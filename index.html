@@ -5,7 +5,7 @@
 <title>매일 5시간 — Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&display=swap');
 
 :root{
   --paper:#F6F0E3;
@@ -28,18 +28,29 @@
   --c-vocabulary:#5C9E8C;
   --c-topik:#B33B34;
   --c-other:#8B8578;
-
-  --gold:#B0A46E;
 }
 
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
-body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;padding:32px 20px 60px;min-height:100vh;}
+body{background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR',sans-serif;padding:32px 20px 60px;min-height:100vh;}
 .wrap{max-width:780px;margin:0 auto;}
 .hidden{display:none !important;}
 
-.auth-wrap{max-width:360px;margin:80px auto;}
-.auth-card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:28px 26px;}
+.lang-switch{display:flex;gap:4px;}
+.lang-switch button{
+  background:var(--paper);
+  color:var(--ink-soft);
+  border:1px solid var(--line);
+  padding:5px 10px;
+  font-size:11.5px;
+  font-weight:600;
+  border-radius:5px;
+}
+.lang-switch button.active{background:var(--ink);color:var(--paper);}
+
+.auth-wrap{max-width:360px;margin:60px auto 0;}
+.auth-topbar{display:flex;justify-content:flex-end;max-width:360px;margin:0 auto;}
+.auth-card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:28px 26px;margin-top:14px;}
 .auth-card h1{font-family:'Noto Serif KR',serif;font-size:24px;margin:0 0 4px;}
 .auth-sub{font-size:13px;color:var(--ink-soft);margin-bottom:20px;}
 .auth-tabs{display:flex;gap:6px;margin-bottom:18px;}
@@ -63,21 +74,11 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:28px;margin:0 0 4
 .who button:hover{background:var(--paper-dim);color:var(--ink);}
 
 .tabs{display:flex;gap:8px;margin-bottom:22px;}
-.tabs button{
-  flex:1;
-  background:var(--paper-dim);
-  color:var(--ink-soft);
-  border:1px solid var(--line);
-  padding:10px;
-  font-size:13px;
-  font-weight:600;
-  border-radius:8px;
-}
+.tabs button{flex:1;background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--line);padding:10px;font-size:13px;font-weight:600;border-radius:8px;}
 .tabs button.active{background:var(--ink);color:var(--paper);}
 
 .card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:22px;}
 .card h2{font-family:'Noto Serif KR',serif;font-size:15px;margin:0 0 14px;color:var(--ink);}
-.card .card-note{font-size:11.5px;color:var(--ink-soft);margin-top:-8px;margin-bottom:14px;}
 
 .lb-row{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
 .lb-row:last-child{border-bottom:none;}
@@ -144,13 +145,11 @@ button:hover{background:var(--celadon-4);}
 .e-chip .del:hover{color:var(--seal);}
 .empty{color:var(--ink-soft);font-size:13px;padding:10px 0;}
 
-/* stat mini row */
-.stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+.stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:0;}
 .stat-mini{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 16px;text-align:center;flex:1;min-width:80px;}
 .stat-mini .num{font-family:'Space Grotesk',monospace;font-size:20px;font-weight:700;color:var(--celadon-4);}
 .stat-mini .label{font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-top:3px;}
 
-/* status badges */
 .badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;color:#fff;}
 .badge.applied, .badge.to_read{background:var(--ink-soft);}
 .badge.interview, .badge.reading{background:var(--celadon-3);color:var(--ink);}
@@ -158,7 +157,6 @@ button:hover{background:var(--celadon-4);}
 .badge.rejected{background:var(--seal);}
 .badge.withdrawn{background:#B0A79A;color:var(--ink);}
 
-/* list rows for books/jobs */
 .item-row{padding:14px 0;border-bottom:1px solid var(--line);}
 .item-row:last-child{border-bottom:none;}
 .item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px;}
@@ -168,7 +166,6 @@ button:hover{background:var(--celadon-4);}
 .item-meta select{font-family:'Inter',sans-serif;font-size:12px;padding:5px 8px;border-radius:5px;border:1px solid var(--line);background:var(--paper);}
 .item-meta input[type=number]{width:70px;font-family:'Space Grotesk',monospace;font-size:12px;padding:5px 7px;border-radius:5px;border:1px solid var(--line);background:var(--paper);}
 .item-meta a{font-size:12px;color:var(--celadon-4);}
-.item-meta .mini-btn{font-size:11px;padding:5px 10px;}
 .item-del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:15px;}
 .item-del:hover{color:var(--seal);}
 .progress-track{background:var(--paper);border:1px solid var(--line);border-radius:4px;height:8px;overflow:hidden;margin-top:6px;width:160px;}
@@ -180,28 +177,33 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
 <body>
 
 <!-- AUTH SCREEN -->
-<div class="auth-wrap" id="authScreen">
-  <div class="auth-card">
-    <h1>매일 5시간</h1>
-    <div class="auth-sub">Korean study · reading · job hunt tracker</div>
-    <div class="auth-tabs">
-      <button id="tabSignIn" class="active">Sign in</button>
-      <button id="tabSignUp">Sign up</button>
+<div id="authScreen">
+  <div class="auth-topbar">
+    <div class="lang-switch" id="langSwitchAuth"></div>
+  </div>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h1>매일 5시간</h1>
+      <div class="auth-sub" id="authTagline"></div>
+      <div class="auth-tabs">
+        <button id="tabSignIn" class="active"></button>
+        <button id="tabSignUp"></button>
+      </div>
+      <div id="displayNameField" class="auth-field hidden">
+        <label for="displayNameInput" id="lblDisplayName"></label>
+        <input type="text" id="displayNameInput" placeholder="e.g. Kristoffer">
+      </div>
+      <div class="auth-field">
+        <label for="emailInput" id="lblEmail"></label>
+        <input type="email" id="emailInput">
+      </div>
+      <div class="auth-field">
+        <label for="passwordInput" id="lblPassword"></label>
+        <input type="password" id="passwordInput">
+      </div>
+      <button class="auth-submit" id="authSubmit"></button>
+      <div id="authMsg" class="auth-msg"></div>
     </div>
-    <div id="displayNameField" class="auth-field hidden">
-      <label for="displayNameInput">Your name</label>
-      <input type="text" id="displayNameInput" placeholder="e.g. Kristoffer">
-    </div>
-    <div class="auth-field">
-      <label for="emailInput">Email</label>
-      <input type="email" id="emailInput">
-    </div>
-    <div class="auth-field">
-      <label for="passwordInput">Password</label>
-      <input type="password" id="passwordInput">
-    </div>
-    <button class="auth-submit" id="authSubmit">Sign in</button>
-    <div id="authMsg" class="auth-msg"></div>
   </div>
 </div>
 
@@ -211,79 +213,80 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
   <header>
     <div>
       <h1>매일 5시간</h1>
-      <div class="sub">Study · Reading · Job hunt</div>
+      <div class="sub" id="headerSub"></div>
     </div>
     <div class="who">
+      <div class="lang-switch" id="langSwitchApp"></div>
       <span class="name" id="whoName"></span>
-      <button id="signOutBtn">Sign out</button>
+      <button id="signOutBtn"></button>
     </div>
   </header>
 
   <div class="tabs" id="tabNav">
-    <button data-tab="study" class="active">Study</button>
-    <button data-tab="reading">Reading</button>
-    <button data-tab="jobs">Jobs</button>
+    <button data-tab="study" class="active" id="tabBtnStudy"></button>
+    <button data-tab="reading" id="tabBtnReading"></button>
+    <button data-tab="jobs" id="tabBtnJobs"></button>
   </div>
 
   <!-- STUDY TAB -->
   <div class="tab-panel" id="panelStudy">
     <div class="card">
-      <h2>Leaderboard</h2>
-      <div class="lb-head"><span>#</span><span>Name</span><span>Streak</span><span>Week</span><span>Total</span></div>
+      <h2 id="hLeaderboard"></h2>
+      <div class="lb-head"><span id="lbHeadRank"></span><span id="lbHeadName"></span><span id="lbHeadStreak"></span><span id="lbHeadWeek"></span><span id="lbHeadTotal"></span></div>
       <div id="leaderboard"></div>
     </div>
 
     <div class="card">
-      <h2>Log a study session</h2>
+      <h2 id="hLogStudy"></h2>
       <div class="log-form">
         <div class="field">
-          <label for="dateInput">Date</label>
+          <label for="dateInput" id="lblDate"></label>
           <input type="date" id="dateInput">
         </div>
         <div class="field">
-          <label for="activityInput">Activity</label>
+          <label for="activityInput" id="lblActivity"></label>
           <select id="activityInput"></select>
         </div>
         <div class="field">
-          <label for="hoursInput">Hours</label>
+          <label for="hoursInput" id="lblHours"></label>
           <input type="number" id="hoursInput" min="0" step="0.25" placeholder="1.5">
         </div>
-        <button id="addBtn">Add session</button>
+        <button id="addBtn"></button>
       </div>
-      <div class="hint">This logs to your own account only.</div>
+      <div class="hint" id="studyHint"></div>
     </div>
 
     <div class="card">
-      <h2>Your last 12 weeks</h2>
+      <h2 id="hCalendar"></h2>
       <div class="cal" id="calGrid"></div>
       <div class="cal-legend">
-        <span>Less</span>
+        <span id="calLegendLess"></span>
         <div class="cal-cell"></div>
         <div class="cal-cell l1"></div>
         <div class="cal-cell l2"></div>
         <div class="cal-cell l3"></div>
         <div class="cal-cell hit"></div>
-        <span>Goal hit</span>
+        <span id="calLegendHit"></span>
       </div>
     </div>
 
     <div class="card">
-      <h2>Your activity breakdown</h2>
+      <h2 id="hBreakdown"></h2>
       <div class="bd-toggle" id="bdToggle">
-        <button data-range="7">Last 7 days</button>
-        <button data-range="30">Last 30 days</button>
-        <button data-range="all" class="active">All time</button>
+        <button data-range="7" id="bd7"></button>
+        <button data-range="30" id="bd30"></button>
+        <button data-range="all" class="active" id="bdAll"></button>
       </div>
       <div id="bdBars"></div>
     </div>
 
     <div class="card">
-      <h2>Your recent entries</h2>
+      <h2 id="hMyEntries"></h2>
       <ul class="entries" id="entryList"></ul>
     </div>
 
     <div class="card">
-      <h2>Recent activity (everyone)</h2>
+      <h2 id="hFeed"></h2>
       <ul class="entries" id="feedList"></ul>
     </div>
   </div>
@@ -291,49 +294,45 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
   <!-- READING TAB -->
   <div class="tab-panel hidden" id="panelReading">
     <div class="card">
-      <h2>Your reading</h2>
+      <h2 id="hReadingStats"></h2>
       <div class="stat-row">
-        <div class="stat-mini"><div class="num" id="rStatReading">0</div><div class="label">Reading</div></div>
-        <div class="stat-mini"><div class="num" id="rStatToRead">0</div><div class="label">To read</div></div>
-        <div class="stat-mini"><div class="num" id="rStatFinished">0</div><div class="label">Finished</div></div>
+        <div class="stat-mini"><div class="num" id="rStatReading">0</div><div class="label" id="rLabelReading"></div></div>
+        <div class="stat-mini"><div class="num" id="rStatToRead">0</div><div class="label" id="rLabelToRead"></div></div>
+        <div class="stat-mini"><div class="num" id="rStatFinished">0</div><div class="label" id="rLabelFinished"></div></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Add a book</h2>
+      <h2 id="hAddBook"></h2>
       <div class="log-form">
         <div class="field wide">
-          <label for="bookTitle">Title</label>
-          <input type="text" id="bookTitle" placeholder="Book title">
+          <label for="bookTitle" id="lblBookTitle"></label>
+          <input type="text" id="bookTitle">
         </div>
         <div class="field wide">
-          <label for="bookAuthor">Author</label>
-          <input type="text" id="bookAuthor" placeholder="Author (optional)">
+          <label for="bookAuthor" id="lblBookAuthor"></label>
+          <input type="text" id="bookAuthor">
         </div>
         <div class="field">
-          <label for="bookStatus">Status</label>
-          <select id="bookStatus">
-            <option value="to_read">To read</option>
-            <option value="reading" selected>Reading</option>
-            <option value="finished">Finished</option>
-          </select>
+          <label for="bookStatus" id="lblBookStatus"></label>
+          <select id="bookStatus"></select>
         </div>
         <div class="field">
-          <label for="bookPages">Total pages</label>
-          <input type="number" id="bookPages" min="0" placeholder="optional">
+          <label for="bookPages" id="lblBookPages"></label>
+          <input type="number" id="bookPages" min="0">
         </div>
-        <button id="addBookBtn">Add book</button>
+        <button id="addBookBtn"></button>
       </div>
     </div>
 
     <div class="card">
-      <h2>Your books</h2>
+      <h2 id="hYourBooks"></h2>
       <div id="bookList"></div>
     </div>
 
     <div class="card">
-      <h2>Books finished — leaderboard</h2>
-      <div class="lb-head-simple"><span>#</span><span>Name</span><span>Finished</span></div>
+      <h2 id="hBookLB"></h2>
+      <div class="lb-head-simple"><span id="blbHeadRank"></span><span id="blbHeadName"></span><span id="blbHeadFinished"></span></div>
       <div id="bookLeaderboard"></div>
     </div>
   </div>
@@ -341,61 +340,55 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
   <!-- JOBS TAB -->
   <div class="tab-panel hidden" id="panelJobs">
     <div class="card">
-      <h2>Your applications</h2>
+      <h2 id="hJobStats"></h2>
       <div class="stat-row">
-        <div class="stat-mini"><div class="num" id="jStatApplied">0</div><div class="label">Applied</div></div>
-        <div class="stat-mini"><div class="num" id="jStatInterview">0</div><div class="label">Interview</div></div>
-        <div class="stat-mini"><div class="num" id="jStatOffer">0</div><div class="label">Offer</div></div>
-        <div class="stat-mini"><div class="num" id="jStatRejected">0</div><div class="label">Rejected</div></div>
+        <div class="stat-mini"><div class="num" id="jStatApplied">0</div><div class="label" id="jLabelApplied"></div></div>
+        <div class="stat-mini"><div class="num" id="jStatInterview">0</div><div class="label" id="jLabelInterview"></div></div>
+        <div class="stat-mini"><div class="num" id="jStatOffer">0</div><div class="label" id="jLabelOffer"></div></div>
+        <div class="stat-mini"><div class="num" id="jStatRejected">0</div><div class="label" id="jLabelRejected"></div></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Log an application</h2>
+      <h2 id="hAddJob"></h2>
       <div class="log-form">
         <div class="field wide">
-          <label for="jobCompany">Company</label>
-          <input type="text" id="jobCompany" placeholder="Company name">
+          <label for="jobCompany" id="lblCompany"></label>
+          <input type="text" id="jobCompany">
         </div>
         <div class="field wide">
-          <label for="jobRole">Role</label>
-          <input type="text" id="jobRole" placeholder="Position (optional)">
+          <label for="jobRole" id="lblRole"></label>
+          <input type="text" id="jobRole">
         </div>
         <div class="field">
-          <label for="jobStatus">Status</label>
-          <select id="jobStatus">
-            <option value="applied" selected>Applied</option>
-            <option value="interview">Interview</option>
-            <option value="offer">Offer</option>
-            <option value="rejected">Rejected</option>
-            <option value="withdrawn">Withdrawn</option>
-          </select>
+          <label for="jobStatus" id="lblJobStatus"></label>
+          <select id="jobStatus"></select>
         </div>
         <div class="field">
-          <label for="jobDate">Date applied</label>
+          <label for="jobDate" id="lblJobDate"></label>
           <input type="date" id="jobDate">
         </div>
         <div class="field wide">
-          <label for="jobLink">Link</label>
-          <input type="text" id="jobLink" placeholder="optional">
+          <label for="jobLink" id="lblJobLink"></label>
+          <input type="text" id="jobLink">
         </div>
-        <button id="addJobBtn">Add application</button>
+        <button id="addJobBtn"></button>
       </div>
     </div>
 
     <div class="card">
-      <h2>Your applications</h2>
+      <h2 id="hYourJobs"></h2>
       <div id="jobList"></div>
     </div>
 
     <div class="card">
-      <h2>Applications submitted — combined</h2>
-      <div class="lb-head-simple"><span>#</span><span>Name</span><span>Applied</span></div>
+      <h2 id="hJobLB"></h2>
+      <div class="lb-head-simple"><span id="jlbHeadRank"></span><span id="jlbHeadName"></span><span id="jlbHeadApplied"></span></div>
       <div id="jobLeaderboard"></div>
     </div>
   </div>
 
-  <footer>Entries are visible to everyone signed in to this tracker; only you can edit your own.</footer>
+  <footer id="footerText"></footer>
 </div>
 
 <script>
@@ -408,23 +401,119 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* ---------- I18N ---------- */
+const I18N = {
+  en: {
+    tagline:'Korean study · reading · job hunt tracker',
+    signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
+    headerSub:'Study · Reading · Job hunt', signOut:'Sign out',
+    tabStudy:'Study', tabReading:'Reading', tabJobs:'Jobs',
+    leaderboard:'Leaderboard', lbRank:'#', lbName:'Name', lbStreak:'Streak', lbWeek:'Week', lbTotal:'Total',
+    logStudy:'Log a study session', date:'Date', activity:'Activity', hours:'Hours', addSession:'Add session',
+    studyHint:'This logs to your own account only.',
+    last12weeks:'Your last 12 weeks', less:'Less', goalHit:'Goal hit',
+    activityBreakdown:'Your activity breakdown', last7:'Last 7 days', last30:'Last 30 days', allTime:'All time',
+    yourEntries:'Your recent entries', feedEveryone:'Recent activity (everyone)',
+    yourReading:'Your reading', statusReading:'Reading', statusToRead:'To read', statusFinished:'Finished',
+    addBook:'Add a book', title:'Title', author:'Author', status:'Status', totalPages:'Total pages', addBookBtn:'Add book',
+    yourBooks:'Your books', booksFinishedLB:'Books finished — leaderboard',
+    yourApplications:'Your applications', jobApplied:'Applied', jobInterview:'Interview', jobOffer:'Offer', jobRejected:'Rejected', jobWithdrawn:'Withdrawn',
+    logApplication:'Log an application', company:'Company', role:'Role', dateApplied:'Date applied', link:'Link', addApplicationBtn:'Add application',
+    applicationsCombined:'Applications submitted — combined',
+    footer:'Entries are visible to everyone signed in to this tracker; only you can edit your own.',
+    actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
+    linkOpen:'Link ↗'
+  },
+  ko: {
+    tagline:'한국어 공부 · 독서 · 구직 트래커',
+    signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
+    headerSub:'공부 · 독서 · 구직', signOut:'로그아웃',
+    tabStudy:'공부', tabReading:'독서', tabJobs:'구직',
+    leaderboard:'순위표', lbRank:'#', lbName:'이름', lbStreak:'연속', lbWeek:'이번 주', lbTotal:'총합',
+    logStudy:'공부 시간 기록', date:'날짜', activity:'활동', hours:'시간', addSession:'기록 추가',
+    studyHint:'본인 계정에만 기록됩니다.',
+    last12weeks:'최근 12주', less:'적음', goalHit:'목표 달성',
+    activityBreakdown:'활동별 통계', last7:'최근 7일', last30:'최근 30일', allTime:'전체 기간',
+    yourEntries:'최근 기록', feedEveryone:'전체 최근 활동',
+    yourReading:'독서 현황', statusReading:'읽는 중', statusToRead:'읽을 예정', statusFinished:'완독',
+    addBook:'책 추가', title:'제목', author:'저자', status:'상태', totalPages:'총 페이지', addBookBtn:'책 추가하기',
+    yourBooks:'내 책 목록', booksFinishedLB:'완독 순위표',
+    yourApplications:'지원 현황', jobApplied:'지원함', jobInterview:'면접', jobOffer:'합격', jobRejected:'불합격', jobWithdrawn:'철회',
+    logApplication:'지원 내역 기록', company:'회사', role:'직무', dateApplied:'지원일', link:'링크', addApplicationBtn:'지원 추가',
+    applicationsCombined:'전체 지원 건수',
+    footer:'모든 기록은 로그인한 모든 사용자에게 공개되며, 본인 기록만 수정할 수 있습니다.',
+    actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
+    linkOpen:'링크 ↗'
+  },
+  vi: {
+    tagline:'Ứng dụng theo dõi học tiếng Hàn · đọc sách · xin việc',
+    signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
+    headerSub:'Học tập · Đọc sách · Xin việc', signOut:'Đăng xuất',
+    tabStudy:'Học tập', tabReading:'Đọc sách', tabJobs:'Xin việc',
+    leaderboard:'Bảng xếp hạng', lbRank:'#', lbName:'Tên', lbStreak:'Chuỗi ngày', lbWeek:'Tuần này', lbTotal:'Tổng cộng',
+    logStudy:'Ghi lại buổi học', date:'Ngày', activity:'Hoạt động', hours:'Số giờ', addSession:'Thêm buổi học',
+    studyHint:'Chỉ ghi vào tài khoản của bạn.',
+    last12weeks:'12 tuần gần đây', less:'Ít', goalHit:'Đạt mục tiêu',
+    activityBreakdown:'Thống kê theo hoạt động', last7:'7 ngày qua', last30:'30 ngày qua', allTime:'Toàn bộ thời gian',
+    yourEntries:'Ghi chú gần đây của bạn', feedEveryone:'Hoạt động gần đây (mọi người)',
+    yourReading:'Sách đang đọc', statusReading:'Đang đọc', statusToRead:'Muốn đọc', statusFinished:'Đã đọc xong',
+    addBook:'Thêm sách', title:'Tên sách', author:'Tác giả', status:'Trạng thái', totalPages:'Tổng số trang', addBookBtn:'Thêm sách',
+    yourBooks:'Sách của bạn', booksFinishedLB:'Bảng xếp hạng sách đã đọc',
+    yourApplications:'Đơn ứng tuyển của bạn', jobApplied:'Đã nộp', jobInterview:'Phỏng vấn', jobOffer:'Trúng tuyển', jobRejected:'Bị từ chối', jobWithdrawn:'Đã rút',
+    logApplication:'Ghi lại đơn ứng tuyển', company:'Công ty', role:'Vị trí', dateApplied:'Ngày nộp', link:'Liên kết', addApplicationBtn:'Thêm đơn',
+    applicationsCombined:'Tổng số đơn đã nộp',
+    footer:'Tất cả mục nhập hiển thị cho mọi người đã đăng nhập; bạn chỉ có thể chỉnh sửa mục của mình.',
+    actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
+    linkOpen:'Liên kết ↗'
+  }
+};
+
+const STATIC_MAP = {
+  authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password',
+  headerSub:'headerSub', signOutBtn:'signOut',
+  tabBtnStudy:'tabStudy', tabBtnReading:'tabReading', tabBtnJobs:'tabJobs',
+  hLeaderboard:'leaderboard', lbHeadRank:'lbRank', lbHeadName:'lbName', lbHeadStreak:'lbStreak', lbHeadWeek:'lbWeek', lbHeadTotal:'lbTotal',
+  hLogStudy:'logStudy', lblDate:'date', lblActivity:'activity', lblHours:'hours', addBtn:'addSession', studyHint:'studyHint',
+  hCalendar:'last12weeks', calLegendLess:'less', calLegendHit:'goalHit',
+  hBreakdown:'activityBreakdown', bd7:'last7', bd30:'last30', bdAll:'allTime',
+  hMyEntries:'yourEntries', hFeed:'feedEveryone',
+  hReadingStats:'yourReading', rLabelReading:'statusReading', rLabelToRead:'statusToRead', rLabelFinished:'statusFinished',
+  hAddBook:'addBook', lblBookTitle:'title', lblBookAuthor:'author', lblBookStatus:'status', lblBookPages:'totalPages', addBookBtn:'addBookBtn',
+  hYourBooks:'yourBooks', hBookLB:'booksFinishedLB', blbHeadRank:'lbRank', blbHeadName:'lbName', blbHeadFinished:'statusFinished',
+  hJobStats:'yourApplications', jLabelApplied:'jobApplied', jLabelInterview:'jobInterview', jLabelOffer:'jobOffer', jLabelRejected:'jobRejected',
+  hAddJob:'logApplication', lblCompany:'company', lblRole:'role', lblJobStatus:'status', lblJobDate:'dateApplied', lblJobLink:'link', addJobBtn:'addApplicationBtn',
+  hYourJobs:'yourApplications', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied',
+  footerText:'footer'
+};
+
+const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
+const BOOK_STATUS_KEYS = {to_read:'statusToRead', reading:'statusReading', finished:'statusFinished'};
+const JOB_STATUS_KEYS = {applied:'jobApplied', interview:'jobInterview', offer:'jobOffer', rejected:'jobRejected', withdrawn:'jobWithdrawn'};
+
+let currentLang = localStorage.getItem('trackerLang') || 'en';
+
+function t(key){ return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key; }
+function actLabel(key){ return t(ACT_KEYS[key] || key); }
+function bookStatusLabel(status){ return t(BOOK_STATUS_KEYS[status] || status); }
+function jobStatusLabel(status){ return t(JOB_STATUS_KEYS[status] || status); }
+
 const ACTIVITIES = [
-  {key:'listening', label:'Listening', color:'var(--c-listening)'},
-  {key:'speaking', label:'Speaking', color:'var(--c-speaking)'},
-  {key:'reading', label:'Reading', color:'var(--c-reading)'},
-  {key:'writing', label:'Writing', color:'var(--c-writing)'},
-  {key:'grammar', label:'Grammar', color:'var(--c-grammar)'},
-  {key:'vocabulary', label:'Vocabulary', color:'var(--c-vocabulary)'},
-  {key:'topik', label:'TOPIK prep', color:'var(--c-topik)'},
-  {key:'other', label:'Other', color:'var(--c-other)'},
+  {key:'listening', color:'var(--c-listening)'},
+  {key:'speaking', color:'var(--c-speaking)'},
+  {key:'reading', color:'var(--c-reading)'},
+  {key:'writing', color:'var(--c-writing)'},
+  {key:'grammar', color:'var(--c-grammar)'},
+  {key:'vocabulary', color:'var(--c-vocabulary)'},
+  {key:'topik', color:'var(--c-topik)'},
+  {key:'other', color:'var(--c-other)'},
 ];
 const ACT_MAP = Object.fromEntries(ACTIVITIES.map(a=>[a.key,a]));
 
 let currentUser = null;
 let profiles = {};
 let allEntries = {};
-let allBooks = {};   // userId -> array of book rows
-let allJobs = {};    // userId -> array of job rows
+let allBooks = {};
+let allJobs = {};
 let bdRange = 'all';
 let authMode = 'signin';
 let activeTab = 'study';
@@ -437,45 +526,72 @@ function todayStr(d = new Date()){
 function nameFor(userId){ return profiles[userId] || 'Someone'; }
 function fmt(n){ return Number(n.toFixed(2)).toString(); }
 
-/* ---------- STUDY HELPERS ---------- */
-function dayTotal(userId, dateKey){
-  const u = allEntries[userId];
-  if(!u || !u[dateKey]) return 0;
-  return Object.values(u[dateKey]).reduce((a,b)=>a+Number(b),0);
+/* ---------- LANGUAGE APPLICATION ---------- */
+function buildLangSwitch(container){
+  container.innerHTML = '';
+  [['en','EN'],['ko','한국어'],['vi','Tiếng Việt']].forEach(([code,label])=>{
+    const btn = document.createElement('button');
+    btn.textContent = label;
+    btn.dataset.lang = code;
+    if(code === currentLang) btn.classList.add('active');
+    btn.addEventListener('click', ()=> applyLanguage(code));
+    container.appendChild(btn);
+  });
 }
-function computeStreak(userId){
-  let streak = 0; let d = new Date();
-  if(!(dayTotal(userId, todayStr(d)) >= GOAL)) d.setDate(d.getDate()-1);
-  while(true){
-    const key = todayStr(d);
-    if(dayTotal(userId, key) >= GOAL){ streak++; d.setDate(d.getDate()-1); } else break;
-  }
-  return streak;
+
+function rebuildActivitySelect(){
+  const sel = document.getElementById('activityInput');
+  const prev = sel.value;
+  sel.innerHTML = '';
+  ACTIVITIES.forEach(a=>{
+    const opt = document.createElement('option');
+    opt.value = a.key; opt.textContent = actLabel(a.key);
+    sel.appendChild(opt);
+  });
+  if(prev) sel.value = prev;
 }
-function computeWeekTotal(userId){
-  const now = new Date(); const day = now.getDay();
-  const mondayOffset = day === 0 ? 6 : day - 1;
-  const monday = new Date(now); monday.setDate(now.getDate() - mondayOffset);
-  let sum = 0;
-  for(let i=0;i<7;i++){
-    const d = new Date(monday); d.setDate(monday.getDate()+i);
-    if(d > now) break;
-    sum += dayTotal(userId, todayStr(d));
-  }
-  return sum;
+function rebuildBookStatusSelect(){
+  const sel = document.getElementById('bookStatus');
+  const prev = sel.value || 'reading';
+  sel.innerHTML = '';
+  ['to_read','reading','finished'].forEach(s=>{
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = bookStatusLabel(s);
+    sel.appendChild(opt);
+  });
+  sel.value = prev;
 }
-function computeTotal(userId){
-  const u = allEntries[userId];
-  if(!u) return 0;
-  return Object.keys(u).reduce((a,k)=>a+dayTotal(userId,k),0);
+function rebuildJobStatusSelect(){
+  const sel = document.getElementById('jobStatus');
+  const prev = sel.value || 'applied';
+  sel.innerHTML = '';
+  ['applied','interview','offer','rejected','withdrawn'].forEach(s=>{
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = jobStatusLabel(s);
+    sel.appendChild(opt);
+  });
+  sel.value = prev;
 }
-function levelFor(hours){
-  if(!hours) return '';
-  if(hours >= GOAL) return 'hit';
-  if(hours >= GOAL*0.66) return 'l3';
-  if(hours >= GOAL*0.33) return 'l2';
-  if(hours > 0) return 'l1';
-  return '';
+
+function applyLanguage(lang){
+  currentLang = lang;
+  localStorage.setItem('trackerLang', lang);
+
+  Object.entries(STATIC_MAP).forEach(([id,key])=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = t(key);
+  });
+
+  document.getElementById('authSubmit').textContent = authMode === 'signin' ? t('signIn') : t('createAccount');
+
+  buildLangSwitch(document.getElementById('langSwitchAuth'));
+  buildLangSwitch(document.getElementById('langSwitchApp'));
+
+  rebuildActivitySelect();
+  rebuildBookStatusSelect();
+  rebuildJobStatusSelect();
+
+  if(currentUser){ renderAll(); }
 }
 
 /* ---------- AUTH ---------- */
@@ -484,7 +600,7 @@ function setAuthMode(mode){
   document.getElementById('tabSignIn').classList.toggle('active', mode==='signin');
   document.getElementById('tabSignUp').classList.toggle('active', mode==='signup');
   document.getElementById('displayNameField').classList.toggle('hidden', mode!=='signup');
-  document.getElementById('authSubmit').textContent = mode==='signin' ? 'Sign in' : 'Create account';
+  document.getElementById('authSubmit').textContent = mode==='signin' ? t('signIn') : t('createAccount');
   document.getElementById('authMsg').innerHTML = '';
 }
 function showAuthMsg(text, type){
@@ -543,6 +659,47 @@ document.getElementById('tabNav').addEventListener('click', (e)=>{
   document.getElementById('panelJobs').classList.toggle('hidden', activeTab!=='jobs');
 });
 
+/* ---------- STUDY HELPERS ---------- */
+function dayTotal(userId, dateKey){
+  const u = allEntries[userId];
+  if(!u || !u[dateKey]) return 0;
+  return Object.values(u[dateKey]).reduce((a,b)=>a+Number(b),0);
+}
+function computeStreak(userId){
+  let streak = 0; let d = new Date();
+  if(!(dayTotal(userId, todayStr(d)) >= GOAL)) d.setDate(d.getDate()-1);
+  while(true){
+    const key = todayStr(d);
+    if(dayTotal(userId, key) >= GOAL){ streak++; d.setDate(d.getDate()-1); } else break;
+  }
+  return streak;
+}
+function computeWeekTotal(userId){
+  const now = new Date(); const day = now.getDay();
+  const mondayOffset = day === 0 ? 6 : day - 1;
+  const monday = new Date(now); monday.setDate(now.getDate() - mondayOffset);
+  let sum = 0;
+  for(let i=0;i<7;i++){
+    const d = new Date(monday); d.setDate(monday.getDate()+i);
+    if(d > now) break;
+    sum += dayTotal(userId, todayStr(d));
+  }
+  return sum;
+}
+function computeTotal(userId){
+  const u = allEntries[userId];
+  if(!u) return 0;
+  return Object.keys(u).reduce((a,k)=>a+dayTotal(userId,k),0);
+}
+function levelFor(hours){
+  if(!hours) return '';
+  if(hours >= GOAL) return 'hit';
+  if(hours >= GOAL*0.66) return 'l3';
+  if(hours >= GOAL*0.33) return 'l2';
+  if(hours > 0) return 'l1';
+  return '';
+}
+
 /* ---------- DATA LOAD ---------- */
 async function loadAllData(){
   const { data: profileRows } = await supabaseClient.from('profiles').select('*');
@@ -590,7 +747,7 @@ function renderLeaderboard(){
     id, name: nameFor(id),
     streak: computeStreak(id), week: computeWeekTotal(id), total: computeTotal(id)
   })).sort((a,b)=> b.streak - a.streak || b.total - a.total);
-  if(rows.length === 0){ el.innerHTML = '<div class="bd-empty">No one has logged yet.</div>'; return; }
+  if(rows.length === 0){ el.innerHTML = '<div class="bd-empty">—</div>'; return; }
   rows.forEach((r,i)=>{
     const row = document.createElement('div');
     row.className = 'lb-row' + (r.id===currentUser.id ? ' me' : '');
@@ -620,7 +777,7 @@ function renderCalendar(){
         const hrs = dayTotal(currentUser.id, key);
         const lvl = levelFor(hrs);
         if(lvl) cell.classList.add(lvl);
-        cell.title = key + ': ' + (hrs ? fmt(hrs) + ' hrs' : 'no entry');
+        cell.title = key + ': ' + (hrs ? fmt(hrs) + ' hrs' : '—');
       } else { cell.style.visibility = 'hidden'; }
       col.appendChild(cell);
     }
@@ -643,29 +800,29 @@ function renderBreakdown(){
   const max = Math.max(...Object.values(totals), 0.001);
   const sorted = ACTIVITIES.slice().sort((a,b)=> totals[b.key]-totals[a.key]);
   const anyData = Object.values(totals).some(v=>v>0);
-  if(!anyData){ container.innerHTML = '<div class="bd-empty">No sessions logged in this range yet.</div>'; return; }
+  if(!anyData){ container.innerHTML = '<div class="bd-empty">—</div>'; return; }
   sorted.forEach(a=>{
     const val = totals[a.key];
     const row = document.createElement('div'); row.className = 'bd-row';
     row.innerHTML =
       `<span class="bd-dot" style="background:${a.color}"></span>` +
-      `<span class="bd-label">${a.label}</span>` +
+      `<span class="bd-label">${actLabel(a.key)}</span>` +
       `<span class="bd-track"><span class="bd-fill" style="width:${(val/max*100).toFixed(1)}%;background:${a.color}"></span></span>` +
       `<span class="bd-val">${fmt(val)}h</span>`;
     container.appendChild(row);
   });
 }
 function chipHtml(dateKey, act, hrs, editable){
-  const meta = ACT_MAP[act] || {label:act, color:'var(--c-other)'};
+  const meta = ACT_MAP[act] || {color:'var(--c-other)'};
   const delBtn = editable ? `<button class="del" data-date="${dateKey}" data-act="${act}" title="Remove">✕</button>` : '';
-  return `<span class="e-chip"><span class="dot" style="background:${meta.color}"></span>${meta.label} ${fmt(hrs)}h${delBtn}</span>`;
+  return `<span class="e-chip"><span class="dot" style="background:${meta.color}"></span>${actLabel(act)} ${fmt(hrs)}h${delBtn}</span>`;
 }
 function renderEntries(){
   const list = document.getElementById('entryList');
   list.innerHTML = '';
   const myEntries = allEntries[currentUser.id] || {};
   const dates = Object.keys(myEntries).sort((a,b)=> b.localeCompare(a)).slice(0,20);
-  if(dates.length === 0){ list.innerHTML = '<li class="empty">No entries yet.</li>'; return; }
+  if(dates.length === 0){ list.innerHTML = '<li class="empty">—</li>'; return; }
   dates.forEach(key=>{
     const total = dayTotal(currentUser.id, key);
     const hit = total >= GOAL;
@@ -697,7 +854,7 @@ function renderFeed(){
   });
   rows.sort((a,b)=> b.date.localeCompare(a.date));
   const top = rows.slice(0,15);
-  if(top.length === 0){ list.innerHTML = '<li class="empty">Nothing logged yet.</li>'; return; }
+  if(top.length === 0){ list.innerHTML = '<li class="empty">—</li>'; return; }
   top.forEach(r=>{
     const total = Object.values(r.activities).reduce((a,b)=>a+Number(b),0);
     const hit = total >= GOAL;
@@ -758,7 +915,7 @@ function renderReading(){
 
   const list = document.getElementById('bookList');
   list.innerHTML = '';
-  if(mine.length === 0){ list.innerHTML = '<div class="empty">No books logged yet.</div>'; }
+  if(mine.length === 0){ list.innerHTML = '<div class="empty">—</div>'; }
   const order = {reading:0, to_read:1, finished:2};
   mine.slice().sort((a,b)=> order[a.status]-order[b.status]).forEach(b=>{
     const div = document.createElement('div');
@@ -774,11 +931,11 @@ function renderReading(){
         <button class="item-del" data-id="${b.id}" data-kind="book" title="Delete">✕</button>
       </div>
       <div class="item-meta">
-        <span class="badge ${b.status}">${b.status.replace('_',' ')}</span>
+        <span class="badge ${b.status}">${bookStatusLabel(b.status)}</span>
         <select data-id="${b.id}" class="book-status-select">
-          <option value="to_read" ${b.status==='to_read'?'selected':''}>To read</option>
-          <option value="reading" ${b.status==='reading'?'selected':''}>Reading</option>
-          <option value="finished" ${b.status==='finished'?'selected':''}>Finished</option>
+          <option value="to_read" ${b.status==='to_read'?'selected':''}>${bookStatusLabel('to_read')}</option>
+          <option value="reading" ${b.status==='reading'?'selected':''}>${bookStatusLabel('reading')}</option>
+          <option value="finished" ${b.status==='finished'?'selected':''}>${bookStatusLabel('finished')}</option>
         </select>
         ${b.total_pages ? `<input type="number" class="book-pages-input" data-id="${b.id}" min="0" max="${b.total_pages}" value="${b.pages_read||0}" title="Pages read"> / ${b.total_pages}p` : ''}
       </div>
@@ -801,7 +958,7 @@ function renderReading(){
   const rows = Object.keys(profiles).map(id=>({
     id, name: nameFor(id), finished: (allBooks[id]||[]).filter(b=>b.status==='finished').length
   })).sort((a,b)=> b.finished - a.finished);
-  if(rows.length === 0){ lb.innerHTML = '<div class="bd-empty">No data yet.</div>'; }
+  if(rows.length === 0){ lb.innerHTML = '<div class="bd-empty">—</div>'; }
   rows.forEach((r,i)=>{
     const row = document.createElement('div');
     row.className = 'lb-row-simple' + (r.id===currentUser.id ? ' me' : '');
@@ -851,7 +1008,7 @@ function renderJobs(){
 
   const list = document.getElementById('jobList');
   list.innerHTML = '';
-  if(mine.length === 0){ list.innerHTML = '<div class="empty">No applications logged yet.</div>'; }
+  if(mine.length === 0){ list.innerHTML = '<div class="empty">—</div>'; }
   mine.slice().sort((a,b)=> (b.date_applied||'').localeCompare(a.date_applied||'')).forEach(j=>{
     const div = document.createElement('div');
     div.className = 'item-row';
@@ -861,15 +1018,15 @@ function renderJobs(){
         <button class="item-del" data-id="${j.id}" data-kind="job" title="Delete">✕</button>
       </div>
       <div class="item-meta">
-        <span class="badge ${j.status}">${j.status}</span>
+        <span class="badge ${j.status}">${jobStatusLabel(j.status)}</span>
         <select data-id="${j.id}" class="job-status-select">
-          <option value="applied" ${j.status==='applied'?'selected':''}>Applied</option>
-          <option value="interview" ${j.status==='interview'?'selected':''}>Interview</option>
-          <option value="offer" ${j.status==='offer'?'selected':''}>Offer</option>
-          <option value="rejected" ${j.status==='rejected'?'selected':''}>Rejected</option>
-          <option value="withdrawn" ${j.status==='withdrawn'?'selected':''}>Withdrawn</option>
+          <option value="applied" ${j.status==='applied'?'selected':''}>${jobStatusLabel('applied')}</option>
+          <option value="interview" ${j.status==='interview'?'selected':''}>${jobStatusLabel('interview')}</option>
+          <option value="offer" ${j.status==='offer'?'selected':''}>${jobStatusLabel('offer')}</option>
+          <option value="rejected" ${j.status==='rejected'?'selected':''}>${jobStatusLabel('rejected')}</option>
+          <option value="withdrawn" ${j.status==='withdrawn'?'selected':''}>${jobStatusLabel('withdrawn')}</option>
         </select>
-        ${j.link ? `<a href="${j.link}" target="_blank" rel="noopener">Link ↗</a>` : ''}
+        ${j.link ? `<a href="${j.link}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
       </div>`;
     list.appendChild(div);
   });
@@ -886,7 +1043,7 @@ function renderJobs(){
   const rows = Object.keys(profiles).map(id=>({
     id, name: nameFor(id), count: (allJobs[id]||[]).length
   })).sort((a,b)=> b.count - a.count);
-  if(rows.length === 0){ lb.innerHTML = '<div class="bd-empty">No data yet.</div>'; }
+  if(rows.length === 0){ lb.innerHTML = '<div class="bd-empty">—</div>'; }
   rows.forEach((r,i)=>{
     const row = document.createElement('div');
     row.className = 'lb-row-simple' + (r.id===currentUser.id ? ' me' : '');
@@ -907,13 +1064,6 @@ function renderAll(){
 }
 
 function initForm(){
-  const sel = document.getElementById('activityInput');
-  sel.innerHTML = '';
-  ACTIVITIES.forEach(a=>{
-    const opt = document.createElement('option');
-    opt.value = a.key; opt.textContent = a.label;
-    sel.appendChild(opt);
-  });
   document.getElementById('dateInput').value = todayStr();
   document.getElementById('jobDate').value = todayStr();
 }
@@ -943,6 +1093,7 @@ document.getElementById('bdToggle').addEventListener('click', (e)=>{
 
 (async function init(){
   initForm();
+  applyLanguage(currentLang);
   const { data: { session } } = await supabaseClient.auth.getSession();
   if(session){ await onAuthed(session.user); }
 })();
