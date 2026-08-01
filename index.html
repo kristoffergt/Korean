@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>매일 5시간 — Korean Study Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+  --paper:#F6F0E3;
+  --paper-dim:#EDE4D0;
+  --ink:#242019;
+  --ink-soft:#6B6152;
+  --celadon-1:#DCE7DA;
+  --celadon-2:#AFC9AE;
+  --celadon-3:#7FA694;
+  --celadon-4:#4F7563;
+  --seal:#B33B34;
+  --seal-dark:#8C2C27;
+  --line: rgba(36,32,25,0.12);
+
+  --c-listening:#6E8FB0;
+  --c-speaking:#B37B4F;
+  --c-reading:#7FA694;
+  --c-writing:#9C7BB0;
+  --c-grammar:#B0A46E;
+  --c-vocabulary:#5C9E8C;
+  --c-topik:#B33B34;
+  --c-other:#8B8578;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  padding:32px 20px 60px;
+  min-height:100vh;
+}
+
+.wrap{max-width:780px;margin:0 auto;}
+.hidden{display:none !important;}
+
+/* auth screen */
+.auth-wrap{max-width:360px;margin:80px auto;}
+.auth-card{
+  background:var(--paper-dim);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:28px 26px;
+}
+.auth-card h1{
+  font-family:'Noto Serif KR',serif;
+  font-size:24px;
+  margin:0 0 4px;
+}
+.auth-sub{font-size:13px;color:var(--ink-soft);margin-bottom:20px;}
+.auth-tabs{display:flex;gap:6px;margin-bottom:18px;}
+.auth-tabs button{
+  flex:1;
+  background:var(--paper);
+  color:var(--ink-soft);
+  border:1px solid var(--line);
+  padding:8px;
+  font-size:13px;
+  font-weight:600;
+}
+.auth-tabs button.active{background:var(--ink);color:var(--paper);}
+.auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.auth-field label{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.5px;}
+.auth-field input{
+  font-family:'Inter',sans-serif;
+  font-size:14px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--paper);
+  color:var(--ink);
+  width:100%;
+}
+.auth-field input:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
+.auth-submit{width:100%;margin-top:6px;}
+.auth-msg{font-size:12.5px;margin-top:12px;padding:10px 12px;border-radius:6px;}
+.auth-msg.error{background:#F3D9D7;color:var(--seal-dark);border:1px solid var(--seal);}
+.auth-msg.info{background:var(--celadon-1);color:var(--celadon-4);border:1px solid var(--celadon-3);}
+
+/* app header */
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  border-bottom:2px solid var(--ink);
+  padding-bottom:16px;
+  margin-bottom:22px;
+  gap:16px;
+  flex-wrap:wrap;
+}
+h1{
+  font-family:'Noto Serif KR',serif;
+  font-weight:700;
+  font-size:28px;
+  margin:0 0 4px;
+  letter-spacing:0.5px;
+}
+.sub{
+  font-size:13px;
+  color:var(--ink-soft);
+  letter-spacing:0.3px;
+}
+.who{display:flex;align-items:center;gap:12px;}
+.who .name{font-size:13px;color:var(--ink-soft);}
+.who button{
+  background:none;
+  border:1px solid var(--line);
+  color:var(--ink-soft);
+  padding:6px 12px;
+  font-size:12px;
+  font-weight:500;
+}
+.who button:hover{background:var(--paper-dim);color:var(--ink);}
+
+.card{
+  background:var(--paper-dim);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:20px 22px;
+  margin-bottom:22px;
+}
+.card h2{
+  font-family:'Noto Serif KR',serif;
+  font-size:15px;
+  margin:0 0 14px;
+  color:var(--ink);
+}
+.card .card-note{font-size:11.5px;color:var(--ink-soft);margin-top:-8px;margin-bottom:14px;}
+
+/* leaderboard */
+.lb-row{
+  display:grid;
+  grid-template-columns:22px 1fr 60px 70px 70px;
+  align-items:center;
+  gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid var(--line);
+  font-size:13.5px;
+}
+.lb-row:last-child{border-bottom:none;}
+.lb-row.me{background:rgba(127,166,148,0.12);border-radius:6px;padding:10px 8px;margin:0 -8px;}
+.lb-rank{color:var(--ink-soft);font-family:'Space Grotesk',monospace;}
+.lb-name{font-weight:600;}
+.lb-name .tag{font-size:10px;color:var(--celadon-4);font-weight:600;margin-left:5px;}
+.lb-stat{text-align:right;font-family:'Space Grotesk',monospace;}
+.lb-head{
+  display:grid;
+  grid-template-columns:22px 1fr 60px 70px 70px;
+  gap:10px;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  color:var(--ink-soft);
+  padding-bottom:8px;
+  border-bottom:1px solid var(--line);
+}
+.lb-head span:not(:first-child){text-align:right;}
+
+.log-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.5px;}
+.field input, .field select{
+  font-family:'Space Grotesk',monospace;
+  font-size:15px;
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--paper);
+  color:var(--ink);
+  width:150px;
+}
+.field select{font-family:'Inter',sans-serif;font-size:14px;}
+.field input:focus, .field select:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
+button{
+  font-family:'Inter',sans-serif;
+  font-weight:600;
+  font-size:14px;
+  padding:10px 20px;
+  border:none;
+  border-radius:6px;
+  background:var(--ink);
+  color:var(--paper);
+  cursor:pointer;
+}
+button:hover{background:var(--celadon-4);}
+.hint{font-size:12px;color:var(--ink-soft);margin-top:10px;}
+
+.cal{display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;}
+.cal-week{display:flex;flex-direction:column;gap:4px;}
+.cal-cell{width:15px;height:15px;border-radius:3px;background:var(--paper);border:1px solid var(--line);position:relative;}
+.cal-cell.l1{background:var(--celadon-1);border-color:transparent;}
+.cal-cell.l2{background:var(--celadon-2);border-color:transparent;}
+.cal-cell.l3{background:var(--celadon-3);border-color:transparent;}
+.cal-cell.hit{background:var(--celadon-4);border-color:transparent;}
+.cal-cell.hit::after{
+  content:'';position:absolute;inset:-2px;
+  border:1.5px solid var(--seal);border-radius:4px;
+  transform:rotate(-6deg);opacity:0.9;
+}
+.cal-legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-soft);margin-top:10px;flex-wrap:wrap;}
+.cal-legend .cal-cell{width:12px;height:12px;}
+
+.bd-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:13px;}
+.bd-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.bd-label{width:88px;flex-shrink:0;color:var(--ink-soft);}
+.bd-track{flex:1;background:var(--paper);border-radius:4px;overflow:hidden;height:14px;border:1px solid var(--line);}
+.bd-fill{height:100%;border-radius:3px 0 0 3px;}
+.bd-val{width:48px;text-align:right;font-family:'Space Grotesk',monospace;font-weight:600;flex-shrink:0;}
+.bd-toggle{display:flex;gap:8px;margin-bottom:14px;}
+.bd-toggle button{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:5px 12px;font-size:12px;font-weight:500;}
+.bd-toggle button.active{background:var(--ink);color:var(--paper);}
+.bd-empty{color:var(--ink-soft);font-size:13px;}
+
+.entries{list-style:none;margin:0;padding:0;}
+.entries li{padding:12px 0;border-bottom:1px solid var(--line);}
+.entries li:last-child{border-bottom:none;}
+.e-top{display:flex;align-items:center;justify-content:space-between;font-size:14px;margin-bottom:6px;}
+.e-date{font-family:'Space Grotesk',monospace;color:var(--ink-soft);}
+.e-who{font-size:11px;background:var(--celadon-1);color:var(--celadon-4);padding:2px 8px;border-radius:10px;font-weight:600;margin-right:8px;}
+.e-total{font-family:'Space Grotesk',monospace;font-weight:700;}
+.e-total.hit{color:var(--seal);}
+.e-seal{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;border:1.5px solid var(--seal);border-radius:4px;
+  color:var(--seal);font-family:'Noto Serif KR',serif;font-size:10px;font-weight:700;
+  transform:rotate(-5deg);margin-right:5px;
+}
+.e-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.e-chip{display:flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:3px 9px 3px 7px;font-size:11.5px;}
+.e-chip .dot{width:7px;height:7px;border-radius:50%;}
+.e-chip .del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:12px;padding:0 0 0 3px;line-height:1;}
+.e-chip .del:hover{color:var(--seal);}
+.empty{color:var(--ink-soft);font-size:13px;padding:10px 0;}
+
+footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <h1>매일 5시간</h1>
+    <div class="auth-sub">Korean study tracker</div>
+    <div class="auth-tabs">
+      <button id="tabSignIn" class="active">Sign in</button>
+      <button id="tabSignUp">Sign up</button>
+    </div>
+    <div id="displayNameField" class="auth-field hidden">
+      <label for="displayNameInput">Your name</label>
+      <input type="text" id="displayNameInput" placeholder="e.g. Kristoffer">
+    </div>
+    <div class="auth-field">
+      <label for="emailInput">Email</label>
+      <input type="email" id="emailInput">
+    </div>
+    <div class="auth-field">
+      <label for="passwordInput">Password</label>
+      <input type="password" id="passwordInput">
+    </div>
+    <button class="auth-submit" id="authSubmit">Sign in</button>
+    <div id="authMsg"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="wrap hidden" id="appScreen">
+
+  <header>
+    <div>
+      <h1>매일 5시간</h1>
+      <div class="sub">Korean study tracker · goal: 5 hrs / day</div>
+    </div>
+    <div class="who">
+      <span class="name" id="whoName"></span>
+      <button id="signOutBtn">Sign out</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2>Leaderboard</h2>
+    <div class="lb-head"><span>#</span><span>Name</span><span>Streak</span><span>Week</span><span>Total</span></div>
+    <div id="leaderboard"></div>
+  </div>
+
+  <div class="card">
+    <h2>Log a study session</h2>
+    <div class="log-form">
+      <div class="field">
+        <label for="dateInput">Date</label>
+        <input type="date" id="dateInput">
+      </div>
+      <div class="field">
+        <label for="activityInput">Activity</label>
+        <select id="activityInput"></select>
+      </div>
+      <div class="field">
+        <label for="hoursInput">Hours</label>
+        <input type="number" id="hoursInput" min="0" step="0.25" placeholder="1.5">
+      </div>
+      <button id="addBtn">Add session</button>
+    </div>
+    <div class="hint">This logs to your own account only. Your girlfriend logs hers separately when signed in as herself.</div>
+  </div>
+
+  <div class="card">
+    <h2>Your last 12 weeks</h2>
+    <div class="cal" id="calGrid"></div>
+    <div class="cal-legend">
+      <span>Less</span>
+      <div class="cal-cell"></div>
+      <div class="cal-cell l1"></div>
+      <div class="cal-cell l2"></div>
+      <div class="cal-cell l3"></div>
+      <div class="cal-cell hit"></div>
+      <span>Goal hit</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Your activity breakdown</h2>
+    <div class="bd-toggle" id="bdToggle">
+      <button data-range="7">Last 7 days</button>
+      <button data-range="30">Last 30 days</button>
+      <button data-range="all" class="active">All time</button>
+    </div>
+    <div id="bdBars"></div>
+  </div>
+
+  <div class="card">
+    <h2>Your recent entries</h2>
+    <ul class="entries" id="entryList"></ul>
+  </div>
+
+  <div class="card">
+    <h2>Recent activity (everyone)</h2>
+    <ul class="entries" id="feedList"></ul>
+  </div>
+
+  <footer>Entries are visible to everyone signed in to this tracker; only you can edit your own.</footer>
+</div>
+
+<script>
+const GOAL = 5;
+
+// ---- Fill these in from Supabase → Project Settings → API ----
+const SUPABASE_URL = 'https://kbqwitmxpmkueryjsyip.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImticXdpdG14cG1rdWVyeWpzeWlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NzIxNjUsImV4cCI6MjEwMTE0ODE2NX0.hOuxXxjfPemuSpthbMAD7tz30oxBkI3CyyZ8fwgwZTc';
+// ----------------------------------------------------------------
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const ACTIVITIES = [
+  {key:'listening', label:'Listening', color:'var(--c-listening)'},
+  {key:'speaking', label:'Speaking', color:'var(--c-speaking)'},
+  {key:'reading', label:'Reading', color:'var(--c-reading)'},
+  {key:'writing', label:'Writing', color:'var(--c-writing)'},
+  {key:'grammar', label:'Grammar', color:'var(--c-grammar)'},
+  {key:'vocabulary', label:'Vocabulary', color:'var(--c-vocabulary)'},
+  {key:'topik', label:'TOPIK prep', color:'var(--c-topik)'},
+  {key:'other', label:'Other', color:'var(--c-other)'},
+];
+const ACT_MAP = Object.fromEntries(ACTIVITIES.map(a=>[a.key,a]));
+
+let currentUser = null;       // { id, email }
+let profiles = {};            // userId -> display_name
+let allEntries = {};          // userId -> { 'YYYY-MM-DD': { activity: hours } }
+let bdRange = 'all';
+let authMode = 'signin';
+
+function todayStr(d = new Date()){
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off*60000);
+  return local.toISOString().slice(0,10);
+}
+
+function nameFor(userId){
+  return profiles[userId] || 'Someone';
+}
+
+function dayTotal(userId, dateKey){
+  const u = allEntries[userId];
+  if(!u || !u[dateKey]) return 0;
+  return Object.values(u[dateKey]).reduce((a,b)=>a+Number(b),0);
+}
+
+function computeStreak(userId){
+  let streak = 0;
+  let d = new Date();
+  if(!(dayTotal(userId, todayStr(d)) >= GOAL)){
+    d.setDate(d.getDate()-1);
+  }
+  while(true){
+    const key = todayStr(d);
+    if(dayTotal(userId, key) >= GOAL){
+      streak++;
+      d.setDate(d.getDate()-1);
+    } else break;
+  }
+  return streak;
+}
+
+function computeWeekTotal(userId){
+  const now = new Date();
+  const day = now.getDay();
+  const mondayOffset = day === 0 ? 6 : day - 1;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - mondayOffset);
+  let sum = 0;
+  for(let i=0;i<7;i++){
+    const d = new Date(monday);
+    d.setDate(monday.getDate()+i);
+    if(d > now) break;
+    sum += dayTotal(userId, todayStr(d));
+  }
+  return sum;
+}
+
+function computeTotal(userId){
+  const u = allEntries[userId];
+  if(!u) return 0;
+  return Object.keys(u).reduce((a,k)=>a+dayTotal(userId,k),0);
+}
+
+function fmt(n){ return Number(n.toFixed(2)).toString(); }
+
+function levelFor(hours){
+  if(!hours) return '';
+  if(hours >= GOAL) return 'hit';
+  if(hours >= GOAL*0.66) return 'l3';
+  if(hours >= GOAL*0.33) return 'l2';
+  if(hours > 0) return 'l1';
+  return '';
+}
+
+/* ---------- AUTH ---------- */
+
+function setAuthMode(mode){
+  authMode = mode;
+  document.getElementById('tabSignIn').classList.toggle('active', mode==='signin');
+  document.getElementById('tabSignUp').classList.toggle('active', mode==='signup');
+  document.getElementById('displayNameField').classList.toggle('hidden', mode!=='signup');
+  document.getElementById('authSubmit').textContent = mode==='signin' ? 'Sign in' : 'Create account';
+  document.getElementById('authMsg').innerHTML = '';
+}
+
+function showAuthMsg(text, type){
+  document.getElementById('authMsg').innerHTML = `<div class="auth-msg ${type}">${text}</div>`;
+}
+
+document.getElementById('tabSignIn').addEventListener('click', ()=>setAuthMode('signin'));
+document.getElementById('tabSignUp').addEventListener('click', ()=>setAuthMode('signup'));
+
+document.getElementById('authSubmit').addEventListener('click', async ()=>{
+  const email = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+  if(!email || !password){ showAuthMsg('Enter email and password.', 'error'); return; }
+
+  if(authMode === 'signup'){
+    const displayName = document.getElementById('displayNameInput').value.trim();
+    if(!displayName){ showAuthMsg('Enter a name.', 'error'); return; }
+    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+    if(error){ showAuthMsg(error.message, 'error'); return; }
+    if(data.user){
+      await supabaseClient.from('profiles').upsert({ id: data.user.id, display_name: displayName });
+    }
+    if(data.session){
+      onAuthed(data.user);
+    } else {
+      showAuthMsg('Account created. Check your email to confirm, then sign in.', 'info');
+    }
+  } else {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if(error){ showAuthMsg(error.message, 'error'); return; }
+    onAuthed(data.user);
+  }
+});
+
+document.getElementById('signOutBtn').addEventListener('click', async ()=>{
+  await supabaseClient.auth.signOut();
+  currentUser = null;
+  document.getElementById('appScreen').classList.add('hidden');
+  document.getElementById('authScreen').classList.remove('hidden');
+});
+
+async function onAuthed(user){
+  currentUser = { id: user.id, email: user.email };
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('appScreen').classList.remove('hidden');
+  document.getElementById('whoName').textContent = user.email;
+  await loadAllData();
+  renderAll();
+}
+
+/* ---------- DATA ---------- */
+
+async function loadAllData(){
+  const { data: profileRows } = await supabaseClient.from('profiles').select('*');
+  profiles = {};
+  (profileRows||[]).forEach(p => profiles[p.id] = p.display_name);
+
+  const { data: entryRows } = await supabaseClient.from('study_entries').select('*');
+  allEntries = {};
+  (entryRows||[]).forEach(row=>{
+    if(!allEntries[row.user_id]) allEntries[row.user_id] = {};
+    allEntries[row.user_id][row.entry_date] = row.activities || {};
+  });
+}
+
+async function upsertMyDay(dateVal, activities){
+  await supabaseClient.from('study_entries').upsert(
+    { user_id: currentUser.id, entry_date: dateVal, activities },
+    { onConflict: 'user_id,entry_date' }
+  );
+}
+
+async function deleteMyDay(dateVal){
+  await supabaseClient.from('study_entries').delete()
+    .eq('user_id', currentUser.id).eq('entry_date', dateVal);
+}
+
+/* ---------- RENDER ---------- */
+
+function renderLeaderboard(){
+  const el = document.getElementById('leaderboard');
+  el.innerHTML = '';
+  const userIds = Object.keys(profiles);
+  const rows = userIds.map(id=>({
+    id, name: nameFor(id),
+    streak: computeStreak(id), week: computeWeekTotal(id), total: computeTotal(id)
+  })).sort((a,b)=> b.streak - a.streak || b.total - a.total);
+
+  if(rows.length === 0){
+    el.innerHTML = '<div class="bd-empty">No one has logged yet.</div>';
+    return;
+  }
+  rows.forEach((r,i)=>{
+    const row = document.createElement('div');
+    row.className = 'lb-row' + (r.id===currentUser.id ? ' me' : '');
+    row.innerHTML =
+      '<span class="lb-rank">' + (i+1) + '</span>' +
+      '<span class="lb-name">' + r.name + (r.id===currentUser.id ? '<span class="tag">YOU</span>' : '') + '</span>' +
+      '<span class="lb-stat">' + r.streak + '</span>' +
+      '<span class="lb-stat">' + fmt(r.week) + 'h</span>' +
+      '<span class="lb-stat">' + fmt(r.total) + 'h</span>';
+    el.appendChild(row);
+  });
+}
+
+function renderCalendar(){
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  const weeks = 12;
+  const today = new Date();
+  const end = new Date(today);
+  end.setDate(end.getDate() + (6 - (end.getDay())));
+  const start = new Date(end);
+  start.setDate(end.getDate() - weeks*7 + 1);
+
+  for(let w=0; w<weeks; w++){
+    const col = document.createElement('div');
+    col.className = 'cal-week';
+    for(let d=0; d<7; d++){
+      const date = new Date(start);
+      date.setDate(start.getDate() + w*7 + d);
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+      if(date <= today){
+        const key = todayStr(date);
+        const hrs = dayTotal(currentUser.id, key);
+        const lvl = levelFor(hrs);
+        if(lvl) cell.classList.add(lvl);
+        cell.title = key + ': ' + (hrs ? fmt(hrs) + ' hrs' : 'no entry');
+      } else {
+        cell.style.visibility = 'hidden';
+      }
+      col.appendChild(cell);
+    }
+    grid.appendChild(col);
+  }
+}
+
+function renderBreakdown(){
+  const container = document.getElementById('bdBars');
+  container.innerHTML = '';
+  const myEntries = allEntries[currentUser.id] || {};
+  let dateKeys = Object.keys(myEntries);
+  if(bdRange !== 'all'){
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - Number(bdRange) + 1);
+    dateKeys = dateKeys.filter(k => new Date(k) >= new Date(todayStr(cutoff)));
+  }
+  const totals = {};
+  ACTIVITIES.forEach(a => totals[a.key] = 0);
+  dateKeys.forEach(k=>{
+    Object.entries(myEntries[k]).forEach(([act,hrs])=>{
+      totals[act] = (totals[act]||0) + Number(hrs);
+    });
+  });
+  const max = Math.max(...Object.values(totals), 0.001);
+  const sorted = ACTIVITIES.slice().sort((a,b)=> totals[b.key]-totals[a.key]);
+  const anyData = Object.values(totals).some(v=>v>0);
+  if(!anyData){
+    container.innerHTML = '<div class="bd-empty">No sessions logged in this range yet.</div>';
+    return;
+  }
+  sorted.forEach(a=>{
+    const val = totals[a.key];
+    const row = document.createElement('div');
+    row.className = 'bd-row';
+    row.innerHTML =
+      '<span class="bd-dot" style="background:' + a.color + '"></span>' +
+      '<span class="bd-label">' + a.label + '</span>' +
+      '<span class="bd-track"><span class="bd-fill" style="width:' + (val/max*100).toFixed(1) + '%;background:' + a.color + '"></span></span>' +
+      '<span class="bd-val">' + fmt(val) + 'h</span>';
+    container.appendChild(row);
+  });
+}
+
+function chipHtml(dateKey, act, hrs, editable){
+  const meta = ACT_MAP[act] || {label:act, color:'var(--c-other)'};
+  const delBtn = editable ? '<button class="del" data-date="' + dateKey + '" data-act="' + act + '" title="Remove">✕</button>' : '';
+  return '<span class="e-chip"><span class="dot" style="background:' + meta.color + '"></span>' + meta.label + ' ' + fmt(hrs) + 'h' + delBtn + '</span>';
+}
+
+function renderEntries(){
+  const list = document.getElementById('entryList');
+  list.innerHTML = '';
+  const myEntries = allEntries[currentUser.id] || {};
+  const dates = Object.keys(myEntries).sort((a,b)=> b.localeCompare(a)).slice(0,20);
+  if(dates.length === 0){
+    list.innerHTML = '<li class="empty">No entries yet — log your first study session above.</li>';
+    return;
+  }
+  dates.forEach(key=>{
+    const total = dayTotal(currentUser.id, key);
+    const hit = total >= GOAL;
+    const chips = Object.entries(myEntries[key]).sort((a,b)=>b[1]-a[1])
+      .map(([act,hrs])=> chipHtml(key,act,hrs,true)).join('');
+    const li = document.createElement('li');
+    li.innerHTML =
+      '<div class="e-top">' +
+        '<span class="e-date">' + key + '</span>' +
+        '<span class="e-total ' + (hit?'hit':'') + '">' + (hit ? '<span class="e-seal">완</span>' : '') + fmt(total) + ' hrs</span>' +
+      '</div>' +
+      '<div class="e-chips">' + chips + '</div>';
+    list.appendChild(li);
+  });
+  list.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      const date = e.target.dataset.date;
+      const act = e.target.dataset.act;
+      const day = allEntries[currentUser.id][date];
+      delete day[act];
+      if(Object.keys(day).length === 0){
+        await deleteMyDay(date);
+        delete allEntries[currentUser.id][date];
+      } else {
+        await upsertMyDay(date, day);
+      }
+      renderAll();
+    });
+  });
+}
+
+function renderFeed(){
+  const list = document.getElementById('feedList');
+  list.innerHTML = '';
+  const rows = [];
+  Object.entries(allEntries).forEach(([userId, byDate])=>{
+    Object.entries(byDate).forEach(([date, activities])=>{
+      rows.push({ userId, date, activities });
+    });
+  });
+  rows.sort((a,b)=> b.date.localeCompare(a.date));
+  const top = rows.slice(0,15);
+  if(top.length === 0){
+    list.innerHTML = '<li class="empty">Nothing logged yet.</li>';
+    return;
+  }
+  top.forEach(r=>{
+    const total = Object.values(r.activities).reduce((a,b)=>a+Number(b),0);
+    const hit = total >= GOAL;
+    const chips = Object.entries(r.activities).sort((a,b)=>b[1]-a[1])
+      .map(([act,hrs])=> chipHtml(r.date,act,hrs,false)).join('');
+    const li = document.createElement('li');
+    li.innerHTML =
+      '<div class="e-top">' +
+        '<span><span class="e-who">' + nameFor(r.userId) + '</span><span class="e-date">' + r.date + '</span></span>' +
+        '<span class="e-total ' + (hit?'hit':'') + '">' + (hit ? '<span class="e-seal">완</span>' : '') + fmt(total) + ' hrs</span>' +
+      '</div>' +
+      '<div class="e-chips">' + chips + '</div>';
+    list.appendChild(li);
+  });
+}
+
+function renderAll(){
+  renderLeaderboard();
+  renderCalendar();
+  renderBreakdown();
+  renderEntries();
+  renderFeed();
+}
+
+function initForm(){
+  const sel = document.getElementById('activityInput');
+  sel.innerHTML = '';
+  ACTIVITIES.forEach(a=>{
+    const opt = document.createElement('option');
+    opt.value = a.key;
+    opt.textContent = a.label;
+    sel.appendChild(opt);
+  });
+  document.getElementById('dateInput').value = todayStr();
+}
+
+document.getElementById('addBtn').addEventListener('click', async ()=>{
+  const dateVal = document.getElementById('dateInput').value;
+  const actVal = document.getElementById('activityInput').value;
+  const hoursVal = parseFloat(document.getElementById('hoursInput').value);
+  if(!dateVal || !actVal || isNaN(hoursVal) || hoursVal <= 0) return;
+
+  if(!allEntries[currentUser.id]) allEntries[currentUser.id] = {};
+  const day = allEntries[currentUser.id][dateVal] || {};
+  day[actVal] = (day[actVal] || 0) + hoursVal;
+  allEntries[currentUser.id][dateVal] = day;
+
+  await upsertMyDay(dateVal, day);
+  document.getElementById('hoursInput').value = '';
+  renderAll();
+});
+
+document.getElementById('bdToggle').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  bdRange = btn.dataset.range;
+  document.querySelectorAll('#bdToggle button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBreakdown();
+});
+
+(async function init(){
+  initForm();
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if(session){
+    await onAuthed(session.user);
+  }
+})();
+</script>
+</body>
+</html>
