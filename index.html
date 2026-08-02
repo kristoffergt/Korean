@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>매일 5시간 — Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Productivity Tracker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4F7563">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="매일 5시간">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&display=swap');
@@ -29,24 +36,29 @@
   --c-topik:#B33B34;
   --c-other:#8B8578;
 }
+body.dark{
+  --paper:#1E1B16;
+  --paper-dim:#2A241D;
+  --ink:#EDE4D0;
+  --ink-soft:#A79C89;
+  --celadon-1:#2E3A34;
+  --celadon-2:#3C4F45;
+  --line: rgba(237,228,208,0.14);
+}
 
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
-body{background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR',sans-serif;padding:32px 20px 60px;min-height:100vh;}
+body{background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR',sans-serif;padding:32px 20px 60px;min-height:100vh;transition:background 0.2s,color 0.2s;}
 .wrap{max-width:780px;margin:0 auto;}
 .hidden{display:none !important;}
 
-.lang-switch{display:flex;gap:4px;}
-.lang-switch button{
-  background:var(--paper);
-  color:var(--ink-soft);
-  border:1px solid var(--line);
-  padding:5px 10px;
-  font-size:11.5px;
-  font-weight:600;
-  border-radius:5px;
-}
+.topbar-controls{display:flex;gap:8px;align-items:center;}
+.lang-switch{display:flex;gap:4px;background:var(--paper-dim);padding:4px;border-radius:8px;border:1px solid var(--line);}
+.lang-switch button{background:transparent;color:var(--ink-soft);border:none;padding:5px 10px;font-size:11.5px;font-weight:600;border-radius:5px;}
+.lang-switch button:hover{background:rgba(127,127,127,0.1);}
 .lang-switch button.active{background:var(--ink);color:var(--paper);}
+.icon-btn{background:var(--paper-dim);border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:8px;font-size:14px;line-height:1;}
+.icon-btn:hover{background:var(--celadon-1);}
 
 .auth-wrap{max-width:360px;margin:60px auto 0;}
 .auth-topbar{display:flex;justify-content:flex-end;max-width:360px;margin:0 auto;}
@@ -68,17 +80,19 @@ body{background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR'
 header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:18px;gap:16px;flex-wrap:wrap;}
 h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:28px;margin:0 0 4px;letter-spacing:0.5px;}
 .sub{font-size:13px;color:var(--ink-soft);letter-spacing:0.3px;}
-.who{display:flex;align-items:center;gap:12px;}
+.who{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .who .name{font-size:13px;color:var(--ink-soft);}
-.who button{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:6px 12px;font-size:12px;font-weight:500;}
-.who button:hover{background:var(--paper-dim);color:var(--ink);}
+.who button.textbtn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:6px 12px;font-size:12px;font-weight:500;}
+.who button.textbtn:hover{background:var(--paper-dim);color:var(--ink);}
 
-.tabs{display:flex;gap:8px;margin-bottom:22px;}
-.tabs button{flex:1;background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--line);padding:10px;font-size:13px;font-weight:600;border-radius:8px;}
+.tabs{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
+.tabs button{flex:1;min-width:80px;background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--line);padding:10px;font-size:13px;font-weight:600;border-radius:8px;}
 .tabs button.active{background:var(--ink);color:var(--paper);}
 
 .card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:22px;}
-.card h2{font-family:'Noto Serif KR',serif;font-size:15px;margin:0 0 14px;color:var(--ink);}
+.card h2{font-family:'Noto Serif KR',serif;font-size:15px;margin:0 0 14px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.export-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:5px 10px;font-size:11px;font-weight:600;border-radius:6px;}
+.export-btn:hover{background:var(--paper);color:var(--ink);}
 
 .lb-row{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
 .lb-row:last-child{border-bottom:none;}
@@ -99,10 +113,10 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:28px;margin:0 0 4
 .log-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
 .field{display:flex;flex-direction:column;gap:5px;}
 .field label{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.5px;}
-.field input, .field select{font-family:'Space Grotesk',monospace;font-size:15px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:150px;}
-.field.wide input{width:220px;}
+.field input, .field select, .field textarea{font-family:'Space Grotesk',monospace;font-size:15px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:150px;}
+.field.wide input, .field.wide textarea{width:220px;}
 .field select{font-family:'Inter',sans-serif;font-size:14px;}
-.field input:focus, .field select:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
+.field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
 button{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:10px 20px;border:none;border-radius:6px;background:var(--ink);color:var(--paper);cursor:pointer;}
 button:hover{background:var(--celadon-4);}
 .hint{font-size:12px;color:var(--ink-soft);margin-top:10px;}
@@ -146,9 +160,10 @@ button:hover{background:var(--celadon-4);}
 .empty{color:var(--ink-soft);font-size:13px;padding:10px 0;}
 
 .stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:0;}
-.stat-mini{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 16px;text-align:center;flex:1;min-width:80px;}
-.stat-mini .num{font-family:'Space Grotesk',monospace;font-size:20px;font-weight:700;color:var(--celadon-4);}
+.stat-mini{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 16px;text-align:center;flex:1;min-width:110px;}
+.stat-mini .num{font-family:'Space Grotesk',monospace;font-size:18px;font-weight:700;color:var(--celadon-4);}
 .stat-mini .label{font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-top:3px;}
+.stat-mini.urgent .num{color:var(--seal);}
 
 .badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;color:#fff;}
 .badge.applied, .badge.to_read{background:var(--ink-soft);}
@@ -166,10 +181,49 @@ button:hover{background:var(--celadon-4);}
 .item-meta select{font-family:'Inter',sans-serif;font-size:12px;padding:5px 8px;border-radius:5px;border:1px solid var(--line);background:var(--paper);}
 .item-meta input[type=number]{width:70px;font-family:'Space Grotesk',monospace;font-size:12px;padding:5px 7px;border-radius:5px;border:1px solid var(--line);background:var(--paper);}
 .item-meta a{font-size:12px;color:var(--celadon-4);}
+.item-meta .linkbtn{background:none;border:none;color:var(--celadon-4);font-size:12px;padding:0;text-decoration:underline;font-weight:600;}
 .item-del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:15px;}
 .item-del:hover{color:var(--seal);}
 .progress-track{background:var(--paper);border:1px solid var(--line);border-radius:4px;height:8px;overflow:hidden;margin-top:6px;width:160px;}
 .progress-fill{height:100%;background:var(--celadon-3);}
+
+.notes-panel{margin-top:10px;padding:12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;}
+.note-item{padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
+.note-item:last-child{border-bottom:none;}
+.note-item .note-page{font-size:10.5px;color:var(--ink-soft);margin-bottom:2px;}
+.note-item .note-del{float:right;background:none;border:none;color:var(--ink-soft);font-size:12px;cursor:pointer;}
+.note-add{display:flex;gap:6px;margin-top:8px;align-items:flex-end;flex-wrap:wrap;}
+.note-add textarea{flex:1;min-width:160px;height:44px;resize:vertical;font-family:'Inter',sans-serif;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:5px;background:var(--paper-dim);color:var(--ink);}
+.note-add input{width:60px;font-family:'Space Grotesk',monospace;font-size:12px;padding:6px;border:1px solid var(--line);border-radius:5px;background:var(--paper-dim);}
+.note-add button{padding:8px 14px;font-size:12px;}
+
+.topik-row{display:flex;gap:14px;flex-wrap:wrap;}
+.topik-box{flex:1;min-width:180px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px 16px;}
+.topik-box .tlabel{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-bottom:6px;}
+.topik-box .tval{font-family:'Space Grotesk',monospace;font-size:22px;font-weight:700;color:var(--seal);}
+.topik-box .tdate{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+
+.deadline-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;gap:10px;}
+.deadline-row:last-child{border-bottom:none;}
+.deadline-left{display:flex;flex-direction:column;}
+.deadline-title{font-weight:600;}
+.deadline-notes{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+.deadline-right{display:flex;align-items:center;gap:10px;}
+.deadline-days{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--celadon-4);}
+.deadline-days.soon{color:var(--seal);}
+
+.month-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.month-nav button{padding:6px 12px;font-size:13px;}
+.month-nav .month-label{font-family:'Space Grotesk',monospace;font-weight:700;font-size:14px;}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.month-dow{font-size:10px;text-transform:uppercase;color:var(--ink-soft);text-align:center;padding-bottom:4px;}
+.month-day{aspect-ratio:1;border:1px solid var(--line);border-radius:6px;background:var(--paper);font-size:11px;padding:4px;position:relative;color:var(--ink-soft);}
+.month-day.today{border-color:var(--celadon-4);border-width:2px;}
+.month-day .dnum{font-family:'Space Grotesk',monospace;}
+.month-day .dot-row{position:absolute;bottom:4px;left:4px;right:4px;display:flex;gap:2px;flex-wrap:wrap;}
+.month-day .mdot{width:5px;height:5px;border-radius:50%;background:var(--celadon-4);}
+.month-day .mdot.topik{background:var(--seal);}
+.month-day.empty{visibility:hidden;}
 
 footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
 </style>
@@ -179,7 +233,10 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
 <!-- AUTH SCREEN -->
 <div id="authScreen">
   <div class="auth-topbar">
-    <div class="lang-switch" id="langSwitchAuth"></div>
+    <div class="topbar-controls">
+      <button class="icon-btn" id="darkToggleAuth" title="Toggle dark mode">🌙</button>
+      <div class="lang-switch" id="langSwitchAuth"></div>
+    </div>
   </div>
   <div class="auth-wrap">
     <div class="auth-card">
@@ -216,9 +273,10 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
       <div class="sub" id="headerSub"></div>
     </div>
     <div class="who">
+      <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode">🌙</button>
       <div class="lang-switch" id="langSwitchApp"></div>
       <span class="name" id="whoName"></span>
-      <button id="signOutBtn"></button>
+      <button class="textbtn" id="signOutBtn"></button>
     </div>
   </header>
 
@@ -226,6 +284,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
     <button data-tab="study" class="active" id="tabBtnStudy"></button>
     <button data-tab="reading" id="tabBtnReading"></button>
     <button data-tab="jobs" id="tabBtnJobs"></button>
+    <button data-tab="calendar" id="tabBtnCalendar"></button>
   </div>
 
   <!-- STUDY TAB -->
@@ -281,7 +340,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
     </div>
 
     <div class="card">
-      <h2 id="hMyEntries"></h2>
+      <h2><span id="hMyEntries"></span><button class="export-btn" id="exportStudyBtn"></button></h2>
       <ul class="entries" id="entryList"></ul>
     </div>
 
@@ -326,7 +385,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
     </div>
 
     <div class="card">
-      <h2 id="hYourBooks"></h2>
+      <h2><span id="hYourBooks"></span><button class="export-btn" id="exportBooksBtn"></button></h2>
       <div id="bookList"></div>
     </div>
 
@@ -377,7 +436,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
     </div>
 
     <div class="card">
-      <h2 id="hYourJobs"></h2>
+      <h2><span id="hYourJobs"></span><button class="export-btn" id="exportJobsBtn"></button></h2>
       <div id="jobList"></div>
     </div>
 
@@ -385,6 +444,65 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
       <h2 id="hJobLB"></h2>
       <div class="lb-head-simple"><span id="jlbHeadRank"></span><span id="jlbHeadName"></span><span id="jlbHeadApplied"></span></div>
       <div id="jobLeaderboard"></div>
+    </div>
+  </div>
+
+  <!-- CALENDAR TAB -->
+  <div class="tab-panel hidden" id="panelCalendar">
+    <div class="card">
+      <h2 id="hTopik"></h2>
+      <div class="topik-row">
+        <div class="topik-box">
+          <div class="tlabel" id="topikRegLabel"></div>
+          <div class="tval" id="topikRegVal">—</div>
+          <div class="tdate">Sep 1, 2026 · 10:00 AM KST</div>
+        </div>
+        <div class="topik-box">
+          <div class="tlabel" id="topikTestLabel"></div>
+          <div class="tval" id="topikTestVal">—</div>
+          <div class="tdate">Nov 15, 2026 · 12:00 PM KST</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 id="hAddDeadline"></h2>
+      <div class="log-form">
+        <div class="field wide">
+          <label for="eventTitle" id="lblEventTitle"></label>
+          <input type="text" id="eventTitle">
+        </div>
+        <div class="field">
+          <label for="eventDate" id="lblEventDate"></label>
+          <input type="date" id="eventDate">
+        </div>
+        <div class="field wide">
+          <label for="eventNotes" id="lblEventNotes"></label>
+          <input type="text" id="eventNotes">
+        </div>
+        <button id="addEventBtn"></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <span id="hDeadlines"></span>
+        <span>
+          <button class="export-btn" id="exportEventsBtn"></button>
+          <button class="export-btn" id="exportIcsBtn"></button>
+        </span>
+      </h2>
+      <div id="deadlineList"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="hMonthView"></h2>
+      <div class="month-nav">
+        <button id="monthPrevBtn">‹</button>
+        <span class="month-label" id="monthLabel"></span>
+        <button id="monthNextBtn">›</button>
+      </div>
+      <div class="month-grid" id="monthGrid"></div>
     </div>
   </div>
 
@@ -401,13 +519,16 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const TOPIK_REG = new Date('2026-09-01T10:00:00+09:00');
+const TOPIK_TEST = new Date('2026-11-15T12:00:00+09:00');
+
 /* ---------- I18N ---------- */
 const I18N = {
   en: {
     tagline:'Korean study · reading · job hunt tracker',
     signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
     headerSub:'Study · Reading · Job hunt', signOut:'Sign out',
-    tabStudy:'Study', tabReading:'Reading', tabJobs:'Jobs',
+    tabStudy:'Study', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar',
     leaderboard:'Leaderboard', lbRank:'#', lbName:'Name', lbStreak:'Streak', lbWeek:'Week', lbTotal:'Total',
     logStudy:'Log a study session', date:'Date', activity:'Activity', hours:'Hours', addSession:'Add session',
     studyHint:'This logs to your own account only.',
@@ -422,13 +543,17 @@ const I18N = {
     applicationsCombined:'Applications submitted — combined',
     footer:'Entries are visible to everyone signed in to this tracker; only you can edit your own.',
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
-    linkOpen:'Link ↗'
+    linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar',
+    topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed',
+    addDeadline:'Add a deadline', eventTitle:'Title', eventDate:'Date', eventNotes:'Notes', addDeadlineBtn:'Add',
+    yourDeadlines:'Your deadlines', monthView:'Month view', daysLeft:'days left', today:'today', overdue:'overdue',
+    notesQuotes:'Notes & quotes', addNote:'Add note', page:'page', noteBtn:'Show notes'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
     signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
     headerSub:'공부 · 독서 · 구직', signOut:'로그아웃',
-    tabStudy:'공부', tabReading:'독서', tabJobs:'구직',
+    tabStudy:'공부', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더',
     leaderboard:'순위표', lbRank:'#', lbName:'이름', lbStreak:'연속', lbWeek:'이번 주', lbTotal:'총합',
     logStudy:'공부 시간 기록', date:'날짜', activity:'활동', hours:'시간', addSession:'기록 추가',
     studyHint:'본인 계정에만 기록됩니다.',
@@ -443,13 +568,17 @@ const I18N = {
     applicationsCombined:'전체 지원 건수',
     footer:'모든 기록은 로그인한 모든 사용자에게 공개되며, 본인 기록만 수정할 수 있습니다.',
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
-    linkOpen:'링크 ↗'
+    linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기',
+    topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다',
+    addDeadline:'마감일 추가', eventTitle:'제목', eventDate:'날짜', eventNotes:'메모', addDeadlineBtn:'추가',
+    yourDeadlines:'나의 마감일', monthView:'월간 보기', daysLeft:'일 남음', today:'오늘', overdue:'지남',
+    notesQuotes:'메모 및 인용구', addNote:'메모 추가', page:'페이지', noteBtn:'메모 보기'
   },
   vi: {
     tagline:'Ứng dụng theo dõi học tiếng Hàn · đọc sách · xin việc',
     signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
     headerSub:'Học tập · Đọc sách · Xin việc', signOut:'Đăng xuất',
-    tabStudy:'Học tập', tabReading:'Đọc sách', tabJobs:'Xin việc',
+    tabStudy:'Học tập', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch',
     leaderboard:'Bảng xếp hạng', lbRank:'#', lbName:'Tên', lbStreak:'Chuỗi ngày', lbWeek:'Tuần này', lbTotal:'Tổng cộng',
     logStudy:'Ghi lại buổi học', date:'Ngày', activity:'Hoạt động', hours:'Số giờ', addSession:'Thêm buổi học',
     studyHint:'Chỉ ghi vào tài khoản của bạn.',
@@ -464,25 +593,32 @@ const I18N = {
     applicationsCombined:'Tổng số đơn đã nộp',
     footer:'Tất cả mục nhập hiển thị cho mọi người đã đăng nhập; bạn chỉ có thể chỉnh sửa mục của mình.',
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
-    linkOpen:'Liên kết ↗'
+    linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch',
+    topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc',
+    addDeadline:'Thêm hạn chót', eventTitle:'Tiêu đề', eventDate:'Ngày', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm',
+    yourDeadlines:'Hạn chót của bạn', monthView:'Xem theo tháng', daysLeft:'ngày còn lại', today:'hôm nay', overdue:'quá hạn',
+    notesQuotes:'Ghi chú & trích dẫn', addNote:'Thêm ghi chú', page:'trang', noteBtn:'Xem ghi chú'
   }
 };
 
 const STATIC_MAP = {
   authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password',
   headerSub:'headerSub', signOutBtn:'signOut',
-  tabBtnStudy:'tabStudy', tabBtnReading:'tabReading', tabBtnJobs:'tabJobs',
+  tabBtnStudy:'tabStudy', tabBtnReading:'tabReading', tabBtnJobs:'tabJobs', tabBtnCalendar:'tabCalendar',
   hLeaderboard:'leaderboard', lbHeadRank:'lbRank', lbHeadName:'lbName', lbHeadStreak:'lbStreak', lbHeadWeek:'lbWeek', lbHeadTotal:'lbTotal',
   hLogStudy:'logStudy', lblDate:'date', lblActivity:'activity', lblHours:'hours', addBtn:'addSession', studyHint:'studyHint',
   hCalendar:'last12weeks', calLegendLess:'less', calLegendHit:'goalHit',
   hBreakdown:'activityBreakdown', bd7:'last7', bd30:'last30', bdAll:'allTime',
-  hMyEntries:'yourEntries', hFeed:'feedEveryone',
+  hMyEntries:'yourEntries', hFeed:'feedEveryone', exportStudyBtn:'exportCsv',
   hReadingStats:'yourReading', rLabelReading:'statusReading', rLabelToRead:'statusToRead', rLabelFinished:'statusFinished',
   hAddBook:'addBook', lblBookTitle:'title', lblBookAuthor:'author', lblBookStatus:'status', lblBookPages:'totalPages', addBookBtn:'addBookBtn',
-  hYourBooks:'yourBooks', hBookLB:'booksFinishedLB', blbHeadRank:'lbRank', blbHeadName:'lbName', blbHeadFinished:'statusFinished',
+  hYourBooks:'yourBooks', exportBooksBtn:'exportCsv', hBookLB:'booksFinishedLB', blbHeadRank:'lbRank', blbHeadName:'lbName', blbHeadFinished:'statusFinished',
   hJobStats:'yourApplications', jLabelApplied:'jobApplied', jLabelInterview:'jobInterview', jLabelOffer:'jobOffer', jLabelRejected:'jobRejected',
   hAddJob:'logApplication', lblCompany:'company', lblRole:'role', lblJobStatus:'status', lblJobDate:'dateApplied', lblJobLink:'link', addJobBtn:'addApplicationBtn',
-  hYourJobs:'yourApplications', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied',
+  hYourJobs:'yourApplications', exportJobsBtn:'exportCsv', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied',
+  hTopik:'topikCountdown', topikRegLabel:'regOpensIn', topikTestLabel:'testIn',
+  hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventDate:'eventDate', lblEventNotes:'eventNotes', addEventBtn:'addDeadlineBtn',
+  hDeadlines:'yourDeadlines', exportEventsBtn:'exportCsv', exportIcsBtn:'exportIcs', hMonthView:'monthView',
   footerText:'footer'
 };
 
@@ -514,9 +650,12 @@ let profiles = {};
 let allEntries = {};
 let allBooks = {};
 let allJobs = {};
+let allEvents = {};
 let bdRange = 'all';
 let authMode = 'signin';
 let activeTab = 'study';
+let expandedBookNotes = new Set();
+let calViewDate = new Date();
 
 function todayStr(d = new Date()){
   const off = d.getTimezoneOffset();
@@ -525,6 +664,17 @@ function todayStr(d = new Date()){
 }
 function nameFor(userId){ return profiles[userId] || 'Someone'; }
 function fmt(n){ return Number(n.toFixed(2)).toString(); }
+
+/* ---------- DARK MODE ---------- */
+function applyDarkMode(isDark){
+  document.body.classList.toggle('dark', isDark);
+  localStorage.setItem('trackerDark', isDark ? '1' : '0');
+  const icon = isDark ? '☀️' : '🌙';
+  document.getElementById('darkToggleAuth').textContent = icon;
+  document.getElementById('darkToggleApp').textContent = icon;
+}
+document.getElementById('darkToggleAuth').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
+document.getElementById('darkToggleApp').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 
 /* ---------- LANGUAGE APPLICATION ---------- */
 function buildLangSwitch(container){
@@ -538,7 +688,6 @@ function buildLangSwitch(container){
     container.appendChild(btn);
   });
 }
-
 function rebuildActivitySelect(){
   const sel = document.getElementById('activityInput');
   const prev = sel.value;
@@ -572,25 +721,20 @@ function rebuildJobStatusSelect(){
   });
   sel.value = prev;
 }
-
 function applyLanguage(lang){
   currentLang = lang;
   localStorage.setItem('trackerLang', lang);
-
   Object.entries(STATIC_MAP).forEach(([id,key])=>{
     const el = document.getElementById(id);
     if(el) el.textContent = t(key);
   });
-
   document.getElementById('authSubmit').textContent = authMode === 'signin' ? t('signIn') : t('createAccount');
-
   buildLangSwitch(document.getElementById('langSwitchAuth'));
   buildLangSwitch(document.getElementById('langSwitchApp'));
-
   rebuildActivitySelect();
   rebuildBookStatusSelect();
   rebuildJobStatusSelect();
-
+  renderTopikCountdown();
   if(currentUser){ renderAll(); }
 }
 
@@ -613,7 +757,6 @@ document.getElementById('authSubmit').addEventListener('click', async ()=>{
   const email = document.getElementById('emailInput').value.trim();
   const password = document.getElementById('passwordInput').value;
   if(!email || !password){ showAuthMsg('Enter email and password.', 'error'); return; }
-
   if(authMode === 'signup'){
     const displayName = document.getElementById('displayNameInput').value.trim();
     if(!displayName){ showAuthMsg('Enter a name.', 'error'); return; }
@@ -657,6 +800,7 @@ document.getElementById('tabNav').addEventListener('click', (e)=>{
   document.getElementById('panelStudy').classList.toggle('hidden', activeTab!=='study');
   document.getElementById('panelReading').classList.toggle('hidden', activeTab!=='reading');
   document.getElementById('panelJobs').classList.toggle('hidden', activeTab!=='jobs');
+  document.getElementById('panelCalendar').classList.toggle('hidden', activeTab!=='calendar');
 });
 
 /* ---------- STUDY HELPERS ---------- */
@@ -726,6 +870,13 @@ async function loadAllData(){
     if(!allJobs[j.user_id]) allJobs[j.user_id] = [];
     allJobs[j.user_id].push(j);
   });
+
+  const { data: eventRows } = await supabaseClient.from('events').select('*').order('event_date', {ascending:true});
+  allEvents = {};
+  (eventRows||[]).forEach(ev=>{
+    if(!allEvents[ev.user_id]) allEvents[ev.user_id] = [];
+    allEvents[ev.user_id].push(ev);
+  });
 }
 
 async function upsertMyDay(dateVal, activities){
@@ -737,6 +888,79 @@ async function upsertMyDay(dateVal, activities){
 async function deleteMyDay(dateVal){
   await supabaseClient.from('study_entries').delete().eq('user_id', currentUser.id).eq('entry_date', dateVal);
 }
+
+/* ---------- CSV / ICS EXPORT ---------- */
+function downloadFile(filename, content, mime){
+  const blob = new Blob([content], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function toCSV(rows, headers){
+  const esc = v => `"${String(v==null?'':v).replace(/"/g,'""')}"`;
+  const lines = [headers.join(',')];
+  rows.forEach(r=> lines.push(headers.map(h=>esc(r[h])).join(',')));
+  return lines.join('\r\n');
+}
+function exportStudyCsv(){
+  const mine = allEntries[currentUser.id] || {};
+  const rows = [];
+  Object.entries(mine).forEach(([date, acts])=>{
+    Object.entries(acts).forEach(([act,hrs])=> rows.push({date, activity: actLabel(act), hours: hrs}));
+  });
+  downloadFile('study_sessions.csv', toCSV(rows, ['date','activity','hours']), 'text/csv');
+}
+function exportBooksCsv(){
+  const rows = (allBooks[currentUser.id]||[]).map(b=>({
+    title:b.title, author:b.author||'', status:bookStatusLabel(b.status),
+    total_pages:b.total_pages||'', pages_read:b.pages_read||0, finished_at:b.finished_at||''
+  }));
+  downloadFile('books.csv', toCSV(rows, ['title','author','status','total_pages','pages_read','finished_at']), 'text/csv');
+}
+function exportJobsCsv(){
+  const rows = (allJobs[currentUser.id]||[]).map(j=>({
+    company:j.company, role:j.role||'', status:jobStatusLabel(j.status), date_applied:j.date_applied||'', link:j.link||''
+  }));
+  downloadFile('job_applications.csv', toCSV(rows, ['company','role','status','date_applied','link']), 'text/csv');
+}
+function exportEventsCsv(){
+  const rows = (allEvents[currentUser.id]||[]).map(ev=>({
+    title:ev.title, date:ev.event_date, notes:ev.notes||''
+  }));
+  downloadFile('deadlines.csv', toCSV(rows, ['title','date','notes']), 'text/csv');
+}
+function icsEscape(s){ return String(s).replace(/[,;]/g, c=>'\\'+c).replace(/\n/g,'\\n'); }
+function icsDateTimeUTC(d){ return d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z'; }
+function exportIcs(){
+  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Korean Tracker//EN','CALSCALE:GREGORIAN'];
+  lines.push('BEGIN:VEVENT');
+  lines.push('UID:topik-registration@korean-tracker');
+  lines.push('DTSTART:'+icsDateTimeUTC(TOPIK_REG));
+  lines.push('SUMMARY:'+icsEscape('TOPIK Registration Opens'));
+  lines.push('END:VEVENT');
+  lines.push('BEGIN:VEVENT');
+  lines.push('UID:topik-test@korean-tracker');
+  lines.push('DTSTART:'+icsDateTimeUTC(TOPIK_TEST));
+  lines.push('SUMMARY:'+icsEscape('TOPIK Test Day'));
+  lines.push('END:VEVENT');
+  (allEvents[currentUser.id]||[]).forEach(ev=>{
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:'+ev.id+'@korean-tracker');
+    lines.push('DTSTART;VALUE=DATE:'+ev.event_date.replace(/-/g,''));
+    lines.push('SUMMARY:'+icsEscape(ev.title));
+    if(ev.notes) lines.push('DESCRIPTION:'+icsEscape(ev.notes));
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  downloadFile('korean-tracker.ics', lines.join('\r\n'), 'text/calendar');
+}
+document.getElementById('exportStudyBtn').addEventListener('click', exportStudyCsv);
+document.getElementById('exportBooksBtn').addEventListener('click', exportBooksCsv);
+document.getElementById('exportJobsBtn').addEventListener('click', exportJobsCsv);
+document.getElementById('exportEventsBtn').addEventListener('click', exportEventsCsv);
+document.getElementById('exportIcsBtn').addEventListener('click', exportIcs);
 
 /* ---------- STUDY RENDER ---------- */
 function renderLeaderboard(){
@@ -875,7 +1099,7 @@ async function addBook(){
   const status = document.getElementById('bookStatus').value;
   const pages = parseInt(document.getElementById('bookPages').value) || null;
   if(!title) return;
-  const row = { user_id: currentUser.id, title, author: author || null, status, total_pages: pages, pages_read: status==='finished' ? pages : 0, finished_at: status==='finished' ? todayStr() : null };
+  const row = { user_id: currentUser.id, title, author: author || null, status, total_pages: pages, pages_read: status==='finished' ? pages : 0, finished_at: status==='finished' ? todayStr() : null, notes: [] };
   const { data, error } = await supabaseClient.from('books').insert(row).select();
   if(!error && data){
     if(!allBooks[currentUser.id]) allBooks[currentUser.id] = [];
@@ -905,6 +1129,24 @@ async function deleteBook(bookId){
   allBooks[currentUser.id] = (allBooks[currentUser.id]||[]).filter(x=>x.id!==bookId);
   renderReading();
 }
+function genId(){ return (crypto.randomUUID ? crypto.randomUUID() : 'n'+Date.now()+Math.random().toString(16).slice(2)); }
+async function addBookNote(bookId, text, page){
+  const b = (allBooks[currentUser.id]||[]).find(x=>x.id===bookId);
+  if(!b || !text.trim()) return;
+  const notes = (b.notes || []).slice();
+  notes.push({ id: genId(), text: text.trim(), page: page || null, created_at: todayStr() });
+  await supabaseClient.from('books').update({ notes }).eq('id', bookId);
+  b.notes = notes;
+  renderReading();
+}
+async function deleteBookNote(bookId, noteId){
+  const b = (allBooks[currentUser.id]||[]).find(x=>x.id===bookId);
+  if(!b) return;
+  const notes = (b.notes||[]).filter(n=>n.id!==noteId);
+  await supabaseClient.from('books').update({ notes }).eq('id', bookId);
+  b.notes = notes;
+  renderReading();
+}
 document.getElementById('addBookBtn').addEventListener('click', addBook);
 
 function renderReading(){
@@ -925,6 +1167,14 @@ function renderReading(){
       const pct = Math.min(100, ((b.pages_read||0)/b.total_pages*100)).toFixed(0);
       progressHtml = `<div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>`;
     }
+    const notes = b.notes || [];
+    const isOpen = expandedBookNotes.has(b.id);
+    const notesListHtml = notes.map(n => `
+      <div class="note-item">
+        <button class="note-del" data-book="${b.id}" data-note="${n.id}">✕</button>
+        ${n.page ? `<div class="note-page">${t('page')} ${n.page}</div>` : ''}
+        ${n.text.replace(/</g,'&lt;')}
+      </div>`).join('') || `<div class="empty">—</div>`;
     div.innerHTML =
       `<div class="item-top">
         <div><div class="item-title">${b.title}</div><div class="item-sub">${b.author || ''}</div></div>
@@ -938,8 +1188,17 @@ function renderReading(){
           <option value="finished" ${b.status==='finished'?'selected':''}>${bookStatusLabel('finished')}</option>
         </select>
         ${b.total_pages ? `<input type="number" class="book-pages-input" data-id="${b.id}" min="0" max="${b.total_pages}" value="${b.pages_read||0}" title="Pages read"> / ${b.total_pages}p` : ''}
+        <button class="linkbtn note-toggle" data-id="${b.id}">${t('noteBtn')} (${notes.length})</button>
       </div>
-      ${progressHtml}`;
+      ${progressHtml}
+      <div class="notes-panel ${isOpen?'':'hidden'}" data-notes-for="${b.id}">
+        ${notesListHtml}
+        <div class="note-add">
+          <textarea placeholder="${t('addNote')}..." data-book="${b.id}" class="note-text-input"></textarea>
+          <input type="number" min="0" placeholder="${t('page')}" data-book="${b.id}" class="note-page-input">
+          <button class="note-save-btn" data-book="${b.id}">${t('addNote')}</button>
+        </div>
+      </div>`;
     list.appendChild(div);
   });
 
@@ -951,6 +1210,25 @@ function renderReading(){
   });
   list.querySelectorAll('.book-pages-input').forEach(inp=>{
     inp.addEventListener('change', ()=> updateBookPages(inp.dataset.id, parseInt(inp.value)||0));
+  });
+  list.querySelectorAll('.note-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      if(expandedBookNotes.has(id)) expandedBookNotes.delete(id); else expandedBookNotes.add(id);
+      renderReading();
+    });
+  });
+  list.querySelectorAll('.note-del').forEach(btn=>{
+    btn.addEventListener('click', ()=> deleteBookNote(btn.dataset.book, btn.dataset.note));
+  });
+  list.querySelectorAll('.note-save-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const bookId = btn.dataset.book;
+      const textEl = list.querySelector(`.note-text-input[data-book="${bookId}"]`);
+      const pageEl = list.querySelector(`.note-page-input[data-book="${bookId}"]`);
+      expandedBookNotes.add(bookId);
+      addBookNote(bookId, textEl.value, pageEl.value ? parseInt(pageEl.value) : null);
+    });
   });
 
   const lb = document.getElementById('bookLeaderboard');
@@ -1052,6 +1330,127 @@ function renderJobs(){
   });
 }
 
+/* ---------- CALENDAR / TOPIK / DEADLINES ---------- */
+function formatCountdown(target){
+  const diff = target - new Date();
+  if(diff <= 0) return null;
+  const days = Math.floor(diff/86400000);
+  const hours = Math.floor((diff%86400000)/3600000);
+  const mins = Math.floor((diff%3600000)/60000);
+  return `${days}d ${hours}h ${mins}m`;
+}
+function renderTopikCountdown(){
+  const regVal = document.getElementById('topikRegVal');
+  const testVal = document.getElementById('topikTestVal');
+  const now = new Date();
+  const regCd = formatCountdown(TOPIK_REG);
+  const testCd = formatCountdown(TOPIK_TEST);
+  regVal.textContent = regCd ? regCd : (now < TOPIK_TEST ? t('regIsOpen') : t('examPassed'));
+  testVal.textContent = testCd ? testCd : t('examPassed');
+}
+setInterval(renderTopikCountdown, 30000);
+
+async function addEvent(){
+  const title = document.getElementById('eventTitle').value.trim();
+  const date = document.getElementById('eventDate').value;
+  const notes = document.getElementById('eventNotes').value.trim();
+  if(!title || !date) return;
+  const row = { user_id: currentUser.id, title, event_date: date, notes: notes || null };
+  const { data, error } = await supabaseClient.from('events').insert(row).select();
+  if(!error && data){
+    if(!allEvents[currentUser.id]) allEvents[currentUser.id] = [];
+    allEvents[currentUser.id].push(data[0]);
+  }
+  document.getElementById('eventTitle').value = '';
+  document.getElementById('eventNotes').value = '';
+  renderCalendarTab();
+}
+async function deleteEvent(eventId){
+  await supabaseClient.from('events').delete().eq('id', eventId);
+  allEvents[currentUser.id] = (allEvents[currentUser.id]||[]).filter(x=>x.id!==eventId);
+  renderCalendarTab();
+}
+document.getElementById('addEventBtn').addEventListener('click', addEvent);
+
+function renderDeadlineList(){
+  const list = document.getElementById('deadlineList');
+  list.innerHTML = '';
+  const mine = (allEvents[currentUser.id]||[]).slice().sort((a,b)=> a.event_date.localeCompare(b.event_date));
+  if(mine.length === 0){ list.innerHTML = '<div class="empty">—</div>'; return; }
+  const today = new Date(todayStr());
+  mine.forEach(ev=>{
+    const evDate = new Date(ev.event_date);
+    const diffDays = Math.round((evDate - today) / 86400000);
+    let daysText, soon = false;
+    if(diffDays > 0){ daysText = diffDays + ' ' + t('daysLeft'); soon = diffDays <= 7; }
+    else if(diffDays === 0){ daysText = t('today'); soon = true; }
+    else { daysText = Math.abs(diffDays) + ' ' + t('overdue'); soon = true; }
+    const row = document.createElement('div');
+    row.className = 'deadline-row';
+    row.innerHTML =
+      `<div class="deadline-left">
+        <div class="deadline-title">${ev.title}</div>
+        <div class="deadline-notes">${ev.event_date}${ev.notes ? ' · ' + ev.notes : ''}</div>
+      </div>
+      <div class="deadline-right">
+        <span class="deadline-days ${soon?'soon':''}">${daysText}</span>
+        <button class="item-del" data-id="${ev.id}" title="Delete">✕</button>
+      </div>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.item-del').forEach(btn=>{
+    btn.addEventListener('click', ()=> deleteEvent(btn.dataset.id));
+  });
+}
+
+function renderMonthGrid(){
+  const grid = document.getElementById('monthGrid');
+  grid.innerHTML = '';
+  const y = calViewDate.getFullYear(), m = calViewDate.getMonth();
+  document.getElementById('monthLabel').textContent = calViewDate.toLocaleDateString(undefined, {month:'long', year:'numeric'});
+  ['S','M','T','W','T','F','S'].forEach(d=>{
+    const el = document.createElement('div'); el.className = 'month-dow'; el.textContent = d;
+    grid.appendChild(el);
+  });
+  const firstDay = new Date(y, m, 1);
+  const startOffset = firstDay.getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const todayKey = todayStr();
+
+  const myEventDates = {};
+  (allEvents[currentUser.id]||[]).forEach(ev=>{ myEventDates[ev.event_date] = (myEventDates[ev.event_date]||0)+1; });
+  const topikDates = new Set([todayStr(TOPIK_REG), todayStr(TOPIK_TEST)]);
+
+  for(let i=0;i<startOffset;i++){
+    const el = document.createElement('div'); el.className='month-day empty';
+    grid.appendChild(el);
+  }
+  for(let day=1; day<=daysInMonth; day++){
+    const dateKey = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const cell = document.createElement('div');
+    cell.className = 'month-day' + (dateKey===todayKey ? ' today' : '');
+    let dots = '';
+    if(myEventDates[dateKey]) dots += '<span class="mdot"></span>'.repeat(Math.min(3,myEventDates[dateKey]));
+    if(topikDates.has(dateKey)) dots += '<span class="mdot topik"></span>';
+    cell.innerHTML = `<div class="dnum">${day}</div>${dots ? `<div class="dot-row">${dots}</div>` : ''}`;
+    grid.appendChild(cell);
+  }
+}
+document.getElementById('monthPrevBtn').addEventListener('click', ()=>{
+  calViewDate.setMonth(calViewDate.getMonth()-1);
+  renderMonthGrid();
+});
+document.getElementById('monthNextBtn').addEventListener('click', ()=>{
+  calViewDate.setMonth(calViewDate.getMonth()+1);
+  renderMonthGrid();
+});
+
+function renderCalendarTab(){
+  renderTopikCountdown();
+  renderDeadlineList();
+  renderMonthGrid();
+}
+
 /* ---------- GLOBAL RENDER ---------- */
 function renderAll(){
   renderLeaderboard();
@@ -1061,11 +1460,13 @@ function renderAll(){
   renderFeed();
   renderReading();
   renderJobs();
+  renderCalendarTab();
 }
 
 function initForm(){
   document.getElementById('dateInput').value = todayStr();
   document.getElementById('jobDate').value = todayStr();
+  document.getElementById('eventDate').value = todayStr();
 }
 
 document.getElementById('addBtn').addEventListener('click', async ()=>{
@@ -1094,8 +1495,17 @@ document.getElementById('bdToggle').addEventListener('click', (e)=>{
 (async function init(){
   initForm();
   applyLanguage(currentLang);
+  applyDarkMode(localStorage.getItem('trackerDark') === '1');
+  renderTopikCountdown();
+  renderMonthGrid();
   const { data: { session } } = await supabaseClient.auth.getSession();
   if(session){ await onAuthed(session.user); }
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    });
+  }
 })();
 </script>
 </body>
