@@ -87,6 +87,12 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:28px;margin:0 0 4
 .card h2{font-family:'Noto Serif KR',serif;font-size:15px;margin:0 0 14px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:10px;}
 .export-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:5px 10px;font-size:11px;font-weight:600;border-radius:6px;}
 .export-btn:hover{background:var(--paper);color:var(--ink);}
+.list-controls{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap;}
+.page-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 10px;font-size:12px;font-weight:600;border-radius:5px;min-width:32px;}
+.page-btn.active{background:var(--ink);color:var(--paper);}
+.page-btn:disabled{opacity:0.35;cursor:default;}
+.show-more-btn{width:100%;background:none;border:1px dashed var(--line);color:var(--ink-soft);padding:10px;font-size:12.5px;font-weight:600;border-radius:6px;margin-top:10px;}
+.show-more-btn:hover{background:var(--paper);color:var(--ink);}
 .lb-row{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
 .lb-row:last-child{border-bottom:none;}
 .lb-row.me{background:rgba(127,166,148,0.12);border-radius:6px;padding:10px 8px;margin:0 -8px;}
@@ -436,6 +442,13 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
           <input type="text" id="eventTitle">
         </div>
         <div class="field">
+          <label for="eventKind" id="lblEventKind"></label>
+          <select id="eventKind">
+            <option value="deadline">Deadline</option>
+            <option value="event">Event</option>
+          </select>
+        </div>
+        <div class="field">
           <label for="eventDate" id="lblEventDate"></label>
           <input type="date" id="eventDate">
         </div>
@@ -465,6 +478,12 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
         </span>
       </h2>
       <div id="deadlineList"></div>
+      <div class="list-controls" id="deadlineListControls"></div>
+    </div>
+    <div class="card">
+      <h2><span id="hEvents"></span><button class="export-btn" id="exportEventsKindBtn"></button></h2>
+      <div id="eventListKind"></div>
+      <div class="list-controls" id="eventListControls"></div>
     </div>
     <div class="card">
       <h2 id="hMonthView"></h2>
@@ -510,7 +529,9 @@ const I18N = {
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar',
     topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed',
-    addDeadline:'Add a deadline', eventTitle:'Title', eventDate:'Date', eventTime:'Time (optional)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color',
+    addDeadline:'Add a deadline or event', eventTitle:'Title', eventDate:'Date', eventTime:'Time (optional)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color',
+    eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
+    showMore:'Show more', showLess:'Show less',
     importIcs:'Import .ics', importSuccess:'Imported {n} events', importFail:'Could not read that file',
     yourDeadlines:'Your deadlines', monthView:'Month view', daysLeft:'days left', today:'today', overdue:'overdue',
     notesQuotes:'Notes & quotes', addNote:'Add note', page:'page', noteBtn:'Show notes'
@@ -536,7 +557,9 @@ const I18N = {
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기',
     topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다',
-    addDeadline:'마감일 추가', eventTitle:'제목', eventDate:'날짜', eventTime:'시각 (선택)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상',
+    addDeadline:'마감일 또는 일정 추가', eventTitle:'제목', eventDate:'날짜', eventTime:'시각 (선택)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상',
+    eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
+    showMore:'더 보기', showLess:'간단히 보기',
     importIcs:'.ics 가져오기', importSuccess:'{n}개 일정을 가져왔습니다', importFail:'파일을 읽을 수 없습니다',
     yourDeadlines:'나의 마감일', monthView:'월간 보기', daysLeft:'일 남음', today:'오늘', overdue:'지남',
     notesQuotes:'메모 및 인용구', addNote:'메모 추가', page:'페이지', noteBtn:'메모 보기'
@@ -562,7 +585,9 @@ const I18N = {
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch',
     topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc',
-    addDeadline:'Thêm hạn chót', eventTitle:'Tiêu đề', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu',
+    addDeadline:'Thêm hạn chót hoặc sự kiện', eventTitle:'Tiêu đề', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu',
+    eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
+    showMore:'Xem thêm', showLess:'Thu gọn',
     importIcs:'Nhập .ics', importSuccess:'Đã nhập {n} sự kiện', importFail:'Không thể đọc tệp này',
     yourDeadlines:'Hạn chót của bạn', monthView:'Xem theo tháng', daysLeft:'ngày còn lại', today:'hôm nay', overdue:'quá hạn',
     notesQuotes:'Ghi chú & trích dẫn', addNote:'Thêm ghi chú', page:'trang', noteBtn:'Xem ghi chú'
@@ -584,8 +609,8 @@ const STATIC_MAP = {
   hAddJob:'logApplication', lblCompany:'company', lblRole:'role', lblJobStatus:'status', lblJobDate:'dateApplied', lblJobLink:'link', addJobBtn:'addApplicationBtn',
   hYourJobs:'yourApplications', exportJobsBtn:'exportCsv', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied',
   hTopik:'topikCountdown', topikRegLabel:'regOpensIn', topikTestLabel:'testIn',
-  hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', addEventBtn:'addDeadlineBtn',
-  hDeadlines:'yourDeadlines', importIcsBtn:'importIcs', exportEventsBtn:'exportCsv', exportIcsBtn:'exportIcs', hMonthView:'monthView',
+  hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', addEventBtn:'addDeadlineBtn',
+  hDeadlines:'yourDeadlines', importIcsBtn:'importIcs', exportEventsBtn:'exportCsv', exportIcsBtn:'exportIcs', hEvents:'yourEvents', exportEventsKindBtn:'exportCsv', hMonthView:'monthView',
   footerText:'footer'
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
@@ -680,6 +705,17 @@ function rebuildJobStatusSelect(){
   });
   sel.value = prev;
 }
+function rebuildEventKindSelect(){
+  const sel = document.getElementById('eventKind');
+  const prev = sel.value || 'deadline';
+  sel.innerHTML = '';
+  [['deadline','kindDeadline'],['event','kindEvent']].forEach(([val,key])=>{
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = t(key);
+    sel.appendChild(opt);
+  });
+  sel.value = prev;
+}
 function applyLanguage(lang){
   currentLang = lang;
   localStorage.setItem('trackerLang', lang);
@@ -693,6 +729,7 @@ function applyLanguage(lang){
   rebuildActivitySelect();
   rebuildBookStatusSelect();
   rebuildJobStatusSelect();
+  rebuildEventKindSelect();
   renderTopikCountdown();
   if(currentUser){ renderAll(); }
 }
@@ -871,11 +908,13 @@ function exportJobsCsv(){
   }));
   downloadFile('job_applications.csv', toCSV(rows, ['company','role','status','date_applied','link']), 'text/csv');
 }
-function exportEventsCsv(){
-  const rows = (allEvents[currentUser.id]||[]).map(ev=>({
-    title:ev.title, date:ev.event_date, time:ev.event_time||'', notes:ev.notes||''
-  }));
-  downloadFile('deadlines.csv', toCSV(rows, ['title','date','time','notes']), 'text/csv');
+function exportEventsCsv(kind){
+  const rows = (allEvents[currentUser.id]||[])
+    .filter(ev => (ev.kind || 'deadline') === kind)
+    .map(ev=>({
+      title:ev.title, date:ev.event_date, time:ev.event_time||'', notes:ev.notes||''
+    }));
+  downloadFile((kind==='event' ? 'events' : 'deadlines') + '.csv', toCSV(rows, ['title','date','time','notes']), 'text/csv');
 }
 function icsEscape(s){ return String(s).replace(/[,;]/g, c=>'\\'+c).replace(/\n/g,'\\n'); }
 function icsDateTimeUTC(d){ return d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z'; }
@@ -910,7 +949,8 @@ function exportIcs(){
 document.getElementById('exportStudyBtn').addEventListener('click', exportStudyCsv);
 document.getElementById('exportBooksBtn').addEventListener('click', exportBooksCsv);
 document.getElementById('exportJobsBtn').addEventListener('click', exportJobsCsv);
-document.getElementById('exportEventsBtn').addEventListener('click', exportEventsCsv);
+document.getElementById('exportEventsBtn').addEventListener('click', ()=> exportEventsCsv('deadline'));
+document.getElementById('exportEventsKindBtn').addEventListener('click', ()=> exportEventsCsv('event'));
 document.getElementById('exportIcsBtn').addEventListener('click', exportIcs);
 
 /* ---------- ICS IMPORT ---------- */
@@ -962,6 +1002,7 @@ async function importIcsFile(file){
   const rows = parsed.map(ev => ({
     user_id: currentUser.id,
     title: ev.title || 'Untitled',
+    kind: 'event',
     event_date: ev.date,
     event_time: ev.time || null,
     notes: ev.notes || null,
@@ -1363,12 +1404,13 @@ function renderTopikCountdown(){
 setInterval(renderTopikCountdown, 30000);
 async function addEvent(){
   const title = document.getElementById('eventTitle').value.trim();
+  const kind = document.getElementById('eventKind').value || 'deadline';
   const date = document.getElementById('eventDate').value;
   const time = document.getElementById('eventTime').value;
   const notes = document.getElementById('eventNotes').value.trim();
   const color = document.getElementById('eventColor').value || '#4F7563';
   if(!title || !date) return;
-  const row = { user_id: currentUser.id, title, event_date: date, event_time: time || null, notes: notes || null, color };
+  const row = { user_id: currentUser.id, title, kind, event_date: date, event_time: time || null, notes: notes || null, color };
   const { data, error } = await supabaseClient.from('events').insert(row).select();
   if(!error && data){
     if(!allEvents[currentUser.id]) allEvents[currentUser.id] = [];
@@ -1393,36 +1435,105 @@ function formatTime12h(t){
   h = h % 12; if(h === 0) h = 12;
   return `${h}:${mStr} ${ampm}`;
 }
-function renderDeadlineList(){
-  const list = document.getElementById('deadlineList');
-  list.innerHTML = '';
-  const mine = (allEvents[currentUser.id]||[]).slice().sort((a,b)=> a.event_date.localeCompare(b.event_date) || (a.event_time||'').localeCompare(b.event_time||''));
-  if(mine.length === 0){ list.innerHTML = '<div class="empty">—</div>'; return; }
+
+const PAGE_SIZE = 10;
+const PREVIEW_SIZE = 3;
+const listState = {
+  deadline: { expanded:false, page:1 },
+  event: { expanded:false, page:1 }
+};
+
+function itemsOfKind(kind){
+  return (allEvents[currentUser.id]||[])
+    .filter(ev => (ev.kind || 'deadline') === kind)
+    .slice()
+    .sort((a,b)=> a.event_date.localeCompare(b.event_date) || (a.event_time||'').localeCompare(b.event_time||''));
+}
+
+function buildEventRowEl(ev){
   const today = new Date(todayStr());
-  mine.forEach(ev=>{
-    const evDate = new Date(ev.event_date);
-    const diffDays = Math.round((evDate - today) / 86400000);
-    let daysText, soon = false;
-    if(diffDays > 0){ daysText = diffDays + ' ' + t('daysLeft'); soon = diffDays <= 7; }
-    else if(diffDays === 0){ daysText = t('today'); soon = true; }
-    else { daysText = Math.abs(diffDays) + ' ' + t('overdue'); soon = true; }
-    const row = document.createElement('div');
-    row.className = 'deadline-row';
-    const timeText = ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '';
-    row.innerHTML =
-      `<div class="deadline-left">
-        <div class="deadline-title"><span class="deadline-color" style="background:${ev.color||'#4F7563'}"></span>${ev.title}</div>
-        <div class="deadline-notes">${ev.event_date}${timeText}${ev.notes ? ' · ' + ev.notes : ''}</div>
-      </div>
-      <div class="deadline-right">
-        <span class="deadline-days ${soon?'soon':''}">${daysText}</span>
-        <button class="item-del" data-id="${ev.id}" title="Delete">✕</button>
-      </div>`;
-    list.appendChild(row);
-  });
-  list.querySelectorAll('.item-del').forEach(btn=>{
-    btn.addEventListener('click', ()=> deleteEvent(btn.dataset.id));
-  });
+  const evDate = new Date(ev.event_date);
+  const diffDays = Math.round((evDate - today) / 86400000);
+  let daysText, soon = false;
+  if(diffDays > 0){ daysText = diffDays + ' ' + t('daysLeft'); soon = diffDays <= 7; }
+  else if(diffDays === 0){ daysText = t('today'); soon = true; }
+  else { daysText = Math.abs(diffDays) + ' ' + t('overdue'); soon = true; }
+  const row = document.createElement('div');
+  row.className = 'deadline-row';
+  const timeText = ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '';
+  row.innerHTML =
+    `<div class="deadline-left">
+      <div class="deadline-title"><span class="deadline-color" style="background:${ev.color||'#4F7563'}"></span>${ev.title}</div>
+      <div class="deadline-notes">${ev.event_date}${timeText}${ev.notes ? ' · ' + ev.notes : ''}</div>
+    </div>
+    <div class="deadline-right">
+      <span class="deadline-days ${soon?'soon':''}">${daysText}</span>
+      <button class="item-del" data-id="${ev.id}" title="Delete">✕</button>
+    </div>`;
+  row.querySelector('.item-del').addEventListener('click', ()=> deleteEvent(ev.id));
+  return row;
+}
+
+function renderKindList(kind, listId, controlsId){
+  const list = document.getElementById(listId);
+  const controls = document.getElementById(controlsId);
+  list.innerHTML = '';
+  controls.innerHTML = '';
+  const items = itemsOfKind(kind);
+  if(items.length === 0){ list.innerHTML = '<div class="empty">—</div>'; return; }
+
+  const state = listState[kind];
+  let toShow;
+
+  if(!state.expanded){
+    toShow = items.slice(0, PREVIEW_SIZE);
+  } else {
+    const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    if(state.page > totalPages) state.page = totalPages;
+    const start = (state.page - 1) * PAGE_SIZE;
+    toShow = items.slice(start, start + PAGE_SIZE);
+  }
+  toShow.forEach(ev => list.appendChild(buildEventRowEl(ev)));
+
+  if(!state.expanded && items.length > PREVIEW_SIZE){
+    const moreBtn = document.createElement('button');
+    moreBtn.className = 'show-more-btn';
+    moreBtn.textContent = `${t('showMore')} (${items.length - PREVIEW_SIZE})`;
+    moreBtn.addEventListener('click', ()=>{ state.expanded = true; state.page = 1; renderCalendarTab(); });
+    controls.appendChild(moreBtn);
+  } else if(state.expanded){
+    const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    if(totalPages > 1){
+      const nav = document.createElement('div');
+      nav.className = 'list-controls';
+      const mkBtn = (label, page, disabled)=>{
+        const b = document.createElement('button');
+        b.textContent = label;
+        b.disabled = !!disabled;
+        b.className = 'page-btn' + (page === state.page ? ' active' : '');
+        b.addEventListener('click', ()=>{ state.page = page; renderCalendarTab(); });
+        return b;
+      };
+      nav.appendChild(mkBtn('«', 1, state.page === 1));
+      nav.appendChild(mkBtn('‹', Math.max(1, state.page - 1), state.page === 1));
+      for(let p = 1; p <= totalPages; p++){ nav.appendChild(mkBtn(String(p), p, false)); }
+      nav.appendChild(mkBtn('›', Math.min(totalPages, state.page + 1), state.page === totalPages));
+      nav.appendChild(mkBtn('»', totalPages, state.page === totalPages));
+      controls.appendChild(nav);
+    }
+    if(items.length > PREVIEW_SIZE){
+      const lessBtn = document.createElement('button');
+      lessBtn.className = 'show-more-btn';
+      lessBtn.textContent = t('showLess');
+      lessBtn.addEventListener('click', ()=>{ state.expanded = false; state.page = 1; renderCalendarTab(); });
+      controls.appendChild(lessBtn);
+    }
+  }
+}
+
+function renderDeadlineList(){
+  renderKindList('deadline', 'deadlineList', 'deadlineListControls');
+  renderKindList('event', 'eventListKind', 'eventListControls');
 }
 function textColorFor(hex){
   if(!hex) return '#fff';
