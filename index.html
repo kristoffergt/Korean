@@ -26,6 +26,7 @@
   --seal:#B33B34;
   --seal-dark:#8C2C27;
   --line: rgba(30,31,34,0.12);
+  --ink-hover:#000000;
   --c-listening:#6E8FB0;
   --c-speaking:#B37B4F;
   --c-reading:#7FA694;
@@ -44,6 +45,7 @@ body.dark{
   --celadon-1:#2E3A34;
   --celadon-2:#3C4F45;
   --line: rgba(237,237,239,0.14);
+  --ink-hover:#FFFFFF;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -56,7 +58,7 @@ body{background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR'
 .lang-switch button:hover{background:rgba(127,127,127,0.1);}
 .lang-switch button.active{background:var(--ink);color:var(--paper);}
 .icon-btn{background:var(--paper-dim);border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:8px;font-size:14px;line-height:1;}
-.icon-btn:hover{background:var(--celadon-1);}
+.icon-btn:hover{background:rgba(127,127,127,0.16);}
 .auth-wrap{max-width:360px;margin:60px auto 0;}
 .auth-topbar{display:flex;justify-content:flex-end;max-width:360px;margin:0 auto;}
 .auth-card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:28px 26px;margin-top:14px;}
@@ -115,7 +117,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:28px;margin:0 0 4
 .field select{font-family:'Inter',sans-serif;font-size:14px;}
 .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
 button{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:10px 20px;border:none;border-radius:6px;background:var(--ink);color:var(--paper);cursor:pointer;}
-button:hover{background:var(--celadon-4);}
+button:hover{background:var(--ink-hover);}
 .hint{font-size:12px;color:var(--ink-soft);margin-top:10px;}
 .cal{display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;}
 .cal-week{display:flex;flex-direction:column;gap:4px;}
@@ -236,7 +238,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
       </div>
       <div id="displayNameField" class="auth-field hidden">
         <label for="displayNameInput" id="lblDisplayName"></label>
-        <input type="text" id="displayNameInput" placeholder="e.g. Kristoffer">
+        <input type="text" id="displayNameInput">
       </div>
       <div class="auth-field">
         <label for="emailInput" id="lblEmail"></label>
@@ -533,7 +535,7 @@ const I18N = {
     eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
     showMore:'Show more', showLess:'Show less',
     importIcs:'Import .ics', importSuccess:'Imported {n} events', importFail:'Could not read that file',
-    yourDeadlines:'Your deadlines', monthView:'Month view', daysLeft:'days left', today:'today', overdue:'overdue',
+    yourDeadlines:'Your deadlines', monthView:'Month view', daysLeft:'days left', dayLeftSingular:'day left', today:'today', overdue:'days overdue', overdueSingular:'day overdue',
     notesQuotes:'Notes & quotes', addNote:'Add note', page:'page', noteBtn:'Show notes'
   },
   ko: {
@@ -561,7 +563,7 @@ const I18N = {
     eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
     showMore:'더 보기', showLess:'간단히 보기',
     importIcs:'.ics 가져오기', importSuccess:'{n}개 일정을 가져왔습니다', importFail:'파일을 읽을 수 없습니다',
-    yourDeadlines:'나의 마감일', monthView:'월간 보기', daysLeft:'일 남음', today:'오늘', overdue:'지남',
+    yourDeadlines:'나의 마감일', monthView:'월간 보기', daysLeft:'일 남음', dayLeftSingular:'일 남음', today:'오늘', overdue:'지남', overdueSingular:'지남',
     notesQuotes:'메모 및 인용구', addNote:'메모 추가', page:'페이지', noteBtn:'메모 보기'
   },
   vi: {
@@ -589,7 +591,7 @@ const I18N = {
     eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
     showMore:'Xem thêm', showLess:'Thu gọn',
     importIcs:'Nhập .ics', importSuccess:'Đã nhập {n} sự kiện', importFail:'Không thể đọc tệp này',
-    yourDeadlines:'Hạn chót của bạn', monthView:'Xem theo tháng', daysLeft:'ngày còn lại', today:'hôm nay', overdue:'quá hạn',
+    yourDeadlines:'Hạn chót của bạn', monthView:'Xem theo tháng', daysLeft:'ngày còn lại', dayLeftSingular:'ngày còn lại', today:'hôm nay', overdue:'quá hạn', overdueSingular:'quá hạn',
     notesQuotes:'Ghi chú & trích dẫn', addNote:'Thêm ghi chú', page:'trang', noteBtn:'Xem ghi chú'
   }
 };
@@ -650,6 +652,9 @@ function todayStr(d = new Date()){
 }
 function nameFor(userId){ return profiles[userId] || 'Someone'; }
 function fmt(n){ return Number(n.toFixed(2)).toString(); }
+function pluralUnit(n, singularWord, pluralWord){
+  return n === 1 ? singularWord : pluralWord;
+}
 /* ---------- DARK MODE ---------- */
 function applyDarkMode(isDark){
   document.body.classList.toggle('dark', isDark);
@@ -1065,7 +1070,7 @@ function renderCalendar(){
         const hrs = dayTotal(currentUser.id, key);
         const lvl = levelFor(hrs);
         if(lvl) cell.classList.add(lvl);
-        cell.title = key + ': ' + (hrs ? fmt(hrs) + ' hrs' : '—');
+        cell.title = key + ': ' + (hrs ? fmt(hrs) + ' ' + pluralUnit(hrs, 'hr', 'hrs') : '—');
       } else { cell.style.visibility = 'hidden'; }
       col.appendChild(cell);
     }
@@ -1118,7 +1123,7 @@ function renderEntries(){
     const li = document.createElement('li');
     li.innerHTML =
       `<div class="e-top"><span class="e-date">${key}</span>` +
-      `<span class="e-total ${hit?'hit':''}">${hit ? '<span class="e-seal">완</span>' : ''}${fmt(total)} hrs</span></div>` +
+      `<span class="e-total ${hit?'hit':''}">${hit ? '<span class="e-seal">완</span>' : ''}${fmt(total)} ${pluralUnit(total,'hr','hrs')}</span></div>` +
       `<div class="e-chips">${chips}</div>`;
     list.appendChild(li);
   });
@@ -1150,7 +1155,7 @@ function renderFeed(){
     const li = document.createElement('li');
     li.innerHTML =
       `<div class="e-top"><span><span class="e-who">${nameFor(r.userId)}</span><span class="e-date">${r.date}</span></span>` +
-      `<span class="e-total ${hit?'hit':''}">${hit ? '<span class="e-seal">완</span>' : ''}${fmt(total)} hrs</span></div>` +
+      `<span class="e-total ${hit?'hit':''}">${hit ? '<span class="e-seal">완</span>' : ''}${fmt(total)} ${pluralUnit(total,'hr','hrs')}</span></div>` +
       `<div class="e-chips">${chips}</div>`;
     list.appendChild(li);
   });
@@ -1455,9 +1460,9 @@ function buildEventRowEl(ev){
   const evDate = new Date(ev.event_date);
   const diffDays = Math.round((evDate - today) / 86400000);
   let daysText, soon = false;
-  if(diffDays > 0){ daysText = diffDays + ' ' + t('daysLeft'); soon = diffDays <= 7; }
+  if(diffDays > 0){ daysText = diffDays + ' ' + pluralUnit(diffDays, t('dayLeftSingular'), t('daysLeft')); soon = diffDays <= 7; }
   else if(diffDays === 0){ daysText = t('today'); soon = true; }
-  else { daysText = Math.abs(diffDays) + ' ' + t('overdue'); soon = true; }
+  else { const od = Math.abs(diffDays); daysText = od + ' ' + pluralUnit(od, t('overdueSingular'), t('overdue')); soon = true; }
   const row = document.createElement('div');
   row.className = 'deadline-row';
   const timeText = ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '';
