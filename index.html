@@ -84,7 +84,9 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:28px;margin:0 0 4
 .who button.textbtn:hover{background:var(--paper-dim);color:var(--ink);}
 .tabs{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
 .tabs button{flex:1;min-width:80px;background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--line);padding:10px;font-size:13px;font-weight:600;border-radius:8px;}
+.tabs button:hover{background:rgba(127,127,127,0.22);}
 .tabs button.active{background:var(--ink);color:var(--paper);}
+.tabs button.active:hover{background:var(--ink);box-shadow:inset 0 0 0 2px var(--celadon-3);}
 .card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:22px;}
 .card h2{font-family:'Noto Serif KR',serif;font-size:15px;margin:0 0 14px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:10px;}
 .export-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:5px 10px;font-size:11px;font-weight:600;border-radius:6px;}
@@ -1341,10 +1343,27 @@ async function deleteJob(jobId){
 document.getElementById('addJobBtn').addEventListener('click', addJob);
 function renderJobs(){
   const mine = allJobs[currentUser.id] || [];
-  document.getElementById('jStatApplied').textContent = mine.filter(j=>j.status==='applied').length;
-  document.getElementById('jStatInterview').textContent = mine.filter(j=>j.status==='interview').length;
-  document.getElementById('jStatOffer').textContent = mine.filter(j=>j.status==='offer').length;
-  document.getElementById('jStatRejected').textContent = mine.filter(j=>j.status==='rejected').length;
+  const jApplied = mine.filter(j=>j.status==='applied').length;
+  const jInterview = mine.filter(j=>j.status==='interview').length;
+  const jOffer = mine.filter(j=>j.status==='offer').length;
+  const jRejected = mine.filter(j=>j.status==='rejected').length;
+
+  const appliedEl = document.getElementById('jStatApplied');
+  const interviewEl = document.getElementById('jStatInterview');
+  const offerEl = document.getElementById('jStatOffer');
+  const rejectedEl = document.getElementById('jStatRejected');
+
+  appliedEl.textContent = jApplied;
+  appliedEl.style.color = jApplied > 0 ? '#D9A521' : 'var(--ink)';
+
+  interviewEl.textContent = jInterview;
+  interviewEl.style.color = jInterview > 0 ? '#AFC9AE' : 'var(--ink)';
+
+  offerEl.textContent = jOffer;
+  offerEl.style.color = jOffer > 0 ? '#27AE60' : 'var(--ink)';
+
+  rejectedEl.textContent = jRejected;
+  rejectedEl.style.color = jRejected > 0 ? 'var(--seal)' : 'var(--ink)';
   const list = document.getElementById('jobList');
   list.innerHTML = '';
   if(mine.length === 0){ list.innerHTML = '<div class="empty">—</div>'; }
