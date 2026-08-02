@@ -439,6 +439,10 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
           <label for="eventDate" id="lblEventDate"></label>
           <input type="date" id="eventDate">
         </div>
+        <div class="field">
+          <label for="eventTime" id="lblEventTime"></label>
+          <input type="time" id="eventTime">
+        </div>
         <div class="field wide">
           <label for="eventNotes" id="lblEventNotes"></label>
           <input type="text" id="eventNotes">
@@ -506,7 +510,7 @@ const I18N = {
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar',
     topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed',
-    addDeadline:'Add a deadline', eventTitle:'Title', eventDate:'Date', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color',
+    addDeadline:'Add a deadline', eventTitle:'Title', eventDate:'Date', eventTime:'Time (optional)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color',
     importIcs:'Import .ics', importSuccess:'Imported {n} events', importFail:'Could not read that file',
     yourDeadlines:'Your deadlines', monthView:'Month view', daysLeft:'days left', today:'today', overdue:'overdue',
     notesQuotes:'Notes & quotes', addNote:'Add note', page:'page', noteBtn:'Show notes'
@@ -532,7 +536,7 @@ const I18N = {
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기',
     topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다',
-    addDeadline:'마감일 추가', eventTitle:'제목', eventDate:'날짜', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상',
+    addDeadline:'마감일 추가', eventTitle:'제목', eventDate:'날짜', eventTime:'시각 (선택)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상',
     importIcs:'.ics 가져오기', importSuccess:'{n}개 일정을 가져왔습니다', importFail:'파일을 읽을 수 없습니다',
     yourDeadlines:'나의 마감일', monthView:'월간 보기', daysLeft:'일 남음', today:'오늘', overdue:'지남',
     notesQuotes:'메모 및 인용구', addNote:'메모 추가', page:'페이지', noteBtn:'메모 보기'
@@ -558,7 +562,7 @@ const I18N = {
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch',
     topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc',
-    addDeadline:'Thêm hạn chót', eventTitle:'Tiêu đề', eventDate:'Ngày', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu',
+    addDeadline:'Thêm hạn chót', eventTitle:'Tiêu đề', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu',
     importIcs:'Nhập .ics', importSuccess:'Đã nhập {n} sự kiện', importFail:'Không thể đọc tệp này',
     yourDeadlines:'Hạn chót của bạn', monthView:'Xem theo tháng', daysLeft:'ngày còn lại', today:'hôm nay', overdue:'quá hạn',
     notesQuotes:'Ghi chú & trích dẫn', addNote:'Thêm ghi chú', page:'trang', noteBtn:'Xem ghi chú'
@@ -580,7 +584,7 @@ const STATIC_MAP = {
   hAddJob:'logApplication', lblCompany:'company', lblRole:'role', lblJobStatus:'status', lblJobDate:'dateApplied', lblJobLink:'link', addJobBtn:'addApplicationBtn',
   hYourJobs:'yourApplications', exportJobsBtn:'exportCsv', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied',
   hTopik:'topikCountdown', topikRegLabel:'regOpensIn', topikTestLabel:'testIn',
-  hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventDate:'eventDate', lblEventNotes:'eventNotes', lblEventColor:'eventColor', addEventBtn:'addDeadlineBtn',
+  hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', addEventBtn:'addDeadlineBtn',
   hDeadlines:'yourDeadlines', importIcsBtn:'importIcs', exportEventsBtn:'exportCsv', exportIcsBtn:'exportIcs', hMonthView:'monthView',
   footerText:'footer'
 };
@@ -869,9 +873,9 @@ function exportJobsCsv(){
 }
 function exportEventsCsv(){
   const rows = (allEvents[currentUser.id]||[]).map(ev=>({
-    title:ev.title, date:ev.event_date, notes:ev.notes||''
+    title:ev.title, date:ev.event_date, time:ev.event_time||'', notes:ev.notes||''
   }));
-  downloadFile('deadlines.csv', toCSV(rows, ['title','date','notes']), 'text/csv');
+  downloadFile('deadlines.csv', toCSV(rows, ['title','date','time','notes']), 'text/csv');
 }
 function icsEscape(s){ return String(s).replace(/[,;]/g, c=>'\\'+c).replace(/\n/g,'\\n'); }
 function icsDateTimeUTC(d){ return d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z'; }
@@ -890,7 +894,12 @@ function exportIcs(){
   (allEvents[currentUser.id]||[]).forEach(ev=>{
     lines.push('BEGIN:VEVENT');
     lines.push('UID:'+ev.id+'@korean-tracker');
-    lines.push('DTSTART;VALUE=DATE:'+ev.event_date.replace(/-/g,''));
+    if(ev.event_time){
+      const timeDigits = ev.event_time.replace(/:/g,'').padEnd(6,'0').slice(0,6);
+      lines.push('DTSTART:'+ev.event_date.replace(/-/g,'')+'T'+timeDigits);
+    } else {
+      lines.push('DTSTART;VALUE=DATE:'+ev.event_date.replace(/-/g,''));
+    }
     lines.push('SUMMARY:'+icsEscape(ev.title));
     if(ev.notes) lines.push('DESCRIPTION:'+icsEscape(ev.notes));
     lines.push('END:VEVENT');
@@ -929,9 +938,14 @@ function parseICS(text){
     if(key === 'SUMMARY'){ cur.title = unescapeICSText(value); }
     else if(key === 'DESCRIPTION'){ cur.notes = unescapeICSText(value); }
     else if(key === 'DTSTART'){
-      const digits = value.replace(/[^0-9]/g,'');
-      if(digits.length >= 8){
-        cur.date = `${digits.slice(0,4)}-${digits.slice(4,6)}-${digits.slice(6,8)}`;
+      const digits = value.replace(/[^0-9T]/g,'');
+      const datePart = digits.split('T')[0];
+      if(datePart.length >= 8){
+        cur.date = `${datePart.slice(0,4)}-${datePart.slice(4,6)}-${datePart.slice(6,8)}`;
+      }
+      const timePart = digits.includes('T') ? digits.split('T')[1] : '';
+      if(timePart.length >= 4){
+        cur.time = `${timePart.slice(0,2)}:${timePart.slice(2,4)}`;
       }
     }
   });
@@ -949,6 +963,7 @@ async function importIcsFile(file){
     user_id: currentUser.id,
     title: ev.title || 'Untitled',
     event_date: ev.date,
+    event_time: ev.time || null,
     notes: ev.notes || null,
     color: '#6E8FB0'
   }));
@@ -1349,16 +1364,18 @@ setInterval(renderTopikCountdown, 30000);
 async function addEvent(){
   const title = document.getElementById('eventTitle').value.trim();
   const date = document.getElementById('eventDate').value;
+  const time = document.getElementById('eventTime').value;
   const notes = document.getElementById('eventNotes').value.trim();
   const color = document.getElementById('eventColor').value || '#4F7563';
   if(!title || !date) return;
-  const row = { user_id: currentUser.id, title, event_date: date, notes: notes || null, color };
+  const row = { user_id: currentUser.id, title, event_date: date, event_time: time || null, notes: notes || null, color };
   const { data, error } = await supabaseClient.from('events').insert(row).select();
   if(!error && data){
     if(!allEvents[currentUser.id]) allEvents[currentUser.id] = [];
     allEvents[currentUser.id].push(data[0]);
   }
   document.getElementById('eventTitle').value = '';
+  document.getElementById('eventTime').value = '';
   document.getElementById('eventNotes').value = '';
   renderCalendarTab();
 }
@@ -1368,10 +1385,18 @@ async function deleteEvent(eventId){
   renderCalendarTab();
 }
 document.getElementById('addEventBtn').addEventListener('click', addEvent);
+function formatTime12h(t){
+  if(!t) return '';
+  const [hStr, mStr] = t.split(':');
+  let h = parseInt(hStr,10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if(h === 0) h = 12;
+  return `${h}:${mStr} ${ampm}`;
+}
 function renderDeadlineList(){
   const list = document.getElementById('deadlineList');
   list.innerHTML = '';
-  const mine = (allEvents[currentUser.id]||[]).slice().sort((a,b)=> a.event_date.localeCompare(b.event_date));
+  const mine = (allEvents[currentUser.id]||[]).slice().sort((a,b)=> a.event_date.localeCompare(b.event_date) || (a.event_time||'').localeCompare(b.event_time||''));
   if(mine.length === 0){ list.innerHTML = '<div class="empty">—</div>'; return; }
   const today = new Date(todayStr());
   mine.forEach(ev=>{
@@ -1383,10 +1408,11 @@ function renderDeadlineList(){
     else { daysText = Math.abs(diffDays) + ' ' + t('overdue'); soon = true; }
     const row = document.createElement('div');
     row.className = 'deadline-row';
+    const timeText = ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '';
     row.innerHTML =
       `<div class="deadline-left">
         <div class="deadline-title"><span class="deadline-color" style="background:${ev.color||'#4F7563'}"></span>${ev.title}</div>
-        <div class="deadline-notes">${ev.event_date}${ev.notes ? ' · ' + ev.notes : ''}</div>
+        <div class="deadline-notes">${ev.event_date}${timeText}${ev.notes ? ' · ' + ev.notes : ''}</div>
       </div>
       <div class="deadline-right">
         <span class="deadline-days ${soon?'soon':''}">${daysText}</span>
@@ -1445,7 +1471,8 @@ function renderMonthGrid(){
     }
     events.slice(0, maxShow).forEach(ev=>{
       const bg = ev.color || '#4F7563';
-      chips += `<div class="event-chip" style="background:${bg};color:${textColorFor(bg)}" title="${ev.title}">${ev.title}</div>`;
+      const tip = ev.event_time ? `${ev.title} · ${formatTime12h(ev.event_time)}` : ev.title;
+      chips += `<div class="event-chip" style="background:${bg};color:${textColorFor(bg)}" title="${tip}">${ev.title}</div>`;
     });
     const extra = events.length - maxShow;
     if(extra > 0){ chips += `<div class="more-count">+${extra}</div>`; }
