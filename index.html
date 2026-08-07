@@ -596,7 +596,8 @@ const I18N = {
     forgotPassword:'Forgot password?', resetSent:'Check your email for a reset link.', resetError:'Could not send reset email.',
     lblSetNewPassword:'Set a new password', lblNewPassword:'New password', updatePasswordBtn:'Update password',
     passwordUpdated:'Password updated! Signing you in...', passwordUpdateError:'Could not update password.', enterEmailFirst:'Enter your email above first.',
-    lblEventPrivate:'Visibility', publicOpt:'Public', privateOpt:'Private', ownedBy:'by'
+    lblEventPrivate:'Visibility', publicOpt:'Public', privateOpt:'Private', ownedBy:'by',
+    editBtn:'✏️ Edit', saveChanges:'Save changes', cancelEdit:'Cancel'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
@@ -634,7 +635,8 @@ const I18N = {
     forgotPassword:'비밀번호를 잊으셨나요?', resetSent:'재설정 링크를 이메일로 보냈습니다.', resetError:'재설정 이메일을 보낼 수 없습니다.',
     lblSetNewPassword:'새 비밀번호 설정', lblNewPassword:'새 비밀번호', updatePasswordBtn:'비밀번호 변경',
     passwordUpdated:'비밀번호가 변경되었습니다! 로그인 중...', passwordUpdateError:'비밀번호를 변경할 수 없습니다.', enterEmailFirst:'먼저 위에 이메일을 입력하세요.',
-    lblEventPrivate:'공개 범위', publicOpt:'공개', privateOpt:'비공개', ownedBy:''
+    lblEventPrivate:'공개 범위', publicOpt:'공개', privateOpt:'비공개', ownedBy:'',
+    editBtn:'✏️ 수정', saveChanges:'변경사항 저장', cancelEdit:'취소'
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
@@ -672,7 +674,8 @@ const I18N = {
     forgotPassword:'Quên mật khẩu?', resetSent:'Kiểm tra email để lấy liên kết đặt lại mật khẩu.', resetError:'Không thể gửi email đặt lại mật khẩu.',
     lblSetNewPassword:'Đặt mật khẩu mới', lblNewPassword:'Mật khẩu mới', updatePasswordBtn:'Cập nhật mật khẩu',
     passwordUpdated:'Đã cập nhật mật khẩu! Đang đăng nhập...', passwordUpdateError:'Không thể cập nhật mật khẩu.', enterEmailFirst:'Hãy nhập email của bạn ở trên trước.',
-    lblEventPrivate:'Chế độ hiển thị', publicOpt:'Công khai', privateOpt:'Riêng tư', ownedBy:'bởi'
+    lblEventPrivate:'Chế độ hiển thị', publicOpt:'Công khai', privateOpt:'Riêng tư', ownedBy:'bởi',
+    editBtn:'✏️ Sửa', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy'
   }
 };
 const STATIC_MAP = {
@@ -1638,6 +1641,37 @@ async function deleteEvent(eventId){
   delete mySubscriptions[eventId];
   renderCalendarTab();
 }
+async function saveEventEdit(eventId, wrap){
+  const title = wrap.querySelector('.edit-title').value.trim();
+  const kind = wrap.querySelector('.edit-kind').value;
+  const date = wrap.querySelector('.edit-date').value;
+  const time = wrap.querySelector('.edit-time').value;
+  const notes = wrap.querySelector('.edit-notes').value.trim();
+  const color = wrap.querySelector('.edit-color').value;
+  const isPrivate = wrap.querySelector('.edit-private').value === '1';
+  const recurFreq = wrap.querySelector('.edit-recur-freq').value || null;
+  const recurInterval = parseInt(wrap.querySelector('.edit-recur-interval').value) || 1;
+  const recurEndType = wrap.querySelector('.edit-recur-end-type').value || 'never';
+  const recurEndDate = wrap.querySelector('.edit-recur-end-date').value || null;
+  if(!title || !date) return;
+  const patch = {
+    title, kind, event_date: date, event_time: time || null, notes: notes || null, color,
+    is_private: isPrivate,
+    recur_freq: recurFreq,
+    recur_interval: recurFreq ? recurInterval : 1,
+    recur_end_type: recurFreq ? recurEndType : 'never',
+    recur_end_date: (recurFreq && recurEndType === 'date') ? recurEndDate : null
+  };
+  const { data, error } = await supabaseClient.from('events').update(patch).eq('id', eventId).select();
+  if(!error && data && data[0]){
+    Object.keys(allEvents).forEach(uid=>{
+      const idx = (allEvents[uid]||[]).findIndex(x=>x.id===eventId);
+      if(idx !== -1) allEvents[uid][idx] = data[0];
+    });
+  }
+  expandedEdit.delete(eventId);
+  renderCalendarTab();
+}
 document.getElementById('addEventBtn').addEventListener('click', addEvent);
 
 function updateRecurFieldVisibility(){
@@ -1723,6 +1757,7 @@ function itemsOfKind(kind){
 }
 
 let expandedSubscribe = new Set();
+let expandedEdit = new Set();
 let reminderDrafts = {};
 
 function buildEventRowEl(ev){
@@ -1762,6 +1797,71 @@ function buildEventRowEl(ev){
       <button class="item-del rem-remove-btn" data-idx="${idx}" title="Remove">✕</button>
     </span>`).join('');
 
+  const isEditOpen = expandedEdit.has(ev.id);
+  const editPanelHtml = `
+    <div class="field wide">
+      <label>${t('eventTitle')}</label>
+      <input type="text" class="edit-title" value="${(ev.title||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div class="field">
+      <label>${t('eventKind')}</label>
+      <select class="edit-kind">
+        <option value="deadline" ${ev.kind==='deadline'?'selected':''}>${t('kindDeadline')}</option>
+        <option value="event" ${ev.kind==='event'?'selected':''}>${t('kindEvent')}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>${t('eventDate')}</label>
+      <input type="date" class="edit-date" value="${ev.event_date}">
+    </div>
+    <div class="field">
+      <label>${t('eventTime')}</label>
+      <input type="time" class="edit-time" value="${ev.event_time||''}">
+    </div>
+    <div class="field wide">
+      <label>${t('eventNotes')}</label>
+      <input type="text" class="edit-notes" value="${(ev.notes||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div class="field">
+      <label>${t('eventColor')}</label>
+      <input type="color" class="edit-color" value="${ev.color||'#4F7563'}">
+    </div>
+    <div class="field">
+      <label>${t('lblEventPrivate')}</label>
+      <select class="edit-private">
+        <option value="0" ${!ev.is_private?'selected':''}>${t('publicOpt')}</option>
+        <option value="1" ${ev.is_private?'selected':''}>${t('privateOpt')}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>${t('lblRecurFreq')}</label>
+      <select class="edit-recur-freq">
+        <option value="" ${!ev.recur_freq?'selected':''}>${t('noRepeat')}</option>
+        <option value="day" ${ev.recur_freq==='day'?'selected':''}>${t('repeatDay')}</option>
+        <option value="week" ${ev.recur_freq==='week'?'selected':''}>${t('repeatWeek')}</option>
+        <option value="month" ${ev.recur_freq==='month'?'selected':''}>${t('repeatMonth')}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>${t('lblRecurInterval')}</label>
+      <input type="number" min="1" class="edit-recur-interval" value="${ev.recur_interval||1}" style="width:70px;">
+    </div>
+    <div class="field">
+      <label>${t('lblRecurEndType')}</label>
+      <select class="edit-recur-end-type">
+        <option value="never" ${ev.recur_end_type!=='date'?'selected':''}>${t('recurNever')}</option>
+        <option value="date" ${ev.recur_end_type==='date'?'selected':''}>${t('recurUntilDate')}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>${t('lblRecurEndDate')}</label>
+      <input type="date" class="edit-recur-end-date" value="${ev.recur_end_date||''}">
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="export-btn edit-save-btn" data-id="${ev.id}">${t('saveChanges')}</button>
+      <button class="export-btn edit-cancel-btn" data-id="${ev.id}">${t('cancelEdit')}</button>
+    </div>`;
+
   wrap.className = 'deadline-row';
   wrap.innerHTML =
     `<div class="deadline-left">
@@ -1769,6 +1869,10 @@ function buildEventRowEl(ev){
       <div class="deadline-notes">${nextDate}${timeText}${ev.notes ? ' · ' + ev.notes : ''}</div>
       ${recurText ? `<div class="deadline-notes">↻ ${recurText}</div>` : ''}
       <button class="linkbtn sub-toggle" data-id="${ev.id}" style="margin-top:6px;">${bellLabel}</button>
+      <button class="linkbtn edit-toggle" data-id="${ev.id}" style="margin-top:6px;margin-left:12px;">${t('editBtn')}</button>
+      <div class="notes-panel ${isEditOpen?'':'hidden'}" data-edit-for="${ev.id}">
+        ${editPanelHtml}
+      </div>
       <div class="notes-panel ${isOpen?'':'hidden'}" data-sub-for="${ev.id}">
         ${ev.recur_freq ? `
         <div class="field">
@@ -1794,6 +1898,14 @@ function buildEventRowEl(ev){
 
   const delBtn = wrap.querySelector('.del-event-btn');
   if(delBtn) delBtn.addEventListener('click', ()=> deleteEvent(ev.id));
+  wrap.querySelector('.edit-toggle').addEventListener('click', ()=>{
+    if(expandedEdit.has(ev.id)) expandedEdit.delete(ev.id); else expandedEdit.add(ev.id);
+    renderCalendarTab();
+  });
+  const editSaveBtn = wrap.querySelector('.edit-save-btn');
+  if(editSaveBtn) editSaveBtn.addEventListener('click', ()=> saveEventEdit(ev.id, wrap));
+  const editCancelBtn = wrap.querySelector('.edit-cancel-btn');
+  if(editCancelBtn) editCancelBtn.addEventListener('click', ()=>{ expandedEdit.delete(ev.id); renderCalendarTab(); });
   wrap.querySelector('.sub-toggle').addEventListener('click', ()=>{
     if(expandedSubscribe.has(ev.id)) expandedSubscribe.delete(ev.id); else expandedSubscribe.add(ev.id);
     renderCalendarTab();
