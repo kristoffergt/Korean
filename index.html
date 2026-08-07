@@ -1789,8 +1789,7 @@ function buildEventRowEl(ev){
 
   const remRows = draft.reminders.map((r, idx) => `
     <span class="note-add" style="margin-top:6px;">
-      <input type="number" min="1" value="${r.value}" data-idx="${idx}" class="rem-value-input" style="width:60px;">
-      <select data-idx="${idx}" class="rem-unit-select">
+        <input type="number" min="0" value="${r.value}" data-idx="${idx}" class="rem-value-input" style="width:60px;">      <select data-idx="${idx}" class="rem-unit-select">
         <option value="hours" ${r.unit==='hours'?'selected':''}>${t('unitHours')}</option>
         <option value="days" ${r.unit==='days'?'selected':''}>${t('unitDays')}</option>
       </select>
@@ -1915,7 +1914,12 @@ function buildEventRowEl(ev){
     appliesSel.addEventListener('change', ()=>{ draft.appliesTo = appliesSel.value; });
   }
   wrap.querySelectorAll('.rem-value-input').forEach(inp=>{
-    inp.addEventListener('change', ()=>{ draft.reminders[parseInt(inp.dataset.idx)].value = parseInt(inp.value)||1; });
+    inp.addEventListener('change', ()=>{
+      const idx = parseInt(inp.dataset.idx, 10);
+      const parsed = parseInt(inp.value, 10);
+  
+      draft.reminders[idx].value = Number.isNaN(parsed) ? 1 : parsed;
+    });
   });
   wrap.querySelectorAll('.rem-unit-select').forEach(sel=>{
     sel.addEventListener('change', ()=>{ draft.reminders[parseInt(sel.dataset.idx)].unit = sel.value; });
@@ -1943,11 +1947,19 @@ function buildEventRowEl(ev){
 async function saveSubscription(eventId){
   const draft = reminderDrafts[eventId];
   if(!draft) return;
+  const normalizedReminders = draft.reminders.map(r => {
+    const value = Number(r.value);
+    return {
+      value: Number.isFinite(value) && value >= 0 ? value : 1,
+      unit: r.unit === 'days' ? 'days' : 'hours'
+    };
+  });
+  
   const row = {
     event_id: eventId,
     user_id: currentUser.id,
     applies_to: draft.appliesTo,
-    reminders: draft.reminders
+    reminders: normalizedReminders
   };
   const { data, error } = await supabaseClient.from('event_subscriptions')
     .upsert(row, { onConflict: 'event_id,user_id' }).select();
