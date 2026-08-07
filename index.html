@@ -468,8 +468,33 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
           <label for="eventColor" id="lblEventColor"></label>
           <input type="color" id="eventColor" value="#4F7563">
         </div>
+        <div class="field">
+          <label for="eventRecurFreq" id="lblRecurFreq"></label>
+          <select id="eventRecurFreq">
+            <option value="">No repeat</option>
+            <option value="day">Day(s)</option>
+            <option value="week">Week(s)</option>
+            <option value="month">Month(s)</option>
+          </select>
+        </div>
+        <div class="field hidden" id="recurIntervalField">
+          <label for="eventRecurInterval" id="lblRecurInterval"></label>
+          <input type="number" id="eventRecurInterval" min="1" value="1" style="width:70px;">
+        </div>
+        <div class="field hidden" id="recurEndTypeField">
+          <label for="eventRecurEndType" id="lblRecurEndType"></label>
+          <select id="eventRecurEndType">
+            <option value="never">Never</option>
+            <option value="date">Until date</option>
+          </select>
+        </div>
+        <div class="field hidden" id="recurEndDateField">
+          <label for="eventRecurEndDate" id="lblRecurEndDate"></label>
+          <input type="date" id="eventRecurEndDate">
+        </div>
         <button id="addEventBtn"></button>
       </div>
+      <div class="hint" id="recurHint"></div>
     </div>
     <div class="card">
       <h2>
@@ -535,6 +560,12 @@ const I18N = {
     topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed',
     addDeadline:'Add a deadline or event', eventTitle:'Title', eventDate:'Date', eventTime:'Time (optional)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color',
     eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
+    lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
+    lblRecurInterval:'Every', lblRecurEndType:'Ends', recurNever:'Never', recurUntilDate:'Until date', lblRecurEndDate:'End date',
+    recurHint:'Set "Repeat" to create a recurring deadline or event.', recurBadge:'Every {n} {unit}', recurUntil:'until {date}', recurForever:'no end date',
+    remindMe:'Remind me', subscribed:'Reminders on', applyToLabel:'Apply to', applyAll:'All future occurrences', applyOnce:'Just this occurrence',
+    unitHours:'hours before', unitDays:'days before', addReminder:'+ Add reminder', saveReminders:'Save', unsubscribe:'Turn off reminders',
+    reminderNote:'Reminder delivery requires an email service to be connected — ask Claude to set this up.',
     showMore:'Show more', showLess:'Show less',
     importIcs:'Import .ics', importSuccess:'Imported {n} events', importFail:'Could not read that file',
     yourDeadlines:'Your deadlines', monthView:'Month view', daysLeft:'days left', dayLeftSingular:'day left', today:'today', overdue:'days overdue', overdueSingular:'day overdue',
@@ -563,6 +594,12 @@ const I18N = {
     topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다',
     addDeadline:'마감일 또는 일정 추가', eventTitle:'제목', eventDate:'날짜', eventTime:'시각 (선택)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상',
     eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
+    lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
+    lblRecurInterval:'주기', lblRecurEndType:'종료', recurNever:'계속 반복', recurUntilDate:'날짜까지', lblRecurEndDate:'종료일',
+    recurHint:'"반복"을 설정하면 정기적인 마감일/일정을 만들 수 있습니다.', recurBadge:'{n}{unit}마다', recurUntil:'{date}까지', recurForever:'종료일 없음',
+    remindMe:'알림 받기', subscribed:'알림 켜짐', applyToLabel:'적용 대상', applyAll:'앞으로 모든 일정', applyOnce:'이번 일정만',
+    unitHours:'시간 전', unitDays:'일 전', addReminder:'+ 알림 추가', saveReminders:'저장', unsubscribe:'알림 끄기',
+    reminderNote:'알림 발송을 위해서는 이메일 서비스 연동이 필요합니다 — Claude에게 설정을 요청하세요.',
     showMore:'더 보기', showLess:'간단히 보기',
     importIcs:'.ics 가져오기', importSuccess:'{n}개 일정을 가져왔습니다', importFail:'파일을 읽을 수 없습니다',
     yourDeadlines:'나의 마감일', monthView:'월간 보기', daysLeft:'일 남음', dayLeftSingular:'일 남음', today:'오늘', overdue:'지남', overdueSingular:'지남',
@@ -591,6 +628,12 @@ const I18N = {
     topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc',
     addDeadline:'Thêm hạn chót hoặc sự kiện', eventTitle:'Tiêu đề', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu',
     eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
+    lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
+    lblRecurInterval:'Mỗi', lblRecurEndType:'Kết thúc', recurNever:'Không bao giờ', recurUntilDate:'Đến ngày', lblRecurEndDate:'Ngày kết thúc',
+    recurHint:'Đặt "Lặp lại" để tạo hạn chót/sự kiện định kỳ.', recurBadge:'Mỗi {n} {unit}', recurUntil:'đến {date}', recurForever:'không có ngày kết thúc',
+    remindMe:'Nhắc tôi', subscribed:'Đã bật nhắc nhở', applyToLabel:'Áp dụng cho', applyAll:'Tất cả các lần tới', applyOnce:'Chỉ lần này',
+    unitHours:'giờ trước', unitDays:'ngày trước', addReminder:'+ Thêm nhắc nhở', saveReminders:'Lưu', unsubscribe:'Tắt nhắc nhở',
+    reminderNote:'Việc gửi nhắc nhở cần kết nối dịch vụ email — hãy nhờ Claude thiết lập.',
     showMore:'Xem thêm', showLess:'Thu gọn',
     importIcs:'Nhập .ics', importSuccess:'Đã nhập {n} sự kiện', importFail:'Không thể đọc tệp này',
     yourDeadlines:'Hạn chót của bạn', monthView:'Xem theo tháng', daysLeft:'ngày còn lại', dayLeftSingular:'ngày còn lại', today:'hôm nay', overdue:'quá hạn', overdueSingular:'quá hạn',
@@ -614,6 +657,7 @@ const STATIC_MAP = {
   hYourJobs:'yourApplications', exportJobsBtn:'exportCsv', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied',
   hTopik:'topikCountdown', topikRegLabel:'regOpensIn', topikTestLabel:'testIn',
   hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', addEventBtn:'addDeadlineBtn',
+  lblRecurFreq:'lblRecurFreq', lblRecurInterval:'lblRecurInterval', lblRecurEndType:'lblRecurEndType', lblRecurEndDate:'lblRecurEndDate', recurHint:'recurHint',
   hDeadlines:'yourDeadlines', importIcsBtn:'importIcs', exportEventsBtn:'exportCsv', exportIcsBtn:'exportIcs', hEvents:'yourEvents', exportEventsKindBtn:'exportCsv', hMonthView:'monthView',
   footerText:'footer'
 };
@@ -642,6 +686,7 @@ let allEntries = {};
 let allBooks = {};
 let allJobs = {};
 let allEvents = {};
+let mySubscriptions = {}; // eventId -> { applies_to, reminders: [{value,unit}] }
 let bdRange = 'all';
 let authMode = 'signin';
 let activeTab = 'study';
@@ -723,6 +768,26 @@ function rebuildEventKindSelect(){
   });
   sel.value = prev;
 }
+function rebuildRecurFreqSelect(){
+  const sel = document.getElementById('eventRecurFreq');
+  const prev = sel.value || '';
+  sel.innerHTML = '';
+  [['','noRepeat'],['day','repeatDay'],['week','repeatWeek'],['month','repeatMonth']].forEach(([val,key])=>{
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = t(key);
+    sel.appendChild(opt);
+  });
+  sel.value = prev;
+  const endSel = document.getElementById('eventRecurEndType');
+  const prevEnd = endSel.value || 'never';
+  endSel.innerHTML = '';
+  [['never','recurNever'],['date','recurUntilDate']].forEach(([val,key])=>{
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = t(key);
+    endSel.appendChild(opt);
+  });
+  endSel.value = prevEnd;
+}
 function applyLanguage(lang){
   currentLang = lang;
   localStorage.setItem('trackerLang', lang);
@@ -737,6 +802,7 @@ function applyLanguage(lang){
   rebuildBookStatusSelect();
   rebuildJobStatusSelect();
   rebuildEventKindSelect();
+  rebuildRecurFreqSelect();
   renderTopikCountdown();
   if(currentUser){ renderAll(); }
 }
@@ -869,6 +935,9 @@ async function loadAllData(){
     if(!allEvents[ev.user_id]) allEvents[ev.user_id] = [];
     allEvents[ev.user_id].push(ev);
   });
+  const { data: subRows } = await supabaseClient.from('event_subscriptions').select('*').eq('user_id', currentUser.id);
+  mySubscriptions = {};
+  (subRows||[]).forEach(s=>{ mySubscriptions[s.event_id] = s; });
 }
 async function upsertMyDay(dateVal, activities){
   await supabaseClient.from('study_entries').upsert(
@@ -925,6 +994,15 @@ function exportEventsCsv(kind){
 }
 function icsEscape(s){ return String(s).replace(/[,;]/g, c=>'\\'+c).replace(/\n/g,'\\n'); }
 function icsDateTimeUTC(d){ return d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z'; }
+function icsRRule(ev){
+  if(!ev.recur_freq) return null;
+  const freqMap = { day:'DAILY', week:'WEEKLY', month:'MONTHLY' };
+  let rule = `FREQ=${freqMap[ev.recur_freq]};INTERVAL=${ev.recur_interval||1}`;
+  if(ev.recur_end_type === 'date' && ev.recur_end_date){
+    rule += `;UNTIL=${ev.recur_end_date.replace(/-/g,'')}T235959Z`;
+  }
+  return rule;
+}
 function exportIcs(){
   const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Korean Tracker//EN','CALSCALE:GREGORIAN'];
   lines.push('BEGIN:VEVENT');
@@ -946,6 +1024,8 @@ function exportIcs(){
     } else {
       lines.push('DTSTART;VALUE=DATE:'+ev.event_date.replace(/-/g,''));
     }
+    const rrule = icsRRule(ev);
+    if(rrule) lines.push('RRULE:'+rrule);
     lines.push('SUMMARY:'+icsEscape(ev.title));
     if(ev.notes) lines.push('DESCRIPTION:'+icsEscape(ev.notes));
     lines.push('END:VEVENT');
@@ -1446,8 +1526,18 @@ async function addEvent(){
   const time = document.getElementById('eventTime').value;
   const notes = document.getElementById('eventNotes').value.trim();
   const color = document.getElementById('eventColor').value || '#4F7563';
+  const recurFreq = document.getElementById('eventRecurFreq').value || null;
+  const recurInterval = parseInt(document.getElementById('eventRecurInterval').value) || 1;
+  const recurEndType = document.getElementById('eventRecurEndType').value || 'never';
+  const recurEndDate = document.getElementById('eventRecurEndDate').value || null;
   if(!title || !date) return;
-  const row = { user_id: currentUser.id, title, kind, event_date: date, event_time: time || null, notes: notes || null, color };
+  const row = {
+    user_id: currentUser.id, title, kind, event_date: date, event_time: time || null, notes: notes || null, color,
+    recur_freq: recurFreq,
+    recur_interval: recurFreq ? recurInterval : 1,
+    recur_end_type: recurFreq ? recurEndType : 'never',
+    recur_end_date: (recurFreq && recurEndType === 'date') ? recurEndDate : null
+  };
   const { data, error } = await supabaseClient.from('events').insert(row).select();
   if(!error && data){
     if(!allEvents[currentUser.id]) allEvents[currentUser.id] = [];
@@ -1461,9 +1551,21 @@ async function addEvent(){
 async function deleteEvent(eventId){
   await supabaseClient.from('events').delete().eq('id', eventId);
   allEvents[currentUser.id] = (allEvents[currentUser.id]||[]).filter(x=>x.id!==eventId);
+  await supabaseClient.from('event_subscriptions').delete().eq('event_id', eventId).eq('user_id', currentUser.id);
+  delete mySubscriptions[eventId];
   renderCalendarTab();
 }
 document.getElementById('addEventBtn').addEventListener('click', addEvent);
+
+function updateRecurFieldVisibility(){
+  const freq = document.getElementById('eventRecurFreq').value;
+  const endType = document.getElementById('eventRecurEndType').value;
+  document.getElementById('recurIntervalField').classList.toggle('hidden', !freq);
+  document.getElementById('recurEndTypeField').classList.toggle('hidden', !freq);
+  document.getElementById('recurEndDateField').classList.toggle('hidden', !freq || endType !== 'date');
+}
+document.getElementById('eventRecurFreq').addEventListener('change', updateRecurFieldVisibility);
+document.getElementById('eventRecurEndType').addEventListener('change', updateRecurFieldVisibility);
 function formatTime12h(t){
   if(!t) return '';
   const [hStr, mStr] = t.split(':');
@@ -1471,6 +1573,53 @@ function formatTime12h(t){
   const ampm = h >= 12 ? 'PM' : 'AM';
   h = h % 12; if(h === 0) h = 12;
   return `${h}:${mStr} ${ampm}`;
+}
+
+function expandOccurrences(ev, rangeStartStr, rangeEndStr){
+  const rangeStart = new Date(rangeStartStr);
+  const rangeEnd = new Date(rangeEndStr);
+  if(!ev.recur_freq){
+    const d = new Date(ev.event_date);
+    return (d >= rangeStart && d <= rangeEnd) ? [ev.event_date] : [];
+  }
+  const occ = [];
+  let cur = new Date(ev.event_date);
+  const interval = ev.recur_interval || 1;
+  const recurEnd = (ev.recur_end_type === 'date' && ev.recur_end_date) ? new Date(ev.recur_end_date) : null;
+  let safety = 0;
+  while(cur <= rangeEnd && safety < 2000){
+    safety++;
+    if(recurEnd && cur > recurEnd) break;
+    if(cur >= rangeStart && cur <= rangeEnd){ occ.push(todayStr(cur)); }
+    if(ev.recur_freq === 'day') cur.setDate(cur.getDate() + interval);
+    else if(ev.recur_freq === 'week') cur.setDate(cur.getDate() + interval*7);
+    else if(ev.recur_freq === 'month') cur.setMonth(cur.getMonth() + interval);
+    else break;
+  }
+  return occ;
+}
+
+function nextOccurrence(ev){
+  const today = todayStr();
+  const farFuture = todayStr(new Date(Date.now() + 1000*60*60*24*365*3));
+  if(!ev.recur_freq){ return ev.event_date; }
+  const occ = expandOccurrences(ev, today, farFuture);
+  if(occ.length > 0) return occ[0];
+  const recurEnd = (ev.recur_end_type === 'date' && ev.recur_end_date) ? ev.recur_end_date : null;
+  return recurEnd || ev.event_date;
+}
+
+function recurBadgeText(ev){
+  if(!ev.recur_freq) return '';
+  const n = ev.recur_interval || 1;
+  const unitKey = ev.recur_freq === 'day' ? 'repeatDay' : ev.recur_freq === 'week' ? 'repeatWeek' : 'repeatMonth';
+  let text = t('recurBadge').replace('{n}', n).replace('{unit}', t(unitKey).toLowerCase());
+  if(ev.recur_end_type === 'date' && ev.recur_end_date){
+    text += ' · ' + t('recurUntil').replace('{date}', ev.recur_end_date);
+  } else {
+    text += ' · ' + t('recurForever');
+  }
+  return text;
 }
 
 const PAGE_SIZE = 10;
@@ -1484,31 +1633,135 @@ function itemsOfKind(kind){
   return (allEvents[currentUser.id]||[])
     .filter(ev => (ev.kind || 'deadline') === kind)
     .slice()
-    .sort((a,b)=> a.event_date.localeCompare(b.event_date) || (a.event_time||'').localeCompare(b.event_time||''));
+    .sort((a,b)=> nextOccurrence(a).localeCompare(nextOccurrence(b)) || (a.event_time||'').localeCompare(b.event_time||''));
 }
+
+let expandedSubscribe = new Set();
+let reminderDrafts = {};
 
 function buildEventRowEl(ev){
   const today = new Date(todayStr());
-  const evDate = new Date(ev.event_date);
+  const nextDate = nextOccurrence(ev);
+  const evDate = new Date(nextDate);
   const diffDays = Math.round((evDate - today) / 86400000);
   let daysText, soon = false;
   if(diffDays > 0){ daysText = diffDays + ' ' + pluralUnit(diffDays, t('dayLeftSingular'), t('daysLeft')); soon = diffDays <= 7; }
   else if(diffDays === 0){ daysText = t('today'); soon = true; }
   else { const od = Math.abs(diffDays); daysText = od + ' ' + pluralUnit(od, t('overdueSingular'), t('overdue')); soon = true; }
-  const row = document.createElement('div');
-  row.className = 'deadline-row';
+
+  const wrap = document.createElement('div');
   const timeText = ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '';
-  row.innerHTML =
+  const recurText = recurBadgeText(ev);
+  const sub = mySubscriptions[ev.id];
+  const isOpen = expandedSubscribe.has(ev.id);
+  const bellLabel = sub ? '🔔 ' + t('subscribed') : '🔕 ' + t('remindMe');
+
+  if(!reminderDrafts[ev.id]){
+    reminderDrafts[ev.id] = {
+      appliesTo: sub ? sub.applies_to : 'all',
+      reminders: (sub && sub.reminders && sub.reminders.length) ? JSON.parse(JSON.stringify(sub.reminders)) : [{value:24, unit:'hours'}]
+    };
+  }
+  const draft = reminderDrafts[ev.id];
+
+  const remRows = draft.reminders.map((r, idx) => `
+    <span class="note-add" style="margin-top:6px;">
+      <input type="number" min="1" value="${r.value}" data-idx="${idx}" class="rem-value-input" style="width:60px;">
+      <select data-idx="${idx}" class="rem-unit-select">
+        <option value="hours" ${r.unit==='hours'?'selected':''}>${t('unitHours')}</option>
+        <option value="days" ${r.unit==='days'?'selected':''}>${t('unitDays')}</option>
+      </select>
+      <button class="item-del rem-remove-btn" data-idx="${idx}" title="Remove">✕</button>
+    </span>`).join('');
+
+  wrap.className = 'deadline-row';
+  wrap.innerHTML =
     `<div class="deadline-left">
       <div class="deadline-title"><span class="deadline-color" style="background:${ev.color||'#4F7563'}"></span>${ev.title}</div>
-      <div class="deadline-notes">${ev.event_date}${timeText}${ev.notes ? ' · ' + ev.notes : ''}</div>
+      <div class="deadline-notes">${nextDate}${timeText}${ev.notes ? ' · ' + ev.notes : ''}</div>
+      ${recurText ? `<div class="deadline-notes">↻ ${recurText}</div>` : ''}
+      <button class="linkbtn sub-toggle" data-id="${ev.id}" style="margin-top:6px;">${bellLabel}</button>
+      <div class="notes-panel ${isOpen?'':'hidden'}" data-sub-for="${ev.id}">
+        ${ev.recur_freq ? `
+        <div class="field">
+          <label>${t('applyToLabel')}</label>
+          <select class="sub-applies-select" data-id="${ev.id}">
+            <option value="all" ${draft.appliesTo==='all'?'selected':''}>${t('applyAll')}</option>
+            <option value="once" ${draft.appliesTo==='once'?'selected':''}>${t('applyOnce')}</option>
+          </select>
+        </div>` : ''}
+        ${remRows}
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="export-btn sub-add-reminder" data-id="${ev.id}">${t('addReminder')}</button>
+          <button class="export-btn sub-save" data-id="${ev.id}">${t('saveReminders')}</button>
+          ${sub ? `<button class="export-btn sub-remove" data-id="${ev.id}">${t('unsubscribe')}</button>` : ''}
+        </div>
+        <div class="hint">${t('reminderNote')}</div>
+      </div>
     </div>
     <div class="deadline-right">
       <span class="deadline-days ${soon?'soon':''}">${daysText}</span>
       <button class="item-del" data-id="${ev.id}" title="Delete">✕</button>
     </div>`;
-  row.querySelector('.item-del').addEventListener('click', ()=> deleteEvent(ev.id));
-  return row;
+
+  wrap.querySelector('.item-del').addEventListener('click', ()=> deleteEvent(ev.id));
+  wrap.querySelector('.sub-toggle').addEventListener('click', ()=>{
+    if(expandedSubscribe.has(ev.id)) expandedSubscribe.delete(ev.id); else expandedSubscribe.add(ev.id);
+    renderCalendarTab();
+  });
+  const appliesSel = wrap.querySelector('.sub-applies-select');
+  if(appliesSel){
+    appliesSel.addEventListener('change', ()=>{ draft.appliesTo = appliesSel.value; });
+  }
+  wrap.querySelectorAll('.rem-value-input').forEach(inp=>{
+    inp.addEventListener('change', ()=>{ draft.reminders[parseInt(inp.dataset.idx)].value = parseInt(inp.value)||1; });
+  });
+  wrap.querySelectorAll('.rem-unit-select').forEach(sel=>{
+    sel.addEventListener('change', ()=>{ draft.reminders[parseInt(sel.dataset.idx)].unit = sel.value; });
+  });
+  wrap.querySelectorAll('.rem-remove-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      draft.reminders.splice(parseInt(btn.dataset.idx),1);
+      if(draft.reminders.length === 0) draft.reminders.push({value:24,unit:'hours'});
+      renderCalendarTab();
+    });
+  });
+  const addBtn = wrap.querySelector('.sub-add-reminder');
+  if(addBtn) addBtn.addEventListener('click', ()=>{
+    draft.reminders.push({value:24, unit:'hours'});
+    renderCalendarTab();
+  });
+  const saveBtn = wrap.querySelector('.sub-save');
+  if(saveBtn) saveBtn.addEventListener('click', ()=> saveSubscription(ev.id));
+  const removeBtn = wrap.querySelector('.sub-remove');
+  if(removeBtn) removeBtn.addEventListener('click', ()=> removeSubscription(ev.id));
+
+  return wrap;
+}
+
+async function saveSubscription(eventId){
+  const draft = reminderDrafts[eventId];
+  if(!draft) return;
+  const row = {
+    event_id: eventId,
+    user_id: currentUser.id,
+    applies_to: draft.appliesTo,
+    reminders: draft.reminders
+  };
+  const { data, error } = await supabaseClient.from('event_subscriptions')
+    .upsert(row, { onConflict: 'event_id,user_id' }).select();
+  if(!error && data && data[0]){
+    mySubscriptions[eventId] = data[0];
+  }
+  expandedSubscribe.delete(eventId);
+  renderCalendarTab();
+}
+async function removeSubscription(eventId){
+  await supabaseClient.from('event_subscriptions').delete().eq('event_id', eventId).eq('user_id', currentUser.id);
+  delete mySubscriptions[eventId];
+  delete reminderDrafts[eventId];
+  expandedSubscribe.delete(eventId);
+  renderCalendarTab();
 }
 
 function renderKindList(kind, listId, controlsId){
@@ -1593,11 +1846,16 @@ function renderMonthGrid(){
   const startOffset = firstDay.getDay();
   const daysInMonth = new Date(y, m+1, 0).getDate();
   const todayKey = todayStr();
+  const monthStart = `${y}-${String(m+1).padStart(2,'0')}-01`;
+  const monthEnd = `${y}-${String(m+1).padStart(2,'0')}-${String(daysInMonth).padStart(2,'0')}`;
 
   const myEventsByDate = {};
   (allEvents[currentUser.id]||[]).forEach(ev=>{
-    if(!myEventsByDate[ev.event_date]) myEventsByDate[ev.event_date] = [];
-    myEventsByDate[ev.event_date].push(ev);
+    const occ = expandOccurrences(ev, monthStart, monthEnd);
+    occ.forEach(dateKey=>{
+      if(!myEventsByDate[dateKey]) myEventsByDate[dateKey] = [];
+      myEventsByDate[dateKey].push(ev);
+    });
   });
   const topikByDate = {};
   topikByDate[todayStr(TOPIK_REG)] = 'TOPIK reg.';
@@ -1619,8 +1877,9 @@ function renderMonthGrid(){
     }
     events.slice(0, maxShow).forEach(ev=>{
       const bg = ev.color || '#4F7563';
-      const tip = ev.event_time ? `${ev.title} · ${formatTime12h(ev.event_time)}` : ev.title;
-      chips += `<div class="event-chip" style="background:${bg};color:${textColorFor(bg)}" title="${tip}">${ev.title}</div>`;
+      const recurPrefix = ev.recur_freq ? '↻ ' : '';
+      const tip = ev.event_time ? `${recurPrefix}${ev.title} · ${formatTime12h(ev.event_time)}` : `${recurPrefix}${ev.title}`;
+      chips += `<div class="event-chip" style="background:${bg};color:${textColorFor(bg)}" title="${tip}">${recurPrefix}${ev.title}</div>`;
     });
     const extra = events.length - maxShow;
     if(extra > 0){ chips += `<div class="more-count">+${extra}</div>`; }
