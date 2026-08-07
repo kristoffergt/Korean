@@ -176,6 +176,7 @@ button:hover{background:var(--ink-hover);}
 .item-meta select{font-family:'Inter',sans-serif;font-size:12px;padding:5px 8px;border-radius:5px;border:1px solid var(--line);background:var(--paper);color:var(--ink);}
 .item-meta input[type=number]{width:70px;font-family:'Space Grotesk',monospace;font-size:12px;padding:5px 7px;border-radius:5px;border:1px solid var(--line);background:var(--paper);color:var(--ink);}
 .item-meta a{font-size:12px;color:var(--celadon-4);}
+.linkbtn{background:none;border:none;color:var(--celadon-4);font-size:12px;padding:0;text-decoration:underline;font-weight:600;cursor:pointer;}
 .item-meta .linkbtn{background:none;border:none;color:var(--celadon-4);font-size:12px;padding:0;text-decoration:underline;font-weight:600;}
 .item-del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:15px;}
 .item-del:hover{color:var(--seal);}
@@ -251,8 +252,23 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
         <input type="password" id="passwordInput">
       </div>
       <button class="auth-submit" id="authSubmit"></button>
+      <button class="linkbtn" id="forgotPasswordBtn" style="margin-top:10px;width:100%;text-align:center;"></button>
       <div id="authMsg" class="auth-msg"></div>
     </div>
+  </div>
+</div>
+
+<!-- PASSWORD RESET SCREEN -->
+<div class="auth-wrap hidden" id="resetScreen">
+  <div class="auth-card">
+    <h1>Productivity Tracker</h1>
+    <div class="auth-sub" id="lblSetNewPassword"></div>
+    <div class="auth-field">
+      <label for="newPasswordInput" id="lblNewPassword"></label>
+      <input type="password" id="newPasswordInput">
+    </div>
+    <button class="auth-submit" id="updatePasswordBtn"></button>
+    <div id="resetMsg" class="auth-msg"></div>
   </div>
 </div>
 <!-- APP -->
@@ -469,6 +485,13 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
           <input type="color" id="eventColor" value="#4F7563">
         </div>
         <div class="field">
+          <label for="eventPrivate" id="lblEventPrivate"></label>
+          <select id="eventPrivate">
+            <option value="0">Public</option>
+            <option value="1">Private</option>
+          </select>
+        </div>
+        <div class="field">
           <label for="eventRecurFreq" id="lblRecurFreq"></label>
           <select id="eventRecurFreq">
             <option value="">No repeat</option>
@@ -569,7 +592,11 @@ const I18N = {
     showMore:'Show more', showLess:'Show less',
     importIcs:'Import .ics', importSuccess:'Imported {n} events', importFail:'Could not read that file',
     yourDeadlines:'Your deadlines', monthView:'Month view', daysLeft:'days left', dayLeftSingular:'day left', today:'today', overdue:'days overdue', overdueSingular:'day overdue',
-    notesQuotes:'Notes & quotes', addNote:'Add note', page:'page', noteBtn:'Show notes'
+    notesQuotes:'Notes & quotes', addNote:'Add note', page:'page', noteBtn:'Show notes',
+    forgotPassword:'Forgot password?', resetSent:'Check your email for a reset link.', resetError:'Could not send reset email.',
+    lblSetNewPassword:'Set a new password', lblNewPassword:'New password', updatePasswordBtn:'Update password',
+    passwordUpdated:'Password updated! Signing you in...', passwordUpdateError:'Could not update password.', enterEmailFirst:'Enter your email above first.',
+    lblEventPrivate:'Visibility', publicOpt:'Public', privateOpt:'Private', ownedBy:'by'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
@@ -603,7 +630,11 @@ const I18N = {
     showMore:'더 보기', showLess:'간단히 보기',
     importIcs:'.ics 가져오기', importSuccess:'{n}개 일정을 가져왔습니다', importFail:'파일을 읽을 수 없습니다',
     yourDeadlines:'나의 마감일', monthView:'월간 보기', daysLeft:'일 남음', dayLeftSingular:'일 남음', today:'오늘', overdue:'지남', overdueSingular:'지남',
-    notesQuotes:'메모 및 인용구', addNote:'메모 추가', page:'페이지', noteBtn:'메모 보기'
+    notesQuotes:'메모 및 인용구', addNote:'메모 추가', page:'페이지', noteBtn:'메모 보기',
+    forgotPassword:'비밀번호를 잊으셨나요?', resetSent:'재설정 링크를 이메일로 보냈습니다.', resetError:'재설정 이메일을 보낼 수 없습니다.',
+    lblSetNewPassword:'새 비밀번호 설정', lblNewPassword:'새 비밀번호', updatePasswordBtn:'비밀번호 변경',
+    passwordUpdated:'비밀번호가 변경되었습니다! 로그인 중...', passwordUpdateError:'비밀번호를 변경할 수 없습니다.', enterEmailFirst:'먼저 위에 이메일을 입력하세요.',
+    lblEventPrivate:'공개 범위', publicOpt:'공개', privateOpt:'비공개', ownedBy:''
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
@@ -637,7 +668,11 @@ const I18N = {
     showMore:'Xem thêm', showLess:'Thu gọn',
     importIcs:'Nhập .ics', importSuccess:'Đã nhập {n} sự kiện', importFail:'Không thể đọc tệp này',
     yourDeadlines:'Hạn chót của bạn', monthView:'Xem theo tháng', daysLeft:'ngày còn lại', dayLeftSingular:'ngày còn lại', today:'hôm nay', overdue:'quá hạn', overdueSingular:'quá hạn',
-    notesQuotes:'Ghi chú & trích dẫn', addNote:'Thêm ghi chú', page:'trang', noteBtn:'Xem ghi chú'
+    notesQuotes:'Ghi chú & trích dẫn', addNote:'Thêm ghi chú', page:'trang', noteBtn:'Xem ghi chú',
+    forgotPassword:'Quên mật khẩu?', resetSent:'Kiểm tra email để lấy liên kết đặt lại mật khẩu.', resetError:'Không thể gửi email đặt lại mật khẩu.',
+    lblSetNewPassword:'Đặt mật khẩu mới', lblNewPassword:'Mật khẩu mới', updatePasswordBtn:'Cập nhật mật khẩu',
+    passwordUpdated:'Đã cập nhật mật khẩu! Đang đăng nhập...', passwordUpdateError:'Không thể cập nhật mật khẩu.', enterEmailFirst:'Hãy nhập email của bạn ở trên trước.',
+    lblEventPrivate:'Chế độ hiển thị', publicOpt:'Công khai', privateOpt:'Riêng tư', ownedBy:'bởi'
   }
 };
 const STATIC_MAP = {
@@ -659,7 +694,9 @@ const STATIC_MAP = {
   hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', addEventBtn:'addDeadlineBtn',
   lblRecurFreq:'lblRecurFreq', lblRecurInterval:'lblRecurInterval', lblRecurEndType:'lblRecurEndType', lblRecurEndDate:'lblRecurEndDate', recurHint:'recurHint',
   hDeadlines:'yourDeadlines', importIcsBtn:'importIcs', exportEventsBtn:'exportCsv', exportIcsBtn:'exportIcs', hEvents:'yourEvents', exportEventsKindBtn:'exportCsv', hMonthView:'monthView',
-  footerText:'footer'
+  footerText:'footer',
+  forgotPasswordBtn:'forgotPassword', lblSetNewPassword:'lblSetNewPassword', lblNewPassword:'lblNewPassword', updatePasswordBtn:'updatePasswordBtn',
+  lblEventPrivate:'lblEventPrivate'
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
 const BOOK_STATUS_KEYS = {to_read:'statusToRead', reading:'statusReading', finished:'statusFinished'};
@@ -768,6 +805,17 @@ function rebuildEventKindSelect(){
   });
   sel.value = prev;
 }
+function rebuildPrivacySelect(){
+  const sel = document.getElementById('eventPrivate');
+  const prev = sel.value || '0';
+  sel.innerHTML = '';
+  [['0','publicOpt'],['1','privateOpt']].forEach(([val,key])=>{
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = t(key);
+    sel.appendChild(opt);
+  });
+  sel.value = prev;
+}
 function rebuildRecurFreqSelect(){
   const sel = document.getElementById('eventRecurFreq');
   const prev = sel.value || '';
@@ -803,6 +851,7 @@ function applyLanguage(lang){
   rebuildJobStatusSelect();
   rebuildEventKindSelect();
   rebuildRecurFreqSelect();
+  rebuildPrivacySelect();
   renderTopikCountdown();
   if(currentUser){ renderAll(); }
 }
@@ -849,11 +898,43 @@ document.getElementById('signOutBtn').addEventListener('click', async ()=>{
 async function onAuthed(user){
   currentUser = { id: user.id, email: user.email };
   document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('resetScreen').classList.add('hidden');
   document.getElementById('appScreen').classList.remove('hidden');
   document.getElementById('whoName').textContent = user.email;
   await loadAllData();
   renderAll();
 }
+
+/* ---------- FORGOT / RESET PASSWORD ---------- */
+document.getElementById('forgotPasswordBtn').addEventListener('click', async ()=>{
+  const email = document.getElementById('emailInput').value.trim();
+  if(!email){ showAuthMsg(t('enterEmailFirst'), 'error'); return; }
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  if(error){ showAuthMsg(t('resetError') + ' (' + error.message + ')', 'error'); return; }
+  showAuthMsg(t('resetSent'), 'info');
+});
+
+function showResetMsg(text, type){
+  document.getElementById('resetMsg').innerHTML = `<div class="auth-msg-inner ${type}">${text}</div>`;
+}
+document.getElementById('updatePasswordBtn').addEventListener('click', async ()=>{
+  const newPassword = document.getElementById('newPasswordInput').value;
+  if(!newPassword || newPassword.length < 6){ showResetMsg(t('passwordUpdateError'), 'error'); return; }
+  const { data, error } = await supabaseClient.auth.updateUser({ password: newPassword });
+  if(error){ showResetMsg(t('passwordUpdateError') + ' (' + error.message + ')', 'error'); return; }
+  showResetMsg(t('passwordUpdated'), 'info');
+  setTimeout(()=>{ if(data.user) onAuthed(data.user); }, 1200);
+});
+
+supabaseClient.auth.onAuthStateChange((event, session)=>{
+  if(event === 'PASSWORD_RECOVERY'){
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('appScreen').classList.add('hidden');
+    document.getElementById('resetScreen').classList.remove('hidden');
+  }
+});
 /* ---------- TAB SWITCHING ---------- */
 document.getElementById('tabNav').addEventListener('click', (e)=>{
   const btn = e.target.closest('button');
@@ -1526,6 +1607,7 @@ async function addEvent(){
   const time = document.getElementById('eventTime').value;
   const notes = document.getElementById('eventNotes').value.trim();
   const color = document.getElementById('eventColor').value || '#4F7563';
+  const isPrivate = document.getElementById('eventPrivate').value === '1';
   const recurFreq = document.getElementById('eventRecurFreq').value || null;
   const recurInterval = parseInt(document.getElementById('eventRecurInterval').value) || 1;
   const recurEndType = document.getElementById('eventRecurEndType').value || 'never';
@@ -1533,6 +1615,7 @@ async function addEvent(){
   if(!title || !date) return;
   const row = {
     user_id: currentUser.id, title, kind, event_date: date, event_time: time || null, notes: notes || null, color,
+    is_private: isPrivate,
     recur_freq: recurFreq,
     recur_interval: recurFreq ? recurInterval : 1,
     recur_end_type: recurFreq ? recurEndType : 'never',
@@ -1630,10 +1713,13 @@ const listState = {
 };
 
 function itemsOfKind(kind){
-  return (allEvents[currentUser.id]||[])
-    .filter(ev => (ev.kind || 'deadline') === kind)
-    .slice()
-    .sort((a,b)=> nextOccurrence(a).localeCompare(nextOccurrence(b)) || (a.event_time||'').localeCompare(b.event_time||''));
+  const all = [];
+  Object.values(allEvents).forEach(userEvents=>{
+    userEvents.forEach(ev=>{
+      if((ev.kind || 'deadline') === kind) all.push(ev);
+    });
+  });
+  return all.sort((a,b)=> nextOccurrence(a).localeCompare(nextOccurrence(b)) || (a.event_time||'').localeCompare(b.event_time||''));
 }
 
 let expandedSubscribe = new Set();
@@ -1655,6 +1741,8 @@ function buildEventRowEl(ev){
   const sub = mySubscriptions[ev.id];
   const isOpen = expandedSubscribe.has(ev.id);
   const bellLabel = sub ? '🔔 ' + t('subscribed') : '🔕 ' + t('remindMe');
+  const isMine = ev.user_id === currentUser.id;
+  const ownerTag = !isMine ? `<span class="e-who">${nameFor(ev.user_id)}</span>` : '';
 
   if(!reminderDrafts[ev.id]){
     reminderDrafts[ev.id] = {
@@ -1677,7 +1765,7 @@ function buildEventRowEl(ev){
   wrap.className = 'deadline-row';
   wrap.innerHTML =
     `<div class="deadline-left">
-      <div class="deadline-title"><span class="deadline-color" style="background:${ev.color||'#4F7563'}"></span>${ev.title}</div>
+      <div class="deadline-title">${ownerTag}<span class="deadline-color" style="background:${ev.color||'#4F7563'}"></span>${ev.title}</div>
       <div class="deadline-notes">${nextDate}${timeText}${ev.notes ? ' · ' + ev.notes : ''}</div>
       ${recurText ? `<div class="deadline-notes">↻ ${recurText}</div>` : ''}
       <button class="linkbtn sub-toggle" data-id="${ev.id}" style="margin-top:6px;">${bellLabel}</button>
@@ -1701,10 +1789,11 @@ function buildEventRowEl(ev){
     </div>
     <div class="deadline-right">
       <span class="deadline-days ${soon?'soon':''}">${daysText}</span>
-      <button class="item-del del-event-btn" data-id="${ev.id}" title="Delete">✕</button>
+      ${isMine ? `<button class="item-del del-event-btn" data-id="${ev.id}" title="Delete">✕</button>` : ''}
     </div>`;
 
-  wrap.querySelector('.del-event-btn').addEventListener('click', ()=> deleteEvent(ev.id));
+  const delBtn = wrap.querySelector('.del-event-btn');
+  if(delBtn) delBtn.addEventListener('click', ()=> deleteEvent(ev.id));
   wrap.querySelector('.sub-toggle').addEventListener('click', ()=>{
     if(expandedSubscribe.has(ev.id)) expandedSubscribe.delete(ev.id); else expandedSubscribe.add(ev.id);
     renderCalendarTab();
@@ -1850,11 +1939,13 @@ function renderMonthGrid(){
   const monthEnd = `${y}-${String(m+1).padStart(2,'0')}-${String(daysInMonth).padStart(2,'0')}`;
 
   const myEventsByDate = {};
-  (allEvents[currentUser.id]||[]).forEach(ev=>{
-    const occ = expandOccurrences(ev, monthStart, monthEnd);
-    occ.forEach(dateKey=>{
-      if(!myEventsByDate[dateKey]) myEventsByDate[dateKey] = [];
-      myEventsByDate[dateKey].push(ev);
+  Object.values(allEvents).forEach(userEvents=>{
+    userEvents.forEach(ev=>{
+      const occ = expandOccurrences(ev, monthStart, monthEnd);
+      occ.forEach(dateKey=>{
+        if(!myEventsByDate[dateKey]) myEventsByDate[dateKey] = [];
+        myEventsByDate[dateKey].push(ev);
+      });
     });
   });
   const topikByDate = {};
@@ -1878,7 +1969,8 @@ function renderMonthGrid(){
     events.slice(0, maxShow).forEach(ev=>{
       const bg = ev.color || '#4F7563';
       const recurPrefix = ev.recur_freq ? '↻ ' : '';
-      const tip = ev.event_time ? `${recurPrefix}${ev.title} · ${formatTime12h(ev.event_time)}` : `${recurPrefix}${ev.title}`;
+      const ownerSuffix = ev.user_id !== currentUser.id ? ` (${t('ownedBy')} ${nameFor(ev.user_id)})` : '';
+      const tip = ev.event_time ? `${recurPrefix}${ev.title} · ${formatTime12h(ev.event_time)}${ownerSuffix}` : `${recurPrefix}${ev.title}${ownerSuffix}`;
       chips += `<div class="event-chip" style="background:${bg};color:${textColorFor(bg)}" title="${tip}">${recurPrefix}${ev.title}</div>`;
     });
     const extra = events.length - maxShow;
