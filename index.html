@@ -507,10 +507,14 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
     </div>
     <div class="card">
       <h2 id="hLectures"></h2>
+      <div class="field" style="margin-bottom:12px;">
+        <label for="notesPersonFilter" id="lblNotesPersonFilter"></label>
+        <select id="notesPersonFilter"></select>
+      </div>
       <div id="lectureList"></div>
     </div>
     <div class="card hidden" id="editorCard">
-      <h2><span id="editorLectureTitle"></span><button class="export-btn" id="saveNoteBtn"></button></h2>
+      <h2><span id="editorLectureTitle"></span><span><button class="export-btn" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
       <div class="hint" id="lastSavedInfo"></div>
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
       <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
@@ -836,11 +840,11 @@ const I18N = {
     thisOccurrenceOnly:'This event only', allOccurrences:'All events', cancelBtn:'Cancel',
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', deleteEventBtn:'Delete',
-    addCourseBtn:'Add course', courseHint:'Only course title and time are required.',
+    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in',
     hCourseList:'All courses', viewSyllabus:'Syllabus ↗',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
-    generalNotes:'General notes', noNote:'No course',
+    generalNotes:'General notes', noNote:'No course', allPeople:'All', lblNotesPersonFilter:'Show', closeNoteBtn:'Close',
     lastSavedBy:'Last saved by {name} at {time}', neverSaved:'Not saved yet',
     versionHistory:'Version history ({n})', noVersions:'No earlier versions', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', eventForUser:'For',
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
@@ -898,11 +902,11 @@ const I18N = {
     thisOccurrenceOnly:'이 일정만', allOccurrences:'전체 일정', cancelBtn:'취소',
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', deleteEventBtn:'삭제',
-    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.',
+    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정',
     hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
-    generalNotes:'일반 노트', noNote:'수업 없음',
+    generalNotes:'일반 노트', noNote:'수업 없음', allPeople:'전체', lblNotesPersonFilter:'보기', closeNoteBtn:'닫기',
     lastSavedBy:'{name}님이 {time}에 저장함', neverSaved:'아직 저장되지 않음',
     versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', eventForUser:'대상',
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
@@ -960,11 +964,11 @@ const I18N = {
     thisOccurrenceOnly:'Chỉ sự kiện này', allOccurrences:'Tất cả sự kiện', cancelBtn:'Hủy',
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', deleteEventBtn:'Xóa',
-    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.',
+    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt',
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
-    generalNotes:'Ghi chú chung', noNote:'Không có khóa học',
+    generalNotes:'Ghi chú chung', noNote:'Không có khóa học', allPeople:'Tất cả', lblNotesPersonFilter:'Hiển thị', closeNoteBtn:'Đóng',
     lastSavedBy:'Lưu lần cuối bởi {name} lúc {time}', neverSaved:'Chưa được lưu',
     versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', eventForUser:'Cho',
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
@@ -1004,7 +1008,7 @@ const STATIC_MAP = {
   calModalDeleteBtn:'deleteEventBtn', calModalCloseBtn:'cancelBtn',
   deleteChoiceText:'deleteRecurringQ', deleteThisOnlyBtn:'thisOccurrenceOnly', deleteAllBtn:'allOccurrences', deleteChoiceCancelBtn:'cancelBtn',
   hNotesPick:'hNotesPick', lblNotesCourse:'lblNotesCourse', lblNewLecture:'lblNewLecture', addLectureBtn:'addLectureBtn',
-  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn'
+  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn'
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
 const BOOK_STATUS_KEYS = {to_read:'statusToRead', reading:'statusReading', finished:'statusFinished'};
@@ -2821,18 +2825,25 @@ function renderWeekGrid(){
       const top = (startMin/60)*HOUR_PX;
       const height = Math.max(((endMin-startMin)/60)*HOUR_PX, 18);
       const bg = ev.color || '#4F7563';
+      const recurPrefix = ev.recur_freq ? '↻ ' : '';
+      const bellIcon = mySubscriptions[ev.id] ? '🔔' : '🔕';
       const bar = document.createElement('div');
       bar.className = 'week-event-bar';
       bar.style.top = top+'px';
       bar.style.height = height+'px';
       bar.style.background = bg;
       bar.style.color = textColorFor(bg);
-      bar.innerHTML = `${ev.title}<span class="week-bar-initial">${(nameFor(ev.user_id)||'?').charAt(0).toUpperCase()}</span>`;
+      bar.innerHTML = `<span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">✏️</span>${recurPrefix}${ev.title}<span class="week-bar-initial">${(nameFor(ev.user_id)||'?').charAt(0).toUpperCase()}</span>`;
       bar.title = ev.title + (ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '');
-      bar.addEventListener('click', ()=> openCalendarEditModal(ev.id, dateKey));
       col.appendChild(bar);
     });
     body.appendChild(col);
+  });
+  body.querySelectorAll('.chip-bell').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); quickToggleSubscription(btn.dataset.ev); });
+  });
+  body.querySelectorAll('.chip-edit').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); openCalendarEditModal(btn.dataset.ev, btn.dataset.date); });
   });
 }
 document.getElementById('calViewMonthBtn').addEventListener('click', ()=>{
@@ -3126,8 +3137,10 @@ function buildCourseEditFieldsHtml(c){
     </div>
     <div class="field">
       <label>${t('courseSyllabus')}</label>
-      <input type="file" class="ce-syllabus" accept=".pdf,.doc,.docx">
-      ${c.syllabus_name ? `<div class="hint">${c.syllabus_name}</div>` : ''}
+      ${c.syllabus_url ? `<div style="display:flex;align-items:center;gap:8px;">
+        <a href="${c.syllabus_url}" target="_blank" rel="noopener" style="font-size:12px;">${c.syllabus_name||'file'}</a>
+        <button type="button" class="linkbtn ce-syllabus-remove" data-id="${c.id}">${t('removeSyllabus')}</button>
+      </div>` : `<input type="file" class="ce-syllabus" accept=".pdf,.doc,.docx">`}
     </div>
     <div style="margin-top:8px;display:flex;gap:8px;">
       <button class="export-btn ce-save-btn" data-id="${c.id}">${t('saveCourseChanges')}</button>
@@ -3148,7 +3161,7 @@ async function saveCourseEdit(courseId, container){
   const finalDate = container.querySelector('.ce-final').value || null;
   const concentration = container.querySelector('.ce-concentration').value.trim();
   const fileInput = container.querySelector('.ce-syllabus');
-  const file = fileInput.files[0];
+  const file = fileInput ? fileInput.files[0] : null;
   if(!title || !timeSlot) return;
 
   const patch = {
@@ -3240,12 +3253,22 @@ function renderCourses(){
   list.querySelectorAll('[data-course-edit-for]').forEach(panel=>{
     const saveBtn = panel.querySelector('.ce-save-btn');
     const cancelBtn = panel.querySelector('.ce-cancel-btn');
+    const removeSyllabusBtn = panel.querySelector('.ce-syllabus-remove');
     if(saveBtn) saveBtn.addEventListener('click', ()=> saveCourseEdit(saveBtn.dataset.id, panel));
     if(cancelBtn) cancelBtn.addEventListener('click', ()=>{
       expandedCourseEdit.delete(cancelBtn.dataset.id);
       renderCourses();
     });
+    if(removeSyllabusBtn) removeSyllabusBtn.addEventListener('click', ()=> removeCourseSyllabus(removeSyllabusBtn.dataset.id));
   });
+}
+async function removeCourseSyllabus(courseId){
+  await supabaseClient.from('courses').update({ syllabus_url: null, syllabus_name: null }).eq('id', courseId);
+  Object.values(allCourses).forEach(list=>{
+    const c = list.find(x=>x.id===courseId);
+    if(c){ c.syllabus_url = null; c.syllabus_name = null; }
+  });
+  renderCourses();
 }
 
 
@@ -3295,7 +3318,7 @@ function rebuildNotesCourseSelect(){
   document.getElementById('notesEmptyHint').classList.add('hidden');
   if(prev !== undefined) sel.value = prev;
 }
-function renderNotesCourseSelect(){ rebuildNotesCourseSelect(); }
+function renderNotesCourseSelect(){ rebuildNotesCourseSelect(); rebuildNotesPersonFilter(); }
 
 async function addLecture(){
   const title = document.getElementById('newLectureTitle').value.trim();
@@ -3338,13 +3361,43 @@ async function moveNote(noteId, groupKey, direction){
   renderLectureList();
 }
 
+let notesPersonFilter = 'all';
+function rebuildNotesPersonFilter(){
+  const sel = document.getElementById('notesPersonFilter');
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
+  sel.appendChild(allOpt);
+  Object.keys(profiles).forEach(uid=>{
+    const opt = document.createElement('option');
+    opt.value = uid; opt.textContent = nameFor(uid);
+    sel.appendChild(opt);
+  });
+  sel.value = (prev && (prev==='all'||profiles[prev])) ? prev : 'all';
+  notesPersonFilter = sel.value;
+}
+document.getElementById('notesPersonFilter').addEventListener('change', (e)=>{
+  notesPersonFilter = e.target.value;
+  renderLectureList();
+});
+
 function renderLectureList(){
   const list = document.getElementById('lectureList');
   list.innerHTML = '';
   const courseTitleFor = {};
-  Object.values(allCourses).forEach(arr=> arr.forEach(c=> courseTitleFor[c.id] = c.title));
+  const courseOwnerFor = {};
+  Object.values(allCourses).forEach(arr=> arr.forEach(c=>{ courseTitleFor[c.id] = c.title; courseOwnerFor[c.id] = c.user_id; }));
 
-  const groupKeys = Object.keys(allNotes).filter(k => (allNotes[k]||[]).length > 0);
+  let groupKeys = Object.keys(courseTitleFor);
+  if((allNotes['__none__']||[]).length > 0) groupKeys.push('__none__');
+  groupKeys = Array.from(new Set(groupKeys));
+
+  if(notesPersonFilter !== 'all'){
+    groupKeys = groupKeys.filter(k => k === '__none__' || courseOwnerFor[k] === notesPersonFilter);
+  }
+
   if(groupKeys.length === 0){ list.innerHTML = '<div class="empty">—</div>'; return; }
 
   groupKeys.sort((a,b)=>{
@@ -3354,7 +3407,10 @@ function renderLectureList(){
   });
 
   groupKeys.forEach(groupKey=>{
-    const notes = (allNotes[groupKey]||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+    let notes = (allNotes[groupKey]||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+    if(groupKey === '__none__' && notesPersonFilter !== 'all'){
+      notes = notes.filter(n => n.user_id === notesPersonFilter);
+    }
     const groupLabel = groupKey === '__none__' ? t('generalNotes') : (courseTitleFor[groupKey] || t('generalNotes'));
     const isExpanded = expandedNoteGroups.has(groupKey);
 
@@ -3370,6 +3426,9 @@ function renderLectureList(){
     if(!isExpanded) return;
     const body = document.createElement('div');
     body.className = 'note-group-body';
+    if(notes.length === 0){
+      body.innerHTML = '<div class="empty">—</div>';
+    }
     notes.forEach((n, idx)=>{
       const row = document.createElement('div');
       row.className = 'lecture-row' + (n.id===selectedLectureId ? ' active' : '');
@@ -3493,6 +3552,17 @@ document.getElementById('saveNoteBtn').addEventListener('click', async ()=>{
   editorDirty = false;
   updateLastSavedInfo(note);
   alert(t('noteSaved'));
+});
+document.getElementById('closeNoteBtn').addEventListener('click', ()=>{
+  if(editorDirty){
+    const proceed = confirm(t('unsavedConfirm'));
+    if(!proceed) return;
+  }
+  editorDirty = false;
+  selectedLectureId = null;
+  document.getElementById('editorCard').classList.add('hidden');
+  document.getElementById('versionHistoryPanel').classList.add('hidden');
+  renderLectureList();
 });
 
 (async function init(){
