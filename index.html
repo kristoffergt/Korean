@@ -518,7 +518,8 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
       <div id="lectureList"></div>
     </div>
     <div class="card hidden" id="editorCard">
-      <h2><span id="editorLectureTitle"></span><span><button class="export-btn" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
+      <h2><span id="editorLectureTitle" style="cursor:pointer;text-decoration:underline dotted;" title="Click to edit"></span><span><button class="export-btn" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
+      <div class="notes-panel hidden" id="editorTitleEditPanel"></div>
       <div class="hint" id="lastSavedInfo"></div>
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
       <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
@@ -3476,18 +3477,7 @@ function renderLectureList(){
           </div>
           ${isMine && isMetaEditOpen ? `
           <div class="notes-panel" data-note-edit-for="${n.id}" style="margin-top:6px;">
-            <div class="field wide">
-              <label>${t('lblNewLecture')}</label>
-              <input type="text" class="ne-title" value="${(n.lecture_title||'').replace(/"/g,'&quot;')}">
-            </div>
-            <div class="field">
-              <label>${t('noteColorLabel')}</label>
-              <input type="color" class="ne-color" value="${colorForNote(n)}">
-            </div>
-            <div style="margin-top:8px;display:flex;gap:8px;">
-              <button class="export-btn ne-save-btn" data-id="${n.id}" data-group="${groupKey}">${t('saveChanges')}</button>
-              <button class="export-btn ne-cancel-btn" data-id="${n.id}">${t('cancelEdit')}</button>
-            </div>
+            ${buildNoteMetaFieldsHtml(n, groupKey)}
           </div>` : ''}
         </div>`;
       body.appendChild(row);
@@ -3529,6 +3519,21 @@ function renderLectureList(){
     });
   });
 }
+function buildNoteMetaFieldsHtml(n, groupKey){
+  return `
+    <div class="field wide">
+      <label>${t('lblNewLecture')}</label>
+      <input type="text" class="ne-title" value="${(n.lecture_title||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div class="field">
+      <label>${t('noteColorLabel')}</label>
+      <input type="color" class="ne-color" value="${colorForNote(n)}">
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button class="export-btn ne-save-btn" data-id="${n.id}" data-group="${groupKey}">${t('saveChanges')}</button>
+      <button class="export-btn ne-cancel-btn" data-id="${n.id}">${t('cancelEdit')}</button>
+    </div>`;
+}
 async function saveNoteMeta(noteId, groupKey, container){
   const title = container.querySelector('.ne-title').value.trim();
   const color = container.querySelector('.ne-color').value;
@@ -3542,9 +3547,29 @@ async function saveNoteMeta(noteId, groupKey, container){
     document.getElementById('quillContainer').style.setProperty('--note-author-color', color);
     currentNoteColor = color;
     if(quillEditor && quillEditor._updateColorTriggers) quillEditor._updateColorTriggers();
+    document.getElementById('editorTitleEditPanel').classList.add('hidden');
+    document.getElementById('editorTitleEditPanel').innerHTML = '';
   }
   renderLectureList();
 }
+document.getElementById('editorLectureTitle').addEventListener('click', ()=>{
+  if(!selectedLectureId) return;
+  const note = (allNotes[selectedNotesCourse]||[]).find(n=>n.id===selectedLectureId);
+  if(!note || note.user_id !== currentUser.id) return;
+  const panel = document.getElementById('editorTitleEditPanel');
+  if(!panel.classList.contains('hidden')){
+    panel.classList.add('hidden');
+    panel.innerHTML = '';
+    return;
+  }
+  panel.innerHTML = buildNoteMetaFieldsHtml(note, selectedNotesCourse);
+  panel.classList.remove('hidden');
+  panel.querySelector('.ne-save-btn').addEventListener('click', ()=> saveNoteMeta(note.id, selectedNotesCourse, panel));
+  panel.querySelector('.ne-cancel-btn').addEventListener('click', ()=>{
+    panel.classList.add('hidden');
+    panel.innerHTML = '';
+  });
+});
 
 let editorDirty = false;
 const QUILL_PALETTE = [
@@ -3724,6 +3749,8 @@ function openLecture(noteId, groupKey){
   if(!note) return;
   document.getElementById('editorCard').classList.remove('hidden');
   document.getElementById('editorLectureTitle').textContent = note.lecture_title;
+  document.getElementById('editorTitleEditPanel').classList.add('hidden');
+  document.getElementById('editorTitleEditPanel').innerHTML = '';
   document.getElementById('quillContainer').style.setProperty('--note-author-color', colorForNote(note));
   currentNoteColor = colorForNote(note);
   ensureQuillInitialized();
