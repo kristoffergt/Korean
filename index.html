@@ -3512,15 +3512,21 @@ function buildCustomColorControls(){
   const toolbar = document.querySelector('.ql-toolbar');
   if(!toolbar || toolbar.querySelector('.cc-color-wrap')) return;
 
+  let openPanel = null;
+  function closeOpenPanel(){
+    if(openPanel){ openPanel.style.display = 'none'; openPanel = null; }
+  }
+  document.addEventListener('click', ()=> closeOpenPanel());
+
   function makeSwatchGrid(applyFn){
     const grid = document.createElement('div');
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:2px;';
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(7,16px);gap:2px;';
     QUILL_PALETTE.forEach(hex=>{
       const sw = document.createElement('button');
       sw.type = 'button';
       sw.title = hex;
       sw.style.cssText = `width:16px;height:16px;padding:0;border:1px solid rgba(0,0,0,0.15);background:${hex};cursor:pointer;`;
-      sw.addEventListener('click', ()=> applyFn(hex));
+      sw.addEventListener('click', (e)=>{ e.stopPropagation(); applyFn(hex); });
       grid.appendChild(sw);
     });
     return grid;
@@ -3538,7 +3544,7 @@ function buildCustomColorControls(){
     trigger.style.cssText = 'font-weight:700;';
 
     const panel = document.createElement('div');
-    panel.style.cssText = 'display:none;position:absolute;top:100%;left:0;z-index:10;background:var(--paper-dim);border:1px solid var(--line);border-radius:6px;padding:6px;margin-top:2px;box-shadow:0 4px 12px rgba(0,0,0,0.2);width:152px;';
+    panel.style.cssText = 'display:none;flex-direction:column;position:absolute;top:100%;left:0;z-index:10;background:var(--paper-dim);border:1px solid var(--line);border-radius:6px;padding:6px;margin-top:2px;box-shadow:0 4px 12px rgba(0,0,0,0.2);width:132px;';
 
     const defaultBtn = document.createElement('button');
     defaultBtn.type = 'button';
@@ -3550,20 +3556,21 @@ function buildCustomColorControls(){
       if(range && range.length > 0) quillEditor.formatText(range.index, range.length, formatName, value);
       else quillEditor.format(formatName, value);
       editorDirty = true;
-      panel.style.display = 'none';
+      closeOpenPanel();
     }
 
-    defaultBtn.addEventListener('click', ()=> apply(false));
+    defaultBtn.addEventListener('click', (e)=>{ e.stopPropagation(); apply(false); });
     panel.appendChild(defaultBtn);
     panel.appendChild(makeSwatchGrid(apply));
 
     trigger.addEventListener('click', (e)=>{
       e.stopPropagation();
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      if(openPanel === panel){ closeOpenPanel(); return; }
+      closeOpenPanel();
+      panel.style.display = 'flex';
+      openPanel = panel;
     });
-    document.addEventListener('click', (e)=>{
-      if(!wrap.contains(e.target)) panel.style.display = 'none';
-    });
+    panel.addEventListener('click', (e)=> e.stopPropagation());
 
     wrap.appendChild(trigger);
     wrap.appendChild(panel);
