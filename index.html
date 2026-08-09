@@ -101,7 +101,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:28px;margin:0 0 4
 .show-more-btn:hover{background:var(--paper);color:var(--ink);}
 .lb-row{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
 .lb-row:last-child{border-bottom:none;}
-.lb-row.me{background:rgba(127,166,148,0.12);border-radius:6px;padding:10px 8px;margin:0 -8px;}
+.lb-row.me{background:rgba(127,166,148,0.12);border-radius:6px;padding:10px 8px;margin:0;}
 .lb-rank{color:var(--ink-soft);font-family:'Space Grotesk',monospace;}
 .lb-name{font-weight:600;}
 .lb-name .tag{font-size:10px;color:var(--celadon-4);font-weight:600;margin-left:5px;}
@@ -110,7 +110,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:28px;margin:0 0 4
 .lb-head span:not(:first-child){text-align:right;}
 .lb-row-simple{display:grid;grid-template-columns:22px 1fr 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
 .lb-row-simple:last-child{border-bottom:none;}
-.lb-row-simple.me{background:rgba(127,166,148,0.12);border-radius:6px;padding:10px 8px;margin:0 -8px;}
+.lb-row-simple.me{background:rgba(127,166,148,0.12);border-radius:6px;padding:10px 8px;margin:0;}
 .lb-head-simple{display:grid;grid-template-columns:22px 1fr 70px;gap:10px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);padding-bottom:8px;border-bottom:1px solid var(--line);}
 .lb-head-simple span:last-child{text-align:right;}
 .log-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
@@ -221,6 +221,8 @@ button:hover{background:var(--ink-hover);}
 .chip-bell:hover{transform:scale(1.15);}
 .chip-edit{cursor:pointer;margin-right:2px;filter:brightness(1.4);}
 .chip-edit:hover{transform:scale(1.15);}
+.event-chip{position:relative;padding-right:12px !important;}
+.chip-initial{position:absolute;top:1px;right:1px;font-size:7px;width:9px;height:9px;line-height:9px;text-align:center;border-radius:50%;background:rgba(255,255,255,0.4);color:inherit;font-weight:800;}
 .month-day .more-count{font-size:8px;color:var(--ink-soft);}
 .month-day.empty{visibility:hidden;}
 .cal-view-toggle{display:flex;gap:8px;margin-bottom:12px;}
@@ -237,11 +239,13 @@ button:hover{background:var(--ink-hover);}
 .week-hour-label{font-size:9.5px;color:var(--ink-soft);text-align:right;padding-right:4px;box-sizing:border-box;border-top:1px solid var(--line);}
 .week-day-col{flex:1;position:relative;border-left:1px solid var(--line);background-image:repeating-linear-gradient(to bottom, var(--line) 0, var(--line) 1px, transparent 1px, transparent 44px);}
 .week-event-bar{position:absolute;left:2px;right:2px;border-radius:4px;font-size:10px;padding:2px 4px;overflow:hidden;cursor:pointer;line-height:1.2;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.2);}
+.week-bar-initial{position:absolute;top:2px;right:2px;font-size:8px;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:rgba(255,255,255,0.4);color:inherit;font-weight:800;}
 .deadline-color{width:10px;height:10px;border-radius:3px;flex-shrink:0;display:inline-block;margin-right:7px;}
 .field input[type=color]{padding:2px;width:44px;height:38px;cursor:pointer;}
 .ql-toolbar.ql-snow{border-color:var(--line) !important;background:var(--paper-dim);border-radius:8px 8px 0 0;}
 .ql-container.ql-snow{border-color:var(--line) !important;border-radius:0 0 8px 8px;min-height:220px;font-size:14px;}
-.ql-editor{color:var(--ink);min-height:220px;}
+.ql-editor{color:var(--ink) !important;background:transparent !important;min-height:220px;}
+.ql-editor.ql-blank::before{color:var(--ink-soft) !important;}
 .ql-snow .ql-stroke{stroke:var(--ink-soft);}
 .ql-snow .ql-fill{fill:var(--ink-soft);}
 .ql-snow .ql-picker{color:var(--ink-soft);}
@@ -325,7 +329,10 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
     <div class="who">
       <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode">🌙</button>
       <div class="lang-switch" id="langSwitchApp"></div>
-      <span class="name" id="whoName"></span>
+      <span id="whoNameWrap" style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.3;">
+        <span class="name" id="whoName" style="font-weight:700;"></span>
+        <span id="whoEmail" style="font-size:11px;color:var(--ink-soft);"></span>
+      </span>
       <input type="color" id="myColorPicker" title="Your color" style="width:30px;height:30px;padding:2px;border-radius:6px;border:1px solid var(--line);cursor:pointer;">
       <button class="textbtn" id="signOutBtn"></button>
     </div>
@@ -500,7 +507,10 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
     </div>
     <div class="card hidden" id="editorCard">
       <h2><span id="editorLectureTitle"></span><button class="export-btn" id="saveNoteBtn"></button></h2>
+      <div class="hint" id="lastSavedInfo"></div>
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
+      <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
+      <div class="notes-panel hidden" id="versionHistoryPanel"></div>
     </div>
   </div>
 
@@ -662,6 +672,10 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
           <input type="text" id="eventNotes">
         </div>
         <div class="field">
+          <label for="eventForUser" id="lblEventForUser"></label>
+          <select id="eventForUser"></select>
+        </div>
+        <div class="field">
           <label for="eventColor" id="lblEventColor"></label>
           <input type="color" id="eventColor" value="#4F7563">
         </div>
@@ -730,7 +744,6 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
       <div class="list-controls" id="birthdayListControls"></div>
     </div>
   </div>
-  <footer id="footerText"></footer>
 </div>
 
 <!-- CALENDAR EDIT MODAL -->
@@ -790,7 +803,7 @@ const I18N = {
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar',
     topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed',
     addDeadline:'Add a deadline or event', eventTitle:'Title', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color',
-    viewMonth:'Month', viewWeek:'Week',
+    viewMonth:'Month', viewWeek:'Week', weekViewLabel:'Week view',
     eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
     lblRecurInterval:'Every', lblRecurEndType:'Ends', recurNever:'Never', recurUntilDate:'Until date', lblRecurEndDate:'End date',
@@ -824,6 +837,8 @@ const I18N = {
     hCourseList:'All courses', viewSyllabus:'Syllabus ↗',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
     generalNotes:'General notes', noNote:'No course',
+    lastSavedBy:'Last saved by {name} at {time}', neverSaved:'Not saved yet',
+    versionHistory:'Version history ({n})', noVersions:'No earlier versions', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', eventForUser:'For',
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
     hLectures:'Lectures', saveNoteBtn:'Save note', noteSaved:'Saved!',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago'
@@ -850,7 +865,7 @@ const I18N = {
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기',
     topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다',
     addDeadline:'마감일 또는 일정 추가', eventTitle:'제목', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상',
-    viewMonth:'월간', viewWeek:'주간',
+    viewMonth:'월간', viewWeek:'주간', weekViewLabel:'주간 보기',
     eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
     lblRecurInterval:'주기', lblRecurEndType:'종료', recurNever:'계속 반복', recurUntilDate:'날짜까지', lblRecurEndDate:'종료일',
@@ -884,6 +899,8 @@ const I18N = {
     hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
     generalNotes:'일반 노트', noNote:'수업 없음',
+    lastSavedBy:'{name}님이 {time}에 저장함', neverSaved:'아직 저장되지 않음',
+    versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', eventForUser:'대상',
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
     hLectures:'강의 목록', saveNoteBtn:'노트 저장', noteSaved:'저장됨!',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전'
@@ -910,7 +927,7 @@ const I18N = {
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch',
     topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc',
     addDeadline:'Thêm hạn chót hoặc sự kiện', eventTitle:'Tiêu đề', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu',
-    viewMonth:'Tháng', viewWeek:'Tuần',
+    viewMonth:'Tháng', viewWeek:'Tuần', weekViewLabel:'Xem theo tuần',
     eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
     lblRecurInterval:'Mỗi', lblRecurEndType:'Kết thúc', recurNever:'Không bao giờ', recurUntilDate:'Đến ngày', lblRecurEndDate:'Ngày kết thúc',
@@ -944,6 +961,8 @@ const I18N = {
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
     generalNotes:'Ghi chú chung', noNote:'Không có khóa học',
+    lastSavedBy:'Lưu lần cuối bởi {name} lúc {time}', neverSaved:'Chưa được lưu',
+    versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', eventForUser:'Cho',
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
     hLectures:'Bài giảng', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước'
@@ -969,9 +988,8 @@ const STATIC_MAP = {
   calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek',
   lblRecurFreq:'lblRecurFreq', lblRecurInterval:'lblRecurInterval', lblRecurEndType:'lblRecurEndType', lblRecurEndDate:'lblRecurEndDate', recurHint:'recurHint',
   hDeadlines:'yourDeadlines', importIcsBtn:'importIcs', exportEventsBtn:'exportCsv', exportIcsBtn:'exportIcs', hEvents:'yourEvents', exportEventsKindBtn:'exportCsv', hMonthView:'monthView',
-  footerText:'footer',
   forgotPasswordBtn:'forgotPassword', lblSetNewPassword:'lblSetNewPassword', lblNewPassword:'lblNewPassword', updatePasswordBtn:'updatePasswordBtn',
-  lblEventPrivate:'lblEventPrivate',
+  lblEventPrivate:'lblEventPrivate', lblEventForUser:'eventForUser',
   hCoursesCal:'hCoursesCal', hBirthdays:'hBirthdays',
   hAddCourse:'hAddCourse', lblCourseTitle:'courseTitle', lblCourseCode:'courseCode', lblCourseProfessor:'courseProfessor',
   lblCourseTime:'courseTime', lblCourseConcentration:'courseConcentration', lblCourseStatus:'courseStatus', lblCourseSyllabus:'courseSyllabus',
@@ -1110,6 +1128,19 @@ function rebuildPrivacySelect(){
   });
   sel.value = prev;
 }
+function rebuildForUserSelect(){
+  const sel = document.getElementById('eventForUser');
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  Object.keys(profiles).forEach(uid=>{
+    const opt = document.createElement('option');
+    opt.value = uid; opt.textContent = nameFor(uid);
+    sel.appendChild(opt);
+  });
+  if(prev && profiles[prev]) sel.value = prev;
+  else if(currentUser && profiles[currentUser.id]) sel.value = currentUser.id;
+}
 function rebuildRecurFreqSelect(){
   const sel = document.getElementById('eventRecurFreq');
   const prev = sel.value || '';
@@ -1146,6 +1177,7 @@ function applyLanguage(lang){
   rebuildEventKindSelect();
   rebuildRecurFreqSelect();
   rebuildPrivacySelect();
+  rebuildForUserSelect();
   rebuildCourseStatusSelect();
   rebuildCourseDaySelect();
   renderTopikCountdown();
@@ -1208,8 +1240,12 @@ async function onAuthed(user){
   document.getElementById('resetScreen').classList.add('hidden');
   document.getElementById('appScreen').classList.remove('hidden');
   await loadAllData();
+  rebuildForUserSelect();
   document.getElementById('whoName').textContent = profiles[user.id] || user.email;
-  document.getElementById('myColorPicker').value = colorForUser(user.id);
+  document.getElementById('whoEmail').textContent = user.email;
+  const myColor = colorForUser(user.id);
+  document.getElementById('myColorPicker').value = myColor;
+  document.getElementById('whoName').style.color = myColor;
   renderAll();
 }
 
@@ -2038,6 +2074,7 @@ async function addEvent(){
   const endTime = document.getElementById('eventEndTime').value;
   const notes = document.getElementById('eventNotes').value.trim();
   const color = document.getElementById('eventColor').value || '#4F7563';
+  const forUser = document.getElementById('eventForUser').value || currentUser.id;
   const isPrivate = document.getElementById('eventPrivate').value === '1';
   const recurFreq = document.getElementById('eventRecurFreq').value || null;
   const recurInterval = parseInt(document.getElementById('eventRecurInterval').value) || 1;
@@ -2045,7 +2082,7 @@ async function addEvent(){
   const recurEndDate = document.getElementById('eventRecurEndDate').value || null;
   if(!title || !date) return;
   const row = {
-    user_id: currentUser.id, title, kind, event_date: date, event_time: time || null,
+    user_id: forUser, title, kind, event_date: date, event_time: time || null,
     event_end_time: (kind === 'event' && endTime) ? endTime : null,
     notes: notes || null, color,
     is_private: isPrivate,
@@ -2056,8 +2093,9 @@ async function addEvent(){
   };
   const { data, error } = await supabaseClient.from('events').insert(row).select();
   if(!error && data){
-    if(!allEvents[currentUser.id]) allEvents[currentUser.id] = [];
-    allEvents[currentUser.id].push(data[0]);
+    const ownerUid = data[0].user_id;
+    if(!allEvents[ownerUid]) allEvents[ownerUid] = [];
+    allEvents[ownerUid].push(data[0]);
   }
   document.getElementById('eventTitle').value = '';
   document.getElementById('eventTime').value = '';
@@ -2148,6 +2186,8 @@ async function saveEventEdit(eventId, wrap){
   const time = wrap.querySelector('.edit-time').value;
   const endTime = wrap.querySelector('.edit-end-time').value;
   const notes = wrap.querySelector('.edit-notes').value.trim();
+  const forUserEl = wrap.querySelector('.edit-for-user');
+  const forUser = forUserEl ? forUserEl.value : null;
   const color = wrap.querySelector('.edit-color').value;
   const isPrivate = wrap.querySelector('.edit-private').value === '1';
   const recurFreq = wrap.querySelector('.edit-recur-freq').value || null;
@@ -2165,12 +2205,15 @@ async function saveEventEdit(eventId, wrap){
     recur_end_type: recurFreq ? recurEndType : 'never',
     recur_end_date: (recurFreq && recurEndType === 'date') ? recurEndDate : null
   };
+  if(forUser) patch.user_id = forUser;
   const { data, error } = await supabaseClient.from('events').update(patch).eq('id', eventId).select();
   if(!error && data && data[0]){
     Object.keys(allEvents).forEach(uid=>{
-      const idx = (allEvents[uid]||[]).findIndex(x=>x.id===eventId);
-      if(idx !== -1) allEvents[uid][idx] = data[0];
+      allEvents[uid] = (allEvents[uid]||[]).filter(x=>x.id!==eventId);
     });
+    const ownerUid = data[0].user_id;
+    if(!allEvents[ownerUid]) allEvents[ownerUid] = [];
+    allEvents[ownerUid].push(data[0]);
   }
   expandedEdit.delete(eventId);
   renderCalendarTab();
@@ -2314,6 +2357,12 @@ function buildEventEditFieldsHtml(ev){
       <input type="text" class="edit-notes" value="${(ev.notes||'').replace(/"/g,'&quot;')}">
     </div>
     <div class="field">
+      <label>${t('eventForUser')}</label>
+      <select class="edit-for-user">
+        ${Object.keys(profiles).map(uid=>`<option value="${uid}" ${ev.user_id===uid?'selected':''}>${nameFor(uid)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field">
       <label>${t('eventColor')}</label>
       <input type="color" class="edit-color" value="${ev.color||'#4F7563'}">
     </div>
@@ -2445,7 +2494,7 @@ function buildEventRowEl(ev){
     </div>
     <div class="deadline-right">
       <span class="deadline-days ${soon?'soon':''}">${daysText}</span>
-      ${isMine ? `<button class="item-del del-event-btn" data-id="${ev.id}" title="Delete">✕</button>` : ''}
+      <button class="item-del del-event-btn" data-id="${ev.id}" title="Delete">✕</button>
     </div>`;
 
   const delBtn = wrap.querySelector('.del-event-btn');
@@ -2650,7 +2699,7 @@ function renderMonthGrid(){
       const ownerSuffix = ev.user_id !== currentUser.id ? ` (${t('ownedBy')} ${nameFor(ev.user_id)})` : '';
       const tip = ev.event_time ? `${recurPrefix}${ev.title} · ${formatTime12h(ev.event_time)}${ownerSuffix}` : `${recurPrefix}${ev.title}${ownerSuffix}`;
       const bellIcon = mySubscriptions[ev.id] ? '🔔' : '🔕';
-      chips += `<div class="event-chip" style="background:${bg};color:${textColorFor(bg)}" title="${tip}"><span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">✏️</span>${recurPrefix}${ev.title}</div>`;
+      chips += `<div class="event-chip" style="background:${bg};color:${textColorFor(bg)}" title="${tip}"><span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">✏️</span>${recurPrefix}${ev.title}<span class="chip-initial">${(nameFor(ev.user_id)||'?').charAt(0).toUpperCase()}</span></div>`;
     });
     const extra = events.length - maxShow;
     if(extra > 0){ chips += `<div class="more-count">+${extra}</div>`; }
@@ -2757,7 +2806,7 @@ function renderWeekGrid(){
     (eventsByDate[dateKey]||[]).forEach(ev=>{
       const startMin = timeToMinutes(ev.event_time || '00:00');
       let endMin;
-      if(ev.kind === 'event' && ev.event_end_time){
+      if(ev.event_end_time){
         endMin = timeToMinutes(ev.event_end_time);
         if(endMin <= startMin) endMin = startMin + 60;
       } else {
@@ -2772,7 +2821,7 @@ function renderWeekGrid(){
       bar.style.height = height+'px';
       bar.style.background = bg;
       bar.style.color = textColorFor(bg);
-      bar.textContent = ev.title;
+      bar.innerHTML = `${ev.title}<span class="week-bar-initial">${(nameFor(ev.user_id)||'?').charAt(0).toUpperCase()}</span>`;
       bar.title = ev.title + (ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '');
       bar.addEventListener('click', ()=> openCalendarEditModal(ev.id, dateKey));
       col.appendChild(bar);
@@ -2786,6 +2835,7 @@ document.getElementById('calViewMonthBtn').addEventListener('click', ()=>{
   document.getElementById('calViewWeekBtn').classList.remove('active');
   document.getElementById('monthGrid').classList.remove('hidden');
   document.getElementById('weekGridWrap').classList.add('hidden');
+  document.getElementById('hMonthView').textContent = t('monthView');
   renderMonthGrid();
 });
 document.getElementById('calViewWeekBtn').addEventListener('click', ()=>{
@@ -2794,6 +2844,7 @@ document.getElementById('calViewWeekBtn').addEventListener('click', ()=>{
   document.getElementById('calViewMonthBtn').classList.remove('active');
   document.getElementById('monthGrid').classList.add('hidden');
   document.getElementById('weekGridWrap').classList.remove('hidden');
+  document.getElementById('hMonthView').textContent = t('weekViewLabel');
   renderWeekGrid();
 });
 document.getElementById('monthPrevBtn').addEventListener('click', ()=>{
@@ -2878,6 +2929,7 @@ function rebuildCourseDaySelect(selectEl){
 const DAY_LABELS = {1:'dayMon', 2:'dayTue', 3:'dayWed', 4:'dayThu', 5:'dayFri'};
 const TIME_LABELS = {'9-12':'9:00–12:00','12-15':'12:00–15:00','15-18':'15:00–18:00'};
 const TIME_START = {'9-12':'09:00','12-15':'12:00','15-18':'15:00'};
+const TIME_END = {'9-12':'12:00','12-15':'15:00','15-18':'18:00'};
 
 function nextWeekdayDate(targetDow){
   const d = new Date();
@@ -2894,10 +2946,11 @@ async function removeLinkedCalendarEvents(courseId){
 }
 async function linkCourseToCalendar(course){
   const startTime = TIME_START[course.time_slot] || '09:00';
+  const endTime = TIME_END[course.time_slot] || '10:00';
   const rows = [{
     user_id: course.user_id, title: course.title, kind: 'course', course_id: course.id,
-    event_date: nextWeekdayDate(parseInt(course.day_of_week)||1), event_time: startTime, notes: course.code || null,
-    color: '#6E8FB0', is_private: false,
+    event_date: nextWeekdayDate(parseInt(course.day_of_week)||1), event_time: startTime, event_end_time: endTime, notes: course.code || null,
+    color: colorForUser(course.user_id), is_private: false,
     recur_freq: 'week', recur_interval: 1,
     recur_end_type: course.end_date ? 'date' : 'never', recur_end_date: course.end_date || null
   }];
@@ -3186,6 +3239,7 @@ function colorForUser(userId){
 document.getElementById('myColorPicker').addEventListener('change', async (e)=>{
   const color = e.target.value;
   profileColors[currentUser.id] = color;
+  document.getElementById('whoName').style.color = color;
   await supabaseClient.from('profiles').update({ color }).eq('id', currentUser.id);
   renderLectureList();
 });
@@ -3317,6 +3371,7 @@ function renderLectureList(){
   });
 }
 
+let editorDirty = false;
 function ensureQuillInitialized(){
   if(quillEditor) return;
   quillEditor = new Quill('#quillContainer', {
@@ -3330,8 +3385,51 @@ function ensureQuillInitialized(){
       ]
     }
   });
+  quillEditor.on('text-change', (delta, oldDelta, source)=>{
+    if(source === 'user') editorDirty = true;
+  });
 }
+window.addEventListener('beforeunload', (e)=>{
+  if(editorDirty){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+function updateLastSavedInfo(note){
+  const el = document.getElementById('lastSavedInfo');
+  if(note.updated_by && note.updated_at){
+    el.textContent = t('lastSavedBy').replace('{name}', nameFor(note.updated_by)).replace('{time}', new Date(note.updated_at).toLocaleString());
+  } else {
+    el.textContent = t('neverSaved');
+  }
+  const versions = note.previous_versions || [];
+  document.getElementById('versionHistoryToggle').textContent = t('versionHistory').replace('{n}', versions.length);
+  document.getElementById('versionHistoryPanel').classList.add('hidden');
+}
+document.getElementById('versionHistoryToggle').addEventListener('click', ()=>{
+  const panel = document.getElementById('versionHistoryPanel');
+  const note = (allNotes[selectedNotesCourse]||[]).find(n=>n.id===selectedLectureId);
+  if(!note){ panel.classList.add('hidden'); return; }
+  const versions = note.previous_versions || [];
+  if(versions.length === 0){
+    panel.innerHTML = `<div class="empty">${t('noVersions')}</div>`;
+  } else {
+    panel.innerHTML = versions.map(v=>{
+      const name = nameFor(v.updated_by);
+      const time = v.updated_at ? new Date(v.updated_at).toLocaleString() : '';
+      const preview = (v.content||'').replace(/<[^>]+>/g,' ').trim().slice(0,200);
+      return `<div class="note-item"><div class="note-page">${name} · ${time}</div>${preview || '—'}</div>`;
+    }).join('');
+  }
+  panel.classList.toggle('hidden');
+});
 function openLecture(noteId, groupKey){
+  if(selectedLectureId === noteId) return;
+  if(editorDirty){
+    const proceed = confirm(t('unsavedConfirm'));
+    if(!proceed) return;
+  }
+  editorDirty = false;
   selectedLectureId = noteId;
   selectedNotesCourse = groupKey;
   renderLectureList();
@@ -3341,13 +3439,26 @@ function openLecture(noteId, groupKey){
   document.getElementById('editorLectureTitle').textContent = note.lecture_title;
   ensureQuillInitialized();
   quillEditor.root.innerHTML = note.content || '';
+  editorDirty = false;
+  updateLastSavedInfo(note);
 }
 document.getElementById('saveNoteBtn').addEventListener('click', async ()=>{
   if(!selectedLectureId || !quillEditor) return;
   const content = quillEditor.root.innerHTML;
-  await supabaseClient.from('course_notes').update({ content, updated_at: new Date().toISOString() }).eq('id', selectedLectureId);
   const note = (allNotes[selectedNotesCourse]||[]).find(n=>n.id===selectedLectureId);
-  if(note) note.content = content;
+  if(!note) return;
+  const prevVersions = (note.previous_versions || []).slice();
+  if(note.content){
+    prevVersions.unshift({ content: note.content, updated_by: note.updated_by || note.user_id, updated_at: note.updated_at || note.created_at });
+  }
+  const patch = {
+    content, updated_at: new Date().toISOString(), updated_by: currentUser.id,
+    previous_versions: prevVersions.slice(0,2)
+  };
+  await supabaseClient.from('course_notes').update(patch).eq('id', selectedLectureId);
+  Object.assign(note, patch);
+  editorDirty = false;
+  updateLastSavedInfo(note);
   alert(t('noteSaved'));
 });
 
