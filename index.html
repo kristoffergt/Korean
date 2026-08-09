@@ -846,7 +846,7 @@ const I18N = {
     thisOccurrenceOnly:'This event only', allOccurrences:'All events', cancelBtn:'Cancel',
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', deleteEventBtn:'Delete',
-    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color',
+    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in',
     hCourseList:'All courses', viewSyllabus:'Syllabus ↗',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
@@ -908,7 +908,7 @@ const I18N = {
     thisOccurrenceOnly:'이 일정만', allOccurrences:'전체 일정', cancelBtn:'취소',
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', deleteEventBtn:'삭제',
-    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상',
+    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정',
     hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
@@ -970,7 +970,7 @@ const I18N = {
     thisOccurrenceOnly:'Chỉ sự kiện này', allOccurrences:'Tất cả sự kiện', cancelBtn:'Hủy',
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', deleteEventBtn:'Xóa',
-    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu',
+    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt',
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
@@ -2829,7 +2829,7 @@ function renderWeekGrid(){
       bar.textContent = topikByDate[dateKey];
       col.appendChild(bar);
     }
-    (eventsByDate[dateKey]||[]).forEach(ev=>{
+    const dayEvents = (eventsByDate[dateKey]||[]).map(ev=>{
       const startMin = timeToMinutes(ev.event_time || '00:00');
       let endMin;
       if(ev.event_end_time){
@@ -2838,6 +2838,29 @@ function renderWeekGrid(){
       } else {
         endMin = startMin + 60;
       }
+      return { ev, startMin, endMin };
+    }).sort((a,b)=> a.startMin - b.startMin || a.endMin - b.endMin);
+
+    // Assign side-by-side columns to overlapping events (classic calendar layout)
+    const columnsEnd = []; // end time of the last event placed in each column
+    dayEvents.forEach(item=>{
+      let colIdx = columnsEnd.findIndex(endMin => endMin <= item.startMin);
+      if(colIdx === -1){ colIdx = columnsEnd.length; columnsEnd.push(item.endMin); }
+      else { columnsEnd[colIdx] = item.endMin; }
+      item.col = colIdx;
+    });
+    dayEvents.forEach(item=>{
+      // total overlapping columns = max col+1 among events that overlap this one's time range
+      let maxCol = item.col;
+      dayEvents.forEach(other=>{
+        if(other.startMin < item.endMin && other.endMin > item.startMin){
+          maxCol = Math.max(maxCol, other.col);
+        }
+      });
+      item.totalCols = maxCol + 1;
+    });
+
+    dayEvents.forEach(({ev, startMin, endMin, col: colIdx, totalCols})=>{
       const top = (startMin/60)*HOUR_PX;
       const height = Math.max(((endMin-startMin)/60)*HOUR_PX, 18);
       const bg = ev.color || '#4F7563';
@@ -2847,6 +2870,10 @@ function renderWeekGrid(){
       bar.className = 'week-event-bar';
       bar.style.top = top+'px';
       bar.style.height = height+'px';
+      const widthPct = 100 / totalCols;
+      bar.style.left = `calc(${colIdx * widthPct}% + 2px)`;
+      bar.style.width = `calc(${widthPct}% - 4px)`;
+      bar.style.right = 'auto';
       bar.style.background = bg;
       bar.style.color = textColorFor(bg);
       let bodyHtml = ev.title;
@@ -3136,6 +3163,7 @@ async function updateCourseStatus(courseId, status){
   renderCourses();
 }
 async function deleteCourse(courseId){
+  if(!confirm(t('deleteCourseConfirm'))) return;
   await supabaseClient.from('courses').delete().eq('id', courseId);
   Object.keys(allCourses).forEach(uid=>{
     allCourses[uid] = (allCourses[uid]||[]).filter(x=>x.id!==courseId);
