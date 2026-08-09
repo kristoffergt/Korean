@@ -844,7 +844,7 @@ const I18N = {
     thisOccurrenceOnly:'This event only', allOccurrences:'All events', cancelBtn:'Cancel',
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', deleteEventBtn:'Delete',
-    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight',
+    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in',
     hCourseList:'All courses', viewSyllabus:'Syllabus ↗',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
@@ -906,7 +906,7 @@ const I18N = {
     thisOccurrenceOnly:'이 일정만', allOccurrences:'전체 일정', cancelBtn:'취소',
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', deleteEventBtn:'삭제',
-    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음',
+    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정',
     hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
@@ -968,7 +968,7 @@ const I18N = {
     thisOccurrenceOnly:'Chỉ sự kiện này', allOccurrences:'Tất cả sự kiện', cancelBtn:'Hủy',
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', deleteEventBtn:'Xóa',
-    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng',
+    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt',
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
@@ -1045,9 +1045,11 @@ let allCourses = {}; // userId -> [course rows]
 let allNotes = {}; // courseId (or '__none__') -> [note rows]
 let profileColors = {}; // userId -> custom color hex (optional override)
 let expandedNoteGroups = new Set();
+let expandedNoteEdit = new Set();
 let selectedNotesCourse = null;
 let selectedLectureId = null;
 let quillEditor = null;
+let currentNoteColor = null;
 let bdRange = 'all';
 let authMode = 'signin';
 let activeTab = 'calendar';
@@ -3312,6 +3314,9 @@ function hashColorForUser(userId){
 function colorForUser(userId){
   return profileColors[userId] || hashColorForUser(userId);
 }
+function colorForNote(note){
+  return (note && note.color) || colorForUser(note ? note.user_id : null);
+}
 document.getElementById('myColorPicker').addEventListener('change', async (e)=>{
   const color = e.target.value;
   profileColors[currentUser.id] = color;
@@ -3454,16 +3459,37 @@ function renderLectureList(){
       const row = document.createElement('div');
       row.className = 'lecture-row' + (n.id===selectedLectureId ? ' active' : '');
       const isMine = n.user_id === currentUser.id;
+      const isMetaEditOpen = expandedNoteEdit.has(n.id);
       row.innerHTML = `
-        <span class="lecture-title-btn" data-id="${n.id}" data-group="${groupKey}">
-          <span class="author-dot" style="background:${colorForUser(n.user_id)}" title="${nameFor(n.user_id)}"></span>
-          ${n.lecture_title}
-        </span>
-        <span class="lecture-actions">
-          ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${groupKey}" ${idx===0?'disabled':''} title="Move up">↑</button>` : ''}
-          ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${groupKey}" ${idx===notes.length-1?'disabled':''} title="Move down">↓</button>` : ''}
-          ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${groupKey}" title="Delete">✕</button>` : ''}
-        </span>`;
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="lecture-title-btn" data-id="${n.id}" data-group="${groupKey}">
+              <span class="author-dot" style="background:${colorForNote(n)}" title="${nameFor(n.user_id)}"></span>
+              ${n.lecture_title}
+            </span>
+            <span class="lecture-actions">
+              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${groupKey}" title="Edit">✏️</button>` : ''}
+              ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${groupKey}" ${idx===0?'disabled':''} title="Move up">↑</button>` : ''}
+              ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${groupKey}" ${idx===notes.length-1?'disabled':''} title="Move down">↓</button>` : ''}
+              ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${groupKey}" title="Delete">✕</button>` : ''}
+            </span>
+          </div>
+          ${isMine && isMetaEditOpen ? `
+          <div class="notes-panel" data-note-edit-for="${n.id}" style="margin-top:6px;">
+            <div class="field wide">
+              <label>${t('lblNewLecture')}</label>
+              <input type="text" class="ne-title" value="${(n.lecture_title||'').replace(/"/g,'&quot;')}">
+            </div>
+            <div class="field">
+              <label>${t('noteColorLabel')}</label>
+              <input type="color" class="ne-color" value="${colorForNote(n)}">
+            </div>
+            <div style="margin-top:8px;display:flex;gap:8px;">
+              <button class="export-btn ne-save-btn" data-id="${n.id}" data-group="${groupKey}">${t('saveChanges')}</button>
+              <button class="export-btn ne-cancel-btn" data-id="${n.id}">${t('cancelEdit')}</button>
+            </div>
+          </div>` : ''}
+        </div>`;
       body.appendChild(row);
     });
     list.appendChild(body);
@@ -3481,6 +3507,43 @@ function renderLectureList(){
   list.querySelectorAll('.lecture-down').forEach(btn=>{
     btn.addEventListener('click', (e)=>{ e.stopPropagation(); moveNote(btn.dataset.id, btn.dataset.group, 1); });
   });
+  list.querySelectorAll('.lecture-edit').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      if(expandedNoteEdit.has(id)) expandedNoteEdit.delete(id); else expandedNoteEdit.add(id);
+      renderLectureList();
+    });
+  });
+  list.querySelectorAll('.ne-cancel-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      expandedNoteEdit.delete(btn.dataset.id);
+      renderLectureList();
+    });
+  });
+  list.querySelectorAll('.ne-save-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      saveNoteMeta(btn.dataset.id, btn.dataset.group, btn.closest('[data-note-edit-for]'));
+    });
+  });
+}
+async function saveNoteMeta(noteId, groupKey, container){
+  const title = container.querySelector('.ne-title').value.trim();
+  const color = container.querySelector('.ne-color').value;
+  if(!title) return;
+  await supabaseClient.from('course_notes').update({ lecture_title: title, color }).eq('id', noteId);
+  const note = (allNotes[groupKey]||[]).find(n=>n.id===noteId);
+  if(note){ note.lecture_title = title; note.color = color; }
+  expandedNoteEdit.delete(noteId);
+  if(selectedLectureId === noteId){
+    document.getElementById('editorLectureTitle').textContent = title;
+    document.getElementById('quillContainer').style.setProperty('--note-author-color', color);
+    currentNoteColor = color;
+    if(quillEditor && quillEditor._updateColorTriggers) quillEditor._updateColorTriggers();
+  }
+  renderLectureList();
 }
 
 let editorDirty = false;
@@ -3532,6 +3595,29 @@ function buildCustomColorControls(){
     return grid;
   }
 
+  let colorTrigger = null, bgTrigger = null;
+  function updateTriggerColors(){
+    if(!quillEditor) return;
+    const range = quillEditor.getSelection();
+    const format = range ? quillEditor.getFormat(range) : {};
+    const activeColor = format.color || currentNoteColor || 'var(--ink)';
+    if(colorTrigger){
+      colorTrigger.style.color = activeColor;
+      colorTrigger.style.borderBottom = `2px solid ${activeColor}`;
+    }
+    if(bgTrigger){
+      if(format.background){
+        bgTrigger.style.background = format.background;
+        bgTrigger.style.borderColor = 'rgba(0,0,0,0.3)';
+      } else {
+        bgTrigger.style.background = 'transparent';
+        bgTrigger.style.borderColor = 'var(--ink-soft)';
+      }
+    }
+  }
+  quillEditor.on('selection-change', updateTriggerColors);
+  quillEditor.on('text-change', updateTriggerColors);
+
   function makePicker(labelKey, formatName){
     const wrap = document.createElement('span');
     wrap.className = 'cc-' + formatName + '-wrap ql-formats';
@@ -3539,9 +3625,16 @@ function buildCustomColorControls(){
 
     const trigger = document.createElement('button');
     trigger.type = 'button';
-    trigger.textContent = formatName === 'color' ? 'A' : '⬛';
+    if(formatName === 'color'){
+      trigger.textContent = 'A';
+      trigger.style.cssText = 'font-weight:700;padding-bottom:3px;';
+      colorTrigger = trigger;
+    } else {
+      trigger.textContent = '';
+      trigger.style.cssText = 'width:16px;height:16px;padding:0;border:2px solid var(--ink-soft);border-radius:2px;background:transparent;box-sizing:border-box;';
+      bgTrigger = trigger;
+    }
     trigger.title = t(labelKey);
-    trigger.style.cssText = 'font-weight:700;';
 
     const panel = document.createElement('div');
     panel.style.cssText = 'display:none;flex-direction:column;position:absolute;top:100%;left:0;z-index:10;background:var(--paper-dim);border:1px solid var(--line);border-radius:6px;padding:6px;margin-top:2px;box-shadow:0 4px 12px rgba(0,0,0,0.2);width:132px;';
@@ -3557,6 +3650,7 @@ function buildCustomColorControls(){
       else quillEditor.format(formatName, value);
       editorDirty = true;
       closeOpenPanel();
+      updateTriggerColors();
     }
 
     defaultBtn.addEventListener('click', (e)=>{ e.stopPropagation(); apply(false); });
@@ -3579,6 +3673,8 @@ function buildCustomColorControls(){
 
   toolbar.appendChild(makePicker('defaultColor', 'color'));
   toolbar.appendChild(makePicker('noHighlight', 'background'));
+  quillEditor._updateColorTriggers = updateTriggerColors;
+  updateTriggerColors();
 }
 window.addEventListener('beforeunload', (e)=>{
   if(editorDirty){
@@ -3628,9 +3724,11 @@ function openLecture(noteId, groupKey){
   if(!note) return;
   document.getElementById('editorCard').classList.remove('hidden');
   document.getElementById('editorLectureTitle').textContent = note.lecture_title;
-  document.getElementById('quillContainer').style.setProperty('--note-author-color', colorForUser(note.user_id));
+  document.getElementById('quillContainer').style.setProperty('--note-author-color', colorForNote(note));
+  currentNoteColor = colorForNote(note);
   ensureQuillInitialized();
   quillEditor.root.innerHTML = note.content || '';
+  if(quillEditor._updateColorTriggers) quillEditor._updateColorTriggers();
   editorDirty = false;
   updateLastSavedInfo(note);
 }
