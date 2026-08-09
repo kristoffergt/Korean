@@ -244,7 +244,7 @@ button:hover{background:var(--ink-hover);}
 .field input[type=color]{padding:2px;width:44px;height:38px;cursor:pointer;}
 .ql-toolbar.ql-snow{border-color:var(--line) !important;background:var(--paper-dim);border-radius:8px 8px 0 0;}
 .ql-container.ql-snow{border-color:var(--line) !important;border-radius:0 0 8px 8px;min-height:220px;font-size:14px;}
-.ql-editor{color:var(--ink) !important;background:transparent !important;min-height:220px;}
+.ql-editor{color:var(--note-author-color, var(--ink)) !important;background:transparent !important;min-height:220px;}
 .ql-editor.ql-blank::before{color:var(--ink-soft) !important;}
 .ql-snow .ql-stroke{stroke:var(--ink-soft);}
 .ql-snow .ql-fill{fill:var(--ink-soft);}
@@ -415,6 +415,10 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
         <div class="field">
           <label for="courseCode" id="lblCourseCode"></label>
           <input type="text" id="courseCode">
+        </div>
+        <div class="field">
+          <label for="courseForUser" id="lblCourseForUser"></label>
+          <select id="courseForUser"></select>
         </div>
         <div class="field">
           <label for="courseProfessor" id="lblCourseProfessor"></label>
@@ -991,7 +995,7 @@ const STATIC_MAP = {
   forgotPasswordBtn:'forgotPassword', lblSetNewPassword:'lblSetNewPassword', lblNewPassword:'lblNewPassword', updatePasswordBtn:'updatePasswordBtn',
   lblEventPrivate:'lblEventPrivate', lblEventForUser:'eventForUser',
   hCoursesCal:'hCoursesCal', hBirthdays:'hBirthdays',
-  hAddCourse:'hAddCourse', lblCourseTitle:'courseTitle', lblCourseCode:'courseCode', lblCourseProfessor:'courseProfessor',
+  hAddCourse:'hAddCourse', lblCourseTitle:'courseTitle', lblCourseCode:'courseCode', lblCourseForUser:'eventForUser', lblCourseProfessor:'courseProfessor',
   lblCourseTime:'courseTime', lblCourseConcentration:'courseConcentration', lblCourseStatus:'courseStatus', lblCourseSyllabus:'courseSyllabus',
   addCourseBtn:'addCourseBtn', courseHint:'courseHint',
   hYourCourses:'hYourCourses', cLabelPlanning:'statusPlanning', cLabelSignedUp:'statusSignedUp', cLabelLockedIn:'statusLockedIn',
@@ -1178,6 +1182,7 @@ function applyLanguage(lang){
   rebuildRecurFreqSelect();
   rebuildPrivacySelect();
   rebuildForUserSelect();
+  rebuildCourseForUserSelect();
   rebuildCourseStatusSelect();
   rebuildCourseDaySelect();
   renderTopikCountdown();
@@ -1241,6 +1246,7 @@ async function onAuthed(user){
   document.getElementById('appScreen').classList.remove('hidden');
   await loadAllData();
   rebuildForUserSelect();
+  rebuildCourseForUserSelect();
   document.getElementById('whoName').textContent = profiles[user.id] || user.email;
   document.getElementById('whoEmail').textContent = user.email;
   const myColor = colorForUser(user.id);
@@ -2914,6 +2920,19 @@ function rebuildCourseStatusSelect(){
   });
   sel.value = prev;
 }
+function rebuildCourseForUserSelect(){
+  const sel = document.getElementById('courseForUser');
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  Object.keys(profiles).forEach(uid=>{
+    const opt = document.createElement('option');
+    opt.value = uid; opt.textContent = nameFor(uid);
+    sel.appendChild(opt);
+  });
+  if(prev && profiles[prev]) sel.value = prev;
+  else if(currentUser && profiles[currentUser.id]) sel.value = currentUser.id;
+}
 function rebuildCourseDaySelect(selectEl){
   const sel = selectEl || document.getElementById('courseDay');
   if(!sel) return;
@@ -2977,6 +2996,7 @@ async function linkCourseToCalendar(course){
 async function addCourse(){
   const title = document.getElementById('courseTitle').value.trim();
   const code = document.getElementById('courseCode').value.trim();
+  const forUser = document.getElementById('courseForUser').value || currentUser.id;
   const professor = document.getElementById('courseProfessor').value.trim();
   const dayOfWeek = parseInt(document.getElementById('courseDay').value) || 1;
   const timeSlot = document.getElementById('courseTime').value;
@@ -3001,7 +3021,7 @@ async function addCourse(){
   }
 
   const row = {
-    user_id: currentUser.id, title, code: code || null, professor: professor || null,
+    user_id: forUser, title, code: code || null, professor: professor || null,
     day_of_week: dayOfWeek, time_slot: timeSlot, end_date: endDate,
     midterm_date: midtermDate, final_date: finalDate,
     concentration: concentration || null, status,
@@ -3009,8 +3029,9 @@ async function addCourse(){
   };
   const { data, error } = await supabaseClient.from('courses').insert(row).select();
   if(!error && data && data[0]){
-    if(!allCourses[currentUser.id]) allCourses[currentUser.id] = [];
-    allCourses[currentUser.id].unshift(data[0]);
+    const ownerUid = data[0].user_id;
+    if(!allCourses[ownerUid]) allCourses[ownerUid] = [];
+    allCourses[ownerUid].unshift(data[0]);
     await linkCourseToCalendar(data[0]);
   }
   document.getElementById('courseTitle').value = '';
@@ -3058,6 +3079,12 @@ function buildCourseEditFieldsHtml(c){
     <div class="field">
       <label>${t('courseCode')}</label>
       <input type="text" class="ce-code" value="${(c.code||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div class="field">
+      <label>${t('eventForUser')}</label>
+      <select class="ce-for-user">
+        ${Object.keys(profiles).map(uid=>`<option value="${uid}" ${c.user_id===uid?'selected':''}>${nameFor(uid)}</option>`).join('')}
+      </select>
     </div>
     <div class="field">
       <label>${t('courseProfessor')}</label>
@@ -3111,6 +3138,8 @@ function buildCourseEditFieldsHtml(c){
 async function saveCourseEdit(courseId, container){
   const title = container.querySelector('.ce-title').value.trim();
   const code = container.querySelector('.ce-code').value.trim();
+  const forUserEl = container.querySelector('.ce-for-user');
+  const forUser = forUserEl ? forUserEl.value : null;
   const professor = container.querySelector('.ce-professor').value.trim();
   const dayOfWeek = parseInt(container.querySelector('.ce-day').value) || 1;
   const timeSlot = container.querySelector('.ce-time').value;
@@ -3127,6 +3156,7 @@ async function saveCourseEdit(courseId, container){
     day_of_week: dayOfWeek, time_slot: timeSlot, end_date: endDate,
     midterm_date: midtermDate, final_date: finalDate, concentration: concentration || null
   };
+  if(forUser) patch.user_id = forUser;
   if(file){
     const path = `${currentUser.id}/${Date.now()}_${file.name}`;
     const { error: uploadError } = await supabaseClient.storage.from('syllabi').upload(path, file);
@@ -3139,9 +3169,11 @@ async function saveCourseEdit(courseId, container){
   const { data, error } = await supabaseClient.from('courses').update(patch).eq('id', courseId).select();
   if(!error && data && data[0]){
     Object.keys(allCourses).forEach(uid=>{
-      const idx = (allCourses[uid]||[]).findIndex(x=>x.id===courseId);
-      if(idx !== -1) allCourses[uid][idx] = data[0];
+      allCourses[uid] = (allCourses[uid]||[]).filter(x=>x.id!==courseId);
     });
+    const ownerUid = data[0].user_id;
+    if(!allCourses[ownerUid]) allCourses[ownerUid] = [];
+    allCourses[ownerUid].push(data[0]);
     await removeLinkedCalendarEvents(courseId);
     await linkCourseToCalendar(data[0]);
   }
@@ -3177,19 +3209,19 @@ function renderCourses(){
       `<div class="item-top">
         <div><div class="item-title">${!isMine ? `<span class="e-who">${nameFor(c.user_id)}</span>` : ''}${c.title}</div>
         <div class="item-sub">${metaParts.join(' · ')}</div></div>
-        ${isMine ? `<button class="item-del" data-id="${c.id}" title="Delete">✕</button>` : ''}
+        <button class="item-del" data-id="${c.id}" title="Delete">✕</button>
       </div>
       <div class="item-meta">
         <span class="badge ${badgeClass}">${t(statusKey)}</span>
-        ${isMine ? `<select class="course-status-select" data-id="${c.id}">
+        <select class="course-status-select" data-id="${c.id}">
           <option value="planning" ${c.status==='planning'?'selected':''}>${t('statusPlanning')}</option>
           <option value="signed_up" ${c.status==='signed_up'?'selected':''}>${t('statusSignedUp')}</option>
           <option value="locked_in" ${c.status==='locked_in'?'selected':''}>${t('statusLockedIn')}</option>
-        </select>` : ''}
+        </select>
         ${c.syllabus_url ? `<a href="${c.syllabus_url}" target="_blank" rel="noopener">${t('viewSyllabus')}</a>` : ''}
-        ${isMine ? `<button class="linkbtn course-edit-toggle" data-id="${c.id}">${t('editCourse')}</button>` : ''}
+        <button class="linkbtn course-edit-toggle" data-id="${c.id}">${t('editCourse')}</button>
       </div>
-      ${isMine ? `<div class="notes-panel ${isEditOpen?'':'hidden'}" data-course-edit-for="${c.id}">${isEditOpen ? buildCourseEditFieldsHtml(c) : ''}</div>` : ''}`;
+      <div class="notes-panel ${isEditOpen?'':'hidden'}" data-course-edit-for="${c.id}">${isEditOpen ? buildCourseEditFieldsHtml(c) : ''}</div>`;
     list.appendChild(div);
   });
   list.querySelectorAll('.item-del').forEach(btn=>{
@@ -3437,6 +3469,7 @@ function openLecture(noteId, groupKey){
   if(!note) return;
   document.getElementById('editorCard').classList.remove('hidden');
   document.getElementById('editorLectureTitle').textContent = note.lecture_title;
+  document.getElementById('quillContainer').style.setProperty('--note-author-color', colorForUser(note.user_id));
   ensureQuillInitialized();
   quillEditor.root.innerHTML = note.content || '';
   editorDirty = false;
