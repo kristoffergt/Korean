@@ -107,7 +107,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:28px;margin:0 0 4
 .lb-name .tag{font-size:10px;color:var(--celadon-4);font-weight:600;margin-left:5px;}
 .lb-stat{text-align:right;font-family:'Space Grotesk',monospace;}
 .lb-head{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;gap:10px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);padding-bottom:8px;border-bottom:1px solid var(--line);}
-.lb-head span:not(:first-child){text-align:right;}
+.lb-head span:not(:first-child):not(:nth-child(2)){text-align:right;}
 .lb-row-simple{display:grid;grid-template-columns:22px 1fr 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
 .lb-row-simple:last-child{border-bottom:none;}
 .lb-row-simple.me{background:rgba(127,166,148,0.12);border-radius:6px;padding:10px 8px;margin:0;}
@@ -200,7 +200,7 @@ button:hover{background:var(--ink-hover);}
 .topik-box .tdate{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
 .deadline-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;gap:10px;}
 .deadline-row:last-child{border-bottom:none;}
-.deadline-left{display:flex;flex-direction:column;}
+.deadline-left{display:flex;flex-direction:column;align-items:flex-start;}
 .deadline-title{font-weight:600;}
 .deadline-notes{font-size:12px;color:var(--ink-soft);margin-top:2px;}
 .deadline-right{display:flex;align-items:center;gap:10px;}
@@ -264,6 +264,9 @@ button:hover{background:var(--ink-hover);}
 .note-group-body{padding-left:12px;}
 .course-picker-empty{color:var(--ink-soft);font-size:13px;}
 footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
+.hidden-file-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;}
+.file-upload-btn{display:inline-block;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;}
+.file-upload-btn:hover{background:var(--ink-hover);}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
 .modal-box{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:22px 24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;}
 .modal-box h2{font-family:'Noto Serif KR',serif;font-size:16px;margin:0 0 14px;}
@@ -468,7 +471,8 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
         </div>
         <div class="field">
           <label for="courseSyllabus" id="lblCourseSyllabus"></label>
-          <input type="file" id="courseSyllabus" accept=".pdf,.doc,.docx">
+          <label class="file-upload-btn" for="courseSyllabus" id="chooseFileLabel"></label>
+          <input type="file" id="courseSyllabus" accept=".pdf,.doc,.docx" class="hidden-file-input">
         </div>
         <button id="addCourseBtn"></button>
       </div>
@@ -517,6 +521,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
       <h2><span id="editorLectureTitle"></span><span><button class="export-btn" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
       <div class="hint" id="lastSavedInfo"></div>
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
+      <button class="export-btn" id="defaultColorBtn" style="margin-top:8px;"></button>
       <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
       <div class="notes-panel hidden" id="versionHistoryPanel"></div>
     </div>
@@ -840,7 +845,7 @@ const I18N = {
     thisOccurrenceOnly:'This event only', allOccurrences:'All events', cancelBtn:'Cancel',
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', deleteEventBtn:'Delete',
-    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove',
+    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in',
     hCourseList:'All courses', viewSyllabus:'Syllabus ↗',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
@@ -902,7 +907,7 @@ const I18N = {
     thisOccurrenceOnly:'이 일정만', allOccurrences:'전체 일정', cancelBtn:'취소',
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', deleteEventBtn:'삭제',
-    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제',
+    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정',
     hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
@@ -964,7 +969,7 @@ const I18N = {
     thisOccurrenceOnly:'Chỉ sự kiện này', allOccurrences:'Tất cả sự kiện', cancelBtn:'Hủy',
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', deleteEventBtn:'Xóa',
-    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa',
+    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt',
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
@@ -1008,7 +1013,7 @@ const STATIC_MAP = {
   calModalDeleteBtn:'deleteEventBtn', calModalCloseBtn:'cancelBtn',
   deleteChoiceText:'deleteRecurringQ', deleteThisOnlyBtn:'thisOccurrenceOnly', deleteAllBtn:'allOccurrences', deleteChoiceCancelBtn:'cancelBtn',
   hNotesPick:'hNotesPick', lblNotesCourse:'lblNotesCourse', lblNewLecture:'lblNewLecture', addLectureBtn:'addLectureBtn',
-  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn'
+  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabel:'chooseFile', defaultColorBtn:'defaultColor'
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
 const BOOK_STATUS_KEYS = {to_read:'statusToRead', reading:'statusReading', finished:'statusFinished'};
@@ -2120,6 +2125,13 @@ async function deleteEvent(eventId){
   delete mySubscriptions[eventId];
   renderCalendarTab();
 }
+function findCourseById(courseId){
+  for(const uid of Object.keys(allCourses)){
+    const found = (allCourses[uid]||[]).find(c=>c.id===courseId);
+    if(found) return found;
+  }
+  return null;
+}
 function findEventById(eventId){
   for(const uid of Object.keys(allEvents)){
     const found = (allEvents[uid]||[]).find(x=>x.id===eventId);
@@ -2833,7 +2845,17 @@ function renderWeekGrid(){
       bar.style.height = height+'px';
       bar.style.background = bg;
       bar.style.color = textColorFor(bg);
-      bar.innerHTML = `<span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">✏️</span>${recurPrefix}${ev.title}<span class="week-bar-initial">${(nameFor(ev.user_id)||'?').charAt(0).toUpperCase()}</span>`;
+      let bodyHtml = ev.title;
+      if(ev.kind === 'course' && ev.course_id){
+        const course = findCourseById(ev.course_id);
+        if(course){
+          const line2 = course.professor ? `<div style="font-size:9px;font-weight:400;opacity:0.9;">${course.professor}</div>` : '';
+          const line3Text = [course.code, course.concentration].filter(Boolean).join(' · ');
+          const line3 = line3Text ? `<div style="font-size:9px;font-weight:400;opacity:0.9;">${line3Text}</div>` : '';
+          bodyHtml = `<div>${ev.title}</div>${line2}${line3}`;
+        }
+      }
+      bar.innerHTML = `<span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">✏️</span>${recurPrefix}${bodyHtml}<span class="week-bar-initial">${(nameFor(ev.user_id)||'?').charAt(0).toUpperCase()}</span>`;
       bar.title = ev.title + (ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '');
       col.appendChild(bar);
     });
@@ -3140,7 +3162,7 @@ function buildCourseEditFieldsHtml(c){
       ${c.syllabus_url ? `<div style="display:flex;align-items:center;gap:8px;">
         <a href="${c.syllabus_url}" target="_blank" rel="noopener" style="font-size:12px;">${c.syllabus_name||'file'}</a>
         <button type="button" class="linkbtn ce-syllabus-remove" data-id="${c.id}">${t('removeSyllabus')}</button>
-      </div>` : `<input type="file" class="ce-syllabus" accept=".pdf,.doc,.docx">`}
+      </div>` : `<label class="file-upload-btn">${t('chooseFile')}<input type="file" class="ce-syllabus hidden-file-input"></label>`}
     </div>
     <div style="margin-top:8px;display:flex;gap:8px;">
       <button class="export-btn ce-save-btn" data-id="${c.id}">${t('saveCourseChanges')}</button>
@@ -3563,6 +3585,16 @@ document.getElementById('closeNoteBtn').addEventListener('click', ()=>{
   document.getElementById('editorCard').classList.add('hidden');
   document.getElementById('versionHistoryPanel').classList.add('hidden');
   renderLectureList();
+});
+document.getElementById('defaultColorBtn').addEventListener('click', ()=>{
+  if(!quillEditor) return;
+  const range = quillEditor.getSelection(true);
+  if(range && range.length > 0){
+    quillEditor.formatText(range.index, range.length, 'color', false);
+  } else {
+    quillEditor.format('color', false);
+  }
+  editorDirty = true;
 });
 
 (async function init(){
