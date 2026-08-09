@@ -11,6 +11,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Productivity Tracker">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.6/quill.snow.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.6/quill.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&display=swap');
 :root{
@@ -215,10 +217,23 @@ button:hover{background:var(--ink-hover);}
 .month-day .chip-stack{display:flex;flex-direction:column;gap:2px;overflow:hidden;}
 .month-day .event-chip{font-size:8.5px;line-height:1.3;padding:1px 4px;border-radius:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .month-day .event-chip.topik{background:var(--seal);color:#fff;}
+.chip-bell{cursor:pointer;margin-right:2px;filter:brightness(1.4);}
+.chip-bell:hover{transform:scale(1.15);}
 .month-day .more-count{font-size:8px;color:var(--ink-soft);}
 .month-day.empty{visibility:hidden;}
 .deadline-color{width:10px;height:10px;border-radius:3px;flex-shrink:0;display:inline-block;margin-right:7px;}
 .field input[type=color]{padding:2px;width:44px;height:38px;cursor:pointer;}
+.ql-toolbar.ql-snow{border-color:var(--line) !important;background:var(--paper-dim);border-radius:8px 8px 0 0;}
+.ql-container.ql-snow{border-color:var(--line) !important;border-radius:0 0 8px 8px;min-height:220px;font-size:14px;}
+.ql-editor{color:var(--ink);min-height:220px;}
+.ql-snow .ql-stroke{stroke:var(--ink-soft);}
+.ql-snow .ql-fill{fill:var(--ink-soft);}
+.ql-snow .ql-picker{color:var(--ink-soft);}
+.lecture-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;cursor:pointer;}
+.lecture-row:last-child{border-bottom:none;}
+.lecture-row:hover{color:var(--celadon-4);}
+.lecture-row.active{color:var(--celadon-4);font-weight:700;}
+.course-picker-empty{color:var(--ink-soft);font-size:13px;}
 footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
 </style>
 </head>
@@ -249,10 +264,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
       </div>
       <div class="auth-field">
         <label for="passwordInput" id="lblPassword"></label>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <input type="password" id="passwordInput" style="flex:1;">
-          <button type="button" class="icon-btn" id="togglePasswordBtn" title="Show password">👁️</button>
-        </div>
+        <input type="password" id="passwordInput">
       </div>
       <button class="auth-submit" id="authSubmit"></button>
       <button class="linkbtn" id="forgotPasswordBtn" style="margin-top:10px;width:100%;text-align:center;"></button>
@@ -268,10 +280,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
     <div class="auth-sub" id="lblSetNewPassword"></div>
     <div class="auth-field">
       <label for="newPasswordInput" id="lblNewPassword"></label>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input type="password" id="newPasswordInput" style="flex:1;">
-        <button type="button" class="icon-btn" id="toggleNewPasswordBtn" title="Show password">👁️</button>
-      </div>
+      <input type="password" id="newPasswordInput">
     </div>
     <button class="auth-submit" id="updatePasswordBtn"></button>
     <div id="resetMsg" class="auth-msg"></div>
@@ -292,13 +301,15 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
     </div>
   </header>
   <div class="tabs" id="tabNav">
-    <button data-tab="study" class="active" id="tabBtnStudy"></button>
+    <button data-tab="calendar" class="active" id="tabBtnCalendar"></button>
+    <button data-tab="study" id="tabBtnStudy"></button>
+    <button data-tab="courses" id="tabBtnCourses"></button>
+    <button data-tab="notes" id="tabBtnNotes"></button>
     <button data-tab="reading" id="tabBtnReading"></button>
     <button data-tab="jobs" id="tabBtnJobs"></button>
-    <button data-tab="calendar" id="tabBtnCalendar"></button>
   </div>
   <!-- STUDY TAB -->
-  <div class="tab-panel" id="panelStudy">
+  <div class="tab-panel hidden" id="panelStudy">
     <div class="card">
       <h2 id="hLeaderboard"></h2>
       <div class="lb-head"><span id="lbHeadRank"></span><span id="lbHeadName"></span><span id="lbHeadStreak"></span><span id="lbHeadWeek"></span><span id="lbHeadTotal"></span></div>
@@ -354,6 +365,93 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
       <ul class="entries" id="feedList"></ul>
     </div>
   </div>
+
+  <!-- COURSES TAB -->
+  <div class="tab-panel hidden" id="panelCourses">
+    <div class="card">
+      <h2 id="hAddCourse"></h2>
+      <div class="log-form">
+        <div class="field wide">
+          <label for="courseTitle" id="lblCourseTitle"></label>
+          <input type="text" id="courseTitle">
+        </div>
+        <div class="field">
+          <label for="courseCode" id="lblCourseCode"></label>
+          <input type="text" id="courseCode">
+        </div>
+        <div class="field">
+          <label for="courseProfessor" id="lblCourseProfessor"></label>
+          <input type="text" id="courseProfessor">
+        </div>
+        <div class="field">
+          <label for="courseTime" id="lblCourseTime"></label>
+          <select id="courseTime">
+            <option value="9-12">9:00–12:00</option>
+            <option value="12-15">12:00–15:00</option>
+            <option value="15-18">15:00–18:00</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="courseConcentration" id="lblCourseConcentration"></label>
+          <input type="text" id="courseConcentration">
+        </div>
+        <div class="field">
+          <label for="courseStatus" id="lblCourseStatus"></label>
+          <select id="courseStatus">
+            <option value="planning">Planning</option>
+            <option value="signed_up">Signed up</option>
+            <option value="locked_in">Locked in</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="courseSyllabus" id="lblCourseSyllabus"></label>
+          <input type="file" id="courseSyllabus" accept=".pdf,.doc,.docx">
+        </div>
+        <button id="addCourseBtn"></button>
+      </div>
+      <div class="hint" id="courseHint"></div>
+    </div>
+    <div class="card">
+      <h2 id="hYourCourses"></h2>
+      <div class="stat-row">
+        <div class="stat-mini"><div class="num" id="cStatPlanning">0</div><div class="label" id="cLabelPlanning"></div></div>
+        <div class="stat-mini"><div class="num" id="cStatSignedUp">0</div><div class="label" id="cLabelSignedUp"></div></div>
+        <div class="stat-mini"><div class="num" id="cStatLockedIn">0</div><div class="label" id="cLabelLockedIn"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 id="hCourseList"></h2>
+      <div id="courseFullList"></div>
+    </div>
+  </div>
+
+  <!-- NOTES TAB -->
+  <div class="tab-panel hidden" id="panelNotes">
+    <div class="card">
+      <h2 id="hNotesPick"></h2>
+      <div class="log-form">
+        <div class="field wide">
+          <label for="notesCourseSelect" id="lblNotesCourse"></label>
+          <select id="notesCourseSelect"></select>
+        </div>
+        <div class="field wide">
+          <label for="newLectureTitle" id="lblNewLecture"></label>
+          <input type="text" id="newLectureTitle">
+        </div>
+        <button id="addLectureBtn"></button>
+      </div>
+      <div class="hint" id="notesEmptyHint"></div>
+    </div>
+    <div class="card">
+      <h2 id="hLectures"></h2>
+      <div id="lectureList"></div>
+    </div>
+    <div class="card hidden" id="editorCard">
+      <h2><span id="editorLectureTitle"></span><button class="export-btn" id="saveNoteBtn"></button></h2>
+      <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
+    </div>
+  </div>
+
   <!-- READING TAB -->
   <div class="tab-panel hidden" id="panelReading">
     <div class="card">
@@ -444,7 +542,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
     </div>
   </div>
   <!-- CALENDAR TAB -->
-  <div class="tab-panel hidden" id="panelCalendar">
+  <div class="tab-panel" id="panelCalendar">
     <div class="card">
       <h2 id="hTopik"></h2>
       <div class="topik-row">
@@ -461,6 +559,15 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
       </div>
     </div>
     <div class="card">
+      <h2 id="hMonthView"></h2>
+      <div class="month-nav">
+        <button id="monthPrevBtn">‹</button>
+        <span class="month-label" id="monthLabel"></span>
+        <button id="monthNextBtn">›</button>
+      </div>
+      <div class="month-grid" id="monthGrid"></div>
+    </div>
+    <div class="card">
       <h2 id="hAddDeadline"></h2>
       <div class="log-form">
         <div class="field wide">
@@ -472,6 +579,8 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
           <select id="eventKind">
             <option value="deadline">Deadline</option>
             <option value="event">Event</option>
+            <option value="course">Course</option>
+            <option value="birthday">Birthday</option>
           </select>
         </div>
         <div class="field">
@@ -504,6 +613,7 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
             <option value="day">Day(s)</option>
             <option value="week">Week(s)</option>
             <option value="month">Month(s)</option>
+            <option value="year">Year(s)</option>
           </select>
         </div>
         <div class="field hidden" id="recurIntervalField">
@@ -544,13 +654,14 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
       <div class="list-controls" id="eventListControls"></div>
     </div>
     <div class="card">
-      <h2 id="hMonthView"></h2>
-      <div class="month-nav">
-        <button id="monthPrevBtn">‹</button>
-        <span class="month-label" id="monthLabel"></span>
-        <button id="monthNextBtn">›</button>
-      </div>
-      <div class="month-grid" id="monthGrid"></div>
+      <h2 id="hCoursesCal"></h2>
+      <div id="courseListKind"></div>
+      <div class="list-controls" id="courseListControls"></div>
+    </div>
+    <div class="card">
+      <h2 id="hBirthdays"></h2>
+      <div id="birthdayListKind"></div>
+      <div class="list-controls" id="birthdayListControls"></div>
     </div>
   </div>
   <footer id="footerText"></footer>
@@ -603,7 +714,20 @@ const I18N = {
     lblSetNewPassword:'Set a new password', lblNewPassword:'New password', updatePasswordBtn:'Update password',
     passwordUpdated:'Password updated! Signing you in...', passwordUpdateError:'Could not update password.', enterEmailFirst:'Enter your email above first.',
     lblEventPrivate:'Visibility', publicOpt:'Public', privateOpt:'Private', ownedBy:'by',
-    editBtn:'✏️ Edit', saveChanges:'Save changes', cancelEdit:'Cancel'
+    editBtn:'✏️ Edit', saveChanges:'Save changes', cancelEdit:'Cancel',
+    kindCourse:'Course', kindBirthday:'Birthday', repeatYear:'Year(s)',
+    hCoursesCal:'Courses', hBirthdays:'Birthdays',
+    remindOthersLabel:'Also remind', signInWithNameHint:'Email or display name',
+    duplicateName:'That display name is already taken.',
+    hAddCourse:'Add a course', courseTitle:'Course title', courseCode:'Course code', courseProfessor:'Professor',
+    courseTime:'Time', courseConcentration:'Concentration', courseStatus:'Status', courseSyllabus:'Syllabus (optional)',
+    addCourseBtn:'Add course', courseHint:'Only course title and time are required.',
+    hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in',
+    hCourseList:'All courses', viewSyllabus:'Syllabus ↗',
+    hNotesPick:'Pick a course', lblNotesCourse:'Course', lblNewLecture:'New lecture title', addLectureBtn:'Add lecture',
+    notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
+    hLectures:'Lectures', saveNoteBtn:'Save note', noteSaved:'Saved!',
+    tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
@@ -642,7 +766,20 @@ const I18N = {
     lblSetNewPassword:'새 비밀번호 설정', lblNewPassword:'새 비밀번호', updatePasswordBtn:'비밀번호 변경',
     passwordUpdated:'비밀번호가 변경되었습니다! 로그인 중...', passwordUpdateError:'비밀번호를 변경할 수 없습니다.', enterEmailFirst:'먼저 위에 이메일을 입력하세요.',
     lblEventPrivate:'공개 범위', publicOpt:'공개', privateOpt:'비공개', ownedBy:'',
-    editBtn:'✏️ 수정', saveChanges:'변경사항 저장', cancelEdit:'취소'
+    editBtn:'✏️ 수정', saveChanges:'변경사항 저장', cancelEdit:'취소',
+    kindCourse:'수업', kindBirthday:'생일', repeatYear:'년',
+    hCoursesCal:'수업', hBirthdays:'생일',
+    remindOthersLabel:'함께 알림 받기', signInWithNameHint:'이메일 또는 이름',
+    duplicateName:'이미 사용 중인 이름입니다.',
+    hAddCourse:'수업 추가', courseTitle:'수업명', courseCode:'수업 코드', courseProfessor:'교수',
+    courseTime:'시간', courseConcentration:'전공/트랙', courseStatus:'상태', courseSyllabus:'강의계획서 (선택)',
+    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.',
+    hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정',
+    hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗',
+    hNotesPick:'수업 선택', lblNotesCourse:'수업', lblNewLecture:'새 강의 제목', addLectureBtn:'강의 추가',
+    notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
+    hLectures:'강의 목록', saveNoteBtn:'노트 저장', noteSaved:'저장됨!',
+    tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전'
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
@@ -681,13 +818,26 @@ const I18N = {
     lblSetNewPassword:'Đặt mật khẩu mới', lblNewPassword:'Mật khẩu mới', updatePasswordBtn:'Cập nhật mật khẩu',
     passwordUpdated:'Đã cập nhật mật khẩu! Đang đăng nhập...', passwordUpdateError:'Không thể cập nhật mật khẩu.', enterEmailFirst:'Hãy nhập email của bạn ở trên trước.',
     lblEventPrivate:'Chế độ hiển thị', publicOpt:'Công khai', privateOpt:'Riêng tư', ownedBy:'bởi',
-    editBtn:'✏️ Sửa', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy'
+    editBtn:'✏️ Sửa', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy',
+    kindCourse:'Khóa học', kindBirthday:'Sinh nhật', repeatYear:'Năm',
+    hCoursesCal:'Khóa học', hBirthdays:'Sinh nhật',
+    remindOthersLabel:'Nhắc cả người kia', signInWithNameHint:'Email hoặc tên hiển thị',
+    duplicateName:'Tên hiển thị này đã được sử dụng.',
+    hAddCourse:'Thêm khóa học', courseTitle:'Tên khóa học', courseCode:'Mã khóa học', courseProfessor:'Giáo sư',
+    courseTime:'Giờ học', courseConcentration:'Chuyên ngành', courseStatus:'Trạng thái', courseSyllabus:'Đề cương (tùy chọn)',
+    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.',
+    hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt',
+    hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗',
+    hNotesPick:'Chọn khóa học', lblNotesCourse:'Khóa học', lblNewLecture:'Tiêu đề bài giảng mới', addLectureBtn:'Thêm bài giảng',
+    notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
+    hLectures:'Bài giảng', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!',
+    tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước'
   }
 };
 const STATIC_MAP = {
   authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password',
   headerSub:'headerSub', signOutBtn:'signOut',
-  tabBtnStudy:'tabStudy', tabBtnReading:'tabReading', tabBtnJobs:'tabJobs', tabBtnCalendar:'tabCalendar',
+  tabBtnStudy:'tabStudy', tabBtnReading:'tabReading', tabBtnJobs:'tabJobs', tabBtnCalendar:'tabCalendar', tabBtnCourses:'tabCourses', tabBtnNotes:'tabNotes',
   hLeaderboard:'leaderboard', lbHeadRank:'lbRank', lbHeadName:'lbName', lbHeadStreak:'lbStreak', lbHeadWeek:'lbWeek', lbHeadTotal:'lbTotal',
   hLogStudy:'logStudy', lblDate:'date', lblActivity:'activity', lblHours:'hours', addBtn:'addSession', studyHint:'studyHint',
   hCalendar:'last12weeks', calLegendLess:'less', calLegendHit:'goalHit',
@@ -705,7 +855,15 @@ const STATIC_MAP = {
   hDeadlines:'yourDeadlines', importIcsBtn:'importIcs', exportEventsBtn:'exportCsv', exportIcsBtn:'exportIcs', hEvents:'yourEvents', exportEventsKindBtn:'exportCsv', hMonthView:'monthView',
   footerText:'footer',
   forgotPasswordBtn:'forgotPassword', lblSetNewPassword:'lblSetNewPassword', lblNewPassword:'lblNewPassword', updatePasswordBtn:'updatePasswordBtn',
-  lblEventPrivate:'lblEventPrivate'
+  lblEventPrivate:'lblEventPrivate',
+  hCoursesCal:'hCoursesCal', hBirthdays:'hBirthdays',
+  hAddCourse:'hAddCourse', lblCourseTitle:'courseTitle', lblCourseCode:'courseCode', lblCourseProfessor:'courseProfessor',
+  lblCourseTime:'courseTime', lblCourseConcentration:'courseConcentration', lblCourseStatus:'courseStatus', lblCourseSyllabus:'courseSyllabus',
+  addCourseBtn:'addCourseBtn', courseHint:'courseHint',
+  hYourCourses:'hYourCourses', cLabelPlanning:'statusPlanning', cLabelSignedUp:'statusSignedUp', cLabelLockedIn:'statusLockedIn',
+  hCourseList:'hCourseList',
+  hNotesPick:'hNotesPick', lblNotesCourse:'lblNotesCourse', lblNewLecture:'lblNewLecture', addLectureBtn:'addLectureBtn',
+  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn'
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
 const BOOK_STATUS_KEYS = {to_read:'statusToRead', reading:'statusReading', finished:'statusFinished'};
@@ -732,10 +890,16 @@ let allEntries = {};
 let allBooks = {};
 let allJobs = {};
 let allEvents = {};
-let mySubscriptions = {}; // eventId -> { applies_to, reminders: [{value,unit}] }
+let mySubscriptions = {}; // eventId -> my own subscription row
+let allSubsByEvent = {}; // eventId -> { userId: subscriptionRow }
+let allCourses = {}; // userId -> [course rows]
+let allNotes = {}; // courseId -> [note rows]
+let selectedNotesCourse = null;
+let selectedLectureId = null;
+let quillEditor = null;
 let bdRange = 'all';
 let authMode = 'signin';
-let activeTab = 'study';
+let activeTab = 'calendar';
 let expandedBookNotes = new Set();
 let calViewDate = new Date();
 function todayStr(d = new Date()){
@@ -807,7 +971,7 @@ function rebuildEventKindSelect(){
   const sel = document.getElementById('eventKind');
   const prev = sel.value || 'deadline';
   sel.innerHTML = '';
-  [['deadline','kindDeadline'],['event','kindEvent']].forEach(([val,key])=>{
+  [['deadline','kindDeadline'],['event','kindEvent'],['course','kindCourse'],['birthday','kindBirthday']].forEach(([val,key])=>{
     const opt = document.createElement('option');
     opt.value = val; opt.textContent = t(key);
     sel.appendChild(opt);
@@ -829,7 +993,7 @@ function rebuildRecurFreqSelect(){
   const sel = document.getElementById('eventRecurFreq');
   const prev = sel.value || '';
   sel.innerHTML = '';
-  [['','noRepeat'],['day','repeatDay'],['week','repeatWeek'],['month','repeatMonth']].forEach(([val,key])=>{
+  [['','noRepeat'],['day','repeatDay'],['week','repeatWeek'],['month','repeatMonth'],['year','repeatYear']].forEach(([val,key])=>{
     const opt = document.createElement('option');
     opt.value = val; opt.textContent = t(key);
     sel.appendChild(opt);
@@ -861,6 +1025,7 @@ function applyLanguage(lang){
   rebuildEventKindSelect();
   rebuildRecurFreqSelect();
   rebuildPrivacySelect();
+  rebuildCourseStatusSelect();
   renderTopikCountdown();
   if(currentUser){ renderAll(); }
 }
@@ -871,6 +1036,7 @@ function setAuthMode(mode){
   document.getElementById('tabSignUp').classList.toggle('active', mode==='signup');
   document.getElementById('displayNameField').classList.toggle('hidden', mode!=='signup');
   document.getElementById('authSubmit').textContent = mode==='signin' ? t('signIn') : t('createAccount');
+  document.getElementById('lblEmail').textContent = mode==='signin' ? t('signInWithNameHint') : t('email');
   document.getElementById('authMsg').innerHTML = '';
 }
 function showAuthMsg(text, type){
@@ -879,20 +1045,30 @@ function showAuthMsg(text, type){
 document.getElementById('tabSignIn').addEventListener('click', ()=>setAuthMode('signin'));
 document.getElementById('tabSignUp').addEventListener('click', ()=>setAuthMode('signup'));
 document.getElementById('authSubmit').addEventListener('click', async ()=>{
-  const email = document.getElementById('emailInput').value.trim();
+  const rawInput = document.getElementById('emailInput').value.trim();
   const password = document.getElementById('passwordInput').value;
-  if(!email || !password){ showAuthMsg('Enter email and password.', 'error'); return; }
+  if(!rawInput || !password){ showAuthMsg('Enter email and password.', 'error'); return; }
   if(authMode === 'signup'){
+    const email = rawInput;
     const displayName = document.getElementById('displayNameInput').value.trim();
     if(!displayName){ showAuthMsg('Enter a name.', 'error'); return; }
+    const { data: available, error: availError } = await supabaseClient.rpc('display_name_available', { dname: displayName });
+    if(!availError && available === false){ showAuthMsg(t('duplicateName'), 'error'); return; }
     const { data, error } = await supabaseClient.auth.signUp({ email, password });
     if(error){ showAuthMsg(error.message, 'error'); return; }
     if(data.user){
-      await supabaseClient.from('profiles').upsert({ id: data.user.id, display_name: displayName });
+      const { error: profileError } = await supabaseClient.from('profiles').upsert({ id: data.user.id, display_name: displayName });
+      if(profileError){ showAuthMsg(t('duplicateName'), 'error'); return; }
     }
     if(data.session){ onAuthed(data.user); }
     else { showAuthMsg('Account created. Check your email to confirm, then sign in.', 'info'); }
   } else {
+    let email = rawInput;
+    if(!email.includes('@')){
+      const { data: resolvedEmail, error: lookupError } = await supabaseClient.rpc('email_for_display_name', { dname: rawInput });
+      if(lookupError || !resolvedEmail){ showAuthMsg('No account found with that name.', 'error'); return; }
+      email = resolvedEmail;
+    }
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if(error){ showAuthMsg(error.message, 'error'); return; }
     onAuthed(data.user);
@@ -909,8 +1085,8 @@ async function onAuthed(user){
   document.getElementById('authScreen').classList.add('hidden');
   document.getElementById('resetScreen').classList.add('hidden');
   document.getElementById('appScreen').classList.remove('hidden');
-  document.getElementById('whoName').textContent = user.email;
   await loadAllData();
+  document.getElementById('whoName').textContent = profiles[user.id] || user.email;
   renderAll();
 }
 
@@ -955,6 +1131,8 @@ document.getElementById('tabNav').addEventListener('click', (e)=>{
   document.getElementById('panelReading').classList.toggle('hidden', activeTab!=='reading');
   document.getElementById('panelJobs').classList.toggle('hidden', activeTab!=='jobs');
   document.getElementById('panelCalendar').classList.toggle('hidden', activeTab!=='calendar');
+  document.getElementById('panelCourses').classList.toggle('hidden', activeTab!=='courses');
+  document.getElementById('panelNotes').classList.toggle('hidden', activeTab!=='notes');
 });
 /* ---------- STUDY HELPERS ---------- */
 function dayTotal(userId, dateKey){
@@ -1025,9 +1203,26 @@ async function loadAllData(){
     if(!allEvents[ev.user_id]) allEvents[ev.user_id] = [];
     allEvents[ev.user_id].push(ev);
   });
-  const { data: subRows } = await supabaseClient.from('event_subscriptions').select('*').eq('user_id', currentUser.id);
+  const { data: subRows } = await supabaseClient.from('event_subscriptions').select('*');
   mySubscriptions = {};
-  (subRows||[]).forEach(s=>{ mySubscriptions[s.event_id] = s; });
+  allSubsByEvent = {};
+  (subRows||[]).forEach(s=>{
+    if(!allSubsByEvent[s.event_id]) allSubsByEvent[s.event_id] = {};
+    allSubsByEvent[s.event_id][s.user_id] = s;
+    if(s.user_id === currentUser.id) mySubscriptions[s.event_id] = s;
+  });
+  const { data: courseRows } = await supabaseClient.from('courses').select('*').order('created_at', {ascending:false});
+  allCourses = {};
+  (courseRows||[]).forEach(c=>{
+    if(!allCourses[c.user_id]) allCourses[c.user_id] = [];
+    allCourses[c.user_id].push(c);
+  });
+  const { data: noteRows } = await supabaseClient.from('course_notes').select('*').order('created_at', {ascending:true});
+  allNotes = {};
+  (noteRows||[]).forEach(n=>{
+    if(!allNotes[n.course_id]) allNotes[n.course_id] = [];
+    allNotes[n.course_id].push(n);
+  });
 }
 async function upsertMyDay(dateVal, activities){
   await supabaseClient.from('study_entries').upsert(
@@ -1154,6 +1349,7 @@ function parseICS(text){
     const key = keyPart.split(';')[0].toUpperCase();
     if(key === 'SUMMARY'){ cur.title = unescapeICSText(value); }
     else if(key === 'DESCRIPTION'){ cur.notes = unescapeICSText(value); }
+    else if(key === 'RRULE'){ cur.rrule = value; }
     else if(key === 'DTSTART'){
       const digits = value.replace(/[^0-9T]/g,'');
       const datePart = digits.split('T')[0];
@@ -1168,6 +1364,99 @@ function parseICS(text){
   });
   return events;
 }
+function parseRRule(rrule){
+  const parts = {};
+  rrule.split(';').forEach(p=>{
+    const kv = p.split('=');
+    if(kv[0]) parts[kv[0].toUpperCase()] = kv[1];
+  });
+  return parts;
+}
+function isBirthdayTitle(title){
+  const s = (title||'').toLowerCase();
+  return s.includes('birthday') || s.includes('fødselsdag');
+}
+function classifyImportedEvents(parsed){
+  const results = [];
+  const consumed = new Set();
+  const byTitle = {};
+  parsed.forEach((ev, idx)=>{
+    const key = (ev.title||'').trim();
+    if(!byTitle[key]) byTitle[key] = [];
+    byTitle[key].push(Object.assign({}, ev, { idx }));
+  });
+
+  parsed.forEach((ev, idx)=>{
+    if(consumed.has(idx)) return;
+
+    if(isBirthdayTitle(ev.title)){
+      results.push({
+        title: ev.title, date: ev.date, time: ev.time || null, notes: ev.notes || null,
+        kind: 'birthday', recur_freq: 'year', recur_interval: 1, recur_end_type: 'never', recur_end_date: null
+      });
+      consumed.add(idx);
+      return;
+    }
+
+    if(ev.rrule){
+      const rr = parseRRule(ev.rrule);
+      let endDate = null;
+      if(rr.UNTIL){
+        const d = rr.UNTIL.replace(/[^0-9]/g,'').slice(0,8);
+        endDate = `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;
+      }
+      if(rr.FREQ === 'WEEKLY'){
+        results.push({
+          title: ev.title, date: ev.date, time: ev.time || null, notes: ev.notes || null,
+          kind: 'course', recur_freq: 'week', recur_interval: parseInt(rr.INTERVAL)||1,
+          recur_end_type: endDate ? 'date' : 'never', recur_end_date: endDate
+        });
+        consumed.add(idx);
+        return;
+      }
+      const freqMap = {DAILY:'day', WEEKLY:'week', MONTHLY:'month', YEARLY:'year'};
+      results.push({
+        title: ev.title, date: ev.date, time: ev.time || null, notes: ev.notes || null,
+        kind: 'imported', recur_freq: freqMap[rr.FREQ] || null, recur_interval: parseInt(rr.INTERVAL)||1,
+        recur_end_type: endDate ? 'date' : 'never', recur_end_date: endDate
+      });
+      consumed.add(idx);
+      return;
+    }
+
+    const group = (byTitle[(ev.title||'').trim()] || []).filter(g => !consumed.has(g.idx));
+    if(group.length >= 4){
+      const sorted = group.slice().sort((a,b)=> a.date.localeCompare(b.date));
+      let bestStart=0, bestLen=1, curStart=0, curLen=1;
+      for(let i=1;i<sorted.length;i++){
+        const prev = new Date(sorted[i-1].date);
+        const curD = new Date(sorted[i].date);
+        const diffDays = Math.round((curD-prev)/86400000);
+        if(diffDays === 7){ curLen++; }
+        else { if(curLen>bestLen){bestLen=curLen;bestStart=curStart;} curStart=i; curLen=1; }
+      }
+      if(curLen>bestLen){bestLen=curLen;bestStart=curStart;}
+      if(bestLen >= 4){
+        const runItems = sorted.slice(bestStart, bestStart+bestLen);
+        results.push({
+          title: ev.title, date: runItems[0].date, time: runItems[0].time || null, notes: runItems[0].notes || null,
+          kind: 'course', recur_freq: 'week', recur_interval: 1,
+          recur_end_type: 'date', recur_end_date: runItems[runItems.length-1].date
+        });
+        runItems.forEach(ri => consumed.add(ri.idx));
+        return;
+      }
+    }
+
+    results.push({
+      title: ev.title, date: ev.date, time: ev.time || null, notes: ev.notes || null,
+      kind: 'imported', recur_freq: null, recur_interval: 1, recur_end_type: 'never', recur_end_date: null
+    });
+    consumed.add(idx);
+  });
+
+  return results;
+}
 async function importIcsFile(file){
   const text = await file.text();
   let parsed;
@@ -1176,14 +1465,20 @@ async function importIcsFile(file){
     alert(t('importFail'));
     return;
   }
-  const rows = parsed.map(ev => ({
+  const classified = classifyImportedEvents(parsed);
+  const rows = classified.map(ev => ({
     user_id: currentUser.id,
     title: ev.title || 'Untitled',
-    kind: 'event',
+    kind: ev.kind,
     event_date: ev.date,
     event_time: ev.time || null,
     notes: ev.notes || null,
-    color: '#6E8FB0'
+    color: ev.kind === 'course' ? '#6E8FB0' : ev.kind === 'birthday' ? '#B37B4F' : '#8B8578',
+    recur_freq: ev.recur_freq,
+    recur_interval: ev.recur_interval,
+    recur_end_type: ev.recur_end_type,
+    recur_end_date: ev.recur_end_date,
+    is_private: false
   }));
   const { data, error } = await supabaseClient.from('events').insert(rows).select();
   if(!error && data){
@@ -1609,6 +1904,7 @@ function renderTopikCountdown(){
   testVal.textContent = testCd ? testCd : t('examPassed');
 }
 setInterval(renderTopikCountdown, 30000);
+setInterval(()=>{ if(currentUser && activeTab === 'calendar') renderDeadlineList(); }, 30000);
 async function addEvent(){
   const title = document.getElementById('eventTitle').value.trim();
   const kind = document.getElementById('eventKind').value || 'deadline';
@@ -1717,6 +2013,7 @@ function expandOccurrences(ev, rangeStartStr, rangeEndStr){
     if(ev.recur_freq === 'day') cur.setDate(cur.getDate() + interval);
     else if(ev.recur_freq === 'week') cur.setDate(cur.getDate() + interval*7);
     else if(ev.recur_freq === 'month') cur.setMonth(cur.getMonth() + interval);
+    else if(ev.recur_freq === 'year') cur.setFullYear(cur.getFullYear() + interval);
     else break;
   }
   return occ;
@@ -1735,7 +2032,7 @@ function nextOccurrence(ev){
 function recurBadgeText(ev){
   if(!ev.recur_freq) return '';
   const n = ev.recur_interval || 1;
-  const unitKey = ev.recur_freq === 'day' ? 'repeatDay' : ev.recur_freq === 'week' ? 'repeatWeek' : 'repeatMonth';
+  const unitKey = ev.recur_freq === 'day' ? 'repeatDay' : ev.recur_freq === 'week' ? 'repeatWeek' : ev.recur_freq === 'year' ? 'repeatYear' : 'repeatMonth';
   let text = t('recurBadge').replace('{n}', n).replace('{unit}', t(unitKey).toLowerCase());
   if(ev.recur_end_type === 'date' && ev.recur_end_date){
     text += ' · ' + t('recurUntil').replace('{date}', ev.recur_end_date);
@@ -1749,7 +2046,9 @@ const PAGE_SIZE = 10;
 const PREVIEW_SIZE = 3;
 const listState = {
   deadline: { expanded:false, page:1 },
-  event: { expanded:false, page:1 }
+  event: { expanded:false, page:1 },
+  course: { expanded:false, page:1 },
+  birthday: { expanded:false, page:1 }
 };
 
 function itemsOfKind(kind){
@@ -1766,36 +2065,69 @@ let expandedSubscribe = new Set();
 let expandedEdit = new Set();
 let reminderDrafts = {};
 
+function fineCountdownText(targetMs, nowMs){
+  const diffMs = targetMs - nowMs;
+  const absMs = Math.abs(diffMs);
+  const h = Math.floor(absMs/3600000);
+  const m = Math.floor((absMs%3600000)/60000);
+  const s = Math.floor((absMs%60000)/1000);
+  const parts = [];
+  if(h>0) parts.push(h+'h');
+  parts.push(m+'m');
+  if(h===0) parts.push(s+'s');
+  const fine = parts.join(' ');
+  return diffMs >= 0 ? `${fine} ${t('fineLeft')}` : `${fine} ${t('fineAgo')}`;
+}
 function buildEventRowEl(ev){
   const today = new Date(todayStr());
   const nextDate = nextOccurrence(ev);
   const evDate = new Date(nextDate);
   const diffDays = Math.round((evDate - today) / 86400000);
+  const now = new Date();
+  const target = new Date(nextDate + 'T' + (ev.event_time || '23:59:59'));
+  const diffMsExact = target - now;
   let daysText, soon = false;
-  if(diffDays > 0){ daysText = diffDays + ' ' + pluralUnit(diffDays, t('dayLeftSingular'), t('daysLeft')); soon = diffDays <= 7; }
+  if(Math.abs(diffMsExact) < 86400000){
+    daysText = fineCountdownText(target.getTime(), now.getTime());
+    soon = true;
+  }
+  else if(diffDays > 0){ daysText = diffDays + ' ' + pluralUnit(diffDays, t('dayLeftSingular'), t('daysLeft')); soon = diffDays <= 7; }
   else if(diffDays === 0){ daysText = t('today'); soon = true; }
   else { const od = Math.abs(diffDays); daysText = od + ' ' + pluralUnit(od, t('overdueSingular'), t('overdue')); soon = true; }
 
   const wrap = document.createElement('div');
   const timeText = ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '';
   const recurText = recurBadgeText(ev);
-  const sub = mySubscriptions[ev.id];
+  const subsForEvent = allSubsByEvent[ev.id] || {};
+  const mySubForRow = subsForEvent[currentUser.id];
   const isOpen = expandedSubscribe.has(ev.id);
-  const bellLabel = sub ? '🔔 ' + t('subscribed') : '🔕 ' + t('remindMe');
+  const bellLabel = mySubForRow ? '🔔 ' + t('subscribed') : '🔕 ' + t('remindMe');
   const isMine = ev.user_id === currentUser.id;
   const ownerTag = !isMine ? `<span class="e-who">${nameFor(ev.user_id)}</span>` : '';
 
   if(!reminderDrafts[ev.id]){
+    const existingRecipients = Object.keys(subsForEvent);
+    const seedSub = mySubForRow || Object.values(subsForEvent)[0];
     reminderDrafts[ev.id] = {
-      appliesTo: sub ? sub.applies_to : 'all',
-      reminders: (sub && sub.reminders && sub.reminders.length) ? JSON.parse(JSON.stringify(sub.reminders)) : [{value:24, unit:'hours'}]
+      appliesTo: seedSub ? seedSub.applies_to : 'all',
+      reminders: (seedSub && seedSub.reminders && seedSub.reminders.length) ? JSON.parse(JSON.stringify(seedSub.reminders)) : [{value:24, unit:'hours'}],
+      recipients: new Set(existingRecipients.length ? existingRecipients : [currentUser.id])
     };
   }
   const draft = reminderDrafts[ev.id];
 
+  const recipientCheckboxes = Object.keys(profiles).map(uid=>{
+    const label = uid === currentUser.id ? t('remindMe') : `${t('remindOthersLabel')}: ${nameFor(uid)}`;
+    const checked = draft.recipients.has(uid);
+    return `<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;margin-bottom:4px;">
+      <input type="checkbox" class="rem-recipient-cb" data-uid="${uid}" ${checked?'checked':''}> ${label}
+    </label>`;
+  }).join('');
+
   const remRows = draft.reminders.map((r, idx) => `
     <span class="note-add" style="margin-top:6px;">
-        <input type="number" min="0" value="${r.value}" data-idx="${idx}" class="rem-value-input" style="width:60px;">      <select data-idx="${idx}" class="rem-unit-select">
+      <input type="number" min="1" value="${r.value}" data-idx="${idx}" class="rem-value-input" style="width:60px;">
+      <select data-idx="${idx}" class="rem-unit-select">
         <option value="hours" ${r.unit==='hours'?'selected':''}>${t('unitHours')}</option>
         <option value="days" ${r.unit==='days'?'selected':''}>${t('unitDays')}</option>
       </select>
@@ -1813,6 +2145,8 @@ function buildEventRowEl(ev){
       <select class="edit-kind">
         <option value="deadline" ${ev.kind==='deadline'?'selected':''}>${t('kindDeadline')}</option>
         <option value="event" ${ev.kind==='event'?'selected':''}>${t('kindEvent')}</option>
+        <option value="course" ${ev.kind==='course'?'selected':''}>${t('kindCourse')}</option>
+        <option value="birthday" ${ev.kind==='birthday'?'selected':''}>${t('kindBirthday')}</option>
       </select>
     </div>
     <div class="field">
@@ -1879,6 +2213,7 @@ function buildEventRowEl(ev){
         ${editPanelHtml}
       </div>
       <div class="notes-panel ${isOpen?'':'hidden'}" data-sub-for="${ev.id}">
+        <div style="margin-bottom:8px;">${recipientCheckboxes}</div>
         ${ev.recur_freq ? `
         <div class="field">
           <label>${t('applyToLabel')}</label>
@@ -1891,7 +2226,7 @@ function buildEventRowEl(ev){
         <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
           <button class="export-btn sub-add-reminder" data-id="${ev.id}">${t('addReminder')}</button>
           <button class="export-btn sub-save" data-id="${ev.id}">${t('saveReminders')}</button>
-          ${sub ? `<button class="export-btn sub-remove" data-id="${ev.id}">${t('unsubscribe')}</button>` : ''}
+          ${mySubForRow ? `<button class="export-btn sub-remove" data-id="${ev.id}">${t('unsubscribe')}</button>` : ''}
         </div>
         <div class="hint">${t('reminderNote')}</div>
       </div>
@@ -1919,13 +2254,13 @@ function buildEventRowEl(ev){
   if(appliesSel){
     appliesSel.addEventListener('change', ()=>{ draft.appliesTo = appliesSel.value; });
   }
-  wrap.querySelectorAll('.rem-value-input').forEach(inp=>{
-    inp.addEventListener('change', ()=>{
-      const idx = parseInt(inp.dataset.idx, 10);
-      const parsed = parseInt(inp.value, 10);
-  
-      draft.reminders[idx].value = Number.isNaN(parsed) ? 1 : parsed;
+  wrap.querySelectorAll('.rem-recipient-cb').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      if(cb.checked) draft.recipients.add(cb.dataset.uid); else draft.recipients.delete(cb.dataset.uid);
     });
+  });
+  wrap.querySelectorAll('.rem-value-input').forEach(inp=>{
+    inp.addEventListener('change', ()=>{ draft.reminders[parseInt(inp.dataset.idx)].value = parseInt(inp.value)||1; });
   });
   wrap.querySelectorAll('.rem-unit-select').forEach(sel=>{
     sel.addEventListener('change', ()=>{ draft.reminders[parseInt(sel.dataset.idx)].unit = sel.value; });
@@ -1953,31 +2288,30 @@ function buildEventRowEl(ev){
 async function saveSubscription(eventId){
   const draft = reminderDrafts[eventId];
   if(!draft) return;
-  const normalizedReminders = draft.reminders.map(r => {
-    const value = Number(r.value);
-    return {
-      value: Number.isFinite(value) && value >= 0 ? value : 1,
-      unit: r.unit === 'days' ? 'days' : 'hours'
-    };
-  });
-  
-  const row = {
-    event_id: eventId,
-    user_id: currentUser.id,
-    applies_to: draft.appliesTo,
-    reminders: normalizedReminders
-  };
-  const { data, error } = await supabaseClient.from('event_subscriptions')
-    .upsert(row, { onConflict: 'event_id,user_id' }).select();
-  if(!error && data && data[0]){
-    mySubscriptions[eventId] = data[0];
+  const existing = allSubsByEvent[eventId] || {};
+  const recipients = Array.from(draft.recipients);
+  if(recipients.length > 0){
+    const rows = recipients.map(uid => ({
+      event_id: eventId, user_id: uid, applies_to: draft.appliesTo, reminders: draft.reminders
+    }));
+    await supabaseClient.from('event_subscriptions').upsert(rows, { onConflict: 'event_id,user_id' });
   }
+  const toRemove = Object.keys(existing).filter(uid => !draft.recipients.has(uid));
+  for(const uid of toRemove){
+    await supabaseClient.from('event_subscriptions').delete().eq('event_id', eventId).eq('user_id', uid);
+  }
+  const { data: freshRows } = await supabaseClient.from('event_subscriptions').select('*').eq('event_id', eventId);
+  allSubsByEvent[eventId] = {};
+  (freshRows||[]).forEach(s=>{ allSubsByEvent[eventId][s.user_id] = s; });
+  mySubscriptions[eventId] = allSubsByEvent[eventId][currentUser.id];
+  if(!mySubscriptions[eventId]) delete mySubscriptions[eventId];
   expandedSubscribe.delete(eventId);
   renderCalendarTab();
 }
 async function removeSubscription(eventId){
   await supabaseClient.from('event_subscriptions').delete().eq('event_id', eventId).eq('user_id', currentUser.id);
   delete mySubscriptions[eventId];
+  if(allSubsByEvent[eventId]) delete allSubsByEvent[eventId][currentUser.id];
   delete reminderDrafts[eventId];
   expandedSubscribe.delete(eventId);
   renderCalendarTab();
@@ -2043,6 +2377,8 @@ function renderKindList(kind, listId, controlsId){
 function renderDeadlineList(){
   renderKindList('deadline', 'deadlineList', 'deadlineListControls');
   renderKindList('event', 'eventListKind', 'eventListControls');
+  renderKindList('course', 'courseListKind', 'courseListControls');
+  renderKindList('birthday', 'birthdayListKind', 'birthdayListControls');
 }
 function textColorFor(hex){
   if(!hex) return '#fff';
@@ -2101,12 +2437,27 @@ function renderMonthGrid(){
       const recurPrefix = ev.recur_freq ? '↻ ' : '';
       const ownerSuffix = ev.user_id !== currentUser.id ? ` (${t('ownedBy')} ${nameFor(ev.user_id)})` : '';
       const tip = ev.event_time ? `${recurPrefix}${ev.title} · ${formatTime12h(ev.event_time)}${ownerSuffix}` : `${recurPrefix}${ev.title}${ownerSuffix}`;
-      chips += `<div class="event-chip" style="background:${bg};color:${textColorFor(bg)}" title="${tip}">${recurPrefix}${ev.title}</div>`;
+      const bellIcon = mySubscriptions[ev.id] ? '🔔' : '🔕';
+      chips += `<div class="event-chip" style="background:${bg};color:${textColorFor(bg)}" title="${tip}"><span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span>${recurPrefix}${ev.title}</div>`;
     });
     const extra = events.length - maxShow;
     if(extra > 0){ chips += `<div class="more-count">+${extra}</div>`; }
     cell.innerHTML = `<div class="dnum">${day}</div><div class="chip-stack">${chips}</div>`;
     grid.appendChild(cell);
+  }
+  grid.querySelectorAll('.chip-bell').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      quickToggleSubscription(btn.dataset.ev);
+    });
+  });
+}
+async function quickToggleSubscription(eventId){
+  if(mySubscriptions[eventId]){
+    await removeSubscription(eventId);
+  } else {
+    reminderDrafts[eventId] = { appliesTo:'all', reminders:[{value:24,unit:'hours'}], recipients: new Set([currentUser.id]) };
+    await saveSubscription(eventId);
   }
 }
 document.getElementById('monthPrevBtn').addEventListener('click', ()=>{
@@ -2122,21 +2473,6 @@ function renderCalendarTab(){
   renderDeadlineList();
   renderMonthGrid();
 }
-  function attachPasswordToggle(inputId, buttonId){
-  const input = document.getElementById(inputId);
-  const btn = document.getElementById(buttonId);
-  if(!input || !btn) return;
-
-  btn.addEventListener('click', ()=>{
-    const showing = input.type === 'text';
-    input.type = showing ? 'password' : 'text';
-    btn.textContent = showing ? '👁️' : '🙈';
-    btn.title = showing ? 'Show password' : 'Hide password';
-  });
-}
-
-attachPasswordToggle('passwordInput', 'togglePasswordBtn');
-attachPasswordToggle('newPasswordInput', 'toggleNewPasswordBtn');
 /* ---------- GLOBAL RENDER ---------- */
 function renderAll(){
   renderLeaderboard();
@@ -2147,6 +2483,9 @@ function renderAll(){
   renderReading();
   renderJobs();
   renderCalendarTab();
+  renderCourses();
+  renderNotesCourseSelect();
+  renderLectureList();
 }
 function initForm(){
   document.getElementById('dateInput').value = todayStr();
@@ -2174,6 +2513,232 @@ document.getElementById('bdToggle').addEventListener('click', (e)=>{
   btn.classList.add('active');
   renderBreakdown();
 });
+
+/* ---------- COURSES ---------- */
+function rebuildCourseStatusSelect(){
+  const sel = document.getElementById('courseStatus');
+  if(!sel) return;
+  const prev = sel.value || 'planning';
+  sel.innerHTML = '';
+  [['planning','statusPlanning'],['signed_up','statusSignedUp'],['locked_in','statusLockedIn']].forEach(([val,key])=>{
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = t(key);
+    sel.appendChild(opt);
+  });
+  sel.value = prev;
+}
+function nextWeekdayDate(targetDow){
+  const d = new Date();
+  const cur = d.getDay();
+  const diff = (targetDow - cur + 7) % 7;
+  d.setDate(d.getDate() + diff);
+  return todayStr(d);
+}
+async function linkCourseToCalendar(course){
+  const timeMap = {'9-12':'09:00','12-15':'12:00','15-18':'15:00'};
+  const startTime = timeMap[course.time_slot] || '09:00';
+  const rows = [];
+  for(let dow=1; dow<=5; dow++){
+    rows.push({
+      user_id: currentUser.id, title: course.title, kind: 'course',
+      event_date: nextWeekdayDate(dow), event_time: startTime, notes: course.code || null,
+      color: '#6E8FB0', is_private: false,
+      recur_freq: 'week', recur_interval: 1, recur_end_type: 'never', recur_end_date: null
+    });
+  }
+  const { data, error } = await supabaseClient.from('events').insert(rows).select();
+  if(!error && data){
+    if(!allEvents[currentUser.id]) allEvents[currentUser.id] = [];
+    allEvents[currentUser.id].push(...data);
+  }
+}
+async function addCourse(){
+  const title = document.getElementById('courseTitle').value.trim();
+  const code = document.getElementById('courseCode').value.trim();
+  const professor = document.getElementById('courseProfessor').value.trim();
+  const timeSlot = document.getElementById('courseTime').value;
+  const concentration = document.getElementById('courseConcentration').value.trim();
+  const status = document.getElementById('courseStatus').value;
+  const fileInput = document.getElementById('courseSyllabus');
+  const file = fileInput.files[0];
+  if(!title || !timeSlot) return;
+
+  let syllabusUrl = null, syllabusName = null;
+  if(file){
+    const path = `${currentUser.id}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabaseClient.storage.from('syllabi').upload(path, file);
+    if(!uploadError){
+      const { data: urlData } = supabaseClient.storage.from('syllabi').getPublicUrl(path);
+      syllabusUrl = urlData.publicUrl;
+      syllabusName = file.name;
+    }
+  }
+
+  const row = {
+    user_id: currentUser.id, title, code: code || null, professor: professor || null,
+    time_slot: timeSlot, concentration: concentration || null, status,
+    syllabus_url: syllabusUrl, syllabus_name: syllabusName
+  };
+  const { data, error } = await supabaseClient.from('courses').insert(row).select();
+  if(!error && data && data[0]){
+    if(!allCourses[currentUser.id]) allCourses[currentUser.id] = [];
+    allCourses[currentUser.id].unshift(data[0]);
+    await linkCourseToCalendar(data[0]);
+  }
+  document.getElementById('courseTitle').value = '';
+  document.getElementById('courseCode').value = '';
+  document.getElementById('courseProfessor').value = '';
+  document.getElementById('courseConcentration').value = '';
+  fileInput.value = '';
+  renderCourses();
+  renderCalendarTab();
+  renderNotesCourseSelect();
+}
+document.getElementById('addCourseBtn').addEventListener('click', addCourse);
+async function updateCourseStatus(courseId, status){
+  await supabaseClient.from('courses').update({status}).eq('id', courseId);
+  Object.values(allCourses).forEach(list=>{
+    const c = list.find(x=>x.id===courseId);
+    if(c) c.status = status;
+  });
+  renderCourses();
+}
+async function deleteCourse(courseId){
+  await supabaseClient.from('courses').delete().eq('id', courseId);
+  Object.keys(allCourses).forEach(uid=>{
+    allCourses[uid] = (allCourses[uid]||[]).filter(x=>x.id!==courseId);
+  });
+  renderCourses();
+  renderNotesCourseSelect();
+}
+function renderCourses(){
+  const mine = allCourses[currentUser.id] || [];
+  document.getElementById('cStatPlanning').textContent = mine.filter(c=>c.status==='planning').length;
+  document.getElementById('cStatSignedUp').textContent = mine.filter(c=>c.status==='signed_up').length;
+  document.getElementById('cStatLockedIn').textContent = mine.filter(c=>c.status==='locked_in').length;
+
+  const list = document.getElementById('courseFullList');
+  list.innerHTML = '';
+  const all = [];
+  Object.values(allCourses).forEach(arr=> all.push(...arr));
+  if(all.length === 0){ list.innerHTML = '<div class="empty">—</div>'; return; }
+  const timeLabels = {'9-12':'9:00–12:00','12-15':'12:00–15:00','15-18':'15:00–18:00'};
+  all.slice().sort((a,b)=> (b.created_at||'').localeCompare(a.created_at||'')).forEach(c=>{
+    const isMine = c.user_id === currentUser.id;
+    const div = document.createElement('div');
+    div.className = 'item-row';
+    const metaParts = [timeLabels[c.time_slot] || c.time_slot];
+    if(c.code) metaParts.push(c.code);
+    if(c.professor) metaParts.push(c.professor);
+    if(c.concentration) metaParts.push(c.concentration);
+    const badgeClass = c.status==='locked_in' ? 'finished' : c.status==='signed_up' ? 'reading' : 'to_read';
+    const statusKey = c.status==='locked_in' ? 'statusLockedIn' : c.status==='signed_up' ? 'statusSignedUp' : 'statusPlanning';
+    div.innerHTML =
+      `<div class="item-top">
+        <div><div class="item-title">${!isMine ? `<span class="e-who">${nameFor(c.user_id)}</span>` : ''}${c.title}</div>
+        <div class="item-sub">${metaParts.join(' · ')}</div></div>
+        ${isMine ? `<button class="item-del" data-id="${c.id}" title="Delete">✕</button>` : ''}
+      </div>
+      <div class="item-meta">
+        <span class="badge ${badgeClass}">${t(statusKey)}</span>
+        ${isMine ? `<select class="course-status-select" data-id="${c.id}">
+          <option value="planning" ${c.status==='planning'?'selected':''}>${t('statusPlanning')}</option>
+          <option value="signed_up" ${c.status==='signed_up'?'selected':''}>${t('statusSignedUp')}</option>
+          <option value="locked_in" ${c.status==='locked_in'?'selected':''}>${t('statusLockedIn')}</option>
+        </select>` : ''}
+        ${c.syllabus_url ? `<a href="${c.syllabus_url}" target="_blank" rel="noopener">${t('viewSyllabus')}</a>` : ''}
+      </div>`;
+    list.appendChild(div);
+  });
+  list.querySelectorAll('.item-del').forEach(btn=>{
+    btn.addEventListener('click', ()=> deleteCourse(btn.dataset.id));
+  });
+  list.querySelectorAll('.course-status-select').forEach(sel=>{
+    sel.addEventListener('change', ()=> updateCourseStatus(sel.dataset.id, sel.value));
+  });
+}
+
+/* ---------- NOTES ---------- */
+function renderNotesCourseSelect(){
+  const sel = document.getElementById('notesCourseSelect');
+  const prev = sel.value;
+  sel.innerHTML = '';
+  const all = [];
+  Object.values(allCourses).forEach(arr=> all.push(...arr));
+  document.getElementById('notesEmptyHint').classList.toggle('hidden', all.length > 0);
+  all.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.title + (c.user_id !== currentUser.id ? ` (${nameFor(c.user_id)})` : '');
+    sel.appendChild(opt);
+  });
+  if(prev && all.find(c=>c.id===prev)){ sel.value = prev; selectedNotesCourse = prev; }
+  else if(all.length){ selectedNotesCourse = sel.value; }
+  else { selectedNotesCourse = null; }
+}
+document.getElementById('notesCourseSelect').addEventListener('change', (e)=>{
+  selectedNotesCourse = e.target.value;
+  selectedLectureId = null;
+  document.getElementById('editorCard').classList.add('hidden');
+  renderLectureList();
+});
+async function addLecture(){
+  const title = document.getElementById('newLectureTitle').value.trim();
+  if(!title || !selectedNotesCourse) return;
+  const row = { user_id: currentUser.id, course_id: selectedNotesCourse, lecture_title: title, content: '' };
+  const { data, error } = await supabaseClient.from('course_notes').insert(row).select();
+  if(!error && data && data[0]){
+    if(!allNotes[selectedNotesCourse]) allNotes[selectedNotesCourse] = [];
+    allNotes[selectedNotesCourse].push(data[0]);
+  }
+  document.getElementById('newLectureTitle').value = '';
+  renderLectureList();
+}
+document.getElementById('addLectureBtn').addEventListener('click', addLecture);
+function renderLectureList(){
+  const list = document.getElementById('lectureList');
+  list.innerHTML = '';
+  if(!selectedNotesCourse){ list.innerHTML = '<div class="empty">—</div>'; return; }
+  const lectures = allNotes[selectedNotesCourse] || [];
+  if(lectures.length === 0){ list.innerHTML = '<div class="empty">—</div>'; return; }
+  lectures.forEach(n=>{
+    const row = document.createElement('div');
+    row.className = 'lecture-row' + (n.id===selectedLectureId ? ' active' : '');
+    row.textContent = n.lecture_title;
+    row.addEventListener('click', ()=> openLecture(n.id));
+    list.appendChild(row);
+  });
+}
+function openLecture(noteId){
+  selectedLectureId = noteId;
+  renderLectureList();
+  const note = (allNotes[selectedNotesCourse]||[]).find(n=>n.id===noteId);
+  if(!note) return;
+  document.getElementById('editorCard').classList.remove('hidden');
+  document.getElementById('editorLectureTitle').textContent = note.lecture_title;
+  document.getElementById('quillContainer').innerHTML = '';
+  quillEditor = new Quill('#quillContainer', {
+    theme: 'snow',
+    modules: {
+      toolbar: [
+        ['bold','italic','underline','strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['clean']
+      ]
+    }
+  });
+  quillEditor.root.innerHTML = note.content || '';
+}
+document.getElementById('saveNoteBtn').addEventListener('click', async ()=>{
+  if(!selectedLectureId || !quillEditor) return;
+  const content = quillEditor.root.innerHTML;
+  await supabaseClient.from('course_notes').update({ content, updated_at: new Date().toISOString() }).eq('id', selectedLectureId);
+  const note = (allNotes[selectedNotesCourse]||[]).find(n=>n.id===selectedLectureId);
+  if(note) note.content = content;
+  alert(t('noteSaved'));
+});
+
 (async function init(){
   initForm();
   applyLanguage(currentLang);
