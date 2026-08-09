@@ -3484,6 +3484,13 @@ function renderLectureList(){
 }
 
 let editorDirty = false;
+const QUILL_PALETTE = [
+  '#000000','#e60000','#ff9900','#ffff00','#008a00','#0066cc','#9933ff',
+  '#ffffff','#facccc','#ffebcc','#ffffcc','#cce8cc','#cce0f5','#ebd6ff',
+  '#bbbbbb','#f06666','#ffc266','#ffff66','#66b966','#66a3e0','#c285ff',
+  '#888888','#a10000','#b26b00','#b2b200','#006100','#0047b2','#6b24b2',
+  '#444444','#5c0000','#663d00','#666600','#003700','#002966','#3d1466'
+];
 function ensureQuillInitialized(){
   if(quillEditor) return;
   quillEditor = new Quill('#quillContainer', {
@@ -3491,7 +3498,6 @@ function ensureQuillInitialized(){
     modules: {
       toolbar: [
         ['bold','italic','underline','strike'],
-        [{ 'color': [] }, { 'background': [] }],
         [{ 'list': 'ordered'}, { 'list': 'bullet' }],
         ['clean']
       ]
@@ -3500,51 +3506,72 @@ function ensureQuillInitialized(){
   quillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user') editorDirty = true;
   });
-  setupCustomPickerButtons();
+  buildCustomColorControls();
 }
-function setupCustomPickerButtons(){
-  // Quill's picker sets select.selectedIndex via indexOf(item, item.parentNode.children)
-  // at click time. Inserting a button BEFORE the real swatches shifts every swatch's
-  // index and corrupts color selection. Appending AFTER them (last child) leaves every
-  // real swatch's index untouched; we then use absolute positioning to visually pull
-  // our button to the top of the dropdown.
-  const btnStyle = 'position:absolute;top:4px;left:8px;right:8px;z-index:2;display:block;padding:5px;font-size:11px;font-weight:600;background:var(--paper-dim);border:1px solid var(--line);border-radius:4px;cursor:pointer;color:var(--ink);text-align:center;';
-  const colorOptions = document.querySelector('.ql-toolbar .ql-color .ql-picker-options');
-  if(colorOptions && !colorOptions.querySelector('.ql-default-color-btn')){
-    colorOptions.style.paddingTop = '34px';
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'ql-default-color-btn';
-    btn.textContent = t('defaultColor');
-    btn.style.cssText = btnStyle;
-    btn.addEventListener('click', (e)=>{
-      e.preventDefault(); e.stopPropagation();
-      const range = quillEditor.getSelection(true);
-      if(range && range.length > 0) quillEditor.formatText(range.index, range.length, 'color', false);
-      else quillEditor.format('color', false);
-      editorDirty = true;
-      document.querySelector('.ql-toolbar .ql-color').classList.remove('ql-expanded');
+function buildCustomColorControls(){
+  const toolbar = document.querySelector('.ql-toolbar');
+  if(!toolbar || toolbar.querySelector('.cc-color-wrap')) return;
+
+  function makeSwatchGrid(applyFn){
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:2px;';
+    QUILL_PALETTE.forEach(hex=>{
+      const sw = document.createElement('button');
+      sw.type = 'button';
+      sw.title = hex;
+      sw.style.cssText = `width:16px;height:16px;padding:0;border:1px solid rgba(0,0,0,0.15);background:${hex};cursor:pointer;`;
+      sw.addEventListener('click', ()=> applyFn(hex));
+      grid.appendChild(sw);
     });
-    colorOptions.appendChild(btn);
+    return grid;
   }
-  const bgOptions = document.querySelector('.ql-toolbar .ql-background .ql-picker-options');
-  if(bgOptions && !bgOptions.querySelector('.ql-no-highlight-btn')){
-    bgOptions.style.paddingTop = '34px';
-    const btn2 = document.createElement('button');
-    btn2.type = 'button';
-    btn2.className = 'ql-no-highlight-btn';
-    btn2.textContent = t('noHighlight');
-    btn2.style.cssText = btnStyle;
-    btn2.addEventListener('click', (e)=>{
-      e.preventDefault(); e.stopPropagation();
+
+  function makePicker(labelKey, formatName){
+    const wrap = document.createElement('span');
+    wrap.className = 'cc-' + formatName + '-wrap ql-formats';
+    wrap.style.cssText = 'position:relative;display:inline-block;';
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.textContent = formatName === 'color' ? 'A' : '⬛';
+    trigger.title = t(labelKey);
+    trigger.style.cssText = 'font-weight:700;';
+
+    const panel = document.createElement('div');
+    panel.style.cssText = 'display:none;position:absolute;top:100%;left:0;z-index:10;background:var(--paper-dim);border:1px solid var(--line);border-radius:6px;padding:6px;margin-top:2px;box-shadow:0 4px 12px rgba(0,0,0,0.2);width:152px;';
+
+    const defaultBtn = document.createElement('button');
+    defaultBtn.type = 'button';
+    defaultBtn.textContent = t(formatName === 'color' ? 'defaultColor' : 'noHighlight');
+    defaultBtn.style.cssText = 'display:block;width:100%;margin-bottom:6px;padding:5px;font-size:11px;font-weight:600;background:var(--paper);border:1px solid var(--line);border-radius:4px;cursor:pointer;color:var(--ink);';
+
+    function apply(value){
       const range = quillEditor.getSelection(true);
-      if(range && range.length > 0) quillEditor.formatText(range.index, range.length, 'background', false);
-      else quillEditor.format('background', false);
+      if(range && range.length > 0) quillEditor.formatText(range.index, range.length, formatName, value);
+      else quillEditor.format(formatName, value);
       editorDirty = true;
-      document.querySelector('.ql-toolbar .ql-background').classList.remove('ql-expanded');
+      panel.style.display = 'none';
+    }
+
+    defaultBtn.addEventListener('click', ()=> apply(false));
+    panel.appendChild(defaultBtn);
+    panel.appendChild(makeSwatchGrid(apply));
+
+    trigger.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
     });
-    bgOptions.appendChild(btn2);
+    document.addEventListener('click', (e)=>{
+      if(!wrap.contains(e.target)) panel.style.display = 'none';
+    });
+
+    wrap.appendChild(trigger);
+    wrap.appendChild(panel);
+    return wrap;
   }
+
+  toolbar.appendChild(makePicker('defaultColor', 'color'));
+  toolbar.appendChild(makePicker('noHighlight', 'background'));
 }
 window.addEventListener('beforeunload', (e)=>{
   if(editorDirty){
