@@ -521,6 +521,10 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
       <h2><span id="editorLectureTitle"></span><span><button class="export-btn" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
       <div class="hint" id="lastSavedInfo"></div>
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="export-btn" id="defaultColorBtn"></button>
+        <button class="export-btn" id="noHighlightBtn"></button>
+      </div>
       <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
       <div class="notes-panel hidden" id="versionHistoryPanel"></div>
     </div>
@@ -1012,7 +1016,7 @@ const STATIC_MAP = {
   calModalDeleteBtn:'deleteEventBtn', calModalCloseBtn:'cancelBtn',
   deleteChoiceText:'deleteRecurringQ', deleteThisOnlyBtn:'thisOccurrenceOnly', deleteAllBtn:'allOccurrences', deleteChoiceCancelBtn:'cancelBtn',
   hNotesPick:'hNotesPick', lblNotesCourse:'lblNotesCourse', lblNewLecture:'lblNewLecture', addLectureBtn:'addLectureBtn',
-  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabel:'chooseFile'
+  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabel:'chooseFile', defaultColorBtn:'defaultColor', noHighlightBtn:'noHighlight'
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
 const BOOK_STATUS_KEYS = {to_read:'statusToRead', reading:'statusReading', finished:'statusFinished'};
@@ -3503,41 +3507,9 @@ function ensureQuillInitialized(){
   setupCustomPickerButtons();
 }
 function setupCustomPickerButtons(){
-  const btnStyle = 'display:block;width:100%;margin-bottom:6px;padding:5px;font-size:11px;font-weight:600;background:var(--paper-dim);border:1px solid var(--line);border-radius:4px;cursor:pointer;color:var(--ink);';
-  const colorOptions = document.querySelector('.ql-toolbar .ql-color .ql-picker-options');
-  if(colorOptions && !colorOptions.querySelector('.ql-default-color-btn')){
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'ql-default-color-btn';
-    btn.textContent = t('defaultColor');
-    btn.style.cssText = btnStyle;
-    btn.addEventListener('click', (e)=>{
-      e.preventDefault(); e.stopPropagation();
-      const range = quillEditor.getSelection(true);
-      if(range && range.length > 0) quillEditor.formatText(range.index, range.length, 'color', false);
-      else quillEditor.format('color', false);
-      editorDirty = true;
-      document.querySelector('.ql-toolbar .ql-color').classList.remove('ql-expanded');
-    });
-    colorOptions.insertBefore(btn, colorOptions.firstChild);
-  }
-  const bgOptions = document.querySelector('.ql-toolbar .ql-background .ql-picker-options');
-  if(bgOptions && !bgOptions.querySelector('.ql-no-highlight-btn')){
-    const btn2 = document.createElement('button');
-    btn2.type = 'button';
-    btn2.className = 'ql-no-highlight-btn';
-    btn2.textContent = t('noHighlight');
-    btn2.style.cssText = btnStyle;
-    btn2.addEventListener('click', (e)=>{
-      e.preventDefault(); e.stopPropagation();
-      const range = quillEditor.getSelection(true);
-      if(range && range.length > 0) quillEditor.formatText(range.index, range.length, 'background', false);
-      else quillEditor.format('background', false);
-      editorDirty = true;
-      document.querySelector('.ql-toolbar .ql-background').classList.remove('ql-expanded');
-    });
-    bgOptions.insertBefore(btn2, bgOptions.firstChild);
-  }
+  // NOTE: inserting elements inside Quill's native .ql-picker-options grid corrupts
+  // its internal swatch-to-color mapping. Keeping these as separate controls below
+  // the toolbar instead, to guarantee colors stay correct.
 }
 window.addEventListener('beforeunload', (e)=>{
   if(editorDirty){
@@ -3622,6 +3594,20 @@ document.getElementById('closeNoteBtn').addEventListener('click', ()=>{
   document.getElementById('editorCard').classList.add('hidden');
   document.getElementById('versionHistoryPanel').classList.add('hidden');
   renderLectureList();
+});
+document.getElementById('defaultColorBtn').addEventListener('click', ()=>{
+  if(!quillEditor) return;
+  const range = quillEditor.getSelection(true);
+  if(range && range.length > 0) quillEditor.formatText(range.index, range.length, 'color', false);
+  else quillEditor.format('color', false);
+  editorDirty = true;
+});
+document.getElementById('noHighlightBtn').addEventListener('click', ()=>{
+  if(!quillEditor) return;
+  const range = quillEditor.getSelection(true);
+  if(range && range.length > 0) quillEditor.formatText(range.index, range.length, 'background', false);
+  else quillEditor.format('background', false);
+  editorDirty = true;
 });
 
 (async function init(){
