@@ -222,7 +222,7 @@ button:hover{background:var(--ink-hover);}
 .chip-edit{cursor:pointer;margin-right:2px;filter:brightness(1.4);}
 .chip-edit:hover{transform:scale(1.15);}
 .event-chip{position:relative;padding-right:12px !important;}
-.chip-initial{position:absolute;top:1px;right:1px;font-size:7px;width:9px;height:9px;line-height:9px;text-align:center;border-radius:50%;background:rgba(255,255,255,0.4);color:inherit;font-weight:800;}
+.chip-initial{position:absolute;top:1px;right:1px;font-size:6.5px;min-width:9px;height:9px;line-height:9px;padding:0 2px;text-align:center;border-radius:5px;background:rgba(255,255,255,0.4);color:inherit;font-weight:800;box-sizing:border-box;}
 .month-day .more-count{font-size:8px;color:var(--ink-soft);}
 .month-day.empty{visibility:hidden;}
 .cal-view-toggle{display:flex;gap:8px;margin-bottom:12px;}
@@ -239,7 +239,7 @@ button:hover{background:var(--ink-hover);}
 .week-hour-label{font-size:9.5px;color:var(--ink-soft);text-align:right;padding-right:4px;box-sizing:border-box;border-top:1px solid var(--line);}
 .week-day-col{flex:1;position:relative;border-left:1px solid var(--line);background-image:repeating-linear-gradient(to bottom, var(--line) 0, var(--line) 1px, transparent 1px, transparent 44px);}
 .week-event-bar{position:absolute;left:2px;right:2px;border-radius:4px;font-size:10px;padding:2px 4px;overflow:hidden;cursor:pointer;line-height:1.2;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.2);}
-.week-bar-initial{position:absolute;top:2px;right:2px;font-size:8px;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:rgba(255,255,255,0.4);color:inherit;font-weight:800;}
+.week-bar-initial{position:absolute;top:2px;right:2px;font-size:8px;min-width:12px;height:12px;line-height:12px;padding:0 3px;text-align:center;border-radius:6px;background:rgba(255,255,255,0.4);color:inherit;font-weight:800;box-sizing:border-box;}
 .deadline-color{width:10px;height:10px;border-radius:3px;flex-shrink:0;display:inline-block;margin-right:7px;}
 .field input[type=color]{padding:2px;width:44px;height:38px;cursor:pointer;}
 .ql-toolbar.ql-snow{border-color:var(--line) !important;background:var(--paper-dim);border-radius:8px 8px 0 0;}
@@ -265,8 +265,8 @@ button:hover{background:var(--ink-hover);}
 .course-picker-empty{color:var(--ink-soft);font-size:13px;}
 footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
 .hidden-file-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;}
-.file-upload-btn{display:inline-block;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;}
-.file-upload-btn:hover{background:var(--ink-hover);}
+label.file-upload-btn{display:inline-block;align-self:flex-start;width:fit-content;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:6px;font-size:13px;font-weight:600;text-transform:none;letter-spacing:normal;cursor:pointer;}
+label.file-upload-btn:hover{background:var(--ink-hover);}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
 .modal-box{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:22px 24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;}
 .modal-box h2{font-family:'Noto Serif KR',serif;font-size:16px;margin:0 0 14px;}
@@ -419,9 +419,9 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
           <label for="courseCode" id="lblCourseCode"></label>
           <input type="text" id="courseCode">
         </div>
-        <div class="field">
-          <label for="courseForUser" id="lblCourseForUser"></label>
-          <select id="courseForUser"></select>
+        <div class="field wide">
+          <label id="lblCourseForUser"></label>
+          <div id="courseForUsersGroup" style="display:flex;gap:14px;flex-wrap:wrap;padding-top:6px;"></div>
         </div>
         <div class="field">
           <label for="courseProfessor" id="lblCourseProfessor"></label>
@@ -2723,7 +2723,7 @@ function renderMonthGrid(){
       const ownerSuffix = ev.user_id !== currentUser.id ? ` (${t('ownedBy')} ${nameFor(ev.user_id)})` : '';
       const tip = ev.event_time ? `${recurPrefix}${ev.title} · ${formatTime12h(ev.event_time)}${ownerSuffix}` : `${recurPrefix}${ev.title}${ownerSuffix}`;
       const bellIcon = mySubscriptions[ev.id] ? '🔔' : '🔕';
-      chips += `<div class="event-chip" style="background:${bg};color:${textColorFor(bg)}" title="${tip}"><span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">✏️</span>${recurPrefix}${ev.title}<span class="chip-initial">${(nameFor(ev.user_id)||'?').charAt(0).toUpperCase()}</span></div>`;
+      chips += `<div class="event-chip" style="background:${bg};color:${textColorFor(bg)}" title="${tip}"><span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">✏️</span>${recurPrefix}${ev.title}<span class="chip-initial">${initialsForEvent(ev)}</span></div>`;
     });
     const extra = events.length - maxShow;
     if(extra > 0){ chips += `<div class="more-count">+${extra}</div>`; }
@@ -2852,13 +2852,13 @@ function renderWeekGrid(){
       if(ev.kind === 'course' && ev.course_id){
         const course = findCourseById(ev.course_id);
         if(course){
-          const line2 = course.professor ? `<div style="font-size:9px;font-weight:400;opacity:0.9;margin-top:4px;">${course.professor}</div>` : '';
+          const line2 = course.professor ? `<div style="font-size:9px;font-weight:400;opacity:0.9;margin-top:10px;">${course.professor}</div>` : '';
           const line3Text = [course.code, course.concentration].filter(Boolean).join(' · ');
-          const line3 = line3Text ? `<div style="font-size:9px;font-weight:400;opacity:0.9;margin-top:4px;">${line3Text}</div>` : '';
+          const line3 = line3Text ? `<div style="font-size:9px;font-weight:400;opacity:0.9;margin-top:10px;">${line3Text}</div>` : '';
           bodyHtml = `<div>${ev.title}</div>${line2}${line3}`;
         }
       }
-      bar.innerHTML = `<span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">✏️</span>${recurPrefix}${bodyHtml}<span class="week-bar-initial">${(nameFor(ev.user_id)||'?').charAt(0).toUpperCase()}</span>`;
+      bar.innerHTML = `<span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">✏️</span>${recurPrefix}${bodyHtml}<span class="week-bar-initial">${initialsForEvent(ev)}</span>`;
       bar.title = ev.title + (ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '');
       col.appendChild(bar);
     });
@@ -2963,17 +2963,51 @@ function rebuildCourseStatusSelect(){
   sel.value = prev;
 }
 function rebuildCourseForUserSelect(){
-  const sel = document.getElementById('courseForUser');
-  if(!sel) return;
-  const prev = sel.value;
-  sel.innerHTML = '';
+  const group = document.getElementById('courseForUsersGroup');
+  if(!group) return;
+  const prevChecked = Array.from(group.querySelectorAll('input:checked')).map(i=>i.value);
+  group.innerHTML = '';
   Object.keys(profiles).forEach(uid=>{
-    const opt = document.createElement('option');
-    opt.value = uid; opt.textContent = nameFor(uid);
-    sel.appendChild(opt);
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = uid;
+    cb.checked = prevChecked.length ? prevChecked.includes(uid) : (currentUser && uid === currentUser.id);
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(' ' + nameFor(uid)));
+    group.appendChild(label);
   });
-  if(prev && profiles[prev]) sel.value = prev;
-  else if(currentUser && profiles[currentUser.id]) sel.value = currentUser.id;
+}
+function blendColors(hexArr){
+  const valid = (hexArr||[]).filter(Boolean);
+  if(valid.length === 0) return '#4F7563';
+  if(valid.length === 1) return valid[0];
+  let r=0,g=0,b=0;
+  valid.forEach(hex=>{
+    const h = hex.replace('#','');
+    r += parseInt(h.slice(0,2),16)||0;
+    g += parseInt(h.slice(2,4),16)||0;
+    b += parseInt(h.slice(4,6),16)||0;
+  });
+  const n = valid.length;
+  r = Math.round(r/n); g = Math.round(g/n); b = Math.round(b/n);
+  return '#' + [r,g,b].map(x=>Math.max(0,Math.min(255,x)).toString(16).padStart(2,'0')).join('');
+}
+function courseParticipants(course){
+  if(!course) return [];
+  return Array.from(new Set([course.user_id, ...(course.shared_with||[])].filter(Boolean)));
+}
+function initialsForEvent(ev){
+  if(ev.kind === 'course' && ev.course_id){
+    const course = findCourseById(ev.course_id);
+    if(course){
+      const participants = courseParticipants(course);
+      const initials = participants.map(uid => (nameFor(uid)||'?').charAt(0).toUpperCase());
+      return Array.from(new Set(initials)).join('');
+    }
+  }
+  return (nameFor(ev.user_id)||'?').charAt(0).toUpperCase();
 }
 function rebuildCourseDaySelect(selectEl){
   const sel = selectEl || document.getElementById('courseDay');
@@ -3008,10 +3042,11 @@ async function removeLinkedCalendarEvents(courseId){
 async function linkCourseToCalendar(course){
   const startTime = TIME_START[course.time_slot] || '09:00';
   const endTime = TIME_END[course.time_slot] || '10:00';
+  const blendedColor = blendColors(courseParticipants(course).map(uid=>colorForUser(uid)));
   const rows = [{
     user_id: course.user_id, title: course.title, kind: 'course', course_id: course.id,
     event_date: nextWeekdayDate(parseInt(course.day_of_week)||1), event_time: startTime, event_end_time: endTime, notes: course.code || null,
-    color: colorForUser(course.user_id), is_private: false,
+    color: blendedColor, is_private: false,
     recur_freq: 'week', recur_interval: 1,
     recur_end_type: course.end_date ? 'date' : 'never', recur_end_date: course.end_date || null
   }];
@@ -3038,7 +3073,9 @@ async function linkCourseToCalendar(course){
 async function addCourse(){
   const title = document.getElementById('courseTitle').value.trim();
   const code = document.getElementById('courseCode').value.trim();
-  const forUser = document.getElementById('courseForUser').value || currentUser.id;
+  const forUsers = Array.from(document.querySelectorAll('#courseForUsersGroup input:checked')).map(i=>i.value);
+  const primaryUser = forUsers.includes(currentUser.id) ? currentUser.id : (forUsers[0] || currentUser.id);
+  const sharedWith = forUsers.filter(u => u !== primaryUser);
   const professor = document.getElementById('courseProfessor').value.trim();
   const dayOfWeek = parseInt(document.getElementById('courseDay').value) || 1;
   const timeSlot = document.getElementById('courseTime').value;
@@ -3063,7 +3100,7 @@ async function addCourse(){
   }
 
   const row = {
-    user_id: forUser, title, code: code || null, professor: professor || null,
+    user_id: primaryUser, shared_with: sharedWith, title, code: code || null, professor: professor || null,
     day_of_week: dayOfWeek, time_slot: timeSlot, end_date: endDate,
     midterm_date: midtermDate, final_date: finalDate,
     concentration: concentration || null, status,
@@ -3105,8 +3142,16 @@ async function deleteCourse(courseId){
   Object.keys(allEvents).forEach(uid=>{
     allEvents[uid] = (allEvents[uid]||[]).filter(x=>x.course_id!==courseId);
   });
+  const deletedNoteIds = new Set((allNotes[courseId]||[]).map(n=>n.id));
+  delete allNotes[courseId];
+  if(selectedLectureId && deletedNoteIds.has(selectedLectureId)){
+    selectedLectureId = null;
+    document.getElementById('editorCard').classList.add('hidden');
+  }
+  if(selectedNotesCourse === courseId) selectedNotesCourse = null;
   renderCourses();
   renderNotesCourseSelect();
+  renderLectureList();
   renderCalendarTab();
 }
 
@@ -3122,11 +3167,14 @@ function buildCourseEditFieldsHtml(c){
       <label>${t('courseCode')}</label>
       <input type="text" class="ce-code" value="${(c.code||'').replace(/"/g,'&quot;')}">
     </div>
-    <div class="field">
+    <div class="field wide">
       <label>${t('eventForUser')}</label>
-      <select class="ce-for-user">
-        ${Object.keys(profiles).map(uid=>`<option value="${uid}" ${c.user_id===uid?'selected':''}>${nameFor(uid)}</option>`).join('')}
-      </select>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;padding-top:6px;">
+        ${Object.keys(profiles).map(uid=>{
+          const checked = uid===c.user_id || (c.shared_with||[]).includes(uid);
+          return `<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="ce-for-user-cb" value="${uid}" ${checked?'checked':''}> ${nameFor(uid)}</label>`;
+        }).join('')}
+      </div>
     </div>
     <div class="field">
       <label>${t('courseProfessor')}</label>
@@ -3182,8 +3230,11 @@ function buildCourseEditFieldsHtml(c){
 async function saveCourseEdit(courseId, container){
   const title = container.querySelector('.ce-title').value.trim();
   const code = container.querySelector('.ce-code').value.trim();
-  const forUserEl = container.querySelector('.ce-for-user');
-  const forUser = forUserEl ? forUserEl.value : null;
+  const forUsers = Array.from(container.querySelectorAll('.ce-for-user-cb:checked')).map(i=>i.value);
+  const existingCourse = findCourseById(courseId);
+  const existingOwner = existingCourse ? existingCourse.user_id : null;
+  const primaryUser = forUsers.includes(existingOwner) ? existingOwner : (forUsers[0] || existingOwner || currentUser.id);
+  const sharedWith = forUsers.filter(u => u !== primaryUser);
   const professor = container.querySelector('.ce-professor').value.trim();
   const dayOfWeek = parseInt(container.querySelector('.ce-day').value) || 1;
   const timeSlot = container.querySelector('.ce-time').value;
@@ -3198,9 +3249,9 @@ async function saveCourseEdit(courseId, container){
   const patch = {
     title, code: code || null, professor: professor || null,
     day_of_week: dayOfWeek, time_slot: timeSlot, end_date: endDate,
-    midterm_date: midtermDate, final_date: finalDate, concentration: concentration || null
+    midterm_date: midtermDate, final_date: finalDate, concentration: concentration || null,
+    user_id: primaryUser, shared_with: sharedWith
   };
-  if(forUser) patch.user_id = forUser;
   if(file){
     const path = `${currentUser.id}/${Date.now()}_${file.name}`;
     const { error: uploadError } = await supabaseClient.storage.from('syllabi').upload(path, file);
