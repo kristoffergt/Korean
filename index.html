@@ -2754,6 +2754,7 @@ async function quickToggleSubscription(eventId){
 
 /* ---------- WEEK VIEW ---------- */
 let calViewMode = 'month';
+let weekScrollInitialized = false;
 const HOUR_PX = 44;
 function timeToMinutes(t){
   if(!t) return 0;
@@ -2851,9 +2852,9 @@ function renderWeekGrid(){
       if(ev.kind === 'course' && ev.course_id){
         const course = findCourseById(ev.course_id);
         if(course){
-          const line2 = course.professor ? `<div style="font-size:9px;font-weight:400;opacity:0.9;">${course.professor}</div>` : '';
+          const line2 = course.professor ? `<div style="font-size:9px;font-weight:400;opacity:0.9;margin-top:4px;">${course.professor}</div>` : '';
           const line3Text = [course.code, course.concentration].filter(Boolean).join(' · ');
-          const line3 = line3Text ? `<div style="font-size:9px;font-weight:400;opacity:0.9;">${line3Text}</div>` : '';
+          const line3 = line3Text ? `<div style="font-size:9px;font-weight:400;opacity:0.9;margin-top:4px;">${line3Text}</div>` : '';
           bodyHtml = `<div>${ev.title}</div>${line2}${line3}`;
         }
       }
@@ -2869,9 +2870,15 @@ function renderWeekGrid(){
   body.querySelectorAll('.chip-edit').forEach(btn=>{
     btn.addEventListener('click', (e)=>{ e.stopPropagation(); openCalendarEditModal(btn.dataset.ev, btn.dataset.date); });
   });
+  if(!weekScrollInitialized){
+    const scrollWrap = document.querySelector('.week-body-scroll');
+    if(scrollWrap){ scrollWrap.scrollTop = 9 * HOUR_PX; }
+    weekScrollInitialized = true;
+  }
 }
 document.getElementById('calViewMonthBtn').addEventListener('click', ()=>{
   calViewMode = 'month';
+  weekScrollInitialized = false;
   document.getElementById('calViewMonthBtn').classList.add('active');
   document.getElementById('calViewWeekBtn').classList.remove('active');
   document.getElementById('monthGrid').classList.remove('hidden');
