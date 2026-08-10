@@ -247,7 +247,7 @@ button:hover{background:var(--ink-hover);}
 .ql-toolbar.ql-snow{border-color:var(--line) !important;background:var(--paper-dim);border-radius:8px 8px 0 0;}
 .ql-container.ql-snow{border-color:var(--line) !important;border-radius:0 0 8px 8px;min-height:220px;font-size:14px;}
 #quillContainer .ql-editor{color:var(--note-author-color, var(--ink));background:transparent !important;min-height:220px;}
-#writingQuillContainer .ql-editor{color:var(--ink);background:transparent !important;min-height:220px;}
+#writingQuillContainer .ql-editor{color:var(--writing-author-color, var(--ink));background:transparent !important;min-height:220px;}
 .writing-task-box{white-space:pre-wrap;background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.6;margin-top:10px;}
 .writing-char-count{font-weight:600;}
 .writing-char-count.over-target{color:var(--danger, #c0392b);}
@@ -280,6 +280,9 @@ button:hover{background:var(--ink-hover);}
 .writing-source-group:first-child{border-top:none;padding-top:0;margin-top:0;}
 .writing-timer-bar{display:flex;align-items:center;gap:12px;background:var(--celadon-1);border:1px solid var(--celadon-3);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;}
 .writing-timer-display{font-family:'Space Grotesk',monospace;font-weight:700;font-size:17px;margin-left:auto;}
+.writing-sample-timer{display:flex;align-items:center;gap:6px;background:var(--paper-dim);border:1px solid var(--line);border-radius:7px;padding:5px 7px;margin:8px 0;width:fit-content;}
+.writing-sample-timer-display{font-family:'Space Grotesk',monospace;font-weight:700;font-size:13px;min-width:46px;text-align:center;}
+.writing-sample-timer .icon-btn{padding:4px 8px;font-size:11px;font-weight:600;}
 .ql-editor.ql-blank::before{color:var(--ink-soft) !important;}
 .ql-snow .ql-stroke{stroke:var(--ink-soft);}
 .ql-snow .ql-fill{fill:var(--ink-soft);}
@@ -422,11 +425,6 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <button data-view="log" class="active" id="studySubLogBtn"></button>
       <button data-view="grammar" id="studySubGrammarBtn"></button>
       <button data-view="writing" id="studySubWritingBtn"></button>
-    </div>
-    <div class="writing-timer-bar hidden" id="writingCountdownBar">
-      <span id="writingCountdownLabel"></span>
-      <span class="writing-timer-display" id="writingCountdownDisplay">00:00</span>
-      <button class="linkbtn" id="writingCountdownStopBtn"></button>
     </div>
     <div id="studyLogSection">
     <div class="card">
@@ -649,6 +647,13 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <div class="card hidden" id="writingEditorCard">
         <h2><span id="writingEditorTopic"></span><span><button class="export-btn" id="saveWritingBtn"></button> <button class="export-btn" id="closeWritingBtn"></button></span></h2>
         <div class="hint" id="writingLastSavedInfo"></div>
+        <div class="writing-sample-timer" id="writingSampleTimer">
+          <span class="writing-sample-timer-display" id="writingSampleTimerDisplay">00:00</span>
+          <button class="icon-btn" id="writingSampleTimerStartBtn"></button>
+          <button class="icon-btn hidden" id="writingSampleTimerPauseBtn"></button>
+          <button class="icon-btn" id="writingSampleTimerResetBtn"></button>
+          <button class="icon-btn" id="writingSampleTimerSaveBtn"></button>
+        </div>
         <div class="writing-task-box hidden" id="writingEditorTaskPrompt"></div>
         <div id="writingQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
         <div class="hint" id="writingWordCount"></div>
@@ -1323,7 +1328,8 @@ const STATIC_MAP = {
   studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', hGrammar:'hGrammar',
   hNewWriting:'hNewWriting', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
   lblWritingCustomTaskType:'lblWritingCustomTaskType', writingTaskTypeEssayOpt:'writingTaskTypeEssay', writingTaskTypeDataOpt:'writingTaskTypeData', lblWritingCustomDescription:'lblWritingCustomDescription', lblWritingImage:'lblWritingImage', writingImageHint:'writingImageHint',
-  lblWritingEssayGroup:'lblWritingEssayGroup', lblWritingQ53Group:'lblWritingQ53Group', lblWritingCustomGroup:'lblWritingCustomGroup', writingEssayRandomBtn:'writingRandomBtn', writingQ53RandomBtn:'writingRandomBtn', writingEssayStartBtn:'startWritingBtn', writingQ53StartBtn:'startWritingBtn', lblWritingQ53Image:'lblWritingQ53Image', writingQ53ImageHint:'writingQ53ImageHint', lblWritingMockGroup:'lblWritingMockGroup', writingMockDataStartBtn:'writingMockDataStartBtn', writingMockEssayStartBtn:'writingMockEssayStartBtn', writingMockStartBtn:'writingMockStartBtn', writingMockHint:'writingMockHint', writingCountdownStopBtn:'writingCountdownStopLabel',
+  lblWritingEssayGroup:'lblWritingEssayGroup', lblWritingQ53Group:'lblWritingQ53Group', lblWritingCustomGroup:'lblWritingCustomGroup', writingEssayRandomBtn:'writingRandomBtn', writingQ53RandomBtn:'writingRandomBtn', writingEssayStartBtn:'startWritingBtn', writingQ53StartBtn:'startWritingBtn', lblWritingQ53Image:'lblWritingQ53Image', writingQ53ImageHint:'writingQ53ImageHint', lblWritingMockGroup:'lblWritingMockGroup', writingMockDataStartBtn:'writingMockDataStartBtn', writingMockEssayStartBtn:'writingMockEssayStartBtn', writingMockStartBtn:'writingMockStartBtn', writingMockHint:'writingMockHint',
+  writingSampleTimerStartBtn:'timerStartBtn', writingSampleTimerPauseBtn:'timerPauseBtn', writingSampleTimerResetBtn:'timerResetBtn', writingSampleTimerSaveBtn:'timerSaveBtn',
   lblGramSearch:'lblGramSearch', lblGramLevelFilter:'lblGramLevelFilter', lblGramJump:'lblGramJump', lblGramSort:'lblGramSort', lblGramReviewedFilter:'lblGramReviewedFilter'
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
@@ -4621,7 +4627,6 @@ document.getElementById('writingEssayStartBtn').addEventListener('click', async 
   if(!sample) return;
   renderWritingList();
   openWritingSample(sample.id, currentUser.id);
-  offerWritingCountdown('essay', task.topic);
 });
 document.getElementById('writingQ53StartBtn').addEventListener('click', async ()=>{
   const task = getWritingTask(document.getElementById('writingQ53Select').value);
@@ -4634,7 +4639,6 @@ document.getElementById('writingQ53StartBtn').addEventListener('click', async ()
   document.getElementById('writingQ53ImageFile').value = '';
   renderWritingList();
   openWritingSample(sample.id, currentUser.id);
-  offerWritingCountdown('data', task.topic);
 });
 document.getElementById('startWritingBtn').addEventListener('click', async ()=>{
   const topic = document.getElementById('writingCustomTopicInput').value.trim();
@@ -4658,7 +4662,6 @@ document.getElementById('startWritingBtn').addEventListener('click', async ()=>{
   document.getElementById('writingImageFile').value = '';
   renderWritingList();
   openWritingSample(sample.id, currentUser.id);
-  offerWritingCountdown(taskType, topic);
 });
 document.getElementById('writingMockDataStartBtn').addEventListener('click', async ()=>{
   if(WRITING_DATA_TASKS.length === 0) return;
@@ -4668,7 +4671,7 @@ document.getElementById('writingMockDataStartBtn').addEventListener('click', asy
   if(!s53) return;
   renderWritingList();
   openWritingSample(s53.id, currentUser.id);
-  startWritingCountdown(15, `${t('writingGroupData')} — ${dataTask.topic}`);
+  offerMockTimerStart(15);
 });
 document.getElementById('writingMockEssayStartBtn').addEventListener('click', async ()=>{
   if(WRITING_TASKS.length === 0) return;
@@ -4677,7 +4680,7 @@ document.getElementById('writingMockEssayStartBtn').addEventListener('click', as
   if(!s54) return;
   renderWritingList();
   openWritingSample(s54.id, currentUser.id);
-  startWritingCountdown(35, `${t('writingGroupEssay')} — ${essayTask.topic}`);
+  offerMockTimerStart(35);
 });
 document.getElementById('writingMockStartBtn').addEventListener('click', async ()=>{
   if(WRITING_TASKS.length === 0 || WRITING_DATA_TASKS.length === 0) return;
@@ -4688,54 +4691,80 @@ document.getElementById('writingMockStartBtn').addEventListener('click', async (
   const s54 = await createWritingSample(essayTask.topic, 'essay', essayTask.charMin, essayTask.charMax, composeTaskPrompt(essayTask));
   if(!s53 || !s54) return;
   renderWritingList();
-  openWritingSample(s53.id, currentUser.id); // real exam order: 53 before 54
-  startWritingCountdown(50, t('writingMockLabel'));
+  openWritingSample(s53.id, currentUser.id); // real exam order: 53 before 54 — its own 15-min
+  offerMockTimerStart(15); // timer starts here; the 54 sample gets its own 35-min timer when opened later
 });
 
-/* ---------- WRITING COUNTDOWN TIMER (links into the study log) ---------- */
-let writingCountdownTotalSec = 0;
-let writingCountdownStartedAt = null; // Date.now() ms while running, null while stopped
-let writingCountdownInterval = null;
-function offerWritingCountdown(taskType, topicLabel){
-  const minutes = taskType === 'data' ? 15 : 35;
-  const groupLabel = taskType === 'data' ? t('writingGroupData') : t('writingGroupEssay');
-  if(confirm(t('writingTimerOfferConfirm').replace('{n}', minutes))){
-    startWritingCountdown(minutes, `${groupLabel} — ${topicLabel}`);
-  }
+/* ---------- PER-SAMPLE WRITING TIMER ----------
+   One small Start/Pause/Reset/Save timer lives inside the open writing
+   sample (35 min target for essays, 15 min for data-description tasks —
+   matching real TOPIK time allocations). It never auto-logs: time is only
+   added to the study log when Save is pressed. Switching samples, closing
+   the editor, or leaving the page while it has unsaved running/paused time
+   triggers the same "unsaved changes" warning as unsaved Quill content. */
+let writingSampleTimerTargetSec = 0;
+let writingSampleTimerAccumulatedSec = 0;
+let writingSampleTimerStartedAt = null; // Date.now() ms while running, null while paused/stopped
+let writingSampleTimerInterval = null;
+function writingSampleTimerElapsedSec(){
+  return writingSampleTimerAccumulatedSec + (writingSampleTimerStartedAt ? (Date.now()-writingSampleTimerStartedAt)/1000 : 0);
 }
-function startWritingCountdown(minutes, label){
-  if(writingCountdownInterval) clearInterval(writingCountdownInterval);
-  writingCountdownTotalSec = minutes * 60;
-  writingCountdownStartedAt = Date.now();
-  document.getElementById('writingCountdownBar').classList.remove('hidden');
-  document.getElementById('writingCountdownLabel').textContent = label;
-  tickWritingCountdown();
-  writingCountdownInterval = setInterval(tickWritingCountdown, 1000);
+function writingSampleTimerDirty(){
+  return writingSampleTimerElapsedSec() > 0.5;
 }
-function tickWritingCountdown(){
-  const elapsed = Math.floor((Date.now() - writingCountdownStartedAt)/1000);
-  const remaining = Math.max(0, writingCountdownTotalSec - elapsed);
-  const m = Math.floor(remaining/60), s = remaining%60;
-  document.getElementById('writingCountdownDisplay').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  if(remaining <= 0) finishWritingCountdown();
+function formatMMSS(totalSec){
+  const s = Math.max(0, Math.round(totalSec));
+  return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 }
-async function stopWritingCountdownInternal(shouldLog){
-  if(writingCountdownInterval){ clearInterval(writingCountdownInterval); writingCountdownInterval = null; }
-  if(writingCountdownStartedAt && shouldLog){
-    const elapsedSec = Math.min(writingCountdownTotalSec, Math.floor((Date.now() - writingCountdownStartedAt)/1000));
-    const hours = Math.round((elapsedSec/3600)*100)/100;
-    if(hours > 0) await logStudySession(todayStr(), 'writing', hours);
-  }
-  writingCountdownStartedAt = null;
-  document.getElementById('writingCountdownBar').classList.add('hidden');
+function updateWritingSampleTimerDisplay(){
+  const remaining = Math.max(0, writingSampleTimerTargetSec - writingSampleTimerElapsedSec());
+  document.getElementById('writingSampleTimerDisplay').textContent = formatMMSS(remaining);
 }
-async function finishWritingCountdown(){
-  await stopWritingCountdownInternal(true);
-  alert(t('writingTimerDone'));
+function resetWritingSampleTimerState(targetMinutes){
+  if(writingSampleTimerInterval){ clearInterval(writingSampleTimerInterval); writingSampleTimerInterval = null; }
+  writingSampleTimerTargetSec = targetMinutes * 60;
+  writingSampleTimerAccumulatedSec = 0;
+  writingSampleTimerStartedAt = null;
+  document.getElementById('writingSampleTimerStartBtn').classList.remove('hidden');
+  document.getElementById('writingSampleTimerPauseBtn').classList.add('hidden');
+  updateWritingSampleTimerDisplay();
 }
-document.getElementById('writingCountdownStopBtn').addEventListener('click', async ()=>{
-  if(confirm(t('writingTimerStopConfirm'))) await stopWritingCountdownInternal(true);
-});
+function tickWritingSampleTimer(){
+  updateWritingSampleTimerDisplay();
+  if(writingSampleTimerElapsedSec() >= writingSampleTimerTargetSec) pauseWritingSampleTimer();
+}
+function startWritingSampleTimer(){
+  if(writingSampleTimerStartedAt || writingSampleTimerElapsedSec() >= writingSampleTimerTargetSec) return;
+  writingSampleTimerStartedAt = Date.now();
+  document.getElementById('writingSampleTimerStartBtn').classList.add('hidden');
+  document.getElementById('writingSampleTimerPauseBtn').classList.remove('hidden');
+  writingSampleTimerInterval = setInterval(tickWritingSampleTimer, 1000);
+}
+function pauseWritingSampleTimer(){
+  if(!writingSampleTimerStartedAt) return;
+  writingSampleTimerAccumulatedSec = writingSampleTimerElapsedSec();
+  writingSampleTimerStartedAt = null;
+  if(writingSampleTimerInterval){ clearInterval(writingSampleTimerInterval); writingSampleTimerInterval = null; }
+  document.getElementById('writingSampleTimerStartBtn').classList.remove('hidden');
+  document.getElementById('writingSampleTimerPauseBtn').classList.add('hidden');
+  updateWritingSampleTimerDisplay();
+}
+async function saveWritingSampleTimer(){
+  const elapsedSec = writingSampleTimerElapsedSec();
+  const hours = Math.round((elapsedSec/3600)*100)/100;
+  if(hours > 0) await logStudySession(todayStr(), 'writing', hours);
+  resetWritingSampleTimerState(writingSampleTimerTargetSec/60);
+}
+document.getElementById('writingSampleTimerStartBtn').addEventListener('click', startWritingSampleTimer);
+document.getElementById('writingSampleTimerPauseBtn').addEventListener('click', pauseWritingSampleTimer);
+document.getElementById('writingSampleTimerResetBtn').addEventListener('click', ()=> resetWritingSampleTimerState(writingSampleTimerTargetSec/60));
+document.getElementById('writingSampleTimerSaveBtn').addEventListener('click', saveWritingSampleTimer);
+function offerMockTimerStart(minutes){
+  if(confirm(t('writingTimerOfferConfirm').replace('{n}', minutes))) startWritingSampleTimer();
+}
+function hasUnsavedWritingProgress(){
+  return writingEditorDirty || writingSampleTimerDirty();
+}
 
 function stripHtml(html){
   const d = document.createElement('div');
@@ -4759,6 +4788,7 @@ async function deleteWritingSample(id){
   if(selectedWritingSampleId === id){
     selectedWritingSampleId = null;
     selectedWritingSampleOwner = null;
+    resetWritingSampleTimerState(0);
     document.getElementById('writingEditorCard').classList.add('hidden');
   }
   renderWritingList();
@@ -4805,6 +4835,7 @@ let writingQuillEditor = null;
 let selectedWritingSampleId = null;
 let selectedWritingSampleOwner = null;
 let writingEditorDirty = false;
+let currentWritingColor = null;
 function ensureWritingQuillInitialized(){
   if(writingQuillEditor) return;
   writingQuillEditor = new Quill('#writingQuillContainer', {
@@ -4817,6 +4848,115 @@ function ensureWritingQuillInitialized(){
       updateWritingCharCount();
     }
   });
+  buildCustomWritingColorControls();
+}
+// Mirrors buildCustomColorControls() (Notes editor) so the writing editor has
+// the exact same text-color and highlight swatch pickers, just scoped to its
+// own Quill instance/toolbar and its own dirty flag.
+function buildCustomWritingColorControls(){
+  const toolbar = writingQuillEditor.getModule('toolbar').container;
+  if(!toolbar || toolbar.querySelector('.cc-color-wrap')) return;
+
+  let openPanel = null;
+  function closeOpenPanel(){
+    if(openPanel){ openPanel.style.display = 'none'; openPanel = null; }
+  }
+  document.addEventListener('click', ()=> closeOpenPanel());
+
+  function makeSwatchGrid(applyFn){
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(7,16px);gap:2px;';
+    QUILL_PALETTE.forEach(hex=>{
+      const sw = document.createElement('button');
+      sw.type = 'button';
+      sw.title = hex;
+      sw.style.cssText = `width:16px;height:16px;padding:0;border:1px solid rgba(0,0,0,0.15);background:${hex};cursor:pointer;`;
+      sw.addEventListener('click', (e)=>{ e.stopPropagation(); applyFn(hex); });
+      grid.appendChild(sw);
+    });
+    return grid;
+  }
+
+  let colorTrigger = null, bgTrigger = null;
+  function updateTriggerColors(){
+    if(!writingQuillEditor) return;
+    const range = writingQuillEditor.getSelection();
+    const format = range ? writingQuillEditor.getFormat(range) : {};
+    const activeColor = format.color || currentWritingColor || 'var(--ink)';
+    if(colorTrigger){
+      colorTrigger.style.color = activeColor;
+      colorTrigger.style.borderBottom = `2px solid ${activeColor}`;
+    }
+    if(bgTrigger){
+      if(format.background){
+        bgTrigger.style.background = format.background;
+        bgTrigger.style.borderColor = 'rgba(0,0,0,0.3)';
+      } else {
+        bgTrigger.style.background = 'transparent';
+        bgTrigger.style.borderColor = 'var(--ink-soft)';
+      }
+    }
+  }
+  writingQuillEditor.on('selection-change', updateTriggerColors);
+  writingQuillEditor.on('text-change', updateTriggerColors);
+
+  function makePicker(labelKey, formatName){
+    const wrap = document.createElement('span');
+    wrap.className = 'cc-' + formatName + '-wrap ql-formats';
+    wrap.style.cssText = 'position:relative;display:inline-block;';
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    if(formatName === 'color'){
+      trigger.textContent = 'A';
+      trigger.style.cssText = 'font-weight:700;padding-bottom:3px;';
+      colorTrigger = trigger;
+    } else {
+      trigger.textContent = '';
+      trigger.style.cssText = 'width:16px;height:16px;padding:0;border:2px solid var(--ink-soft);border-radius:2px;background:transparent;box-sizing:border-box;';
+      bgTrigger = trigger;
+    }
+    trigger.title = t(labelKey);
+
+    const panel = document.createElement('div');
+    panel.style.cssText = 'display:none;flex-direction:column;position:absolute;top:100%;left:0;z-index:10;background:var(--paper-dim);border:1px solid var(--line);border-radius:6px;padding:6px;margin-top:2px;box-shadow:0 4px 12px rgba(0,0,0,0.2);width:132px;';
+
+    const defaultBtn = document.createElement('button');
+    defaultBtn.type = 'button';
+    defaultBtn.textContent = t(formatName === 'color' ? 'defaultColor' : 'noHighlight');
+    defaultBtn.style.cssText = 'display:block;width:100%;margin-bottom:6px;padding:5px;font-size:11px;font-weight:600;background:var(--paper);border:1px solid var(--line);border-radius:4px;cursor:pointer;color:var(--ink);';
+
+    function apply(value){
+      const range = writingQuillEditor.getSelection(true);
+      if(range && range.length > 0) writingQuillEditor.formatText(range.index, range.length, formatName, value);
+      else writingQuillEditor.format(formatName, value);
+      writingEditorDirty = true;
+      closeOpenPanel();
+      updateTriggerColors();
+    }
+
+    defaultBtn.addEventListener('click', (e)=>{ e.stopPropagation(); apply(false); });
+    panel.appendChild(defaultBtn);
+    panel.appendChild(makeSwatchGrid(apply));
+
+    trigger.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(openPanel === panel){ closeOpenPanel(); return; }
+      closeOpenPanel();
+      panel.style.display = 'flex';
+      openPanel = panel;
+    });
+    panel.addEventListener('click', (e)=> e.stopPropagation());
+
+    wrap.appendChild(trigger);
+    wrap.appendChild(panel);
+    return wrap;
+  }
+
+  toolbar.appendChild(makePicker('defaultColor', 'color'));
+  toolbar.appendChild(makePicker('noHighlight', 'background'));
+  writingQuillEditor._updateWritingColorTriggers = updateTriggerColors;
+  updateTriggerColors();
 }
 function updateWritingCharCount(){
   const el = document.getElementById('writingWordCount');
@@ -4844,7 +4984,7 @@ function updateWritingLastSavedInfo(w){
 }
 function openWritingSample(id, ownerUid){
   if(selectedWritingSampleId === id) return;
-  if(writingEditorDirty){
+  if(hasUnsavedWritingProgress()){
     const proceed = confirm(t('unsavedConfirm'));
     if(!proceed) return;
   }
@@ -4853,7 +4993,8 @@ function openWritingSample(id, ownerUid){
   selectedWritingSampleOwner = ownerUid;
   renderWritingList();
   const w = (allWritingSamples[ownerUid]||[]).find(x=>x.id===id);
-  if(!w) return;
+  if(!w){ resetWritingSampleTimerState(0); return; }
+  resetWritingSampleTimerState(w.task_type === 'data' ? 15 : 35);
   const isMine = ownerUid === currentUser.id;
   document.getElementById('writingEditorCard').classList.remove('hidden');
   document.getElementById('writingEditorTopic').textContent = w.topic || '';
@@ -4874,8 +5015,12 @@ function openWritingSample(id, ownerUid){
     taskBox.classList.add('hidden');
   }
   ensureWritingQuillInitialized();
+  const authorColor = colorForUser(ownerUid);
+  currentWritingColor = authorColor;
+  document.getElementById('writingQuillContainer').style.setProperty('--writing-author-color', authorColor);
   writingQuillEditor.root.innerHTML = w.content || '';
   writingQuillEditor.enable(isMine);
+  if(writingQuillEditor._updateWritingColorTriggers) writingQuillEditor._updateWritingColorTriggers();
   writingEditorDirty = false;
   updateWritingLastSavedInfo(w);
   updateWritingCharCount();
@@ -4902,11 +5047,12 @@ document.getElementById('saveWritingBtn').addEventListener('click', async ()=>{
   alert(t('noteSaved'));
 });
 document.getElementById('closeWritingBtn').addEventListener('click', ()=>{
-  if(writingEditorDirty){
+  if(hasUnsavedWritingProgress()){
     const proceed = confirm(t('unsavedConfirm'));
     if(!proceed) return;
   }
   writingEditorDirty = false;
+  resetWritingSampleTimerState(0);
   selectedWritingSampleId = null;
   selectedWritingSampleOwner = null;
   document.getElementById('writingEditorCard').classList.add('hidden');
@@ -4931,7 +5077,7 @@ document.getElementById('writingVersionHistoryToggle').addEventListener('click',
   panel.classList.toggle('hidden');
 });
 window.addEventListener('beforeunload', (e)=>{
-  if(writingEditorDirty){
+  if(hasUnsavedWritingProgress()){
     e.preventDefault();
     e.returnValue = '';
   }
@@ -5805,7 +5951,7 @@ function ensureQuillInitialized(){
   buildCustomColorControls();
 }
 function buildCustomColorControls(){
-  const toolbar = document.querySelector('.ql-toolbar');
+  const toolbar = quillEditor.getModule('toolbar').container;
   if(!toolbar || toolbar.querySelector('.cc-color-wrap')) return;
 
   let openPanel = null;
