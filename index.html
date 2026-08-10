@@ -3433,7 +3433,12 @@ function renderCourses(){
   const list = document.getElementById('courseFullList');
   list.innerHTML = '';
   if(all.length === 0){ list.innerHTML = '<div class="empty">—</div>'; return; }
-  all.slice().sort((a,b)=> (b.created_at||'').localeCompare(a.created_at||'')).forEach(c=>{
+  all.slice().sort((a,b)=>{
+    const dayA = a.day_of_week||1, dayB = b.day_of_week||1;
+    if(dayA !== dayB) return dayA - dayB;
+    const timeA = TIME_START[a.time_slot] || '00:00', timeB = TIME_START[b.time_slot] || '00:00';
+    return timeA.localeCompare(timeB);
+  }).forEach(c=>{
     const div = document.createElement('div');
     div.className = 'item-row';
     const metaParts = [t(DAY_LABELS[c.day_of_week]||'dayMon'), TIME_LABELS[c.time_slot] || c.time_slot];
