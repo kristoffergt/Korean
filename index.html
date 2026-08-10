@@ -2811,13 +2811,19 @@ function shortenTitleForMobile(title){
   if(!title) return title;
   const fillers = new Set(['the','in','to','from','of','and']);
   const words = title.split(/\s+/).filter(Boolean);
-  const kept = words.filter(w=>{
-    if(w === '&') return false;
+  const clusters = [];
+  let current = '';
+  words.forEach(w=>{
     const clean = w.toLowerCase().replace(/[^a-z]/g,'');
-    return !fillers.has(clean);
+    if(w === '&' || fillers.has(clean)){
+      if(current){ clusters.push(current); current = ''; }
+      return;
+    }
+    current += w.charAt(0).toUpperCase();
   });
-  if(kept.length === 0) return title;
-  return kept.map(w=> w.charAt(0).toUpperCase()).join(' ');
+  if(current) clusters.push(current);
+  if(clusters.length === 0) return title;
+  return clusters.join(' ');
 }
 let calViewMode = isMobileDevice() ? 'day' : 'week';
 let weekScrollInitialized = false;
@@ -2943,15 +2949,17 @@ function renderCalGrid(dates){
       bar.style.right = 'auto';
       bar.style.background = bg;
       bar.style.color = textColorFor(bg);
-      if(overlapping){ bar.style.fontSize = '7px'; bar.style.lineHeight = '1.1'; }
-      const titleSize = overlapping ? '7px' : 'inherit';
+      let titleSize, detailSize, detailMargin;
+      if(overlapping && mobileShorten){ titleSize='6px'; detailSize='5px'; detailMargin='2px'; }
+      else if(overlapping){ titleSize='7px'; detailSize='6px'; detailMargin='3px'; }
+      else if(mobileShorten){ titleSize='7px'; detailSize='6px'; detailMargin='4px'; }
+      else { titleSize='inherit'; detailSize='9px'; detailMargin='10px'; }
+      if(overlapping || mobileShorten){ bar.style.fontSize = titleSize; bar.style.lineHeight = '1.1'; }
       const displayTitle = mobileShorten ? shortenTitleForMobile(ev.title) : ev.title;
       let bodyHtml = `<div style="font-size:${titleSize};">${displayTitle}</div>`;
-      if(ev.kind === 'course' && ev.course_id && !mobileShorten){
+      if(ev.kind === 'course' && ev.course_id){
         const course = findCourseById(ev.course_id);
         if(course){
-          const detailSize = overlapping ? '6px' : '9px';
-          const detailMargin = overlapping ? '3px' : '10px';
           const line2 = course.professor ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:${detailMargin};">${course.professor}</div>` : '';
           const line3Text = [course.code, course.concentration].filter(Boolean).join(' · ');
           const line3 = line3Text ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:${detailMargin};">${line3Text}</div>` : '';
