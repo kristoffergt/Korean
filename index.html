@@ -247,6 +247,7 @@ button:hover{background:var(--ink-hover);}
 .ql-toolbar.ql-snow{border-color:var(--line) !important;background:var(--paper-dim);border-radius:8px 8px 0 0;}
 .ql-container.ql-snow{border-color:var(--line) !important;border-radius:0 0 8px 8px;min-height:220px;font-size:14px;}
 #quillContainer .ql-editor{color:var(--note-author-color, var(--ink));background:transparent !important;min-height:220px;}
+#writingQuillContainer .ql-editor{color:var(--ink);background:transparent !important;min-height:220px;}
 .ql-editor.ql-blank::before{color:var(--ink-soft) !important;}
 .ql-snow .ql-stroke{stroke:var(--ink-soft);}
 .ql-snow .ql-fill{fill:var(--ink-soft);}
@@ -269,6 +270,10 @@ button:hover{background:var(--ink-hover);}
 .gram-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px;}
 .gram-pattern{font-weight:700;font-size:15px;font-family:'Space Grotesk',monospace;}
 .gram-number{font-size:11.5px;font-family:'Space Grotesk',monospace;color:var(--ink-soft);margin-right:6px;min-width:22px;display:inline-block;text-align:right;}
+.gram-resource-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12.5px;gap:8px;}
+.gram-resource-row a{color:var(--celadon-4);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gram-resource-row a:hover{text-decoration:underline;}
+.gram-resource-del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:11px;flex-shrink:0;}
 .gram-topik-pill{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:9px;font-size:9.5px;font-weight:700;letter-spacing:0.3px;color:#fff;background:var(--c-topik);vertical-align:middle;}
 .gram-unit-tag{font-size:10.5px;color:var(--ink-soft);font-weight:400;margin-left:8px;}
 .gram-body{margin-top:10px;font-size:13.5px;line-height:1.55;display:none;}
@@ -384,12 +389,30 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="cal-view-toggle" id="studySubToggle" style="margin-bottom:16px;">
       <button data-view="log" class="active" id="studySubLogBtn"></button>
       <button data-view="grammar" id="studySubGrammarBtn"></button>
+      <button data-view="writing" id="studySubWritingBtn"></button>
     </div>
     <div id="studyLogSection">
     <div class="card">
       <h2 id="hLeaderboard"></h2>
       <div class="lb-head"><span id="lbHeadRank"></span><span id="lbHeadName"></span><span id="lbHeadStreak"></span><span id="lbHeadWeek"></span><span id="lbHeadTotal"></span></div>
       <div id="leaderboard"></div>
+    </div>
+    <div class="card">
+      <h2 id="hStudyTimer"></h2>
+      <div style="text-align:center;">
+        <div id="timerDisplay" style="font-family:'Space Grotesk',monospace;font-size:42px;font-weight:700;margin:6px 0 14px;">00:00:00</div>
+      </div>
+      <div class="log-form" style="justify-content:center;">
+        <div class="field">
+          <label for="timerActivitySelect" id="lblTimerActivity"></label>
+          <select id="timerActivitySelect"></select>
+        </div>
+        <button id="timerStartBtn"></button>
+        <button id="timerPauseBtn" class="hidden"></button>
+        <button id="timerResetBtn"></button>
+        <button id="timerSaveBtn"></button>
+      </div>
+      <div class="hint" id="timerHint"></div>
     </div>
     <div class="card">
       <h2 id="hLogStudy"></h2>
@@ -465,11 +488,19 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
               <option value="freq-asc">Least common first</option>
             </select>
           </div>
+          <div class="field">
+            <label for="gramReviewedFilter" id="lblGramReviewedFilter"></label>
+            <select id="gramReviewedFilter"></select>
+          </div>
           <div class="field wide">
             <label for="gramJumpSelect" id="lblGramJump"></label>
             <select id="gramJumpSelect"></select>
           </div>
         </div>
+      </div>
+      <div class="card">
+        <h2 id="hGramReadiness"></h2>
+        <div id="gramReadinessCard"></div>
       </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:6px;">
@@ -486,6 +517,38 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         </div>
         <div class="note-group-header" id="gramAdvancedHeader"></div>
         <div id="gramAdvancedList" class="note-group-body hidden"></div>
+      </div>
+    </div>
+    <div id="studyWritingSection" class="hidden">
+      <div class="card">
+        <h2 id="hNewWriting"></h2>
+        <div class="log-form">
+          <div class="field wide">
+            <label for="writingTopicSelect" id="lblWritingTopic"></label>
+            <select id="writingTopicSelect"></select>
+          </div>
+          <div class="field wide hidden" id="writingCustomTopicField">
+            <label for="writingCustomTopicInput" id="lblWritingCustomTopic"></label>
+            <input type="text" id="writingCustomTopicInput">
+          </div>
+          <button id="startWritingBtn"></button>
+        </div>
+      </div>
+      <div class="card">
+        <h2 id="hWritingSamples"></h2>
+        <div class="field" style="margin-bottom:12px;">
+          <label for="writingPersonFilter" id="lblWritingPersonFilter"></label>
+          <select id="writingPersonFilter"></select>
+        </div>
+        <div id="writingSampleList"></div>
+      </div>
+      <div class="card hidden" id="writingEditorCard">
+        <h2><span id="writingEditorTopic"></span><span><button class="export-btn" id="saveWritingBtn"></button> <button class="export-btn" id="closeWritingBtn"></button></span></h2>
+        <div class="hint" id="writingLastSavedInfo"></div>
+        <div id="writingQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
+        <div class="hint" id="writingWordCount"></div>
+        <button class="linkbtn" id="writingVersionHistoryToggle" style="margin-top:10px;"></button>
+        <div class="notes-panel hidden" id="writingVersionHistoryPanel"></div>
       </div>
     </div>
   </div>
@@ -905,6 +968,7 @@ const I18N = {
     leaderboard:'Leaderboard', lbRank:'#', lbName:'Name', lbStreak:'Streak', lbWeek:'Week', lbTotal:'Total',
     logStudy:'Log a study session', date:'Date', activity:'Activity', hours:'Hours', addSession:'Add session',
     studyHint:'This logs to your own account only.',
+    hStudyTimer:'Study timer', lblTimerActivity:'Activity', timerStartBtn:'Start', timerPauseBtn:'Pause', timerResetBtn:'Reset', timerSaveBtn:'Save to log', timerHint:'Saving adds the elapsed time to today’s log for the selected activity, then resets the timer.',
     last12weeks:'Your last 12 weeks', less:'Less', goalHit:'Goal hit',
     activityBreakdown:'Your activity breakdown', last7:'Last 7 days', last30:'Last 30 days', allTime:'All time',
     yourEntries:'Your recent entries', feedEveryone:'Recent activity (everyone)',
@@ -948,13 +1012,17 @@ const I18N = {
     thisOccurrenceOnly:'This event only', allOccurrences:'All events', cancelBtn:'Cancel',
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', deleteEventBtn:'Delete',
-    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.', studySubLog:'Log', studySubGrammar:'Korean Grammar', hGrammar:'Korean Grammar Reference',
+    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.', studySubLog:'Log', studySubGrammar:'Korean Grammar', studySubWriting:'Writing', hGrammar:'Korean Grammar Reference',
+    hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
+    lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
     gramJumpPlaceholder:'— Select —', gramAllLevels:'All', gramIntermediateGroup:'Intermediate', gramAdvancedGroup:'Advanced',
     gramDifficulty:'Difficulty', gramEasy:'Easy', gramHard:'Hard',
     gramFormality:'Formality', gramCasual:'Casual', gramFormal:'Formal',
     gramPoliteness:'Politeness', gramBlunt:'Blunt', gramPolite:'Polite',
-    gramYourSentences:'Your practice sentences', gramSentencePlaceholder:'Write a sentence using this pattern...', gramAddSentence:'Add', lblGramSort:'Sort', gramSortDefault:'Default order', gramSortFreqDesc:'Most common first', gramSortFreqAsc:'Least common first', gramFrequencyHeader:'Frequency', gramLevelHeader:'Level', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently — leave a line blank to clear that field.',
+    gramYourSentences:'Your practice sentences', gramSentencePlaceholder:'Write a sentence using this pattern...', gramAddSentence:'Add', lblGramSort:'Sort', gramSortDefault:'Default order', gramSortFreqDesc:'Most common first', gramSortFreqAsc:'Least common first', gramFrequencyHeader:'Frequency', gramLevelHeader:'Level',
+    gramMarkNotReviewed:'Mark as not reviewed', gramMarkReviewedAgain:'Undo — mark as reviewed', gramResources:'Videos & links', gramResourceUrlPlaceholder:'YouTube or website URL', gramResourceLabelPlaceholder:'Label (optional)', gramAddResource:'Add',
+    hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently — leave a line blank to clear that field.',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in',
     hCourseList:'All courses', viewSyllabus:'Syllabus ↗',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
@@ -973,6 +1041,7 @@ const I18N = {
     leaderboard:'순위표', lbRank:'#', lbName:'이름', lbStreak:'연속', lbWeek:'이번 주', lbTotal:'총합',
     logStudy:'공부 시간 기록', date:'날짜', activity:'활동', hours:'시간', addSession:'기록 추가',
     studyHint:'본인 계정에만 기록됩니다.',
+    hStudyTimer:'학습 타이머', lblTimerActivity:'활동', timerStartBtn:'시작', timerPauseBtn:'일시정지', timerResetBtn:'초기화', timerSaveBtn:'기록에 저장', timerHint:'저장하면 경과 시간이 오늘의 선택한 활동 기록에 추가되고 타이머가 초기화됩니다.',
     last12weeks:'최근 12주', less:'적음', goalHit:'목표 달성',
     activityBreakdown:'활동별 통계', last7:'최근 7일', last30:'최근 30일', allTime:'전체 기간',
     yourEntries:'최근 기록', feedEveryone:'전체 최근 활동',
@@ -1016,13 +1085,17 @@ const I18N = {
     thisOccurrenceOnly:'이 일정만', allOccurrences:'전체 일정', cancelBtn:'취소',
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', deleteEventBtn:'삭제',
-    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', studySubLog:'기록', studySubGrammar:'한국어 문법', hGrammar:'한국어 문법 참고',
+    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', studySubLog:'기록', studySubGrammar:'한국어 문법', studySubWriting:'작문', hGrammar:'한국어 문법 참고',
+    hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
+    lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
     gramJumpPlaceholder:'— 선택 —', gramAllLevels:'전체', gramIntermediateGroup:'중급', gramAdvancedGroup:'고급',
     gramDifficulty:'난이도', gramEasy:'쉬움', gramHard:'어려움',
     gramFormality:'격식', gramCasual:'비격식', gramFormal:'격식체',
     gramPoliteness:'공손함', gramBlunt:'직설적', gramPolite:'공손함',
-    gramYourSentences:'나의 연습 문장', gramSentencePlaceholder:'이 문법을 사용해 문장을 써 보세요...', gramAddSentence:'추가', lblGramSort:'정렬', gramSortDefault:'기본 순서', gramSortFreqDesc:'가장 흔한 순', gramSortFreqAsc:'가장 드문 순', gramFrequencyHeader:'빈도', gramLevelHeader:'난이도', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다 — 비워두면 해당 항목이 지워집니다.',
+    gramYourSentences:'나의 연습 문장', gramSentencePlaceholder:'이 문법을 사용해 문장을 써 보세요...', gramAddSentence:'추가', lblGramSort:'정렬', gramSortDefault:'기본 순서', gramSortFreqDesc:'가장 흔한 순', gramSortFreqAsc:'가장 드문 순', gramFrequencyHeader:'빈도', gramLevelHeader:'난이도',
+    gramMarkNotReviewed:'복습 안 함으로 표시', gramMarkReviewedAgain:'취소 — 복습함으로 표시', gramResources:'영상 및 링크', gramResourceUrlPlaceholder:'유튜브 또는 웹사이트 URL', gramResourceLabelPlaceholder:'라벨 (선택)', gramAddResource:'추가',
+    hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다 — 비워두면 해당 항목이 지워집니다.',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정',
     hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
@@ -1041,6 +1114,7 @@ const I18N = {
     leaderboard:'Bảng xếp hạng', lbRank:'#', lbName:'Tên', lbStreak:'Chuỗi ngày', lbWeek:'Tuần này', lbTotal:'Tổng cộng',
     logStudy:'Ghi lại buổi học', date:'Ngày', activity:'Hoạt động', hours:'Số giờ', addSession:'Thêm buổi học',
     studyHint:'Chỉ ghi vào tài khoản của bạn.',
+    hStudyTimer:'Đồng hồ học tập', lblTimerActivity:'Hoạt động', timerStartBtn:'Bắt đầu', timerPauseBtn:'Tạm dừng', timerResetBtn:'Đặt lại', timerSaveBtn:'Lưu vào nhật ký', timerHint:'Lưu sẽ cộng thời gian đã trôi qua vào nhật ký hôm nay cho hoạt động đã chọn, sau đó đặt lại đồng hồ.',
     last12weeks:'12 tuần gần đây', less:'Ít', goalHit:'Đạt mục tiêu',
     activityBreakdown:'Thống kê theo hoạt động', last7:'7 ngày qua', last30:'30 ngày qua', allTime:'Toàn bộ thời gian',
     yourEntries:'Ghi chú gần đây của bạn', feedEveryone:'Hoạt động gần đây (mọi người)',
@@ -1085,13 +1159,17 @@ const I18N = {
     thisOccurrenceOnly:'Chỉ sự kiện này', allOccurrences:'Tất cả sự kiện', cancelBtn:'Hủy',
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', deleteEventBtn:'Xóa',
-    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp Hàn', hGrammar:'Tài liệu ngữ pháp Hàn',
+    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp Hàn', studySubWriting:'Luyện viết', hGrammar:'Tài liệu ngữ pháp Hàn',
+    hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
+    lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
     gramJumpPlaceholder:'— Chọn —', gramAllLevels:'Tất cả', gramIntermediateGroup:'Trung cấp', gramAdvancedGroup:'Cao cấp',
     gramDifficulty:'Độ khó', gramEasy:'Dễ', gramHard:'Khó',
     gramFormality:'Trang trọng', gramCasual:'Thân mật', gramFormal:'Trang trọng',
     gramPoliteness:'Lịch sự', gramBlunt:'Thẳng thắn', gramPolite:'Lịch sự',
-    gramYourSentences:'Câu luyện tập của bạn', gramSentencePlaceholder:'Viết một câu dùng mẫu này...', gramAddSentence:'Thêm', lblGramSort:'Sắp xếp', gramSortDefault:'Mặc định', gramSortFreqDesc:'Phổ biến nhất trước', gramSortFreqAsc:'Ít phổ biến nhất trước', gramFrequencyHeader:'Tần suất', gramLevelHeader:'Cấp độ', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập — để trống dòng nào sẽ xóa trường đó.',
+    gramYourSentences:'Câu luyện tập của bạn', gramSentencePlaceholder:'Viết một câu dùng mẫu này...', gramAddSentence:'Thêm', lblGramSort:'Sắp xếp', gramSortDefault:'Mặc định', gramSortFreqDesc:'Phổ biến nhất trước', gramSortFreqAsc:'Ít phổ biến nhất trước', gramFrequencyHeader:'Tần suất', gramLevelHeader:'Cấp độ',
+    gramMarkNotReviewed:'Đánh dấu chưa ôn tập', gramMarkReviewedAgain:'Hoàn tác — đánh dấu đã ôn tập', gramResources:'Video & liên kết', gramResourceUrlPlaceholder:'URL YouTube hoặc trang web', gramResourceLabelPlaceholder:'Nhãn (tùy chọn)', gramAddResource:'Thêm',
+    hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập — để trống dòng nào sẽ xóa trường đó.',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt',
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
@@ -1109,6 +1187,7 @@ const STATIC_MAP = {
   tabBtnStudy:'tabStudy', tabBtnReading:'tabReading', tabBtnJobs:'tabJobs', tabBtnCalendar:'tabCalendar', tabBtnCourses:'tabCourses', tabBtnNotes:'tabNotes',
   hLeaderboard:'leaderboard', lbHeadRank:'lbRank', lbHeadName:'lbName', lbHeadStreak:'lbStreak', lbHeadWeek:'lbWeek', lbHeadTotal:'lbTotal',
   hLogStudy:'logStudy', lblDate:'date', lblActivity:'activity', lblHours:'hours', addBtn:'addSession', studyHint:'studyHint',
+  hStudyTimer:'hStudyTimer', lblTimerActivity:'lblTimerActivity', timerStartBtn:'timerStartBtn', timerPauseBtn:'timerPauseBtn', timerResetBtn:'timerResetBtn', timerSaveBtn:'timerSaveBtn', timerHint:'timerHint',
   hCalendar:'last12weeks', calLegendLess:'less', calLegendHit:'goalHit',
   hBreakdown:'activityBreakdown', bd7:'last7', bd30:'last30', bdAll:'allTime',
   hMyEntries:'yourEntries', hFeed:'feedEveryone', exportStudyBtn:'exportCsv',
@@ -1136,8 +1215,9 @@ const STATIC_MAP = {
   deleteChoiceText:'deleteRecurringQ', deleteThisOnlyBtn:'thisOccurrenceOnly', deleteAllBtn:'allOccurrences', deleteChoiceCancelBtn:'cancelBtn',
   hNotesPick:'hNotesPick', lblNotesCourse:'lblNotesCourse', lblNewLecture:'lblNewLecture', addLectureBtn:'addLectureBtn',
   hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabel:'chooseFile',
-  studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', hGrammar:'hGrammar',
-  lblGramSearch:'lblGramSearch', lblGramLevelFilter:'lblGramLevelFilter', lblGramJump:'lblGramJump', lblGramSort:'lblGramSort'
+  studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', hGrammar:'hGrammar',
+  hNewWriting:'hNewWriting', lblWritingTopic:'lblWritingTopic', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
+  lblGramSearch:'lblGramSearch', lblGramLevelFilter:'lblGramLevelFilter', lblGramJump:'lblGramJump', lblGramSort:'lblGramSort', lblGramReviewedFilter:'lblGramReviewedFilter', hGramReadiness:'hGramReadiness'
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
 const BOOK_STATUS_KEYS = {to_read:'statusToRead', reading:'statusReading', finished:'statusFinished'};
@@ -1168,6 +1248,8 @@ let mySubscriptions = {}; // eventId -> my own subscription row
 let allSubsByEvent = {}; // eventId -> { userId: subscriptionRow }
 let allCourses = {}; // userId -> [course rows]
 let allNotes = {}; // courseId (or '__none__') -> [note rows]
+let allWritingSamples = {}; // userId -> [writing_samples rows]
+let grammarReviewOverrides = {}; // "userId::patternId" -> true (manually unmarked)
 let profileColors = {}; // userId -> custom color hex (optional override)
 let coreMembers = {}; // userId -> boolean, true for Kristoffer/Roxy
 function amICore(){ return !!(currentUser && coreMembers[currentUser.id]); }
@@ -1215,15 +1297,18 @@ function buildLangSwitch(container){
   });
 }
 function rebuildActivitySelect(){
-  const sel = document.getElementById('activityInput');
-  const prev = sel.value;
-  sel.innerHTML = '';
-  ACTIVITIES.forEach(a=>{
-    const opt = document.createElement('option');
-    opt.value = a.key; opt.textContent = actLabel(a.key);
-    sel.appendChild(opt);
+  ['activityInput', 'timerActivitySelect'].forEach(id=>{
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = '';
+    ACTIVITIES.forEach(a=>{
+      const opt = document.createElement('option');
+      opt.value = a.key; opt.textContent = actLabel(a.key);
+      sel.appendChild(opt);
+    });
+    if(prev) sel.value = prev;
   });
-  if(prev) sel.value = prev;
 }
 function rebuildBookStatusSelect(){
   const sel = document.getElementById('bookStatus');
@@ -1292,6 +1377,35 @@ function rebuildGramLevelFilterSelect(){
     sortSel.value = prevSort;
   }
 }
+function rebuildGramReviewedFilterSelect(){
+  const sel = document.getElementById('gramReviewedFilter');
+  if(!sel || !currentUser) return;
+  const prev = sel.value || 'all';
+  sel.innerHTML = '';
+  const opts = [['all', t('gramReviewedAll')]];
+  opts.push(['me-yes', `${t('gramReviewedYes')} — ${t('gramReviewedMe')}`]);
+  opts.push(['me-no', `${t('gramReviewedNo')} — ${t('gramReviewedMe')}`]);
+  // Roxy/Kristoffer also get per-partner and combined options; anyone else
+  // (a non-core account) only ever sees their own reviewed status.
+  if(amICore()){
+    const partnerUid = Object.keys(profiles).find(uid=>coreMembers[uid] && uid!==currentUser.id);
+    if(partnerUid){
+      const partnerName = nameFor(partnerUid);
+      opts.push(['partner-yes', `${t('gramReviewedYes')} — ${partnerName}`]);
+      opts.push(['partner-no', `${t('gramReviewedNo')} — ${partnerName}`]);
+      opts.push(['both-yes', `${t('gramReviewedYes')} — ${t('gramReviewedBoth')}`]);
+      opts.push(['both-no', `${t('gramReviewedNo')} — ${t('gramReviewedBoth')}`]);
+    }
+  }
+  opts.forEach(([val,label])=>{
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = label;
+    sel.appendChild(opt);
+  });
+  const validVals = opts.map(o=>o[0]);
+  sel.value = validVals.includes(prev) ? prev : 'all';
+  gramReviewedFilterVal = sel.value;
+}
 function rebuildForUserSelect(){
   const group = document.getElementById('eventForUsersGroup');
   const field = document.getElementById('eventForUserField');
@@ -1356,6 +1470,7 @@ function applyLanguage(lang){
   rebuildPrivacySelect();
   rebuildForUserSelect();
   rebuildGramLevelFilterSelect();
+  rebuildGramReviewedFilterSelect();
   rebuildCourseForUserSelect();
   rebuildCourseStatusSelect();
   rebuildCourseDaySelect();
@@ -1422,6 +1537,7 @@ async function onAuthed(user){
   await loadAllData();
   rebuildForUserSelect();
   rebuildGramLevelFilterSelect();
+  rebuildGramReviewedFilterSelect();
   rebuildCourseForUserSelect();
   document.getElementById('whoName').textContent = profiles[user.id] || user.email;
   document.getElementById('whoEmail').textContent = user.email;
@@ -1573,6 +1689,17 @@ async function loadAllData(){
     if(!allGrammarNotes[n.pattern_id]) allGrammarNotes[n.pattern_id] = [];
     allGrammarNotes[n.pattern_id].push(n);
   });
+  const { data: overrideRows } = await supabaseClient.from('grammar_review_overrides').select('*');
+  grammarReviewOverrides = {};
+  (overrideRows||[]).forEach(o=>{
+    if(o.unmarked) grammarReviewOverrides[o.user_id + '::' + o.pattern_id] = true;
+  });
+  const { data: writingRows } = await supabaseClient.from('writing_samples').select('*').order('created_at', {ascending:false});
+  allWritingSamples = {};
+  (writingRows||[]).forEach(w=>{
+    if(!allWritingSamples[w.user_id]) allWritingSamples[w.user_id] = [];
+    allWritingSamples[w.user_id].push(w);
+  });
   const { data: gramPointRows } = await supabaseClient.from('grammar_points').select('*').order('pattern', {ascending:true});
   if(gramPointRows && gramPointRows.length > 0){
     GRAMMAR_DATA = gramPointRows.map(r => ({
@@ -1580,7 +1707,7 @@ async function loadAllData(){
       commonality: r.commonality, difficulty: r.difficulty,
       formality: r.formality, politeness: r.politeness,
       senses: r.senses, matchStrings: r.match_strings, finalOnly: r.final_only,
-      number: r.number, topik: !!r.topik
+      number: r.number, topik: !!r.topik, resources: r.resources || []
     }));
   } else {
     GRAMMAR_DATA = GRAMMAR_SEED;
@@ -3303,12 +3430,40 @@ function renderAll(){
   renderNotesCourseSelect();
   renderLectureList();
   renderGrammarList();
+  rebuildWritingTopicSelect();
+  rebuildWritingPersonFilter();
+  renderWritingList();
 }
 let expandedGrammar = new Set();
 let gramGroupsOpen = { intermediate: false, advanced: false };
 let gramSearchTerm = '';
 let gramLevelFilterVal = 'all';
 let gramSortVal = 'default';
+let gramReviewedFilterVal = 'all';
+// A grammar point counts as "reviewed" by a user once they've added at
+// least one practice sentence under it that actually uses the pattern —
+// i.e. the same match the sentence-bolding already checks for, not just
+// any attempt.
+function isGrammarReviewedBy(g, uid){
+  if(!uid) return false;
+  if(grammarReviewOverrides[uid + '::' + g.id]) return false; // manually unmarked
+  const notes = allGrammarNotes[g.id] || [];
+  return notes.some(n => n.user_id === uid && checkGrammarUsage(n.sentence, g).matched);
+}
+function grammarMatchesReviewedFilter(g){
+  if(gramReviewedFilterVal === 'all' || !currentUser) return true;
+  const meId = currentUser.id;
+  if(gramReviewedFilterVal === 'me-yes') return isGrammarReviewedBy(g, meId);
+  if(gramReviewedFilterVal === 'me-no') return !isGrammarReviewedBy(g, meId);
+  const partnerUid = Object.keys(profiles).find(uid=>coreMembers[uid] && uid!==meId);
+  if(!partnerUid) return true;
+  if(gramReviewedFilterVal === 'partner-yes') return isGrammarReviewedBy(g, partnerUid);
+  if(gramReviewedFilterVal === 'partner-no') return !isGrammarReviewedBy(g, partnerUid);
+  const bothReviewed = isGrammarReviewedBy(g, meId) && isGrammarReviewedBy(g, partnerUid);
+  if(gramReviewedFilterVal === 'both-yes') return bothReviewed;
+  if(gramReviewedFilterVal === 'both-no') return !bothReviewed;
+  return true;
+}
 let allGrammarNotes = {}; // patternId -> [note rows]
 let GRAMMAR_DATA = GRAMMAR_SEED;
 
@@ -3522,6 +3677,13 @@ function buildGrammarCardHtml(g){
       ${isMine ? `<span><button class="gram-sentence-edit-btn" data-id="${n.id}" title="Edit">✏️</button><button class="gram-note-del" data-id="${n.id}" data-pattern="${g.id}">✕</button></span>` : ''}
     </div>`;
   }).join('') || `<div class="empty">—</div>`;
+  const hasMatchingSentence = myNotes.some(n=>n.user_id===currentUser.id && checkGrammarUsage(n.sentence, g).matched);
+  const isReviewOverridden = !!grammarReviewOverrides[currentUser.id + '::' + g.id];
+  const resourcesHtml = (g.resources||[]).map((r,idx)=>`
+    <div class="gram-resource-row">
+      <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${r.type==='youtube'?'▶':'🔗'} ${escapeHtml(r.label || r.url)}</a>
+      ${amICore() ? `<button class="gram-resource-del" data-pattern="${g.id}" data-idx="${idx}">✕</button>` : ''}
+    </div>`).join('') || `<div class="empty">—</div>`;
   return `
     <div class="gram-row${isOpen?' open':''}" data-gram-id="${g.id}">
       <div class="gram-head">
@@ -3546,6 +3708,20 @@ function buildGrammarCardHtml(g){
             <button class="export-btn gram-add-sentence" data-pattern="${g.id}">${t('gramAddSentence')}</button>
           </div>
           <div class="gram-sentence-list" data-pattern="${g.id}">${notesListHtml}</div>
+          ${hasMatchingSentence ? `<button class="linkbtn gram-review-toggle" data-pattern="${g.id}" style="margin-top:6px;font-size:11.5px;">${isReviewOverridden ? t('gramMarkReviewedAgain') : t('gramMarkNotReviewed')}</button>` : ''}
+        </div>
+        <div class="gram-notebook">
+          <div class="gram-sense-label">${t('gramResources')}</div>
+          <div class="gram-resource-list" data-pattern="${g.id}">${resourcesHtml}</div>
+          ${amICore() ? `<div class="log-form">
+            <div class="field wide">
+              <input type="text" class="gram-resource-url-input" data-pattern="${g.id}" placeholder="${t('gramResourceUrlPlaceholder')}">
+            </div>
+            <div class="field wide">
+              <input type="text" class="gram-resource-label-input" data-pattern="${g.id}" placeholder="${t('gramResourceLabelPlaceholder')}">
+            </div>
+            <button class="export-btn gram-add-resource" data-pattern="${g.id}">${t('gramAddResource')}</button>
+          </div>` : ''}
         </div>
       </div>
     </div>`;
@@ -3555,7 +3731,8 @@ function renderGrammarGroup(level, containerId){
   let items = GRAMMAR_DATA.filter(g =>
     g.level === level &&
     (gramLevelFilterVal === 'all' || gramLevelFilterVal === level) &&
-    grammarMatchesSearch(g, gramSearchTerm)
+    grammarMatchesSearch(g, gramSearchTerm) &&
+    grammarMatchesReviewedFilter(g)
   );
   if(gramSortVal === 'freq-desc') items = items.slice().sort((a,b)=> b.commonality - a.commonality);
   else if(gramSortVal === 'freq-asc') items = items.slice().sort((a,b)=> a.commonality - b.commonality);
@@ -3594,6 +3771,15 @@ function renderGrammarGroup(level, containerId){
       saveGrammarSentenceEdit(btn.dataset.id, btn.dataset.pattern);
     });
   });
+  container.querySelectorAll('.gram-review-toggle').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleGrammarReviewOverride(btn.dataset.pattern); });
+  });
+  container.querySelectorAll('.gram-add-resource').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); addGrammarResource(btn.dataset.pattern); });
+  });
+  container.querySelectorAll('.gram-resource-del').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); deleteGrammarResource(btn.dataset.pattern, parseInt(btn.dataset.idx)); });
+  });
   container.querySelectorAll('.gram-edit-toggle').forEach(btn=>{
     btn.addEventListener('click', (e)=>{
       e.stopPropagation();
@@ -3631,6 +3817,41 @@ function renderGrammarList(){
   document.getElementById('gramAdvancedList').classList.toggle('hidden', !gramGroupsOpen.advanced);
   if(gramGroupsOpen.intermediate) renderGrammarGroup('intermediate', 'gramIntermediateList');
   if(gramGroupsOpen.advanced) renderGrammarGroup('advanced', 'gramAdvancedList');
+  renderGrammarReadiness();
+}
+// Frequency-weighted so common patterns count for more than rare ones.
+// Optionally scoped to just the TOPIK-tagged subset.
+function computeGrammarReadiness(uid, topikOnly){
+  let earned = 0, total = 0;
+  GRAMMAR_DATA.forEach(g=>{
+    if(topikOnly && !g.topik) return;
+    const weight = g.commonality || 1;
+    total += weight;
+    if(isGrammarReviewedBy(g, uid)) earned += weight;
+  });
+  return total > 0 ? Math.round((earned/total)*100) : 0;
+}
+function readinessRowHtml(label, pct){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:3px;">
+      <span style="font-weight:600;">${label}</span><span style="font-family:'Space Grotesk',monospace;">${pct}%</span>
+    </div>
+    <div class="gram-bar-wrap" style="min-width:100%;margin-bottom:10px;">
+      <div class="gram-bar"><div class="gram-bar-marker" style="left:${pct}%;"></div></div>
+    </div>`;
+}
+function renderGrammarReadiness(){
+  const el = document.getElementById('gramReadinessCard');
+  if(!el || !currentUser) return;
+  const myOverall = computeGrammarReadiness(currentUser.id, false);
+  const myTopik = computeGrammarReadiness(currentUser.id, true);
+  let html = readinessRowHtml(`${t('gramReadinessYou')} — ${t('gramReadinessOverall')}`, myOverall)
+    + readinessRowHtml(`${t('gramReadinessYou')} — ${t('gramReadinessTopik')}`, myTopik);
+  const others = Object.keys(profiles).filter(uid=>coreMembers[uid] && uid!==currentUser.id);
+  others.forEach(uid=>{
+    html += readinessRowHtml(`${nameFor(uid)} — ${t('gramReadinessOverall')}`, computeGrammarReadiness(uid, false))
+      + readinessRowHtml(`${nameFor(uid)} — ${t('gramReadinessTopik')}`, computeGrammarReadiness(uid, true));
+  });
+  el.innerHTML = html;
 }
 document.getElementById('gramIntermediateHeader').addEventListener('click', ()=>{
   gramGroupsOpen.intermediate = !gramGroupsOpen.intermediate;
@@ -3652,6 +3873,11 @@ document.getElementById('gramLevelFilter').addEventListener('change', (e)=>{
 });
 document.getElementById('gramSortSelect').addEventListener('change', (e)=>{
   gramSortVal = e.target.value;
+  renderGrammarList();
+});
+document.getElementById('gramReviewedFilter').addEventListener('change', (e)=>{
+  gramReviewedFilterVal = e.target.value;
+  rebuildGramJumpSelect();
   renderGrammarList();
 });
 function rebuildGramJumpSelect(){
@@ -3702,36 +3928,386 @@ async function saveGrammarSentenceEdit(noteId, patternId){
   expandedSentenceEdit.delete(noteId);
   renderGrammarList();
 }
-document.getElementById('studySubLogBtn').addEventListener('click', ()=>{
-  document.getElementById('studySubLogBtn').classList.add('active');
-  document.getElementById('studySubGrammarBtn').classList.remove('active');
-  document.getElementById('studyLogSection').classList.remove('hidden');
-  document.getElementById('studyGrammarSection').classList.add('hidden');
+async function toggleGrammarReviewOverride(patternId){
+  if(!currentUser) return;
+  const key = currentUser.id + '::' + patternId;
+  const isOverridden = !!grammarReviewOverrides[key];
+  if(isOverridden){
+    await supabaseClient.from('grammar_review_overrides').delete().eq('user_id', currentUser.id).eq('pattern_id', patternId);
+    delete grammarReviewOverrides[key];
+  } else {
+    await supabaseClient.from('grammar_review_overrides')
+      .upsert({ user_id: currentUser.id, pattern_id: patternId, unmarked: true, updated_at: new Date().toISOString() });
+    grammarReviewOverrides[key] = true;
+  }
+  renderGrammarList();
+}
+function detectResourceType(url){
+  return /youtube\.com|youtu\.be/i.test(url) ? 'youtube' : 'link';
+}
+async function addGrammarResource(patternId){
+  if(!amICore()) return;
+  const urlInput = document.querySelector(`.gram-resource-url-input[data-pattern="${patternId}"]`);
+  const labelInput = document.querySelector(`.gram-resource-label-input[data-pattern="${patternId}"]`);
+  const url = urlInput.value.trim();
+  if(!url) return;
+  const label = labelInput.value.trim();
+  const g = GRAMMAR_DATA.find(x=>x.id===patternId);
+  if(!g) return;
+  const resources = (g.resources||[]).slice();
+  resources.push({ type: detectResourceType(url), url, label: label || null });
+  const { error } = await supabaseClient.from('grammar_points').update({ resources }).eq('id', patternId);
+  if(!error){
+    g.resources = resources;
+    urlInput.value = '';
+    labelInput.value = '';
+    renderGrammarList();
+  } else {
+    alert('Could not save the link — make sure new_features_migration.sql has been run.');
+  }
+}
+async function deleteGrammarResource(patternId, idx){
+  if(!amICore()) return;
+  const g = GRAMMAR_DATA.find(x=>x.id===patternId);
+  if(!g) return;
+  const resources = (g.resources||[]).filter((r,i)=>i!==idx);
+  const { error } = await supabaseClient.from('grammar_points').update({ resources }).eq('id', patternId);
+  if(!error){
+    g.resources = resources;
+    renderGrammarList();
+  }
+}
+function switchStudySubTab(view){
+  const btns = { log: 'studySubLogBtn', grammar: 'studySubGrammarBtn', writing: 'studySubWritingBtn' };
+  const sections = { log: 'studyLogSection', grammar: 'studyGrammarSection', writing: 'studyWritingSection' };
+  Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
+  Object.entries(sections).forEach(([v,id])=> document.getElementById(id).classList.toggle('hidden', v!==view));
+  if(view === 'grammar') rebuildGramJumpSelect();
+  if(view === 'writing') renderWritingList();
+}
+document.getElementById('studySubLogBtn').addEventListener('click', ()=> switchStudySubTab('log'));
+document.getElementById('studySubGrammarBtn').addEventListener('click', ()=> switchStudySubTab('grammar'));
+document.getElementById('studySubWritingBtn').addEventListener('click', ()=> switchStudySubTab('writing'));
+
+/* ---------- WRITING PRACTICE ---------- */
+const WRITING_TOPICS = ["올바른 사과 – 잘못된 사과", "현대 사회에서 나눔(분배)의 필요성", "‘동물실험’ 찬성하거나 반대", "이 시대가 원하는 지도자, 지도자의 조건", "올바른 인터넷 사용 태도", "‘감시 카메라 설치 확대’ 찬성하거나 반대", "세계화 시대에 필요한 인재상", "현대 사회에서 바람직한 신문의 기능", "자기 계발의 필요성", "왜 영화나 소설 속의 주인공은 모두 착하고 현명하고 아름다운가?", "통계 자료의 양면성", "진정한 리더십", "창의적으로 사고하는 능력이 반드시 필요", "바람직한 인간관계", "고난과 시련을 통해 배운 것", "성공의 기준", "개인 정보 공개와 시청자의 알 권리", "경쟁 긍정적인 면과 함께 부정적인 면", "선의의 거짓말", "토론에 필요한 자세", "예술 교육의 필요성", "행복한 삶의 조건", "대학의 역할", "직업 선택의 조건", "자연 보존과 자연 개발", "경제적 조건과 행복한 삶", "동기가 일에 미치는 영향", "현대 사회에서 필요한 인재", "인터넷 악플", "역사", "광고 긍정적인 면과 부정적인 면", "직업 선택", "독서 역할", "실패는 성공의 어머니", "칭찬", "반려동물", "봉사활동", "청년 실업 문제", "의사소통", "절약", "다름을 인정하는 필요성", "인터넷 정보", "조언", "역사 영화의 부정적, 긍정적인 영향", "외국어 공부", "조기 교육의 장점 및 문제점", "타인의 평가", "실천의 중요성", "결과를 중시하는 가치관의 문제점", "청소년기의 중요성", "적당한 자신감을 유지하기 위해 가져야 할 태도", "지식 교육과 인성 교육", "대도시의 문제와 해결방안", "후회를 대하는 바람직한 자세", "개인 방송 장단점", "동료와 일을 할 때 지녀야 할 바람직한 태도", "도시 개발의 바람직한 방향", "인간 존중 교육의 필요성", "일회 용품 사용을 효과적으로 줄이기 위한 방법", "기부의 필요성 및 활성화 방안", "게임의 긍정적인 효과와 문제점", "걱정이 우리 삶에 미치는 영향", "노인들이 겪는 사회적 어려움을 해결하기 위한 방법", "직업 선택의 중요성", "어린이 경제 교육", "부모의 역할", "창의력 필요성", "진정한 휴식", "토론", "농담", "독서", "CCTV 설치의 중요성과 부작용", "재능 발견의 중요성", "로봇의 발달에 따른 직업 감소", "가짜 뉴스", "인구 구조 변화", "디지털 기기의 편리함과 부작용", "문화생활의 가치", "기업의 사회적 책임", "직장과 개인의 자율성", "차별", "격려와 응원", "마음의 상처 회복 방법", "인공지능", "스트레스 해소 방법", "실수를 대하는 바람직한 태도", "온라인 교육의 장단점", "인공지능과 일자리의 미래", "여가 시간의 활용 방법", "전통과 현대의 조화", "환경 보호를 위한 개인의 역할", "소통에서 경청의 중요성", "1인 가구 증가에 따른 사회 변화", "재택근무의 장단점"];
+
+function rebuildWritingTopicSelect(){
+  const sel = document.getElementById('writingTopicSelect');
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  WRITING_TOPICS.forEach(topic=>{
+    const opt = document.createElement('option');
+    opt.value = topic; opt.textContent = topic;
+    sel.appendChild(opt);
+  });
+  const customOpt = document.createElement('option');
+  customOpt.value = '__custom__'; customOpt.textContent = t('writingCustomTopicOpt');
+  sel.appendChild(customOpt);
+  if(prev) sel.value = prev;
+  const customField = document.getElementById('writingCustomTopicField');
+  if(customField) customField.classList.toggle('hidden', sel.value !== '__custom__');
+}
+document.getElementById('writingTopicSelect').addEventListener('change', (e)=>{
+  document.getElementById('writingCustomTopicField').classList.toggle('hidden', e.target.value !== '__custom__');
 });
-document.getElementById('studySubGrammarBtn').addEventListener('click', ()=>{
-  document.getElementById('studySubGrammarBtn').classList.add('active');
-  document.getElementById('studySubLogBtn').classList.remove('active');
-  document.getElementById('studyLogSection').classList.add('hidden');
-  document.getElementById('studyGrammarSection').classList.remove('hidden');
-  rebuildGramJumpSelect();
+
+let writingPersonFilter = null;
+function rebuildWritingPersonFilter(){
+  const sel = document.getElementById('writingPersonFilter');
+  if(!sel || !currentUser) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
+  sel.appendChild(allOpt);
+  Object.keys(profiles).filter(uid=>coreMembers[uid]).forEach(uid=>{
+    const opt = document.createElement('option');
+    opt.value = uid; opt.textContent = nameFor(uid);
+    sel.appendChild(opt);
+  });
+  const valid = prev && (prev==='all' || coreMembers[prev]);
+  sel.value = valid ? prev : currentUser.id;
+  writingPersonFilter = sel.value;
+}
+document.getElementById('writingPersonFilter').addEventListener('change', (e)=>{
+  writingPersonFilter = e.target.value;
+  renderWritingList();
+});
+
+async function startWriting(){
+  const sel = document.getElementById('writingTopicSelect');
+  let topic = sel.value;
+  if(topic === '__custom__'){
+    topic = document.getElementById('writingCustomTopicInput').value.trim();
+    if(!topic) return;
+  }
+  const row = { user_id: currentUser.id, topic, content: '', word_count: 0 };
+  const { data, error } = await supabaseClient.from('writing_samples').insert(row).select();
+  if(!error && data && data[0]){
+    if(!allWritingSamples[currentUser.id]) allWritingSamples[currentUser.id] = [];
+    allWritingSamples[currentUser.id].unshift(data[0]);
+    document.getElementById('writingCustomTopicInput').value = '';
+    renderWritingList();
+    openWritingSample(data[0].id, currentUser.id);
+  } else {
+    alert('Could not create the writing sample — make sure new_features_migration.sql has been run.');
+  }
+}
+document.getElementById('startWritingBtn').addEventListener('click', startWriting);
+
+function stripHtml(html){
+  const d = document.createElement('div');
+  d.innerHTML = html || '';
+  return d.textContent || '';
+}
+function countWords(html){
+  return stripHtml(html).trim().split(/\s+/).filter(Boolean).length;
+}
+async function deleteWritingSample(id){
+  if(!confirm(t('deleteSampleConfirm'))) return;
+  await supabaseClient.from('writing_samples').delete().eq('id', id);
+  Object.keys(allWritingSamples).forEach(uid=>{
+    allWritingSamples[uid] = (allWritingSamples[uid]||[]).filter(w=>w.id!==id);
+  });
+  if(selectedWritingSampleId === id){
+    selectedWritingSampleId = null;
+    selectedWritingSampleOwner = null;
+    document.getElementById('writingEditorCard').classList.add('hidden');
+  }
+  renderWritingList();
+}
+function renderWritingList(){
+  const list = document.getElementById('writingSampleList');
+  if(!list || !currentUser) return;
+  const filterVal = writingPersonFilter || currentUser.id;
+  let items;
+  if(filterVal === 'all'){
+    items = Object.keys(profiles).filter(uid=>coreMembers[uid]).flatMap(uid=>allWritingSamples[uid]||[]);
+  } else {
+    items = allWritingSamples[filterVal] || [];
+  }
+  items = items.slice().sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+  list.innerHTML = '';
+  if(items.length === 0){ list.innerHTML = '<div class="empty">—</div>'; return; }
+  items.forEach(w=>{
+    const isMine = w.user_id === currentUser.id;
+    const row = document.createElement('div');
+    row.className = 'lecture-row' + (w.id===selectedWritingSampleId ? ' active' : '');
+    row.innerHTML = `
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span class="lecture-title-btn" data-id="${w.id}" data-uid="${w.user_id}">
+            <span class="author-dot" style="background:${colorForUser(w.user_id)};" title="${escapeHtml(nameFor(w.user_id)||'')}"></span>
+            ${escapeHtml(w.topic || '')}
+          </span>
+          <span class="lecture-actions">${isMine ? `<button class="lecture-del" data-id="${w.id}">✕</button>` : ''}</span>
+        </div>
+        <div class="item-sub" style="margin-top:2px;">${w.word_count||0} ${t('wordsLabel')||''} · ${new Date(w.created_at).toLocaleDateString()}${!isMine ? ' · ' + escapeHtml(nameFor(w.user_id)||'') : ''}</div>
+      </div>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.lecture-title-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> openWritingSample(btn.dataset.id, btn.dataset.uid));
+  });
+  list.querySelectorAll('.lecture-del').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); deleteWritingSample(btn.dataset.id); });
+  });
+}
+
+let writingQuillEditor = null;
+let selectedWritingSampleId = null;
+let selectedWritingSampleOwner = null;
+let writingEditorDirty = false;
+function ensureWritingQuillInitialized(){
+  if(writingQuillEditor) return;
+  writingQuillEditor = new Quill('#writingQuillContainer', {
+    theme: 'snow',
+    modules: { toolbar: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']] }
+  });
+  writingQuillEditor.on('text-change', (delta, oldDelta, source)=>{
+    if(source === 'user'){
+      writingEditorDirty = true;
+      updateWritingWordCount();
+    }
+  });
+}
+function updateWritingWordCount(){
+  const el = document.getElementById('writingWordCount');
+  if(!el || !writingQuillEditor) return;
+  el.textContent = t('wordCountLabel').replace('{n}', countWords(writingQuillEditor.root.innerHTML));
+}
+function updateWritingLastSavedInfo(w){
+  const el = document.getElementById('writingLastSavedInfo');
+  if(w.updated_by && w.updated_at){
+    el.textContent = t('lastSavedBy').replace('{name}', nameFor(w.updated_by)).replace('{time}', new Date(w.updated_at).toLocaleString());
+  } else {
+    el.textContent = t('neverSaved');
+  }
+  const versions = w.previous_versions || [];
+  document.getElementById('writingVersionHistoryToggle').textContent = t('versionHistory').replace('{n}', versions.length);
+  document.getElementById('writingVersionHistoryPanel').classList.add('hidden');
+}
+function openWritingSample(id, ownerUid){
+  if(selectedWritingSampleId === id) return;
+  if(writingEditorDirty){
+    const proceed = confirm(t('unsavedConfirm'));
+    if(!proceed) return;
+  }
+  writingEditorDirty = false;
+  selectedWritingSampleId = id;
+  selectedWritingSampleOwner = ownerUid;
+  renderWritingList();
+  const w = (allWritingSamples[ownerUid]||[]).find(x=>x.id===id);
+  if(!w) return;
+  const isMine = ownerUid === currentUser.id;
+  document.getElementById('writingEditorCard').classList.remove('hidden');
+  document.getElementById('writingEditorTopic').textContent = w.topic || '';
+  document.getElementById('saveWritingBtn').classList.toggle('hidden', !isMine);
+  ensureWritingQuillInitialized();
+  writingQuillEditor.root.innerHTML = w.content || '';
+  writingQuillEditor.enable(isMine);
+  writingEditorDirty = false;
+  updateWritingLastSavedInfo(w);
+  updateWritingWordCount();
+}
+document.getElementById('saveWritingBtn').addEventListener('click', async ()=>{
+  if(!selectedWritingSampleId || !writingQuillEditor || selectedWritingSampleOwner !== currentUser.id) return;
+  const content = writingQuillEditor.root.innerHTML;
+  const w = (allWritingSamples[currentUser.id]||[]).find(x=>x.id===selectedWritingSampleId);
+  if(!w) return;
+  const prevVersions = (w.previous_versions || []).slice();
+  if(w.content){
+    prevVersions.unshift({ content: w.content, updated_by: w.updated_by || w.user_id, updated_at: w.updated_at || w.created_at });
+  }
+  const patch = {
+    content, word_count: countWords(content), updated_at: new Date().toISOString(), updated_by: currentUser.id,
+    previous_versions: prevVersions.slice(0,5)
+  };
+  await supabaseClient.from('writing_samples').update(patch).eq('id', selectedWritingSampleId);
+  Object.assign(w, patch);
+  writingEditorDirty = false;
+  updateWritingLastSavedInfo(w);
+  updateWritingWordCount();
+  renderWritingList();
+  alert(t('noteSaved'));
+});
+document.getElementById('closeWritingBtn').addEventListener('click', ()=>{
+  if(writingEditorDirty){
+    const proceed = confirm(t('unsavedConfirm'));
+    if(!proceed) return;
+  }
+  writingEditorDirty = false;
+  selectedWritingSampleId = null;
+  selectedWritingSampleOwner = null;
+  document.getElementById('writingEditorCard').classList.add('hidden');
+  document.getElementById('writingVersionHistoryPanel').classList.add('hidden');
+  renderWritingList();
+});
+document.getElementById('writingVersionHistoryToggle').addEventListener('click', ()=>{
+  const panel = document.getElementById('writingVersionHistoryPanel');
+  const w = (allWritingSamples[selectedWritingSampleOwner]||[]).find(x=>x.id===selectedWritingSampleId);
+  if(!w){ panel.classList.add('hidden'); return; }
+  const versions = w.previous_versions || [];
+  if(versions.length === 0){
+    panel.innerHTML = `<div class="empty">${t('noVersions')}</div>`;
+  } else {
+    panel.innerHTML = versions.map(v=>{
+      const name = nameFor(v.updated_by);
+      const time = v.updated_at ? new Date(v.updated_at).toLocaleString() : '';
+      const preview = stripHtml(v.content||'').slice(0,200);
+      return `<div class="note-item"><div class="note-page">${name} · ${time}</div>${preview || '—'}</div>`;
+    }).join('');
+  }
+  panel.classList.toggle('hidden');
+});
+window.addEventListener('beforeunload', (e)=>{
+  if(writingEditorDirty){
+    e.preventDefault();
+    e.returnValue = '';
+  }
 });
 function initForm(){
   document.getElementById('dateInput').value = todayStr();
   document.getElementById('jobDate').value = todayStr();
   document.getElementById('eventDate').value = todayStr();
 }
-document.getElementById('addBtn').addEventListener('click', async ()=>{
-  const dateVal = document.getElementById('dateInput').value;
-  const actVal = document.getElementById('activityInput').value;
-  const hoursVal = parseFloat(document.getElementById('hoursInput').value);
+async function logStudySession(dateVal, actVal, hoursVal){
   if(!dateVal || !actVal || isNaN(hoursVal) || hoursVal <= 0) return;
   if(!allEntries[currentUser.id]) allEntries[currentUser.id] = {};
   const day = allEntries[currentUser.id][dateVal] || {};
   day[actVal] = (day[actVal] || 0) + hoursVal;
   allEntries[currentUser.id][dateVal] = day;
   await upsertMyDay(dateVal, day);
-  document.getElementById('hoursInput').value = '';
   renderAll();
+}
+document.getElementById('addBtn').addEventListener('click', async ()=>{
+  const dateVal = document.getElementById('dateInput').value;
+  const actVal = document.getElementById('activityInput').value;
+  const hoursVal = parseFloat(document.getElementById('hoursInput').value);
+  await logStudySession(dateVal, actVal, hoursVal);
+  document.getElementById('hoursInput').value = '';
+});
+/* ---------- STUDY TIMER ---------- */
+let timerAccumulatedSec = 0;
+let timerStartedAt = null; // Date.now() ms while running, null while paused
+let timerInterval = null;
+function timerElapsedSec(){
+  return timerAccumulatedSec + (timerStartedAt ? (Date.now() - timerStartedAt)/1000 : 0);
+}
+function formatTimerDisplay(totalSec){
+  const s = Math.max(0, Math.floor(totalSec));
+  const hh = String(Math.floor(s/3600)).padStart(2,'0');
+  const mm = String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const ss = String(s%60).padStart(2,'0');
+  return `${hh}:${mm}:${ss}`;
+}
+function updateTimerDisplay(){
+  const el = document.getElementById('timerDisplay');
+  if(el) el.textContent = formatTimerDisplay(timerElapsedSec());
+}
+function startTimer(){
+  if(timerStartedAt) return;
+  timerStartedAt = Date.now();
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimerDisplay, 250);
+  document.getElementById('timerStartBtn').classList.add('hidden');
+  document.getElementById('timerPauseBtn').classList.remove('hidden');
+  updateTimerDisplay();
+}
+function pauseTimer(){
+  if(!timerStartedAt) return;
+  timerAccumulatedSec += (Date.now() - timerStartedAt)/1000;
+  timerStartedAt = null;
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+  updateTimerDisplay();
+  document.getElementById('timerStartBtn').classList.remove('hidden');
+  document.getElementById('timerPauseBtn').classList.add('hidden');
+}
+function resetTimer(){
+  pauseTimer();
+  timerAccumulatedSec = 0;
+  updateTimerDisplay();
+}
+document.getElementById('timerStartBtn').addEventListener('click', startTimer);
+document.getElementById('timerPauseBtn').addEventListener('click', pauseTimer);
+document.getElementById('timerResetBtn').addEventListener('click', resetTimer);
+document.getElementById('timerSaveBtn').addEventListener('click', async ()=>{
+  const totalSec = timerElapsedSec();
+  const hours = Math.round((totalSec/3600)*100)/100;
+  const actVal = document.getElementById('timerActivitySelect').value;
+  if(hours <= 0 || !actVal) return;
+  pauseTimer();
+  await logStudySession(todayStr(), actVal, hours);
+  resetTimer();
+});
+window.addEventListener('beforeunload', (e)=>{
+  if(timerStartedAt){
+    e.preventDefault();
+    e.returnValue = '';
+  }
 });
 document.getElementById('bdToggle').addEventListener('click', (e)=>{
   const btn = e.target.closest('button');
