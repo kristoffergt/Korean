@@ -248,6 +248,9 @@ button:hover{background:var(--ink-hover);}
 .ql-container.ql-snow{border-color:var(--line) !important;border-radius:0 0 8px 8px;min-height:220px;font-size:14px;}
 #quillContainer .ql-editor{color:var(--note-author-color, var(--ink));background:transparent !important;min-height:220px;}
 #writingQuillContainer .ql-editor{color:var(--ink);background:transparent !important;min-height:220px;}
+.writing-task-box{white-space:pre-wrap;background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.6;margin-top:10px;}
+.writing-char-count{font-weight:600;}
+.writing-char-count.over-target{color:var(--danger, #c0392b);}
 .ql-editor.ql-blank::before{color:var(--ink-soft) !important;}
 .ql-snow .ql-stroke{stroke:var(--ink-soft);}
 .ql-snow .ql-fill{fill:var(--ink-soft);}
@@ -499,8 +502,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         </div>
       </div>
       <div class="card">
-        <h2 id="hGramReadiness"></h2>
-        <div id="gramReadinessCard"></div>
+        <div class="note-group-header" id="gramReadinessHeader"></div>
+        <div id="gramReadinessCard" class="hidden"></div>
       </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:6px;">
@@ -531,6 +534,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
             <label for="writingCustomTopicInput" id="lblWritingCustomTopic"></label>
             <input type="text" id="writingCustomTopicInput">
           </div>
+          <div class="writing-task-box hidden" id="writingTaskPreview"></div>
           <button id="startWritingBtn"></button>
         </div>
       </div>
@@ -545,6 +549,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <div class="card hidden" id="writingEditorCard">
         <h2><span id="writingEditorTopic"></span><span><button class="export-btn" id="saveWritingBtn"></button> <button class="export-btn" id="closeWritingBtn"></button></span></h2>
         <div class="hint" id="writingLastSavedInfo"></div>
+        <div class="writing-task-box hidden" id="writingEditorTaskPrompt"></div>
         <div id="writingQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
         <div class="hint" id="writingWordCount"></div>
         <button class="linkbtn" id="writingVersionHistoryToggle" style="margin-top:10px;"></button>
@@ -1013,7 +1018,7 @@ const I18N = {
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', deleteEventBtn:'Delete',
     addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.', studySubLog:'Log', studySubGrammar:'Korean Grammar', studySubWriting:'Writing', hGrammar:'Korean Grammar Reference',
-    hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?',
+    hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?', charCountLabel:'{n} characters', charCountTarget:'{n} characters (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
     lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
     gramJumpPlaceholder:'— Select —', gramAllLevels:'All', gramIntermediateGroup:'Intermediate', gramAdvancedGroup:'Advanced',
@@ -1086,7 +1091,7 @@ const I18N = {
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', deleteEventBtn:'삭제',
     addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', studySubLog:'기록', studySubGrammar:'한국어 문법', studySubWriting:'작문', hGrammar:'한국어 문법 참고',
-    hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?',
+    hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
     lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
     gramJumpPlaceholder:'— 선택 —', gramAllLevels:'전체', gramIntermediateGroup:'중급', gramAdvancedGroup:'고급',
@@ -1160,7 +1165,7 @@ const I18N = {
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', deleteEventBtn:'Xóa',
     addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp Hàn', studySubWriting:'Luyện viết', hGrammar:'Tài liệu ngữ pháp Hàn',
-    hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?',
+    hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
     lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
     gramJumpPlaceholder:'— Chọn —', gramAllLevels:'Tất cả', gramIntermediateGroup:'Trung cấp', gramAdvancedGroup:'Cao cấp',
@@ -1217,7 +1222,7 @@ const STATIC_MAP = {
   hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabel:'chooseFile',
   studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', hGrammar:'hGrammar',
   hNewWriting:'hNewWriting', lblWritingTopic:'lblWritingTopic', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
-  lblGramSearch:'lblGramSearch', lblGramLevelFilter:'lblGramLevelFilter', lblGramJump:'lblGramJump', lblGramSort:'lblGramSort', lblGramReviewedFilter:'lblGramReviewedFilter', hGramReadiness:'hGramReadiness'
+  lblGramSearch:'lblGramSearch', lblGramLevelFilter:'lblGramLevelFilter', lblGramJump:'lblGramJump', lblGramSort:'lblGramSort', lblGramReviewedFilter:'lblGramReviewedFilter'
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
 const BOOK_STATUS_KEYS = {to_read:'statusToRead', reading:'statusReading', finished:'statusFinished'};
@@ -1383,8 +1388,9 @@ function rebuildGramReviewedFilterSelect(){
   const prev = sel.value || 'all';
   sel.innerHTML = '';
   const opts = [['all', t('gramReviewedAll')]];
-  opts.push(['me-yes', `${t('gramReviewedYes')} — ${t('gramReviewedMe')}`]);
-  opts.push(['me-no', `${t('gramReviewedNo')} — ${t('gramReviewedMe')}`]);
+  const myName = nameFor(currentUser.id);
+  opts.push(['me-yes', `${t('gramReviewedYes')} — ${myName}`]);
+  opts.push(['me-no', `${t('gramReviewedNo')} — ${myName}`]);
   // Roxy/Kristoffer also get per-partner and combined options; anyone else
   // (a non-core account) only ever sees their own reviewed status.
   if(amICore()){
@@ -3839,13 +3845,19 @@ function readinessRowHtml(label, pct){
       <div class="gram-bar"><div class="gram-bar-marker" style="left:${pct}%;"></div></div>
     </div>`;
 }
+let gramReadinessOpen = false;
 function renderGrammarReadiness(){
   const el = document.getElementById('gramReadinessCard');
-  if(!el || !currentUser) return;
+  const header = document.getElementById('gramReadinessHeader');
+  if(!el || !header || !currentUser) return;
+  header.innerHTML = `<span>${gramReadinessOpen?'▾':'▸'}</span> ${t('hGramReadiness')}`;
+  el.classList.toggle('hidden', !gramReadinessOpen);
+  if(!gramReadinessOpen) return;
+  const myName = nameFor(currentUser.id);
   const myOverall = computeGrammarReadiness(currentUser.id, false);
   const myTopik = computeGrammarReadiness(currentUser.id, true);
-  let html = readinessRowHtml(`${t('gramReadinessYou')} — ${t('gramReadinessOverall')}`, myOverall)
-    + readinessRowHtml(`${t('gramReadinessYou')} — ${t('gramReadinessTopik')}`, myTopik);
+  let html = readinessRowHtml(`${myName} — ${t('gramReadinessOverall')}`, myOverall)
+    + readinessRowHtml(`${myName} — ${t('gramReadinessTopik')}`, myTopik);
   const others = Object.keys(profiles).filter(uid=>coreMembers[uid] && uid!==currentUser.id);
   others.forEach(uid=>{
     html += readinessRowHtml(`${nameFor(uid)} — ${t('gramReadinessOverall')}`, computeGrammarReadiness(uid, false))
@@ -3853,6 +3865,10 @@ function renderGrammarReadiness(){
   });
   el.innerHTML = html;
 }
+document.getElementById('gramReadinessHeader').addEventListener('click', ()=>{
+  gramReadinessOpen = !gramReadinessOpen;
+  renderGrammarReadiness();
+});
 document.getElementById('gramIntermediateHeader').addEventListener('click', ()=>{
   gramGroupsOpen.intermediate = !gramGroupsOpen.intermediate;
   renderGrammarList();
@@ -3990,27 +4006,171 @@ document.getElementById('studySubGrammarBtn').addEventListener('click', ()=> swi
 document.getElementById('studySubWritingBtn').addEventListener('click', ()=> switchStudySubTab('writing'));
 
 /* ---------- WRITING PRACTICE ---------- */
-const WRITING_TOPICS = ["올바른 사과 – 잘못된 사과", "현대 사회에서 나눔(분배)의 필요성", "‘동물실험’ 찬성하거나 반대", "이 시대가 원하는 지도자, 지도자의 조건", "올바른 인터넷 사용 태도", "‘감시 카메라 설치 확대’ 찬성하거나 반대", "세계화 시대에 필요한 인재상", "현대 사회에서 바람직한 신문의 기능", "자기 계발의 필요성", "왜 영화나 소설 속의 주인공은 모두 착하고 현명하고 아름다운가?", "통계 자료의 양면성", "진정한 리더십", "창의적으로 사고하는 능력이 반드시 필요", "바람직한 인간관계", "고난과 시련을 통해 배운 것", "성공의 기준", "개인 정보 공개와 시청자의 알 권리", "경쟁 긍정적인 면과 함께 부정적인 면", "선의의 거짓말", "토론에 필요한 자세", "예술 교육의 필요성", "행복한 삶의 조건", "대학의 역할", "직업 선택의 조건", "자연 보존과 자연 개발", "경제적 조건과 행복한 삶", "동기가 일에 미치는 영향", "현대 사회에서 필요한 인재", "인터넷 악플", "역사", "광고 긍정적인 면과 부정적인 면", "직업 선택", "독서 역할", "실패는 성공의 어머니", "칭찬", "반려동물", "봉사활동", "청년 실업 문제", "의사소통", "절약", "다름을 인정하는 필요성", "인터넷 정보", "조언", "역사 영화의 부정적, 긍정적인 영향", "외국어 공부", "조기 교육의 장점 및 문제점", "타인의 평가", "실천의 중요성", "결과를 중시하는 가치관의 문제점", "청소년기의 중요성", "적당한 자신감을 유지하기 위해 가져야 할 태도", "지식 교육과 인성 교육", "대도시의 문제와 해결방안", "후회를 대하는 바람직한 자세", "개인 방송 장단점", "동료와 일을 할 때 지녀야 할 바람직한 태도", "도시 개발의 바람직한 방향", "인간 존중 교육의 필요성", "일회 용품 사용을 효과적으로 줄이기 위한 방법", "기부의 필요성 및 활성화 방안", "게임의 긍정적인 효과와 문제점", "걱정이 우리 삶에 미치는 영향", "노인들이 겪는 사회적 어려움을 해결하기 위한 방법", "직업 선택의 중요성", "어린이 경제 교육", "부모의 역할", "창의력 필요성", "진정한 휴식", "토론", "농담", "독서", "CCTV 설치의 중요성과 부작용", "재능 발견의 중요성", "로봇의 발달에 따른 직업 감소", "가짜 뉴스", "인구 구조 변화", "디지털 기기의 편리함과 부작용", "문화생활의 가치", "기업의 사회적 책임", "직장과 개인의 자율성", "차별", "격려와 응원", "마음의 상처 회복 방법", "인공지능", "스트레스 해소 방법", "실수를 대하는 바람직한 태도", "온라인 교육의 장단점", "인공지능과 일자리의 미래", "여가 시간의 활용 방법", "전통과 현대의 조화", "환경 보호를 위한 개인의 역할", "소통에서 경청의 중요성", "1인 가구 증가에 따른 사회 변화", "재택근무의 장단점"];
+// Q54-style essay tasks (600~700자 argumentative essays), each with the real
+// TOPIK framing: a short context paragraph ending in the standard instruction,
+// plus 2-3 guiding sub-questions, mirroring actual exam prompts.
+const WRITING_TASKS = [
+{topic:"올바른 사과 – 잘못된 사과", prompt:"살다 보면 누구나 실수를 하고 다른 사람에게 사과해야 하는 상황을 겪게 된다. 그러나 사과의 방식에 따라 상대방의 마음을 풀어 주기도 하고 오히려 갈등을 키우기도 한다. 올바른 사과와 잘못된 사과에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["올바른 사과란 무엇인가?","잘못된 사과는 어떤 문제를 일으키는가?","진정성 있는 사과를 하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"현대 사회에서 나눔(분배)의 필요성", prompt:"현대 사회는 물질적으로 풍요로워졌지만 그 혜택이 모든 사람에게 고르게 돌아가지는 않는다. 이러한 상황에서 나눔과 분배의 의미가 다시 주목받고 있다. 현대 사회에서 나눔(분배)의 필요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["나눔과 분배가 필요한 이유는 무엇인가?","나눔이 부족할 경우 어떤 사회 문제가 발생하는가?","나눔의 문화를 확산시키기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"‘동물실험’ 찬성하거나 반대", prompt:"의학과 과학의 발전을 위해 동물실험이 오랫동안 이루어져 왔지만 동물의 생명과 복지를 이유로 이를 반대하는 목소리도 커지고 있다. 동물실험에 대해 찬성하는 입장과 반대하는 입장이 있다. 이에 대한 자신의 입장을 정해 논리적으로 주장하는 글을 쓰십시오.", questions:["동물실험에 찬성하는 근거는 무엇인가?","동물실험에 반대하는 근거는 무엇인가?","자신의 입장과 그 이유는 무엇인가?"]},
+{topic:"이 시대가 원하는 지도자, 지도자의 조건", prompt:"사회가 빠르게 변화하면서 사람들이 지도자에게 요구하는 자질도 달라지고 있다. 이 시대가 원하는 지도자와 지도자의 조건에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["이 시대가 원하는 지도자는 어떤 모습인가?","바람직한 지도자가 갖추어야 할 조건은 무엇인가?","그러한 지도자가 필요한 이유는 무엇인가?"]},
+{topic:"올바른 인터넷 사용 태도", prompt:"인터넷은 생활에 많은 편리함을 주었지만 무분별한 사용으로 인한 부작용도 나타나고 있다. 올바른 인터넷 사용 태도에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["인터넷을 잘못 사용하면 어떤 문제가 생기는가?","올바른 인터넷 사용 태도란 무엇인가?","이를 실천하기 위해 어떤 노력이 필요한가?"]},
+{topic:"‘감시 카메라 설치 확대’ 찬성하거나 반대", prompt:"범죄 예방과 안전을 위해 감시 카메라(CCTV) 설치를 확대해야 한다는 의견이 있는 반면, 사생활 침해를 우려하여 이를 반대하는 의견도 있다. 감시 카메라 설치 확대에 대해 찬성하는 입장과 반대하는 입장이 있다. 이에 대한 자신의 입장을 정해 논리적으로 주장하는 글을 쓰십시오.", questions:["감시 카메라 설치 확대에 찬성하는 근거는 무엇인가?","감시 카메라 설치 확대에 반대하는 근거는 무엇인가?","자신의 입장과 그 이유는 무엇인가?"]},
+{topic:"세계화 시대에 필요한 인재상", prompt:"세계화가 가속화되면서 여러 나라와 문화가 긴밀하게 연결되고 있다. 이러한 세계화 시대에 필요한 인재상에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["세계화 시대에 어떤 능력이 중요해지고 있는가?","세계화 시대가 요구하는 인재상은 무엇인가?","그러한 인재가 되기 위해 어떤 노력이 필요한가?"]},
+{topic:"현대 사회에서 바람직한 신문의 기능", prompt:"신문은 오랫동안 사회의 소식을 전달하고 여론을 형성하는 역할을 해 왔지만 매체 환경이 변화하면서 그 기능도 새롭게 요구되고 있다. 현대 사회에서 바람직한 신문의 기능에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["신문의 전통적인 기능은 무엇인가?","현대 사회에서 신문에 새롭게 요구되는 기능은 무엇인가?","바람직한 신문이 되기 위해 어떤 노력이 필요한가?"]},
+{topic:"자기 계발의 필요성", prompt:"빠르게 변화하는 사회에서 살아남기 위해 끊임없이 자기 계발을 해야 한다는 인식이 확산되고 있다. 자기 계발의 필요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["자기 계발이 필요한 이유는 무엇인가?","자기 계발을 소홀히 하면 어떤 문제가 생기는가?","효과적인 자기 계발을 위해 어떤 노력이 필요한가?"]},
+{topic:"왜 영화나 소설 속의 주인공은 모두 착하고 현명하고 아름다운가?", prompt:"많은 영화나 소설 속의 주인공은 착하고 현명하며 아름다운 인물로 그려지는 경우가 많다. 영화나 소설 속의 주인공이 이렇게 그려지는 이유에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["주인공이 이상적인 모습으로 그려지는 이유는 무엇인가?","이러한 설정이 독자와 관객에게 미치는 영향은 무엇인가?","현실적인 주인공을 그리는 작품에는 어떤 장점이 있는가?"]},
+{topic:"통계 자료의 양면성", prompt:"통계 자료는 현상을 객관적으로 보여 주는 유용한 도구이지만 활용 방식에 따라 왜곡된 정보를 전달하기도 한다. 통계 자료의 양면성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["통계 자료가 가진 긍정적인 기능은 무엇인가?","통계 자료가 잘못 활용될 경우 어떤 문제가 생기는가?","통계 자료를 올바르게 활용하기 위해서는 어떤 태도가 필요한가?"]},
+{topic:"진정한 리더십", prompt:"조직과 사회 곳곳에서 리더의 역할이 중요해지면서 진정한 리더십이 무엇인지에 대한 관심도 커지고 있다. 진정한 리더십에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["진정한 리더십이란 무엇인가?","잘못된 리더십은 어떤 문제를 일으키는가?","진정한 리더가 되기 위해서는 어떤 자질이 필요한가?"]},
+{topic:"창의적으로 사고하는 능력이 반드시 필요", prompt:"인공지능 시대가 도래하면서 정해진 답을 찾는 능력보다 창의적으로 사고하는 능력이 더욱 중요해지고 있다. 창의적으로 사고하는 능력이 반드시 필요한 이유에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["창의적 사고 능력이 중요해지는 이유는 무엇인가?","창의적 사고 능력이 부족하면 어떤 문제가 생기는가?","창의적 사고 능력을 기르기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"바람직한 인간관계", prompt:"사람은 혼자 살아갈 수 없기에 다른 사람들과 관계를 맺으며 살아간다. 바람직한 인간관계에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["바람직한 인간관계란 어떤 것인가?","바람직하지 못한 인간관계는 어떤 문제를 일으키는가?","좋은 인간관계를 맺기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"고난과 시련을 통해 배운 것", prompt:"사람은 살아가면서 크고 작은 고난과 시련을 겪게 되며, 그 과정에서 많은 것을 배우기도 한다. 고난과 시련을 통해 배운 것에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["고난과 시련이 사람에게 주는 부정적인 영향은 무엇인가?","고난과 시련을 통해 얻을 수 있는 긍정적인 교훈은 무엇인가?","고난과 시련을 대하는 바람직한 태도는 무엇인가?"]},
+{topic:"성공의 기준", prompt:"사람마다 성공을 바라보는 기준이 다르며, 시대에 따라 성공의 의미도 달라지고 있다. 성공의 기준에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["일반적으로 사람들이 생각하는 성공의 기준은 무엇인가?","그러한 기준이 가진 문제점은 무엇인가?","자신이 생각하는 진정한 성공의 기준은 무엇인가?"]},
+{topic:"개인 정보 공개와 시청자의 알 권리", prompt:"방송이나 언론에서 사건과 관련된 인물의 개인 정보를 공개하는 경우가 있는데, 이를 두고 시청자의 알 권리와 개인의 사생활 보호가 충돌하는 문제가 발생하고 있다. 개인 정보 공개와 시청자의 알 권리에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["시청자의 알 권리가 중요한 이유는 무엇인가?","개인 정보 공개가 초래할 수 있는 문제는 무엇인가?","두 가치의 균형을 이루기 위해서는 어떤 기준이 필요한가?"]},
+{topic:"경쟁 긍정적인 면과 함께 부정적인 면", prompt:"경쟁은 개인과 사회의 발전을 이끄는 원동력이 되기도 하지만 지나친 경쟁은 부작용을 낳기도 한다. 경쟁이 가진 긍정적인 면과 부정적인 면에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["경쟁이 가진 긍정적인 면은 무엇인가?","지나친 경쟁이 가져오는 부정적인 면은 무엇인가?","건강한 경쟁 문화를 만들기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"선의의 거짓말", prompt:"다른 사람을 배려하기 위해 사실과 다른 말을 하는 이른바 ‘선의의 거짓말’을 하게 되는 경우가 있다. 선의의 거짓말에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["선의의 거짓말은 어떤 경우에 필요한가?","선의의 거짓말이 가진 문제점은 무엇인가?","선의의 거짓말에 대한 자신의 생각은 무엇인가?"]},
+{topic:"토론에 필요한 자세", prompt:"다양한 의견이 존재하는 사회에서 서로 다른 생각을 조율하기 위해 토론이 중요한 역할을 한다. 토론에 필요한 자세에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["바람직한 토론이 되기 위해 필요한 자세는 무엇인가?","바람직하지 못한 토론 태도는 어떤 문제를 일으키는가?","성숙한 토론 문화를 만들기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"예술 교육의 필요성", prompt:"입시와 실용적인 학문이 강조되면서 예술 교육의 중요성이 상대적으로 소홀히 여겨지는 경향이 있다. 예술 교육의 필요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["예술 교육이 개인에게 주는 긍정적인 영향은 무엇인가?","예술 교육이 부족할 경우 어떤 문제가 생기는가?","예술 교육을 활성화하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"행복한 삶의 조건", prompt:"사람마다 행복을 느끼는 기준이 다르지만 누구나 행복한 삶을 살기를 원한다. 행복한 삶의 조건에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["사람들이 생각하는 행복한 삶이란 무엇인가?","행복한 삶을 방해하는 요인은 무엇인가?","행복한 삶을 살기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"대학의 역할", prompt:"많은 사람들이 대학에 진학하고 있지만 대학이 사회에서 담당해야 할 역할에 대해서는 다양한 의견이 존재한다. 대학의 역할에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["대학이 전통적으로 담당해 온 역할은 무엇인가?","현대 사회에서 대학에 새롭게 요구되는 역할은 무엇인가?","대학이 이러한 역할을 다하기 위해 어떤 노력이 필요한가?"]},
+{topic:"직업 선택의 조건", prompt:"직업을 선택할 때 사람들은 저마다 다른 기준을 중요하게 생각한다. 직업 선택의 조건에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["사람들이 직업을 선택할 때 중요하게 생각하는 조건은 무엇인가?","그러한 기준이 가진 장단점은 무엇인가?","자신이 생각하는 바람직한 직업 선택의 기준은 무엇인가?"]},
+{topic:"자연 보존과 자연 개발", prompt:"경제 발전을 위해 자연을 개발해야 한다는 입장과 자연을 있는 그대로 보존해야 한다는 입장이 오랫동안 대립해 왔다. 자연 보존과 자연 개발에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["자연 개발이 가져오는 이점은 무엇인가?","자연 개발로 인해 발생하는 문제는 무엇인가?","자연 보존과 개발이 조화를 이루기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"경제적 조건과 행복한 삶", prompt:"사람들은 다양한 경제 수준의 삶을 살고 있으며 그러한 삶에 대해 느끼는 각자의 만족도도 다양하다. 그러나 경제적 여유와 행복 만족도가 꼭 비례한다고 할 수는 없다. 경제적 조건이 행복한 삶에 미치는 영향에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["사람들이 생각하는 행복한 삶이란 무엇인가?","경제적 조건과 행복 만족도의 관계는 어떠한가?","행복한 삶을 위해 어떤 노력이 필요한가?"]},
+{topic:"동기가 일에 미치는 영향", prompt:"같은 일을 하더라도 어떤 동기를 가지고 임하느냐에 따라 결과와 만족도가 크게 달라질 수 있다. 동기가 일에 미치는 영향에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["동기가 일의 결과에 어떤 영향을 미치는가?","동기가 부족할 경우 어떤 문제가 생기는가?","긍정적인 동기를 유지하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"현대 사회에서 필요한 인재", prompt:"산업 구조와 기술이 빠르게 변화하면서 사회가 요구하는 인재상도 함께 변화하고 있다. 현대 사회에서 필요한 인재에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["현대 사회는 어떤 능력을 가진 인재를 필요로 하는가?","과거와 비교하여 달라진 인재상은 무엇인가?","그러한 인재가 되기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"인터넷 악플", prompt:"인터넷과 소셜 미디어가 발달하면서 익명성을 이용한 악성 댓글, 이른바 ‘악플’로 인한 피해가 사회 문제로 대두되고 있다. 인터넷 악플에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["인터넷 악플이 발생하는 원인은 무엇인가?","인터넷 악플이 개인과 사회에 미치는 영향은 무엇인가?","인터넷 악플을 줄이기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"역사", prompt:"‘역사를 잊은 민족에게 미래는 없다’라는 말처럼 역사는 현재를 살아가는 우리에게 많은 교훈을 준다. 역사를 배우고 기억하는 것의 중요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["역사를 배우는 것이 중요한 이유는 무엇인가?","역사를 잊거나 왜곡할 경우 어떤 문제가 생기는가?","올바른 역사 교육을 위해서는 어떤 노력이 필요한가?"]},
+{topic:"광고 긍정적인 면과 부정적인 면", prompt:"광고는 소비자에게 다양한 상품 정보를 제공하지만 때로는 과장되거나 왜곡된 정보로 소비자를 현혹하기도 한다. 광고가 가진 긍정적인 면과 부정적인 면에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["광고가 소비자와 기업에 주는 긍정적인 면은 무엇인가?","광고가 가진 부정적인 면은 무엇인가?","바람직한 광고 문화를 만들기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"직업 선택", prompt:"평생 종사할 직업을 선택하는 일은 개인의 삶에 큰 영향을 미치는 중요한 결정이다. 직업 선택에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["직업을 선택할 때 고려해야 할 요소는 무엇인가?","잘못된 직업 선택은 어떤 문제를 가져오는가?","만족스러운 직업 생활을 위해서는 어떤 준비가 필요한가?"]},
+{topic:"독서 역할", prompt:"영상 매체가 발달하면서 책을 멀리하는 사람들이 늘고 있지만 독서가 가진 역할은 여전히 중요하다. 독서의 역할에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["독서가 개인에게 주는 긍정적인 영향은 무엇인가?","독서를 멀리할 경우 어떤 문제가 생기는가?","독서 습관을 기르기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"실패는 성공의 어머니", prompt:"‘실패는 성공의 어머니’라는 말처럼 실패의 경험이 이후의 성공에 밑거름이 되는 경우가 많다. 이 말의 의미에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["실패가 성공으로 이어질 수 있는 이유는 무엇인가?","실패를 두려워할 경우 어떤 문제가 생기는가?","실패를 성공의 밑거름으로 삼기 위해서는 어떤 태도가 필요한가?"]},
+{topic:"칭찬", prompt:"칭찬은 사람에게 긍정적인 힘을 주지만 잘못된 방식의 칭찬은 오히려 부작용을 낳기도 한다. 칭찬에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["칭찬이 사람에게 미치는 긍정적인 영향은 무엇인가?","잘못된 칭찬은 어떤 문제를 가져오는가?","바람직한 칭찬의 방법은 무엇인가?"]},
+{topic:"반려동물", prompt:"반려동물을 기르는 가구가 늘어나면서 반려동물이 사람들의 삶에 미치는 영향에 대한 관심도 커지고 있다. 반려동물에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["반려동물을 기르는 것이 사람에게 주는 긍정적인 영향은 무엇인가?","반려동물을 기르면서 생길 수 있는 문제는 무엇인가?","반려동물과 더불어 살아가기 위해서는 어떤 책임이 필요한가?"]},
+{topic:"봉사활동", prompt:"봉사활동은 다른 사람을 돕는 동시에 자신에게도 의미 있는 경험이 될 수 있다. 봉사활동의 가치에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["봉사활동이 개인과 사회에 주는 긍정적인 영향은 무엇인가?","봉사활동에 소극적인 태도는 어떤 문제를 가져오는가?","봉사활동을 활성화하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"청년 실업 문제", prompt:"많은 나라에서 청년 실업 문제가 심각한 사회 문제로 대두되고 있다. 청년 실업 문제에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["청년 실업이 발생하는 원인은 무엇인가?","청년 실업이 개인과 사회에 미치는 영향은 무엇인가?","청년 실업 문제를 해결하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"의사소통", prompt:"사람들은 다양한 방식으로 서로 생각을 주고받으며 살아가지만 원활하지 못한 의사소통으로 인해 오해와 갈등이 생기기도 한다. 의사소통에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["원활한 의사소통이 중요한 이유는 무엇인가?","의사소통이 잘 이루어지지 않을 경우 어떤 문제가 생기는가?","원활한 의사소통을 위해서는 어떤 노력이 필요한가?"]},
+{topic:"절약", prompt:"물질적으로 풍요로운 시대에도 절약은 여전히 중요한 삶의 태도로 강조되고 있다. 절약의 필요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["절약이 개인과 사회에 필요한 이유는 무엇인가?","절약하지 않는 소비 습관은 어떤 문제를 가져오는가?","절약을 실천하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"다름을 인정하는 필요성", prompt:"사회가 다양해지면서 서로 다른 생각과 문화를 가진 사람들이 함께 살아가고 있다. 다름을 인정하는 것의 필요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["다름을 인정하는 태도가 중요한 이유는 무엇인가?","다름을 인정하지 못할 경우 어떤 문제가 생기는가?","다름을 인정하는 사회를 만들기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"인터넷 정보", prompt:"인터넷을 통해 방대한 정보를 손쉽게 얻을 수 있게 되었지만 그 정보의 신뢰성에 대한 우려도 커지고 있다. 인터넷 정보에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["인터넷 정보가 주는 편리함은 무엇인가?","인터넷 정보를 무분별하게 받아들일 경우 어떤 문제가 생기는가?","인터넷 정보를 올바르게 이용하기 위해서는 어떤 태도가 필요한가?"]},
+{topic:"조언", prompt:"사람들은 어려운 상황에 처했을 때 주변 사람의 조언에서 도움을 받기도 한다. 조언에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["조언이 사람에게 도움이 되는 이유는 무엇인가?","잘못된 조언은 어떤 문제를 가져오는가?","바람직한 조언의 태도는 무엇인가?"]},
+{topic:"역사 영화의 부정적, 긍정적인 영향", prompt:"역사적 사실을 소재로 한 영화는 대중에게 역사에 대한 관심을 불러일으키지만 사실을 왜곡할 경우 잘못된 역사 인식을 심어 줄 수도 있다. 역사 영화가 미치는 긍정적인 영향과 부정적인 영향에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["역사 영화가 대중에게 주는 긍정적인 영향은 무엇인가?","역사 영화가 가진 부정적인 영향은 무엇인가?","역사 영화를 올바르게 만들고 감상하기 위해서는 어떤 태도가 필요한가?"]},
+{topic:"외국어 공부", prompt:"세계화 시대를 맞아 많은 사람들이 외국어 공부에 시간과 노력을 투자하고 있다. 외국어 공부의 필요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["외국어를 공부하면 어떤 점이 좋은가?","외국어 공부를 소홀히 할 경우 어떤 어려움을 겪을 수 있는가?","효과적으로 외국어를 공부하기 위해서는 어떤 방법이 필요한가?"]},
+{topic:"조기 교육의 장점 및 문제점", prompt:"요즘은 학교에 들어가지 않은 어린아이들에게 다양한 교육을 실시하는 경우가 많은데 이러한 조기 교육은 좋은 점도 있지만 문제점도 있다. 조기 교육의 장점 및 문제점에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["조기 교육이 아이에게 주는 긍정적인 효과는 무엇인가?","조기 교육이 가진 문제점은 무엇인가?","바람직한 조기 교육을 위해서는 어떤 노력이 필요한가?"]},
+{topic:"타인의 평가", prompt:"사람들은 살아가면서 다른 사람의 평가에 크고 작은 영향을 받는다. 타인의 평가에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["타인의 평가가 사람에게 미치는 영향은 무엇인가?","타인의 평가에 지나치게 집착할 경우 어떤 문제가 생기는가?","타인의 평가를 바람직하게 받아들이기 위해서는 어떤 태도가 필요한가?"]},
+{topic:"실천의 중요성", prompt:"아무리 좋은 생각이나 계획이라도 실천으로 옮기지 않으면 의미가 없다. 실천의 중요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["실천이 중요한 이유는 무엇인가?","실천하지 않을 경우 어떤 문제가 생기는가?","꾸준히 실천하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"결과를 중시하는 가치관의 문제점", prompt:"현대 사회에서는 과정보다 결과를 중시하는 가치관이 널리 퍼져 있다. 결과를 중시하는 가치관의 문제점에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["결과를 중시하는 가치관이 확산된 이유는 무엇인가?","결과 중심의 가치관이 가진 문제점은 무엇인가?","과정과 결과를 균형 있게 바라보기 위해서는 어떤 태도가 필요한가?"]},
+{topic:"청소년기의 중요성", prompt:"청소년기는 자아 정체성을 찾아가는 과도기라는 점에서 인생에서 매우 중요한 시기이다. 청소년기의 중요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["청소년기가 인생에서 중요한 이유는 무엇인가?","청소년기를 잘못 보낼 경우 어떤 문제가 생기는가?","청소년기를 건강하게 보내기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"적당한 자신감을 유지하기 위해 가져야 할 태도", prompt:"지나친 자신감은 실패의 원인이 되기도 하고 지나친 소극적인 태도는 기회를 놓치게 만들기도 한다. 적당한 자신감을 유지하기 위해 가져야 할 태도에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["적당한 자신감이 필요한 이유는 무엇인가?","지나친 자신감이나 부족한 자신감은 어떤 문제를 가져오는가?","적당한 자신감을 유지하기 위해서는 어떤 태도가 필요한가?"]},
+{topic:"지식 교육과 인성 교육", prompt:"학교 교육에서 지식 교육과 인성 교육 중 무엇을 더 중시해야 하는지에 대한 논의가 계속되고 있다. 지식 교육과 인성 교육에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["지식 교육과 인성 교육은 각각 어떤 의미를 가지는가?","지식 교육에 치우친 교육이 가진 문제점은 무엇인가?","지식 교육과 인성 교육이 균형을 이루기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"대도시의 문제와 해결방안", prompt:"많은 사람들이 대도시로 몰리면서 교통 혼잡, 주거 부족 등 다양한 문제가 발생하고 있다. 대도시의 문제와 해결 방안에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["대도시에 인구가 집중되면서 발생하는 문제는 무엇인가?","이러한 문제가 지속될 경우 어떤 결과를 가져오는가?","대도시의 문제를 해결하기 위해서는 어떤 방안이 필요한가?"]},
+{topic:"후회를 대하는 바람직한 자세", prompt:"사람은 살아가면서 크고 작은 선택을 후회하기도 한다. 후회를 대하는 바람직한 자세에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["사람들은 어떤 상황에서 후회를 느끼는가?","후회에 지나치게 얽매일 경우 어떤 문제가 생기는가?","후회를 대하는 바람직한 자세는 무엇인가?"]},
+{topic:"개인 방송 장단점", prompt:"누구나 손쉽게 방송을 만들 수 있는 개인 방송(1인 미디어)이 확산되면서 그 영향력이 커지고 있다. 개인 방송의 장점과 단점에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["개인 방송이 가진 긍정적인 면은 무엇인가?","개인 방송이 가진 부정적인 면은 무엇인가?","개인 방송의 부작용을 줄이기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"동료와 일을 할 때 지녀야 할 바람직한 태도", prompt:"직장이나 조직에서는 혼자가 아니라 동료와 함께 일하는 경우가 많다. 동료와 일을 할 때 지녀야 할 바람직한 태도에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["동료와 함께 일할 때 필요한 태도는 무엇인가?","바람직하지 못한 태도는 어떤 문제를 가져오는가?","원활한 협업을 위해서는 어떤 노력이 필요한가?"]},
+{topic:"도시 개발의 바람직한 방향", prompt:"도시가 성장하면서 개발과 환경 보존 사이의 균형을 어떻게 맞출 것인지가 중요한 과제가 되고 있다. 도시 개발의 바람직한 방향에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["도시 개발이 지역 사회에 주는 이점은 무엇인가?","무분별한 도시 개발은 어떤 문제를 가져오는가?","바람직한 도시 개발을 위해서는 어떤 방향이 필요한가?"]},
+{topic:"인간 존중 교육의 필요성", prompt:"학교 폭력, 차별 등의 문제가 계속되면서 인간 존중 교육의 중요성이 강조되고 있다. 인간 존중 교육의 필요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["인간 존중 교육이 필요한 이유는 무엇인가?","인간 존중 교육이 부족할 경우 어떤 문제가 생기는가?","인간 존중 교육을 효과적으로 실시하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"일회 용품 사용을 효과적으로 줄이기 위한 방법", prompt:"편리함 때문에 일회 용품 사용이 늘어나면서 환경 오염 문제가 심각해지고 있다. 일회 용품 사용을 효과적으로 줄이기 위한 방법에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["일회 용품 사용이 늘어난 이유는 무엇인가?","일회 용품 사용이 초래하는 문제는 무엇인가?","일회 용품 사용을 줄이기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"기부의 필요성 및 활성화 방안", prompt:"어려운 이웃을 돕는 기부 문화는 사회를 따뜻하게 만드는 중요한 역할을 한다. 기부의 필요성 및 활성화 방안에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["기부가 개인과 사회에 필요한 이유는 무엇인가?","기부 문화가 활성화되지 못하는 이유는 무엇인가?","기부 문화를 활성화하기 위해서는 어떤 방안이 필요한가?"]},
+{topic:"게임의 긍정적인 효과와 문제점", prompt:"게임은 여가 활동으로 많은 사람들에게 즐거움을 주지만 지나친 게임 이용은 여러 문제를 낳기도 한다. 게임의 긍정적인 효과와 문제점에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["게임이 사람들에게 주는 긍정적인 효과는 무엇인가?","지나친 게임 이용은 어떤 문제를 가져오는가?","게임을 건강하게 즐기기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"걱정이 우리 삶에 미치는 영향", prompt:"사람은 살아가면서 크고 작은 걱정을 안고 살아간다. 걱정이 우리 삶에 미치는 영향에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["적당한 걱정이 삶에 주는 긍정적인 영향은 무엇인가?","지나친 걱정은 어떤 문제를 가져오는가?","걱정을 건강하게 다스리기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"노인들이 겪는 사회적 어려움을 해결하기 위한 방법", prompt:"고령화 사회로 접어들면서 노인들이 겪는 경제적, 사회적 어려움이 사회 문제로 대두되고 있다. 노인들이 겪는 사회적 어려움을 해결하기 위한 방법에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["노인들이 겪는 사회적 어려움은 무엇인가?","이러한 어려움이 계속될 경우 어떤 문제가 생기는가?","노인들의 어려움을 해결하기 위해서는 어떤 방법이 필요한가?"]},
+{topic:"직업 선택의 중요성", prompt:"직업은 경제적 수단을 넘어 개인의 삶의 방식과 정체성에도 큰 영향을 미친다. 직업 선택의 중요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["직업이 개인의 삶에 미치는 영향은 무엇인가?","신중하지 못한 직업 선택은 어떤 문제를 가져오는가?","신중한 직업 선택을 위해서는 어떤 노력이 필요한가?"]},
+{topic:"어린이 경제 교육", prompt:"최근 어린 시절부터 올바른 경제 관념을 길러 주는 어린이 경제 교육에 대한 관심이 높아지고 있다. 어린이 경제 교육의 필요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["어린이 경제 교육이 필요한 이유는 무엇인가?","경제 교육이 부족할 경우 어떤 문제가 생기는가?","효과적인 어린이 경제 교육을 위해서는 어떤 방법이 필요한가?"]},
+{topic:"부모의 역할", prompt:"자녀의 성장 과정에서 부모는 매우 중요한 역할을 담당한다. 부모의 역할에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["부모가 자녀에게 해 주어야 할 바람직한 역할은 무엇인가?","부모의 역할이 부족하거나 지나칠 경우 어떤 문제가 생기는가?","바람직한 부모의 역할을 다하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"창의력 필요성", prompt:"빠르게 변화하는 사회에서 정해진 지식보다 창의력이 더욱 중요한 능력으로 평가받고 있다. 창의력의 필요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["창의력이 중요해지는 이유는 무엇인가?","창의력이 부족할 경우 어떤 어려움을 겪을 수 있는가?","창의력을 기르기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"진정한 휴식", prompt:"바쁜 현대인들에게 휴식은 꼭 필요하지만 무엇이 진정한 휴식인지에 대한 생각은 사람마다 다르다. 진정한 휴식에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["진정한 휴식이란 무엇인가?","잘못된 휴식 방식은 어떤 문제를 가져오는가?","진정한 휴식을 취하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"토론", prompt:"다양한 의견을 가진 사람들이 함께 살아가는 사회에서 토론은 서로를 이해하고 합의점을 찾는 중요한 수단이 된다. 토론의 필요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["토론이 필요한 이유는 무엇인가?","토론이 제대로 이루어지지 않을 경우 어떤 문제가 생기는가?","생산적인 토론을 위해서는 어떤 자세가 필요한가?"]},
+{topic:"농담", prompt:"농담은 분위기를 부드럽게 만들고 사람 사이의 거리를 좁혀 주기도 하지만 때로는 상대방에게 상처를 주기도 한다. 농담에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["농담이 인간관계에 주는 긍정적인 역할은 무엇인가?","잘못된 농담은 어떤 문제를 가져오는가?","바람직한 농담의 태도는 무엇인가?"]},
+{topic:"독서", prompt:"영상과 인터넷 매체가 발달한 시대에도 독서가 가진 가치는 여전히 크다. 독서의 가치에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["독서가 사람에게 주는 가치는 무엇인가?","독서를 멀리하는 사람이 늘어나면서 생기는 문제는 무엇인가?","독서 습관을 기르기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"CCTV 설치의 중요성과 부작용", prompt:"범죄 예방과 안전 확보를 위해 CCTV 설치가 확대되고 있지만 사생활 침해에 대한 우려도 함께 커지고 있다. CCTV 설치의 중요성과 부작용에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["CCTV 설치가 필요한 이유는 무엇인가?","CCTV 설치가 가져오는 부작용은 무엇인가?","CCTV를 바람직하게 운영하기 위해서는 어떤 기준이 필요한가?"]},
+{topic:"재능 발견의 중요성", prompt:"사람마다 저마다의 재능을 가지고 있지만 이를 일찍 발견하지 못하는 경우도 많다. 재능 발견의 중요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["재능을 일찍 발견하는 것이 중요한 이유는 무엇인가?","재능을 발견하지 못할 경우 어떤 어려움을 겪을 수 있는가?","자신의 재능을 발견하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"로봇의 발달에 따른 직업 감소", prompt:"로봇과 자동화 기술이 발달하면서 여러 산업 분야에서 일자리가 줄어들 것이라는 우려가 커지고 있다. 로봇의 발달에 따른 직업 감소에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["로봇의 발달이 일자리에 미치는 영향은 무엇인가?","일자리 감소가 계속될 경우 어떤 사회 문제가 생기는가?","이러한 변화에 대응하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"가짜 뉴스", prompt:"인터넷과 소셜 미디어를 통해 사실이 아닌 정보, 이른바 ‘가짜 뉴스’가 빠르게 확산되면서 사회적 혼란을 일으키고 있다. 가짜 뉴스에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["가짜 뉴스가 확산되는 원인은 무엇인가?","가짜 뉴스가 개인과 사회에 미치는 영향은 무엇인가?","가짜 뉴스를 근절하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"인구 구조 변화", prompt:"저출산과 고령화가 심화되면서 인구 구조가 빠르게 변화하고 있다. 인구 구조 변화에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["인구 구조가 변화하는 원인은 무엇인가?","인구 구조 변화가 사회에 미치는 영향은 무엇인가?","이러한 변화에 대응하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"디지털 기기의 편리함과 부작용", prompt:"스마트폰을 비롯한 디지털 기기는 생활을 편리하게 해 주었지만 그에 따른 부작용도 나타나고 있다. 디지털 기기의 편리함과 부작용에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["디지털 기기가 주는 편리함은 무엇인가?","디지털 기기의 지나친 사용이 가져오는 부작용은 무엇인가?","디지털 기기를 건강하게 사용하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"문화생활의 가치", prompt:"바쁜 일상 속에서도 사람들은 영화, 공연, 전시 등 다양한 문화생활을 즐기며 삶의 활력을 얻는다. 문화생활의 가치에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["문화생활이 개인의 삶에 주는 가치는 무엇인가?","문화생활이 부족할 경우 어떤 문제가 생기는가?","풍요로운 문화생활을 누리기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"기업의 사회적 책임", prompt:"기업이 이윤 추구를 넘어 사회적 책임을 다해야 한다는 목소리가 커지고 있다. 기업의 사회적 책임에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["기업의 사회적 책임이 중요한 이유는 무엇인가?","기업이 사회적 책임을 다하지 않을 경우 어떤 문제가 생기는가?","기업이 사회적 책임을 다하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"직장과 개인의 자율성", prompt:"직장 생활에서 조직의 규율과 개인의 자율성 사이의 균형을 맞추는 것이 중요한 과제로 떠오르고 있다. 직장과 개인의 자율성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["직장에서 개인의 자율성이 중요한 이유는 무엇인가?","자율성이 지나치거나 부족할 경우 어떤 문제가 생기는가?","조직과 개인의 자율성이 조화를 이루기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"차별", prompt:"성별, 나이, 출신 등을 이유로 한 차별이 여전히 사회 곳곳에 존재하고 있다. 차별에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["사회에서 나타나는 차별에는 어떤 것이 있는가?","차별이 개인과 사회에 미치는 영향은 무엇인가?","차별을 없애기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"격려와 응원", prompt:"어려운 상황에 처한 사람에게 격려와 응원의 말은 큰 힘이 되어 준다. 격려와 응원에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["격려와 응원이 사람에게 주는 긍정적인 영향은 무엇인가?","격려와 응원이 부족할 경우 어떤 문제가 생기는가?","진심 어린 격려와 응원을 하기 위해서는 어떤 태도가 필요한가?"]},
+{topic:"마음의 상처 회복 방법", prompt:"사람은 살아가면서 크고 작은 마음의 상처를 받게 되며, 이를 잘 극복하는 것이 중요하다. 마음의 상처를 회복하는 방법에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["마음의 상처는 주로 어떤 상황에서 생기는가?","마음의 상처를 방치할 경우 어떤 문제가 생기는가?","마음의 상처를 건강하게 회복하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"인공지능", prompt:"인공지능(AI) 기술이 빠르게 발전하면서 우리의 삶 곳곳에 큰 변화를 가져오고 있다. 인공지능이 우리 삶에 미치는 영향에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["인공지능은 어떤 분야에서 활용되고 있는가?","인공지능 발전이 가져오는 문제점은 무엇인가?","인공지능을 올바르게 활용하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"스트레스 해소 방법", prompt:"현대인들은 다양한 원인으로 스트레스를 받으며 살아가고 있으며 이를 건강하게 해소하는 것이 중요하다. 스트레스 해소 방법에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["현대인들이 스트레스를 받는 주된 원인은 무엇인가?","스트레스를 해소하지 못할 경우 어떤 문제가 생기는가?","건강하게 스트레스를 해소하는 방법에는 어떤 것이 있는가?"]},
+{topic:"실수를 대하는 바람직한 태도", prompt:"사람은 누구나 실수를 하며 살아가지만 그 실수를 대하는 태도에 따라 이후의 삶이 달라질 수 있다. 실수를 대하는 바람직한 태도에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["실수를 대하는 바람직하지 못한 태도는 어떤 문제를 가져오는가?","실수를 통해 배울 수 있는 것은 무엇인가?","실수를 대하는 바람직한 태도는 무엇인가?"]},
+{topic:"온라인 교육의 장단점", prompt:"정보 통신 기술의 발달로 온라인 교육이 확산되면서 교육 환경에 큰 변화가 일어나고 있다. 온라인 교육의 장점과 단점에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["온라인 교육이 가진 장점은 무엇인가?","온라인 교육이 가진 단점은 무엇인가?","온라인 교육의 효과를 높이기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"인공지능과 일자리의 미래", prompt:"인공지능 기술의 발달로 여러 직업이 사라지거나 새롭게 생겨나는 등 일자리 지형이 크게 변화하고 있다. 인공지능과 일자리의 미래에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["인공지능의 발달이 일자리에 미치는 영향은 무엇인가?","이러한 변화가 가져올 수 있는 문제는 무엇인가?","변화하는 일자리 환경에 대응하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"여가 시간의 활용 방법", prompt:"일과 삶의 균형이 강조되면서 여가 시간을 어떻게 보내는지가 중요한 관심사가 되고 있다. 여가 시간의 활용 방법에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["여가 시간이 사람들에게 필요한 이유는 무엇인가?","여가 시간을 제대로 활용하지 못할 경우 어떤 문제가 생기는가?","여가 시간을 의미 있게 활용하기 위해서는 어떤 방법이 있는가?"]},
+{topic:"전통과 현대의 조화", prompt:"사회가 빠르게 변화하는 가운데 전통을 지키는 것과 현대적 변화를 받아들이는 것 사이에서 균형을 찾는 일이 중요해지고 있다. 전통과 현대의 조화에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["전통을 지키는 것이 중요한 이유는 무엇인가?","전통만을 고집하거나 현대적 변화만을 좇을 경우 어떤 문제가 생기는가?","전통과 현대가 조화를 이루기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"환경 보호를 위한 개인의 역할", prompt:"환경 문제가 심각해지면서 정부와 기업뿐 아니라 개인의 역할도 중요하게 강조되고 있다. 환경 보호를 위한 개인의 역할에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["환경 보호를 위해 개인이 할 수 있는 노력에는 어떤 것이 있는가?","개인의 노력이 부족할 경우 어떤 문제가 생기는가?","환경 보호를 실천하는 문화를 확산시키기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"소통에서 경청의 중요성", prompt:"원활한 소통을 위해서는 자신의 생각을 전달하는 것뿐만 아니라 상대방의 말을 잘 듣는 경청의 자세도 중요하다. 소통에서 경청의 중요성에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["경청이 소통에서 중요한 이유는 무엇인가?","경청하지 않는 태도는 어떤 문제를 가져오는가?","바람직한 경청의 자세를 기르기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"1인 가구 증가에 따른 사회 변화", prompt:"혼자 사는 1인 가구가 빠르게 늘어나면서 사회 전반에 다양한 변화가 나타나고 있다. 1인 가구 증가에 따른 사회 변화에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["1인 가구가 증가하는 원인은 무엇인가?","1인 가구 증가가 사회에 가져오는 변화는 무엇인가?","1인 가구가 겪는 어려움을 해결하기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"재택근무의 장단점", prompt:"정보 통신 기술의 발달과 사회 환경의 변화로 재택근무를 도입하는 기업이 늘어나고 있다. 재택근무의 장점과 단점에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["재택근무가 가진 장점은 무엇인가?","재택근무가 가진 단점은 무엇인가?","재택근무의 효과를 높이기 위해서는 어떤 노력이 필요한가?"]},
+{topic:"대중매체", prompt:"텔레비전, 인터넷, 소셜 미디어 등 대중매체는 정보를 전달하고 여론을 형성하는 데 큰 영향을 미친다. 대중매체가 사회에 미치는 영향에 대해 아래의 내용을 중심으로 자신의 생각을 쓰십시오.", questions:["대중매체가 사회에 주는 긍정적인 영향은 무엇인가?","대중매체가 가진 부정적인 영향은 무엇인가?","대중매체를 올바르게 활용하기 위해서는 어떤 자세가 필요한가?"]}
+].map(t=>({...t, type:'essay', charMin:600, charMax:700}));
 
+// Framework for a future Q53-style task (describing a graph/table/chart,
+// 200~300자, no personal opinion required). Left empty for now — populate
+// with {topic, prompt, questions, imageUrl} entries and it will
+// automatically appear as its own group in the topic picker, sized to
+// 200~300자 via charMin/charMax, with no extra wiring needed.
+const WRITING_DATA_TASKS = [].map(t=>({...t, type:'data', charMin:200, charMax:300}));
+
+function composeTaskPrompt(task){
+  const qs = (task.questions||[]).map(q => '· ' + q).join('\n');
+  return task.prompt + (qs ? ('\n\n' + qs) : '');
+}
+function getWritingTask(value){
+  if(!value || value === '__custom__') return null;
+  const [kind, idx] = value.split(':');
+  const list = kind === 'data' ? WRITING_DATA_TASKS : WRITING_TASKS;
+  return list[Number(idx)] || null;
+}
+function updateWritingTaskPreview(){
+  const sel = document.getElementById('writingTopicSelect');
+  const box = document.getElementById('writingTaskPreview');
+  if(!sel || !box) return;
+  const task = getWritingTask(sel.value);
+  if(task){
+    box.textContent = composeTaskPrompt(task);
+    box.classList.remove('hidden');
+  } else {
+    box.textContent = '';
+    box.classList.add('hidden');
+  }
+}
 function rebuildWritingTopicSelect(){
   const sel = document.getElementById('writingTopicSelect');
   if(!sel) return;
   const prev = sel.value;
   sel.innerHTML = '';
-  WRITING_TOPICS.forEach(topic=>{
+  const essayGroup = document.createElement('optgroup');
+  essayGroup.label = t('writingGroupEssay');
+  WRITING_TASKS.forEach((task,i)=>{
     const opt = document.createElement('option');
-    opt.value = topic; opt.textContent = topic;
-    sel.appendChild(opt);
+    opt.value = 'essay:' + i; opt.textContent = task.topic;
+    essayGroup.appendChild(opt);
   });
+  sel.appendChild(essayGroup);
+  if(WRITING_DATA_TASKS.length){
+    const dataGroup = document.createElement('optgroup');
+    dataGroup.label = t('writingGroupData');
+    WRITING_DATA_TASKS.forEach((task,i)=>{
+      const opt = document.createElement('option');
+      opt.value = 'data:' + i; opt.textContent = task.topic;
+      dataGroup.appendChild(opt);
+    });
+    sel.appendChild(dataGroup);
+  }
   const customOpt = document.createElement('option');
   customOpt.value = '__custom__'; customOpt.textContent = t('writingCustomTopicOpt');
   sel.appendChild(customOpt);
   if(prev) sel.value = prev;
   const customField = document.getElementById('writingCustomTopicField');
   if(customField) customField.classList.toggle('hidden', sel.value !== '__custom__');
+  updateWritingTaskPreview();
 }
 document.getElementById('writingTopicSelect').addEventListener('change', (e)=>{
   document.getElementById('writingCustomTopicField').classList.toggle('hidden', e.target.value !== '__custom__');
+  updateWritingTaskPreview();
 });
 
 let writingPersonFilter = null;
@@ -4038,12 +4198,18 @@ document.getElementById('writingPersonFilter').addEventListener('change', (e)=>{
 
 async function startWriting(){
   const sel = document.getElementById('writingTopicSelect');
-  let topic = sel.value;
-  if(topic === '__custom__'){
+  const task = getWritingTask(sel.value);
+  let topic, taskPrompt = null, taskType = 'essay', charMin = null, charMax = null;
+  if(!task){
     topic = document.getElementById('writingCustomTopicInput').value.trim();
     if(!topic) return;
+  } else {
+    topic = task.topic;
+    taskPrompt = composeTaskPrompt(task);
+    taskType = task.type;
+    charMin = task.charMin; charMax = task.charMax;
   }
-  const row = { user_id: currentUser.id, topic, content: '', word_count: 0 };
+  const row = { user_id: currentUser.id, topic, content: '', word_count: 0, task_prompt: taskPrompt, task_type: taskType, char_min: charMin, char_max: charMax };
   const { data, error } = await supabaseClient.from('writing_samples').insert(row).select();
   if(!error && data && data[0]){
     if(!allWritingSamples[currentUser.id]) allWritingSamples[currentUser.id] = [];
@@ -4052,7 +4218,7 @@ async function startWriting(){
     renderWritingList();
     openWritingSample(data[0].id, currentUser.id);
   } else {
-    alert('Could not create the writing sample — make sure new_features_migration.sql has been run.');
+    alert('Could not create the writing sample — make sure new_features_migration.sql (and writing_task_framework_migration.sql) has been run.');
   }
 }
 document.getElementById('startWritingBtn').addEventListener('click', startWriting);
@@ -4064,6 +4230,11 @@ function stripHtml(html){
 }
 function countWords(html){
   return stripHtml(html).trim().split(/\s+/).filter(Boolean).length;
+}
+// TOPIK measures essay length in 자 (characters, spaces and punctuation
+// included), not words — this mirrors that rule for the live counter.
+function countChars(html){
+  return stripHtml(html).length;
 }
 async function deleteWritingSample(id){
   if(!confirm(t('deleteSampleConfirm'))) return;
@@ -4129,14 +4300,22 @@ function ensureWritingQuillInitialized(){
   writingQuillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
       writingEditorDirty = true;
-      updateWritingWordCount();
+      updateWritingCharCount();
     }
   });
 }
-function updateWritingWordCount(){
+function updateWritingCharCount(){
   const el = document.getElementById('writingWordCount');
   if(!el || !writingQuillEditor) return;
-  el.textContent = t('wordCountLabel').replace('{n}', countWords(writingQuillEditor.root.innerHTML));
+  const n = countChars(writingQuillEditor.root.innerHTML);
+  const w = (allWritingSamples[selectedWritingSampleOwner]||[]).find(x=>x.id===selectedWritingSampleId);
+  el.className = 'hint writing-char-count';
+  if(w && w.char_min && w.char_max){
+    el.textContent = t('charCountTarget').replace('{n}', n).replace('{min}', w.char_min).replace('{max}', w.char_max);
+    el.classList.toggle('over-target', n < w.char_min || n > w.char_max);
+  } else {
+    el.textContent = t('charCountLabel').replace('{n}', n);
+  }
 }
 function updateWritingLastSavedInfo(w){
   const el = document.getElementById('writingLastSavedInfo');
@@ -4165,12 +4344,20 @@ function openWritingSample(id, ownerUid){
   document.getElementById('writingEditorCard').classList.remove('hidden');
   document.getElementById('writingEditorTopic').textContent = w.topic || '';
   document.getElementById('saveWritingBtn').classList.toggle('hidden', !isMine);
+  const taskBox = document.getElementById('writingEditorTaskPrompt');
+  if(w.task_prompt){
+    taskBox.textContent = w.task_prompt;
+    taskBox.classList.remove('hidden');
+  } else {
+    taskBox.textContent = '';
+    taskBox.classList.add('hidden');
+  }
   ensureWritingQuillInitialized();
   writingQuillEditor.root.innerHTML = w.content || '';
   writingQuillEditor.enable(isMine);
   writingEditorDirty = false;
   updateWritingLastSavedInfo(w);
-  updateWritingWordCount();
+  updateWritingCharCount();
 }
 document.getElementById('saveWritingBtn').addEventListener('click', async ()=>{
   if(!selectedWritingSampleId || !writingQuillEditor || selectedWritingSampleOwner !== currentUser.id) return;
@@ -4189,7 +4376,7 @@ document.getElementById('saveWritingBtn').addEventListener('click', async ()=>{
   Object.assign(w, patch);
   writingEditorDirty = false;
   updateWritingLastSavedInfo(w);
-  updateWritingWordCount();
+  updateWritingCharCount();
   renderWritingList();
   alert(t('noteSaved'));
 });
