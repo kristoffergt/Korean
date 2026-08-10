@@ -648,6 +648,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
     <div class="card">
       <h2><span id="hYourBooks"></span><button class="export-btn" id="exportBooksBtn"></button></h2>
+      <div class="field" style="margin-bottom:12px;">
+        <label for="bookPersonFilter" id="lblBookPersonFilter"></label>
+        <select id="bookPersonFilter"></select>
+      </div>
       <div id="bookList"></div>
     </div>
     <div class="card">
@@ -695,6 +699,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
     <div class="card">
       <h2><span id="hYourJobs"></span><button class="export-btn" id="exportJobsBtn"></button></h2>
+      <div class="field" style="margin-bottom:12px;">
+        <label for="jobPersonFilter" id="lblJobPersonFilter"></label>
+        <select id="jobPersonFilter"></select>
+      </div>
       <div id="jobList"></div>
     </div>
     <div class="card">
@@ -1104,10 +1112,10 @@ const STATIC_MAP = {
   hMyEntries:'yourEntries', hFeed:'feedEveryone', exportStudyBtn:'exportCsv',
   hReadingStats:'yourReading', rLabelReading:'statusReading', rLabelToRead:'statusToRead', rLabelFinished:'statusFinished',
   hAddBook:'addBook', lblBookTitle:'title', lblBookAuthor:'author', lblBookStatus:'status', lblBookPages:'totalPages', addBookBtn:'addBookBtn',
-  hYourBooks:'yourBooks', exportBooksBtn:'exportCsv', hBookLB:'booksFinishedLB', blbHeadRank:'lbRank', blbHeadName:'lbName', blbHeadFinished:'statusFinished',
+  hYourBooks:'yourBooks', exportBooksBtn:'exportCsv', hBookLB:'booksFinishedLB', blbHeadRank:'lbRank', blbHeadName:'lbName', blbHeadFinished:'statusFinished', lblBookPersonFilter:'lblNotesPersonFilter',
   hJobStats:'yourApplications', jLabelApplied:'jobApplied', jLabelInterview:'jobInterview', jLabelOffer:'jobOffer', jLabelRejected:'jobRejected',
   hAddJob:'logApplication', lblCompany:'company', lblRole:'role', lblJobStatus:'status', lblJobDate:'dateApplied', lblJobLink:'link', addJobBtn:'addApplicationBtn',
-  hYourJobs:'yourApplications', exportJobsBtn:'exportCsv', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied',
+  hYourJobs:'yourApplications', exportJobsBtn:'exportCsv', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied', lblJobPersonFilter:'lblNotesPersonFilter',
   hTopik:'topikCountdown', topikRegLabel:'regOpensIn', topikTestLabel:'testIn',
   hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventEndTime:'eventEndTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', addEventBtn:'addDeadlineBtn',
   calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek', calViewDayBtn:'viewDay',
@@ -1853,7 +1861,7 @@ document.getElementById('importIcsFile').addEventListener('change', (e)=>{
 function renderLeaderboard(){
   const el = document.getElementById('leaderboard');
   el.innerHTML = '';
-  const userIds = Object.keys(profiles);
+  const userIds = Object.keys(profiles).filter(uid=>coreMembers[uid]);
   const rows = userIds.map(id=>({
     id, name: nameFor(id),
     streak: computeStreak(id), week: computeWeekTotal(id), total: computeTotal(id)
@@ -2035,6 +2043,8 @@ async function deleteBookNote(bookId, noteId){
 }
 document.getElementById('addBookBtn').addEventListener('click', addBook);
 function renderReading(){
+  // "Your reading" stat tiles always reflect your own books, independent of
+  // which person the list below is currently showing.
   const mine = allBooks[currentUser.id] || [];
   const rReading = mine.filter(b=>b.status==='reading').length;
   const rToRead = mine.filter(b=>b.status==='to_read').length;
@@ -2052,11 +2062,26 @@ function renderReading(){
 
   finishedEl.textContent = rFinished;
   finishedEl.style.color = rFinished > 0 ? '#27AE60' : 'var(--ink)';
+
+  // The list itself honors bookPersonFilter: "me" (default), the other core
+  // member's name, or "all" for a merged, attributed view. The DB only ever
+  // returns rows within the shared core circle (see RLS), so this can never
+  // surface a third party's books even if 'all' is selected.
+  const filterVal = bookPersonFilter || currentUser.id;
+  let viewList;
+  if(filterVal === 'all'){
+    viewList = Object.keys(profiles).filter(uid=>coreMembers[uid])
+      .flatMap(uid => (allBooks[uid]||[]));
+  } else {
+    viewList = allBooks[filterVal] || [];
+  }
+
   const list = document.getElementById('bookList');
   list.innerHTML = '';
-  if(mine.length === 0){ list.innerHTML = '<div class="empty">—</div>'; }
+  if(viewList.length === 0){ list.innerHTML = '<div class="empty">—</div>'; }
   const order = {reading:0, to_read:1, finished:2};
-  mine.slice().sort((a,b)=> order[a.status]-order[b.status]).forEach(b=>{
+  viewList.slice().sort((a,b)=> order[a.status]-order[b.status]).forEach(b=>{
+    const isMine = b.user_id === currentUser.id;
     const div = document.createElement('div');
     div.className = 'item-row';
     let progressHtml = '';
@@ -2068,33 +2093,34 @@ function renderReading(){
     const isOpen = expandedBookNotes.has(b.id);
     const notesListHtml = notes.map(n => `
       <div class="note-item">
-        <button class="note-del" data-book="${b.id}" data-note="${n.id}">✕</button>
+        ${isMine ? `<button class="note-del" data-book="${b.id}" data-note="${n.id}">✕</button>` : ''}
         ${n.page ? `<div class="note-page">${t('page')} ${n.page}</div>` : ''}
         ${n.text.replace(/</g,'&lt;')}
       </div>`).join('') || `<div class="empty">—</div>`;
+    const ownerTag = !isMine ? `<span class="e-who">${nameFor(b.user_id)}</span>` : '';
     div.innerHTML =
       `<div class="item-top">
-        <div><div class="item-title">${b.title}</div><div class="item-sub">${b.author || ''}</div></div>
-        <button class="item-del" data-id="${b.id}" data-kind="book" title="Delete">✕</button>
+        <div><div class="item-title">${b.title} ${ownerTag}</div><div class="item-sub">${b.author || ''}</div></div>
+        ${isMine ? `<button class="item-del" data-id="${b.id}" data-kind="book" title="Delete">✕</button>` : ''}
       </div>
       <div class="item-meta">
         <span class="badge ${b.status}">${bookStatusLabel(b.status)}</span>
-        <select data-id="${b.id}" class="book-status-select">
+        ${isMine ? `<select data-id="${b.id}" class="book-status-select">
           <option value="to_read" ${b.status==='to_read'?'selected':''}>${bookStatusLabel('to_read')}</option>
           <option value="reading" ${b.status==='reading'?'selected':''}>${bookStatusLabel('reading')}</option>
           <option value="finished" ${b.status==='finished'?'selected':''}>${bookStatusLabel('finished')}</option>
-        </select>
-        ${b.total_pages ? `<input type="number" class="book-pages-input" data-id="${b.id}" min="0" max="${b.total_pages}" value="${b.pages_read||0}" title="Pages read"> / ${b.total_pages}p` : ''}
+        </select>` : ''}
+        ${b.total_pages ? (isMine ? `<input type="number" class="book-pages-input" data-id="${b.id}" min="0" max="${b.total_pages}" value="${b.pages_read||0}" title="Pages read"> / ${b.total_pages}p` : `${b.pages_read||0} / ${b.total_pages}p`) : ''}
         <button class="linkbtn note-toggle" data-id="${b.id}">${t('noteBtn')} (${notes.length})</button>
       </div>
       ${progressHtml}
       <div class="notes-panel ${isOpen?'':'hidden'}" data-notes-for="${b.id}">
         ${notesListHtml}
-        <div class="note-add">
+        ${isMine ? `<div class="note-add">
           <textarea placeholder="${t('addNote')}..." data-book="${b.id}" class="note-text-input"></textarea>
           <input type="number" min="0" placeholder="${t('page')}" data-book="${b.id}" class="note-page-input">
           <button class="note-save-btn" data-book="${b.id}">${t('addNote')}</button>
-        </div>
+        </div>` : ''}
       </div>`;
     list.appendChild(div);
   });
@@ -2128,7 +2154,7 @@ function renderReading(){
   });
   const lb = document.getElementById('bookLeaderboard');
   lb.innerHTML = '';
-  const rows = Object.keys(profiles).map(id=>({
+  const rows = Object.keys(profiles).filter(uid=>coreMembers[uid]).map(id=>({
     id, name: nameFor(id), finished: (allBooks[id]||[]).filter(b=>b.status==='finished').length
   })).sort((a,b)=> b.finished - a.finished);
   if(rows.length === 0){ lb.innerHTML = '<div class="bd-empty">—</div>'; }
@@ -2171,6 +2197,8 @@ async function deleteJob(jobId){
 }
 document.getElementById('addJobBtn').addEventListener('click', addJob);
 function renderJobs(){
+  // "Your applications" stat tiles always reflect your own applications,
+  // independent of which person the list below is currently showing.
   const mine = allJobs[currentUser.id] || [];
   const jApplied = mine.filter(j=>j.status==='applied').length;
   const jInterview = mine.filter(j=>j.status==='interview').length;
@@ -2193,26 +2221,42 @@ function renderJobs(){
 
   rejectedEl.textContent = jRejected;
   rejectedEl.style.color = jRejected > 0 ? 'var(--seal)' : 'var(--ink)';
+
+  // The list itself honors jobPersonFilter: "me" (default), the other core
+  // member's name, or "all" for a merged, attributed view. The DB only ever
+  // returns rows within the shared core circle (see RLS), so this can never
+  // surface a third party's applications even if 'all' is selected.
+  const filterVal = jobPersonFilter || currentUser.id;
+  let viewList;
+  if(filterVal === 'all'){
+    viewList = Object.keys(profiles).filter(uid=>coreMembers[uid])
+      .flatMap(uid => (allJobs[uid]||[]));
+  } else {
+    viewList = allJobs[filterVal] || [];
+  }
+
   const list = document.getElementById('jobList');
   list.innerHTML = '';
-  if(mine.length === 0){ list.innerHTML = '<div class="empty">—</div>'; }
-  mine.slice().sort((a,b)=> (b.date_applied||'').localeCompare(a.date_applied||'')).forEach(j=>{
+  if(viewList.length === 0){ list.innerHTML = '<div class="empty">—</div>'; }
+  viewList.slice().sort((a,b)=> (b.date_applied||'').localeCompare(a.date_applied||'')).forEach(j=>{
+    const isMine = j.user_id === currentUser.id;
+    const ownerTag = !isMine ? `<span class="e-who">${nameFor(j.user_id)}</span>` : '';
     const div = document.createElement('div');
     div.className = 'item-row';
     div.innerHTML =
       `<div class="item-top">
-        <div><div class="item-title">${j.company}</div><div class="item-sub">${j.role || ''} ${j.date_applied ? '· ' + j.date_applied : ''}</div></div>
-        <button class="item-del" data-id="${j.id}" data-kind="job" title="Delete">✕</button>
+        <div><div class="item-title">${j.company} ${ownerTag}</div><div class="item-sub">${j.role || ''} ${j.date_applied ? '· ' + j.date_applied : ''}</div></div>
+        ${isMine ? `<button class="item-del" data-id="${j.id}" data-kind="job" title="Delete">✕</button>` : ''}
       </div>
       <div class="item-meta">
         <span class="badge ${j.status}">${jobStatusLabel(j.status)}</span>
-        <select data-id="${j.id}" class="job-status-select">
+        ${isMine ? `<select data-id="${j.id}" class="job-status-select">
           <option value="applied" ${j.status==='applied'?'selected':''}>${jobStatusLabel('applied')}</option>
           <option value="interview" ${j.status==='interview'?'selected':''}>${jobStatusLabel('interview')}</option>
           <option value="offer" ${j.status==='offer'?'selected':''}>${jobStatusLabel('offer')}</option>
           <option value="rejected" ${j.status==='rejected'?'selected':''}>${jobStatusLabel('rejected')}</option>
           <option value="withdrawn" ${j.status==='withdrawn'?'selected':''}>${jobStatusLabel('withdrawn')}</option>
-        </select>
+        </select>` : ''}
         ${j.link ? `<a href="${j.link}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
       </div>`;
     list.appendChild(div);
@@ -2225,7 +2269,7 @@ function renderJobs(){
   });
   const lb = document.getElementById('jobLeaderboard');
   lb.innerHTML = '';
-  const rows = Object.keys(profiles).map(id=>({
+  const rows = Object.keys(profiles).filter(uid=>coreMembers[uid]).map(id=>({
     id, name: nameFor(id), count: (allJobs[id]||[]).length
   })).sort((a,b)=> b.count - a.count);
   if(rows.length === 0){ lb.innerHTML = '<div class="bd-empty">—</div>'; }
@@ -2676,7 +2720,7 @@ function buildEventRowEl(ev){
   }
   const draft = reminderDrafts[ev.id];
 
-  const recipientCheckboxes = Object.keys(profiles).map(uid=>{
+  const recipientCheckboxes = Object.keys(profiles).filter(uid=>coreMembers[uid]).map(uid=>{
     const label = uid === currentUser.id ? t('remindMe') : `${t('remindOthersLabel')}: ${nameFor(uid)}`;
     const checked = draft.recipients.has(uid);
     return `<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;margin-bottom:4px;">
@@ -3223,6 +3267,8 @@ function renderAll(){
   renderBreakdown();
   renderEntries();
   renderFeed();
+  rebuildBookPersonFilter();
+  rebuildJobPersonFilter();
   renderReading();
   renderJobs();
   renderCalendarTab();
@@ -4199,17 +4245,66 @@ function rebuildNotesPersonFilter(){
   const allOpt = document.createElement('option');
   allOpt.value = 'all'; allOpt.textContent = t('allPeople');
   sel.appendChild(allOpt);
-  Object.keys(profiles).forEach(uid=>{
+  Object.keys(profiles).filter(uid=>coreMembers[uid]).forEach(uid=>{
     const opt = document.createElement('option');
     opt.value = uid; opt.textContent = nameFor(uid);
     sel.appendChild(opt);
   });
-  sel.value = (prev && (prev==='all'||profiles[prev])) ? prev : 'all';
+  sel.value = (prev && (prev==='all'||coreMembers[prev])) ? prev : 'all';
   notesPersonFilter = sel.value;
 }
 document.getElementById('notesPersonFilter').addEventListener('change', (e)=>{
   notesPersonFilter = e.target.value;
   renderLectureList();
+});
+
+// Reading (books) and Jobs tabs are personal logs shared only within the
+// core circle (Roxy & Kristoffer). Default to "just me"; either person can
+// switch to the other core member's name, or "All" for a merged view.
+let bookPersonFilter = null;
+function rebuildBookPersonFilter(){
+  const sel = document.getElementById('bookPersonFilter');
+  if(!sel || !currentUser) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
+  sel.appendChild(allOpt);
+  Object.keys(profiles).filter(uid=>coreMembers[uid]).forEach(uid=>{
+    const opt = document.createElement('option');
+    opt.value = uid; opt.textContent = nameFor(uid);
+    sel.appendChild(opt);
+  });
+  const valid = prev && (prev==='all' || coreMembers[prev]);
+  sel.value = valid ? prev : currentUser.id;
+  bookPersonFilter = sel.value;
+}
+document.getElementById('bookPersonFilter').addEventListener('change', (e)=>{
+  bookPersonFilter = e.target.value;
+  renderReading();
+});
+
+let jobPersonFilter = null;
+function rebuildJobPersonFilter(){
+  const sel = document.getElementById('jobPersonFilter');
+  if(!sel || !currentUser) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
+  sel.appendChild(allOpt);
+  Object.keys(profiles).filter(uid=>coreMembers[uid]).forEach(uid=>{
+    const opt = document.createElement('option');
+    opt.value = uid; opt.textContent = nameFor(uid);
+    sel.appendChild(opt);
+  });
+  const valid = prev && (prev==='all' || coreMembers[prev]);
+  sel.value = valid ? prev : currentUser.id;
+  jobPersonFilter = sel.value;
+}
+document.getElementById('jobPersonFilter').addEventListener('change', (e)=>{
+  jobPersonFilter = e.target.value;
+  renderJobs();
 });
 
 function renderLectureList(){
