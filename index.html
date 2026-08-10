@@ -637,8 +637,9 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="card">
       <h2 id="hMonthView"></h2>
       <div class="cal-view-toggle" id="calViewToggle">
-        <button data-view="month" class="active" id="calViewMonthBtn"></button>
+        <button data-view="month" id="calViewMonthBtn"></button>
         <button data-view="week" id="calViewWeekBtn"></button>
+        <button data-view="day" id="calViewDayBtn"></button>
       </div>
       <div class="month-nav">
         <button id="monthPrevBtn">‹</button>
@@ -822,7 +823,7 @@ const I18N = {
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar',
     topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed',
     addDeadline:'Add a deadline or event', eventTitle:'Title', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color',
-    viewMonth:'Month', viewWeek:'Week', weekViewLabel:'Week view',
+    viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Week view', dayViewLabel:'Day view',
     eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
     lblRecurInterval:'Every', lblRecurEndType:'Ends', recurNever:'Never', recurUntilDate:'Until date', lblRecurEndDate:'End date',
@@ -884,7 +885,7 @@ const I18N = {
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기',
     topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다',
     addDeadline:'마감일 또는 일정 추가', eventTitle:'제목', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상',
-    viewMonth:'월간', viewWeek:'주간', weekViewLabel:'주간 보기',
+    viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'주간 보기', dayViewLabel:'일간 보기',
     eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
     lblRecurInterval:'주기', lblRecurEndType:'종료', recurNever:'계속 반복', recurUntilDate:'날짜까지', lblRecurEndDate:'종료일',
@@ -946,7 +947,7 @@ const I18N = {
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch',
     topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc',
     addDeadline:'Thêm hạn chót hoặc sự kiện', eventTitle:'Tiêu đề', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu',
-    viewMonth:'Tháng', viewWeek:'Tuần', weekViewLabel:'Xem theo tuần',
+    viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Xem theo tuần', dayViewLabel:'Xem theo ngày',
     eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
     lblRecurInterval:'Mỗi', lblRecurEndType:'Kết thúc', recurNever:'Không bao giờ', recurUntilDate:'Đến ngày', lblRecurEndDate:'Ngày kết thúc',
@@ -1004,7 +1005,7 @@ const STATIC_MAP = {
   hYourJobs:'yourApplications', exportJobsBtn:'exportCsv', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied',
   hTopik:'topikCountdown', topikRegLabel:'regOpensIn', topikTestLabel:'testIn',
   hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventEndTime:'eventEndTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', addEventBtn:'addDeadlineBtn',
-  calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek',
+  calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek', calViewDayBtn:'viewDay',
   lblRecurFreq:'lblRecurFreq', lblRecurInterval:'lblRecurInterval', lblRecurEndType:'lblRecurEndType', lblRecurEndDate:'lblRecurEndDate', recurHint:'recurHint',
   hDeadlines:'yourDeadlines', importIcsBtn:'importIcs', exportEventsBtn:'exportCsv', exportIcsBtn:'exportIcs', hEvents:'yourEvents', exportEventsKindBtn:'exportCsv', hMonthView:'monthView',
   forgotPasswordBtn:'forgotPassword', lblSetNewPassword:'lblSetNewPassword', lblNewPassword:'lblNewPassword', updatePasswordBtn:'updatePasswordBtn',
@@ -2805,7 +2806,20 @@ async function quickToggleSubscription(eventId){
 }
 
 /* ---------- WEEK VIEW ---------- */
-let calViewMode = 'month';
+function isMobileDevice(){ return window.innerWidth <= 640; }
+function shortenTitleForMobile(title){
+  if(!title) return title;
+  const fillers = new Set(['the','in','to','from','of','and']);
+  const words = title.split(/\s+/).filter(Boolean);
+  const kept = words.filter(w=>{
+    if(w === '&') return false;
+    const clean = w.toLowerCase().replace(/[^a-z]/g,'');
+    return !fillers.has(clean);
+  });
+  if(kept.length === 0) return title;
+  return kept.map(w=> w.charAt(0).toUpperCase()).join(' ');
+}
+let calViewMode = isMobileDevice() ? 'day' : 'week';
 let weekScrollInitialized = false;
 const HOUR_PX = 44;
 function timeToMinutes(t){
@@ -2819,20 +2833,22 @@ function getWeekStart(d){
   date.setHours(0,0,0,0);
   return date;
 }
-function renderWeekGrid(){
-  const weekStart = getWeekStart(calViewDate);
-  const weekDates = [];
-  for(let i=0;i<7;i++){ const d = new Date(weekStart); d.setDate(d.getDate()+i); weekDates.push(d); }
-  const weekStartKey = todayStr(weekDates[0]);
-  const weekEndKey = todayStr(weekDates[6]);
+function renderCalGrid(dates){
+  const startKey = todayStr(dates[0]);
+  const endKey = todayStr(dates[dates.length-1]);
   const todayKey = todayStr();
+  const mobileShorten = dates.length > 1 && isMobileDevice();
 
-  document.getElementById('monthLabel').textContent =
-    `${weekDates[0].toLocaleDateString(undefined,{month:'short',day:'numeric'})} – ${weekDates[6].toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
+  if(dates.length === 1){
+    document.getElementById('monthLabel').textContent = dates[0].toLocaleDateString(undefined,{weekday:'long', month:'short', day:'numeric', year:'numeric'});
+  } else {
+    document.getElementById('monthLabel').textContent =
+      `${dates[0].toLocaleDateString(undefined,{month:'short',day:'numeric'})} – ${dates[dates.length-1].toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
+  }
 
   const headerRow = document.getElementById('weekHeaderRow');
   headerRow.innerHTML = '<div class="week-corner"></div>';
-  weekDates.forEach(d=>{
+  dates.forEach(d=>{
     const key = todayStr(d);
     const div = document.createElement('div');
     div.className = 'week-day-header' + (key===todayKey ? ' today' : '');
@@ -2856,7 +2872,7 @@ function renderWeekGrid(){
   const eventsByDate = {};
   Object.values(allEvents).forEach(userEvents=>{
     userEvents.forEach(ev=>{
-      const occ = expandOccurrences(ev, weekStartKey, weekEndKey);
+      const occ = expandOccurrences(ev, startKey, endKey);
       occ.forEach(dateKey=>{
         if(!eventsByDate[dateKey]) eventsByDate[dateKey] = [];
         eventsByDate[dateKey].push(ev);
@@ -2867,7 +2883,7 @@ function renderWeekGrid(){
   topikByDate[todayStr(TOPIK_REG)] = 'TOPIK reg.';
   topikByDate[todayStr(TOPIK_TEST)] = 'TOPIK test';
 
-  weekDates.forEach(d=>{
+  dates.forEach(d=>{
     const dateKey = todayStr(d);
     const col = document.createElement('div');
     col.className = 'week-day-col';
@@ -2901,7 +2917,6 @@ function renderWeekGrid(){
       item.col = colIdx;
     });
     dayEvents.forEach(item=>{
-      // total overlapping columns = max col+1 among events that overlap this one's time range
       let maxCol = item.col;
       dayEvents.forEach(other=>{
         if(other.startMin < item.endMin && other.endMin > item.startMin){
@@ -2930,8 +2945,9 @@ function renderWeekGrid(){
       bar.style.color = textColorFor(bg);
       if(overlapping){ bar.style.fontSize = '7px'; bar.style.lineHeight = '1.1'; }
       const titleSize = overlapping ? '7px' : 'inherit';
-      let bodyHtml = `<div style="font-size:${titleSize};">${ev.title}</div>`;
-      if(ev.kind === 'course' && ev.course_id){
+      const displayTitle = mobileShorten ? shortenTitleForMobile(ev.title) : ev.title;
+      let bodyHtml = `<div style="font-size:${titleSize};">${displayTitle}</div>`;
+      if(ev.kind === 'course' && ev.course_id && !mobileShorten){
         const course = findCourseById(ev.course_id);
         if(course){
           const detailSize = overlapping ? '6px' : '9px';
@@ -2967,11 +2983,19 @@ function renderWeekGrid(){
     weekScrollInitialized = true;
   }
 }
+function renderWeekGrid(){
+  const weekStart = getWeekStart(calViewDate);
+  const weekDates = [];
+  for(let i=0;i<7;i++){ const d = new Date(weekStart); d.setDate(d.getDate()+i); weekDates.push(d); }
+  renderCalGrid(weekDates);
+}
+function renderDayGrid(){
+  renderCalGrid([new Date(calViewDate)]);
+}
 document.getElementById('calViewMonthBtn').addEventListener('click', ()=>{
   calViewMode = 'month';
   weekScrollInitialized = false;
-  document.getElementById('calViewMonthBtn').classList.add('active');
-  document.getElementById('calViewWeekBtn').classList.remove('active');
+  setActiveCalViewBtn();
   document.getElementById('monthGrid').classList.remove('hidden');
   document.getElementById('weekGridWrap').classList.add('hidden');
   document.getElementById('hMonthView').textContent = t('monthView');
@@ -2979,25 +3003,46 @@ document.getElementById('calViewMonthBtn').addEventListener('click', ()=>{
 });
 document.getElementById('calViewWeekBtn').addEventListener('click', ()=>{
   calViewMode = 'week';
-  document.getElementById('calViewWeekBtn').classList.add('active');
-  document.getElementById('calViewMonthBtn').classList.remove('active');
+  setActiveCalViewBtn();
   document.getElementById('monthGrid').classList.add('hidden');
   document.getElementById('weekGridWrap').classList.remove('hidden');
   document.getElementById('hMonthView').textContent = t('weekViewLabel');
   renderWeekGrid();
 });
+document.getElementById('calViewDayBtn').addEventListener('click', ()=>{
+  calViewMode = 'day';
+  setActiveCalViewBtn();
+  document.getElementById('monthGrid').classList.add('hidden');
+  document.getElementById('weekGridWrap').classList.remove('hidden');
+  document.getElementById('hMonthView').textContent = t('dayViewLabel');
+  renderDayGrid();
+});
+function setActiveCalViewBtn(){
+  document.getElementById('calViewMonthBtn').classList.toggle('active', calViewMode==='month');
+  document.getElementById('calViewWeekBtn').classList.toggle('active', calViewMode==='week');
+  document.getElementById('calViewDayBtn').classList.toggle('active', calViewMode==='day');
+}
 document.getElementById('monthPrevBtn').addEventListener('click', ()=>{
   if(calViewMode === 'week'){ calViewDate.setDate(calViewDate.getDate()-7); renderWeekGrid(); }
+  else if(calViewMode === 'day'){ calViewDate.setDate(calViewDate.getDate()-1); renderDayGrid(); }
   else { calViewDate.setMonth(calViewDate.getMonth()-1); renderMonthGrid(); }
 });
 document.getElementById('monthNextBtn').addEventListener('click', ()=>{
   if(calViewMode === 'week'){ calViewDate.setDate(calViewDate.getDate()+7); renderWeekGrid(); }
+  else if(calViewMode === 'day'){ calViewDate.setDate(calViewDate.getDate()+1); renderDayGrid(); }
   else { calViewDate.setMonth(calViewDate.getMonth()+1); renderMonthGrid(); }
 });
 function renderCalendarTab(){
   renderTopikCountdown();
   renderDeadlineList();
-  if(calViewMode === 'week') renderWeekGrid(); else renderMonthGrid();
+  setActiveCalViewBtn();
+  document.getElementById('monthGrid').classList.toggle('hidden', calViewMode !== 'month');
+  document.getElementById('weekGridWrap').classList.toggle('hidden', calViewMode === 'month');
+  document.getElementById('hMonthView').textContent =
+    calViewMode === 'week' ? t('weekViewLabel') : calViewMode === 'day' ? t('dayViewLabel') : t('monthView');
+  if(calViewMode === 'week') renderWeekGrid();
+  else if(calViewMode === 'day') renderDayGrid();
+  else renderMonthGrid();
 }
 /* ---------- GLOBAL RENDER ---------- */
 function renderAll(){
@@ -3378,18 +3423,17 @@ async function saveCourseEdit(courseId, container){
 }
 
 function renderCourses(){
-  const mine = allCourses[currentUser.id] || [];
+  const all = [];
+  Object.values(allCourses).forEach(arr=> all.push(...arr));
+  const mine = all.filter(c => courseParticipants(c).includes(currentUser.id));
   document.getElementById('cStatPlanning').textContent = mine.filter(c=>c.status==='planning').length;
   document.getElementById('cStatSignedUp').textContent = mine.filter(c=>c.status==='signed_up').length;
   document.getElementById('cStatLockedIn').textContent = mine.filter(c=>c.status==='locked_in').length;
 
   const list = document.getElementById('courseFullList');
   list.innerHTML = '';
-  const all = [];
-  Object.values(allCourses).forEach(arr=> all.push(...arr));
   if(all.length === 0){ list.innerHTML = '<div class="empty">—</div>'; return; }
   all.slice().sort((a,b)=> (b.created_at||'').localeCompare(a.created_at||'')).forEach(c=>{
-    const isMine = c.user_id === currentUser.id;
     const div = document.createElement('div');
     div.className = 'item-row';
     const metaParts = [t(DAY_LABELS[c.day_of_week]||'dayMon'), TIME_LABELS[c.time_slot] || c.time_slot];
@@ -3400,9 +3444,11 @@ function renderCourses(){
     const badgeClass = c.status==='locked_in' ? 'finished' : c.status==='signed_up' ? 'reading' : 'to_read';
     const statusKey = c.status==='locked_in' ? 'statusLockedIn' : c.status==='signed_up' ? 'statusSignedUp' : 'statusPlanning';
     const isEditOpen = expandedCourseEdit.has(c.id);
+    const otherParticipants = courseParticipants(c).filter(uid => uid !== currentUser.id);
+    const ownerTagsHtml = otherParticipants.map(uid => `<span class="e-who">${nameFor(uid)}</span>`).join(' ');
     div.innerHTML =
       `<div class="item-top">
-        <div><div class="item-title">${!isMine ? `<span class="e-who">${nameFor(c.user_id)}</span>` : ''}${c.title}</div>
+        <div><div class="item-title">${ownerTagsHtml}${c.title}</div>
         <div class="item-sub">${metaParts.join(' · ')}</div></div>
         <button class="item-del" data-id="${c.id}" title="Delete">✕</button>
       </div>
