@@ -276,6 +276,10 @@ button:hover{background:var(--ink-hover);}
 .wtc-table th{background:var(--paper);font-weight:600;color:var(--ink-soft);font-size:11px;}
 .wtc-note-list{margin:4px 0 0 0;padding-left:18px;font-size:12.5px;}
 .wtc-note-label{font-weight:600;font-size:12px;margin-top:4px;}
+.writing-source-group{border-top:1px solid var(--line);padding-top:16px;margin-top:16px;}
+.writing-source-group:first-child{border-top:none;padding-top:0;margin-top:0;}
+.writing-timer-bar{display:flex;align-items:center;gap:12px;background:var(--celadon-1);border:1px solid var(--celadon-3);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;}
+.writing-timer-display{font-family:'Space Grotesk',monospace;font-weight:700;font-size:17px;margin-left:auto;}
 .ql-editor.ql-blank::before{color:var(--ink-soft) !important;}
 .ql-snow .ql-stroke{stroke:var(--ink-soft);}
 .ql-snow .ql-fill{fill:var(--ink-soft);}
@@ -419,6 +423,11 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <button data-view="grammar" id="studySubGrammarBtn"></button>
       <button data-view="writing" id="studySubWritingBtn"></button>
     </div>
+    <div class="writing-timer-bar hidden" id="writingCountdownBar">
+      <span id="writingCountdownLabel"></span>
+      <span class="writing-timer-display" id="writingCountdownDisplay">00:00</span>
+      <button class="linkbtn" id="writingCountdownStopBtn"></button>
+    </div>
     <div id="studyLogSection">
     <div class="card">
       <h2 id="hLeaderboard"></h2>
@@ -550,34 +559,78 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div id="studyWritingSection" class="hidden">
       <div class="card">
         <h2 id="hNewWriting"></h2>
-        <div class="log-form">
-          <div class="field wide">
-            <label for="writingTopicSelect" id="lblWritingTopic"></label>
-            <select id="writingTopicSelect"></select>
+
+        <div class="writing-source-group">
+          <div class="wtc-title" id="lblWritingEssayGroup"></div>
+          <div class="log-form">
+            <div class="field wide">
+              <input type="text" id="writingEssaySearch">
+            </div>
+            <div class="field wide">
+              <select id="writingEssaySelect"></select>
+            </div>
           </div>
-          <div class="field wide hidden" id="writingCustomTopicField">
-            <label for="writingCustomTopicInput" id="lblWritingCustomTopic"></label>
-            <input type="text" id="writingCustomTopicInput">
+          <div class="writing-task-box hidden" id="writingEssayPreview"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="export-btn" id="writingEssayRandomBtn"></button>
+            <button id="writingEssayStartBtn"></button>
           </div>
-          <div class="field wide hidden" id="writingCustomTaskTypeField">
-            <label for="writingCustomTaskType" id="lblWritingCustomTaskType"></label>
-            <select id="writingCustomTaskType">
-              <option value="essay" id="writingTaskTypeEssayOpt"></option>
-              <option value="data" id="writingTaskTypeDataOpt"></option>
-            </select>
+        </div>
+
+        <div class="writing-source-group">
+          <div class="wtc-title" id="lblWritingQ53Group"></div>
+          <div class="log-form">
+            <div class="field wide">
+              <input type="text" id="writingQ53Search">
+            </div>
+            <div class="field wide">
+              <select id="writingQ53Select"></select>
+            </div>
+            <div class="field wide">
+              <label for="writingQ53ImageUrl" id="lblWritingQ53Image"></label>
+              <input type="text" id="writingQ53ImageUrl">
+              <input type="file" id="writingQ53ImageFile" accept="image/*" style="margin-top:6px;">
+              <div class="hint" id="writingQ53ImageHint"></div>
+            </div>
           </div>
-          <div class="field wide hidden" id="writingCustomDescField">
-            <label for="writingCustomDescription" id="lblWritingCustomDescription"></label>
-            <textarea id="writingCustomDescription" rows="3"></textarea>
+          <div class="writing-task-box hidden" id="writingQ53Preview"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="export-btn" id="writingQ53RandomBtn"></button>
+            <button id="writingQ53StartBtn"></button>
           </div>
-          <div class="field wide hidden" id="writingImageSection">
-            <label for="writingImageUrl" id="lblWritingImage"></label>
-            <input type="text" id="writingImageUrl">
-            <input type="file" id="writingImageFile" accept="image/*" style="margin-top:6px;">
-            <div class="hint" id="writingImageHint"></div>
+        </div>
+
+        <div class="writing-source-group">
+          <button class="export-btn" id="writingMockStartBtn"></button>
+          <div class="hint" id="writingMockHint"></div>
+        </div>
+
+        <div class="writing-source-group">
+          <div class="wtc-title" id="lblWritingCustomGroup"></div>
+          <div class="log-form">
+            <div class="field wide">
+              <label for="writingCustomTopicInput" id="lblWritingCustomTopic"></label>
+              <input type="text" id="writingCustomTopicInput">
+            </div>
+            <div class="field wide">
+              <label for="writingCustomTaskType" id="lblWritingCustomTaskType"></label>
+              <select id="writingCustomTaskType">
+                <option value="essay" id="writingTaskTypeEssayOpt"></option>
+                <option value="data" id="writingTaskTypeDataOpt"></option>
+              </select>
+            </div>
+            <div class="field wide">
+              <label for="writingCustomDescription" id="lblWritingCustomDescription"></label>
+              <textarea id="writingCustomDescription" rows="3"></textarea>
+            </div>
+            <div class="field wide hidden" id="writingImageSection">
+              <label for="writingImageUrl" id="lblWritingImage"></label>
+              <input type="text" id="writingImageUrl">
+              <input type="file" id="writingImageFile" accept="image/*" style="margin-top:6px;">
+              <div class="hint" id="writingImageHint"></div>
+            </div>
+            <button id="startWritingBtn"></button>
           </div>
-          <div class="writing-task-box hidden" id="writingTaskPreview"></div>
-          <button id="startWritingBtn"></button>
         </div>
       </div>
       <div class="card">
@@ -1060,7 +1113,7 @@ const I18N = {
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', deleteEventBtn:'Delete',
     addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.', studySubLog:'Log', studySubGrammar:'Korean Grammar', studySubWriting:'Writing', hGrammar:'Korean Grammar Reference',
-    hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?', charCountLabel:'{n} characters', charCountTarget:'{n} characters (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description (optional)', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image (optional)', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below — if both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words — don't copy the title or labels directly.",
+    hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?', charCountLabel:'{n} characters', charCountTarget:'{n} characters (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description (optional)', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image (optional)', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below — if both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words — don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'🎲 Random', lblWritingQ53Image:'Attach an image (optional)', writingQ53ImageHint:'Or upload a file below — if both are given, the uploaded file is used.', writingMockStartBtn:'🎯 Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks one data-description task and one essay task, and starts a 50-minute countdown.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
     lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
     gramJumpPlaceholder:'— Select —', gramAllLevels:'All', gramIntermediateGroup:'Intermediate', gramAdvancedGroup:'Advanced',
@@ -1133,7 +1186,7 @@ const I18N = {
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', deleteEventBtn:'삭제',
     addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', studySubLog:'기록', studySubGrammar:'한국어 문법', studySubWriting:'작문', hGrammar:'한국어 문법 참고',
-    hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명 (선택)', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부 (선택)', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.',
+    hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명 (선택)', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부 (선택)', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'🎲 무작위', lblWritingQ53Image:'이미지 첨부 (선택)', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingMockStartBtn:'🎯 실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'자료 설명 과제와 에세이 과제를 무작위로 하나씩 골라 50분 타이머를 시작합니다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
     lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
     gramJumpPlaceholder:'— 선택 —', gramAllLevels:'전체', gramIntermediateGroup:'중급', gramAdvancedGroup:'고급',
@@ -1207,7 +1260,7 @@ const I18N = {
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', deleteEventBtn:'Xóa',
     addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp Hàn', studySubWriting:'Luyện viết', hGrammar:'Tài liệu ngữ pháp Hàn',
-    hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ (tùy chọn)', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh (tùy chọn)', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới — nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn — đừng sao chép tiêu đề hoặc nhãn.',
+    hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ (tùy chọn)', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh (tùy chọn)', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới — nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn — đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'🎲 Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh (tùy chọn)', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới — nếu có cả hai, tệp tải lên sẽ được dùng.', writingMockStartBtn:'🎯 Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một đề mô tả dữ liệu và một đề bài luận, bắt đầu đếm ngược 50 phút.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
     lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
     gramJumpPlaceholder:'— Chọn —', gramAllLevels:'Tất cả', gramIntermediateGroup:'Trung cấp', gramAdvancedGroup:'Cao cấp',
@@ -1263,8 +1316,9 @@ const STATIC_MAP = {
   hNotesPick:'hNotesPick', lblNotesCourse:'lblNotesCourse', lblNewLecture:'lblNewLecture', addLectureBtn:'addLectureBtn',
   hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabel:'chooseFile',
   studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', hGrammar:'hGrammar',
-  hNewWriting:'hNewWriting', lblWritingTopic:'lblWritingTopic', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
+  hNewWriting:'hNewWriting', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
   lblWritingCustomTaskType:'lblWritingCustomTaskType', writingTaskTypeEssayOpt:'writingTaskTypeEssay', writingTaskTypeDataOpt:'writingTaskTypeData', lblWritingCustomDescription:'lblWritingCustomDescription', lblWritingImage:'lblWritingImage', writingImageHint:'writingImageHint',
+  lblWritingEssayGroup:'lblWritingEssayGroup', lblWritingQ53Group:'lblWritingQ53Group', lblWritingCustomGroup:'lblWritingCustomGroup', writingEssayRandomBtn:'writingRandomBtn', writingQ53RandomBtn:'writingRandomBtn', writingEssayStartBtn:'startWritingBtn', writingQ53StartBtn:'startWritingBtn', lblWritingQ53Image:'lblWritingQ53Image', writingQ53ImageHint:'writingQ53ImageHint', writingMockStartBtn:'writingMockStartBtn', writingMockHint:'writingMockHint', writingCountdownStopBtn:'writingCountdownStopLabel',
   lblGramSearch:'lblGramSearch', lblGramLevelFilter:'lblGramLevelFilter', lblGramJump:'lblGramJump', lblGramSort:'lblGramSort', lblGramReviewedFilter:'lblGramReviewedFilter'
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
@@ -1511,6 +1565,9 @@ function applyLanguage(lang){
   document.getElementById('authSubmit').textContent = authMode === 'signin' ? t('signIn') : t('createAccount');
   document.getElementById('writingCustomDescription').placeholder = t('writingCustomDescPlaceholder');
   document.getElementById('writingImageUrl').placeholder = t('writingImageUrlPlaceholder');
+  document.getElementById('writingQ53ImageUrl').placeholder = t('writingImageUrlPlaceholder');
+  document.getElementById('writingEssaySearch').placeholder = t('writingSearchPlaceholder');
+  document.getElementById('writingQ53Search').placeholder = t('writingSearchPlaceholder');
   buildLangSwitch(document.getElementById('langSwitchAuth'));
   buildLangSwitch(document.getElementById('langSwitchApp'));
   rebuildActivitySelect();
@@ -3481,7 +3538,8 @@ function renderAll(){
   renderNotesCourseSelect();
   renderLectureList();
   renderGrammarList();
-  rebuildWritingTopicSelect();
+  rebuildWritingEssaySelect();
+  rebuildWritingQ53Select();
   rebuildWritingPersonFilter();
   renderWritingList();
 }
@@ -4269,6 +4327,79 @@ const WRITING_DATA_TASKS = [
 {topic:"국내 유학생 수 변화", prompt:"다음을 참고하여 '국내 유학생 수 변화'에 대한 글을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"교육부, 국내 유학생 통계", charts:[
   {kind:'line', unit:'만 명', points:[{x:'2015년',y:9},{x:'2020년',y:15},{x:'2025년',y:23}]},
   {kind:'causes', label:'증가 원인', items:['한국 대중문화에 대한 관심 확대','정부의 유학생 유치 정책 강화']}
+]},
+{topic:"고등학교 졸업자의 대학 진학률 변화", prompt:"다음을 참고하여 '고등학교 졸업자의 대학 진학률 변화'에 대한 글을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"교육부, 교육 기본 통계", charts:[
+  {kind:'line', unit:'%', points:[{x:'2005년',y:82},{x:'2015년',y:70},{x:'2025년',y:64}]},
+  {kind:'causes', label:'감소 원인', items:['취업을 우선시하는 가치관 확산','학령 인구 감소']}
+]},
+{topic:"평균 초혼 연령 변화", prompt:"다음을 참고하여 '평균 초혼 연령 변화'에 대한 글을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"통계청, 인구동향조사", charts:[
+  {kind:'line', unit:'세', points:[{x:'2005년',y:29},{x:'2015년',y:32},{x:'2025년',y:34}]},
+  {kind:'causes', label:'변화 원인', items:['경제적 안정을 우선시하는 경향','자기 계발 및 개인 삶을 중시하는 가치관 확산']}
+]},
+{topic:"직장인이 이직을 고려하는 이유", prompt:"다음은 직장인을 대상으로 '이직을 고려하는 이유'에 대해 설문 조사한 결과이다. 이 내용을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"한국고용정보원, 직장인 1,000명 대상", charts:[
+  {kind:'pie', unit:'%', items:[
+    {label:'낮은 임금',value:34},
+    {label:'적성에 맞지 않아서',value:24},
+    {label:'과도한 업무량',value:22},
+    {label:'기타',value:20}
+  ]}
+]},
+{topic:"편의점 매출액 변화", prompt:"다음을 참고하여 '편의점 매출액 변화'에 대한 글을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"한국편의점산업협회", charts:[
+  {kind:'line', unit:'조 원', points:[{x:'2015년',y:17},{x:'2020년',y:24},{x:'2025년',y:33}]},
+  {kind:'causes', label:'증가 원인', items:['1인 가구 증가','근접성과 편리성을 중시하는 소비 성향']}
+]},
+{topic:"카페를 이용하는 목적", prompt:"다음은 카페 이용객을 대상으로 '카페를 이용하는 목적'에 대해 설문 조사한 결과이다. 이 내용을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"한국외식산업연구원, 카페 이용객 700명 대상", charts:[
+  {kind:'pie', unit:'%', items:[
+    {label:'대화 및 만남',value:36},
+    {label:'공부·업무 공간 활용',value:30},
+    {label:'휴식',value:22},
+    {label:'기타',value:12}
+  ]}
+]},
+{topic:"OTT 서비스 하루 평균 이용 시간 변화", prompt:"다음을 참고하여 'OTT(온라인 동영상 서비스) 하루 평균 이용 시간 변화'에 대한 글을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"방송통신위원회, 미디어 이용 행태 조사", charts:[
+  {kind:'line', unit:'분', points:[{x:'2018년',y:25},{x:'2021년',y:58},{x:'2025년',y:92}]},
+  {kind:'causes', label:'증가 원인', items:['다양한 콘텐츠 확보 경쟁','스마트 기기 보급 확대']}
+]},
+{topic:"헬스장에 등록하는 이유", prompt:"다음은 헬스장(피트니스 센터) 회원을 대상으로 '헬스장에 등록하는 이유'에 대해 설문 조사한 결과이다. 이 내용을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"한국피트니스산업협회, 헬스장 회원 600명 대상", charts:[
+  {kind:'pie', unit:'%', items:[
+    {label:'건강 관리',value:41},
+    {label:'체형 관리',value:29},
+    {label:'스트레스 해소',value:18},
+    {label:'기타',value:12}
+  ]}
+]},
+{topic:"중고 거래 플랫폼 이용자 수 변화", prompt:"다음을 참고하여 '중고 거래 플랫폼 이용자 수 변화'에 대한 글을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"한국인터넷진흥원", charts:[
+  {kind:'line', unit:'만 명', points:[{x:'2018년',y:320},{x:'2021년',y:1200},{x:'2025년',y:2100}]},
+  {kind:'causes', label:'증가 원인', items:['합리적 소비를 추구하는 문화 확산','모바일 앱을 통한 거래 편의성 향상']}
+]},
+{topic:"전기차 등록 대수 변화", prompt:"다음을 참고하여 '전기차 등록 대수 변화'에 대한 글을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"국토교통부, 자동차 등록 현황", charts:[
+  {kind:'line', unit:'만 대', points:[{x:'2019년',y:9},{x:'2022년',y:39},{x:'2025년',y:75}]},
+  {kind:'forecast', label:'전망', items:['정부의 친환경차 보급 정책이 계속되면서 전기차 등록 대수는 앞으로도 꾸준히 증가할 것으로 전망됨']}
+]},
+{topic:"아침 식사를 거르는 이유", prompt:"다음은 성인을 대상으로 '아침 식사를 거르는 이유'에 대해 설문 조사한 결과이다. 이 내용을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"국민건강영양조사, 성인 1,000명 대상", charts:[
+  {kind:'bar', unit:'%', items:[
+    {label:'시간이 없어서', value:44},
+    {label:'습관이 되지 않아서', value:27},
+    {label:'식욕이 없어서', value:19},
+    {label:'기타', value:10}
+  ]}
+]},
+{topic:"반려식물을 기르는 이유", prompt:"다음은 반려식물을 기르는 사람들을 대상으로 '반려식물을 기르는 이유'에 대해 설문 조사한 결과이다. 이 내용을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"한국원예산업연구소, 반려식물 양육자 500명 대상", charts:[
+  {kind:'pie', unit:'%', items:[
+    {label:'실내 공기 정화',value:33},
+    {label:'정서적 안정',value:31},
+    {label:'인테리어 효과',value:24},
+    {label:'기타',value:12}
+  ]}
+]},
+{topic:"연령대별 온라인 강의 수강 비율", prompt:"다음을 참고하여 '연령대별 온라인 강의 수강 비율'에 대한 글을 200~300자로 쓰십시오. 단, 그래프의 제목을 그대로 옮겨 쓰지 마십시오.", source:"한국교육학술정보원", charts:[
+  {kind:'bar', unit:'%', items:[
+    {label:'10대', value:38},
+    {label:'20대', value:62},
+    {label:'30대', value:47},
+    {label:'40대', value:29},
+    {label:'50대 이상', value:15}
+  ]}
 ]}
 ].map(t=>({...t, type:'data', charMin:200, charMax:300}));
 
@@ -4361,75 +4492,67 @@ function getWritingTask(value){
   const list = kind === 'data' ? WRITING_DATA_TASKS : WRITING_TASKS;
   return list[Number(idx)] || null;
 }
-function isWritingDataTypeSelected(){
-  const sel = document.getElementById('writingTopicSelect');
-  if(!sel) return false;
-  if(sel.value === '__custom__'){
-    const typeSel = document.getElementById('writingCustomTaskType');
-    return !!(typeSel && typeSel.value === 'data');
-  }
-  const task = getWritingTask(sel.value);
-  return !!(task && task.type === 'data');
+// ---- Topic pickers: two independent dropdowns (essay/54번, data/53번),
+// each with its own search-filter and random-pick button, plus a separate
+// custom-topic section. Option values are 'essay:IDX' / 'data:IDX' indexing
+// into the original (unfiltered) task arrays, so search never disturbs
+// which task a given option actually points to.
+function populateTopicSelect(selectEl, tasks, prefix, searchValue){
+  const q = (searchValue||'').trim().toLowerCase();
+  const prevVal = selectEl.value;
+  selectEl.innerHTML = '';
+  tasks.forEach((task,i)=>{
+    if(q && !task.topic.toLowerCase().includes(q)) return;
+    const opt = document.createElement('option');
+    opt.value = prefix + ':' + i; opt.textContent = task.topic;
+    selectEl.appendChild(opt);
+  });
+  if(prevVal && selectEl.querySelector(`option[value="${prevVal}"]`)) selectEl.value = prevVal;
 }
-function updateWritingCustomVisibility(){
-  const sel = document.getElementById('writingTopicSelect');
-  if(!sel) return;
-  const isCustom = sel.value === '__custom__';
-  document.getElementById('writingCustomTopicField').classList.toggle('hidden', !isCustom);
-  document.getElementById('writingCustomTaskTypeField').classList.toggle('hidden', !isCustom);
-  document.getElementById('writingCustomDescField').classList.toggle('hidden', !isCustom);
-  document.getElementById('writingImageSection').classList.toggle('hidden', !isWritingDataTypeSelected());
-}
-function updateWritingTaskPreview(){
-  const box = document.getElementById('writingTaskPreview');
-  const sel = document.getElementById('writingTopicSelect');
-  if(!sel || !box) return;
-  const task = getWritingTask(sel.value);
-  if(!task){
-    box.innerHTML = ''; box.classList.add('hidden');
-    return;
-  }
-  if(task.type === 'data'){
-    box.innerHTML = renderDataTaskHtml({ prompt: task.prompt, source: task.source || null, charts: task.charts || [], imageUrl: null });
-  } else {
-    box.textContent = composeTaskPrompt(task);
-  }
+function updateWritingEssayPreview(){
+  const box = document.getElementById('writingEssayPreview');
+  const task = getWritingTask(document.getElementById('writingEssaySelect').value);
+  if(!task){ box.textContent=''; box.classList.add('hidden'); return; }
+  box.textContent = composeTaskPrompt(task);
   box.classList.remove('hidden');
 }
-function rebuildWritingTopicSelect(){
-  const sel = document.getElementById('writingTopicSelect');
-  if(!sel) return;
-  const prev = sel.value;
-  sel.innerHTML = '';
-  const essayGroup = document.createElement('optgroup');
-  essayGroup.label = t('writingGroupEssay');
-  WRITING_TASKS.forEach((task,i)=>{
-    const opt = document.createElement('option');
-    opt.value = 'essay:' + i; opt.textContent = task.topic;
-    essayGroup.appendChild(opt);
-  });
-  sel.appendChild(essayGroup);
-  if(WRITING_DATA_TASKS.length){
-    const dataGroup = document.createElement('optgroup');
-    dataGroup.label = t('writingGroupData');
-    WRITING_DATA_TASKS.forEach((task,i)=>{
-      const opt = document.createElement('option');
-      opt.value = 'data:' + i; opt.textContent = task.topic;
-      dataGroup.appendChild(opt);
-    });
-    sel.appendChild(dataGroup);
-  }
-  const customOpt = document.createElement('option');
-  customOpt.value = '__custom__'; customOpt.textContent = t('writingCustomTopicOpt');
-  sel.appendChild(customOpt);
-  if(prev) sel.value = prev;
-  updateWritingCustomVisibility();
-  updateWritingTaskPreview();
+function updateWritingQ53Preview(){
+  const box = document.getElementById('writingQ53Preview');
+  const task = getWritingTask(document.getElementById('writingQ53Select').value);
+  if(!task){ box.innerHTML=''; box.classList.add('hidden'); return; }
+  box.innerHTML = renderDataTaskHtml({ prompt: task.prompt, source: task.source || null, charts: task.charts || [], imageUrl: null });
+  box.classList.remove('hidden');
 }
-document.getElementById('writingTopicSelect').addEventListener('change', ()=>{
-  updateWritingCustomVisibility();
-  updateWritingTaskPreview();
+function rebuildWritingEssaySelect(){
+  populateTopicSelect(document.getElementById('writingEssaySelect'), WRITING_TASKS, 'essay', document.getElementById('writingEssaySearch').value);
+  updateWritingEssayPreview();
+}
+function rebuildWritingQ53Select(){
+  populateTopicSelect(document.getElementById('writingQ53Select'), WRITING_DATA_TASKS, 'data', document.getElementById('writingQ53Search').value);
+  updateWritingQ53Preview();
+}
+document.getElementById('writingEssaySearch').addEventListener('input', rebuildWritingEssaySelect);
+document.getElementById('writingQ53Search').addEventListener('input', rebuildWritingQ53Select);
+document.getElementById('writingEssaySelect').addEventListener('change', updateWritingEssayPreview);
+document.getElementById('writingQ53Select').addEventListener('change', updateWritingQ53Preview);
+document.getElementById('writingEssayRandomBtn').addEventListener('click', ()=>{
+  const sel = document.getElementById('writingEssaySelect');
+  const opts = sel.querySelectorAll('option');
+  if(opts.length === 0) return;
+  sel.value = opts[Math.floor(Math.random()*opts.length)].value;
+  updateWritingEssayPreview();
 });
+document.getElementById('writingQ53RandomBtn').addEventListener('click', ()=>{
+  const sel = document.getElementById('writingQ53Select');
+  const opts = sel.querySelectorAll('option');
+  if(opts.length === 0) return;
+  sel.value = opts[Math.floor(Math.random()*opts.length)].value;
+  updateWritingQ53Preview();
+});
+function updateWritingCustomVisibility(){
+  const isData = document.getElementById('writingCustomTaskType').value === 'data';
+  document.getElementById('writingImageSection').classList.toggle('hidden', !isData);
+}
 document.getElementById('writingCustomTaskType').addEventListener('change', updateWritingCustomVisibility);
 
 let writingPersonFilter = null;
@@ -4456,11 +4579,11 @@ document.getElementById('writingPersonFilter').addEventListener('change', (e)=>{
 });
 
 // Uploads the chosen file (if any) to the writing-images bucket, else falls
-// back to the pasted URL. Used for both library Q53 tasks (to swap in a
-// real exam graph instead of the built-in synthetic chart) and custom
-// data-description samples (where it's the only visual).
-async function resolveWritingImage(){
-  const fileInput = document.getElementById('writingImageFile');
+// back to the pasted URL in the given input pair. Used both for the Q53
+// quick-pick section (swap in a real exam graph) and the custom
+// data-description flow (where it's the only visual).
+async function resolveImageFromInputs(urlInputId, fileInputId){
+  const fileInput = document.getElementById(fileInputId);
   const file = fileInput && fileInput.files[0];
   if(file){
     const path = `${currentUser.id}/${Date.now()}_${file.name}`;
@@ -4471,53 +4594,124 @@ async function resolveWritingImage(){
     }
     return null;
   }
-  const urlInput = document.getElementById('writingImageUrl');
+  const urlInput = document.getElementById(urlInputId);
   const url = urlInput ? urlInput.value.trim() : '';
   return url || null;
 }
-async function startWriting(){
-  const sel = document.getElementById('writingTopicSelect');
-  const task = getWritingTask(sel.value);
-  let topic, taskPrompt = null, taskType = 'essay', charMin = null, charMax = null;
-  const imageUrl = isWritingDataTypeSelected() ? await resolveWritingImage() : null;
-  if(!task){
-    topic = document.getElementById('writingCustomTopicInput').value.trim();
-    if(!topic) return;
-    taskType = document.getElementById('writingCustomTaskType').value || 'essay';
-    const desc = document.getElementById('writingCustomDescription').value.trim();
-    if(taskType === 'data'){
-      charMin = 200; charMax = 300;
-      taskPrompt = JSON.stringify({ prompt: desc || null, source: null, charts: [], imageUrl: imageUrl || null });
-    } else {
-      charMin = 600; charMax = 700;
-      taskPrompt = desc || null;
-    }
-  } else {
-    topic = task.topic;
-    taskType = task.type;
-    charMin = task.charMin; charMax = task.charMax;
-    if(task.type === 'data'){
-      taskPrompt = JSON.stringify({ prompt: task.prompt, source: task.source || null, charts: task.charts || [], imageUrl: imageUrl || null });
-    } else {
-      taskPrompt = composeTaskPrompt(task);
-    }
-  }
-  const row = { user_id: currentUser.id, topic, content: '', word_count: 0, task_prompt: taskPrompt, task_type: taskType, char_min: charMin, char_max: charMax };
+async function createWritingSample(topic, taskType, charMin, charMax, taskPromptStr){
+  const row = { user_id: currentUser.id, topic, content: '', word_count: 0, task_prompt: taskPromptStr, task_type: taskType, char_min: charMin, char_max: charMax };
   const { data, error } = await supabaseClient.from('writing_samples').insert(row).select();
   if(!error && data && data[0]){
     if(!allWritingSamples[currentUser.id]) allWritingSamples[currentUser.id] = [];
     allWritingSamples[currentUser.id].unshift(data[0]);
-    document.getElementById('writingCustomTopicInput').value = '';
-    document.getElementById('writingCustomDescription').value = '';
-    document.getElementById('writingImageUrl').value = '';
-    document.getElementById('writingImageFile').value = '';
-    renderWritingList();
-    openWritingSample(data[0].id, currentUser.id);
+    return data[0];
+  }
+  alert('Could not create the writing sample — make sure new_features_migration.sql, writing_task_framework_migration.sql, and writing_images_storage_migration.sql have all been run.');
+  return null;
+}
+document.getElementById('writingEssayStartBtn').addEventListener('click', async ()=>{
+  const task = getWritingTask(document.getElementById('writingEssaySelect').value);
+  if(!task) return;
+  const sample = await createWritingSample(task.topic, 'essay', task.charMin, task.charMax, composeTaskPrompt(task));
+  if(!sample) return;
+  renderWritingList();
+  openWritingSample(sample.id, currentUser.id);
+  offerWritingCountdown('essay', task.topic);
+});
+document.getElementById('writingQ53StartBtn').addEventListener('click', async ()=>{
+  const task = getWritingTask(document.getElementById('writingQ53Select').value);
+  if(!task) return;
+  const imageUrl = await resolveImageFromInputs('writingQ53ImageUrl', 'writingQ53ImageFile');
+  const promptStr = JSON.stringify({ prompt: task.prompt, source: task.source || null, charts: task.charts || [], imageUrl: imageUrl || null });
+  const sample = await createWritingSample(task.topic, 'data', task.charMin, task.charMax, promptStr);
+  if(!sample) return;
+  document.getElementById('writingQ53ImageUrl').value = '';
+  document.getElementById('writingQ53ImageFile').value = '';
+  renderWritingList();
+  openWritingSample(sample.id, currentUser.id);
+  offerWritingCountdown('data', task.topic);
+});
+document.getElementById('startWritingBtn').addEventListener('click', async ()=>{
+  const topic = document.getElementById('writingCustomTopicInput').value.trim();
+  if(!topic) return;
+  const taskType = document.getElementById('writingCustomTaskType').value || 'essay';
+  const desc = document.getElementById('writingCustomDescription').value.trim();
+  let taskPrompt, charMin, charMax;
+  if(taskType === 'data'){
+    const imageUrl = await resolveImageFromInputs('writingImageUrl', 'writingImageFile');
+    charMin = 200; charMax = 300;
+    taskPrompt = JSON.stringify({ prompt: desc || null, source: null, charts: [], imageUrl: imageUrl || null });
   } else {
-    alert('Could not create the writing sample — make sure new_features_migration.sql, writing_task_framework_migration.sql, and writing_images_storage_migration.sql have all been run.');
+    charMin = 600; charMax = 700;
+    taskPrompt = desc || null;
+  }
+  const sample = await createWritingSample(topic, taskType, charMin, charMax, taskPrompt);
+  if(!sample) return;
+  document.getElementById('writingCustomTopicInput').value = '';
+  document.getElementById('writingCustomDescription').value = '';
+  document.getElementById('writingImageUrl').value = '';
+  document.getElementById('writingImageFile').value = '';
+  renderWritingList();
+  openWritingSample(sample.id, currentUser.id);
+  offerWritingCountdown(taskType, topic);
+});
+document.getElementById('writingMockStartBtn').addEventListener('click', async ()=>{
+  if(WRITING_TASKS.length === 0 || WRITING_DATA_TASKS.length === 0) return;
+  const essayTask = WRITING_TASKS[Math.floor(Math.random()*WRITING_TASKS.length)];
+  const dataTask = WRITING_DATA_TASKS[Math.floor(Math.random()*WRITING_DATA_TASKS.length)];
+  const s53 = await createWritingSample(dataTask.topic, 'data', dataTask.charMin, dataTask.charMax,
+    JSON.stringify({ prompt: dataTask.prompt, source: dataTask.source || null, charts: dataTask.charts || [], imageUrl: null }));
+  const s54 = await createWritingSample(essayTask.topic, 'essay', essayTask.charMin, essayTask.charMax, composeTaskPrompt(essayTask));
+  if(!s53 || !s54) return;
+  renderWritingList();
+  openWritingSample(s53.id, currentUser.id); // real exam order: 53 before 54
+  startWritingCountdown(50, t('writingMockLabel'));
+});
+
+/* ---------- WRITING COUNTDOWN TIMER (links into the study log) ---------- */
+let writingCountdownTotalSec = 0;
+let writingCountdownStartedAt = null; // Date.now() ms while running, null while stopped
+let writingCountdownInterval = null;
+function offerWritingCountdown(taskType, topicLabel){
+  const minutes = taskType === 'data' ? 15 : 35;
+  const groupLabel = taskType === 'data' ? t('writingGroupData') : t('writingGroupEssay');
+  if(confirm(t('writingTimerOfferConfirm').replace('{n}', minutes))){
+    startWritingCountdown(minutes, `${groupLabel} — ${topicLabel}`);
   }
 }
-document.getElementById('startWritingBtn').addEventListener('click', startWriting);
+function startWritingCountdown(minutes, label){
+  if(writingCountdownInterval) clearInterval(writingCountdownInterval);
+  writingCountdownTotalSec = minutes * 60;
+  writingCountdownStartedAt = Date.now();
+  document.getElementById('writingCountdownBar').classList.remove('hidden');
+  document.getElementById('writingCountdownLabel').textContent = label;
+  tickWritingCountdown();
+  writingCountdownInterval = setInterval(tickWritingCountdown, 1000);
+}
+function tickWritingCountdown(){
+  const elapsed = Math.floor((Date.now() - writingCountdownStartedAt)/1000);
+  const remaining = Math.max(0, writingCountdownTotalSec - elapsed);
+  const m = Math.floor(remaining/60), s = remaining%60;
+  document.getElementById('writingCountdownDisplay').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  if(remaining <= 0) finishWritingCountdown();
+}
+async function stopWritingCountdownInternal(shouldLog){
+  if(writingCountdownInterval){ clearInterval(writingCountdownInterval); writingCountdownInterval = null; }
+  if(writingCountdownStartedAt && shouldLog){
+    const elapsedSec = Math.min(writingCountdownTotalSec, Math.floor((Date.now() - writingCountdownStartedAt)/1000));
+    const hours = Math.round((elapsedSec/3600)*100)/100;
+    if(hours > 0) await logStudySession(todayStr(), 'writing', hours);
+  }
+  writingCountdownStartedAt = null;
+  document.getElementById('writingCountdownBar').classList.add('hidden');
+}
+async function finishWritingCountdown(){
+  await stopWritingCountdownInternal(true);
+  alert(t('writingTimerDone'));
+}
+document.getElementById('writingCountdownStopBtn').addEventListener('click', async ()=>{
+  if(confirm(t('writingTimerStopConfirm'))) await stopWritingCountdownInternal(true);
+});
 
 function stripHtml(html){
   const d = document.createElement('div');
