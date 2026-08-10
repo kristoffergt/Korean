@@ -781,8 +781,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
           <input type="text" id="eventNotes">
         </div>
         <div class="field" id="eventForUserField">
-          <label for="eventForUser" id="lblEventForUser"></label>
-          <select id="eventForUser"></select>
+          <label id="lblEventForUser"></label>
+          <div id="eventForUsersGroup" style="display:flex;gap:14px;flex-wrap:wrap;padding-top:6px;"></div>
         </div>
         <div class="field">
           <label for="eventColor" id="lblEventColor"></label>
@@ -928,7 +928,7 @@ const I18N = {
     reminderNote:'Reminder delivery requires an email service to be connected — ask Claude to set this up.',
     showMore:'Show more', showLess:'Show less',
     importIcs:'Import .ics', importSuccess:'Imported {n} events', importFail:'Could not read that file',
-    yourDeadlines:'Your deadlines', monthView:'Month view', daysLeft:'days left', dayLeftSingular:'day left', today:'today', overdue:'days overdue', overdueSingular:'day overdue',
+    yourDeadlines:'Your deadlines', monthView:'Month view', daysLeft:'days left', dayLeftSingular:'day left', today:'today', overdue:'days ago', overdueSingular:'day ago',
     notesQuotes:'Notes & quotes', addNote:'Add note', page:'page', noteBtn:'Show notes',
     forgotPassword:'Forgot password?', resetSent:'Check your email for a reset link.', resetError:'Could not send reset email.',
     lblSetNewPassword:'Set a new password', lblNewPassword:'New password', updatePasswordBtn:'Update password',
@@ -941,7 +941,7 @@ const I18N = {
     duplicateName:'That display name is already taken.',
     hAddCourse:'Add a course', courseTitle:'Course title', courseCode:'Course code', courseProfessor:'Professor',
     courseTime:'Time', courseConcentration:'Concentration', courseStatus:'Status', courseSyllabus:'Syllabus',
-    courseDay:'Day', courseStartDate:'Starts (optional)', courseEndDate:'Ends (optional)', courseMidterm:'Midterm date (optional)', courseFinal:'Final date (optional)',
+    courseDay:'Day', courseStartDate:'Start date (optional)', courseEndDate:'Ends (optional)', courseMidterm:'Midterm date (optional)', courseFinal:'Final date (optional)',
     dayMon:'Monday', dayTue:'Tuesday', dayWed:'Wednesday', dayThu:'Thursday', dayFri:'Friday',
     editCourse:'✏️ Edit', saveCourseChanges:'Save changes', midtermLabel:'Midterm', finalLabel:'Final',
     thisOccurrenceOnly:'This event only', allOccurrences:'All events', cancelBtn:'Cancel',
@@ -996,7 +996,7 @@ const I18N = {
     reminderNote:'알림 발송을 위해서는 이메일 서비스 연동이 필요합니다 — Claude에게 설정을 요청하세요.',
     showMore:'더 보기', showLess:'간단히 보기',
     importIcs:'.ics 가져오기', importSuccess:'{n}개 일정을 가져왔습니다', importFail:'파일을 읽을 수 없습니다',
-    yourDeadlines:'나의 마감일', monthView:'월간 보기', daysLeft:'일 남음', dayLeftSingular:'일 남음', today:'오늘', overdue:'지남', overdueSingular:'지남',
+    yourDeadlines:'나의 마감일', monthView:'월간 보기', daysLeft:'일 남음', dayLeftSingular:'일 남음', today:'오늘', overdue:'일 전', overdueSingular:'일 전',
     notesQuotes:'메모 및 인용구', addNote:'메모 추가', page:'페이지', noteBtn:'메모 보기',
     forgotPassword:'비밀번호를 잊으셨나요?', resetSent:'재설정 링크를 이메일로 보냈습니다.', resetError:'재설정 이메일을 보낼 수 없습니다.',
     lblSetNewPassword:'새 비밀번호 설정', lblNewPassword:'새 비밀번호', updatePasswordBtn:'비밀번호 변경',
@@ -1064,7 +1064,7 @@ const I18N = {
     reminderNote:'Việc gửi nhắc nhở cần kết nối dịch vụ email — hãy nhờ Claude thiết lập.',
     showMore:'Xem thêm', showLess:'Thu gọn',
     importIcs:'Nhập .ics', importSuccess:'Đã nhập {n} sự kiện', importFail:'Không thể đọc tệp này',
-    yourDeadlines:'Hạn chót của bạn', monthView:'Xem theo tháng', daysLeft:'ngày còn lại', dayLeftSingular:'ngày còn lại', today:'hôm nay', overdue:'quá hạn', overdueSingular:'quá hạn',
+    yourDeadlines:'Hạn chót của bạn', monthView:'Xem theo tháng', daysLeft:'ngày còn lại', dayLeftSingular:'ngày còn lại', today:'hôm nay', overdue:'ngày trước', overdueSingular:'ngày trước',
     notesQuotes:'Ghi chú & trích dẫn', addNote:'Thêm ghi chú', page:'trang', noteBtn:'Xem ghi chú',
     forgotPassword:'Quên mật khẩu?', resetSent:'Kiểm tra email để lấy liên kết đặt lại mật khẩu.', resetError:'Không thể gửi email đặt lại mật khẩu.',
     lblSetNewPassword:'Đặt mật khẩu mới', lblNewPassword:'Mật khẩu mới', updatePasswordBtn:'Cập nhật mật khẩu',
@@ -1078,6 +1078,7 @@ const I18N = {
     hAddCourse:'Thêm khóa học', courseTitle:'Tên khóa học', courseCode:'Mã khóa học', courseProfessor:'Giáo sư',
     courseTime:'Giờ học', courseConcentration:'Chuyên ngành', courseStatus:'Trạng thái', courseSyllabus:'Đề cương',
     courseDay:'Thứ', courseStartDate:'Ngày bắt đầu (tùy chọn)', courseEndDate:'Ngày kết thúc (tùy chọn)', courseMidterm:'Ngày thi giữa kỳ (tùy chọn)', courseFinal:'Ngày thi cuối kỳ (tùy chọn)',
+
     dayMon:'Thứ Hai', dayTue:'Thứ Ba', dayWed:'Thứ Tư', dayThu:'Thứ Năm', dayFri:'Thứ Sáu',
     editCourse:'✏️ Sửa', saveCourseChanges:'Lưu thay đổi', midtermLabel:'Giữa kỳ', finalLabel:'Cuối kỳ',
     thisOccurrenceOnly:'Chỉ sự kiện này', allOccurrences:'Tất cả sự kiện', cancelBtn:'Hủy',
@@ -1291,10 +1292,10 @@ function rebuildGramLevelFilterSelect(){
   }
 }
 function rebuildForUserSelect(){
-  const sel = document.getElementById('eventForUser');
+  const group = document.getElementById('eventForUsersGroup');
   const field = document.getElementById('eventForUserField');
   const privField = document.getElementById('eventPrivateField');
-  if(!sel) return;
+  if(!group) return;
   if(!amICore()){
     if(field) field.classList.add('hidden');
     if(privField) privField.classList.add('hidden');
@@ -1302,15 +1303,19 @@ function rebuildForUserSelect(){
   }
   if(field) field.classList.remove('hidden');
   if(privField) privField.classList.remove('hidden');
-  const prev = sel.value;
-  sel.innerHTML = '';
+  const prevChecked = Array.from(group.querySelectorAll('input:checked')).map(i=>i.value);
+  group.innerHTML = '';
   Object.keys(profiles).filter(uid=>coreMembers[uid]).forEach(uid=>{
-    const opt = document.createElement('option');
-    opt.value = uid; opt.textContent = nameFor(uid);
-    sel.appendChild(opt);
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = uid;
+    cb.checked = prevChecked.length ? prevChecked.includes(uid) : (currentUser && uid === currentUser.id);
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(' ' + nameFor(uid)));
+    group.appendChild(label);
   });
-  if(prev && profiles[prev] && coreMembers[prev]) sel.value = prev;
-  else if(currentUser && profiles[currentUser.id]) sel.value = currentUser.id;
 }
 function rebuildRecurFreqSelect(){
   const sel = document.getElementById('eventRecurFreq');
@@ -1353,6 +1358,7 @@ function applyLanguage(lang){
   rebuildCourseForUserSelect();
   rebuildCourseStatusSelect();
   rebuildCourseDaySelect();
+  updateRecurFieldVisibility();
   renderTopikCountdown();
   if(currentUser){ renderAll(); }
 }
@@ -2308,28 +2314,35 @@ async function addEvent(){
   const endTime = document.getElementById('eventEndTime').value;
   const notes = document.getElementById('eventNotes').value.trim();
   const color = document.getElementById('eventColor').value || '#4F7563';
-  const forUser = amICore() ? (document.getElementById('eventForUser').value || currentUser.id) : currentUser.id;
+  const forUsers = amICore()
+    ? Array.from(document.querySelectorAll('#eventForUsersGroup input:checked')).map(i=>i.value)
+    : [currentUser.id];
+  const finalForUsers = forUsers.length ? forUsers : [currentUser.id];
   const isPrivate = amICore() ? (document.getElementById('eventPrivate').value === '1') : true;
   const recurFreq = document.getElementById('eventRecurFreq').value || null;
   const recurInterval = parseInt(document.getElementById('eventRecurInterval').value) || 1;
   const recurEndType = document.getElementById('eventRecurEndType').value || 'never';
   const recurEndDate = document.getElementById('eventRecurEndDate').value || null;
   if(!title || !date) return;
-  const row = {
-    user_id: forUser, title, kind, event_date: date, event_time: time || null,
-    event_end_time: (kind === 'event' && endTime) ? endTime : null,
+  // One row per selected person (checking both Roxy & Kristoffer creates two
+  // independent events, one on each of their calendars).
+  const rows = finalForUsers.map(uid => ({
+    user_id: uid, title, kind, event_date: date, event_time: time || null,
+    event_end_time: ((kind === 'event' || kind === 'course') && endTime) ? endTime : null,
     notes: notes || null, color,
     is_private: isPrivate,
     recur_freq: recurFreq,
     recur_interval: recurFreq ? recurInterval : 1,
     recur_end_type: recurFreq ? recurEndType : 'never',
     recur_end_date: (recurFreq && recurEndType === 'date') ? recurEndDate : null
-  };
-  const { data, error } = await supabaseClient.from('events').insert(row).select();
+  }));
+  const { data, error } = await supabaseClient.from('events').insert(rows).select();
   if(!error && data){
-    const ownerUid = data[0].user_id;
-    if(!allEvents[ownerUid]) allEvents[ownerUid] = [];
-    allEvents[ownerUid].push(data[0]);
+    data.forEach(row=>{
+      const ownerUid = row.user_id;
+      if(!allEvents[ownerUid]) allEvents[ownerUid] = [];
+      allEvents[ownerUid].push(row);
+    });
   }
   document.getElementById('eventTitle').value = '';
   document.getElementById('eventTime').value = '';
@@ -2476,7 +2489,7 @@ async function saveEventEdit(eventId, wrap){
   if(!title || !date) return;
   const patch = {
     title, kind, event_date: date, event_time: time || null,
-    event_end_time: (kind === 'event' && endTime) ? endTime : null,
+    event_end_time: ((kind === 'event' || kind === 'course') && endTime) ? endTime : null,
     notes: notes || null, color,
     is_private: isPrivate,
     recur_freq: recurFreq,
@@ -2505,6 +2518,10 @@ function updateRecurFieldVisibility(){
   document.getElementById('recurIntervalField').classList.toggle('hidden', !freq);
   document.getElementById('recurEndTypeField').classList.toggle('hidden', !freq);
   document.getElementById('recurEndDateField').classList.toggle('hidden', !freq || endType !== 'date');
+  // A repeating item's "Date" field is really the start date of the series
+  // (this is how course class blocks work), so label it accordingly.
+  const dateLbl = document.getElementById('lblEventDate');
+  if(dateLbl) dateLbl.textContent = freq ? t('courseStartDate') : t('eventDate');
 }
 document.getElementById('eventRecurFreq').addEventListener('change', updateRecurFieldVisibility);
 document.getElementById('eventRecurEndType').addEventListener('change', updateRecurFieldVisibility);
@@ -2584,7 +2601,23 @@ function itemsOfKind(kind){
       if((ev.kind || 'deadline') === kind) all.push(ev);
     });
   });
-  return all.sort((a,b)=> nextOccurrence(a).localeCompare(nextOccurrence(b)) || (a.event_time||'').localeCompare(b.event_time||''));
+  // Upcoming items first (soonest first). Past items sink to the bottom,
+  // ordered so the most-recently-past comes right after the upcoming ones
+  // and the longer ago an item is, the further down it sits. Uses the same
+  // "target" moment (date + time, defaulting to end of day) as the
+  // left/ago text in buildEventRowEl, so the sort order always matches
+  // what's displayed.
+  const now = new Date();
+  const withTiming = all.map(ev=>{
+    const nextDate = nextOccurrence(ev);
+    const target = new Date(nextDate + 'T' + (ev.event_time || '23:59:59'));
+    return { ev, target, isPast: target < now };
+  });
+  withTiming.sort((a,b)=>{
+    if(a.isPast !== b.isPast) return a.isPast ? 1 : -1;
+    return a.isPast ? (b.target - a.target) : (a.target - b.target);
+  });
+  return withTiming.map(x=>x.ev);
 }
 
 let expandedSubscribe = new Set();
@@ -2620,7 +2653,7 @@ function buildEventEditFieldsHtml(ev){
       </select>
     </div>
     <div class="field">
-      <label>${t('eventDate')}</label>
+      <label>${ev.recur_freq ? t('courseStartDate') : t('eventDate')}</label>
       <input type="date" class="edit-date" value="${ev.event_date}">
     </div>
     <div class="field">
