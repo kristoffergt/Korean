@@ -451,7 +451,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode">🌙</button>
       <button class="icon-btn" id="accountSettingsBtn" title="Account settings">⚙️</button>
       <span id="whoNameWrap">
-        <span class="name" id="whoName" style="font-weight:700;"></span>
+        <span class="name" id="whoName" style="font-weight:700;cursor:pointer;" title="Click to change your color"></span>
       </span>
     </div>
   </header>
@@ -2089,7 +2089,11 @@ async function refreshMfaStatus(){
 }
 document.getElementById('enable2faBtn').addEventListener('click', async ()=>{
   const { data, error } = await supabaseClient.auth.mfa.enroll({ factorType: 'totp' });
-  if(error){ showSettingsMsg('settings2faMsg', t('settings2faEnrollFailed'), true); return; }
+  if(error){
+    console.error('mfa.enroll failed:', error);
+    showSettingsMsg('settings2faMsg', t('settings2faEnrollFailed') + (error.message ? ' (' + error.message + ')' : ''), true);
+    return;
+  }
   mfaEnrollFactorId = data.id;
   document.getElementById('settings2faQrImg').src = data.totp.qr_code;
   document.getElementById('settings2faSecretText').textContent = data.totp.secret;
@@ -6698,6 +6702,9 @@ function colorForUser(userId){
 function colorForNote(note){
   return (note && note.color) || colorForUser(note ? note.user_id : null);
 }
+document.getElementById('whoName').addEventListener('click', ()=>{
+  document.getElementById('myColorPicker').click();
+});
 document.getElementById('myColorPicker').addEventListener('change', async (e)=>{
   const color = e.target.value;
   profileColors[currentUser.id] = color;
