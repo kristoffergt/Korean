@@ -1711,6 +1711,15 @@ let profileColors = {}; // userId -> custom color hex (optional override)
 let coreMembers = {}; // userId -> boolean, true for Kristoffer/Roxy
 let dailyGoals = {}; // userId -> personal daily study-hour goal (Kristoffer/Roxy share one linked value)
 let hiddenFromLeaderboards = {}; // userId -> true if they've opted out of all leaderboards
+// Hiding is scoped per-viewer, not global: a hidden account still shows up
+// for itself and for its own core study partner (Kristoffer <-> Roxy) — it
+// only actually disappears for everyone else. Mirrors the shared_circle()
+// rule used server-side in leaderboard_expansion_migration.sql.
+function visibleOnLeaderboard(uid){
+  if(!hiddenFromLeaderboards[uid]) return true;
+  if(currentUser && uid === currentUser.id) return true;
+  return !!(currentUser && coreMembers[currentUser.id] && coreMembers[uid]);
+}
 function amICore(){ return !!(currentUser && coreMembers[currentUser.id]); }
 const DEFAULT_GOAL = 5;
 function goalFor(userId){ return Number(dailyGoals[userId]) || DEFAULT_GOAL; }
@@ -2968,7 +2977,7 @@ function renderAllLeaderboards(){
   renderJobLeaderboardList();
 }
 function studyLeaderboardRows(){
-  const userIds = Object.keys(profiles).filter(uid=> !hiddenFromLeaderboards[uid]);
+  const userIds = Object.keys(profiles).filter(visibleOnLeaderboard);
   return userIds.map(id=>({
     id, name: nameFor(id),
     streak: computeStreak(id), week: computeWeekTotal(id), total: computeTotal(id)
@@ -3289,7 +3298,7 @@ async function refreshReadingLeaderboard(){
   // Show every signed-up (non-hidden) account, defaulting to 0 for anyone
   // the aggregate RPC didn't return a row for (i.e. no finished books yet).
   readingLeaderboardCache = Object.keys(profiles)
-    .filter(uid=> !hiddenFromLeaderboards[uid])
+    .filter(visibleOnLeaderboard)
     .map(uid=>({ id: uid, name: nameFor(uid), finished: counts[uid] || 0 }))
     .sort((a,b)=> b.finished - a.finished);
   renderReadingLeaderboardList();
@@ -3441,7 +3450,7 @@ async function refreshJobLeaderboard(){
   const counts = {};
   (data||[]).forEach(r=>{ counts[r.user_id] = r.application_count; });
   jobLeaderboardCache = Object.keys(profiles)
-    .filter(uid=> !hiddenFromLeaderboards[uid])
+    .filter(visibleOnLeaderboard)
     .map(uid=>({ id: uid, name: nameFor(uid), count: counts[uid] || 0 }))
     .sort((a,b)=> b.count - a.count);
   renderJobLeaderboardList();
