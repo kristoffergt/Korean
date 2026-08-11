@@ -1178,7 +1178,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 <!-- ACCOUNT SETTINGS MODAL -->
 <div class="modal-overlay hidden" id="accountSettingsModal">
   <div class="modal-box">
-    <h2 id="hAccountSettings"></h2>
+    <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <span id="hAccountSettings"></span>
+      <button class="icon-btn" id="closeAccountSettingsX" title="Close" style="padding:4px 10px;">✕</button>
+    </h2>
 
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
       <div>
@@ -1981,6 +1984,7 @@ document.getElementById('mfaVerifyBtn').addEventListener('click', async ()=>{
 document.getElementById('signOutBtn').addEventListener('click', async ()=>{
   await supabaseClient.auth.signOut();
   currentUser = null;
+  document.getElementById('accountSettingsModal').classList.add('hidden');
   document.getElementById('appScreen').classList.add('hidden');
   document.getElementById('authScreen').classList.remove('hidden');
 });
@@ -2030,6 +2034,9 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   document.getElementById('accountSettingsModal').classList.remove('hidden');
 });
 document.getElementById('closeAccountSettingsBtn').addEventListener('click', ()=>{
+  document.getElementById('accountSettingsModal').classList.add('hidden');
+});
+document.getElementById('closeAccountSettingsX').addEventListener('click', ()=>{
   document.getElementById('accountSettingsModal').classList.add('hidden');
 });
 
@@ -2088,7 +2095,9 @@ async function refreshMfaStatus(){
   return enrolled;
 }
 document.getElementById('enable2faBtn').addEventListener('click', async ()=>{
-  const { data, error } = await supabaseClient.auth.mfa.enroll({ factorType: 'totp' });
+  // Explicit issuer so the authenticator app always labels this "kristoffergt.com"
+  // regardless of what the Supabase project's Site URL happens to be set to.
+  const { data, error } = await supabaseClient.auth.mfa.enroll({ factorType: 'totp', issuer: 'kristoffergt.com' });
   if(error){
     console.error('mfa.enroll failed:', error);
     showSettingsMsg('settings2faMsg', t('settings2faEnrollFailed') + (error.message ? ' (' + error.message + ')' : ''), true);
