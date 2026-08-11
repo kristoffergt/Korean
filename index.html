@@ -4275,20 +4275,19 @@ async function quickToggleSubscription(eventId){
 
 /* ---------- WEEK VIEW ---------- */
 function isMobileDevice(){ return window.innerWidth <= 640; }
-// On mobile the main tab nav (.tabs, flex-wrap) wraps into rows; whichever
-// tabs land alone on the last, short row stretch to fill it and render
-// oversized (e.g. 6 tabs at 4-per-row wraps 2 onto their own big row).
-// Rather than leaving those big buttons stranded at the bottom, that
-// leftover group is moved to the TOP as a whole row so the bigger buttons
-// appear first — but the left-to-right tab order is never changed within
-// either group (Calendar still comes before Study, Reading still comes
-// before Jobs, etc). Plain CSS `order` can't do this safely: assigning
-// sequential order numbers doesn't force an actual row break, so shorter
-// items from the "rest" group slide up to share space with the "big" row
-// once it's first, mixing the two groups. Instead the buttons are
-// physically moved in the DOM (which preserves their click handlers) and a
-// flex-basis:100% spacer is inserted between the two groups to force a real
-// line break, so the top row always contains exactly the leftover group.
+// On mobile the main tab nav (.tabs, flex-wrap) wraps into rows using the
+// browser's default greedy fill, which packs as many tabs as fit into row 1
+// and leaves the leftover on row 2 (e.g. 6 tabs at 4-per-row -> 4 on top,
+// 2 big ones on the bottom). The tab order must stay identical to desktop
+// (Calendar, Study, Courses, Notes, Reading, Jobs) — nothing is ever moved —
+// but the TOP row should be the bigger one. So instead of reordering tabs,
+// the line break is forced EARLY, right after the first `remainder` tabs
+// (the same count that would otherwise be left dangling on the last row),
+// so fewer tabs share the top row and it renders bigger: 6 tabs -> first 2
+// big on top, remaining 4 smaller below; 7 tabs -> first 3 big on top,
+// remaining 4 below; etc. A flex-basis:100% spacer is what forces that real
+// line break (plain CSS `order` can't do this — it doesn't create an actual
+// row boundary, so items just slide up to fill available space).
 let tabNavCanonicalOrder = null;
 function reorderMobileTabs(){
   const nav = document.getElementById('tabNav');
@@ -4298,9 +4297,9 @@ function reorderMobileTabs(){
   }
   const buttons = tabNavCanonicalOrder.map(id=> document.getElementById(id)).filter(Boolean);
   if(buttons.length === 0) return;
-  // Always rebuild from the original left-to-right order first (also drops
+  // Always restore the original left-to-right tab order first (also drops
   // any spacer from a previous call) so re-measuring is never based on an
-  // already-reordered state.
+  // already-modified state, and tab identity order never changes.
   const oldSpacer = nav.querySelector('.tabs-break');
   if(oldSpacer) oldSpacer.remove();
   buttons.forEach(b=> nav.appendChild(b));
@@ -4310,15 +4309,11 @@ function reorderMobileTabs(){
   const rowCapacity = buttons.filter(b=> b.offsetTop === firstTop).length;
   if(rowCapacity === 0 || rowCapacity >= total) return; // already fits on one row
   const remainder = total % rowCapacity;
-  if(remainder === 0) return; // rows already divide evenly, nothing dangling
-  const bigGroup = buttons.slice(total - remainder);   // e.g. Reading, Jobs — kept in that order
-  const restGroup = buttons.slice(0, total - remainder); // e.g. Calendar, Study, Courses, Notes — kept in that order
-  bigGroup.forEach(b=> nav.appendChild(b));
+  if(remainder === 0) return; // rows already divide evenly, nothing to rebalance
   const spacer = document.createElement('div');
   spacer.className = 'tabs-break';
   spacer.style.cssText = 'flex-basis:100%;height:0;';
-  nav.appendChild(spacer);
-  restGroup.forEach(b=> nav.appendChild(b));
+  nav.insertBefore(spacer, buttons[remainder]);
 }
 let tabReorderResizeTimer = null;
 window.addEventListener('resize', ()=>{
