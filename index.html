@@ -74,9 +74,9 @@ body{background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR'
 .auth-field input{font-family:'Inter',sans-serif;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:100%;}
 .auth-field input:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
 .auth-submit{width:100%;margin-top:6px;}
-.auth-msg .auth-msg-inner{font-size:12.5px;margin-top:12px;padding:10px 12px;border-radius:6px;}
-.auth-msg.error .auth-msg-inner{background:#F3D9D7;color:var(--seal-dark);border:1px solid var(--seal);}
-.auth-msg.info .auth-msg-inner{background:var(--celadon-1);color:var(--celadon-4);border:1px solid var(--celadon-3);}
+.auth-msg .auth-msg-inner{font-size:13px;margin-top:12px;padding:10px 14px;border-radius:8px;font-weight:600;line-height:1.4;}
+.auth-msg-inner.error{background:#F3D9D7;color:var(--seal-dark);border:1px solid var(--seal);border-left:4px solid var(--seal);}
+.auth-msg-inner.info{background:var(--celadon-1);color:var(--celadon-4);border:1px solid var(--celadon-3);border-left:4px solid var(--celadon-3);}
 header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:18px;gap:16px;flex-wrap:nowrap;}
 h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:28px;margin:0 0 4px;letter-spacing:0.5px;}
 .sub{font-size:13px;color:var(--ink-soft);letter-spacing:0.3px;}
@@ -1926,12 +1926,16 @@ document.getElementById('authSubmit').addEventListener('click', async ()=>{
     if(displayName.length > 12){ showAuthMsg(t('settingsNameTooLong'), 'error'); return; }
     const { data: available, error: availError } = await supabaseClient.rpc('display_name_available', { dname: displayName });
     if(!availError && available === false){ showAuthMsg(t('duplicateName'), 'error'); return; }
-    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+    // Note: the display name is NOT written to `profiles` here. Supabase
+    // returns a user object as soon as signUp() is called even when email
+    // confirmation is still pending (data.session is null in that case), so
+    // writing the name immediately would let an abandoned/never-confirmed
+    // signup permanently squat on it. Instead the name rides along as auth
+    // metadata and only gets claimed in `profiles` once someone actually
+    // completes a real, confirmed sign-in — see ensureProfileExists(), called
+    // from onAuthed().
+    const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { display_name: displayName } } });
     if(error){ showAuthMsg(error.message, 'error'); return; }
-    if(data.user){
-      const { error: profileError } = await supabaseClient.from('profiles').upsert({ id: data.user.id, display_name: displayName });
-      if(profileError){ showAuthMsg(t('duplicateName'), 'error'); return; }
-    }
     if(data.session){ checkMfaAndProceed(data.user); }
     else { showAuthMsg(t('signupCheckEmail'), 'info'); }
   } else {
@@ -1988,6 +1992,19 @@ document.getElementById('signOutBtn').addEventListener('click', async ()=>{
   document.getElementById('appScreen').classList.add('hidden');
   document.getElementById('authScreen').classList.remove('hidden');
 });
+// Claims this user's display name in `profiles` the first time they ever
+// reach a real, confirmed session. Safe to call every sign-in — it's a
+// no-op once the row exists. If the desired name got taken by someone else
+// in the meantime (rare), falls back to a still-unique variant rather than
+// blocking access to an account the person already proved they own.
+async function ensureProfileExists(user){
+  if(profiles[user.id]) return;
+  const desiredName = (user.user_metadata && user.user_metadata.display_name) || (user.email||'').split('@')[0] || 'User';
+  const { data: available } = await supabaseClient.rpc('display_name_available', { dname: desiredName });
+  const finalName = available === false ? (desiredName + '-' + user.id.slice(0,4)) : desiredName;
+  const { error } = await supabaseClient.from('profiles').upsert({ id: user.id, display_name: finalName });
+  if(!error) profiles[user.id] = finalName;
+}
 async function onAuthed(user){
   currentUser = { id: user.id, email: user.email };
   document.getElementById('authScreen').classList.add('hidden');
@@ -1995,6 +2012,7 @@ async function onAuthed(user){
   document.getElementById('mfaScreen').classList.add('hidden');
   document.getElementById('appScreen').classList.remove('hidden');
   await loadAllData();
+  await ensureProfileExists(user);
   rebuildForUserSelect();
   rebuildGramLevelFilterSelect();
   rebuildGramReviewedFilterSelect();
