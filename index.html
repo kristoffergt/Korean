@@ -249,11 +249,12 @@ button:hover{background:var(--ink-hover);}
 #quillContainer .ql-editor{color:var(--note-author-color, var(--ink));background:transparent !important;min-height:220px;}
 #writingQuillContainer .ql-editor{color:var(--writing-author-color, var(--ink));background:transparent !important;min-height:220px;max-height:min(46vh, 460px);overflow-y:auto;}
 #writingMockQ53QuillContainer .ql-editor, #writingMockQ54QuillContainer .ql-editor{color:var(--writing-author-color, var(--ink));background:transparent !important;min-height:220px;max-height:min(40vh, 400px);overflow-y:auto;}
-.writing-mock-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px;}
-.writing-mock-pane{min-width:0;}
+.writing-mock-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(5, auto);gap:16px;margin-top:10px;}
+.writing-mock-pane{min-width:0;display:grid;grid-template-rows:subgrid;grid-row:1 / span 5;}
 .writing-mock-pane h3{font-size:13px;margin:0 0 6px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.4px;}
 @media (max-width: 900px){
-  .writing-mock-grid{grid-template-columns:1fr;}
+  .writing-mock-grid{grid-template-columns:1fr;grid-template-rows:none;}
+  .writing-mock-pane{display:block;grid-template-rows:none;grid-row:auto;}
 }
 .writing-task-box{white-space:pre-wrap;background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.6;margin-top:10px;}
 .writing-char-count{font-weight:600;}
@@ -5459,78 +5460,17 @@ function openWritingMockSession(s53, s54){
   document.getElementById('writingMockQ54TaskBox').textContent = s54.task_prompt || '';
   updateWritingMockCharCount('q53');
   updateWritingMockCharCount('q54');
-  // Real exam layout: both writing boxes should start at the same height,
-  // regardless of which task's prompt text is longer — so pad the shorter
-  // task box up to match the taller one instead of letting the editors be
-  // staggered.
-  scheduleEqualizeMockTaskBoxHeights();
-  q53Box.querySelectorAll('img').forEach(img=>{ img.addEventListener('load', equalizeMockTaskBoxHeights); });
   // Real exam scenario: the 50-minute clock starts the instant both tasks
   // are on screen, no confirmation popup.
   resetWritingSampleTimerState(50, 'writingMockTimer');
   startWritingSampleTimer();
 }
-let mockTaskBoxEqualizing = false;
-function equalizeMockTaskBoxHeights(){
-  const box53 = document.getElementById('writingMockQ53TaskBox');
-  const box54 = document.getElementById('writingMockQ54TaskBox');
-  const card = document.getElementById('writingMockCard');
-  if(!box53 || !box54 || !card || card.classList.contains('hidden')) return;
-  // Re-entrancy guard: setting minHeight below changes each box's own
-  // rendered size, which is exactly what mockTaskBoxResizeObserver below is
-  // watching for — without this guard that would trigger another call to
-  // this same function from inside itself.
-  if(mockTaskBoxEqualizing) return;
-  mockTaskBoxEqualizing = true;
-  box53.style.minHeight = '';
-  box54.style.minHeight = '';
-  const h = Math.max(box53.offsetHeight, box54.offsetHeight);
-  box53.style.minHeight = h + 'px';
-  box54.style.minHeight = h + 'px';
-  mockTaskBoxEqualizing = false;
-}
-// A single synchronous measurement right after setting the task text isn't
-// reliable — web fonts, the Quill toolbar (loaded from CDN), or an attached
-// image can all still be reflowing the layout afterward, throwing the two
-// boxes out of sync. Rather than guessing at fixed delays, watch both boxes
-// with a ResizeObserver so ANY future reflow (whatever the cause) triggers
-// a re-equalization — this is the authoritative, ongoing fix, not just a
-// one-time check.
-let mockTaskBoxResizeObserver = null;
-function ensureMockTaskBoxResizeObserver(){
-  if(mockTaskBoxResizeObserver || typeof ResizeObserver === 'undefined') return;
-  let pending = false;
-  mockTaskBoxResizeObserver = new ResizeObserver(()=>{
-    if(pending || mockTaskBoxEqualizing) return;
-    pending = true;
-    requestAnimationFrame(()=>{ pending = false; equalizeMockTaskBoxHeights(); });
-  });
-}
-function scheduleEqualizeMockTaskBoxHeights(){
-  equalizeMockTaskBoxHeights();
-  requestAnimationFrame(()=> requestAnimationFrame(equalizeMockTaskBoxHeights));
-  if(document.fonts && document.fonts.ready){
-    document.fonts.ready.then(equalizeMockTaskBoxHeights).catch(()=>{});
-  }
-  setTimeout(equalizeMockTaskBoxHeights, 150);
-  setTimeout(equalizeMockTaskBoxHeights, 500);
-  ensureMockTaskBoxResizeObserver();
-  if(mockTaskBoxResizeObserver){
-    const box53 = document.getElementById('writingMockQ53TaskBox');
-    const box54 = document.getElementById('writingMockQ54TaskBox');
-    mockTaskBoxResizeObserver.disconnect();
-    if(box53) mockTaskBoxResizeObserver.observe(box53);
-    if(box54) mockTaskBoxResizeObserver.observe(box54);
-  }
-}
-window.addEventListener('resize', ()=> equalizeMockTaskBoxHeights());
 function exitWritingMockSession(){
   writingMockQ53Sample = null;
   writingMockQ54Sample = null;
   writingMockQ53Dirty = false;
   writingMockQ54Dirty = false;
   resetWritingSampleTimerState(0, 'writingSampleTimer');
-  if(mockTaskBoxResizeObserver) mockTaskBoxResizeObserver.disconnect();
   document.getElementById('writingMockCard').classList.add('hidden');
   document.getElementById('writingStartCard').classList.remove('hidden');
   document.getElementById('writingSamplesCard').classList.remove('hidden');
