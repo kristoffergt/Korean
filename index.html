@@ -149,7 +149,7 @@ button:hover{background:var(--ink-hover);}
 .entries li:last-child{border-bottom:none;}
 .e-top{display:flex;align-items:center;justify-content:space-between;font-size:14px;margin-bottom:6px;}
 .e-date{font-family:'Space Grotesk',monospace;color:var(--ink-soft);}
-.e-who{font-size:11px;background:var(--celadon-1);color:var(--celadon-4);padding:2px 8px;border-radius:10px;font-weight:600;margin-right:8px;}
+.e-who{font-size:11px;background:var(--celadon-1);color:var(--celadon-4);padding:2px 8px;border-radius:10px;font-weight:800;margin-right:8px;}
 .e-total{font-family:'Space Grotesk',monospace;font-weight:700;}
 .e-total.hit{color:var(--seal);}
 .e-seal{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1.5px solid var(--seal);border-radius:4px;color:var(--seal);font-family:'Noto Serif KR',serif;font-size:10px;font-weight:700;transform:rotate(-5deg);margin-right:5px;}
@@ -1300,7 +1300,7 @@ const I18N = {
     applicationsCombined:'Applications submitted — combined',
     footer:'Entries are visible to everyone signed in to this tracker; only you can edit your own.',
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
-    linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar',
+    linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
     topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed',
     addDeadline:'Add a deadline or event', eventTitle:'Title', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Week view', dayViewLabel:'Day view',
@@ -1394,7 +1394,7 @@ const I18N = {
     applicationsCombined:'전체 지원 건수',
     footer:'모든 기록은 로그인한 모든 사용자에게 공개되며, 본인 기록만 수정할 수 있습니다.',
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
-    linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기',
+    linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
     topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다',
     addDeadline:'마감일 또는 일정 추가', eventTitle:'제목', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'주간 보기', dayViewLabel:'일간 보기',
@@ -1488,7 +1488,7 @@ const I18N = {
     applicationsCombined:'Tổng số đơn đã nộp',
     footer:'Tất cả mục nhập hiển thị cho mọi người đã đăng nhập; bạn chỉ có thể chỉnh sửa mục của mình.',
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
-    linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch',
+    linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
     topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc',
     addDeadline:'Thêm hạn chót hoặc sự kiện', eventTitle:'Tiêu đề', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Xem theo tuần', dayViewLabel:'Xem theo ngày',
@@ -3054,7 +3054,16 @@ function renderJobs(){
   if(viewList.length === 0){ list.innerHTML = '<div class="empty">—</div>'; }
   viewList.slice().sort((a,b)=> (b.date_applied||'').localeCompare(a.date_applied||'')).forEach(j=>{
     const isMine = j.user_id === currentUser.id;
-    const ownerTag = !isMine ? `<span class="e-who" style="background:${colorForUser(j.user_id)}26;color:${colorForUser(j.user_id)};">${nameFor(j.user_id)}</span>` : '';
+    const ownerTag = `<span class="e-who" style="background:${colorForUser(j.user_id)}26;color:${colorForUser(j.user_id)};">${nameFor(j.user_id)}</span>`;
+    // If the other core member already applied to this same company/role,
+    // offer a one-click way to add your own independent application row for
+    // it instead of retyping everything — status/interview/etc. stay fully
+    // separate per person from that point on, this just saves the retyping.
+    const alreadyMine = !isMine && (allJobs[currentUser.id]||[]).some(x =>
+      (x.company||'').trim().toLowerCase() === (j.company||'').trim().toLowerCase() &&
+      (x.role||'').trim().toLowerCase() === (j.role||'').trim().toLowerCase()
+    );
+    const addMyselfBtn = (!isMine && !alreadyMine) ? `<button class="linkbtn job-add-myself" data-id="${j.id}">${t('addMyselfBtn')}</button>` : '';
     const div = document.createElement('div');
     div.className = 'item-row';
     div.innerHTML =
@@ -3072,6 +3081,7 @@ function renderJobs(){
           <option value="withdrawn" ${j.status==='withdrawn'?'selected':''}>${jobStatusLabel('withdrawn')}</option>
         </select>` : ''}
         ${j.link ? `<a href="${j.link}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
+        ${addMyselfBtn}
       </div>`;
     list.appendChild(div);
   });
@@ -3081,7 +3091,21 @@ function renderJobs(){
   list.querySelectorAll('.job-status-select').forEach(sel=>{
     sel.addEventListener('change', ()=> updateJobStatus(sel.dataset.id, sel.value));
   });
+  list.querySelectorAll('.job-add-myself').forEach(btn=>{
+    btn.addEventListener('click', ()=> addMyselfToJob(btn.dataset.id));
+  });
   refreshJobLeaderboard();
+}
+async function addMyselfToJob(sourceJobId){
+  const source = Object.values(allJobs).flat().find(x=>x.id===sourceJobId);
+  if(!source) return;
+  const row = { user_id: currentUser.id, company: source.company, role: source.role, status: 'applied', date_applied: todayStr(), link: source.link || null };
+  const { data, error } = await supabaseClient.from('job_applications').insert(row).select();
+  if(!error && data && data[0]){
+    if(!allJobs[currentUser.id]) allJobs[currentUser.id] = [];
+    allJobs[currentUser.id].unshift(data[0]);
+  }
+  renderJobs();
 }
 // Same public-leaderboard-vs-private-detail split as reading — see
 // refreshReadingLeaderboard() above and job_leaderboard() in
