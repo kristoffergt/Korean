@@ -493,7 +493,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="who">
       <div class="lang-switch" id="langSwitchApp"></div>
       <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode">🌙</button>
-      <button class="icon-btn" id="accountSettingsBtn" title="Account settings">⚙️</button>
+      <button class="icon-btn" id="accountSettingsBtn" title="Account settings" style="position:relative;">⚙️<span id="linkNotifyDot" class="hidden" style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--seal);"></span></button>
       <span id="whoNameWrap">
         <span class="name" id="whoName" style="font-weight:700;cursor:pointer;" title="Click to change your color"></span>
       </span>
@@ -769,6 +769,14 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         <div class="hint" id="writingWordCount"></div>
         <button class="linkbtn" id="writingVersionHistoryToggle" style="margin-top:10px;"></button>
         <div class="notes-panel hidden" id="writingVersionHistoryPanel"></div>
+        <div class="wtc-title" style="margin-top:18px;" id="writingFeedbackHeader"></div>
+        <div id="writingFeedbackList"></div>
+        <div class="log-form hidden" id="writingFeedbackFormWrap" style="margin-top:8px;">
+          <div class="field wide">
+            <textarea id="writingFeedbackInput" rows="2" style="font-family:'Inter',sans-serif;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);resize:vertical;" placeholder=""></textarea>
+          </div>
+          <button class="export-btn" id="writingFeedbackSendBtn"></button>
+        </div>
       </div>
       <div class="card hidden" id="writingMockCard">
         <h2><span id="hWritingMock"></span><span><button class="export-btn" id="writingMockExitBtn"></button></span></h2>
@@ -1321,6 +1329,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <button class="export-btn" id="disable2faBtn"></button>
     </div>
     <div class="hint hidden" id="settings2faMsg"></div>
+
+    <div class="wtc-title" style="margin-top:22px;" id="hLinkedCircle"></div>
+    <div class="hint" id="linkedCircleDesc"></div>
+    <div id="linkedCircleContent" style="margin-top:8px;"></div>
 
     <div class="log-form" style="margin-top:22px;">
       <div class="field wide">
@@ -7285,7 +7297,7 @@ const I18N = {
     gramRegister:'Register', gramColloquial:'Colloquial', gramWritten:'Written', gramFavorite:'Favorite — mark as difficult/important', gramSortFavorite:'Favorites first', gramViewSimilar:'View similar grammar forms',
     gramYourSentences:'Your practice sentences', gramSentencePlaceholder:'Write a sentence using this pattern...', gramAddSentence:'Add', lblGramSort:'Sort', gramSortDefault:'Default order', gramSortFreqDesc:'Most common first', gramSortFreqAsc:'Least common first', gramFrequencyHeader:'Frequency', gramLevelHeader:'Level',
     gramMarkNotReviewed:'Mark as not reviewed', gramMarkReviewedAgain:'Undo — mark as reviewed', gramResources:'Videos & links', gramResourceUrlPlaceholder:'YouTube or website URL', gramResourceLabelPlaceholder:'Label (optional)', gramAddResource:'Add',
-    hRecap:'Recap',recapWeekBtn:'Past 7 days',recapMonthBtn:'Past 30 days',recapStudyHours:'Study hours',recapGrammarPracticed:'Grammar sentences practiced',recapBooksFinished:'Books finished',recapJobsSent:'Applications sent',hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite.',quizFromCluster:'From comparison group:',quizFillBlank:'Fill in the blank',quizCorrectAnswerLabel:'Correct answer:',quizHistoryHeader:'Your quiz history',quizMaxScoreLabel:'Best score',quizAttemptsCountLabel:'Attempts',quizAverageLabel:'Average',quizNoAttemptsYet:'No attempts yet.',quizDueCount:'{n} pattern(s) due for review',quizReviewDueBtn:'Review due patterns', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently — leave a line blank to clear that field.',
+    hRecap:'Recap',recapWeekBtn:'Past 7 days',recapMonthBtn:'Past 30 days',recapStudyHours:'Study hours',recapGrammarPracticed:'Grammar sentences practiced',recapBooksFinished:'Books finished',recapJobsSent:'Applications sent',hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite.',quizFromCluster:'From comparison group:',quizFillBlank:'Fill in the blank',quizCorrectAnswerLabel:'Correct answer:',quizHistoryHeader:'Your quiz history',quizMaxScoreLabel:'Best score',quizAttemptsCountLabel:'Attempts',quizAverageLabel:'Average',quizNoAttemptsYet:'No attempts yet.',quizDueCount:'{n} pattern(s) due for review',quizReviewDueBtn:'Review due patterns',hLinkedCircle:'Linked circle',linkedCircleDesc:'Link up with other users to share your study data with them, just like Kristoffer & Roxy. Up to 10 people, and you control what you share.',linkInvitedYou:'{name} invited you to link up.',linkAcceptBtn:'Accept',linkDeclineBtn:'Decline',linkLeaveBtn:'Leave circle',linkRosterHeader:'Your circle',linkStatusAccepted:'Linked',linkStatusPending:'Invite sent — awaiting response',linkInviteSearchPlaceholder:'Search by name...',linkInviteBtn:'Invite',linkNoResults:'No matching users found.',linkCatStudyEntries:'Study log',linkCatBooks:'Reading list',linkCatJobApplications:'Job applications',linkCatGrammarNotes:'Grammar practice notes',linkCatCourseNotes:'Course notes',linkCatWritingSamples:'Writing samples & feedback',linkCatRecap:'Weekly/monthly recap',linkCatReadiness:'Grammar readiness',linkSharingHeader:'What you\'re sharing',linkGroupFullMsg:'Your circle is at the 10-person limit.',linkErrorGeneric:'Something went wrong — please try again.',linkNotLinkedYet:'You\'re not linked with anyone yet. Search for someone below to send an invite.',linkInviteSentMsg:'Invite sent.',writingFeedbackHeader:'Feedback',writingFeedbackPlaceholder:'Leave feedback on this sample...',writingFeedbackSendBtn:'Send',writingFeedbackEmpty:'No feedback yet.', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently — leave a line blank to clear that field.',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in',
     hCourseList:'All courses', viewSyllabus:'Syllabus ↗',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
@@ -7385,7 +7397,7 @@ const I18N = {
     gramRegister:'문체', gramColloquial:'구어체', gramWritten:'문어체', gramFavorite:'즐겨찾기 — 어렵거나 중요함으로 표시', gramSortFavorite:'즐겨찾기 우선', gramViewSimilar:'비슷한 문법 형태 보기',
     gramYourSentences:'나의 연습 문장', gramSentencePlaceholder:'이 문법을 사용해 문장을 써 보세요...', gramAddSentence:'추가', lblGramSort:'정렬', gramSortDefault:'기본 순서', gramSortFreqDesc:'가장 흔한 순', gramSortFreqAsc:'가장 드문 순', gramFrequencyHeader:'빈도', gramLevelHeader:'난이도',
     gramMarkNotReviewed:'복습 안 함으로 표시', gramMarkReviewedAgain:'취소 — 복습함으로 표시', gramResources:'영상 및 링크', gramResourceUrlPlaceholder:'유튜브 또는 웹사이트 URL', gramResourceLabelPlaceholder:'라벨 (선택)', gramAddResource:'추가',
-    hRecap:'요약',recapWeekBtn:'지난 7일',recapMonthBtn:'지난 30일',recapStudyHours:'공부 시간',recapGrammarPracticed:'연습한 문법 문장',recapBooksFinished:'완독한 책',recapJobsSent:'지원한 곳',hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요.',quizFromCluster:'비교 그룹:',quizFillBlank:'빈칸을 채우세요',quizCorrectAnswerLabel:'정답:',quizHistoryHeader:'나의 퀴즈 기록',quizMaxScoreLabel:'최고 점수',quizAttemptsCountLabel:'시도 횟수',quizAverageLabel:'평균',quizNoAttemptsYet:'아직 기록이 없어요.',quizDueCount:'복습할 문법 {n}개',quizReviewDueBtn:'복습할 문법 풀기', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다 — 비워두면 해당 항목이 지워집니다.',
+    hRecap:'요약',recapWeekBtn:'지난 7일',recapMonthBtn:'지난 30일',recapStudyHours:'공부 시간',recapGrammarPracticed:'연습한 문법 문장',recapBooksFinished:'완독한 책',recapJobsSent:'지원한 곳',hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요.',quizFromCluster:'비교 그룹:',quizFillBlank:'빈칸을 채우세요',quizCorrectAnswerLabel:'정답:',quizHistoryHeader:'나의 퀴즈 기록',quizMaxScoreLabel:'최고 점수',quizAttemptsCountLabel:'시도 횟수',quizAverageLabel:'평균',quizNoAttemptsYet:'아직 기록이 없어요.',quizDueCount:'복습할 문법 {n}개',quizReviewDueBtn:'복습할 문법 풀기',hLinkedCircle:'연결된 그룹',linkedCircleDesc:'다른 사용자와 연결해서 크리스토퍼와 록시처럼 학습 데이터를 공유하세요. 최대 10명까지 가능하며, 무엇을 공유할지는 직접 선택할 수 있습니다.',linkInvitedYou:'{name}님이 연결을 요청했습니다.',linkAcceptBtn:'수락',linkDeclineBtn:'거절',linkLeaveBtn:'그룹 나가기',linkRosterHeader:'내 그룹',linkStatusAccepted:'연결됨',linkStatusPending:'초대 보냄 — 응답 대기 중',linkInviteSearchPlaceholder:'이름으로 검색...',linkInviteBtn:'초대',linkNoResults:'일치하는 사용자가 없습니다.',linkCatStudyEntries:'학습 기록',linkCatBooks:'독서 목록',linkCatJobApplications:'구직 지원 내역',linkCatGrammarNotes:'문법 연습 노트',linkCatCourseNotes:'수업 노트',linkCatWritingSamples:'작문 및 피드백',linkCatRecap:'주간/월간 요약',linkCatReadiness:'문법 준비도',linkSharingHeader:'공유 중인 항목',linkGroupFullMsg:'그룹이 최대 인원(10명)에 도달했습니다.',linkErrorGeneric:'문제가 발생했습니다. 다시 시도해 주세요.',linkNotLinkedYet:'아직 아무와도 연결되어 있지 않습니다. 아래에서 검색해 초대를 보내보세요.',linkInviteSentMsg:'초대를 보냈습니다.',writingFeedbackHeader:'피드백',writingFeedbackPlaceholder:'이 작문에 대한 피드백을 남겨보세요...',writingFeedbackSendBtn:'보내기',writingFeedbackEmpty:'아직 피드백이 없습니다.', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다 — 비워두면 해당 항목이 지워집니다.',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정',
     hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
@@ -7486,7 +7498,7 @@ const I18N = {
     gramRegister:'Văn phong', gramColloquial:'Khẩu ngữ', gramWritten:'Văn viết', gramFavorite:'Yêu thích — đánh dấu khó/quan trọng', gramSortFavorite:'Yêu thích trước', gramViewSimilar:'Xem các mẫu ngữ pháp tương tự',
     gramYourSentences:'Câu luyện tập của bạn', gramSentencePlaceholder:'Viết một câu dùng mẫu này...', gramAddSentence:'Thêm', lblGramSort:'Sắp xếp', gramSortDefault:'Mặc định', gramSortFreqDesc:'Phổ biến nhất trước', gramSortFreqAsc:'Ít phổ biến nhất trước', gramFrequencyHeader:'Tần suất', gramLevelHeader:'Cấp độ',
     gramMarkNotReviewed:'Đánh dấu chưa ôn tập', gramMarkReviewedAgain:'Hoàn tác — đánh dấu đã ôn tập', gramResources:'Video & liên kết', gramResourceUrlPlaceholder:'URL YouTube hoặc trang web', gramResourceLabelPlaceholder:'Nhãn (tùy chọn)', gramAddResource:'Thêm',
-    hRecap:'Tổng kết',recapWeekBtn:'7 ngày qua',recapMonthBtn:'30 ngày qua',recapStudyHours:'Giờ học',recapGrammarPracticed:'Câu ngữ pháp đã luyện',recapBooksFinished:'Sách đã đọc xong',recapJobsSent:'Đơn ứng tuyển đã gửi',hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng.',quizFromCluster:'Nhóm so sánh:',quizFillBlank:'Điền vào chỗ trống',quizCorrectAnswerLabel:'Đáp án đúng:',quizHistoryHeader:'Lịch sử trắc nghiệm của bạn',quizMaxScoreLabel:'Điểm cao nhất',quizAttemptsCountLabel:'Số lần làm',quizAverageLabel:'Trung bình',quizNoAttemptsYet:'Chưa có lượt làm nào.',quizDueCount:'{n} mẫu ngữ pháp cần ôn tập',quizReviewDueBtn:'Ôn tập các mẫu cần ôn', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập — để trống dòng nào sẽ xóa trường đó.',
+    hRecap:'Tổng kết',recapWeekBtn:'7 ngày qua',recapMonthBtn:'30 ngày qua',recapStudyHours:'Giờ học',recapGrammarPracticed:'Câu ngữ pháp đã luyện',recapBooksFinished:'Sách đã đọc xong',recapJobsSent:'Đơn ứng tuyển đã gửi',hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng.',quizFromCluster:'Nhóm so sánh:',quizFillBlank:'Điền vào chỗ trống',quizCorrectAnswerLabel:'Đáp án đúng:',quizHistoryHeader:'Lịch sử trắc nghiệm của bạn',quizMaxScoreLabel:'Điểm cao nhất',quizAttemptsCountLabel:'Số lần làm',quizAverageLabel:'Trung bình',quizNoAttemptsYet:'Chưa có lượt làm nào.',quizDueCount:'{n} mẫu ngữ pháp cần ôn tập',quizReviewDueBtn:'Ôn tập các mẫu cần ôn',hLinkedCircle:'Nhóm liên kết',linkedCircleDesc:'Liên kết với người dùng khác để chia sẻ dữ liệu học tập, giống như Kristoffer & Roxy. Tối đa 10 người, và bạn tự quyết định chia sẻ những gì.',linkInvitedYou:'{name} đã mời bạn liên kết.',linkAcceptBtn:'Chấp nhận',linkDeclineBtn:'Từ chối',linkLeaveBtn:'Rời nhóm',linkRosterHeader:'Nhóm của bạn',linkStatusAccepted:'Đã liên kết',linkStatusPending:'Đã gửi lời mời — đang chờ phản hồi',linkInviteSearchPlaceholder:'Tìm theo tên...',linkInviteBtn:'Mời',linkNoResults:'Không tìm thấy người dùng phù hợp.',linkCatStudyEntries:'Nhật ký học tập',linkCatBooks:'Danh sách đọc',linkCatJobApplications:'Đơn ứng tuyển',linkCatGrammarNotes:'Ghi chú luyện ngữ pháp',linkCatCourseNotes:'Ghi chú khóa học',linkCatWritingSamples:'Bài viết & phản hồi',linkCatRecap:'Tổng kết tuần/tháng',linkCatReadiness:'Mức độ sẵn sàng ngữ pháp',linkSharingHeader:'Những gì bạn đang chia sẻ',linkGroupFullMsg:'Nhóm của bạn đã đạt giới hạn 10 người.',linkErrorGeneric:'Đã có lỗi xảy ra — vui lòng thử lại.',linkNotLinkedYet:'Bạn chưa liên kết với ai. Hãy tìm kiếm bên dưới để gửi lời mời.',linkInviteSentMsg:'Đã gửi lời mời.',writingFeedbackHeader:'Phản hồi',writingFeedbackPlaceholder:'Để lại phản hồi cho bài viết này...',writingFeedbackSendBtn:'Gửi',writingFeedbackEmpty:'Chưa có phản hồi nào.', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập — để trống dòng nào sẽ xóa trường đó.',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt',
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
@@ -7542,6 +7554,8 @@ const STATIC_MAP = {
   enable2faBtn:'enable2faBtn', disable2faBtn:'disable2faBtn',
   lblSettingsDeleteEmailConfirm:'lblSettingsDeleteEmailConfirm',
   lblSettingsDeletePasswordConfirm:'lblSettingsDeletePasswordConfirm', deleteAccountBtn:'deleteAccountBtn', hModerator:'hModerator', closeAccountSettingsBtn:'closeNoteBtn',
+  hLinkedCircle:'hLinkedCircle', linkedCircleDesc:'linkedCircleDesc',
+  writingFeedbackHeader:'writingFeedbackHeader', writingFeedbackSendBtn:'writingFeedbackSendBtn',
   lblMfaPromptTitle:'mfaPromptTitle', lblMfaPromptHint:'mfaPromptHint', mfaVerifyBtn:'mfaVerifyBtn',
   hNotebookList:'hNotebookList', lblNotebookPersonFilter:'lblNotesPersonFilter', saveNotebookBtn:'saveNoteBtn', closeNotebookBtn:'closeNoteBtn',
   hNewWriting:'hNewWriting', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', deleteAllWritingBtn:'deleteAllWritingBtn', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
@@ -7590,6 +7604,13 @@ let allWritingSamples = {}; // userId -> [writing_samples rows]
 let grammarReviewOverrides = {}; // "userId::patternId" -> true (manually unmarked)
 let grammarFavorites = {}; // "userId::patternId" -> true (starred as difficult/important)
 let grammarSrs = {}; // patternId -> { ease_factor, interval_days, repetitions, due_date, last_reviewed_at, last_quality } (own SM-2 schedule only, private)
+// Generalized linking (see link_groups_migration.sql). RLS scopes what
+// comes back: my own row always, plus every row in my group once I'm an
+// accepted member (roster), plus my own + groupmates' sharing settings.
+let linkGroupRows = []; // link_group_members rows visible to me
+let linkSharingRows = []; // link_sharing_settings rows visible to me
+let allWritingFeedback = {}; // sample_id -> [writing_feedback rows]
+const LINK_CATEGORIES = ['study_entries','books','job_applications','grammar_notes','course_notes','writing_samples','recap','readiness'];
 let profileColors = {}; // userId -> custom color hex (optional override)
 let coreMembers = {}; // userId -> boolean, true for Kristoffer/Roxy
 let dailyGoals = {}; // userId -> personal daily study-hour goal (Kristoffer/Roxy share one linked value)
@@ -7615,6 +7636,53 @@ function lbNameCell(r){
   return `${r.name}${youTag}${hiddenTag}`;
 }
 function amICore(){ return !!(currentUser && coreMembers[currentUser.id]); }
+/* ---------- GENERALIZED LINKING ---------- */
+// Kristoffer & Roxy stay on the separate hardcoded coreMembers/amICore path
+// (unchanged, always full sharing). Everyone else can link up via
+// link_group_members/link_sharing_settings — see link_groups_migration.sql.
+function myLinkRow(){ return currentUser ? linkGroupRows.find(r=>r.user_id===currentUser.id) : null; }
+function myLinkStatus(){ const r = myLinkRow(); return r ? r.status : 'none'; }
+// Everyone accepted in my group besides me.
+function linkedPartnerIds(){
+  const mine = myLinkRow();
+  if(!mine || mine.status !== 'accepted') return [];
+  return linkGroupRows.filter(r=> r.group_id===mine.group_id && r.status==='accepted' && r.user_id!==currentUser.id).map(r=>r.user_id);
+}
+// Roster of everyone in my group (any status), besides me.
+function linkGroupRoster(){
+  const mine = myLinkRow();
+  if(!mine) return [];
+  return linkGroupRows.filter(r=> r.group_id===mine.group_id && r.user_id!==currentUser.id);
+}
+// Does `uid` currently share `category` with me? Defaults to true (opt-out
+// model), mirroring shared_circle_cat()'s SQL default.
+function isSharingWithMe(uid, category){
+  const row = linkSharingRows.find(r=> r.user_id===uid && r.category===category);
+  return row ? !!row.enabled : true;
+}
+function mySharingSetting(category){
+  if(!currentUser) return true;
+  const row = linkSharingRows.find(r=> r.user_id===currentUser.id && r.category===category);
+  return row ? !!row.enabled : true;
+}
+// Combined "who else can I see [category] data for" list: hardcoded core
+// partner (always, no toggle) plus any linked partners who haven't turned
+// that category off.
+function visiblePartnersFor(category){
+  const ids = new Set();
+  if(amICore()) Object.keys(profiles).filter(uid=>coreMembers[uid] && uid!==currentUser.id).forEach(uid=>ids.add(uid));
+  linkedPartnerIds().filter(uid=> isSharingWithMe(uid, category)).forEach(uid=>ids.add(uid));
+  return Array.from(ids);
+}
+// For tables gated by the blanket shared_circle() (no per-category toggle,
+// e.g. notebook_notes): core partner (always) + any linked partner
+// (linking itself is the opt-in; there's no finer per-category control).
+function visibleCircleMembers(){
+  const ids = new Set();
+  if(amICore()) Object.keys(profiles).filter(uid=>coreMembers[uid] && uid!==currentUser.id).forEach(uid=>ids.add(uid));
+  linkedPartnerIds().forEach(uid=>ids.add(uid));
+  return Array.from(ids);
+}
 const DEFAULT_GOAL = 5;
 function goalFor(userId){ return Number(dailyGoals[userId]) || DEFAULT_GOAL; }
 let expandedNoteGroups = new Set();
@@ -7854,6 +7922,7 @@ function applyLanguage(lang){
   });
   document.getElementById('authSubmit').textContent = authMode === 'signin' ? t('signIn') : t('createAccount');
   document.getElementById('writingCustomDescription').placeholder = t('writingCustomDescPlaceholder');
+  document.getElementById('writingFeedbackInput').placeholder = t('writingFeedbackPlaceholder');
   document.getElementById('moderatorSearch').placeholder = t('modSearchPlaceholder');
   rebuildModeratorSortSelect();
   document.getElementById('writingImageUrl').placeholder = t('writingImageUrlPlaceholder');
@@ -8060,6 +8129,7 @@ async function onAuthed(user){
   const myColor = colorForUser(user.id);
   document.getElementById('myColorPicker').value = myColor;
   document.getElementById('whoName').style.color = myColor;
+  updateLinkNotifyDot();
   renderAll();
   // Tab-nav wrap measurement only works once #appScreen is actually visible
   // and laid out, which just happened above — re-run it now that it can
@@ -8093,6 +8163,8 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   const isAdmin = currentUser.email === ADMIN_EMAIL;
   document.getElementById('moderatorSection').classList.toggle('hidden', !isAdmin);
   if(isAdmin) loadModeratorUsers();
+  await refreshLinkData();
+  renderLinkedCircle();
   document.getElementById('accountSettingsModal').classList.remove('hidden');
 });
 document.getElementById('closeAccountSettingsBtn').addEventListener('click', ()=>{
@@ -8107,6 +8179,156 @@ document.getElementById('accountSettingsModal').addEventListener('click', (e)=>{
     document.getElementById('accountSettingsModal').classList.add('hidden');
   }
 });
+
+/* ---------- LINKED CIRCLE (settings UI) ---------- */
+async function refreshLinkData(){
+  if(!currentUser) return;
+  const { data: lgRows } = await supabaseClient.from('link_group_members').select('*');
+  linkGroupRows = lgRows || [];
+  const { data: lsRows } = await supabaseClient.from('link_sharing_settings').select('*');
+  linkSharingRows = lsRows || [];
+  updateLinkNotifyDot();
+}
+function updateLinkNotifyDot(){
+  const dot = document.getElementById('linkNotifyDot');
+  if(!dot) return;
+  dot.classList.toggle('hidden', myLinkStatus() !== 'pending');
+}
+function linkCatLabel(cat){
+  const map = {
+    study_entries:'linkCatStudyEntries', books:'linkCatBooks', job_applications:'linkCatJobApplications',
+    grammar_notes:'linkCatGrammarNotes', course_notes:'linkCatCourseNotes', writing_samples:'linkCatWritingSamples',
+    recap:'linkCatRecap', readiness:'linkCatReadiness'
+  };
+  return t(map[cat]);
+}
+function linkInviteSearchHtml(){
+  return `<div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <input type="text" id="linkInviteSearchInput" placeholder="${t('linkInviteSearchPlaceholder')}" style="flex:1;min-width:160px;font-family:'Inter',sans-serif;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);">
+    </div>
+    <div id="linkInviteResults" style="margin-top:8px;"></div>`;
+}
+function renderLinkedCircle(){
+  const el = document.getElementById('linkedCircleContent');
+  if(!el || !currentUser) return;
+  const mine = myLinkRow();
+  let html = '';
+  if(mine && mine.status === 'pending'){
+    html += `<div class="hint" style="margin-bottom:8px;">${escapeHtml(t('linkInvitedYou').replace('{name}', nameFor(mine.invited_by)))}</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="export-btn" id="linkAcceptBtn">${t('linkAcceptBtn')}</button>
+        <button id="linkDeclineBtn">${t('linkDeclineBtn')}</button>
+      </div>`;
+  }
+  if(mine && mine.status === 'accepted'){
+    const roster = linkGroupRoster();
+    html += `<div style="font-weight:700;font-size:13px;margin-bottom:6px;">${t('linkRosterHeader')}</div>
+      <div style="margin-bottom:10px;">
+        <div style="padding:4px 0;font-size:13px;">${nameFor(currentUser.id)} <span class="tag">YOU</span></div>
+        ${roster.map(r=>{
+          const statusLabel = r.status === 'accepted' ? t('linkStatusAccepted') : t('linkStatusPending');
+          return `<div style="padding:4px 0;font-size:13px;display:flex;justify-content:space-between;gap:10px;">
+            <span>${nameFor(r.user_id)}</span><span style="color:var(--ink-soft);">${statusLabel}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <button id="linkLeaveBtn" style="margin-bottom:14px;">${t('linkLeaveBtn')}</button>
+      <div style="font-weight:700;font-size:13px;margin-bottom:6px;">${t('linkSharingHeader')}</div>
+      <div style="margin-bottom:14px;">
+        ${LINK_CATEGORIES.map(cat=>{
+          const enabled = mySharingSetting(cat);
+          return `<label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer;">
+            <input type="checkbox" class="link-cat-toggle" data-cat="${cat}" ${enabled?'checked':''} style="width:16px;height:16px;">
+            <span>${linkCatLabel(cat)}</span>
+          </label>`;
+        }).join('')}
+      </div>`;
+    const acceptedCount = roster.filter(r=>r.status==='accepted').length + 1;
+    html += acceptedCount >= 10 ? `<div class="hint">${t('linkGroupFullMsg')}</div>` : linkInviteSearchHtml();
+  } else if(!mine || mine.status === 'declined'){
+    html += `<div class="hint" style="margin-bottom:8px;">${t('linkNotLinkedYet')}</div>`;
+    html += linkInviteSearchHtml();
+  }
+  el.innerHTML = html;
+  bindLinkedCircleEvents();
+}
+function bindLinkedCircleEvents(){
+  const acceptBtn = document.getElementById('linkAcceptBtn');
+  if(acceptBtn) acceptBtn.addEventListener('click', async ()=>{
+    acceptBtn.disabled = true;
+    const { error } = await supabaseClient.rpc('link_accept_invite');
+    if(error){ alert(error.message || t('linkErrorGeneric')); acceptBtn.disabled = false; return; }
+    await refreshLinkData();
+    renderLinkedCircle();
+    renderRecap();
+    renderGrammarReadiness();
+  });
+  const declineBtn = document.getElementById('linkDeclineBtn');
+  if(declineBtn) declineBtn.addEventListener('click', async ()=>{
+    declineBtn.disabled = true;
+    const { error } = await supabaseClient.rpc('link_decline_invite');
+    if(error){ alert(error.message || t('linkErrorGeneric')); declineBtn.disabled = false; return; }
+    await refreshLinkData();
+    renderLinkedCircle();
+  });
+  const leaveBtn = document.getElementById('linkLeaveBtn');
+  if(leaveBtn) leaveBtn.addEventListener('click', async ()=>{
+    if(!confirm(t('linkLeaveBtn') + '?')) return;
+    leaveBtn.disabled = true;
+    const { error } = await supabaseClient.rpc('link_leave_group');
+    if(error){ alert(error.message || t('linkErrorGeneric')); leaveBtn.disabled = false; return; }
+    await refreshLinkData();
+    renderLinkedCircle();
+    renderRecap();
+    renderGrammarReadiness();
+  });
+  document.querySelectorAll('.link-cat-toggle').forEach(cb=>{
+    cb.addEventListener('change', async ()=>{
+      const cat = cb.dataset.cat;
+      const enabled = cb.checked;
+      await supabaseClient.from('link_sharing_settings').upsert(
+        { user_id: currentUser.id, category: cat, enabled },
+        { onConflict: 'user_id,category' }
+      );
+      const existing = linkSharingRows.find(r=>r.user_id===currentUser.id && r.category===cat);
+      if(existing) existing.enabled = enabled;
+      else linkSharingRows.push({ user_id: currentUser.id, category: cat, enabled });
+    });
+  });
+  const searchInput = document.getElementById('linkInviteSearchInput');
+  if(searchInput){
+    let searchTimeout = null;
+    searchInput.addEventListener('input', ()=>{
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(async ()=>{
+        const q = searchInput.value.trim();
+        const resultsEl = document.getElementById('linkInviteResults');
+        if(!resultsEl) return;
+        if(q.length < 1){ resultsEl.innerHTML = ''; return; }
+        const { data, error } = await supabaseClient.rpc('link_search_users', { query: q });
+        if(error || !data || data.length === 0){
+          resultsEl.innerHTML = `<div class="hint">${t('linkNoResults')}</div>`;
+          return;
+        }
+        resultsEl.innerHTML = data.map(u=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;">
+            <span>${escapeHtml(u.display_name || '')}</span>
+            <button class="link-invite-send-btn" data-uid="${u.id}" style="font-size:12px;padding:5px 10px;">${t('linkInviteBtn')}</button>
+          </div>`).join('');
+        resultsEl.querySelectorAll('.link-invite-send-btn').forEach(btn=>{
+          btn.addEventListener('click', async ()=>{
+            btn.disabled = true;
+            const { error: inviteErr } = await supabaseClient.rpc('link_invite', { invitee_id: btn.dataset.uid });
+            if(inviteErr){ alert(inviteErr.message || t('linkErrorGeneric')); btn.disabled = false; return; }
+            resultsEl.innerHTML = `<div class="hint">${t('linkInviteSentMsg')}</div>`;
+            await refreshLinkData();
+            renderLinkedCircle();
+          });
+        });
+      }, 300);
+    });
+  }
+}
 
 document.getElementById('saveDisplayNameBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('settingsDisplayName').value.trim();
@@ -8535,6 +8757,20 @@ async function loadAllData(){
   (writingRows||[]).forEach(w=>{
     if(!allWritingSamples[w.user_id]) allWritingSamples[w.user_id] = [];
     allWritingSamples[w.user_id].push(w);
+  });
+  linkGroupRows = [];
+  linkSharingRows = [];
+  if(currentUser){
+    const { data: lgRows } = await supabaseClient.from('link_group_members').select('*');
+    linkGroupRows = lgRows || [];
+    const { data: lsRows } = await supabaseClient.from('link_sharing_settings').select('*');
+    linkSharingRows = lsRows || [];
+  }
+  const { data: feedbackRows } = await supabaseClient.from('writing_feedback').select('*').order('created_at', {ascending:true});
+  allWritingFeedback = {};
+  (feedbackRows||[]).forEach(f=>{
+    if(!allWritingFeedback[f.sample_id]) allWritingFeedback[f.sample_id] = [];
+    allWritingFeedback[f.sample_id].push(f);
   });
   const { data: gramPointRows } = await supabaseClient.from('grammar_points').select('*').order('pattern', {ascending:true});
   if(gramPointRows && gramPointRows.length > 0){
@@ -9021,7 +9257,7 @@ function renderFeed(){
   // as private as before: only detailed entries you actually have RLS
   // access to (yourself + your core study partner).
   Object.entries(allEntries).forEach(([userId, byDate])=>{
-    if(userId !== currentUser.id && !coreMembers[userId]) return;
+    if(userId !== currentUser.id && !coreMembers[userId] && !visiblePartnersFor('study_entries').includes(userId)) return;
     Object.entries(byDate).forEach(([date, activities])=>{ rows.push({ userId, date, activities }); });
   });
   rows.sort((a,b)=> b.date.localeCompare(a.date));
@@ -10481,11 +10717,9 @@ function renderRecap(){
     <button data-period="month" class="${recapPeriod==='month'?'active':''}">${t('recapMonthBtn')}</button>
   </div>`;
   html += recapPersonHtml(currentUser.id, days);
-  if(amICore()){
-    Object.keys(profiles).filter(uid=>coreMembers[uid] && uid!==currentUser.id).forEach(uid=>{
-      html += recapPersonHtml(uid, days);
-    });
-  }
+  visiblePartnersFor('recap').forEach(uid=>{
+    html += recapPersonHtml(uid, days);
+  });
   el.innerHTML = html;
   el.querySelectorAll('.recap-toggle button').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -17203,7 +17437,10 @@ function buildGrammarCardHtml(g){
   const notesListHtml = myNotes.map(n=>{
     const isMine = n.user_id === currentUser.id;
     const isSentenceEditOpen = expandedSentenceEdit.has(n.id);
-    const authorLabel = coreMembers[n.user_id] ? nameFor(n.user_id) : '';
+    // allGrammarNotes is already RLS-filtered to rows I'm allowed to see
+    // (mine + shared_circle_cat 'grammar_notes'), so anyone appearing here
+    // is fair game to label by name.
+    const authorLabel = nameFor(n.user_id) || '';
     if(isSentenceEditOpen){
       return `<div class="gram-sentence-row" style="flex-direction:column;align-items:stretch;gap:6px;">
         <input type="text" class="gram-sentence-edit-input" data-id="${n.id}" data-pattern="${g.id}" value="${n.sentence.replace(/"/g,'&quot;')}" style="color:${colorForUser(n.user_id)};">
@@ -17410,11 +17647,11 @@ function renderGrammarReadiness(){
   const myTopik = computeGrammarReadiness(currentUser.id, true);
   let html = readinessRowHtml(`${myName} — ${t('gramReadinessOverall')}`, myOverall)
     + readinessRowHtml(`${myName} — ${t('gramReadinessTopik')}`, myTopik);
-  // The "shared" rows (a core member's readiness shown to their partner)
-  // are only for the two core members to see each other — not for every
-  // regular signed-up user to see Kristoffer/Roxy's readiness. Gate on the
-  // viewer themselves being core, not just on the target being core.
-  const others = amICore() ? Object.keys(profiles).filter(uid=>coreMembers[uid] && uid!==currentUser.id) : [];
+  // The "shared" rows (someone else's readiness shown to their linked
+  // circle) are only for Kristoffer/Roxy to see each other, and linked
+  // partners who haven't turned off 'readiness' sharing — never for every
+  // regular signed-up user to see someone else's readiness by default.
+  const others = visiblePartnersFor('readiness');
   others.forEach(uid=>{
     html += readinessRowHtml(`${nameFor(uid)} — ${t('gramReadinessOverall')}`, computeGrammarReadiness(uid, false))
       + readinessRowHtml(`${nameFor(uid)} — ${t('gramReadinessTopik')}`, computeGrammarReadiness(uid, true));
@@ -18308,12 +18545,13 @@ function rebuildWritingPersonFilter(){
   const allOpt = document.createElement('option');
   allOpt.value = 'all'; allOpt.textContent = t('allPeople');
   sel.appendChild(allOpt);
-  Object.keys(profiles).filter(uid=>coreMembers[uid]).forEach(uid=>{
+  const selectable = [currentUser.id, ...visiblePartnersFor('writing_samples')];
+  selectable.forEach(uid=>{
     const opt = document.createElement('option');
     opt.value = uid; opt.textContent = nameFor(uid);
     sel.appendChild(opt);
   });
-  const valid = prev && (prev==='all' || coreMembers[prev]);
+  const valid = prev && (prev==='all' || selectable.includes(prev));
   sel.value = valid ? prev : currentUser.id;
   writingPersonFilter = sel.value;
 }
@@ -18573,7 +18811,7 @@ function renderWritingList(){
   const filterVal = writingPersonFilter || currentUser.id;
   let items;
   if(filterVal === 'all'){
-    items = Object.keys(profiles).filter(uid=>coreMembers[uid]).flatMap(uid=>allWritingSamples[uid]||[]);
+    items = [currentUser.id, ...visiblePartnersFor('writing_samples')].flatMap(uid=>allWritingSamples[uid]||[]);
   } else {
     items = allWritingSamples[filterVal] || [];
   }
@@ -18917,7 +19155,62 @@ function openWritingSample(id, ownerUid){
   writingEditorDirty = false;
   updateWritingLastSavedInfo(w);
   updateWritingCharCount();
+  document.getElementById('writingFeedbackInput').value = '';
+  renderWritingFeedback(id, ownerUid);
 }
+/* ---------- WRITING FEEDBACK (linked-circle comments on a sample) ---------- */
+function renderWritingFeedback(sampleId, ownerUid){
+  const listEl = document.getElementById('writingFeedbackList');
+  const formWrap = document.getElementById('writingFeedbackFormWrap');
+  if(!listEl || !formWrap) return;
+  const items = (allWritingFeedback[sampleId] || []).slice().sort((a,b)=> new Date(a.created_at) - new Date(b.created_at));
+  if(items.length === 0){
+    listEl.innerHTML = `<div class="hint">${t('writingFeedbackEmpty')}</div>`;
+  } else {
+    listEl.innerHTML = items.map(f=>{
+      const isMine = currentUser && f.author_id === currentUser.id;
+      return `<div style="padding:8px 0;border-bottom:1px solid var(--line);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <span style="font-weight:700;font-size:12px;color:${colorForUser(f.author_id)};">${escapeHtml(nameFor(f.author_id)||'')}</span>
+          <span style="display:flex;align-items:center;gap:8px;">
+            <span class="hint" style="margin:0;">${new Date(f.created_at).toLocaleDateString()}</span>
+            ${isMine ? `<button class="lecture-del" data-id="${f.id}">✕</button>` : ''}
+          </span>
+        </div>
+        <div style="font-size:13px;margin-top:2px;white-space:pre-wrap;">${escapeHtml(f.content)}</div>
+      </div>`;
+    }).join('');
+    listEl.querySelectorAll('.lecture-del').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteWritingFeedback(btn.dataset.id, sampleId));
+    });
+  }
+  // Visibility is already enforced server-side (RLS on writing_feedback):
+  // if the sample loaded into allWritingSamples at all, the viewer is
+  // allowed to see and add feedback on it — owner included, so they can
+  // reply to comments on their own work.
+  formWrap.classList.toggle('hidden', !currentUser);
+}
+async function sendWritingFeedback(sampleId){
+  const input = document.getElementById('writingFeedbackInput');
+  const content = input.value.trim();
+  if(!content || !currentUser) return;
+  const { data, error } = await supabaseClient.from('writing_feedback')
+    .insert({ sample_id: sampleId, author_id: currentUser.id, content })
+    .select();
+  if(error){ alert(error.message || t('linkErrorGeneric')); return; }
+  if(!allWritingFeedback[sampleId]) allWritingFeedback[sampleId] = [];
+  allWritingFeedback[sampleId].push(data[0]);
+  input.value = '';
+  renderWritingFeedback(sampleId, selectedWritingSampleOwner);
+}
+async function deleteWritingFeedback(id, sampleId){
+  await supabaseClient.from('writing_feedback').delete().eq('id', id);
+  allWritingFeedback[sampleId] = (allWritingFeedback[sampleId]||[]).filter(f=>f.id!==id);
+  renderWritingFeedback(sampleId, selectedWritingSampleOwner);
+}
+document.getElementById('writingFeedbackSendBtn').addEventListener('click', ()=>{
+  if(selectedWritingSampleId) sendWritingFeedback(selectedWritingSampleId);
+});
 document.getElementById('saveWritingBtn').addEventListener('click', async ()=>{
   if(!selectedWritingSampleId || !writingQuillEditor || selectedWritingSampleOwner !== currentUser.id) return;
   const content = writingQuillEditor.root.innerHTML;
@@ -19651,12 +19944,13 @@ function rebuildNotesPersonFilter(){
   const allOpt = document.createElement('option');
   allOpt.value = 'all'; allOpt.textContent = t('allPeople');
   sel.appendChild(allOpt);
-  Object.keys(profiles).filter(uid=>coreMembers[uid]).forEach(uid=>{
+  const selectable = currentUser ? [currentUser.id, ...visiblePartnersFor('course_notes')] : Object.keys(profiles).filter(uid=>coreMembers[uid]);
+  selectable.forEach(uid=>{
     const opt = document.createElement('option');
     opt.value = uid; opt.textContent = nameFor(uid);
     sel.appendChild(opt);
   });
-  sel.value = (prev && (prev==='all'||coreMembers[prev])) ? prev : 'all';
+  sel.value = (prev && (prev==='all'||selectable.includes(prev))) ? prev : 'all';
   notesPersonFilter = sel.value;
 }
 document.getElementById('notesPersonFilter').addEventListener('change', (e)=>{
@@ -19676,12 +19970,13 @@ function rebuildBookPersonFilter(){
   const allOpt = document.createElement('option');
   allOpt.value = 'all'; allOpt.textContent = t('allPeople');
   sel.appendChild(allOpt);
-  Object.keys(profiles).filter(uid=>coreMembers[uid]).forEach(uid=>{
+  const selectable = [currentUser.id, ...visiblePartnersFor('books')];
+  selectable.forEach(uid=>{
     const opt = document.createElement('option');
     opt.value = uid; opt.textContent = nameFor(uid);
     sel.appendChild(opt);
   });
-  const valid = prev && (prev==='all' || coreMembers[prev]);
+  const valid = prev && (prev==='all' || selectable.includes(prev));
   sel.value = valid ? prev : currentUser.id;
   bookPersonFilter = sel.value;
 }
@@ -19699,12 +19994,13 @@ function rebuildJobPersonFilter(){
   const allOpt = document.createElement('option');
   allOpt.value = 'all'; allOpt.textContent = t('allPeople');
   sel.appendChild(allOpt);
-  Object.keys(profiles).filter(uid=>coreMembers[uid]).forEach(uid=>{
+  const selectable = [currentUser.id, ...visiblePartnersFor('job_applications')];
+  selectable.forEach(uid=>{
     const opt = document.createElement('option');
     opt.value = uid; opt.textContent = nameFor(uid);
     sel.appendChild(opt);
   });
-  const valid = prev && (prev==='all' || coreMembers[prev]);
+  const valid = prev && (prev==='all' || selectable.includes(prev));
   sel.value = valid ? prev : currentUser.id;
   jobPersonFilter = sel.value;
 }
@@ -20159,12 +20455,13 @@ function rebuildNotebookPersonFilter(){
   const allOpt = document.createElement('option');
   allOpt.value = 'all'; allOpt.textContent = t('allPeople');
   sel.appendChild(allOpt);
-  Object.keys(profiles).filter(uid=>coreMembers[uid]).forEach(uid=>{
+  const selectable = currentUser ? [currentUser.id, ...visibleCircleMembers()] : Object.keys(profiles).filter(uid=>coreMembers[uid]);
+  selectable.forEach(uid=>{
     const opt = document.createElement('option');
     opt.value = uid; opt.textContent = nameFor(uid);
     sel.appendChild(opt);
   });
-  sel.value = (prev && (prev==='all'||coreMembers[prev])) ? prev : 'all';
+  sel.value = (prev && (prev==='all'||selectable.includes(prev))) ? prev : 'all';
   notebookPersonFilter = sel.value;
 }
 document.getElementById('notebookPersonFilter').addEventListener('change', (e)=>{
