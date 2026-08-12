@@ -380,6 +380,22 @@ button:hover{background:var(--ink-hover);}
 .gram-bar-marker{position:absolute;top:-3px;width:2px;height:12px;background:var(--ink);border-radius:1px;transform:translateX(-1px);}
 .gram-bar-ends{display:flex;justify-content:space-between;font-size:9px;color:var(--ink-soft);margin-top:2px;}
 .gram-sense-label{font-weight:700;font-size:12px;color:var(--celadon-4);margin-top:10px;margin-bottom:2px;}
+.quiz-intro{font-size:13px;color:var(--ink-soft);margin-bottom:10px;}
+.quiz-meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-soft);margin-bottom:10px;font-family:'Space Grotesk',monospace;}
+.quiz-stem{font-size:16px;line-height:1.6;font-weight:600;margin-bottom:16px;}
+.quiz-stem .quiz-blank{color:var(--celadon-4);letter-spacing:1px;}
+.quiz-options{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.quiz-option{text-align:left;background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:'Space Grotesk',monospace;font-size:13.5px;font-weight:600;cursor:pointer;}
+.quiz-option:hover:not(:disabled){background:var(--paper);}
+.quiz-option:disabled{cursor:default;}
+.quiz-option.correct{background:rgba(90,168,120,0.18);border-color:var(--celadon-4);color:var(--celadon-4);}
+.quiz-option.incorrect{background:rgba(192,57,43,0.12);border-color:var(--danger,#c0392b);color:var(--danger,#c0392b);}
+.quiz-feedback{font-size:13px;margin-bottom:10px;}
+.quiz-feedback.correct{color:var(--celadon-4);font-weight:700;}
+.quiz-feedback.incorrect{color:var(--danger,#c0392b);font-weight:700;}
+.quiz-cluster-note{font-size:12px;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
+.quiz-results{text-align:center;padding:16px 0;}
+.quiz-results-score{font-size:32px;font-weight:700;font-family:'Space Grotesk',monospace;color:var(--celadon-4);margin:8px 0;}
 .gram-notebook{margin-top:14px;border-top:1px solid var(--line);padding-top:10px;}
 .gram-notebook input{width:100%;box-sizing:border-box;}
 .gram-sentence-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;}
@@ -634,6 +650,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <div class="card">
         <div class="note-group-header" id="gramReadinessHeader"></div>
         <div id="gramReadinessCard" class="hidden"></div>
+      </div>
+      <div class="card">
+        <div class="note-group-header" id="gramQuizHeader"></div>
+        <div id="gramQuizCard" class="hidden"></div>
       </div>
     </div>
     <div id="studyWritingSection" class="hidden">
@@ -7253,7 +7273,7 @@ const I18N = {
     gramRegister:'Register', gramColloquial:'Colloquial', gramWritten:'Written', gramFavorite:'Favorite — mark as difficult/important', gramSortFavorite:'Favorites first', gramViewSimilar:'View similar grammar forms',
     gramYourSentences:'Your practice sentences', gramSentencePlaceholder:'Write a sentence using this pattern...', gramAddSentence:'Add', lblGramSort:'Sort', gramSortDefault:'Default order', gramSortFreqDesc:'Most common first', gramSortFreqAsc:'Least common first', gramFrequencyHeader:'Frequency', gramLevelHeader:'Level',
     gramMarkNotReviewed:'Mark as not reviewed', gramMarkReviewedAgain:'Undo — mark as reviewed', gramResources:'Videos & links', gramResourceUrlPlaceholder:'YouTube or website URL', gramResourceLabelPlaceholder:'Label (optional)', gramAddResource:'Add',
-    hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently — leave a line blank to clear that field.',
+    hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite — correct answer:',quizFromCluster:'From comparison group:', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently — leave a line blank to clear that field.',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in',
     hCourseList:'All courses', viewSyllabus:'Syllabus ↗',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
@@ -7353,7 +7373,7 @@ const I18N = {
     gramRegister:'문체', gramColloquial:'구어체', gramWritten:'문어체', gramFavorite:'즐겨찾기 — 어렵거나 중요함으로 표시', gramSortFavorite:'즐겨찾기 우선', gramViewSimilar:'비슷한 문법 형태 보기',
     gramYourSentences:'나의 연습 문장', gramSentencePlaceholder:'이 문법을 사용해 문장을 써 보세요...', gramAddSentence:'추가', lblGramSort:'정렬', gramSortDefault:'기본 순서', gramSortFreqDesc:'가장 흔한 순', gramSortFreqAsc:'가장 드문 순', gramFrequencyHeader:'빈도', gramLevelHeader:'난이도',
     gramMarkNotReviewed:'복습 안 함으로 표시', gramMarkReviewedAgain:'취소 — 복습함으로 표시', gramResources:'영상 및 링크', gramResourceUrlPlaceholder:'유튜브 또는 웹사이트 URL', gramResourceLabelPlaceholder:'라벨 (선택)', gramAddResource:'추가',
-    hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다 — 비워두면 해당 항목이 지워집니다.',
+    hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요 — 정답:',quizFromCluster:'비교 그룹:', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다 — 비워두면 해당 항목이 지워집니다.',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정',
     hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
@@ -7454,7 +7474,7 @@ const I18N = {
     gramRegister:'Văn phong', gramColloquial:'Khẩu ngữ', gramWritten:'Văn viết', gramFavorite:'Yêu thích — đánh dấu khó/quan trọng', gramSortFavorite:'Yêu thích trước', gramViewSimilar:'Xem các mẫu ngữ pháp tương tự',
     gramYourSentences:'Câu luyện tập của bạn', gramSentencePlaceholder:'Viết một câu dùng mẫu này...', gramAddSentence:'Thêm', lblGramSort:'Sắp xếp', gramSortDefault:'Mặc định', gramSortFreqDesc:'Phổ biến nhất trước', gramSortFreqAsc:'Ít phổ biến nhất trước', gramFrequencyHeader:'Tần suất', gramLevelHeader:'Cấp độ',
     gramMarkNotReviewed:'Đánh dấu chưa ôn tập', gramMarkReviewedAgain:'Hoàn tác — đánh dấu đã ôn tập', gramResources:'Video & liên kết', gramResourceUrlPlaceholder:'URL YouTube hoặc trang web', gramResourceLabelPlaceholder:'Nhãn (tùy chọn)', gramAddResource:'Thêm',
-    hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập — để trống dòng nào sẽ xóa trường đó.',
+    hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng — đáp án đúng:',quizFromCluster:'Nhóm so sánh:', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập — để trống dòng nào sẽ xóa trường đó.',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt',
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
@@ -10685,6 +10705,6201 @@ const GRAMMAR_COMPARISONS = [
     ] }
 ];
 
+const QUIZ_QUESTIONS = [
+ {
+  "qid": 1,
+  "patternId": "고-해서",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "여름도 되고 해서 머리 모양을 좀 바꿔 봤어요.",
+  "sentenceBlankKr": "여름도 되____ 머리 모양을 좀 바꿔 봤어요.",
+  "sentenceEn": "Since it's become summer (among other reasons), I decided to change my hairstyle a bit.",
+  "sentenceVi": "Vì cũng sắp vào hè (và vài lý do khác nữa) nên tôi đã thay đổi kiểu tóc một chút.",
+  "options": [
+   "-느라고",
+   "-고 해서",
+   "-는 둥 마는 둥 하다",
+   "-는 바람에"
+  ],
+  "optionIds": [
+   "느라고",
+   "고-해서",
+   "는-둥-마는-둥-하다",
+   "는-바람에"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 2,
+  "patternId": "느라고",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "밤새 시험 공부를 하느라고 한숨도 못 잤어요.",
+  "sentenceBlankKr": "밤새 시험 공부를 하____ 한숨도 못 잤어요.",
+  "sentenceEn": "I was up all night studying for the exam, so I didn't get a wink of sleep.",
+  "sentenceVi": "Tôi thức cả đêm để học thi nên không chợp mắt được chút nào.",
+  "options": [
+   "-느라고",
+   "-을/ㄹ 줄만 알았지",
+   "-는 바람에",
+   "-고 해서"
+  ],
+  "optionIds": [
+   "느라고",
+   "을-ㄹ-줄만-알았지",
+   "는-바람에",
+   "고-해서"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 3,
+  "patternId": "는-바람에",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "택시를 타는 바람에 돈을 다 썼어요.",
+  "sentenceBlankKr": "택시를 타____ 돈을 다 썼어요.",
+  "sentenceEn": "Because I took a taxi, I spent all my money.",
+  "sentenceVi": "Vì đi taxi nên tôi đã tiêu hết tiền.",
+  "options": [
+   "-는 바람에",
+   "-으라고/라고",
+   "-느라고",
+   "-는 탓에 / 탓이다"
+  ],
+  "optionIds": [
+   "는-바람에",
+   "으라고-라고",
+   "느라고",
+   "는-탓에-탓이다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 4,
+  "patternId": "는-탓에-탓이다",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "공부를 하지 않은 탓에 시험에서 떨어졌어요.",
+  "sentenceBlankKr": "공부를 하지 않____ 시험에서 떨어졌어요.",
+  "sentenceEn": "I failed the exam because I didn't study (my fault).",
+  "sentenceVi": "Tôi thi trượt vì đã không học bài (lỗi của tôi).",
+  "options": [
+   "-는 탓에 / 탓이다",
+   "-을락 말락 하다",
+   "-느라고",
+   "-거든(요)"
+  ],
+  "optionIds": [
+   "는-탓에-탓이다",
+   "을락-말락-하다",
+   "느라고",
+   "거든-요"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 5,
+  "patternId": "거든-요",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "고향에 도착하거든 이메일 보내 주세요.",
+  "sentenceBlankKr": "고향에 도착하____ 이메일 보내 주세요.",
+  "sentenceEn": "When you arrive home, please send me an email.",
+  "sentenceVi": "Khi nào về đến quê thì hãy gửi email cho tôi nhé.",
+  "options": [
+   "-마저(도)",
+   "-는 탓에 / 탓이다",
+   "-거든(요)",
+   "-느라고"
+  ],
+  "optionIds": [
+   "마저-도",
+   "는-탓에-탓이다",
+   "거든-요",
+   "느라고"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 6,
+  "patternId": "건만-건마는",
+  "clusterTitle": "건만(건마는) / (으)련만((으)련마는) — lament at how things turned out",
+  "clusterTitle_ko": "건만(건마는) / (으)련만((으)련마는) — 아쉬움을 나타내는 표현",
+  "clusterTitle_vi": "건만(건마는) / (으)련만((으)련마는) — than thở về kết quả không như ý",
+  "sentenceKr": "열심히 준비했건만 결과는 좋지 않았어요.",
+  "sentenceBlankKr": "열심히 준비했____ 결과는 좋지 않았어요.",
+  "sentenceEn": "I prepared so hard for it, and yet the results were disappointing.",
+  "sentenceVi": "Tôi đã chuẩn bị rất chăm chỉ, vậy mà kết quả lại không như ý.",
+  "options": [
+   "-긴 -나 봐요",
+   "-(으)려다가",
+   "-건만 (-건마는)",
+   "(으)련만 ((으)련마는)"
+  ],
+  "optionIds": [
+   "긴-나-봐요",
+   "으-려다가",
+   "건만-건마는",
+   "으-련만-으-련마는"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 7,
+  "patternId": "으-련만-으-련마는",
+  "clusterTitle": "건만(건마는) / (으)련만((으)련마는) — lament at how things turned out",
+  "clusterTitle_ko": "건만(건마는) / (으)련만((으)련마는) — 아쉬움을 나타내는 표현",
+  "clusterTitle_vi": "건만(건마는) / (으)련만((으)련마는) — than thở về kết quả không như ý",
+  "sentenceKr": "시간이 있으련만, 요즘은 너무 바빠서 힘드네요.",
+  "sentenceBlankKr": "시간이 있____, 요즘은 너무 바빠서 힘드네요.",
+  "sentenceEn": "If only I had the time — but lately I've been so busy it's just not possible.",
+  "sentenceVi": "Giá mà tôi có thời gian — nhưng dạo này tôi bận quá nên thực sự không thể.",
+  "options": [
+   "(으)련만 ((으)련마는)",
+   "-건만 (-건마는)",
+   "-을/ㄹ 줄만 알았지",
+   "-는 편이다"
+  ],
+  "optionIds": [
+   "으-련만-으-련마는",
+   "건만-건마는",
+   "을-ㄹ-줄만-알았지",
+   "는-편이다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 8,
+  "patternId": "자마자",
+  "clusterTitle": "\"As soon as / after\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_ko": "\"~하자마자 / ~한 후\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_vi": "\"Ngay khi / sau khi\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "sentenceKr": "나는 방학을 하자마자 고향으로 돌아갈 생각이에요.",
+  "sentenceBlankKr": "나는 방학을 하____ 고향으로 돌아갈 생각이에요.",
+  "sentenceEn": "As soon as school lets out, I plan to go back to my hometown.",
+  "sentenceVi": "Ngay khi nghỉ hè, tôi định về quê.",
+  "options": [
+   "-기가 무섭게",
+   "-자마자",
+   "-는 대로",
+   "-을/ㄹ까 봐"
+  ],
+  "optionIds": [
+   "기가-무섭게",
+   "자마자",
+   "는-대로",
+   "을-ㄹ까-봐"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 9,
+  "patternId": "기가-무섭게",
+  "clusterTitle": "\"As soon as / after\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_ko": "\"~하자마자 / ~한 후\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_vi": "\"Ngay khi / sau khi\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "sentenceKr": "아침에 눈 뜨기가 바쁘게 집에서 나왔어요.",
+  "sentenceBlankKr": "아침에 눈 뜨____ 집에서 나왔어요.",
+  "sentenceEn": "I left the house the very moment I woke up.",
+  "sentenceVi": "Tôi vừa mở mắt ra là ra khỏi nhà ngay lập tức.",
+  "options": [
+   "-고 나서",
+   "-기가 무섭게",
+   "-느라고",
+   "-자마자"
+  ],
+  "optionIds": [
+   "고-나서",
+   "기가-무섭게",
+   "느라고",
+   "자마자"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 10,
+  "patternId": "는-대로",
+  "clusterTitle": "\"As soon as / after\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_ko": "\"~하자마자 / ~한 후\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_vi": "\"Ngay khi / sau khi\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "sentenceKr": "선생님이 가르쳐 주는 대로 공부하면 시험을 잘 볼 수 있어요.",
+  "sentenceBlankKr": "선생님이 가르쳐 주____ 공부하면 시험을 잘 볼 수 있어요.",
+  "sentenceEn": "If you study exactly the way the teacher taught you, you can do well on the test.",
+  "sentenceVi": "Nếu học đúng theo cách thầy/cô đã dạy thì bạn có thể làm bài thi tốt.",
+  "options": [
+   "-기가 무섭게",
+   "-는 대로",
+   "-음으로써",
+   "-고 나서"
+  ],
+  "optionIds": [
+   "기가-무섭게",
+   "는-대로",
+   "음으로써",
+   "고-나서"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 11,
+  "patternId": "고-나서",
+  "clusterTitle": "\"As soon as / after\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_ko": "\"~하자마자 / ~한 후\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_vi": "\"Ngay khi / sau khi\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "sentenceKr": "주말에 청소를 하고 나서 요리를 했어요.",
+  "sentenceBlankKr": "주말에 청소를 하____ 요리를 했어요.",
+  "sentenceEn": "On the weekend, after cleaning, I cooked.",
+  "sentenceVi": "Vào cuối tuần, sau khi dọn dẹp xong tôi đã nấu ăn.",
+  "options": [
+   "-자마자",
+   "-기가 무섭게",
+   "-음으로써",
+   "-고 나서"
+  ],
+  "optionIds": [
+   "자마자",
+   "기가-무섭게",
+   "음으로써",
+   "고-나서"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 12,
+  "patternId": "더니",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "전에는 한국어를 못하더니 이제는 유창하게 하네요.",
+  "sentenceBlankKr": "전에는 한국어를 못하____ 이제는 유창하게 하네요.",
+  "sentenceEn": "Before, they couldn't speak Korean at all, but now they speak it fluently.",
+  "sentenceVi": "Trước đây họ hoàn toàn không nói được tiếng Hàn, mà giờ đã nói lưu loát rồi.",
+  "options": [
+   "-에다가",
+   "-더니",
+   "-던데요",
+   "-았/었/였더니"
+  ],
+  "optionIds": [
+   "에다가",
+   "더니",
+   "던데요",
+   "았-었-였더니"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 13,
+  "patternId": "았-었-였더니",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "매일 일찍 일어났더니 생활이 규칙적이 됐어요.",
+  "sentenceBlankKr": "매일 일찍 일어____ 생활이 규칙적이 됐어요.",
+  "sentenceEn": "I got up early every day, and as a result my routine became much more regular.",
+  "sentenceVi": "Tôi dậy sớm mỗi ngày, và kết quả là sinh hoạt của tôi trở nên đều đặn hơn hẳn.",
+  "options": [
+   "-던",
+   "-더니",
+   "-다시피 (하다)",
+   "-았/었/였더니"
+  ],
+  "optionIds": [
+   "던",
+   "더니",
+   "다시피-하다",
+   "았-었-였더니"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 14,
+  "patternId": "더라고-요",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "어제 공원에 갔는데 사람이 정말 많더라고요.",
+  "sentenceBlankKr": "어제 공원에 갔는데 사람이 정말 많____.",
+  "sentenceEn": "I went to the park yesterday, and there were so many people there, I noticed.",
+  "sentenceVi": "Hôm qua tôi đến công viên, và tôi thấy có rất nhiều người ở đó.",
+  "options": [
+   "-기에는",
+   "-던데요",
+   "-더라고(요)",
+   "-았/었/였더니"
+  ],
+  "optionIds": [
+   "기에는",
+   "던데요",
+   "더라고-요",
+   "았-었-였더니"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 15,
+  "patternId": "던",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "어렸을 때 자주 가던 식당이 문을 닫았어요.",
+  "sentenceBlankKr": "어렸을 때 자주 가____ 식당이 문을 닫았어요.",
+  "sentenceEn": "The restaurant I used to go to often as a kid closed down.",
+  "sentenceVi": "Nhà hàng mà tôi hay đến hồi nhỏ đã đóng cửa rồi.",
+  "options": [
+   "-기 일쑤이다",
+   "-던",
+   "-았/었/였더니",
+   "-더니"
+  ],
+  "optionIds": [
+   "기-일쑤이다",
+   "던",
+   "았-었-였더니",
+   "더니"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 16,
+  "patternId": "던데요",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "그 카페에 가 봤는데 분위기가 정말 좋던데요.",
+  "sentenceBlankKr": "그 카페에 가 봤는데 분위기가 정말 좋____.",
+  "sentenceEn": "I went to that cafe, and the atmosphere was really nice, I have to say.",
+  "sentenceVi": "Tôi đã đến quán cà phê đó, không gian thực sự rất đẹp.",
+  "options": [
+   "-(으)려면",
+   "-던데요",
+   "-더니",
+   "-던"
+  ],
+  "optionIds": [
+   "으-려면",
+   "던데요",
+   "더니",
+   "던"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 17,
+  "patternId": "게-되다",
+  "clusterTitle": "사동 (Causative) / 피동 (Passive) / 게 되다",
+  "clusterTitle_ko": "사동 (사동사) / 피동 (피동사) / 게 되다",
+  "clusterTitle_vi": "사동 (Thể sai khiến) / 피동 (Thể bị động) / 게 되다",
+  "sentenceKr": "우연히 그 사람과 다시 만나게 되었어요.",
+  "sentenceBlankKr": "우연히 그 사람과 다시 만나____.",
+  "sentenceEn": "I ended up running into that person again by chance.",
+  "sentenceVi": "Tôi đã tình cờ gặp lại người đó.",
+  "options": [
+   "-을까/나/지 싶다",
+   "-게 되다",
+   "-아/어 대다",
+   "-는 편이다"
+  ],
+  "optionIds": [
+   "을까-나-지-싶다",
+   "게-되다",
+   "아-어-대다",
+   "는-편이다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 18,
+  "patternId": "는-은-ㄴ-모양이다",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "수업 시간에 조는 걸 보니 피곤한 모양이에요.",
+  "sentenceBlankKr": "수업 시간에 조는 걸 보니 피곤한 ____.",
+  "sentenceEn": "Seeing them dozing off in class, they seem to be tired.",
+  "sentenceVi": "Nhìn cách họ gà gật trong lớp, có vẻ họ đang mệt.",
+  "options": [
+   "-는 셈 치다 / -ㄴ/는다고 치다",
+   "-는, 은/ㄴ 모양이다",
+   "-는/은/ㄴ/을/ㄹ 듯(이)",
+   "-는/ㄴ, -다 싶다"
+  ],
+  "optionIds": [
+   "는-셈-치다-ㄴ-는다고-치다",
+   "는-은-ㄴ-모양이다",
+   "는-은-ㄴ-을-ㄹ-듯-이",
+   "는-ㄴ-다-싶다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 19,
+  "patternId": "으-려나-보다",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "전화를 안 받는 걸 보니 바쁘려나 봐요.",
+  "sentenceBlankKr": "전화를 안 받는 걸 보니 바쁘____요.",
+  "sentenceEn": "Since they're not answering the phone, I guess they must be busy.",
+  "sentenceVi": "Vì không nghe máy nên chắc là đang bận.",
+  "options": [
+   "-(으)려나 보다",
+   "-는/ㄴ, -다 싶다",
+   "-긴 -나 봐요",
+   "-느라고"
+  ],
+  "optionIds": [
+   "으-려나-보다",
+   "는-ㄴ-다-싶다",
+   "긴-나-봐요",
+   "느라고"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 20,
+  "patternId": "긴-나-봐요",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "바쁘긴 바쁜데 그래도 운동은 해야 하나 봐요.",
+  "sentenceBlankKr": "바쁘긴 바쁜데 그래도 운동은 해야 하____.",
+  "sentenceEn": "Admittedly I am busy, but it seems I still need to find time to exercise.",
+  "sentenceVi": "Đúng là tôi bận thật, nhưng có vẻ tôi vẫn cần dành thời gian tập thể dục.",
+  "options": [
+   "-긴 -나 봐요",
+   "-는/ㄴ, -다 싶다",
+   "-(으)려나 보다",
+   "-만 하다"
+  ],
+  "optionIds": [
+   "긴-나-봐요",
+   "는-ㄴ-다-싶다",
+   "으-려나-보다",
+   "만-하다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 21,
+  "patternId": "는-은-ㄴ-을-ㄹ-듯-이",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "날아갈 듯이 기뻤어요.",
+  "sentenceBlankKr": "날아갈 ____ 기뻤어요.",
+  "sentenceEn": "I was so happy it felt like I could fly.",
+  "sentenceVi": "Tôi vui đến mức cảm giác như có thể bay lên được.",
+  "options": [
+   "-는/은/ㄴ/을/ㄹ 듯(이)",
+   "-기로 하다",
+   "-긴 -나 봐요",
+   "-는/ㄴ, -다 싶다"
+  ],
+  "optionIds": [
+   "는-은-ㄴ-을-ㄹ-듯-이",
+   "기로-하다",
+   "긴-나-봐요",
+   "는-ㄴ-다-싶다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 22,
+  "patternId": "으-ㄹ-듯하다",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "구름을 보니 곧 비가 올 듯해요.",
+  "sentenceBlankKr": "구름을 보니 곧 비가 올 ____.",
+  "sentenceEn": "Looking at the clouds, it seems like it's about to rain.",
+  "sentenceVi": "Nhìn mây thế này, có vẻ như trời sắp mưa.",
+  "options": [
+   "-긴 -나 봐요",
+   "-(으)ㄹ 듯하다",
+   "-거든(요)",
+   "-는/은/ㄴ/을/ㄹ 듯(이)"
+  ],
+  "optionIds": [
+   "긴-나-봐요",
+   "으-ㄹ-듯하다",
+   "거든-요",
+   "는-은-ㄴ-을-ㄹ-듯-이"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 23,
+  "patternId": "는-ㄴ-다-싶다",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "이러다가 늦겠다 싶어서 서둘렀어요.",
+  "sentenceBlankKr": "이러다가 늦겠____어서 서둘렀어요.",
+  "sentenceEn": "I had the feeling I was going to be late, so I hurried.",
+  "sentenceVi": "Tôi có cảm giác là mình sẽ trễ nên đã vội vàng lên.",
+  "options": [
+   "-(으)ㄹ 듯하다",
+   "-는/ㄴ, -다 싶다",
+   "-는, 은/ㄴ 모양이다",
+   "-더라도"
+  ],
+  "optionIds": [
+   "으-ㄹ-듯하다",
+   "는-ㄴ-다-싶다",
+   "는-은-ㄴ-모양이다",
+   "더라도"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 24,
+  "patternId": "마저-도",
+  "clusterTitle": "\"Even\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_ko": "\"~조차/마저\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_vi": "\"Ngay cả / thậm chí\" — 마저(도) / 조차 / (이)나마",
+  "sentenceKr": "철수마저 그 사람을 싫어하는 걸 보면 정말 별로인 사람이겠네.",
+  "sentenceBlankKr": "철수____ 그 사람을 싫어하는 걸 보면 정말 별로인 사람이겠네.",
+  "sentenceEn": "If even Cheolsu dislikes that person, they must really be no good.",
+  "sentenceVi": "Nếu đến cả Cheolsu cũng ghét người đó thì chắc người đó thật sự không ra gì.",
+  "options": [
+   "-마저(도)",
+   "-다니 / (이)라니",
+   "-(이)나마",
+   "-조차"
+  ],
+  "optionIds": [
+   "마저-도",
+   "다니-이-라니",
+   "이-나마",
+   "조차"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 25,
+  "patternId": "조차",
+  "clusterTitle": "\"Even\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_ko": "\"~조차/마저\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_vi": "\"Ngay cả / thậm chí\" — 마저(도) / 조차 / (이)나마",
+  "sentenceKr": "우리는 얼굴조차 본 적이 없어.",
+  "sentenceBlankKr": "우리는 얼굴____ 본 적이 없어.",
+  "sentenceEn": "We haven't even seen each other's faces.",
+  "sentenceVi": "Chúng tôi thậm chí còn chưa nhìn thấy mặt nhau.",
+  "options": [
+   "-마저(도)",
+   "-조차",
+   "-는 셈 치다 / -ㄴ/는다고 치다",
+   "-(이)나마"
+  ],
+  "optionIds": [
+   "마저-도",
+   "조차",
+   "는-셈-치다-ㄴ-는다고-치다",
+   "이-나마"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 26,
+  "patternId": "이-나마",
+  "clusterTitle": "\"Even\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_ko": "\"~조차/마저\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_vi": "\"Ngay cả / thậm chí\" — 마저(도) / 조차 / (이)나마",
+  "sentenceKr": "작게나마 제 성의라고 생각해서 이 선물을 받아 주시기 바랍니다.",
+  "sentenceBlankKr": "작게____ 제 성의라고 생각해서 이 선물을 받아 주시기 바랍니다.",
+  "sentenceEn": "Please accept this gift, small as it is, as a token of my sincerity.",
+  "sentenceVi": "Món quà tuy nhỏ nhưng mong bạn nhận lấy như một chút tấm lòng của tôi.",
+  "options": [
+   "-마저(도)",
+   "-조차",
+   "-(이)나마",
+   "-더라고(요)"
+  ],
+  "optionIds": [
+   "마저-도",
+   "조차",
+   "이-나마",
+   "더라고-요"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 27,
+  "patternId": "을-ㄹ-뻔하다",
+  "clusterTitle": "\"Almost / borderline\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_ko": "\"거의 / 경계선\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_vi": "\"Gần như / ở lằn ranh\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "sentenceKr": "길을 건너다가 차에 치일 뻔했어요.",
+  "sentenceBlankKr": "길을 건너다가 차에 치일 ____.",
+  "sentenceEn": "I was crossing the street and nearly got hit by a car.",
+  "sentenceVi": "Tôi đang băng qua đường thì suýt bị xe đâm.",
+  "options": [
+   "-는 둥 마는 둥 하다",
+   "-다시피 (하다)",
+   "-기 마련이다",
+   "-을/ㄹ 뻔하다"
+  ],
+  "optionIds": [
+   "는-둥-마는-둥-하다",
+   "다시피-하다",
+   "기-마련이다",
+   "을-ㄹ-뻔하다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 28,
+  "patternId": "을락-말락-하다",
+  "clusterTitle": "\"Almost / borderline\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_ko": "\"거의 / 경계선\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_vi": "\"Gần như / ở lằn ranh\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "sentenceKr": "천장에 손이 닿을락 말락 해요.",
+  "sentenceBlankKr": "천장에 손이 닿____.",
+  "sentenceEn": "My hand can just barely reach the ceiling.",
+  "sentenceVi": "Tay tôi chỉ vừa chạm tới trần nhà thôi.",
+  "options": [
+   "-(으)려나 보다",
+   "-을/ㄹ 뻔하다",
+   "-을락 말락 하다",
+   "-는 둥 마는 둥 하다"
+  ],
+  "optionIds": [
+   "으-려나-보다",
+   "을-ㄹ-뻔하다",
+   "을락-말락-하다",
+   "는-둥-마는-둥-하다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 29,
+  "patternId": "는-둥-마는-둥-하다",
+  "clusterTitle": "\"Almost / borderline\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_ko": "\"거의 / 경계선\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_vi": "\"Gần như / ở lằn ranh\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "sentenceKr": "어제는 너무 피곤해서 씻는 둥 마는 둥 하고 바로 잤어요.",
+  "sentenceBlankKr": "어제는 너무 피곤해서 씻는 ____ 하고 바로 잤어요.",
+  "sentenceEn": "I was so tired yesterday that I barely washed up before going straight to sleep.",
+  "sentenceVi": "Hôm qua tôi mệt quá nên chỉ rửa mặt qua loa rồi đi ngủ luôn.",
+  "options": [
+   "-는 둥 마는 둥 하다",
+   "-에 따라(서)",
+   "-다시피 (하다)",
+   "-을락 말락 하다"
+  ],
+  "optionIds": [
+   "는-둥-마는-둥-하다",
+   "에-따라-서",
+   "다시피-하다",
+   "을락-말락-하다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 30,
+  "patternId": "다시피-하다",
+  "clusterTitle": "\"Almost / borderline\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_ko": "\"거의 / 경계선\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_vi": "\"Gần như / ở lằn ranh\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "sentenceKr": "다이어트 때문에 매일 굶다시피 하는 사람들이 많아요.",
+  "sentenceBlankKr": "다이어트 때문에 매일 굶____ 하는 사람들이 많아요.",
+  "sentenceEn": "Many people practically starve themselves every day because of dieting.",
+  "sentenceVi": "Nhiều người gần như nhịn đói mỗi ngày vì ăn kiêng.",
+  "options": [
+   "-는 한",
+   "-는 둥 마는 둥 하다",
+   "-다시피 (하다)",
+   "-을락 말락 하다"
+  ],
+  "optionIds": [
+   "는-한",
+   "는-둥-마는-둥-하다",
+   "다시피-하다",
+   "을락-말락-하다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 31,
+  "patternId": "는-편이다",
+  "clusterTitle": "Degrees of \"sort of\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_ko": "\"어느 정도\" 표현들 — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_vi": "Các mức độ \"khá / coi như\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "sentenceKr": "그는 커피에 비해서 녹차를 많이 마시는 편이에요.",
+  "sentenceBlankKr": "그는 커피에 비해서 녹차를 많이 마시____.",
+  "sentenceEn": "He tends to drink more green tea than coffee, comparatively.",
+  "sentenceVi": "So với cà phê thì anh ấy có xu hướng uống trà xanh nhiều hơn.",
+  "options": [
+   "-는 편이다",
+   "-는 셈 치다 / -ㄴ/는다고 치다",
+   "-기 일쑤이다",
+   "-던데요"
+  ],
+  "optionIds": [
+   "는-편이다",
+   "는-셈-치다-ㄴ-는다고-치다",
+   "기-일쑤이다",
+   "던데요"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 32,
+  "patternId": "는-ㄴ-셈이다",
+  "clusterTitle": "Degrees of \"sort of\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_ko": "\"어느 정도\" 표현들 — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_vi": "Các mức độ \"khá / coi như\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "sentenceKr": "할인을 받고 나면 한 병에 5백 원인 셈이에요.",
+  "sentenceBlankKr": "할인을 받고 나면 한 병에 5백 원____.",
+  "sentenceEn": "After the discount, it essentially comes out to 500 won a bottle.",
+  "sentenceVi": "Sau khi giảm giá thì coi như mỗi chai 500 won.",
+  "options": [
+   "-는 편이다",
+   "-는/ㄴ 셈이다",
+   "-기 일쑤이다",
+   "-치고(는)"
+  ],
+  "optionIds": [
+   "는-편이다",
+   "는-ㄴ-셈이다",
+   "기-일쑤이다",
+   "치고-는"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 33,
+  "patternId": "는-셈-치다-ㄴ-는다고-치다",
+  "clusterTitle": "Degrees of \"sort of\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_ko": "\"어느 정도\" 표현들 — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_vi": "Các mức độ \"khá / coi như\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "sentenceKr": "이번은 네가 이긴 셈치자.",
+  "sentenceBlankKr": "이번은 네가 이긴 ____.",
+  "sentenceEn": "Let's just say you won this time.",
+  "sentenceVi": "Cứ coi như lần này bạn thắng đi.",
+  "options": [
+   "-기 일쑤이다",
+   "간접화법 축약형 (Abbreviated Indirect Speech)",
+   "-는 편이다",
+   "-는 셈 치다 / -ㄴ/는다고 치다"
+  ],
+  "optionIds": [
+   "기-일쑤이다",
+   "간접화법-축약형-abbreviated-indirect-speech",
+   "는-편이다",
+   "는-셈-치다-ㄴ-는다고-치다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 34,
+  "patternId": "기-일쑤이다",
+  "clusterTitle": "Degrees of \"sort of\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_ko": "\"어느 정도\" 표현들 — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_vi": "Các mức độ \"khá / coi như\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "sentenceKr": "나는 늦게 자는 버릇이 있어서 지각하기 일쑤이다.",
+  "sentenceBlankKr": "나는 늦게 자는 버릇이 있어서 지각____.",
+  "sentenceEn": "I have a habit of sleeping late, so I often end up being late.",
+  "sentenceVi": "Tôi có thói quen ngủ muộn nên thường hay bị trễ giờ.",
+  "options": [
+   "-아/어도",
+   "-기 일쑤이다",
+   "-는/ㄴ 셈이다",
+   "-는 편이다"
+  ],
+  "optionIds": [
+   "아-어도",
+   "기-일쑤이다",
+   "는-ㄴ-셈이다",
+   "는-편이다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 35,
+  "patternId": "게",
+  "clusterTitle": "\"So that\" — 게 vs 도록",
+  "clusterTitle_ko": "\"~하도록/게\" — 게 vs 도록",
+  "clusterTitle_vi": "\"Để cho / sao cho\" — 게 vs 도록",
+  "sentenceKr": "예쁘게 꾸몄어요.",
+  "sentenceBlankKr": "예쁘____ 꾸몄어요.",
+  "sentenceEn": "I decorated it nicely.",
+  "sentenceVi": "Tôi đã trang trí thật đẹp.",
+  "options": [
+   "-는 한",
+   "-게",
+   "-도록",
+   "-치고(는)"
+  ],
+  "optionIds": [
+   "는-한",
+   "게",
+   "도록",
+   "치고-는"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 36,
+  "patternId": "도록",
+  "clusterTitle": "\"So that\" — 게 vs 도록",
+  "clusterTitle_ko": "\"~하도록/게\" — 게 vs 도록",
+  "clusterTitle_vi": "\"Để cho / sao cho\" — 게 vs 도록",
+  "sentenceKr": "여러분, 지각하지 말고 일찍 오도록 하세요.",
+  "sentenceBlankKr": "여러분, 지각하지 말고 일찍 오____ 하세요.",
+  "sentenceEn": "Everyone, please make sure not to be late and come early.",
+  "sentenceVi": "Mọi người nhớ đừng đến trễ, hãy đến sớm nhé.",
+  "options": [
+   "-아/어 대다",
+   "-도록",
+   "-는/ㄴ 셈이다",
+   "-게"
+  ],
+  "optionIds": [
+   "아-어-대다",
+   "도록",
+   "는-ㄴ-셈이다",
+   "게"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 37,
+  "patternId": "고-말다",
+  "clusterTitle": "Completing an action, often regrettably — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_ko": "아쉽게 행동을 끝맺음 — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_vi": "Hoàn tất một hành động, thường đáng tiếc — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "sentenceKr": "잠을 참으려고 했지만 자고 말았다.",
+  "sentenceBlankKr": "잠을 참으려고 했지만 자____다.",
+  "sentenceEn": "I tried to stay awake, but I ended up falling asleep.",
+  "sentenceVi": "Tôi đã cố thức nhưng cuối cùng lại ngủ mất.",
+  "options": [
+   "-는/ㄴ다는 것이",
+   "-아/어/여 버리다",
+   "-고 말다",
+   "-에 따라(서)"
+  ],
+  "optionIds": [
+   "는-ㄴ다는-것이",
+   "아-어-여-버리다",
+   "고-말다",
+   "에-따라-서"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 38,
+  "patternId": "아-어-여-버리다",
+  "clusterTitle": "Completing an action, often regrettably — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_ko": "아쉽게 행동을 끝맺음 — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_vi": "Hoàn tất một hành động, thường đáng tiếc — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "sentenceKr": "실수로 중요한 파일을 삭제해 버렸어요.",
+  "sentenceBlankKr": "실수로 중요한 파일을 삭제해 ____어요.",
+  "sentenceEn": "I accidentally deleted the important file — and now it's gone.",
+  "sentenceVi": "Tôi đã lỡ xóa mất file quan trọng — giờ thì mất luôn rồi.",
+  "options": [
+   "-는/ㄴ다는 것이",
+   "-고 말다",
+   "-아/어/여 버리다",
+   "-(으)려고"
+  ],
+  "optionIds": [
+   "는-ㄴ다는-것이",
+   "고-말다",
+   "아-어-여-버리다",
+   "으-려고"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 39,
+  "patternId": "는-ㄴ다는-것이",
+  "clusterTitle": "Completing an action, often regrettably — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_ko": "아쉽게 행동을 끝맺음 — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_vi": "Hoàn tất một hành động, thường đáng tiếc — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "sentenceKr": "전화를 끊는다는 것이 실수로 다른 사람한테 걸었어요.",
+  "sentenceBlankKr": "전화를 끊는____ 실수로 다른 사람한테 걸었어요.",
+  "sentenceEn": "I meant to hang up the phone, but I accidentally called someone else instead.",
+  "sentenceVi": "Tôi định cúp máy nhưng lại vô tình gọi nhầm cho người khác.",
+  "options": [
+   "-고 말다",
+   "-게 되다",
+   "-아/어/여 버리다",
+   "-는/ㄴ다는 것이"
+  ],
+  "optionIds": [
+   "고-말다",
+   "게-되다",
+   "아-어-여-버리다",
+   "는-ㄴ다는-것이"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 40,
+  "patternId": "아-어-여-놓다-두다",
+  "clusterTitle": "States after a change — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "clusterTitle_ko": "변화 후의 상태 — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "clusterTitle_vi": "Trạng thái sau một thay đổi — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "sentenceKr": "문을 열어 두세요.",
+  "sentenceBlankKr": "문을 열____.",
+  "sentenceEn": "Please leave the door open.",
+  "sentenceVi": "Hãy để cửa mở nhé.",
+  "options": [
+   "-은/ㄴ 채(로)",
+   "-이자",
+   "-아/어 있다",
+   "-아/어/여 놓다/두다"
+  ],
+  "optionIds": [
+   "은-ㄴ-채-로",
+   "이자",
+   "아-어-있다",
+   "아-어-여-놓다-두다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 41,
+  "patternId": "아-어-있다",
+  "clusterTitle": "States after a change — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "clusterTitle_ko": "변화 후의 상태 — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "clusterTitle_vi": "Trạng thái sau một thay đổi — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "sentenceKr": "우리 교실 벽에는 세계지도와 시계가 걸려 있다.",
+  "sentenceBlankKr": "우리 교실 벽에는 세계지도와 시계가 걸____.",
+  "sentenceEn": "On our classroom wall, there's a world map and a clock hanging.",
+  "sentenceVi": "Trên tường lớp học của chúng tôi có treo một bản đồ thế giới và một chiếc đồng hồ.",
+  "options": [
+   "-은/ㄴ 채(로)",
+   "-아/어 있다",
+   "-아/어/여 놓다/두다",
+   "-는 편이다"
+  ],
+  "optionIds": [
+   "은-ㄴ-채-로",
+   "아-어-있다",
+   "아-어-여-놓다-두다",
+   "는-편이다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 42,
+  "patternId": "은-ㄴ-채-로",
+  "clusterTitle": "States after a change — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "clusterTitle_ko": "변화 후의 상태 — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "clusterTitle_vi": "Trạng thái sau một thay đổi — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "sentenceKr": "신발을 신은 채로 방에 들어오지 마세요.",
+  "sentenceBlankKr": "신발을 신____ 방에 들어오지 마세요.",
+  "sentenceEn": "Please don't come into the room with your shoes still on.",
+  "sentenceVi": "Xin đừng đi giày vào phòng.",
+  "options": [
+   "-기 마련이다",
+   "-은/ㄴ 채(로)",
+   "-아/어 있다",
+   "-아/어/여 놓다/두다"
+  ],
+  "optionIds": [
+   "기-마련이다",
+   "은-ㄴ-채-로",
+   "아-어-있다",
+   "아-어-여-놓다-두다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 43,
+  "patternId": "으-려고",
+  "clusterTitle": "\"Intend to\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_ko": "\"~하려고 / 의도\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_vi": "\"Có ý định\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "sentenceKr": "친구 결혼식 때 입으려고 양복을 미리 사 두었다.",
+  "sentenceBlankKr": "친구 결혼식 때 입____ 양복을 미리 사 두었다.",
+  "sentenceEn": "I bought a suit in advance, intending to wear it to my friend's wedding.",
+  "sentenceVi": "Tôi đã mua sẵn một bộ vest, định mặc đến đám cưới của bạn.",
+  "options": [
+   "-(으)려면",
+   "-고 해서",
+   "-(으)려고",
+   "-(으)ㄹ까 하다"
+  ],
+  "optionIds": [
+   "으-려면",
+   "고-해서",
+   "으-려고",
+   "으-ㄹ까-하다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 44,
+  "patternId": "고자-하다",
+  "clusterTitle": "\"Intend to\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_ko": "\"~하려고 / 의도\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_vi": "\"Có ý định\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "sentenceKr": "이 제품이 지속적으로 좋은 반응을 얻고 있어서 생산량을 늘리고자 합니다.",
+  "sentenceBlankKr": "이 제품이 지속적으로 좋은 반응을 얻고 있어서 생산량을 늘리____ 합니다.",
+  "sentenceEn": "As this product continues to get a good response, we intend to increase production.",
+  "sentenceVi": "Vì sản phẩm này liên tục nhận được phản hồi tốt nên chúng tôi dự định tăng sản lượng.",
+  "options": [
+   "-(으)ㄹ까 하다",
+   "-이자",
+   "-고자 (하다)",
+   "-(으)려고"
+  ],
+  "optionIds": [
+   "으-ㄹ까-하다",
+   "이자",
+   "고자-하다",
+   "으-려고"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 45,
+  "patternId": "기로-하다",
+  "clusterTitle": "\"Intend to\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_ko": "\"~하려고 / 의도\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_vi": "\"Có ý định\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "sentenceKr": "이번 방학에는 친구와 함께 여행을 가기로 했어요.",
+  "sentenceBlankKr": "이번 방학에는 친구와 함께 여행을 가____.",
+  "sentenceEn": "This vacation, I've decided to go traveling with a friend.",
+  "sentenceVi": "Kỳ nghỉ này, tôi đã quyết định đi du lịch cùng bạn.",
+  "options": [
+   "-(으)려면",
+   "(으)련만 ((으)련마는)",
+   "-기로 하다",
+   "-고자 (하다)"
+  ],
+  "optionIds": [
+   "으-려면",
+   "으-련만-으-련마는",
+   "기로-하다",
+   "고자-하다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 46,
+  "patternId": "으-ㄹ까-하다",
+  "clusterTitle": "\"Intend to\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_ko": "\"~하려고 / 의도\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_vi": "\"Có ý định\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "sentenceKr": "내일 친구랑 영화나 볼까 해요.",
+  "sentenceBlankKr": "내일 친구랑 영화나 ____.",
+  "sentenceEn": "I'm thinking I might watch a movie with a friend tomorrow.",
+  "sentenceVi": "Tôi đang định ngày mai xem phim với bạn.",
+  "options": [
+   "-(으)ㄹ까 하다",
+   "-고자 (하다)",
+   "-는 수가 있다",
+   "-기로 하다"
+  ],
+  "optionIds": [
+   "으-ㄹ까-하다",
+   "고자-하다",
+   "는-수가-있다",
+   "기로-하다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 47,
+  "patternId": "으-려면",
+  "clusterTitle": "\"Intend to\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_ko": "\"~하려고 / 의도\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_vi": "\"Có ý định\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "sentenceKr": "건강해지려면 규칙적으로 운동해야 돼요.",
+  "sentenceBlankKr": "건강해지____ 규칙적으로 운동해야 돼요.",
+  "sentenceEn": "If you want to become healthy, you need to exercise regularly.",
+  "sentenceVi": "Nếu muốn khỏe mạnh thì cần tập thể dục thường xuyên.",
+  "options": [
+   "-고자 (하다)",
+   "-(으)려고",
+   "-(으)려면",
+   "-았/었/였더라면"
+  ],
+  "optionIds": [
+   "고자-하다",
+   "으-려고",
+   "으-려면",
+   "았-었-였더라면"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 48,
+  "patternId": "으-려다가",
+  "clusterTitle": "\"Was about to do X\" — (으)려다가 vs (으)려던 참이다",
+  "clusterTitle_ko": "\"막 X하려던 참\" — (으)려다가 vs (으)려던 참이다",
+  "clusterTitle_vi": "\"Vừa định làm X\" — (으)려다가 vs (으)려던 참이다",
+  "sentenceKr": "택시를 타려다가 그냥 걸어가기로 했어요.",
+  "sentenceBlankKr": "택시를 타____ 그냥 걸어가기로 했어요.",
+  "sentenceEn": "I was going to take a taxi, but decided to just walk instead.",
+  "sentenceVi": "Tôi định bắt taxi, nhưng rồi quyết định đi bộ thay vào đó.",
+  "options": [
+   "-는 감이 있다",
+   "-(으)려다가",
+   "-에 따라(서)",
+   "-(으)려던 참이다"
+  ],
+  "optionIds": [
+   "는-감이-있다",
+   "으-려다가",
+   "에-따라-서",
+   "으-려던-참이다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 49,
+  "patternId": "으-려던-참이다",
+  "clusterTitle": "\"Was about to do X\" — (으)려다가 vs (으)려던 참이다",
+  "clusterTitle_ko": "\"막 X하려던 참\" — (으)려다가 vs (으)려던 참이다",
+  "clusterTitle_vi": "\"Vừa định làm X\" — (으)려다가 vs (으)려던 참이다",
+  "sentenceKr": "마침 너한테 연락하려던 참이었는데 잘 됐다.",
+  "sentenceBlankKr": "마침 너한테 연락____ 잘 됐다.",
+  "sentenceEn": "I was just about to contact you, so this works out well.",
+  "sentenceVi": "Tôi cũng vừa định liên lạc với bạn, thật đúng lúc quá.",
+  "options": [
+   "-(으)려다가",
+   "-에 따라(서)",
+   "-(으)면서",
+   "-(으)려던 참이다"
+  ],
+  "optionIds": [
+   "으-려다가",
+   "에-따라-서",
+   "으-면서",
+   "으-려던-참이다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 50,
+  "patternId": "다가는",
+  "clusterTitle": "\"If you keep doing X...\" — 다가는 vs 다(가) 보면",
+  "clusterTitle_ko": "\"계속 X하다가는...\" — 다가는 vs 다(가) 보면",
+  "clusterTitle_vi": "\"Nếu cứ tiếp tục làm X...\" — 다가는 vs 다(가) 보면",
+  "sentenceKr": "그렇게 무리하다가는 건강을 해칠 거예요.",
+  "sentenceBlankKr": "그렇게 무리하____ 건강을 해칠 거예요.",
+  "sentenceEn": "If you keep pushing yourself like that, you'll ruin your health.",
+  "sentenceVi": "Nếu cứ cố quá sức như vậy, bạn sẽ hại sức khỏe của mình.",
+  "options": [
+   "-는 반면(에)",
+   "-다가는",
+   "-는 대신(에)",
+   "-다(가) 보면"
+  ],
+  "optionIds": [
+   "는-반면-에",
+   "다가는",
+   "는-대신-에",
+   "다-가-보면"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 51,
+  "patternId": "다-가-보면",
+  "clusterTitle": "\"If you keep doing X...\" — 다가는 vs 다(가) 보면",
+  "clusterTitle_ko": "\"계속 X하다가는...\" — 다가는 vs 다(가) 보면",
+  "clusterTitle_vi": "\"Nếu cứ tiếp tục làm X...\" — 다가는 vs 다(가) 보면",
+  "sentenceKr": "같이 생활하다 보면 서로 더 잘 이해하게 될 거예요.",
+  "sentenceBlankKr": "같이 생활하____ 서로 더 잘 이해하게 될 거예요.",
+  "sentenceEn": "As you keep living together, you'll come to understand each other better.",
+  "sentenceVi": "Sống chung với nhau lâu dần, hai người sẽ hiểu nhau hơn.",
+  "options": [
+   "-고서야/아/어서야",
+   "-다(가) 보면",
+   "-는/은 줄 모르다(알다)",
+   "-다가는"
+  ],
+  "optionIds": [
+   "고서야-아-어서야",
+   "다-가-보면",
+   "는-은-줄-모르다-알다",
+   "다가는"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 52,
+  "patternId": "을-ㄹ까-봐",
+  "clusterTitle": "Anxious or uncertain guesses — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_ko": "불안하거나 불확실한 추측 — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_vi": "Những suy đoán lo lắng hoặc không chắc chắn — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "sentenceKr": "대학교 입학시험에 떨어질까 봐 걱정이에요.",
+  "sentenceBlankKr": "대학교 입학시험에 ____ 걱정이에요.",
+  "sentenceEn": "I'm worried I might fail the university entrance exam.",
+  "sentenceVi": "Tôi lo mình sẽ trượt kỳ thi tuyển sinh đại học.",
+  "options": [
+   "-(으)ㄹ지도 모르다",
+   "-을/ㄹ까 봐",
+   "-을까/나/지 싶다",
+   "-아/어도"
+  ],
+  "optionIds": [
+   "으-ㄹ지도-모르다",
+   "을-ㄹ까-봐",
+   "을까-나-지-싶다",
+   "아-어도"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 53,
+  "patternId": "으-ㄹ지도-모르다",
+  "clusterTitle": "Anxious or uncertain guesses — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_ko": "불안하거나 불확실한 추측 — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_vi": "Những suy đoán lo lắng hoặc không chắc chắn — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "sentenceKr": "내일은 눈이 올지도 몰라요.",
+  "sentenceBlankKr": "내일은 눈이 올____요.",
+  "sentenceEn": "It might snow tomorrow.",
+  "sentenceVi": "Ngày mai có thể sẽ có tuyết.",
+  "options": [
+   "-을까/나/지 싶다",
+   "-(으)ㄹ지도 모르다",
+   "-긴 -나 봐요",
+   "-는 수가 있다"
+  ],
+  "optionIds": [
+   "을까-나-지-싶다",
+   "으-ㄹ지도-모르다",
+   "긴-나-봐요",
+   "는-수가-있다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 54,
+  "patternId": "을까-나-지-싶다",
+  "clusterTitle": "Anxious or uncertain guesses — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_ko": "불안하거나 불확실한 추측 — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_vi": "Những suy đoán lo lắng hoặc không chắc chắn — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "sentenceKr": "철수가 이거 다 먹을 수 있나 싶었어.",
+  "sentenceBlankKr": "철수가 이거 다 먹을 수 있____었어.",
+  "sentenceEn": "I wondered if Cheolsu could really eat all of this.",
+  "sentenceVi": "Tôi tự hỏi không biết Cheolsu có thể ăn hết chỗ này không.",
+  "options": [
+   "-을까/나/지 싶다",
+   "-는 수가 있다",
+   "-을/ㄹ까 봐",
+   "-는 길에"
+  ],
+  "optionIds": [
+   "을까-나-지-싶다",
+   "는-수가-있다",
+   "을-ㄹ까-봐",
+   "는-길에"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 55,
+  "patternId": "는-수가-있다",
+  "clusterTitle": "Anxious or uncertain guesses — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_ko": "불안하거나 불확실한 추측 — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_vi": "Những suy đoán lo lắng hoặc không chắc chắn — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "sentenceKr": "밤에 커피를 마시면 잠을 못 자는 수가 있어요.",
+  "sentenceBlankKr": "밤에 커피를 마시면 잠을 못 자____.",
+  "sentenceEn": "If you drink coffee at night, there can be times you're unable to sleep.",
+  "sentenceVi": "Nếu uống cà phê vào buổi tối, có thể sẽ có lúc bạn không ngủ được.",
+  "options": [
+   "-(으)ㄹ지도 모르다",
+   "-을/ㄹ까 봐",
+   "-는 대로",
+   "-는 수가 있다"
+  ],
+  "optionIds": [
+   "으-ㄹ지도-모르다",
+   "을-ㄹ까-봐",
+   "는-대로",
+   "는-수가-있다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 56,
+  "patternId": "거니와",
+  "clusterTitle": "\"Not only X but also Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_ko": "\"X뿐만 아니라 Y도\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_vi": "\"Không chỉ X mà còn Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "sentenceKr": "그분은 실력이 뛰어나거니와 인품도 훌륭합니다.",
+  "sentenceBlankKr": "그분은 실력이 뛰어나____ 인품도 훌륭합니다.",
+  "sentenceEn": "Not only is she highly skilled, but her character is also admirable.",
+  "sentenceVi": "Cô ấy không chỉ giỏi mà nhân cách cũng rất đáng ngưỡng mộ.",
+  "options": [
+   "-거니와",
+   "-을/ㄹ 뿐(만) 아니라",
+   "-을/ㄹ 뿐이다",
+   "-기 마련이다"
+  ],
+  "optionIds": [
+   "거니와",
+   "을-ㄹ-뿐-만-아니라",
+   "을-ㄹ-뿐이다",
+   "기-마련이다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 57,
+  "patternId": "을-ㄹ-뿐-만-아니라",
+  "clusterTitle": "\"Not only X but also Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_ko": "\"X뿐만 아니라 Y도\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_vi": "\"Không chỉ X mà còn Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "sentenceKr": "내 친구는 운동도 잘할 뿐만 아니라 공부도 잘한다.",
+  "sentenceBlankKr": "내 친구는 운동도 잘할 ____ 공부도 잘한다.",
+  "sentenceEn": "My friend is not only good at sports but also good at studying.",
+  "sentenceVi": "Bạn tôi không chỉ giỏi thể thao mà còn học giỏi nữa.",
+  "options": [
+   "-거니와",
+   "같아선 (같아서는)",
+   "-을/ㄹ 뿐(만) 아니라",
+   "-을/ㄹ 뿐이다"
+  ],
+  "optionIds": [
+   "거니와",
+   "같아선-같아서는",
+   "을-ㄹ-뿐-만-아니라",
+   "을-ㄹ-뿐이다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 58,
+  "patternId": "을-ㄹ-뿐이다",
+  "clusterTitle": "\"Not only X but also Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_ko": "\"X뿐만 아니라 Y도\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_vi": "\"Không chỉ X mà còn Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "sentenceKr": "그는 아무 말도 없이 웃고만 있을 뿐이다.",
+  "sentenceBlankKr": "그는 아무 말도 없이 웃고만 있을 ____.",
+  "sentenceEn": "He's just smiling without saying anything.",
+  "sentenceVi": "Anh ấy chỉ cười mà không nói gì cả.",
+  "options": [
+   "-기 나름이다 / N 나름이다",
+   "-거니와",
+   "-을/ㄹ 뿐(만) 아니라",
+   "-을/ㄹ 뿐이다"
+  ],
+  "optionIds": [
+   "기-나름이다-n-나름이다",
+   "거니와",
+   "을-ㄹ-뿐-만-아니라",
+   "을-ㄹ-뿐이다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 59,
+  "patternId": "거나",
+  "clusterTitle": "Choice / doesn't matter which — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_ko": "선택 / 상관없음 — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_vi": "Lựa chọn / không quan trọng cái nào — 거나 / 든지 / (으)나 마나",
+  "sentenceKr": "주말에는 영화를 보거나 책을 읽어요.",
+  "sentenceBlankKr": "주말에는 영화를 보____ 책을 읽어요.",
+  "sentenceEn": "On weekends, I either watch a movie or read a book.",
+  "sentenceVi": "Vào cuối tuần, tôi thường xem phim hoặc đọc sách.",
+  "options": [
+   "-든지",
+   "-다시피 (하다)",
+   "-(으)나 마나",
+   "-거나"
+  ],
+  "optionIds": [
+   "든지",
+   "다시피-하다",
+   "으-나-마나",
+   "거나"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 60,
+  "patternId": "든지",
+  "clusterTitle": "Choice / doesn't matter which — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_ko": "선택 / 상관없음 — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_vi": "Lựa chọn / không quan trọng cái nào — 거나 / 든지 / (으)나 마나",
+  "sentenceKr": "먹든지 말든지 네 마음대로 해.",
+  "sentenceBlankKr": "먹____ 말든지 네 마음대로 해.",
+  "sentenceEn": "Whether you eat it or not, do as you please.",
+  "sentenceVi": "Ăn hay không ăn thì tùy bạn.",
+  "options": [
+   "-(으)나 마나",
+   "-기에는",
+   "-든지",
+   "-거나"
+  ],
+  "optionIds": [
+   "으-나-마나",
+   "기에는",
+   "든지",
+   "거나"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 61,
+  "patternId": "으-나-마나",
+  "clusterTitle": "Choice / doesn't matter which — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_ko": "선택 / 상관없음 — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_vi": "Lựa chọn / không quan trọng cái nào — 거나 / 든지 / (으)나 마나",
+  "sentenceKr": "선생님께 물어보나 마나 허락하지 않으실 거예요.",
+  "sentenceBlankKr": "선생님께 물어보____ 허락하지 않으실 거예요.",
+  "sentenceEn": "Whether we ask the teacher or not, they're not going to allow it anyway.",
+  "sentenceVi": "Có hỏi thầy/cô hay không thì cũng vậy thôi, chắc chắn sẽ không cho phép đâu.",
+  "options": [
+   "-거나",
+   "-(으)나 마나",
+   "-을/ㄹ 줄만 알았지",
+   "-든지"
+  ],
+  "optionIds": [
+   "거나",
+   "으-나-마나",
+   "을-ㄹ-줄만-알았지",
+   "든지"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 62,
+  "patternId": "아-어도",
+  "clusterTitle": "Concession \"even if / though\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_ko": "양보 \"비록 ~일지라도\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_vi": "Nhượng bộ \"dù / mặc dù\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "sentenceKr": "무슨 일이 있어도 오늘까지는 이 일을 꼭 끝내야 해요.",
+  "sentenceBlankKr": "무슨 일이 있____ 오늘까지는 이 일을 꼭 끝내야 해요.",
+  "sentenceEn": "No matter what happens, I have to finish this by today.",
+  "sentenceVi": "Dù có chuyện gì xảy ra thì tôi cũng phải hoàn thành việc này trước hôm nay.",
+  "options": [
+   "-아/어도",
+   "-더라도",
+   "-고도",
+   "-아/어다가"
+  ],
+  "optionIds": [
+   "아-어도",
+   "더라도",
+   "고도",
+   "아-어다가"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 63,
+  "patternId": "더라도",
+  "clusterTitle": "Concession \"even if / though\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_ko": "양보 \"비록 ~일지라도\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_vi": "Nhượng bộ \"dù / mặc dù\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "sentenceKr": "힘들더라도 포기하지 마세요.",
+  "sentenceBlankKr": "힘들____ 포기하지 마세요.",
+  "sentenceEn": "Even if it gets hard, please don't give up.",
+  "sentenceVi": "Dù có khó khăn đến đâu thì cũng đừng bỏ cuộc.",
+  "options": [
+   "-고도",
+   "-아/어도",
+   "-(으)려고",
+   "-더라도"
+  ],
+  "optionIds": [
+   "고도",
+   "아-어도",
+   "으-려고",
+   "더라도"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 64,
+  "patternId": "고도",
+  "clusterTitle": "Concession \"even if / though\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_ko": "양보 \"비록 ~일지라도\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_vi": "Nhượng bộ \"dù / mặc dù\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "sentenceKr": "그는 빵을 그렇게 많이 먹고도 배가 고프다고 한다.",
+  "sentenceBlankKr": "그는 빵을 그렇게 많이 먹____ 배가 고프다고 한다.",
+  "sentenceEn": "He says he's hungry even though he ate so much bread.",
+  "sentenceVi": "Anh ấy nói dù đã ăn nhiều bánh mì như vậy mà vẫn đói.",
+  "options": [
+   "-(으)면서",
+   "-아/어도",
+   "-고도",
+   "-더라도"
+  ],
+  "optionIds": [
+   "으-면서",
+   "아-어도",
+   "고도",
+   "더라도"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 65,
+  "patternId": "으-면-몰라도",
+  "clusterTitle": "Concession \"even if / though\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_ko": "양보 \"비록 ~일지라도\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_vi": "Nhượng bộ \"dù / mặc dù\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "sentenceKr": "돈이 많으면 몰라도 지금 형편으로는 유학이 어려워요.",
+  "sentenceBlankKr": "돈이 많으____ 지금 형편으로는 유학이 어려워요.",
+  "sentenceEn": "Unless we had a lot of money, studying abroad is difficult given our current situation.",
+  "sentenceVi": "Trừ khi có nhiều tiền, chứ với hoàn cảnh hiện tại thì du học là điều khó khăn.",
+  "options": [
+   "-더라도",
+   "-(으)면 몰라도",
+   "-는 반면(에)",
+   "-고도"
+  ],
+  "optionIds": [
+   "더라도",
+   "으-면-몰라도",
+   "는-반면-에",
+   "고도"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 66,
+  "patternId": "기에",
+  "clusterTitle": "Reason, formal vs. casual — 기에 / 길래 / 기에는",
+  "clusterTitle_ko": "이유, 격식체 vs 구어체 — 기에 / 길래 / 기에는",
+  "clusterTitle_vi": "Lý do, trang trọng vs thân mật — 기에 / 길래 / 기에는",
+  "sentenceKr": "한 번 한 말은 취소할 수 없기에 조심해야 합니다.",
+  "sentenceBlankKr": "한 번 한 말은 취소할 수 없____ 조심해야 합니다.",
+  "sentenceEn": "Because you can't take back something you've already said, you must be careful.",
+  "sentenceVi": "Vì lời đã nói ra thì không thể rút lại được nên phải cẩn thận.",
+  "options": [
+   "-기에",
+   "-기에는",
+   "-길래",
+   "-아/어/여 놓다/두다"
+  ],
+  "optionIds": [
+   "기에",
+   "기에는",
+   "길래",
+   "아-어-여-놓다-두다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 67,
+  "patternId": "길래",
+  "clusterTitle": "Reason, formal vs. casual — 기에 / 길래 / 기에는",
+  "clusterTitle_ko": "이유, 격식체 vs 구어체 — 기에 / 길래 / 기에는",
+  "clusterTitle_vi": "Lý do, trang trọng vs thân mật — 기에 / 길래 / 기에는",
+  "sentenceKr": "하늘이 흐리길래 우산을 챙겨서 나왔어요.",
+  "sentenceBlankKr": "하늘이 흐리____ 우산을 챙겨서 나왔어요.",
+  "sentenceEn": "The sky looked cloudy, so I brought an umbrella with me.",
+  "sentenceVi": "Trời có vẻ nhiều mây nên tôi đã mang theo ô.",
+  "options": [
+   "-기에",
+   "-길래",
+   "-기에는",
+   "-다니 / (이)라니"
+  ],
+  "optionIds": [
+   "기에",
+   "길래",
+   "기에는",
+   "다니-이-라니"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 68,
+  "patternId": "기에는",
+  "clusterTitle": "Reason, formal vs. casual — 기에 / 길래 / 기에는",
+  "clusterTitle_ko": "이유, 격식체 vs 구어체 — 기에 / 길래 / 기에는",
+  "clusterTitle_vi": "Lý do, trang trọng vs thân mật — 기에 / 길래 / 기에는",
+  "sentenceKr": "하루 만에 끝내기에는 할 일이 너무 많아요.",
+  "sentenceBlankKr": "하루 만에 끝내____ 할 일이 너무 많아요.",
+  "sentenceEn": "There's too much to do to finish it all in just one day.",
+  "sentenceVi": "Có quá nhiều việc để có thể hoàn thành chỉ trong một ngày.",
+  "options": [
+   "-길래",
+   "-기에는",
+   "-기에",
+   "-더라도"
+  ],
+  "optionIds": [
+   "길래",
+   "기에는",
+   "기에",
+   "더라도"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 69,
+  "patternId": "기는요",
+  "clusterTitle": "Same \"기는\" start, different job — 기는요 vs 기는커녕",
+  "clusterTitle_ko": "같은 \"기는\"으로 시작하지만 역할이 다름 — 기는요 vs 기는커녕",
+  "clusterTitle_vi": "Cùng bắt đầu bằng \"기는\" nhưng vai trò khác nhau — 기는요 vs 기는커녕",
+  "sentenceKr": "A: 한국어를 참 잘하시네요! B: 잘하기는요. 아직 멀었어요.",
+  "sentenceBlankKr": "A: 한국어를 참 잘하시네요! B: 잘하____. 아직 멀었어요.",
+  "sentenceEn": "A: You're really good at Korean! B: Not really — I still have a long way to go.",
+  "sentenceVi": "A: Bạn giỏi tiếng Hàn thật đấy! B: Đâu có giỏi gì đâu. Còn phải học nhiều lắm.",
+  "options": [
+   "-기는커녕",
+   "-고말고(요)",
+   "-기는요",
+   "간접화법 축약형 (Abbreviated Indirect Speech)"
+  ],
+  "optionIds": [
+   "기는커녕",
+   "고말고-요",
+   "기는요",
+   "간접화법-축약형-abbreviated-indirect-speech"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 70,
+  "patternId": "기는커녕",
+  "clusterTitle": "Same \"기는\" start, different job — 기는요 vs 기는커녕",
+  "clusterTitle_ko": "같은 \"기는\"으로 시작하지만 역할이 다름 — 기는요 vs 기는커녕",
+  "clusterTitle_vi": "Cùng bắt đầu bằng \"기는\" nhưng vai trò khác nhau — 기는요 vs 기는커녕",
+  "sentenceKr": "감사하기는커녕 오히려 화를 내더라고요.",
+  "sentenceBlankKr": "감사하____ 오히려 화를 내더라고요.",
+  "sentenceEn": "Far from being thankful, she actually got angry at me.",
+  "sentenceVi": "Chẳng những không cảm ơn mà cô ấy còn nổi giận với tôi.",
+  "options": [
+   "-기는요",
+   "-으라고/라고",
+   "-기는커녕",
+   "-거니와"
+  ],
+  "optionIds": [
+   "기는요",
+   "으라고-라고",
+   "기는커녕",
+   "거니와"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 71,
+  "patternId": "기-나름이다-n-나름이다",
+  "clusterTitle": "\"Depends on\" — 기 나름이다 vs 에 따라(서)",
+  "clusterTitle_ko": "\"~하기 나름\" — 기 나름이다 vs 에 따라(서)",
+  "clusterTitle_vi": "\"Tùy thuộc vào\" — 기 나름이다 vs 에 따라(서)",
+  "sentenceKr": "취미 생활도 어떻게 하기 나름이에요.",
+  "sentenceBlankKr": "취미 생활도 어떻게 하기 ____.",
+  "sentenceEn": "Hobbies, too — it all depends on how you approach them.",
+  "sentenceVi": "Sở thích cũng vậy — tất cả đều tùy vào cách bạn nhìn nhận nó.",
+  "options": [
+   "-만 하다",
+   "-에 따라(서)",
+   "-(으)ㄹ 수밖에 없다",
+   "-기 나름이다 / N 나름이다"
+  ],
+  "optionIds": [
+   "만-하다",
+   "에-따라-서",
+   "으-ㄹ-수밖에-없다",
+   "기-나름이다-n-나름이다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 72,
+  "patternId": "에-따라-서",
+  "clusterTitle": "\"Depends on\" — 기 나름이다 vs 에 따라(서)",
+  "clusterTitle_ko": "\"~하기 나름\" — 기 나름이다 vs 에 따라(서)",
+  "clusterTitle_vi": "\"Tùy thuộc vào\" — 기 나름이다 vs 에 따라(서)",
+  "sentenceKr": "시간에 따라서 달라요.",
+  "sentenceBlankKr": "시간____ 달라요.",
+  "sentenceEn": "It's different depending on the time.",
+  "sentenceVi": "Nó khác nhau tùy theo thời điểm.",
+  "options": [
+   "-에 따라(서)",
+   "-(으)리라(고)",
+   "-는 데",
+   "-기 나름이다 / N 나름이다"
+  ],
+  "optionIds": [
+   "에-따라-서",
+   "으-리라-고",
+   "는-데",
+   "기-나름이다-n-나름이다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 73,
+  "patternId": "기-마련이다",
+  "clusterTitle": "Near-synonyms \"bound to be\" — 기 마련이다 vs 는/은 법이다",
+  "clusterTitle_ko": "유의어 \"당연히 ~게 마련이다\" — 기 마련이다 vs 는/은 법이다",
+  "clusterTitle_vi": "Gần nghĩa \"tất yếu là\" — 기 마련이다 vs 는/은 법이다",
+  "sentenceKr": "열심히 노력하면 언젠가는 성공하기 마련이에요.",
+  "sentenceBlankKr": "열심히 노력하면 언젠가는 성공하기 ____.",
+  "sentenceEn": "If you work hard, you're bound to succeed eventually.",
+  "sentenceVi": "Nếu chăm chỉ nỗ lực thì sớm muộn cũng sẽ thành công.",
+  "options": [
+   "-기 마련이다",
+   "-는/은 법이다",
+   "-다(가) 보면",
+   "-는/ㄴ다는 것이"
+  ],
+  "optionIds": [
+   "기-마련이다",
+   "는-은-법이다",
+   "다-가-보면",
+   "는-ㄴ다는-것이"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 74,
+  "patternId": "는-은-법이다",
+  "clusterTitle": "Near-synonyms \"bound to be\" — 기 마련이다 vs 는/은 법이다",
+  "clusterTitle_ko": "유의어 \"당연히 ~게 마련이다\" — 기 마련이다 vs 는/은 법이다",
+  "clusterTitle_vi": "Gần nghĩa \"tất yếu là\" — 기 마련이다 vs 는/은 법이다",
+  "sentenceKr": "사람은 쉽게 변하지 않는 법이야.",
+  "sentenceBlankKr": "사람은 쉽게 변하지 않____.",
+  "sentenceEn": "People just don't easily change (that's the way it is).",
+  "sentenceVi": "Con người vốn dĩ không dễ dàng thay đổi (lẽ tự nhiên là vậy).",
+  "options": [
+   "-는/은 법이다",
+   "-는지/은지/ㄴ지",
+   "-(으)ㄹ지도 모르다",
+   "-기 마련이다"
+  ],
+  "optionIds": [
+   "는-은-법이다",
+   "는지-은지-ㄴ지",
+   "으-ㄹ지도-모르다",
+   "기-마련이다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 75,
+  "patternId": "ㄴ-는다기보다-는",
+  "clusterTitle": "\"Rather than X...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "clusterTitle_ko": "\"X라기보다는...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "clusterTitle_vi": "\"Thay vì X...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "sentenceKr": "그 여자는 여자친구였다기보다는 그냥 친구였어요.",
+  "sentenceBlankKr": "그 여자는 여자친구였____ 그냥 친구였어요.",
+  "sentenceEn": "I wouldn't say she was my girlfriend — she was just a friend.",
+  "sentenceVi": "Không hẳn cô ấy là bạn gái tôi — cô ấy chỉ là bạn thôi.",
+  "options": [
+   "-는 바람에",
+   "-느니 (차라리)",
+   "-ㄴ/는다기보다(는)",
+   "-(으)려나 보다"
+  ],
+  "optionIds": [
+   "는-바람에",
+   "느니-차라리",
+   "ㄴ-는다기보다-는",
+   "으-려나-보다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 76,
+  "patternId": "느니-차라리",
+  "clusterTitle": "\"Rather than X...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "clusterTitle_ko": "\"X라기보다는...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "clusterTitle_vi": "\"Thay vì X...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "sentenceKr": "이런 침대에서 잠을 자느니 바닥에서 자는 게 더 편해.",
+  "sentenceBlankKr": "이런 침대에서 잠을 자____ 바닥에서 자는 게 더 편해.",
+  "sentenceEn": "Rather than sleep in a bed like this, sleeping on the floor is more comfortable.",
+  "sentenceVi": "Thà ngủ dưới sàn còn thoải mái hơn là ngủ trên cái giường như thế này.",
+  "options": [
+   "-느니 (차라리)",
+   "-거니와",
+   "-을/ㄹ까 봐",
+   "-ㄴ/는다기보다(는)"
+  ],
+  "optionIds": [
+   "느니-차라리",
+   "거니와",
+   "을-ㄹ까-봐",
+   "ㄴ-는다기보다-는"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 77,
+  "patternId": "는-데",
+  "clusterTitle": "Look-alike \"다/데\" endings — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_ko": "비슷해 보이는 \"다/데\" 어미 — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_vi": "Các đuôi \"다/데\" trông giống nhau — 는 데 / 는 데다가 / 에다가",
+  "sentenceKr": "전통 문화를 보존하는 데 많은 노력이 필요해요.",
+  "sentenceBlankKr": "전통 문화를 보존하____ 많은 노력이 필요해요.",
+  "sentenceEn": "It takes a great deal of effort when it comes to preserving traditional culture.",
+  "sentenceVi": "Việc bảo tồn văn hóa truyền thống đòi hỏi rất nhiều nỗ lực.",
+  "options": [
+   "-는 데다가",
+   "-는 데",
+   "-아/어/여 버리다",
+   "-에다가"
+  ],
+  "optionIds": [
+   "는-데다가",
+   "는-데",
+   "아-어-여-버리다",
+   "에다가"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 78,
+  "patternId": "는-데다가",
+  "clusterTitle": "Look-alike \"다/데\" endings — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_ko": "비슷해 보이는 \"다/데\" 어미 — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_vi": "Các đuôi \"다/데\" trông giống nhau — 는 데 / 는 데다가 / 에다가",
+  "sentenceKr": "그 사람은 성격이 좋은 데다가 능력도 뛰어나요.",
+  "sentenceBlankKr": "그 사람은 성격이 좋은 ____ 능력도 뛰어나요.",
+  "sentenceEn": "That person not only has a good personality, but is also highly capable.",
+  "sentenceVi": "Người đó không chỉ tính cách tốt mà năng lực cũng xuất sắc.",
+  "options": [
+   "-에다가",
+   "-는 데",
+   "-는 데다가",
+   "-기 나름이다 / N 나름이다"
+  ],
+  "optionIds": [
+   "에다가",
+   "는-데",
+   "는-데다가",
+   "기-나름이다-n-나름이다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 79,
+  "patternId": "에다가",
+  "clusterTitle": "Look-alike \"다/데\" endings — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_ko": "비슷해 보이는 \"다/데\" 어미 — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_vi": "Các đuôi \"다/데\" trông giống nhau — 는 데 / 는 데다가 / 에다가",
+  "sentenceKr": "요즘 집안일에다가 회사 일까지 겹쳐서 힘들어 죽겠어요.",
+  "sentenceBlankKr": "요즘 집안일____ 회사 일까지 겹쳐서 힘들어 죽겠어요.",
+  "sentenceEn": "These days housework on top of work has piled up, so I'm exhausted.",
+  "sentenceVi": "Dạo này việc nhà chồng chất thêm cả việc công ty nên tôi mệt muốn chết.",
+  "options": [
+   "-는 데다가",
+   "-거든(요)",
+   "-는 데",
+   "-에다가"
+  ],
+  "optionIds": [
+   "는-데다가",
+   "거든-요",
+   "는-데",
+   "에다가"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 80,
+  "patternId": "는-반면-에",
+  "clusterTitle": "\"On the other hand\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "clusterTitle_ko": "\"반면에\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "clusterTitle_vi": "\"Mặt khác\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "sentenceKr": "우리나라는 천연자원이 적은 반면에 인적 자원이 우수해요.",
+  "sentenceBlankKr": "우리나라는 천연자원이 적____에 인적 자원이 우수해요.",
+  "sentenceEn": "While Korea has few natural resources, it has excellent human resources.",
+  "sentenceVi": "Trong khi Hàn Quốc có ít tài nguyên thiên nhiên, nước này lại có nguồn nhân lực xuất sắc.",
+  "options": [
+   "-기는커녕",
+   "-는 반면(에)",
+   "-느라고",
+   "-는가, 은/ㄴ가 하면"
+  ],
+  "optionIds": [
+   "기는커녕",
+   "는-반면-에",
+   "느라고",
+   "는가-은-ㄴ가-하면"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 81,
+  "patternId": "는가-은-ㄴ가-하면",
+  "clusterTitle": "\"On the other hand\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "clusterTitle_ko": "\"반면에\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "clusterTitle_vi": "\"Mặt khác\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "sentenceKr": "전통을 중요시하는가 하면, 변화를 원하는 사람도 많아요.",
+  "sentenceBlankKr": "전통을 중요시하는____, 변화를 원하는 사람도 많아요.",
+  "sentenceEn": "While some value tradition highly, there are also many people who want change.",
+  "sentenceVi": "Trong khi có người coi trọng truyền thống, cũng có nhiều người muốn thay đổi.",
+  "options": [
+   "-건만 (-건마는)",
+   "-는가, 은/ㄴ가 하면",
+   "-기에",
+   "-는 반면(에)"
+  ],
+  "optionIds": [
+   "건만-건마는",
+   "는가-은-ㄴ가-하면",
+   "기에",
+   "는-반면-에"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 82,
+  "patternId": "는-은-줄-모르다-알다",
+  "clusterTitle": "\"Know / realize that\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_ko": "\"~인 줄 알다/모르다\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_vi": "\"Biết / nhận ra rằng\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "sentenceKr": "저는 오늘이 휴일인 줄 알았는데 아니었어요.",
+  "sentenceBlankKr": "저는 오늘이 휴일인 ____는데 아니었어요.",
+  "sentenceEn": "I thought today was a holiday, but it wasn't.",
+  "sentenceVi": "Tôi tưởng hôm nay là ngày nghỉ, nhưng hóa ra không phải.",
+  "options": [
+   "-을/ㄹ 줄만 알았지",
+   "-길래",
+   "-는지/은지/ㄴ지",
+   "-는/은 줄 모르다(알다)"
+  ],
+  "optionIds": [
+   "을-ㄹ-줄만-알았지",
+   "길래",
+   "는지-은지-ㄴ지",
+   "는-은-줄-모르다-알다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 83,
+  "patternId": "는지-은지-ㄴ지",
+  "clusterTitle": "\"Know / realize that\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_ko": "\"~인 줄 알다/모르다\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_vi": "\"Biết / nhận ra rằng\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "sentenceKr": "그 사람이 괜찮은지 걱정이 돼요.",
+  "sentenceBlankKr": "그 사람이 괜찮____ 걱정이 돼요.",
+  "sentenceEn": "I'm worried about whether that person is okay.",
+  "sentenceVi": "Tôi lo không biết người đó có ổn không.",
+  "options": [
+   "-을/ㄹ 줄만 알았지",
+   "-는/은 줄 모르다(알다)",
+   "-는지/은지/ㄴ지",
+   "-는 바람에"
+  ],
+  "optionIds": [
+   "을-ㄹ-줄만-알았지",
+   "는-은-줄-모르다-알다",
+   "는지-은지-ㄴ지",
+   "는-바람에"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 84,
+  "patternId": "을-ㄹ-줄만-알았지",
+  "clusterTitle": "\"Know / realize that\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_ko": "\"~인 줄 알다/모르다\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_vi": "\"Biết / nhận ra rằng\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "sentenceKr": "그 사람이 착한 줄만 알았지, 이렇게 이기적인 줄은 몰랐어요.",
+  "sentenceBlankKr": "그 사람이 착____, 이렇게 이기적인 줄은 몰랐어요.",
+  "sentenceEn": "I only thought he was kind — I had no idea he could be this selfish.",
+  "sentenceVi": "Tôi cứ nghĩ anh ta tốt bụng — chứ không ngờ anh ta lại ích kỷ đến vậy.",
+  "options": [
+   "-길래",
+   "-을/ㄹ 줄만 알았지",
+   "-는/은 줄 모르다(알다)",
+   "-는지/은지/ㄴ지"
+  ],
+  "optionIds": [
+   "길래",
+   "을-ㄹ-줄만-알았지",
+   "는-은-줄-모르다-알다",
+   "는지-은지-ㄴ지"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 85,
+  "patternId": "만-못하다",
+  "clusterTitle": "만 못하다 vs 만 하다",
+  "clusterTitle_ko": "만 못하다 vs 만 하다",
+  "clusterTitle_vi": "만 못하다 vs 만 하다",
+  "sentenceKr": "요즘 만드는 음식은 어머니가 해 주시던 것만 못해요.",
+  "sentenceBlankKr": "요즘 만드는 음식은 어머니가 해 주시던 것____.",
+  "sentenceEn": "The food I make these days isn't as good as what my mother used to make.",
+  "sentenceVi": "Món ăn tôi nấu dạo này không ngon bằng món mẹ tôi từng nấu.",
+  "options": [
+   "-았/었으면 하다",
+   "-(으)려다가",
+   "-만 하다",
+   "-만 못하다"
+  ],
+  "optionIds": [
+   "았-었으면-하다",
+   "으-려다가",
+   "만-하다",
+   "만-못하다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 86,
+  "patternId": "만-하다",
+  "clusterTitle": "만 못하다 vs 만 하다",
+  "clusterTitle_ko": "만 못하다 vs 만 하다",
+  "clusterTitle_vi": "만 못하다 vs 만 하다",
+  "sentenceKr": "주먹만 한 돌",
+  "sentenceBlankKr": "주먹____ 돌",
+  "sentenceEn": "a rock about the size of a fist",
+  "sentenceVi": "một hòn đá to bằng nắm tay",
+  "options": [
+   "-게",
+   "-아/어 있다",
+   "-만 하다",
+   "-만 못하다"
+  ],
+  "optionIds": [
+   "게",
+   "아-어-있다",
+   "만-하다",
+   "만-못하다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 87,
+  "patternId": "아-어-대다",
+  "clusterTitle": "Repetitive/habitual action — 아/어 대다 vs 곤 하다",
+  "clusterTitle_ko": "반복/습관적 행동 — 아/어 대다 vs 곤 하다",
+  "clusterTitle_vi": "Hành động lặp lại/theo thói quen — 아/어 대다 vs 곤 하다",
+  "sentenceKr": "철수는 요즘 잠도 안 자고 게임 해 대요.",
+  "sentenceBlankKr": "철수는 요즘 잠도 안 자고 게임 ____요.",
+  "sentenceEn": "Cheolsu's been gaming nonstop lately without even sleeping.",
+  "sentenceVi": "Dạo này Cheolsu chơi game suốt không ngủ nghê gì cả.",
+  "options": [
+   "-기 나름이다 / N 나름이다",
+   "-아/어 대다",
+   "-만에",
+   "-곤 하다"
+  ],
+  "optionIds": [
+   "기-나름이다-n-나름이다",
+   "아-어-대다",
+   "만에",
+   "곤-하다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 88,
+  "patternId": "곤-하다",
+  "clusterTitle": "Repetitive/habitual action — 아/어 대다 vs 곤 하다",
+  "clusterTitle_ko": "반복/습관적 행동 — 아/어 대다 vs 곤 하다",
+  "clusterTitle_vi": "Hành động lặp lại/theo thói quen — 아/어 대다 vs 곤 하다",
+  "sentenceKr": "어렸을 때는 할머니 댁에 자주 놀러 가곤 했어요.",
+  "sentenceBlankKr": "어렸을 때는 할머니 댁에 자주 놀러 가____.",
+  "sentenceEn": "When I was little, I used to often go visit my grandmother's house.",
+  "sentenceVi": "Hồi nhỏ, tôi thường hay đến chơi nhà bà.",
+  "options": [
+   "-아/어 대다",
+   "-는 반면(에)",
+   "-곤 하다",
+   "-는 편이다"
+  ],
+  "optionIds": [
+   "아-어-대다",
+   "는-반면-에",
+   "곤-하다",
+   "는-편이다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 89,
+  "patternId": "았-었-였더라면",
+  "clusterTitle": "Counterfactual wish/regret — 았/었/였더라면 vs 았/었으면 하다",
+  "clusterTitle_ko": "반사실적 소망/후회 — 았/었/였더라면 vs 았/었으면 하다",
+  "clusterTitle_vi": "Ước muốn/hối tiếc trái với thực tế — 았/었/였더라면 vs 았/었으면 하다",
+  "sentenceKr": "더 열심히 공부했더라면 좋은 결과를 얻었을 거예요.",
+  "sentenceBlankKr": "더 열심히 공부했____ 좋은 결과를 얻었을 거예요.",
+  "sentenceEn": "If I had studied harder, I would have gotten better results.",
+  "sentenceVi": "Nếu tôi đã học chăm chỉ hơn thì đã có kết quả tốt hơn rồi.",
+  "options": [
+   "-았/었으면 하다",
+   "-에 따라(서)",
+   "-았/었/였더라면",
+   "-곤 하다"
+  ],
+  "optionIds": [
+   "았-었으면-하다",
+   "에-따라-서",
+   "았-었-였더라면",
+   "곤-하다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 90,
+  "patternId": "았-었으면-하다",
+  "clusterTitle": "Counterfactual wish/regret — 았/었/였더라면 vs 았/었으면 하다",
+  "clusterTitle_ko": "반사실적 소망/후회 — 았/었/였더라면 vs 았/었으면 하다",
+  "clusterTitle_vi": "Ước muốn/hối tiếc trái với thực tế — 았/었/였더라면 vs 았/었으면 하다",
+  "sentenceKr": "대학교를 졸업하고 한국에서 직장을 구했으면 합니다.",
+  "sentenceBlankKr": "대학교를 졸업하고 한국에서 직장을 구____.",
+  "sentenceEn": "I hope that after graduating from university, I can find a job in Korea.",
+  "sentenceVi": "Tôi mong rằng sau khi tốt nghiệp đại học, tôi có thể tìm được việc làm ở Hàn Quốc.",
+  "options": [
+   "-고자 (하다)",
+   "-았/었으면 하다",
+   "-았/었/였더라면",
+   "-는 길에"
+  ],
+  "optionIds": [
+   "고자-하다",
+   "았-었으면-하다",
+   "았-었-였더라면",
+   "는-길에"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 91,
+  "patternId": "으라고-라고",
+  "clusterTitle": "Full form vs. contracted form — 으라고/라고 vs 간접화법 축약형",
+  "clusterTitle_ko": "완전형 vs 축약형 — 으라고/라고 vs 간접화법 축약형",
+  "clusterTitle_vi": "Dạng đầy đủ vs dạng rút gọn — 으라고/라고 vs 간접화법 축약형",
+  "sentenceKr": "조용히 하라고 했는데 왜 계속 떠들어요?",
+  "sentenceBlankKr": "조용히 하____ 했는데 왜 계속 떠들어요?",
+  "sentenceEn": "I told you to be quiet — why do you keep making noise?",
+  "sentenceVi": "Tôi đã bảo im lặng rồi mà, sao cứ ồn ào mãi vậy?",
+  "options": [
+   "-기에",
+   "-는/ㄴ다는 것이",
+   "-으라고/라고",
+   "간접화법 축약형 (Abbreviated Indirect Speech)"
+  ],
+  "optionIds": [
+   "기에",
+   "는-ㄴ다는-것이",
+   "으라고-라고",
+   "간접화법-축약형-abbreviated-indirect-speech"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 92,
+  "patternId": "간접화법-축약형-abbreviated-indirect-speech",
+  "clusterTitle": "Full form vs. contracted form — 으라고/라고 vs 간접화법 축약형",
+  "clusterTitle_ko": "완전형 vs 축약형 — 으라고/라고 vs 간접화법 축약형",
+  "clusterTitle_vi": "Dạng đầy đủ vs dạng rút gọn — 으라고/라고 vs 간접화법 축약형",
+  "sentenceKr": "같이 가재요.",
+  "sentenceBlankKr": "같이 가____.",
+  "sentenceEn": "They're suggesting we go together. (← 같이 가자고 해요)",
+  "sentenceVi": "Họ rủ cùng đi. (← 같이 가자고 해요)",
+  "options": [
+   "-으라고/라고",
+   "간접화법 축약형 (Abbreviated Indirect Speech)",
+   "-는 대로",
+   "-만 못하다"
+  ],
+  "optionIds": [
+   "으라고-라고",
+   "간접화법-축약형-abbreviated-indirect-speech",
+   "는-대로",
+   "만-못하다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 93,
+  "patternId": "이자",
+  "clusterTitle": "\"And also / while also\" — 이자 vs (으)면서",
+  "clusterTitle_ko": "\"~이면서 / ~이자\" — 이자 vs (으)면서",
+  "clusterTitle_vi": "\"Vừa...vừa...\" — 이자 vs (으)면서",
+  "sentenceKr": "네가 내 삶의 원동력이자 희망이자 목표야.",
+  "sentenceBlankKr": "네가 내 삶의 원동력____ 희망이자 목표야.",
+  "sentenceEn": "You are my driving force, my hope, and my goal, all at once.",
+  "sentenceVi": "Em vừa là động lực, vừa là hy vọng, vừa là mục tiêu của anh.",
+  "options": [
+   "-에 따라(서)",
+   "-는 편이다",
+   "-(으)면서",
+   "-이자"
+  ],
+  "optionIds": [
+   "에-따라-서",
+   "는-편이다",
+   "으-면서",
+   "이자"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 94,
+  "patternId": "으-면서",
+  "clusterTitle": "\"And also / while also\" — 이자 vs (으)면서",
+  "clusterTitle_ko": "\"~이면서 / ~이자\" — 이자 vs (으)면서",
+  "clusterTitle_vi": "\"Vừa...vừa...\" — 이자 vs (으)면서",
+  "sentenceKr": "저는 텔레비전을 보면서 밥을 먹어요.",
+  "sentenceBlankKr": "저는 텔레비전을 보____ 밥을 먹어요.",
+  "sentenceEn": "I eat while watching TV.",
+  "sentenceVi": "Tôi vừa xem tivi vừa ăn cơm.",
+  "options": [
+   "-이자",
+   "-(으)면서",
+   "-는 둥 마는 둥 하다",
+   "-(으)리라(고)"
+  ],
+  "optionIds": [
+   "이자",
+   "으-면서",
+   "는-둥-마는-둥-하다",
+   "으-리라-고"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 95,
+  "patternId": "고-해서",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "배도 고프고 해서 우리 뭐 좀 먹으러 갈까요?",
+  "sentenceBlankKr": "배도 고프____ 우리 뭐 좀 먹으러 갈까요?",
+  "sentenceEn": "I'm a bit hungry (among other things), so shall we go grab something to eat?",
+  "sentenceVi": "Tôi cũng hơi đói (và vài lý do khác nữa), hay là mình đi ăn gì đó nhé?",
+  "options": [
+   "-고 해서",
+   "-는 탓에 / 탓이다",
+   "-아/어다가",
+   "-거든(요)"
+  ],
+  "optionIds": [
+   "고-해서",
+   "는-탓에-탓이다",
+   "아-어다가",
+   "거든-요"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 96,
+  "patternId": "느라고",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "친구들이랑 노느라고 숙제를 못 했어요.",
+  "sentenceBlankKr": "친구들이랑 노____ 숙제를 못 했어요.",
+  "sentenceEn": "I was busy hanging out with friends, so I couldn't do my homework.",
+  "sentenceVi": "Vì mải chơi với bạn bè nên tôi không làm bài tập được.",
+  "options": [
+   "-느라고",
+   "-는 탓에 / 탓이다",
+   "-다시피 (하다)",
+   "-는 바람에"
+  ],
+  "optionIds": [
+   "느라고",
+   "는-탓에-탓이다",
+   "다시피-하다",
+   "는-바람에"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 97,
+  "patternId": "는-바람에",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "갑자기 차가 나오는 바람에 사고가 났어요.",
+  "sentenceBlankKr": "갑자기 차가 나오____ 사고가 났어요.",
+  "sentenceEn": "A car suddenly pulled out, and as a result there was an accident.",
+  "sentenceVi": "Vì một chiếc xe bất ngờ lao ra nên đã xảy ra tai nạn.",
+  "options": [
+   "-거든(요)",
+   "-기가 무섭게",
+   "-는 바람에",
+   "-느라고"
+  ],
+  "optionIds": [
+   "거든-요",
+   "기가-무섭게",
+   "는-바람에",
+   "느라고"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 98,
+  "patternId": "는-탓에-탓이다",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "영수는 잔소리를 하는 엄마 탓에 기분이 나빴다.",
+  "sentenceBlankKr": "영수는 잔소리를 하는 엄마 ____ 기분이 나빴다.",
+  "sentenceEn": "Yeongsu was in a bad mood because of his nagging mom.",
+  "sentenceVi": "Yeongsu khó chịu vì mẹ cứ càu nhàu.",
+  "options": [
+   "-는 탓에 / 탓이다",
+   "-는 바람에",
+   "-는, 은/ㄴ 모양이다",
+   "-고 해서"
+  ],
+  "optionIds": [
+   "는-탓에-탓이다",
+   "는-바람에",
+   "는-은-ㄴ-모양이다",
+   "고-해서"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 99,
+  "patternId": "거든-요",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "저 오늘 좀 늦을 것 같아요. 차가 막히거든요.",
+  "sentenceBlankKr": "저 오늘 좀 늦을 것 같아요. 차가 막히____.",
+  "sentenceEn": "I think I'll be a bit late today — traffic's backed up, you see.",
+  "sentenceVi": "Chắc hôm nay tôi sẽ trễ một chút — vì đang kẹt xe.",
+  "options": [
+   "-거든(요)",
+   "-마저(도)",
+   "-느라고",
+   "-는 탓에 / 탓이다"
+  ],
+  "optionIds": [
+   "거든-요",
+   "마저-도",
+   "느라고",
+   "는-탓에-탓이다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 100,
+  "patternId": "건만-건마는",
+  "clusterTitle": "건만(건마는) / (으)련만((으)련마는) — lament at how things turned out",
+  "clusterTitle_ko": "건만(건마는) / (으)련만((으)련마는) — 아쉬움을 나타내는 표현",
+  "clusterTitle_vi": "건만(건마는) / (으)련만((으)련마는) — than thở về kết quả không như ý",
+  "sentenceKr": "몸은 힘들건만 마음만은 행복했어요.",
+  "sentenceBlankKr": "몸은 힘들____ 마음만은 행복했어요.",
+  "sentenceEn": "My body was exhausted, and yet my heart was happy.",
+  "sentenceVi": "Cơ thể thì mệt mỏi, vậy mà trong lòng lại thấy hạnh phúc.",
+  "options": [
+   "-기 나름이다 / N 나름이다",
+   "-게",
+   "-건만 (-건마는)",
+   "(으)련만 ((으)련마는)"
+  ],
+  "optionIds": [
+   "기-나름이다-n-나름이다",
+   "게",
+   "건만-건마는",
+   "으-련만-으-련마는"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 101,
+  "patternId": "으-련만-으-련마는",
+  "clusterTitle": "건만(건마는) / (으)련만((으)련마는) — lament at how things turned out",
+  "clusterTitle_ko": "건만(건마는) / (으)련만((으)련마는) — 아쉬움을 나타내는 표현",
+  "clusterTitle_vi": "건만(건마는) / (으)련만((으)련마는) — than thở về kết quả không như ý",
+  "sentenceKr": "돈이 좀 있으련만, 다 써 버려서 하나도 없네요.",
+  "sentenceBlankKr": "돈이 좀 있____, 다 써 버려서 하나도 없네요.",
+  "sentenceEn": "I wish I had some money — but I've spent it all, so I have none.",
+  "sentenceVi": "Giá mà tôi có ít tiền — nhưng tôi đã tiêu hết rồi nên chẳng còn đồng nào.",
+  "options": [
+   "-다가는",
+   "-기로 하다",
+   "(으)련만 ((으)련마는)",
+   "-건만 (-건마는)"
+  ],
+  "optionIds": [
+   "다가는",
+   "기로-하다",
+   "으-련만-으-련마는",
+   "건만-건마는"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 102,
+  "patternId": "자마자",
+  "clusterTitle": "\"As soon as / after\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_ko": "\"~하자마자 / ~한 후\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_vi": "\"Ngay khi / sau khi\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "sentenceKr": "개봉하자마자 관객 수가 20만 명을 넘었대요.",
+  "sentenceBlankKr": "개봉하____ 관객 수가 20만 명을 넘었대요.",
+  "sentenceEn": "As soon as it was released, it apparently drew over 200,000 viewers.",
+  "sentenceVi": "Ngay khi công chiếu, nghe nói đã thu hút hơn 200.000 lượt khán giả.",
+  "options": [
+   "-기가 무섭게",
+   "-자마자",
+   "-더니",
+   "-고 나서"
+  ],
+  "optionIds": [
+   "기가-무섭게",
+   "자마자",
+   "더니",
+   "고-나서"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 103,
+  "patternId": "기가-무섭게",
+  "clusterTitle": "\"As soon as / after\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_ko": "\"~하자마자 / ~한 후\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_vi": "\"Ngay khi / sau khi\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "sentenceKr": "눈을 치우기가 무섭게 또 눈이 쌓이고 있어요.",
+  "sentenceBlankKr": "눈을 치우____ 또 눈이 쌓이고 있어요.",
+  "sentenceEn": "No sooner had I cleared the snow than it started piling up again.",
+  "sentenceVi": "Vừa mới dọn tuyết xong thì tuyết đã lại chất đống.",
+  "options": [
+   "-는 편이다",
+   "-는 대로",
+   "-기가 무섭게",
+   "-고 나서"
+  ],
+  "optionIds": [
+   "는-편이다",
+   "는-대로",
+   "기가-무섭게",
+   "고-나서"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 104,
+  "patternId": "는-대로",
+  "clusterTitle": "\"As soon as / after\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_ko": "\"~하자마자 / ~한 후\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_vi": "\"Ngay khi / sau khi\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "sentenceKr": "수업이 끝나는 대로 바로 식당으로 오세요.",
+  "sentenceBlankKr": "수업이 끝나____ 바로 식당으로 오세요.",
+  "sentenceEn": "Come to the restaurant as soon as class ends.",
+  "sentenceVi": "Ngay khi tan học thì hãy đến nhà hàng luôn.",
+  "options": [
+   "-을/ㄹ 뿐이다",
+   "-는 대로",
+   "-고 나서",
+   "-자마자"
+  ],
+  "optionIds": [
+   "을-ㄹ-뿐이다",
+   "는-대로",
+   "고-나서",
+   "자마자"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 105,
+  "patternId": "고-나서",
+  "clusterTitle": "\"As soon as / after\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_ko": "\"~하자마자 / ~한 후\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_vi": "\"Ngay khi / sau khi\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "sentenceKr": "숙제를 다 하고 나서 게임을 해도 돼요.",
+  "sentenceBlankKr": "숙제를 다 하____ 게임을 해도 돼요.",
+  "sentenceEn": "You can play games after you finish all your homework.",
+  "sentenceVi": "Con có thể chơi game sau khi làm xong hết bài tập.",
+  "options": [
+   "-고 나서",
+   "-는 대로",
+   "-기가 무섭게",
+   "-던"
+  ],
+  "optionIds": [
+   "고-나서",
+   "는-대로",
+   "기가-무섭게",
+   "던"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 106,
+  "patternId": "더니",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "친구는 전화를 받더니 수업 중간에 나가 버렸어요.",
+  "sentenceBlankKr": "친구는 전화를 받____ 수업 중간에 나가 버렸어요.",
+  "sentenceEn": "My friend got a call, and then left in the middle of class.",
+  "sentenceVi": "Bạn tôi nhận được cuộc gọi, rồi bỏ ra ngoài giữa giờ học.",
+  "options": [
+   "-더니",
+   "-았/었/였더니",
+   "-(으)ㄹ수록",
+   "-더라고(요)"
+  ],
+  "optionIds": [
+   "더니",
+   "았-었-였더니",
+   "으-ㄹ수록",
+   "더라고-요"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 107,
+  "patternId": "았-었-였더니",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "그 식당에 가 봤더니 이미 문을 닫았더라고요.",
+  "sentenceBlankKr": "그 식당에 가 ____ 이미 문을 닫았더라고요.",
+  "sentenceEn": "I went to that restaurant, only to find it had already closed.",
+  "sentenceVi": "Tôi đến nhà hàng đó thì hóa ra nó đã đóng cửa rồi.",
+  "options": [
+   "-더라도",
+   "-았/었/였더니",
+   "-더니",
+   "-더라고(요)"
+  ],
+  "optionIds": [
+   "더라도",
+   "았-었-였더니",
+   "더니",
+   "더라고-요"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 108,
+  "patternId": "더라고-요",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "그 식당 음식이 정말 맛있더라고요.",
+  "sentenceBlankKr": "그 식당 음식이 정말 맛있____.",
+  "sentenceEn": "I noticed (tried it and found) that the food at that restaurant was really delicious.",
+  "sentenceVi": "Tôi nhận thấy (đã thử và thấy) đồ ăn ở nhà hàng đó thực sự rất ngon.",
+  "options": [
+   "-던",
+   "-(으)나 마나",
+   "-더라고(요)",
+   "-던데요"
+  ],
+  "optionIds": [
+   "던",
+   "으-나-마나",
+   "더라고-요",
+   "던데요"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 109,
+  "patternId": "던",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "제가 입던 바지가 어디 갔지?",
+  "sentenceBlankKr": "제가 입____ 바지가 어디 갔지?",
+  "sentenceEn": "Where did the pants I was wearing go?",
+  "sentenceVi": "Cái quần tôi đang mặc lúc nãy đâu rồi nhỉ?",
+  "options": [
+   "-더라고(요)",
+   "-고 나서",
+   "-았/었/였더니",
+   "-던"
+  ],
+  "optionIds": [
+   "더라고-요",
+   "고-나서",
+   "았-었-였더니",
+   "던"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 110,
+  "patternId": "던데요",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "어제 그 영화를 봤는데 엄청 재미있던데요.",
+  "sentenceBlankKr": "어제 그 영화를 봤는데 엄청 재미있____.",
+  "sentenceEn": "I watched that movie yesterday, and it was really fun, you know.",
+  "sentenceVi": "Hôm qua tôi xem bộ phim đó, hay lắm đấy.",
+  "options": [
+   "-느라고",
+   "-던",
+   "-더라고(요)",
+   "-던데요"
+  ],
+  "optionIds": [
+   "느라고",
+   "던",
+   "더라고-요",
+   "던데요"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 111,
+  "patternId": "게-되다",
+  "clusterTitle": "사동 (Causative) / 피동 (Passive) / 게 되다",
+  "clusterTitle_ko": "사동 (사동사) / 피동 (피동사) / 게 되다",
+  "clusterTitle_vi": "사동 (Thể sai khiến) / 피동 (Thể bị động) / 게 되다",
+  "sentenceKr": "다음 달에 미국으로 유학을 가게 되었어요.",
+  "sentenceBlankKr": "다음 달에 미국으로 유학을 가____.",
+  "sentenceEn": "It's been arranged that I'll go study abroad in the US next month.",
+  "sentenceVi": "Tháng sau tôi sẽ đi du học ở Mỹ (mọi việc đã được sắp xếp).",
+  "options": [
+   "-기 나름이다 / N 나름이다",
+   "-(으)ㄹ 수밖에 없다",
+   "-아/어 보니(까) / -고 보니(까)",
+   "-게 되다"
+  ],
+  "optionIds": [
+   "기-나름이다-n-나름이다",
+   "으-ㄹ-수밖에-없다",
+   "아-어-보니-까-고-보니-까",
+   "게-되다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 112,
+  "patternId": "는-은-ㄴ-모양이다",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "집에 불이 꺼진 걸 보니 아무도 없는 모양이다.",
+  "sentenceBlankKr": "집에 불이 꺼진 걸 보니 아무도 없는 ____.",
+  "sentenceEn": "Seeing the lights off at home, it seems like no one's there.",
+  "sentenceVi": "Nhìn đèn nhà tắt hết, có vẻ như không có ai ở nhà.",
+  "options": [
+   "-긴 -나 봐요",
+   "-는, 은/ㄴ 모양이다",
+   "-만 못하다",
+   "-(으)ㄹ 듯하다"
+  ],
+  "optionIds": [
+   "긴-나-봐요",
+   "는-은-ㄴ-모양이다",
+   "만-못하다",
+   "으-ㄹ-듯하다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 113,
+  "patternId": "으-려나-보다",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "하늘이 어두워지는 걸 보니 비가 오려나 봐요.",
+  "sentenceBlankKr": "하늘이 어두워지는 걸 보니 비가 오____요.",
+  "sentenceEn": "Seeing the sky get dark, I guess it's about to rain.",
+  "sentenceVi": "Nhìn trời tối sầm lại, chắc là sắp mưa.",
+  "options": [
+   "-는 대신(에)",
+   "-는, 은/ㄴ 모양이다",
+   "-(으)려나 보다",
+   "-는/은/ㄴ/을/ㄹ 듯(이)"
+  ],
+  "optionIds": [
+   "는-대신-에",
+   "는-은-ㄴ-모양이다",
+   "으-려나-보다",
+   "는-은-ㄴ-을-ㄹ-듯-이"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 114,
+  "patternId": "긴-나-봐요",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "맵긴 하나 봐요. 그래도 사람들이 줄을 서서 먹더라고요.",
+  "sentenceBlankKr": "맵긴 하____. 그래도 사람들이 줄을 서서 먹더라고요.",
+  "sentenceEn": "It does seem to be spicy, yet people were lining up to eat it.",
+  "sentenceVi": "Có vẻ là cay thật, vậy mà mọi người vẫn xếp hàng để ăn.",
+  "options": [
+   "-(으)면 몰라도",
+   "-는/은/ㄴ/을/ㄹ 듯(이)",
+   "-긴 -나 봐요",
+   "-(으)려나 보다"
+  ],
+  "optionIds": [
+   "으-면-몰라도",
+   "는-은-ㄴ-을-ㄹ-듯-이",
+   "긴-나-봐요",
+   "으-려나-보다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 115,
+  "patternId": "는-은-ㄴ-을-ㄹ-듯-이",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "그 사람은 돈을 물 쓰듯이 쓴다.",
+  "sentenceBlankKr": "그 사람은 돈을 물 쓰____ 쓴다.",
+  "sentenceEn": "That person spends money like water.",
+  "sentenceVi": "Người đó tiêu tiền như nước.",
+  "options": [
+   "-는/은/ㄴ/을/ㄹ 듯(이)",
+   "-는/ㄴ, -다 싶다",
+   "-(으)ㄹ 듯하다",
+   "-(으)나 마나"
+  ],
+  "optionIds": [
+   "는-은-ㄴ-을-ㄹ-듯-이",
+   "는-ㄴ-다-싶다",
+   "으-ㄹ-듯하다",
+   "으-나-마나"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 116,
+  "patternId": "으-ㄹ-듯하다",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "오늘 일이 많아서 회식에 참석하지 못할 듯합니다.",
+  "sentenceBlankKr": "오늘 일이 많아서 회식에 참석하지 못할 ____.",
+  "sentenceEn": "Since I have a lot of work today, it seems I won't be able to attend the dinner.",
+  "sentenceVi": "Vì hôm nay tôi có nhiều việc nên có lẽ tôi sẽ không thể tham dự bữa tiệc.",
+  "options": [
+   "-긴 -나 봐요",
+   "-(으)ㄹ 듯하다",
+   "-는 바람에",
+   "-(으)려나 보다"
+  ],
+  "optionIds": [
+   "긴-나-봐요",
+   "으-ㄹ-듯하다",
+   "는-바람에",
+   "으-려나-보다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 117,
+  "patternId": "는-ㄴ-다-싶다",
+  "clusterTitle": "\"Seems / I guess\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_ko": "\"~인 것 같다 / 추측\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "clusterTitle_vi": "\"Có vẻ / Tôi đoán\" — 모양이다 / (으)려나 보다 / 긴 -나 봐요 / 듯(이) / (으)ㄹ 듯하다 / 다 싶다",
+  "sentenceKr": "그 사람 말이 맞는 것 같다 싶었어요.",
+  "sentenceBlankKr": "그 사람 말이 맞는 것 같____었어요.",
+  "sentenceEn": "I had the impression that what that person said might actually be right.",
+  "sentenceVi": "Tôi có cảm giác những gì người đó nói có lẽ đúng.",
+  "options": [
+   "-는/ㄴ, -다 싶다",
+   "-기 마련이다",
+   "-는, 은/ㄴ 모양이다",
+   "-(으)ㄹ 듯하다"
+  ],
+  "optionIds": [
+   "는-ㄴ-다-싶다",
+   "기-마련이다",
+   "는-은-ㄴ-모양이다",
+   "으-ㄹ-듯하다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 118,
+  "patternId": "마저-도",
+  "clusterTitle": "\"Even\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_ko": "\"~조차/마저\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_vi": "\"Ngay cả / thậm chí\" — 마저(도) / 조차 / (이)나마",
+  "sentenceKr": "가방에 있는 사탕마저 다 먹어버렸어.",
+  "sentenceBlankKr": "가방에 있는 사탕____ 다 먹어버렸어.",
+  "sentenceEn": "I even ate all the candy that was in my bag (the last thing left).",
+  "sentenceVi": "Tôi đã ăn hết cả kẹo trong túi (thứ cuối cùng còn lại).",
+  "options": [
+   "-마저(도)",
+   "-조차",
+   "-(이)나마",
+   "-되"
+  ],
+  "optionIds": [
+   "마저-도",
+   "조차",
+   "이-나마",
+   "되"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 119,
+  "patternId": "조차",
+  "clusterTitle": "\"Even\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_ko": "\"~조차/마저\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_vi": "\"Ngay cả / thậm chí\" — 마저(도) / 조차 / (이)나마",
+  "sentenceKr": "너무 시끄러워서 집중할 수조차 없어요.",
+  "sentenceBlankKr": "너무 시끄러워서 집중할 수____ 없어요.",
+  "sentenceEn": "It's so loud that I can't even concentrate.",
+  "sentenceVi": "Ồn đến mức tôi thậm chí không thể tập trung được.",
+  "options": [
+   "-는/은 줄 모르다(알다)",
+   "-마저(도)",
+   "-조차",
+   "-(이)나마"
+  ],
+  "optionIds": [
+   "는-은-줄-모르다-알다",
+   "마저-도",
+   "조차",
+   "이-나마"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 120,
+  "patternId": "이-나마",
+  "clusterTitle": "\"Even\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_ko": "\"~조차/마저\" — 마저(도) / 조차 / (이)나마",
+  "clusterTitle_vi": "\"Ngay cả / thậm chí\" — 마저(도) / 조차 / (이)나마",
+  "sentenceKr": "부족하나마 항상 최선을 다할 것입니다.",
+  "sentenceBlankKr": "부족하____ 항상 최선을 다할 것입니다.",
+  "sentenceEn": "Though it may be lacking, I will always do my best.",
+  "sentenceVi": "Dù có thể còn thiếu sót, tôi sẽ luôn cố gắng hết sức.",
+  "options": [
+   "-는/은 법이다",
+   "-(이)나마",
+   "-조차",
+   "-마저(도)"
+  ],
+  "optionIds": [
+   "는-은-법이다",
+   "이-나마",
+   "조차",
+   "마저-도"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 121,
+  "patternId": "을-ㄹ-뻔하다",
+  "clusterTitle": "\"Almost / borderline\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_ko": "\"거의 / 경계선\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_vi": "\"Gần như / ở lằn ranh\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "sentenceKr": "아침에 급하게 뛰어오다가 넘어질 뻔했어요.",
+  "sentenceBlankKr": "아침에 급하게 뛰어오다가 넘어질 ____.",
+  "sentenceEn": "I was rushing over this morning and almost tripped and fell.",
+  "sentenceVi": "Sáng nay tôi vội chạy đến nên suýt bị vấp ngã.",
+  "options": [
+   "-을락 말락 하다",
+   "-을/ㄹ 뻔하다",
+   "-다시피 (하다)",
+   "-는/은 법이다"
+  ],
+  "optionIds": [
+   "을락-말락-하다",
+   "을-ㄹ-뻔하다",
+   "다시피-하다",
+   "는-은-법이다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 122,
+  "patternId": "을락-말락-하다",
+  "clusterTitle": "\"Almost / borderline\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_ko": "\"거의 / 경계선\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_vi": "\"Gần như / ở lằn ranh\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "sentenceKr": "단추가 떨어질락 말락 해요.",
+  "sentenceBlankKr": "단추가 떨어____.",
+  "sentenceEn": "The button is about to fall off (hanging by a thread).",
+  "sentenceVi": "Cái nút áo sắp rơi ra đến nơi rồi (chỉ còn dính hờ).",
+  "options": [
+   "-다시피 (하다)",
+   "-을락 말락 하다",
+   "-은/ㄴ 채(로)",
+   "-는 둥 마는 둥 하다"
+  ],
+  "optionIds": [
+   "다시피-하다",
+   "을락-말락-하다",
+   "은-ㄴ-채-로",
+   "는-둥-마는-둥-하다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 123,
+  "patternId": "는-둥-마는-둥-하다",
+  "clusterTitle": "\"Almost / borderline\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_ko": "\"거의 / 경계선\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_vi": "\"Gần như / ở lằn ranh\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "sentenceKr": "밥을 먹는 둥 마는 둥 하고 바로 나가 버렸어요.",
+  "sentenceBlankKr": "밥을 먹는 ____ 하고 바로 나가 버렸어요.",
+  "sentenceEn": "He barely touched his food and then left right away.",
+  "sentenceVi": "Anh ấy ăn qua loa rồi đi ra ngay.",
+  "options": [
+   "-을락 말락 하다",
+   "-다시피 (하다)",
+   "-는 둥 마는 둥 하다",
+   "-기에는"
+  ],
+  "optionIds": [
+   "을락-말락-하다",
+   "다시피-하다",
+   "는-둥-마는-둥-하다",
+   "기에는"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 124,
+  "patternId": "다시피-하다",
+  "clusterTitle": "\"Almost / borderline\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_ko": "\"거의 / 경계선\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_vi": "\"Gần như / ở lằn ranh\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "sentenceKr": "그는 연구실에서 살다시피 했어요.",
+  "sentenceBlankKr": "그는 연구실에서 살____ 했어요.",
+  "sentenceEn": "He practically lived in the lab.",
+  "sentenceVi": "Anh ấy gần như sống luôn ở phòng thí nghiệm.",
+  "options": [
+   "-을/ㄹ 뻔하다",
+   "-는 둥 마는 둥 하다",
+   "-다시피 (하다)",
+   "-(으)ㄹ수록"
+  ],
+  "optionIds": [
+   "을-ㄹ-뻔하다",
+   "는-둥-마는-둥-하다",
+   "다시피-하다",
+   "으-ㄹ수록"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 125,
+  "patternId": "는-편이다",
+  "clusterTitle": "Degrees of \"sort of\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_ko": "\"어느 정도\" 표현들 — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_vi": "Các mức độ \"khá / coi như\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "sentenceKr": "제 남자친구는 키가 크고 조금 통통한 편이에요.",
+  "sentenceBlankKr": "제 남자친구는 키가 크고 조금 통통____.",
+  "sentenceEn": "My boyfriend is rather tall and a bit on the chubby side.",
+  "sentenceVi": "Bạn trai tôi khá cao và hơi mập một chút.",
+  "options": [
+   "-는 편이다",
+   "-거나",
+   "-는/ㄴ 셈이다",
+   "-는 셈 치다 / -ㄴ/는다고 치다"
+  ],
+  "optionIds": [
+   "는-편이다",
+   "거나",
+   "는-ㄴ-셈이다",
+   "는-셈-치다-ㄴ-는다고-치다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 126,
+  "patternId": "는-ㄴ-셈이다",
+  "clusterTitle": "Degrees of \"sort of\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_ko": "\"어느 정도\" 표현들 — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_vi": "Các mức độ \"khá / coi như\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "sentenceKr": "결국 저 혼자 다 한 셈이지만 괜찮아요.",
+  "sentenceBlankKr": "결국 저 혼자 다 ____ 괜찮아요.",
+  "sentenceEn": "In the end, it's basically like I did it all myself, but that's fine.",
+  "sentenceVi": "Cuối cùng thì coi như tôi tự làm hết một mình, nhưng không sao cả.",
+  "options": [
+   "-기는요",
+   "-기 일쑤이다",
+   "-는 셈 치다 / -ㄴ/는다고 치다",
+   "-는/ㄴ 셈이다"
+  ],
+  "optionIds": [
+   "기는요",
+   "기-일쑤이다",
+   "는-셈-치다-ㄴ-는다고-치다",
+   "는-ㄴ-셈이다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 127,
+  "patternId": "는-셈-치다-ㄴ-는다고-치다",
+  "clusterTitle": "Degrees of \"sort of\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_ko": "\"어느 정도\" 표현들 — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_vi": "Các mức độ \"khá / coi như\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "sentenceKr": "만난 적 없다고 치고 다시 시작하자.",
+  "sentenceBlankKr": "만난 적 없____고 다시 시작하자.",
+  "sentenceEn": "Let's pretend we've never met and start over.",
+  "sentenceVi": "Hãy coi như chúng ta chưa từng gặp nhau và bắt đầu lại.",
+  "options": [
+   "-는/ㄴ 셈이다",
+   "-는 셈 치다 / -ㄴ/는다고 치다",
+   "-기 일쑤이다",
+   "-(으)ㄹ 듯하다"
+  ],
+  "optionIds": [
+   "는-ㄴ-셈이다",
+   "는-셈-치다-ㄴ-는다고-치다",
+   "기-일쑤이다",
+   "으-ㄹ-듯하다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 128,
+  "patternId": "기-일쑤이다",
+  "clusterTitle": "Degrees of \"sort of\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_ko": "\"어느 정도\" 표현들 — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "clusterTitle_vi": "Các mức độ \"khá / coi như\" — 는 편이다 / 는/ㄴ 셈이다 / 셈 치다 / 기 일쑤이다",
+  "sentenceKr": "그 남자는 거짓말하기 일쑤예요.",
+  "sentenceBlankKr": "그 남자는 거짓말____.",
+  "sentenceEn": "That man is always lying (has a habit of lying).",
+  "sentenceVi": "Người đàn ông đó lúc nào cũng nói dối (có thói quen nói dối).",
+  "options": [
+   "-는/ㄴ 셈이다",
+   "-기 일쑤이다",
+   "-는 셈 치다 / -ㄴ/는다고 치다",
+   "-는지/은지/ㄴ지"
+  ],
+  "optionIds": [
+   "는-ㄴ-셈이다",
+   "기-일쑤이다",
+   "는-셈-치다-ㄴ-는다고-치다",
+   "는지-은지-ㄴ지"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 129,
+  "patternId": "게",
+  "clusterTitle": "\"So that\" — 게 vs 도록",
+  "clusterTitle_ko": "\"~하도록/게\" — 게 vs 도록",
+  "clusterTitle_vi": "\"Để cho / sao cho\" — 게 vs 도록",
+  "sentenceKr": "선생님은 학생들에게 책을 읽게 했어요.",
+  "sentenceBlankKr": "선생님은 학생들에____ 책을 읽게 했어요.",
+  "sentenceEn": "The teacher had the students read a book.",
+  "sentenceVi": "Giáo viên đã cho học sinh đọc sách.",
+  "options": [
+   "-았/었으면 하다",
+   "-게",
+   "-도록",
+   "-길래"
+  ],
+  "optionIds": [
+   "았-었으면-하다",
+   "게",
+   "도록",
+   "길래"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 130,
+  "patternId": "도록",
+  "clusterTitle": "\"So that\" — 게 vs 도록",
+  "clusterTitle_ko": "\"~하도록/게\" — 게 vs 도록",
+  "clusterTitle_vi": "\"Để cho / sao cho\" — 게 vs 도록",
+  "sentenceKr": "밤이 늦도록 딸이 돌아오지 않아서 걱정이에요.",
+  "sentenceBlankKr": "밤이 늦____ 딸이 돌아오지 않아서 걱정이에요.",
+  "sentenceEn": "I'm worried because my daughter hasn't come home even though it's gotten late.",
+  "sentenceVi": "Tôi lo lắng vì trời đã khuya mà con gái tôi vẫn chưa về nhà.",
+  "options": [
+   "-도록",
+   "-더라도",
+   "-아/어 있다",
+   "-게"
+  ],
+  "optionIds": [
+   "도록",
+   "더라도",
+   "아-어-있다",
+   "게"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 131,
+  "patternId": "고-말다",
+  "clusterTitle": "Completing an action, often regrettably — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_ko": "아쉽게 행동을 끝맺음 — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_vi": "Hoàn tất một hành động, thường đáng tiếc — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "sentenceKr": "뛰어갔는데도 지각하고 말았어요.",
+  "sentenceBlankKr": "뛰어갔는데도 지각하____어요.",
+  "sentenceEn": "Even though I ran, I ended up being late.",
+  "sentenceVi": "Dù đã chạy nhưng tôi vẫn bị trễ.",
+  "options": [
+   "-(으)ㄹ수록",
+   "-고 말다",
+   "-아/어/여 버리다",
+   "-는/ㄴ다는 것이"
+  ],
+  "optionIds": [
+   "으-ㄹ수록",
+   "고-말다",
+   "아-어-여-버리다",
+   "는-ㄴ다는-것이"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 132,
+  "patternId": "아-어-여-버리다",
+  "clusterTitle": "Completing an action, often regrettably — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_ko": "아쉽게 행동을 끝맺음 — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_vi": "Hoàn tất một hành động, thường đáng tiếc — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "sentenceKr": "오래된 옷들을 전부 버려 버렸어요.",
+  "sentenceBlankKr": "오래된 옷들을 전부 버려 ____어요.",
+  "sentenceEn": "I just went ahead and threw out all my old clothes.",
+  "sentenceVi": "Tôi đã vứt hết luôn quần áo cũ.",
+  "options": [
+   "-아/어/여 버리다",
+   "-는/ㄴ다는 것이",
+   "-조차",
+   "-고 말다"
+  ],
+  "optionIds": [
+   "아-어-여-버리다",
+   "는-ㄴ다는-것이",
+   "조차",
+   "고-말다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 133,
+  "patternId": "는-ㄴ다는-것이",
+  "clusterTitle": "Completing an action, often regrettably — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_ko": "아쉽게 행동을 끝맺음 — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "clusterTitle_vi": "Hoàn tất một hành động, thường đáng tiếc — 고 말다 / 아/어 버리다 / 는/ㄴ다는 것이",
+  "sentenceKr": "친구에게 문자를 보낸다는 것이 실수로 다른 사람에게 보냈어요.",
+  "sentenceBlankKr": "친구에게 문자를 보낸____ 실수로 다른 사람에게 보냈어요.",
+  "sentenceEn": "I meant to text my friend, but I accidentally sent it to someone else instead.",
+  "sentenceVi": "Tôi định nhắn tin cho bạn nhưng lại vô tình gửi nhầm cho người khác.",
+  "options": [
+   "-는/ㄴ다는 것이",
+   "-아/어/여 버리다",
+   "-(으)려다가",
+   "-고 말다"
+  ],
+  "optionIds": [
+   "는-ㄴ다는-것이",
+   "아-어-여-버리다",
+   "으-려다가",
+   "고-말다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 134,
+  "patternId": "아-어-여-놓다-두다",
+  "clusterTitle": "States after a change — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "clusterTitle_ko": "변화 후의 상태 — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "clusterTitle_vi": "Trạng thái sau một thay đổi — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "sentenceKr": "비자를 연장하려고 예약해 놓았거든요.",
+  "sentenceBlankKr": "비자를 연장하려고 예약해 ____거든요.",
+  "sentenceEn": "You see, I made the reservation in advance to extend my visa.",
+  "sentenceVi": "Là vì tôi đã đặt lịch hẹn trước để gia hạn visa.",
+  "options": [
+   "-아/어 있다",
+   "-은/ㄴ 채(로)",
+   "-는 편이다",
+   "-아/어/여 놓다/두다"
+  ],
+  "optionIds": [
+   "아-어-있다",
+   "은-ㄴ-채-로",
+   "는-편이다",
+   "아-어-여-놓다-두다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 135,
+  "patternId": "아-어-있다",
+  "clusterTitle": "States after a change — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "clusterTitle_ko": "변화 후의 상태 — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "clusterTitle_vi": "Trạng thái sau một thay đổi — 아/어 놓다(두다) / 아/어 있다 / 은/ㄴ 채로",
+  "sentenceKr": "문이 열려 있어서 그냥 들어갔어요.",
+  "sentenceBlankKr": "문이 열____ 그냥 들어갔어요.",
+  "sentenceEn": "The door was open, so I just went in.",
+  "sentenceVi": "Cửa đang mở nên tôi cứ thế đi vào.",
+  "options": [
+   "-다가는",
+   "-아/어/여 놓다/두다",
+   "-은/ㄴ 채(로)",
+   "-아/어 있다"
+  ],
+  "optionIds": [
+   "다가는",
+   "아-어-여-놓다-두다",
+   "은-ㄴ-채-로",
+   "아-어-있다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 136,
+  "patternId": "으-려고",
+  "clusterTitle": "\"Intend to\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_ko": "\"~하려고 / 의도\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_vi": "\"Có ý định\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "sentenceKr": "다이어트를 하려고 저녁마다 운동을 시작했어요.",
+  "sentenceBlankKr": "다이어트를 하____ 저녁마다 운동을 시작했어요.",
+  "sentenceEn": "I started exercising every evening, intending to lose weight.",
+  "sentenceVi": "Tôi bắt đầu tập thể dục mỗi tối vì định giảm cân.",
+  "options": [
+   "-고자 (하다)",
+   "-기로 하다",
+   "-던데요",
+   "-(으)려고"
+  ],
+  "optionIds": [
+   "고자-하다",
+   "기로-하다",
+   "던데요",
+   "으-려고"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 137,
+  "patternId": "고자-하다",
+  "clusterTitle": "\"Intend to\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_ko": "\"~하려고 / 의도\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_vi": "\"Có ý định\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "sentenceKr": "부모님께 드리고자 이 물건을 구매했습니다.",
+  "sentenceBlankKr": "부모님께 드리____ 이 물건을 구매했습니다.",
+  "sentenceEn": "I purchased this item in order to give it to my parents.",
+  "sentenceVi": "Tôi đã mua món đồ này để tặng cho bố mẹ.",
+  "options": [
+   "-고자 (하다)",
+   "-는 편이다",
+   "-(으)려고",
+   "-기로 하다"
+  ],
+  "optionIds": [
+   "고자-하다",
+   "는-편이다",
+   "으-려고",
+   "기로-하다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 138,
+  "patternId": "기로-하다",
+  "clusterTitle": "\"Intend to\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_ko": "\"~하려고 / 의도\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_vi": "\"Có ý định\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "sentenceKr": "이번 주말부터 다이어트를 시작하기로 했어요.",
+  "sentenceBlankKr": "이번 주말부터 다이어트를 시작____.",
+  "sentenceEn": "I've decided to start dieting starting this weekend.",
+  "sentenceVi": "Tôi đã quyết định bắt đầu ăn kiêng từ cuối tuần này.",
+  "options": [
+   "-(으)려고",
+   "-을/ㄹ 수가 있어야지(요)",
+   "-기로 하다",
+   "-(으)ㄹ까 하다"
+  ],
+  "optionIds": [
+   "으-려고",
+   "을-ㄹ-수가-있어야지-요",
+   "기로-하다",
+   "으-ㄹ까-하다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 139,
+  "patternId": "으-ㄹ까-하다",
+  "clusterTitle": "\"Intend to\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_ko": "\"~하려고 / 의도\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_vi": "\"Có ý định\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "sentenceKr": "이번 주말에는 집에서 좀 쉴까 해요.",
+  "sentenceBlankKr": "이번 주말에는 집에서 좀 ____.",
+  "sentenceEn": "I'm thinking I might just rest at home this weekend.",
+  "sentenceVi": "Cuối tuần này tôi định chỉ ở nhà nghỉ ngơi thôi.",
+  "options": [
+   "-(으)려고",
+   "-고자 (하다)",
+   "-(으)ㄹ까 하다",
+   "-기 나름이다 / N 나름이다"
+  ],
+  "optionIds": [
+   "으-려고",
+   "고자-하다",
+   "으-ㄹ까-하다",
+   "기-나름이다-n-나름이다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 140,
+  "patternId": "으-려면",
+  "clusterTitle": "\"Intend to\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_ko": "\"~하려고 / 의도\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "clusterTitle_vi": "\"Có ý định\" — (으)려고 / 고자 (하다) / 기로 하다 / (으)ㄹ까 하다 / (으)려면",
+  "sentenceKr": "한국어를 잘하려면 열심히 공부해야 돼요.",
+  "sentenceBlankKr": "한국어를 잘하____ 열심히 공부해야 돼요.",
+  "sentenceEn": "If you want to become good at Korean, you have to study hard.",
+  "sentenceVi": "Nếu muốn giỏi tiếng Hàn thì phải học chăm chỉ.",
+  "options": [
+   "-기로 하다",
+   "-(으)려면",
+   "-(으)ㄹ까 하다",
+   "-는/ㄴ다는 것이"
+  ],
+  "optionIds": [
+   "기로-하다",
+   "으-려면",
+   "으-ㄹ까-하다",
+   "는-ㄴ다는-것이"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 141,
+  "patternId": "으-려다가",
+  "clusterTitle": "\"Was about to do X\" — (으)려다가 vs (으)려던 참이다",
+  "clusterTitle_ko": "\"막 X하려던 참\" — (으)려다가 vs (으)려던 참이다",
+  "clusterTitle_vi": "\"Vừa định làm X\" — (으)려다가 vs (으)려던 참이다",
+  "sentenceKr": "친구랑 밥을 먹으러 가려다가 그냥 도서관에 가기로 했다.",
+  "sentenceBlankKr": "친구랑 밥을 먹으러 가____ 그냥 도서관에 가기로 했다.",
+  "sentenceEn": "I was going to go eat with a friend, but then decided to just go to the library instead.",
+  "sentenceVi": "Tôi định đi ăn với bạn, nhưng rồi quyết định đến thư viện thay vào đó.",
+  "options": [
+   "-(으)려다가",
+   "-(으)려던 참이다",
+   "-에 따라(서)",
+   "-아/어 있다"
+  ],
+  "optionIds": [
+   "으-려다가",
+   "으-려던-참이다",
+   "에-따라-서",
+   "아-어-있다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 142,
+  "patternId": "으-려던-참이다",
+  "clusterTitle": "\"Was about to do X\" — (으)려다가 vs (으)려던 참이다",
+  "clusterTitle_ko": "\"막 X하려던 참\" — (으)려다가 vs (으)려던 참이다",
+  "clusterTitle_vi": "\"Vừa định làm X\" — (으)려다가 vs (으)려던 참이다",
+  "sentenceKr": "저도 지금 막 가려던 참이었어요.",
+  "sentenceBlankKr": "저도 지금 막 가____.",
+  "sentenceEn": "I was just about to leave right now, actually.",
+  "sentenceVi": "Thật ra tôi cũng vừa định đi ngay bây giờ.",
+  "options": [
+   "-는 데다가",
+   "-(으)려던 참이다",
+   "-(으)려다가",
+   "-다가는"
+  ],
+  "optionIds": [
+   "는-데다가",
+   "으-려던-참이다",
+   "으-려다가",
+   "다가는"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 143,
+  "patternId": "다가는",
+  "clusterTitle": "\"If you keep doing X...\" — 다가는 vs 다(가) 보면",
+  "clusterTitle_ko": "\"계속 X하다가는...\" — 다가는 vs 다(가) 보면",
+  "clusterTitle_vi": "\"Nếu cứ tiếp tục làm X...\" — 다가는 vs 다(가) 보면",
+  "sentenceKr": "그렇게 계속 늦잠을 자다가는 지각하기 십상이에요.",
+  "sentenceBlankKr": "그렇게 계속 늦잠을 자____ 지각하기 십상이에요.",
+  "sentenceEn": "If you keep oversleeping like that, you're bound to end up late.",
+  "sentenceVi": "Nếu cứ ngủ nướng như vậy thì thế nào cũng bị trễ giờ.",
+  "options": [
+   "-다가는",
+   "-다(가) 보면",
+   "(으)련만 ((으)련마는)",
+   "-에 따라(서)"
+  ],
+  "optionIds": [
+   "다가는",
+   "다-가-보면",
+   "으-련만-으-련마는",
+   "에-따라-서"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 144,
+  "patternId": "다-가-보면",
+  "clusterTitle": "\"If you keep doing X...\" — 다가는 vs 다(가) 보면",
+  "clusterTitle_ko": "\"계속 X하다가는...\" — 다가는 vs 다(가) 보면",
+  "clusterTitle_vi": "\"Nếu cứ tiếp tục làm X...\" — 다가는 vs 다(가) 보면",
+  "sentenceKr": "계속 연습하다 보면 실력이 늘 거예요.",
+  "sentenceBlankKr": "계속 연습하____ 실력이 늘 거예요.",
+  "sentenceEn": "If you keep on practicing, your skills will improve over time.",
+  "sentenceVi": "Nếu cứ tiếp tục luyện tập, kỹ năng của bạn sẽ dần tiến bộ.",
+  "options": [
+   "-다(가) 보면",
+   "-다가는",
+   "-(으)면 몰라도",
+   "-아/어도"
+  ],
+  "optionIds": [
+   "다-가-보면",
+   "다가는",
+   "으-면-몰라도",
+   "아-어도"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 145,
+  "patternId": "을-ㄹ까-봐",
+  "clusterTitle": "Anxious or uncertain guesses — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_ko": "불안하거나 불확실한 추측 — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_vi": "Những suy đoán lo lắng hoặc không chắc chắn — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "sentenceKr": "아이가 다칠까 봐 걱정이에요.",
+  "sentenceBlankKr": "아이가 ____ 걱정이에요.",
+  "sentenceEn": "I'm worried the child might get hurt.",
+  "sentenceVi": "Tôi lo con bị thương.",
+  "options": [
+   "-을까/나/지 싶다",
+   "-더라고(요)",
+   "-을/ㄹ까 봐",
+   "-는 수가 있다"
+  ],
+  "optionIds": [
+   "을까-나-지-싶다",
+   "더라고-요",
+   "을-ㄹ까-봐",
+   "는-수가-있다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 146,
+  "patternId": "으-ㄹ지도-모르다",
+  "clusterTitle": "Anxious or uncertain guesses — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_ko": "불안하거나 불확실한 추측 — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_vi": "Những suy đoán lo lắng hoặc không chắc chắn — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "sentenceKr": "나도 모임에 가고 싶지만 일이 있어서 못 갈지도 몰라요.",
+  "sentenceBlankKr": "나도 모임에 가고 싶지만 일이 있어서 못 갈____요.",
+  "sentenceEn": "I want to go to the gathering too, but I might not be able to because I have work.",
+  "sentenceVi": "Tôi cũng muốn đi buổi họp mặt, nhưng có thể sẽ không đi được vì bận việc.",
+  "options": [
+   "-(으)ㄹ지도 모르다",
+   "-을/ㄹ까 봐",
+   "-는 수가 있다",
+   "-(으)ㄹ 듯하다"
+  ],
+  "optionIds": [
+   "으-ㄹ지도-모르다",
+   "을-ㄹ까-봐",
+   "는-수가-있다",
+   "으-ㄹ-듯하다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 147,
+  "patternId": "을까-나-지-싶다",
+  "clusterTitle": "Anxious or uncertain guesses — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_ko": "불안하거나 불확실한 추측 — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_vi": "Những suy đoán lo lắng hoặc không chắc chắn — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "sentenceKr": "내일도 비가 많이 올까 싶네요.",
+  "sentenceBlankKr": "내일도 비가 많이 ____.",
+  "sentenceEn": "I wonder if it'll rain a lot again tomorrow.",
+  "sentenceVi": "Không biết ngày mai có mưa nhiều nữa không nhỉ.",
+  "options": [
+   "-만 못하다",
+   "-을/ㄹ까 봐",
+   "-을까/나/지 싶다",
+   "-(으)ㄹ지도 모르다"
+  ],
+  "optionIds": [
+   "만-못하다",
+   "을-ㄹ까-봐",
+   "을까-나-지-싶다",
+   "으-ㄹ지도-모르다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 148,
+  "patternId": "는-수가-있다",
+  "clusterTitle": "Anxious or uncertain guesses — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_ko": "불안하거나 불확실한 추측 — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "clusterTitle_vi": "Những suy đoán lo lắng hoặc không chắc chắn — (으)ㄹ까 봐 / (으)ㄹ지도 모르다 / 을까/나/지 싶다 / 는 수가 있다",
+  "sentenceKr": "그렇게 공부를 안 하다가는 후회하는 수가 있어요.",
+  "sentenceBlankKr": "그렇게 공부를 안 하다가는 후회하____.",
+  "sentenceEn": "If you keep not studying like that, there may come a time you regret it.",
+  "sentenceVi": "Nếu cứ tiếp tục không học như vậy, có thể sẽ có lúc bạn hối hận.",
+  "options": [
+   "-(으)ㄹ 리가 없다",
+   "-는 수가 있다",
+   "-을/ㄹ까 봐",
+   "-(으)ㄹ지도 모르다"
+  ],
+  "optionIds": [
+   "으-ㄹ-리가-없다",
+   "는-수가-있다",
+   "을-ㄹ까-봐",
+   "으-ㄹ지도-모르다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 149,
+  "patternId": "거니와",
+  "clusterTitle": "\"Not only X but also Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_ko": "\"X뿐만 아니라 Y도\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_vi": "\"Không chỉ X mà còn Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "sentenceKr": "이 식당은 음식도 맛있거니와 서비스도 훌륭하다.",
+  "sentenceBlankKr": "이 식당은 음식도 맛있____ 서비스도 훌륭하다.",
+  "sentenceEn": "Not only is the food at this restaurant delicious, but the service is excellent as well.",
+  "sentenceVi": "Nhà hàng này không chỉ có đồ ăn ngon mà dịch vụ cũng rất tuyệt.",
+  "options": [
+   "-을/ㄹ 뿐(만) 아니라",
+   "-을/ㄹ 뿐이다",
+   "-되",
+   "-거니와"
+  ],
+  "optionIds": [
+   "을-ㄹ-뿐-만-아니라",
+   "을-ㄹ-뿐이다",
+   "되",
+   "거니와"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 150,
+  "patternId": "을-ㄹ-뿐-만-아니라",
+  "clusterTitle": "\"Not only X but also Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_ko": "\"X뿐만 아니라 Y도\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_vi": "\"Không chỉ X mà còn Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "sentenceKr": "이 가방은 디자인이 예쁠 뿐만 아니라 아주 실용적이다.",
+  "sentenceBlankKr": "이 가방은 디자인이 예쁠 ____ 아주 실용적이다.",
+  "sentenceEn": "This bag isn't just pretty in design — it's also very practical.",
+  "sentenceVi": "Chiếc túi này không chỉ thiết kế đẹp mà còn rất tiện dụng.",
+  "options": [
+   "-을/ㄹ 뿐이다",
+   "-거니와",
+   "-더라고(요)",
+   "-을/ㄹ 뿐(만) 아니라"
+  ],
+  "optionIds": [
+   "을-ㄹ-뿐이다",
+   "거니와",
+   "더라고-요",
+   "을-ㄹ-뿐-만-아니라"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 151,
+  "patternId": "을-ㄹ-뿐이다",
+  "clusterTitle": "\"Not only X but also Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_ko": "\"X뿐만 아니라 Y도\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "clusterTitle_vi": "\"Không chỉ X mà còn Y\" — 거니와 / (으)ㄹ 뿐(만) 아니라 / (으)ㄹ 뿐이다",
+  "sentenceKr": "저는 그냥 제 의견을 말했을 뿐이에요.",
+  "sentenceBlankKr": "저는 그냥 제 의견을 말했을 ____.",
+  "sentenceEn": "I merely expressed my own opinion — nothing more than that.",
+  "sentenceVi": "Tôi chỉ đơn giản là bày tỏ ý kiến của mình — không hơn không kém.",
+  "options": [
+   "-거니와",
+   "-아/어 보니(까) / -고 보니(까)",
+   "-을/ㄹ 뿐(만) 아니라",
+   "-을/ㄹ 뿐이다"
+  ],
+  "optionIds": [
+   "거니와",
+   "아-어-보니-까-고-보니-까",
+   "을-ㄹ-뿐-만-아니라",
+   "을-ㄹ-뿐이다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 152,
+  "patternId": "거나",
+  "clusterTitle": "Choice / doesn't matter which — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_ko": "선택 / 상관없음 — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_vi": "Lựa chọn / không quan trọng cái nào — 거나 / 든지 / (으)나 마나",
+  "sentenceKr": "스트레스를 받으면 운동을 하거나 청소를 해요.",
+  "sentenceBlankKr": "스트레스를 받으면 운동을 하____ 청소를 해요.",
+  "sentenceEn": "When I'm stressed, I either exercise or clean.",
+  "sentenceVi": "Khi bị căng thẳng, tôi thường tập thể dục hoặc dọn dẹp.",
+  "options": [
+   "-(으)나 마나",
+   "-(으)려나 보다",
+   "-거나",
+   "-든지"
+  ],
+  "optionIds": [
+   "으-나-마나",
+   "으-려나-보다",
+   "거나",
+   "든지"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 153,
+  "patternId": "든지",
+  "clusterTitle": "Choice / doesn't matter which — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_ko": "선택 / 상관없음 — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_vi": "Lựa chọn / không quan trọng cái nào — 거나 / 든지 / (으)나 마나",
+  "sentenceKr": "우산이 비싸든지 싸든지 무조건 사 오세요.",
+  "sentenceBlankKr": "우산이 비싸____ 싸든지 무조건 사 오세요.",
+  "sentenceEn": "Whether the umbrella is expensive or cheap, just buy it no matter what.",
+  "sentenceVi": "Dù ô có đắt hay rẻ thì cũng cứ mua đi.",
+  "options": [
+   "-고도",
+   "-거나",
+   "-든지",
+   "-(으)나 마나"
+  ],
+  "optionIds": [
+   "고도",
+   "거나",
+   "든지",
+   "으-나-마나"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 154,
+  "patternId": "으-나-마나",
+  "clusterTitle": "Choice / doesn't matter which — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_ko": "선택 / 상관없음 — 거나 / 든지 / (으)나 마나",
+  "clusterTitle_vi": "Lựa chọn / không quan trọng cái nào — 거나 / 든지 / (으)나 마나",
+  "sentenceKr": "그 사람 성격을 보나 마나 분명히 거절할 거예요.",
+  "sentenceBlankKr": "그 사람 성격을 보____ 분명히 거절할 거예요.",
+  "sentenceEn": "Whether we sound out his personality or not, he's clearly going to refuse.",
+  "sentenceVi": "Nhìn tính cách của anh ta thì cũng biết ngay, chắc chắn anh ta sẽ từ chối.",
+  "options": [
+   "-거나",
+   "-(으)려고",
+   "-(으)나 마나",
+   "-든지"
+  ],
+  "optionIds": [
+   "거나",
+   "으-려고",
+   "으-나-마나",
+   "든지"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 155,
+  "patternId": "더라도",
+  "clusterTitle": "Concession \"even if / though\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_ko": "양보 \"비록 ~일지라도\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_vi": "Nhượng bộ \"dù / mặc dù\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "sentenceKr": "비가 오더라도 행사는 예정대로 진행됩니다.",
+  "sentenceBlankKr": "비가 오____ 행사는 예정대로 진행됩니다.",
+  "sentenceEn": "Even if it rains, the event will proceed as scheduled.",
+  "sentenceVi": "Dù trời có mưa thì sự kiện vẫn sẽ diễn ra theo đúng kế hoạch.",
+  "options": [
+   "간접화법 축약형 (Abbreviated Indirect Speech)",
+   "-아/어도",
+   "-더라도",
+   "-(으)면 몰라도"
+  ],
+  "optionIds": [
+   "간접화법-축약형-abbreviated-indirect-speech",
+   "아-어도",
+   "더라도",
+   "으-면-몰라도"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 156,
+  "patternId": "고도",
+  "clusterTitle": "Concession \"even if / though\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_ko": "양보 \"비록 ~일지라도\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_vi": "Nhượng bộ \"dù / mặc dù\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "sentenceKr": "그녀는 선생님이 자기 이름을 부르는 것을 듣고도 대답하지 않았다.",
+  "sentenceBlankKr": "그녀는 선생님이 자기 이름을 부르는 것을 듣____ 대답하지 않았다.",
+  "sentenceEn": "Even though she heard her teacher call her name, she did not answer.",
+  "sentenceVi": "Dù đã nghe thấy giáo viên gọi tên mình nhưng cô ấy vẫn không trả lời.",
+  "options": [
+   "-(으)면 몰라도",
+   "-는 둥 마는 둥 하다",
+   "-더라도",
+   "-고도"
+  ],
+  "optionIds": [
+   "으-면-몰라도",
+   "는-둥-마는-둥-하다",
+   "더라도",
+   "고도"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 157,
+  "patternId": "으-면-몰라도",
+  "clusterTitle": "Concession \"even if / though\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_ko": "양보 \"비록 ~일지라도\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "clusterTitle_vi": "Nhượng bộ \"dù / mặc dù\" — 더라도 / 고도 / 아/어도 / (으)면 몰라도",
+  "sentenceKr": "전문가면 몰라도 초보자가 그 일을 하기는 어려워요.",
+  "sentenceBlankKr": "전문가____ 초보자가 그 일을 하기는 어려워요.",
+  "sentenceEn": "Unless you're an expert, it's really hard for a beginner to do that kind of work.",
+  "sentenceVi": "Trừ khi là chuyên gia, chứ người mới bắt đầu thì thực sự khó làm được việc đó.",
+  "options": [
+   "-(으)면 몰라도",
+   "-다(가) 보면",
+   "-더라도",
+   "-고도"
+  ],
+  "optionIds": [
+   "으-면-몰라도",
+   "다-가-보면",
+   "더라도",
+   "고도"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 158,
+  "patternId": "기에",
+  "clusterTitle": "Reason, formal vs. casual — 기에 / 길래 / 기에는",
+  "clusterTitle_ko": "이유, 격식체 vs 구어체 — 기에 / 길래 / 기에는",
+  "clusterTitle_vi": "Lý do, trang trọng vs thân mật — 기에 / 길래 / 기에는",
+  "sentenceKr": "배움에는 끝이 없기에 꾸준히 배워야 합니다.",
+  "sentenceBlankKr": "배움에는 끝이 없____ 꾸준히 배워야 합니다.",
+  "sentenceEn": "Because learning has no end, one must keep learning steadily.",
+  "sentenceVi": "Vì việc học không có điểm dừng nên phải học tập không ngừng.",
+  "options": [
+   "-길래",
+   "-기에는",
+   "-아/어다가",
+   "-기에"
+  ],
+  "optionIds": [
+   "길래",
+   "기에는",
+   "아-어다가",
+   "기에"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 159,
+  "patternId": "길래",
+  "clusterTitle": "Reason, formal vs. casual — 기에 / 길래 / 기에는",
+  "clusterTitle_ko": "이유, 격식체 vs 구어체 — 기에 / 길래 / 기에는",
+  "clusterTitle_vi": "Lý do, trang trọng vs thân mật — 기에 / 길래 / 기에는",
+  "sentenceKr": "세일을 하길래 충동적으로 사 버렸어요.",
+  "sentenceBlankKr": "세일을 하____ 충동적으로 사 버렸어요.",
+  "sentenceEn": "I saw there was a sale going on, so I impulsively bought it.",
+  "sentenceVi": "Thấy đang giảm giá nên tôi đã mua theo cảm hứng.",
+  "options": [
+   "-기에는",
+   "-길래",
+   "-에다가",
+   "-기에"
+  ],
+  "optionIds": [
+   "기에는",
+   "길래",
+   "에다가",
+   "기에"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 160,
+  "patternId": "기에는",
+  "clusterTitle": "Reason, formal vs. casual — 기에 / 길래 / 기에는",
+  "clusterTitle_ko": "이유, 격식체 vs 구어체 — 기에 / 길래 / 기에는",
+  "clusterTitle_vi": "Lý do, trang trọng vs thân mật — 기에 / 길래 / 기에는",
+  "sentenceKr": "이 방은 혼자 쓰기에는 너무 넓어요.",
+  "sentenceBlankKr": "이 방은 혼자 쓰____ 너무 넓어요.",
+  "sentenceEn": "This room is too big for one person to use alone.",
+  "sentenceVi": "Căn phòng này quá rộng để một người dùng một mình.",
+  "options": [
+   "-기에",
+   "-기에는",
+   "-길래",
+   "-는/ㄴ다는 것이"
+  ],
+  "optionIds": [
+   "기에",
+   "기에는",
+   "길래",
+   "는-ㄴ다는-것이"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 161,
+  "patternId": "기는요",
+  "clusterTitle": "Same \"기는\" start, different job — 기는요 vs 기는커녕",
+  "clusterTitle_ko": "같은 \"기는\"으로 시작하지만 역할이 다름 — 기는요 vs 기는커녕",
+  "clusterTitle_vi": "Cùng bắt đầu bằng \"기는\" nhưng vai trò khác nhau — 기는요 vs 기는커녕",
+  "sentenceKr": "A: 요즘 바쁘시죠? B: 바쁘기는요. 완전 한가해요.",
+  "sentenceBlankKr": "A: 요즘 바쁘시죠? B: 바쁘____. 완전 한가해요.",
+  "sentenceEn": "A: You must be busy these days, right? B: Busy? Not at all — I'm totally free.",
+  "sentenceVi": "A: Dạo này chắc bạn bận lắm nhỉ? B: Bận gì đâu. Rảnh ơi là rảnh.",
+  "options": [
+   "-고(요)",
+   "-아/어 대다",
+   "-기는커녕",
+   "-기는요"
+  ],
+  "optionIds": [
+   "고-요",
+   "아-어-대다",
+   "기는커녕",
+   "기는요"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 162,
+  "patternId": "기는커녕",
+  "clusterTitle": "Same \"기는\" start, different job — 기는요 vs 기는커녕",
+  "clusterTitle_ko": "같은 \"기는\"으로 시작하지만 역할이 다름 — 기는요 vs 기는커녕",
+  "clusterTitle_vi": "Cùng bắt đầu bằng \"기는\" nhưng vai trò khác nhau — 기는요 vs 기는커녕",
+  "sentenceKr": "사과하기는커녕 오히려 저한테 잘못을 떠넘기더라고요.",
+  "sentenceBlankKr": "사과하____ 오히려 저한테 잘못을 떠넘기더라고요.",
+  "sentenceEn": "Far from apologizing, he actually tried to pin the blame on me instead.",
+  "sentenceVi": "Chẳng những không xin lỗi mà anh ta còn đổ lỗi cho tôi.",
+  "options": [
+   "-기는커녕",
+   "-곤 하다",
+   "-던데요",
+   "-기는요"
+  ],
+  "optionIds": [
+   "기는커녕",
+   "곤-하다",
+   "던데요",
+   "기는요"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 163,
+  "patternId": "기-나름이다-n-나름이다",
+  "clusterTitle": "\"Depends on\" — 기 나름이다 vs 에 따라(서)",
+  "clusterTitle_ko": "\"~하기 나름\" — 기 나름이다 vs 에 따라(서)",
+  "clusterTitle_vi": "\"Tùy thuộc vào\" — 기 나름이다 vs 에 따라(서)",
+  "sentenceKr": "행복은 생각하기 나름이에요.",
+  "sentenceBlankKr": "행복은 생각하기 ____.",
+  "sentenceEn": "Happiness is all about how you think about it.",
+  "sentenceVi": "Hạnh phúc là tùy vào cách bạn suy nghĩ về nó.",
+  "options": [
+   "-거니와",
+   "-에 따라(서)",
+   "간접화법 축약형 (Abbreviated Indirect Speech)",
+   "-기 나름이다 / N 나름이다"
+  ],
+  "optionIds": [
+   "거니와",
+   "에-따라-서",
+   "간접화법-축약형-abbreviated-indirect-speech",
+   "기-나름이다-n-나름이다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 164,
+  "patternId": "에-따라-서",
+  "clusterTitle": "\"Depends on\" — 기 나름이다 vs 에 따라(서)",
+  "clusterTitle_ko": "\"~하기 나름\" — 기 나름이다 vs 에 따라(서)",
+  "clusterTitle_vi": "\"Tùy thuộc vào\" — 기 나름이다 vs 에 따라(서)",
+  "sentenceKr": "누가 하는지에 따라서 달라요.",
+  "sentenceBlankKr": "누가 하는지____ 달라요.",
+  "sentenceEn": "It depends on who does it.",
+  "sentenceVi": "Điều đó tùy thuộc vào ai làm việc đó.",
+  "options": [
+   "-기 나름이다 / N 나름이다",
+   "-는/은 줄 모르다(알다)",
+   "-에다가",
+   "-에 따라(서)"
+  ],
+  "optionIds": [
+   "기-나름이다-n-나름이다",
+   "는-은-줄-모르다-알다",
+   "에다가",
+   "에-따라-서"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 165,
+  "patternId": "기-마련이다",
+  "clusterTitle": "Near-synonyms \"bound to be\" — 기 마련이다 vs 는/은 법이다",
+  "clusterTitle_ko": "유의어 \"당연히 ~게 마련이다\" — 기 마련이다 vs 는/은 법이다",
+  "clusterTitle_vi": "Gần nghĩa \"tất yếu là\" — 기 마련이다 vs 는/은 법이다",
+  "sentenceKr": "사람은 나이가 들면 누구나 늙기 마련이에요.",
+  "sentenceBlankKr": "사람은 나이가 들면 누구나 늙기 ____.",
+  "sentenceEn": "Everyone is bound to grow old as they age — that's just natural.",
+  "sentenceVi": "Ai rồi cũng sẽ già đi theo tuổi tác — đó là điều tự nhiên.",
+  "options": [
+   "-다(가) 보면",
+   "-는/은 법이다",
+   "-는 데다가",
+   "-기 마련이다"
+  ],
+  "optionIds": [
+   "다-가-보면",
+   "는-은-법이다",
+   "는-데다가",
+   "기-마련이다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 166,
+  "patternId": "는-은-법이다",
+  "clusterTitle": "Near-synonyms \"bound to be\" — 기 마련이다 vs 는/은 법이다",
+  "clusterTitle_ko": "유의어 \"당연히 ~게 마련이다\" — 기 마련이다 vs 는/은 법이다",
+  "clusterTitle_vi": "Gần nghĩa \"tất yếu là\" — 기 마련이다 vs 는/은 법이다",
+  "sentenceKr": "기대가 없으면 실망도 없는 법이에요.",
+  "sentenceBlankKr": "기대가 없으면 실망도 없____.",
+  "sentenceEn": "If there's no expectation, naturally there's no disappointment either.",
+  "sentenceVi": "Nếu không kỳ vọng thì tự nhiên cũng sẽ không có thất vọng.",
+  "options": [
+   "-기 마련이다",
+   "-는/은 법이다",
+   "(으)련만 ((으)련마는)",
+   "같아선 (같아서는)"
+  ],
+  "optionIds": [
+   "기-마련이다",
+   "는-은-법이다",
+   "으-련만-으-련마는",
+   "같아선-같아서는"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 167,
+  "patternId": "ㄴ-는다기보다-는",
+  "clusterTitle": "\"Rather than X...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "clusterTitle_ko": "\"X라기보다는...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "clusterTitle_vi": "\"Thay vì X...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "sentenceKr": "다이어트를 위해 먹는다기보다는 건강을 위해 아침을 먹어요.",
+  "sentenceBlankKr": "다이어트를 위해 먹는____ 건강을 위해 아침을 먹어요.",
+  "sentenceEn": "I wouldn't say I eat breakfast for the diet — it's more that I eat it for my health.",
+  "sentenceVi": "Không hẳn là tôi ăn sáng để ăn kiêng — mà đúng hơn là tôi ăn vì sức khỏe.",
+  "options": [
+   "-느니 (차라리)",
+   "-ㄴ/는다기보다(는)",
+   "-거니와",
+   "-(으)면 몰라도"
+  ],
+  "optionIds": [
+   "느니-차라리",
+   "ㄴ-는다기보다-는",
+   "거니와",
+   "으-면-몰라도"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 168,
+  "patternId": "느니-차라리",
+  "clusterTitle": "\"Rather than X...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "clusterTitle_ko": "\"X라기보다는...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "clusterTitle_vi": "\"Thay vì X...\" — ㄴ/는다기보다(는) vs 느니 (차라리)",
+  "sentenceKr": "팝콘을 먹느니 뻥튀기를 먹겟어.",
+  "sentenceBlankKr": "팝콘을 먹____ 뻥튀기를 먹겟어.",
+  "sentenceEn": "Rather than eat popcorn, I'd eat rice puffs.",
+  "sentenceVi": "Thà ăn bỏng gạo còn hơn ăn bắp rang.",
+  "options": [
+   "-느니 (차라리)",
+   "-(으)ㄹ 듯하다",
+   "-ㄴ/는다기보다(는)",
+   "-던데요"
+  ],
+  "optionIds": [
+   "느니-차라리",
+   "으-ㄹ-듯하다",
+   "ㄴ-는다기보다-는",
+   "던데요"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 169,
+  "patternId": "는-데",
+  "clusterTitle": "Look-alike \"다/데\" endings — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_ko": "비슷해 보이는 \"다/데\" 어미 — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_vi": "Các đuôi \"다/데\" trông giống nhau — 는 데 / 는 데다가 / 에다가",
+  "sentenceKr": "이 문제를 해결하는 데 시간이 좀 걸릴 것 같아요.",
+  "sentenceBlankKr": "이 문제를 해결하____ 시간이 좀 걸릴 것 같아요.",
+  "sentenceEn": "It seems like it'll take some time to solve this problem.",
+  "sentenceVi": "Có vẻ sẽ mất chút thời gian để giải quyết vấn đề này.",
+  "options": [
+   "-에다가",
+   "-건만 (-건마는)",
+   "-는 데",
+   "-는 데다가"
+  ],
+  "optionIds": [
+   "에다가",
+   "건만-건마는",
+   "는-데",
+   "는-데다가"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 170,
+  "patternId": "는-데다가",
+  "clusterTitle": "Look-alike \"다/데\" endings — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_ko": "비슷해 보이는 \"다/데\" 어미 — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_vi": "Các đuôi \"다/데\" trông giống nhau — 는 데 / 는 데다가 / 에다가",
+  "sentenceKr": "오늘은 비가 오는 데다가 바람까지 불어서 제대로 걸을 수가 없다.",
+  "sentenceBlankKr": "오늘은 비가 오는 ____ 바람까지 불어서 제대로 걸을 수가 없다.",
+  "sentenceEn": "Today it's not only raining, but the wind is blowing too, so I can barely walk.",
+  "sentenceVi": "Hôm nay không chỉ mưa mà gió còn thổi mạnh nên tôi khó lòng đi được.",
+  "options": [
+   "-는 길에",
+   "-에다가",
+   "-는 데다가",
+   "-는 데"
+  ],
+  "optionIds": [
+   "는-길에",
+   "에다가",
+   "는-데다가",
+   "는-데"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 171,
+  "patternId": "에다가",
+  "clusterTitle": "Look-alike \"다/데\" endings — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_ko": "비슷해 보이는 \"다/데\" 어미 — 는 데 / 는 데다가 / 에다가",
+  "clusterTitle_vi": "Các đuôi \"다/데\" trông giống nhau — 는 데 / 는 데다가 / 에다가",
+  "sentenceKr": "여기에다가 성함과 나이를 써주세요.",
+  "sentenceBlankKr": "여기____ 성함과 나이를 써주세요.",
+  "sentenceEn": "Please write your name and age here.",
+  "sentenceVi": "Hãy viết họ tên và tuổi vào đây.",
+  "options": [
+   "-에다가",
+   "-는 데다가",
+   "-는 데",
+   "-도록"
+  ],
+  "optionIds": [
+   "에다가",
+   "는-데다가",
+   "는-데",
+   "도록"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 172,
+  "patternId": "는-반면-에",
+  "clusterTitle": "\"On the other hand\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "clusterTitle_ko": "\"반면에\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "clusterTitle_vi": "\"Mặt khác\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "sentenceKr": "몇몇은 태닝을 하기 위해 가는 반면, 다른 몇몇은 단순히 경치를 보러 가요.",
+  "sentenceBlankKr": "몇몇은 태닝을 하기 위해 가____, 다른 몇몇은 단순히 경치를 보러 가요.",
+  "sentenceEn": "While some go to tan, others simply go to see the scenery.",
+  "sentenceVi": "Trong khi một số người đi để tắm nắng, một số khác chỉ đơn giản là đi ngắm cảnh.",
+  "options": [
+   "-는 바람에",
+   "-는가, 은/ㄴ가 하면",
+   "-기 마련이다",
+   "-는 반면(에)"
+  ],
+  "optionIds": [
+   "는-바람에",
+   "는가-은-ㄴ가-하면",
+   "기-마련이다",
+   "는-반면-에"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 173,
+  "patternId": "는가-은-ㄴ가-하면",
+  "clusterTitle": "\"On the other hand\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "clusterTitle_ko": "\"반면에\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "clusterTitle_vi": "\"Mặt khác\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "sentenceKr": "값이 싼 물건이 있는가 하면 터무니없이 비싼 물건도 있다.",
+  "sentenceBlankKr": "값이 싼 물건이 있는____ 터무니없이 비싼 물건도 있다.",
+  "sentenceEn": "There are items that are cheap, while there are also ones that are absurdly expensive.",
+  "sentenceVi": "Có những món hàng rẻ, nhưng cũng có những món đắt đến vô lý.",
+  "options": [
+   "-는 반면(에)",
+   "-(으)ㄹ 수밖에 없다",
+   "-기 나름이다 / N 나름이다",
+   "-는가, 은/ㄴ가 하면"
+  ],
+  "optionIds": [
+   "는-반면-에",
+   "으-ㄹ-수밖에-없다",
+   "기-나름이다-n-나름이다",
+   "는가-은-ㄴ가-하면"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 174,
+  "patternId": "는-은-줄-모르다-알다",
+  "clusterTitle": "\"Know / realize that\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_ko": "\"~인 줄 알다/모르다\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_vi": "\"Biết / nhận ra rằng\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "sentenceKr": "영미 씨가 한국어를 이렇게 잘하는 줄 몰랐어요.",
+  "sentenceBlankKr": "영미 씨가 한국어를 이렇게 잘하는 ____어요.",
+  "sentenceEn": "I didn't realize Yeong-mi was this good at Korean.",
+  "sentenceVi": "Tôi không ngờ Yeong-mi lại giỏi tiếng Hàn đến vậy.",
+  "options": [
+   "-을/ㄹ 줄만 알았지",
+   "-는지/은지/ㄴ지",
+   "-는/은 줄 모르다(알다)",
+   "-다(가) 보면"
+  ],
+  "optionIds": [
+   "을-ㄹ-줄만-알았지",
+   "는지-은지-ㄴ지",
+   "는-은-줄-모르다-알다",
+   "다-가-보면"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 175,
+  "patternId": "는지-은지-ㄴ지",
+  "clusterTitle": "\"Know / realize that\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_ko": "\"~인 줄 알다/모르다\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_vi": "\"Biết / nhận ra rằng\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "sentenceKr": "왜 그런지 이해가 안 돼요.",
+  "sentenceBlankKr": "왜 그____ 이해가 안 돼요.",
+  "sentenceEn": "I can't understand why that is.",
+  "sentenceVi": "Tôi không thể hiểu tại sao lại như vậy.",
+  "options": [
+   "-을/ㄹ 줄만 알았지",
+   "-는/은 줄 모르다(알다)",
+   "-이야말로",
+   "-는지/은지/ㄴ지"
+  ],
+  "optionIds": [
+   "을-ㄹ-줄만-알았지",
+   "는-은-줄-모르다-알다",
+   "이야말로",
+   "는지-은지-ㄴ지"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 176,
+  "patternId": "을-ㄹ-줄만-알았지",
+  "clusterTitle": "\"Know / realize that\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_ko": "\"~인 줄 알다/모르다\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_vi": "\"Biết / nhận ra rằng\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "sentenceKr": "쉬울 줄만 알았지, 막상 해 보니 정말 어렵네요.",
+  "sentenceBlankKr": "쉬____, 막상 해 보니 정말 어렵네요.",
+  "sentenceEn": "I only thought it would be easy — but now that I'm actually doing it, it's really hard.",
+  "sentenceVi": "Tôi cứ nghĩ nó sẽ dễ thôi — nhưng khi thực sự bắt tay vào làm mới thấy thật khó.",
+  "options": [
+   "-는/은 줄 모르다(알다)",
+   "-는지/은지/ㄴ지",
+   "-(으)로서/(으)로써",
+   "-을/ㄹ 줄만 알았지"
+  ],
+  "optionIds": [
+   "는-은-줄-모르다-알다",
+   "는지-은지-ㄴ지",
+   "으-로서-으-로써",
+   "을-ㄹ-줄만-알았지"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 177,
+  "patternId": "만-못하다",
+  "clusterTitle": "만 못하다 vs 만 하다",
+  "clusterTitle_ko": "만 못하다 vs 만 하다",
+  "clusterTitle_vi": "만 못하다 vs 만 하다",
+  "sentenceKr": "전망은 이 방만 못하지만 밝고 깨끗해요.",
+  "sentenceBlankKr": "전망은 이 방____ 밝고 깨끗해요.",
+  "sentenceEn": "The view isn't as good as this room's, but it's bright and clean.",
+  "sentenceVi": "Tầm nhìn không bằng phòng này, nhưng sáng sủa và sạch sẽ.",
+  "options": [
+   "-고 나서",
+   "-만 하다",
+   "-다(가) 보면",
+   "-만 못하다"
+  ],
+  "optionIds": [
+   "고-나서",
+   "만-하다",
+   "다-가-보면",
+   "만-못하다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 178,
+  "patternId": "만-하다",
+  "clusterTitle": "만 못하다 vs 만 하다",
+  "clusterTitle_ko": "만 못하다 vs 만 하다",
+  "clusterTitle_vi": "만 못하다 vs 만 하다",
+  "sentenceKr": "저 개는 정말 크네요. - 네, 정말 개가 송아지만 하네요.",
+  "sentenceBlankKr": "저 개는 정말 크네요. - 네, 정말 개가 송아지____.",
+  "sentenceEn": "That dog is really big. - Yeah, it's really about the size of a calf.",
+  "sentenceVi": "Con chó đó to thật đấy. - Ừ, đúng là to bằng cả con bê.",
+  "options": [
+   "-만 못하다",
+   "-는 편이다",
+   "-만 하다",
+   "-아/어다가"
+  ],
+  "optionIds": [
+   "만-못하다",
+   "는-편이다",
+   "만-하다",
+   "아-어다가"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 179,
+  "patternId": "아-어-대다",
+  "clusterTitle": "Repetitive/habitual action — 아/어 대다 vs 곤 하다",
+  "clusterTitle_ko": "반복/습관적 행동 — 아/어 대다 vs 곤 하다",
+  "clusterTitle_vi": "Hành động lặp lại/theo thói quen — 아/어 대다 vs 곤 하다",
+  "sentenceKr": "밖에서 고양이가 밤마다 울어 대서 잠을 자기 힘들어요.",
+  "sentenceBlankKr": "밖에서 고양이가 밤마다 울____서 잠을 자기 힘들어요.",
+  "sentenceEn": "A cat outside keeps yowling every night, so it's hard to sleep.",
+  "sentenceVi": "Con mèo ngoài kia cứ kêu suốt đêm nên khó ngủ quá.",
+  "options": [
+   "-았/었/였더라면",
+   "-(으)ㄹ 정도로",
+   "-아/어 대다",
+   "-곤 하다"
+  ],
+  "optionIds": [
+   "았-었-였더라면",
+   "으-ㄹ-정도로",
+   "아-어-대다",
+   "곤-하다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 180,
+  "patternId": "곤-하다",
+  "clusterTitle": "Repetitive/habitual action — 아/어 대다 vs 곤 하다",
+  "clusterTitle_ko": "반복/습관적 행동 — 아/어 대다 vs 곤 하다",
+  "clusterTitle_vi": "Hành động lặp lại/theo thói quen — 아/어 대다 vs 곤 하다",
+  "sentenceKr": "나는 시간이 나면 공원을 산책하곤 해요.",
+  "sentenceBlankKr": "나는 시간이 나면 공원을 산책____.",
+  "sentenceEn": "When I have free time, I often take a walk in the park.",
+  "sentenceVi": "Khi rảnh, tôi thường hay đi dạo trong công viên.",
+  "options": [
+   "-곤 하다",
+   "-는/ㄴ다는 것이",
+   "-아/어 대다",
+   "-는 반면(에)"
+  ],
+  "optionIds": [
+   "곤-하다",
+   "는-ㄴ다는-것이",
+   "아-어-대다",
+   "는-반면-에"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 181,
+  "patternId": "았-었-였더라면",
+  "clusterTitle": "Counterfactual wish/regret — 았/었/였더라면 vs 았/었으면 하다",
+  "clusterTitle_ko": "반사실적 소망/후회 — 았/었/였더라면 vs 았/었으면 하다",
+  "clusterTitle_vi": "Ước muốn/hối tiếc trái với thực tế — 았/었/였더라면 vs 았/었으면 하다",
+  "sentenceKr": "시험 준비를 열심히 했더라면 합격했을 텐데.",
+  "sentenceBlankKr": "시험 준비를 열심히 했____ 합격했을 텐데.",
+  "sentenceEn": "If I had prepared hard for the exam, I would have passed.",
+  "sentenceVi": "Nếu tôi đã chuẩn bị kỹ cho kỳ thi thì đã đỗ rồi.",
+  "options": [
+   "-았/었으면 하다",
+   "-았/었/였더라면",
+   "-게",
+   "-는지/은지/ㄴ지"
+  ],
+  "optionIds": [
+   "았-었으면-하다",
+   "았-었-였더라면",
+   "게",
+   "는지-은지-ㄴ지"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 182,
+  "patternId": "았-었으면-하다",
+  "clusterTitle": "Counterfactual wish/regret — 았/었/였더라면 vs 았/었으면 하다",
+  "clusterTitle_ko": "반사실적 소망/후회 — 았/었/였더라면 vs 았/었으면 하다",
+  "clusterTitle_vi": "Ước muốn/hối tiếc trái với thực tế — 았/었/였더라면 vs 았/었으면 하다",
+  "sentenceKr": "이번 방학에는 가족과 함께 여행을 갔으면 해요.",
+  "sentenceBlankKr": "이번 방학에는 가족과 함께 여행을 ____.",
+  "sentenceEn": "I hope that this vacation, I can go traveling together with my family.",
+  "sentenceVi": "Tôi mong rằng kỳ nghỉ này tôi có thể đi du lịch cùng gia đình.",
+  "options": [
+   "-기 일쑤이다",
+   "-고 말다",
+   "-았/었/였더라면",
+   "-았/었으면 하다"
+  ],
+  "optionIds": [
+   "기-일쑤이다",
+   "고-말다",
+   "았-었-였더라면",
+   "았-었으면-하다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 183,
+  "patternId": "으라고-라고",
+  "clusterTitle": "Full form vs. contracted form — 으라고/라고 vs 간접화법 축약형",
+  "clusterTitle_ko": "완전형 vs 축약형 — 으라고/라고 vs 간접화법 축약형",
+  "clusterTitle_vi": "Dạng đầy đủ vs dạng rút gọn — 으라고/라고 vs 간접화법 축약형",
+  "sentenceKr": "선생님이 내일까지 제출하라고 하셨어요.",
+  "sentenceBlankKr": "선생님이 내일까지 제출하____ 하셨어요.",
+  "sentenceEn": "The teacher said to submit it by tomorrow.",
+  "sentenceVi": "Giáo viên bảo phải nộp trước ngày mai.",
+  "options": [
+   "-(으)ㄹ걸(요)",
+   "간접화법 축약형 (Abbreviated Indirect Speech)",
+   "-으라고/라고",
+   "-을락 말락 하다"
+  ],
+  "optionIds": [
+   "으-ㄹ걸-요",
+   "간접화법-축약형-abbreviated-indirect-speech",
+   "으라고-라고",
+   "을락-말락-하다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 184,
+  "patternId": "간접화법-축약형-abbreviated-indirect-speech",
+  "clusterTitle": "Full form vs. contracted form — 으라고/라고 vs 간접화법 축약형",
+  "clusterTitle_ko": "완전형 vs 축약형 — 으라고/라고 vs 간접화법 축약형",
+  "clusterTitle_vi": "Dạng đầy đủ vs dạng rút gọn — 으라고/라고 vs 간접화법 축약형",
+  "sentenceKr": "음식이 싸고 맛있대요.",
+  "sentenceBlankKr": "음식이 싸고 맛있____.",
+  "sentenceEn": "They say the food is cheap and delicious. (← 맛있다고 해요)",
+  "sentenceVi": "Nghe nói đồ ăn vừa rẻ vừa ngon. (← 맛있다고 해요)",
+  "options": [
+   "-기에",
+   "-으라고/라고",
+   "-고 나서",
+   "간접화법 축약형 (Abbreviated Indirect Speech)"
+  ],
+  "optionIds": [
+   "기에",
+   "으라고-라고",
+   "고-나서",
+   "간접화법-축약형-abbreviated-indirect-speech"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 185,
+  "patternId": "이자",
+  "clusterTitle": "\"And also / while also\" — 이자 vs (으)면서",
+  "clusterTitle_ko": "\"~이면서 / ~이자\" — 이자 vs (으)면서",
+  "clusterTitle_vi": "\"Vừa...vừa...\" — 이자 vs (으)면서",
+  "sentenceKr": "아이유는 가수이자 배우로 많은 사람들에게 사랑 받고 있다.",
+  "sentenceBlankKr": "아이유는 가수____ 배우로 많은 사람들에게 사랑 받고 있다.",
+  "sentenceEn": "IU is loved by many people as both a singer and an actress.",
+  "sentenceVi": "IU được nhiều người yêu mến với vai trò vừa là ca sĩ vừa là diễn viên.",
+  "options": [
+   "-느니 (차라리)",
+   "-이자",
+   "-는, 은/ㄴ 모양이다",
+   "-(으)면서"
+  ],
+  "optionIds": [
+   "느니-차라리",
+   "이자",
+   "는-은-ㄴ-모양이다",
+   "으-면서"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 186,
+  "patternId": "으-면서",
+  "clusterTitle": "\"And also / while also\" — 이자 vs (으)면서",
+  "clusterTitle_ko": "\"~이면서 / ~이자\" — 이자 vs (으)면서",
+  "clusterTitle_vi": "\"Vừa...vừa...\" — 이자 vs (으)면서",
+  "sentenceKr": "저는 음악을 들으면서 공부를 해요.",
+  "sentenceBlankKr": "저는 음악을 들____ 공부를 해요.",
+  "sentenceEn": "I study while listening to music.",
+  "sentenceVi": "Tôi vừa nghe nhạc vừa học bài.",
+  "options": [
+   "-는 대로",
+   "-마저(도)",
+   "-이자",
+   "-(으)면서"
+  ],
+  "optionIds": [
+   "는-대로",
+   "마저-도",
+   "이자",
+   "으-면서"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 187,
+  "patternId": "거든-요",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "시간이 있거든 저 좀 도와주세요.",
+  "sentenceBlankKr": "시간이 있____ 저 좀 도와주세요.",
+  "sentenceEn": "If you have time, please help me out.",
+  "sentenceVi": "Nếu có thời gian thì hãy giúp tôi với.",
+  "options": [
+   "-거든(요)",
+   "-는 탓에 / 탓이다",
+   "-는 바람에",
+   "-느니 (차라리)"
+  ],
+  "optionIds": [
+   "거든-요",
+   "는-탓에-탓이다",
+   "는-바람에",
+   "느니-차라리"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 188,
+  "patternId": "는-대로",
+  "clusterTitle": "\"As soon as / after\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_ko": "\"~하자마자 / ~한 후\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_vi": "\"Ngay khi / sau khi\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "sentenceKr": "요리책에 나와 있는 대로 순서대로 따라 했어요.",
+  "sentenceBlankKr": "요리책에 나와 있____ 순서대로 따라 했어요.",
+  "sentenceEn": "I followed along exactly in the order shown in the cookbook.",
+  "sentenceVi": "Tôi đã làm theo đúng thứ tự được ghi trong sách nấu ăn.",
+  "options": [
+   "-자마자",
+   "-기가 무섭게",
+   "-는 대로",
+   "-고자 (하다)"
+  ],
+  "optionIds": [
+   "자마자",
+   "기가-무섭게",
+   "는-대로",
+   "고자-하다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 189,
+  "patternId": "더니",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "아까는 울더니 지금은 잘 웃네요.",
+  "sentenceBlankKr": "아까는 울____ 지금은 잘 웃네요.",
+  "sentenceEn": "A little while ago they were crying, but now they're laughing happily.",
+  "sentenceVi": "Lúc nãy còn khóc, mà giờ đã cười vui vẻ rồi.",
+  "options": [
+   "-던",
+   "-더니",
+   "-을/ㄹ 줄만 알았지",
+   "-던데요"
+  ],
+  "optionIds": [
+   "던",
+   "더니",
+   "을-ㄹ-줄만-알았지",
+   "던데요"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 190,
+  "patternId": "던",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "그 사람이 어디 사람이던가?",
+  "sentenceBlankKr": "그 사람이 어디 사람이____?",
+  "sentenceEn": "Where was that person from again?",
+  "sentenceVi": "Người đó là người ở đâu ấy nhỉ?",
+  "options": [
+   "-거나",
+   "-더라고(요)",
+   "-던데요",
+   "-던"
+  ],
+  "optionIds": [
+   "거나",
+   "더라고-요",
+   "던데요",
+   "던"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 191,
+  "patternId": "다시피-하다",
+  "clusterTitle": "\"Almost / borderline\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_ko": "\"거의 / 경계선\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "clusterTitle_vi": "\"Gần như / ở lằn ranh\" — (으)ㄹ 뻔하다 / (으)락 말락 하다 / 는 둥 마는 둥 하다 / 다시피 (하다)",
+  "sentenceKr": "너도 알다시피 난 정치에 관심이 없어.",
+  "sentenceBlankKr": "너도 알____ 난 정치에 관심이 없어.",
+  "sentenceEn": "As you know, I have no interest in politics.",
+  "sentenceVi": "Như bạn đã biết, tôi không quan tâm đến chính trị.",
+  "options": [
+   "-다시피 (하다)",
+   "-을락 말락 하다",
+   "-만 하다",
+   "-을/ㄹ 뻔하다"
+  ],
+  "optionIds": [
+   "다시피-하다",
+   "을락-말락-하다",
+   "만-하다",
+   "을-ㄹ-뻔하다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 192,
+  "patternId": "게",
+  "clusterTitle": "\"So that\" — 게 vs 도록",
+  "clusterTitle_ko": "\"~하도록/게\" — 게 vs 도록",
+  "clusterTitle_vi": "\"Để cho / sao cho\" — 게 vs 도록",
+  "sentenceKr": "아이가 알아듣게 천천히 말해 주세요.",
+  "sentenceBlankKr": "아이가 알아듣____ 천천히 말해 주세요.",
+  "sentenceEn": "Please speak slowly so the child can understand.",
+  "sentenceVi": "Hãy nói chậm để đứa trẻ có thể hiểu được.",
+  "options": [
+   "간접화법 축약형 (Abbreviated Indirect Speech)",
+   "-게",
+   "-도록",
+   "-는/ㄴ, -다 싶다"
+  ],
+  "optionIds": [
+   "간접화법-축약형-abbreviated-indirect-speech",
+   "게",
+   "도록",
+   "는-ㄴ-다-싶다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 193,
+  "patternId": "도록",
+  "clusterTitle": "\"So that\" — 게 vs 도록",
+  "clusterTitle_ko": "\"~하도록/게\" — 게 vs 도록",
+  "clusterTitle_vi": "\"Để cho / sao cho\" — 게 vs 도록",
+  "sentenceKr": "모두가 이해할 수 있도록 천천히 설명해 주세요.",
+  "sentenceBlankKr": "모두가 이해할 수 있____ 천천히 설명해 주세요.",
+  "sentenceEn": "Please explain slowly so that everyone can understand.",
+  "sentenceVi": "Hãy giải thích chậm rãi để mọi người có thể hiểu được.",
+  "options": [
+   "-도록",
+   "-게",
+   "-에다가",
+   "-는 데다가"
+  ],
+  "optionIds": [
+   "도록",
+   "게",
+   "에다가",
+   "는-데다가"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 194,
+  "patternId": "는-은-법이다",
+  "clusterTitle": "Near-synonyms \"bound to be\" — 기 마련이다 vs 는/은 법이다",
+  "clusterTitle_ko": "유의어 \"당연히 ~게 마련이다\" — 기 마련이다 vs 는/은 법이다",
+  "clusterTitle_vi": "Gần nghĩa \"tất yếu là\" — 기 마련이다 vs 는/은 법이다",
+  "sentenceKr": "여러 상황을 생각해 보면 전쟁이 일어날 법도 하다.",
+  "sentenceBlankKr": "여러 상황을 생각해 보면 전쟁이 일어날 ____.",
+  "sentenceEn": "Thinking it over, it's plausible that a war could break out.",
+  "sentenceVi": "Nghĩ kỹ lại thì cũng có khả năng chiến tranh sẽ nổ ra.",
+  "options": [
+   "-게",
+   "-(으)려고",
+   "-기 마련이다",
+   "-는/은 법이다"
+  ],
+  "optionIds": [
+   "게",
+   "으-려고",
+   "기-마련이다",
+   "는-은-법이다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 195,
+  "patternId": "는-반면-에",
+  "clusterTitle": "\"On the other hand\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "clusterTitle_ko": "\"반면에\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "clusterTitle_vi": "\"Mặt khác\" — 는 반면(에) vs 는가, 은/ㄴ가 하면",
+  "sentenceKr": "이 지역은 물가가 비싼 데 비해 임금 수준은 낮은 편이다.",
+  "sentenceBlankKr": "이 지역은 물가가 비싼 ____ 임금 수준은 낮은 편이다.",
+  "sentenceEn": "Compared to how expensive the cost of living is in this area, wage levels are relatively low.",
+  "sentenceVi": "So với mức chi phí sinh hoạt đắt đỏ ở khu vực này, mức lương lại tương đối thấp.",
+  "options": [
+   "-고도",
+   "-는 반면(에)",
+   "-는가, 은/ㄴ가 하면",
+   "-는 데"
+  ],
+  "optionIds": [
+   "고도",
+   "는-반면-에",
+   "는가-은-ㄴ가-하면",
+   "는-데"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 196,
+  "patternId": "는지-은지-ㄴ지",
+  "clusterTitle": "\"Know / realize that\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_ko": "\"~인 줄 알다/모르다\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "clusterTitle_vi": "\"Biết / nhận ra rằng\" — 는/은 줄 모르다(알다) vs 는지/은지/ㄴ지 vs (으)ㄹ 줄만 알았지",
+  "sentenceKr": "얼마나 반가운지 눈물이 날 뻔했어요.",
+  "sentenceBlankKr": "얼마나 반가____ 눈물이 날 뻔했어요.",
+  "sentenceEn": "I was so glad to see them that I nearly burst into tears.",
+  "sentenceVi": "Tôi vui mừng đến mức suýt bật khóc.",
+  "options": [
+   "-는/은 줄 모르다(알다)",
+   "-을/ㄹ 줄만 알았지",
+   "-는지/은지/ㄴ지",
+   "-으라고/라고"
+  ],
+  "optionIds": [
+   "는-은-줄-모르다-알다",
+   "을-ㄹ-줄만-알았지",
+   "는지-은지-ㄴ지",
+   "으라고-라고"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 197,
+  "patternId": "거든-요",
+  "clusterTitle": "Cause & reason — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_ko": "원인과 이유 — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "clusterTitle_vi": "Nguyên nhân & lý do — 고 해서 / 느라고 / 는 바람에 / 는 탓에 / 거든(요)",
+  "sentenceKr": "배가 고파요. 아침부터 아무것도 안 먹었거든요.",
+  "sentenceBlankKr": "배가 고파요. 아침부터 아무것도 안 먹었____.",
+  "sentenceEn": "I'm hungry — you see, I haven't eaten anything since this morning.",
+  "sentenceVi": "Tôi đói bụng quá — vì từ sáng đến giờ tôi chưa ăn gì cả.",
+  "options": [
+   "-는 탓에 / 탓이다",
+   "-고 해서",
+   "-아/어도",
+   "-거든(요)"
+  ],
+  "optionIds": [
+   "는-탓에-탓이다",
+   "고-해서",
+   "아-어도",
+   "거든-요"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 198,
+  "patternId": "는-대로",
+  "clusterTitle": "\"As soon as / after\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_ko": "\"~하자마자 / ~한 후\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "clusterTitle_vi": "\"Ngay khi / sau khi\" — 자마자 / 기가 무섭게 / 는 대로 / 고 나서",
+  "sentenceKr": "도착하는 대로 저한테 전화 좀 해 주세요.",
+  "sentenceBlankKr": "도착하____ 저한테 전화 좀 해 주세요.",
+  "sentenceEn": "Please call me as soon as you arrive.",
+  "sentenceVi": "Ngay khi đến nơi thì hãy gọi điện cho tôi nhé.",
+  "options": [
+   "-기가 무섭게",
+   "-자마자",
+   "-는 대로",
+   "-고서야/아/어서야"
+  ],
+  "optionIds": [
+   "기가-무섭게",
+   "자마자",
+   "는-대로",
+   "고서야-아-어서야"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 199,
+  "patternId": "더니",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "그 친구가 매일 운동을 하더니 살이 많이 빠졌어요.",
+  "sentenceBlankKr": "그 친구가 매일 운동을 하____ 살이 많이 빠졌어요.",
+  "sentenceEn": "That friend exercised every day, and as a result they lost a lot of weight.",
+  "sentenceVi": "Người bạn đó tập thể dục mỗi ngày, và kết quả là đã giảm được nhiều cân.",
+  "options": [
+   "-았/었/였더니",
+   "-던",
+   "-더니",
+   "-는 셈 치다 / -ㄴ/는다고 치다"
+  ],
+  "optionIds": [
+   "았-었-였더니",
+   "던",
+   "더니",
+   "는-셈-치다-ㄴ-는다고-치다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 200,
+  "patternId": "던",
+  "clusterTitle": "The \"-더-\" retrospective family — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_ko": "회상의 \"-더-\" 계열 — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "clusterTitle_vi": "Nhóm hồi tưởng \"-더-\" — 더니 / 았/었더니 / 더라고요 / 던 / 던데요",
+  "sentenceKr": "우리가 어디서 승차했던가?",
+  "sentenceBlankKr": "우리가 어디서 승차했____?",
+  "sentenceEn": "Where was it we got on again? (trying to recall)",
+  "sentenceVi": "Chúng ta đã lên xe ở đâu ấy nhỉ? (đang cố nhớ lại)",
+  "options": [
+   "-더라고(요)",
+   "-던",
+   "-(으)면 몰라도",
+   "-았/었/였더니"
+  ],
+  "optionIds": [
+   "더라고-요",
+   "던",
+   "으-면-몰라도",
+   "았-었-였더니"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 201,
+  "patternId": "아무리-기로서니",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "아무리 바쁘기로서니 식사도 건너뛰면 안 되죠.",
+  "sentenceBlankKr": "아무리 바쁘____ 식사도 건너뛰면 안 되죠.",
+  "sentenceEn": "No matter how busy you are, skipping meals entirely is just not okay.",
+  "sentenceVi": "Dù bận đến đâu thì cũng không được bỏ bữa hoàn toàn.",
+  "options": [
+   "-거든(요)",
+   "-아/어도",
+   "-치고(는)",
+   "(아무리) -기로서니"
+  ],
+  "optionIds": [
+   "거든-요",
+   "아-어도",
+   "치고-는",
+   "아무리-기로서니"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 202,
+  "patternId": "아무리-기로서니",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "아무리 화가 나기로서니 그렇게 소리를 지르면 안 되지.",
+  "sentenceBlankKr": "아무리 화가 나____ 그렇게 소리를 지르면 안 되지.",
+  "sentenceEn": "No matter how angry you are, you shouldn't yell like that.",
+  "sentenceVi": "Dù có tức giận đến đâu thì cũng không nên la hét như vậy.",
+  "options": [
+   "(아무리) -기로서니",
+   "-(으)ㄹ 듯하다",
+   "-아/어 대다",
+   "-는 탓에 / 탓이다"
+  ],
+  "optionIds": [
+   "아무리-기로서니",
+   "으-ㄹ-듯하다",
+   "아-어-대다",
+   "는-탓에-탓이다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 203,
+  "patternId": "으-ㄹ-리가-없다",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "등산을 싫어하는 다나카 씨가 산에 갈 리가 없다.",
+  "sentenceBlankKr": "등산을 싫어하는 다나카 씨가 산에 ____.",
+  "sentenceEn": "There's no way Tanaka, who hates hiking, would go to the mountains.",
+  "sentenceVi": "Không đời nào anh Tanaka, người ghét leo núi, lại đi lên núi.",
+  "options": [
+   "-을/ㄹ 뿐이다",
+   "-(으)면서",
+   "같아선 (같아서는)",
+   "-(으)ㄹ 리가 없다"
+  ],
+  "optionIds": [
+   "을-ㄹ-뿐이다",
+   "으-면서",
+   "같아선-같아서는",
+   "으-ㄹ-리가-없다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 204,
+  "patternId": "으-ㄹ-리가-없다",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "그렇게 성실한 사람이 거짓말을 할 리가 없어요.",
+  "sentenceBlankKr": "그렇게 성실한 사람이 거짓말을 ____.",
+  "sentenceEn": "There's no way someone that diligent would tell a lie.",
+  "sentenceVi": "Không đời nào một người chăm chỉ như vậy lại nói dối.",
+  "options": [
+   "-더라고(요)",
+   "-(으)ㄹ 리가 없다",
+   "간접화법 축약형 (Abbreviated Indirect Speech)",
+   "-는걸요, -(으)ㄴ걸요"
+  ],
+  "optionIds": [
+   "더라고-요",
+   "으-ㄹ-리가-없다",
+   "간접화법-축약형-abbreviated-indirect-speech",
+   "는걸요-으-ㄴ걸요"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 205,
+  "patternId": "으-ㄹ-수밖에-없다",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "그렇게 열심히 하는데 성공할 수밖에 없지요.",
+  "sentenceBlankKr": "그렇게 열심히 하는데 ____.",
+  "sentenceEn": "Working that hard, of course they can't help but succeed.",
+  "sentenceVi": "Làm việc chăm chỉ như thế thì đương nhiên không thể không thành công.",
+  "options": [
+   "-고 말다",
+   "-기에",
+   "-(으)ㄹ 듯하다",
+   "-(으)ㄹ 수밖에 없다"
+  ],
+  "optionIds": [
+   "고-말다",
+   "기에",
+   "으-ㄹ-듯하다",
+   "으-ㄹ-수밖에-없다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 206,
+  "patternId": "으-ㄹ-수밖에-없다",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "표가 다 팔려서 다음 공연을 예매할 수밖에 없었어요.",
+  "sentenceBlankKr": "표가 다 팔려서 다음 공연을 ____.",
+  "sentenceEn": "Since the tickets were all sold out, I had no choice but to book the next show.",
+  "sentenceVi": "Vì vé đã bán hết nên tôi không còn cách nào khác ngoài việc đặt suất diễn tiếp theo.",
+  "options": [
+   "-(으)ㄹ 수밖에 없다",
+   "-아/어 있다",
+   "-(으)ㄹ수록",
+   "-기에"
+  ],
+  "optionIds": [
+   "으-ㄹ-수밖에-없다",
+   "아-어-있다",
+   "으-ㄹ수록",
+   "기에"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 207,
+  "patternId": "으-ㄹ-정도로",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "그 영화는 눈물이 날 정도로 슬펐지만 울지 않고 참았다.",
+  "sentenceBlankKr": "그 영화는 눈물이 날 ____ 슬펐지만 울지 않고 참았다.",
+  "sentenceEn": "The movie was sad enough to bring tears, but I held back and didn't cry.",
+  "sentenceVi": "Bộ phim buồn đến mức rơi nước mắt, nhưng tôi đã cố nhịn không khóc.",
+  "options": [
+   "-아/어다가",
+   "-아/어 대다",
+   "-이자",
+   "-(으)ㄹ 정도로"
+  ],
+  "optionIds": [
+   "아-어다가",
+   "아-어-대다",
+   "이자",
+   "으-ㄹ-정도로"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 208,
+  "patternId": "으-ㄹ-정도로",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "손이 떨릴 정도로 긴장이 됐어요.",
+  "sentenceBlankKr": "손이 떨릴 ____ 긴장이 됐어요.",
+  "sentenceEn": "I was so nervous that my hands were trembling.",
+  "sentenceVi": "Tôi hồi hộp đến mức tay run lên.",
+  "options": [
+   "-아/어 보니(까) / -고 보니(까)",
+   "-(으)ㄹ 정도로",
+   "-다시피 (하다)",
+   "-(으)나 마나"
+  ],
+  "optionIds": [
+   "아-어-보니-까-고-보니-까",
+   "으-ㄹ-정도로",
+   "다시피-하다",
+   "으-나-마나"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 209,
+  "patternId": "으-ㄹ걸-요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "미리 예약할걸 그랬어요. 이제 자리가 없네요.",
+  "sentenceBlankKr": "미리 ____. 이제 자리가 없네요.",
+  "sentenceEn": "I should have made a reservation in advance. Now there are no seats left.",
+  "sentenceVi": "Đáng lẽ tôi nên đặt chỗ trước. Giờ thì hết chỗ rồi.",
+  "options": [
+   "-고자 (하다)",
+   "-(으)ㄹ걸(요)",
+   "-는 수가 있다",
+   "-을락 말락 하다"
+  ],
+  "optionIds": [
+   "고자-하다",
+   "으-ㄹ걸-요",
+   "는-수가-있다",
+   "을락-말락-하다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 210,
+  "patternId": "으-ㄹ걸-요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "돈이 있을 때 좀 아껴서 쓸걸 그랬어요.",
+  "sentenceBlankKr": "돈이 있을 때 좀 아껴서 ____.",
+  "sentenceEn": "I should have been more frugal while I had money.",
+  "sentenceVi": "Đáng lẽ lúc có tiền tôi nên tiết kiệm hơn một chút.",
+  "options": [
+   "-(으)리라(고)",
+   "-(으)ㄹ걸(요)",
+   "(아무리) -기로서니",
+   "-에 따라(서)"
+  ],
+  "optionIds": [
+   "으-리라-고",
+   "으-ㄹ걸-요",
+   "아무리-기로서니",
+   "에-따라-서"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 211,
+  "patternId": "으-ㄹ걸-요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "영미 씨는 감기에 걸려서 오늘 학교에 못 올걸요.",
+  "sentenceBlankKr": "영미 씨는 감기에 걸려서 오늘 학교에 ____.",
+  "sentenceEn": "Yeong-mi has a cold, so she probably won't be able to come to school today.",
+  "sentenceVi": "Yeong-mi bị cảm nên chắc hôm nay sẽ không đến trường được đâu.",
+  "options": [
+   "-(으)ㄹ수록",
+   "-던",
+   "-(으)ㄹ걸(요)",
+   "-더라고(요)"
+  ],
+  "optionIds": [
+   "으-ㄹ수록",
+   "던",
+   "으-ㄹ걸-요",
+   "더라고-요"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 212,
+  "patternId": "으-ㄹ걸-요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "지금 출발하면 늦지 않을걸요.",
+  "sentenceBlankKr": "지금 출발하면 늦지 않____.",
+  "sentenceEn": "If you leave now, I bet you won't be late.",
+  "sentenceVi": "Nếu xuất phát bây giờ thì chắc sẽ không muộn đâu.",
+  "options": [
+   "-(으)면서",
+   "-는, 은/ㄴ 모양이다",
+   "-(으)ㄹ걸(요)",
+   "-치고(는)"
+  ],
+  "optionIds": [
+   "으-면서",
+   "는-은-ㄴ-모양이다",
+   "으-ㄹ걸-요",
+   "치고-는"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 213,
+  "patternId": "으-ㄹ수록",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "한국어는 배우면 배울수록 재미있어요.",
+  "sentenceBlankKr": "한국어는 배우면 ____ 재미있어요.",
+  "sentenceEn": "The more you learn Korean, the more interesting it gets.",
+  "sentenceVi": "Tiếng Hàn càng học càng thấy thú vị.",
+  "options": [
+   "-았/었으면 하다",
+   "-는, 은/ㄴ 모양이다",
+   "-을/ㄹ 뻔하다",
+   "-(으)ㄹ수록"
+  ],
+  "optionIds": [
+   "았-었으면-하다",
+   "는-은-ㄴ-모양이다",
+   "을-ㄹ-뻔하다",
+   "으-ㄹ수록"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 214,
+  "patternId": "으-ㄹ수록",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "나이가 들수록 시간이 빨리 가는 것 같아요.",
+  "sentenceBlankKr": "나이가 ____ 시간이 빨리 가는 것 같아요.",
+  "sentenceEn": "The older I get, the faster time seems to pass.",
+  "sentenceVi": "Càng lớn tuổi, thời gian dường như càng trôi nhanh hơn.",
+  "options": [
+   "-고 나서",
+   "-거니와",
+   "-(으)려다가",
+   "-(으)ㄹ수록"
+  ],
+  "optionIds": [
+   "고-나서",
+   "거니와",
+   "으-려다가",
+   "으-ㄹ수록"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 215,
+  "patternId": "으-랴-으-랴",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "애들 돌보랴 집안일 하랴 정신이 없어요.",
+  "sentenceBlankKr": "애들 ____ 정신이 없어요.",
+  "sentenceEn": "What with looking after the kids and keeping up with the housework, I'm completely frazzled.",
+  "sentenceVi": "Vừa trông con vừa làm việc nhà, tôi rối tung cả lên.",
+  "options": [
+   "-만에",
+   "-고말고(요)",
+   "-는 대로",
+   "-(으)랴 -(으)랴"
+  ],
+  "optionIds": [
+   "만에",
+   "고말고-요",
+   "는-대로",
+   "으-랴-으-랴"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 216,
+  "patternId": "으-랴-으-랴",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "손님을 맞으랴 음식을 준비하랴 하루 종일 바빴어요.",
+  "sentenceBlankKr": "손님을 ____ 하루 종일 바빴어요.",
+  "sentenceEn": "What with greeting guests and preparing food, I was busy all day long.",
+  "sentenceVi": "Vừa đón khách vừa chuẩn bị đồ ăn, tôi bận rộn suốt cả ngày.",
+  "options": [
+   "-(으)랴 -(으)랴",
+   "-(으)면 몰라도",
+   "-아/어도",
+   "-기가 무섭게"
+  ],
+  "optionIds": [
+   "으-랴-으-랴",
+   "으-면-몰라도",
+   "아-어도",
+   "기가-무섭게"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 217,
+  "patternId": "으-로서-으-로써",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "동물을 사랑하는 사람으로서 마음이 너무 아프네요.",
+  "sentenceBlankKr": "동물을 사랑하는 사람____ 마음이 너무 아프네요.",
+  "sentenceEn": "As a person who loves animals, my heart really aches.",
+  "sentenceVi": "Là một người yêu động vật, trái tim tôi thực sự đau nhói.",
+  "options": [
+   "-더라고(요)",
+   "-(으)로서/(으)로써",
+   "-는 감이 있다",
+   "-(으)려고"
+  ],
+  "optionIds": [
+   "더라고-요",
+   "으-로서-으-로써",
+   "는-감이-있다",
+   "으-려고"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 218,
+  "patternId": "으-로서-으-로써",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "저는 그 사건의 검사로서 재판을 전담하기로 했습니다.",
+  "sentenceBlankKr": "저는 그 사건의 검사____ 재판을 전담하기로 했습니다.",
+  "sentenceEn": "As the prosecutor for that case, I decided to take full charge of the trial.",
+  "sentenceVi": "Với tư cách là công tố viên của vụ án đó, tôi đã quyết định phụ trách toàn bộ phiên tòa.",
+  "options": [
+   "-(으)로서/(으)로써",
+   "-을/ㄹ 뿐이다",
+   "-는 감이 있다",
+   "-는/ㄴ다는 것이"
+  ],
+  "optionIds": [
+   "으-로서-으-로써",
+   "을-ㄹ-뿐이다",
+   "는-감이-있다",
+   "는-ㄴ다는-것이"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 219,
+  "patternId": "으-로서-으-로써",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "낙엽으로써 목면을 만들었다.",
+  "sentenceBlankKr": "낙엽____ 목면을 만들었다.",
+  "sentenceEn": "They made a mask out of fallen leaves.",
+  "sentenceVi": "Họ đã làm mặt nạ bằng lá rụng.",
+  "options": [
+   "-는 셈 치다 / -ㄴ/는다고 치다",
+   "-(으)로서/(으)로써",
+   "-거나",
+   "-기 나름이다 / N 나름이다"
+  ],
+  "optionIds": [
+   "는-셈-치다-ㄴ-는다고-치다",
+   "으-로서-으-로써",
+   "거나",
+   "기-나름이다-n-나름이다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 220,
+  "patternId": "으-로서-으-로써",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "우리 회사는 광고로써 대부분의 수입을 올린다.",
+  "sentenceBlankKr": "우리 회사는 광고____ 대부분의 수입을 올린다.",
+  "sentenceEn": "Our company earns most of its income by means of advertising.",
+  "sentenceVi": "Công ty chúng tôi kiếm phần lớn thu nhập thông qua quảng cáo.",
+  "options": [
+   "-자마자",
+   "-는/은 법이다",
+   "-(으)로서/(으)로써",
+   "-기에는"
+  ],
+  "optionIds": [
+   "자마자",
+   "는-은-법이다",
+   "으-로서-으-로써",
+   "기에는"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 221,
+  "patternId": "으-리라-고",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "올해는 꼭 합격하리라.",
+  "sentenceBlankKr": "올해는 꼭 합격하____.",
+  "sentenceEn": "I will surely pass this year.",
+  "sentenceVi": "Năm nay chắc chắn tôi sẽ đỗ.",
+  "options": [
+   "-(으)리라(고)",
+   "-(으)면 몰라도",
+   "-아/어도",
+   "-기로 하다"
+  ],
+  "optionIds": [
+   "으-리라-고",
+   "으-면-몰라도",
+   "아-어도",
+   "기로-하다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 222,
+  "patternId": "으-리라-고",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "철수가 모델로 성공하리라고는 아무도 예상하지 못했으리라.",
+  "sentenceBlankKr": "철수가 모델로 성공하____는 아무도 예상하지 못했으리라.",
+  "sentenceEn": "Surely no one could have expected that Cheolsu would succeed as a model.",
+  "sentenceVi": "Chắc hẳn không ai có thể ngờ rằng Cheolsu sẽ thành công với vai trò người mẫu.",
+  "options": [
+   "-(으)리라(고)",
+   "-는 데다가",
+   "-(으)ㄹ 수밖에 없다",
+   "-을/ㄹ 뻔하다"
+  ],
+  "optionIds": [
+   "으-리라-고",
+   "는-데다가",
+   "으-ㄹ-수밖에-없다",
+   "을-ㄹ-뻔하다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 223,
+  "patternId": "고-요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "오늘 날씨가 좋네요. 바람도 시원하고요.",
+  "sentenceBlankKr": "오늘 날씨가 좋네요. 바람도 시원하____.",
+  "sentenceEn": "The weather's nice today. And the breeze is cool too.",
+  "sentenceVi": "Hôm nay thời tiết đẹp quá. Mà gió cũng mát nữa.",
+  "options": [
+   "-을까/나/지 싶다",
+   "-을/ㄹ 뿐이다",
+   "-고(요)",
+   "-고자 (하다)"
+  ],
+  "optionIds": [
+   "을까-나-지-싶다",
+   "을-ㄹ-뿐이다",
+   "고-요",
+   "고자-하다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 224,
+  "patternId": "고-요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "이 식당 음식이 참 맛있어요. 가격도 저렴하고요.",
+  "sentenceBlankKr": "이 식당 음식이 참 맛있어요. 가격도 저렴하____.",
+  "sentenceEn": "The food at this restaurant is really good. And it's inexpensive too.",
+  "sentenceVi": "Đồ ăn ở nhà hàng này ngon thật. Mà giá cũng rẻ nữa.",
+  "options": [
+   "-(으)려던 참이다",
+   "-치고(는)",
+   "-고(요)",
+   "-는 데"
+  ],
+  "optionIds": [
+   "으-려던-참이다",
+   "치고-는",
+   "고-요",
+   "는-데"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 225,
+  "patternId": "고말고-요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "네, 숙제 다 했고말고요.",
+  "sentenceBlankKr": "네, 숙제 다 했____.",
+  "sentenceEn": "Yes, of course I did all my homework.",
+  "sentenceVi": "Vâng, tất nhiên là em đã làm hết bài tập rồi.",
+  "options": [
+   "-게",
+   "-고말고(요)",
+   "-기 나름이다 / N 나름이다",
+   "-(이)나마"
+  ],
+  "optionIds": [
+   "게",
+   "고말고-요",
+   "기-나름이다-n-나름이다",
+   "이-나마"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 226,
+  "patternId": "고말고-요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "네, 깎아 드리고말고요.",
+  "sentenceBlankKr": "네, 깎아 드리____.",
+  "sentenceEn": "Sure, of course I'll give you a discount.",
+  "sentenceVi": "Vâng, tất nhiên là tôi sẽ giảm giá cho anh/chị.",
+  "options": [
+   "-기는커녕",
+   "-고말고(요)",
+   "-는 탓에 / 탓이다",
+   "-는 셈 치다 / -ㄴ/는다고 치다"
+  ],
+  "optionIds": [
+   "기는커녕",
+   "고말고-요",
+   "는-탓에-탓이다",
+   "는-셈-치다-ㄴ-는다고-치다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 227,
+  "patternId": "고서야-아-어서야",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "나는 약을 며칠이나 먹고서야 감기가 나았다.",
+  "sentenceBlankKr": "나는 약을 며칠이나 먹____ 감기가 나았다.",
+  "sentenceEn": "It was only after taking medicine for several days that my cold got better.",
+  "sentenceVi": "Phải uống thuốc mấy ngày liền tôi mới khỏi cảm.",
+  "options": [
+   "-고서야/아/어서야",
+   "-기로 하다",
+   "-게 되다",
+   "-(으)리라(고)"
+  ],
+  "optionIds": [
+   "고서야-아-어서야",
+   "기로-하다",
+   "게-되다",
+   "으-리라-고"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 228,
+  "patternId": "고서야-아-어서야",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "날이 밝아서야 우리는 잃어버린 것을 찾을 수 있었다.",
+  "sentenceBlankKr": "날이 밝____ 우리는 잃어버린 것을 찾을 수 있었다.",
+  "sentenceEn": "It was only once dawn broke that we were able to find what we'd lost.",
+  "sentenceVi": "Phải đến khi trời sáng chúng tôi mới tìm được thứ đã mất.",
+  "options": [
+   "-고서야/아/어서야",
+   "-을/ㄹ 줄만 알았지",
+   "-는 대신(에)",
+   "-이야말로"
+  ],
+  "optionIds": [
+   "고서야-아-어서야",
+   "을-ㄹ-줄만-알았지",
+   "는-대신-에",
+   "이야말로"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 229,
+  "patternId": "는-감이-있다",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "영화가 좀 너무 단순한 감이 있어.",
+  "sentenceBlankKr": "영화가 좀 너무 ____.",
+  "sentenceEn": "This movie is somewhat too simple, I feel.",
+  "sentenceVi": "Tôi thấy bộ phim này có phần hơi đơn giản quá.",
+  "options": [
+   "-을/ㄹ 수가 있어야지(요)",
+   "-(으)면서",
+   "-(으)ㄹ수록",
+   "-는 감이 있다"
+  ],
+  "optionIds": [
+   "을-ㄹ-수가-있어야지-요",
+   "으-면서",
+   "으-ㄹ수록",
+   "는-감이-있다"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 230,
+  "patternId": "는-감이-있다",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "저 선생님 수업은 지겨운 감이 있어서 싫어요.",
+  "sentenceBlankKr": "저 선생님 수업은 ____ 싫어요.",
+  "sentenceEn": "That teacher's class kind of feels boring, so I don't like it.",
+  "sentenceVi": "Tôi thấy giờ học của thầy/cô đó hơi nhàm chán nên không thích.",
+  "options": [
+   "-는 감이 있다",
+   "-에 따라(서)",
+   "-느라고",
+   "-더라도"
+  ],
+  "optionIds": [
+   "는-감이-있다",
+   "에-따라-서",
+   "느라고",
+   "더라도"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 231,
+  "patternId": "는-길에",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "집에 돌아오는 길에 과일 좀 사 오세요.",
+  "sentenceBlankKr": "집에 돌아오____ 과일 좀 사 오세요.",
+  "sentenceEn": "On your way home, please pick up some fruit.",
+  "sentenceVi": "Trên đường về nhà, hãy mua giúp ít trái cây nhé.",
+  "options": [
+   "-는 반면(에)",
+   "-는 길에",
+   "-는 대신(에)",
+   "-아/어 대다"
+  ],
+  "optionIds": [
+   "는-반면-에",
+   "는-길에",
+   "는-대신-에",
+   "아-어-대다"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 232,
+  "patternId": "는-길에",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "회사에 가는 길에 우연히 옛 친구를 만났어요.",
+  "sentenceBlankKr": "회사에 가____ 우연히 옛 친구를 만났어요.",
+  "sentenceEn": "On my way to work, I happened to run into an old friend.",
+  "sentenceVi": "Trên đường đi làm, tôi tình cờ gặp lại người bạn cũ.",
+  "options": [
+   "-았/었으면 하다",
+   "-으라고/라고",
+   "-는 길에",
+   "-아/어 보니(까) / -고 보니(까)"
+  ],
+  "optionIds": [
+   "았-었으면-하다",
+   "으라고-라고",
+   "는-길에",
+   "아-어-보니-까-고-보니-까"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 233,
+  "patternId": "는-대신-에",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "내가 한국어를 가르쳐 주는 대신에 너는 중국어를 가르쳐 줘.",
+  "sentenceBlankKr": "내가 한국어를 가르쳐 주____에 너는 중국어를 가르쳐 줘.",
+  "sentenceEn": "I'll teach you Korean, and in exchange you teach me Chinese.",
+  "sentenceVi": "Tôi sẽ dạy bạn tiếng Hàn, đổi lại bạn dạy tôi tiếng Trung.",
+  "options": [
+   "-(으)ㄹ걸(요)",
+   "-(으)면서",
+   "-는 대신(에)",
+   "-는걸요, -(으)ㄴ걸요"
+  ],
+  "optionIds": [
+   "으-ㄹ걸-요",
+   "으-면서",
+   "는-대신-에",
+   "는걸요-으-ㄴ걸요"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 234,
+  "patternId": "는-대신-에",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "요즘은 현금을 내는 대신에 교통카드를 많이 써요.",
+  "sentenceBlankKr": "요즘은 현금을 내____에 교통카드를 많이 써요.",
+  "sentenceEn": "These days, instead of paying cash, people mostly use transit cards.",
+  "sentenceVi": "Dạo này, thay vì trả tiền mặt, người ta chủ yếu dùng thẻ giao thông.",
+  "options": [
+   "-고 말다",
+   "-는 대신(에)",
+   "-기로 하다",
+   "-거나"
+  ],
+  "optionIds": [
+   "고-말다",
+   "는-대신-에",
+   "기로-하다",
+   "거나"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 235,
+  "patternId": "는-한",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "내가 있는 한 절대로 포기하지 않을 거예요.",
+  "sentenceBlankKr": "내가 있____ 절대로 포기하지 않을 거예요.",
+  "sentenceEn": "As long as I am here, I will absolutely never give up.",
+  "sentenceVi": "Chừng nào tôi còn ở đây, tôi sẽ tuyệt đối không bỏ cuộc.",
+  "options": [
+   "-고 나서",
+   "-는 한",
+   "-을까/나/지 싶다",
+   "-으라고/라고"
+  ],
+  "optionIds": [
+   "고-나서",
+   "는-한",
+   "을까-나-지-싶다",
+   "으라고-라고"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 236,
+  "patternId": "는-한",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "네가 노력하는 한 나는 언제나 널 응원할 거야.",
+  "sentenceBlankKr": "네가 노력하____ 나는 언제나 널 응원할 거야.",
+  "sentenceEn": "As long as you keep trying, I will always support you.",
+  "sentenceVi": "Chừng nào bạn còn cố gắng, tôi sẽ luôn ủng hộ bạn.",
+  "options": [
+   "-는/은/ㄴ/을/ㄹ 듯(이)",
+   "-(으)려고",
+   "-는 한",
+   "-는/ㄴ 셈이다"
+  ],
+  "optionIds": [
+   "는-은-ㄴ-을-ㄹ-듯-이",
+   "으-려고",
+   "는-한",
+   "는-ㄴ-셈이다"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 237,
+  "patternId": "는걸요-으-ㄴ걸요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "평소에는 몰랐는데 치마를 입으니 여성스러운걸요.",
+  "sentenceBlankKr": "평소에는 몰랐는데 치마를 입으니 ____.",
+  "sentenceEn": "I didn't notice before, but now that she's wearing a skirt, she looks quite feminine, doesn't she.",
+  "sentenceVi": "Trước đây tôi không để ý, nhưng giờ mặc váy trông cô ấy nữ tính thật đấy.",
+  "options": [
+   "-기로 하다",
+   "-게",
+   "-는걸요, -(으)ㄴ걸요",
+   "-아/어도"
+  ],
+  "optionIds": [
+   "기로-하다",
+   "게",
+   "는걸요-으-ㄴ걸요",
+   "아-어도"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 238,
+  "patternId": "는걸요-으-ㄴ걸요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "생각보다 어렵지 않은걸요. 한번 해 보세요.",
+  "sentenceBlankKr": "생각보다 ____. 한번 해 보세요.",
+  "sentenceEn": "It's not as hard as you'd think, you know — give it a try.",
+  "sentenceVi": "Không khó như bạn nghĩ đâu — thử làm xem.",
+  "options": [
+   "-게 되다",
+   "-을/ㄹ 뻔하다",
+   "-는걸요, -(으)ㄴ걸요",
+   "-는가, 은/ㄴ가 하면"
+  ],
+  "optionIds": [
+   "게-되다",
+   "을-ㄹ-뻔하다",
+   "는걸요-으-ㄴ걸요",
+   "는가-은-ㄴ가-하면"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 239,
+  "patternId": "다니-이-라니",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "그 사람이 이미 결혼을 했다니 정말 놀라워요.",
+  "sentenceBlankKr": "그 사람이 이미 결혼을 했____ 정말 놀라워요.",
+  "sentenceEn": "I can't believe they're already married — that's really shocking.",
+  "sentenceVi": "Không thể tin được là họ đã kết hôn rồi — thật sự bất ngờ quá.",
+  "options": [
+   "-다니 / (이)라니",
+   "-는 대신(에)",
+   "간접화법 축약형 (Abbreviated Indirect Speech)",
+   "-더니"
+  ],
+  "optionIds": [
+   "다니-이-라니",
+   "는-대신-에",
+   "간접화법-축약형-abbreviated-indirect-speech",
+   "더니"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 240,
+  "patternId": "다니-이-라니",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "이 가격에 이런 서비스라니, 너무 좋다!",
+  "sentenceBlankKr": "이 가격에 이런 서비스____, 너무 좋다!",
+  "sentenceEn": "To think you get this kind of service at this price — this is amazing!",
+  "sentenceVi": "Không ngờ với giá này lại có được dịch vụ như vậy — tuyệt quá!",
+  "options": [
+   "-다니 / (이)라니",
+   "-는 바람에",
+   "-(으)나 마나",
+   "-(으)랴 -(으)랴"
+  ],
+  "optionIds": [
+   "다니-이-라니",
+   "는-바람에",
+   "으-나-마나",
+   "으-랴-으-랴"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 241,
+  "patternId": "되",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "지원은 가능하되, 서류를 먼저 제출해야 합니다.",
+  "sentenceBlankKr": "지원은 ____, 서류를 먼저 제출해야 합니다.",
+  "sentenceEn": "Applications are accepted; however, documents must be submitted first.",
+  "sentenceVi": "Có thể nộp đơn; tuy nhiên phải nộp hồ sơ trước.",
+  "options": [
+   "-을까/나/지 싶다",
+   "-기는요",
+   "같아선 (같아서는)",
+   "-되"
+  ],
+  "optionIds": [
+   "을까-나-지-싶다",
+   "기는요",
+   "같아선-같아서는",
+   "되"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 242,
+  "patternId": "되",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "물건은 반품하되, 영수증을 반드시 지참해야 합니다.",
+  "sentenceBlankKr": "물건은 ____, 영수증을 반드시 지참해야 합니다.",
+  "sentenceEn": "You may return the item; however, you must bring the receipt without fail.",
+  "sentenceVi": "Bạn có thể trả lại món hàng; tuy nhiên nhất định phải mang theo hóa đơn.",
+  "options": [
+   "-되",
+   "-긴 -나 봐요",
+   "같아선 (같아서는)",
+   "-는 길에"
+  ],
+  "optionIds": [
+   "되",
+   "긴-나-봐요",
+   "같아선-같아서는",
+   "는-길에"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 243,
+  "patternId": "만에",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "입학한 지 5년 만에 졸업했어요.",
+  "sentenceBlankKr": "입학한 지 5년 ____ 졸업했어요.",
+  "sentenceEn": "I graduated 5 years after enrolling.",
+  "sentenceVi": "Tôi đã tốt nghiệp sau 5 năm kể từ khi nhập học.",
+  "options": [
+   "-기 마련이다",
+   "-더니",
+   "-만에",
+   "-(으)려고"
+  ],
+  "optionIds": [
+   "기-마련이다",
+   "더니",
+   "만에",
+   "으-려고"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 244,
+  "patternId": "만에",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "시작한 지 1시간 만에 도착했다.",
+  "sentenceBlankKr": "시작한 지 1시간 ____ 도착했다.",
+  "sentenceEn": "We arrived just 1 hour after starting.",
+  "sentenceVi": "Chúng tôi đã đến nơi chỉ sau 1 tiếng kể từ khi xuất phát.",
+  "options": [
+   "-았/었으면 하다",
+   "-(으)ㄹ걸(요)",
+   "-기 나름이다 / N 나름이다",
+   "-만에"
+  ],
+  "optionIds": [
+   "았-었으면-하다",
+   "으-ㄹ걸-요",
+   "기-나름이다-n-나름이다",
+   "만에"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 245,
+  "patternId": "아-어-보니-까-고-보니-까",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "아이폰을 써 보니까 다른 핸드폰을 사용할 수 없다.",
+  "sentenceBlankKr": "아이폰을 ____ 다른 핸드폰을 사용할 수 없다.",
+  "sentenceEn": "Now that I've tried using an iPhone, I can't use any other phone.",
+  "sentenceVi": "Giờ đã dùng thử iPhone rồi thì tôi không thể dùng điện thoại khác được nữa.",
+  "options": [
+   "-아/어 보니(까) / -고 보니(까)",
+   "-는/은 줄 모르다(알다)",
+   "-되",
+   "같아선 (같아서는)"
+  ],
+  "optionIds": [
+   "아-어-보니-까-고-보니-까",
+   "는-은-줄-모르다-알다",
+   "되",
+   "같아선-같아서는"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 246,
+  "patternId": "아-어-보니-까-고-보니-까",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "이 사람을 만나고 보니 좋은 사람 같아요.",
+  "sentenceBlankKr": "이 사람을 만나____ 좋은 사람 같아요.",
+  "sentenceEn": "Now that I've met this person, they seem like a good person.",
+  "sentenceVi": "Giờ đã gặp người này rồi thì thấy có vẻ là người tốt.",
+  "options": [
+   "-아/어 보니(까) / -고 보니(까)",
+   "-는, 은/ㄴ 모양이다",
+   "-만 못하다",
+   "-는 길에"
+  ],
+  "optionIds": [
+   "아-어-보니-까-고-보니-까",
+   "는-은-ㄴ-모양이다",
+   "만-못하다",
+   "는-길에"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 247,
+  "patternId": "아-어다가",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "이 우산을 가져다가 쓰세요.",
+  "sentenceBlankKr": "이 우산을 가져____ 쓰세요.",
+  "sentenceEn": "Take this umbrella (from here) and use it (there).",
+  "sentenceVi": "Hãy lấy cái ô này (ở đây) mang theo mà dùng (ở kia).",
+  "options": [
+   "-아/어다가",
+   "-았/었/였더라면",
+   "-거니와",
+   "-조차"
+  ],
+  "optionIds": [
+   "아-어다가",
+   "았-었-였더라면",
+   "거니와",
+   "조차"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 248,
+  "patternId": "아-어다가",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "저기서 물고기를 잡아다가 먹을까요?",
+  "sentenceBlankKr": "저기서 물고기를 잡____ 먹을까요?",
+  "sentenceEn": "Shall we catch fish over there and bring them back to eat?",
+  "sentenceVi": "Hay là mình bắt cá ở đằng kia rồi mang về ăn nhé?",
+  "options": [
+   "-아/어다가",
+   "-는 둥 마는 둥 하다",
+   "-는/ㄴ다는 것이",
+   "-(으)ㄹ 수밖에 없다"
+  ],
+  "optionIds": [
+   "아-어다가",
+   "는-둥-마는-둥-하다",
+   "는-ㄴ다는-것이",
+   "으-ㄹ-수밖에-없다"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 249,
+  "patternId": "을-ㄹ-수가-있어야지-요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "이렇게 시끄러운데 잠을 잘 수가 있어야지요.",
+  "sentenceBlankKr": "이렇게 시끄러운데 잠을 잘 ____요.",
+  "sentenceEn": "With all this noise, there's no way anyone could sleep.",
+  "sentenceVi": "Ồn thế này thì làm sao mà ngủ được.",
+  "options": [
+   "-(으)로서/(으)로써",
+   "-(으)려던 참이다",
+   "-을/ㄹ 수가 있어야지(요)",
+   "-을/ㄹ까 봐"
+  ],
+  "optionIds": [
+   "으-로서-으-로써",
+   "으-려던-참이다",
+   "을-ㄹ-수가-있어야지-요",
+   "을-ㄹ까-봐"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 250,
+  "patternId": "을-ㄹ-수가-있어야지-요",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "물가가 이렇게 비싼데 돈을 모을 수가 있어야지요.",
+  "sentenceBlankKr": "물가가 이렇게 비싼데 돈을 모을 ____요.",
+  "sentenceEn": "With prices this high, there's just no way anyone could save money.",
+  "sentenceVi": "Giá cả đắt đỏ thế này thì làm sao mà tiết kiệm được tiền.",
+  "options": [
+   "-다시피 (하다)",
+   "-을/ㄹ 수가 있어야지(요)",
+   "-느니 (차라리)",
+   "-마저(도)"
+  ],
+  "optionIds": [
+   "다시피-하다",
+   "을-ㄹ-수가-있어야지-요",
+   "느니-차라리",
+   "마저-도"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 251,
+  "patternId": "음으로써",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "꾸준히 연습함으로써 실력을 키울 수 있어요.",
+  "sentenceBlankKr": "꾸준히 연습____ 실력을 키울 수 있어요.",
+  "sentenceEn": "By practicing consistently, you can build up your skills.",
+  "sentenceVi": "Bằng cách luyện tập đều đặn, bạn có thể nâng cao kỹ năng của mình.",
+  "options": [
+   "-(으)나 마나",
+   "-는 대신(에)",
+   "-(으)리라(고)",
+   "-음으로써"
+  ],
+  "optionIds": [
+   "으-나-마나",
+   "는-대신-에",
+   "으-리라-고",
+   "음으로써"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 252,
+  "patternId": "음으로써",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "적극적으로 참여함으로써 좋은 결과를 얻을 수 있었다.",
+  "sentenceBlankKr": "적극적으로 참여____ 좋은 결과를 얻을 수 있었다.",
+  "sentenceEn": "By participating actively, we were able to achieve good results.",
+  "sentenceVi": "Bằng cách tham gia tích cực, chúng tôi đã đạt được kết quả tốt.",
+  "options": [
+   "-길래",
+   "-기 일쑤이다",
+   "-는 탓에 / 탓이다",
+   "-음으로써"
+  ],
+  "optionIds": [
+   "길래",
+   "기-일쑤이다",
+   "는-탓에-탓이다",
+   "음으로써"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 253,
+  "patternId": "이야말로",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "사랑이야말로 결혼 생활에서 가장 중요한 것이다.",
+  "sentenceBlankKr": "사랑____ 결혼 생활에서 가장 중요한 것이다.",
+  "sentenceEn": "Love is indeed the most important thing in married life.",
+  "sentenceVi": "Tình yêu quả thực là điều quan trọng nhất trong đời sống hôn nhân.",
+  "options": [
+   "-아/어다가",
+   "-에다가",
+   "-자마자",
+   "-이야말로"
+  ],
+  "optionIds": [
+   "아-어다가",
+   "에다가",
+   "자마자",
+   "이야말로"
+  ],
+  "correctIndex": 3
+ },
+ {
+  "qid": 254,
+  "patternId": "이야말로",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "그 디자인이야말로 제가 찾던 거예요.",
+  "sentenceBlankKr": "그 디자인____ 제가 찾던 거예요.",
+  "sentenceEn": "That design is exactly what I was looking for.",
+  "sentenceVi": "Thiết kế đó chính xác là thứ tôi đang tìm kiếm.",
+  "options": [
+   "-을/ㄹ 줄만 알았지",
+   "-이야말로",
+   "-(으)ㄹ 리가 없다",
+   "-(으)로서/(으)로써"
+  ],
+  "optionIds": [
+   "을-ㄹ-줄만-알았지",
+   "이야말로",
+   "으-ㄹ-리가-없다",
+   "으-로서-으-로써"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 255,
+  "patternId": "치고-는",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "성공한 사람치고 부지런하지 않은 사람이 없다.",
+  "sentenceBlankKr": "성공한 사람____ 부지런하지 않은 사람이 없다.",
+  "sentenceEn": "There isn't a successful person who isn't diligent.",
+  "sentenceVi": "Không có người thành công nào mà không chăm chỉ.",
+  "options": [
+   "-치고(는)",
+   "간접화법 축약형 (Abbreviated Indirect Speech)",
+   "(으)련만 ((으)련마는)",
+   "-거든(요)"
+  ],
+  "optionIds": [
+   "치고-는",
+   "간접화법-축약형-abbreviated-indirect-speech",
+   "으-련만-으-련마는",
+   "거든-요"
+  ],
+  "correctIndex": 0
+ },
+ {
+  "qid": 256,
+  "patternId": "치고-는",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "작은 호텔치고 숙박비가 비싼 편이다.",
+  "sentenceBlankKr": "작은 호텔____ 숙박비가 비싼 편이다.",
+  "sentenceEn": "For a small hotel, the room charge is rather expensive.",
+  "sentenceVi": "So với một khách sạn nhỏ thì giá phòng khá đắt.",
+  "options": [
+   "-는/은 줄 모르다(알다)",
+   "-치고(는)",
+   "-다시피 (하다)",
+   "-는 길에"
+  ],
+  "optionIds": [
+   "는-은-줄-모르다-알다",
+   "치고-는",
+   "다시피-하다",
+   "는-길에"
+  ],
+  "correctIndex": 1
+ },
+ {
+  "qid": 257,
+  "patternId": "같아선-같아서는",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "이 속도 같아선 마감을 맞추기가 힘들 것 같아요.",
+  "sentenceBlankKr": "이 속도 ____ 마감을 맞추기가 힘들 것 같아요.",
+  "sentenceEn": "At this rate, it looks like we'll have trouble meeting the deadline.",
+  "sentenceVi": "Với tốc độ này thì có vẻ sẽ khó kịp hạn chót.",
+  "options": [
+   "-되",
+   "-기에",
+   "같아선 (같아서는)",
+   "-도록"
+  ],
+  "optionIds": [
+   "되",
+   "기에",
+   "같아선-같아서는",
+   "도록"
+  ],
+  "correctIndex": 2
+ },
+ {
+  "qid": 258,
+  "patternId": "같아선-같아서는",
+  "clusterTitle": null,
+  "clusterTitle_ko": null,
+  "clusterTitle_vi": null,
+  "sentenceKr": "내 마음 같아선 지금 당장 그만두고 싶어요.",
+  "sentenceBlankKr": "내 마음 ____ 지금 당장 그만두고 싶어요.",
+  "sentenceEn": "If it were up to how I feel, I'd want to quit right this instant.",
+  "sentenceVi": "Nếu theo đúng cảm giác của tôi thì tôi muốn nghỉ ngay lập tức.",
+  "options": [
+   "-(으)려다가",
+   "-자마자",
+   "-기는커녕",
+   "같아선 (같아서는)"
+  ],
+  "optionIds": [
+   "으-려다가",
+   "자마자",
+   "기는커녕",
+   "같아선-같아서는"
+  ],
+  "correctIndex": 3
+ }
+];
+
 let expandedGrammarEdit = new Set();
 let expandedSentenceEdit = new Set();
 function buildGrammarEditFormHtml(g){
@@ -11066,6 +17281,7 @@ function renderGrammarList(){
   if(gramGroupsOpen.advanced) renderGrammarGroup('advanced', 'gramAdvancedList');
   renderGrammarReadiness();
   renderGrammarComparisons();
+  renderGrammarQuiz();
 }
 // Frequency-weighted so common patterns count for more than rare ones.
 // Optionally scoped to just the TOPIK-tagged subset.
@@ -11163,6 +17379,101 @@ function jumpToComparisonGroup(idx){
 document.getElementById('gramComparisonsHeader').addEventListener('click', ()=>{
   gramComparisonsOpen = !gramComparisonsOpen;
   renderGrammarComparisons();
+});
+/* ---------- GRAMMAR QUIZ ---------- */
+// Each QUIZ_QUESTIONS entry is a fill-in-the-blank multiple choice question
+// built from a real example sentence: the correct pattern plus 1-2 "nuance"
+// distractors pulled from the same GRAMMAR_COMPARISONS cluster (genuinely
+// confusable forms) and the remaining option(s) as true outliers from an
+// unrelated pattern, so it's not pure elimination.
+let gramQuizOpen = false;
+let quizSession = null; // { questions, idx, score, answered, selectedIdx }
+function renderGrammarQuiz(){
+  const el = document.getElementById('gramQuizCard');
+  const header = document.getElementById('gramQuizHeader');
+  if(!el || !header) return;
+  header.innerHTML = `<span>${gramQuizOpen?'▾':'▸'}</span> ${t('hGramQuiz')}`;
+  el.classList.toggle('hidden', !gramQuizOpen);
+  if(!gramQuizOpen) return;
+  if(!quizSession){
+    el.innerHTML = `
+      <div class="quiz-intro">${t('quizDesc')}</div>
+      <button class="export-btn" id="quizStartBtn">${t('quizStartBtn')}</button>`;
+    document.getElementById('quizStartBtn').addEventListener('click', ()=> startQuiz());
+    return;
+  }
+  if(quizSession.idx >= quizSession.questions.length){
+    el.innerHTML = `
+      <div class="quiz-results">
+        <div>${t('quizDoneTitle')}</div>
+        <div class="quiz-results-score">${quizSession.score} / ${quizSession.questions.length}</div>
+        <button class="export-btn" id="quizRetakeBtn">${t('quizRetakeBtn')}</button>
+      </div>`;
+    document.getElementById('quizRetakeBtn').addEventListener('click', ()=> startQuiz());
+    return;
+  }
+  renderQuizQuestion();
+}
+function startQuiz(n){
+  n = n || 15;
+  const pool = QUIZ_QUESTIONS.slice().sort(()=>Math.random()-0.5);
+  quizSession = { questions: pool.slice(0, Math.min(n, pool.length)), idx: 0, score: 0, answered: false, selectedIdx: null };
+  renderGrammarQuiz();
+}
+function renderQuizQuestion(){
+  const el = document.getElementById('gramQuizCard');
+  const q = quizSession.questions[quizSession.idx];
+  const langSuffix = currentLang === 'ko' ? '_ko' : currentLang === 'vi' ? '_vi' : '';
+  const clusterTitle = (langSuffix && q['clusterTitle'+langSuffix]) || q.clusterTitle;
+  // Sentence translation gloss follows the same convention as the grammar
+  // reference examples: Korean mode keeps it in English, Vietnamese mode
+  // switches to Vietnamese.
+  const translation = currentLang === 'vi' ? (q.sentenceVi || q.sentenceEn) : q.sentenceEn;
+  const stemHtml = escapeHtml(q.sentenceBlankKr).replace('____', '<span class="quiz-blank">____</span>');
+  const optionsHtml = q.options.map((opt, idx)=>{
+    let cls = 'quiz-option';
+    if(quizSession.answered){
+      if(idx === q.correctIndex) cls += ' correct';
+      else if(idx === quizSession.selectedIdx) cls += ' incorrect';
+    }
+    return `<button class="${cls}" data-idx="${idx}" ${quizSession.answered ? 'disabled' : ''}>${escapeHtml(opt)}</button>`;
+  }).join('');
+  let feedbackHtml = '';
+  if(quizSession.answered){
+    const wasCorrect = quizSession.selectedIdx === q.correctIndex;
+    feedbackHtml = `
+      <div class="quiz-feedback ${wasCorrect ? 'correct' : 'incorrect'}">${wasCorrect ? t('quizCorrectBadge') : t('quizIncorrectBadge') + ' ' + escapeHtml(q.options[q.correctIndex])}</div>
+      <div class="quiz-cluster-note">${escapeHtml(translation)}</div>
+      ${clusterTitle ? `<div class="quiz-cluster-note">${t('quizFromCluster')} ${escapeHtml(clusterTitle)}</div>` : ''}
+      <button class="export-btn" id="quizNextBtn" style="margin-top:8px;">${quizSession.idx === quizSession.questions.length - 1 ? t('quizSeeResultsBtn') : t('quizNextBtn')}</button>`;
+  }
+  el.innerHTML = `
+    <div class="quiz-meta"><span>${t('quizQuestionLabel')} ${quizSession.idx + 1} / ${quizSession.questions.length}</span><span>${t('quizScoreLabel')}: ${quizSession.score}</span></div>
+    <div class="quiz-stem">${stemHtml}</div>
+    <div class="quiz-options">${optionsHtml}</div>
+    ${feedbackHtml}`;
+  el.querySelectorAll('.quiz-option').forEach(btn=>{
+    btn.addEventListener('click', ()=> answerQuiz(parseInt(btn.dataset.idx)));
+  });
+  const nextBtn = document.getElementById('quizNextBtn');
+  if(nextBtn) nextBtn.addEventListener('click', ()=>{
+    quizSession.idx++;
+    quizSession.answered = false;
+    quizSession.selectedIdx = null;
+    renderGrammarQuiz();
+  });
+}
+function answerQuiz(idx){
+  if(quizSession.answered) return;
+  quizSession.answered = true;
+  quizSession.selectedIdx = idx;
+  const q = quizSession.questions[quizSession.idx];
+  if(idx === q.correctIndex) quizSession.score++;
+  renderQuizQuestion();
+}
+document.getElementById('gramQuizHeader').addEventListener('click', ()=>{
+  gramQuizOpen = !gramQuizOpen;
+  renderGrammarQuiz();
 });
 document.getElementById('gramIntermediateHeader').addEventListener('click', ()=>{
   gramGroupsOpen.intermediate = !gramGroupsOpen.intermediate;
