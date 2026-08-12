@@ -493,7 +493,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="who">
       <div class="lang-switch" id="langSwitchApp"></div>
       <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode">🌙</button>
-      <button class="icon-btn" id="accountSettingsBtn" title="Account settings" style="position:relative;">⚙️<span id="linkNotifyDot" class="hidden" style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--seal);"></span></button>
+      <button class="icon-btn" id="friendsBtn" title="Linked circle" style="position:relative;">👥<span id="linkNotifyDot" class="hidden" style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--seal);"></span></button>
+      <button class="icon-btn" id="accountSettingsBtn" title="Account settings">⚙️</button>
       <span id="whoNameWrap">
         <span class="name" id="whoName" style="font-weight:700;cursor:pointer;" title="Click to change your color"></span>
       </span>
@@ -1330,10 +1331,6 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
     <div class="hint hidden" id="settings2faMsg"></div>
 
-    <div class="wtc-title" style="margin-top:22px;" id="hLinkedCircle"></div>
-    <div class="hint" id="linkedCircleDesc"></div>
-    <div id="linkedCircleContent" style="margin-top:8px;"></div>
-
     <div class="log-form" style="margin-top:22px;">
       <div class="field wide">
         <label for="settingsDeleteEmailConfirm" id="lblSettingsDeleteEmailConfirm"></label>
@@ -1358,6 +1355,20 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 
     <div style="margin-top:18px;">
       <button id="closeAccountSettingsBtn"></button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="friendsModal">
+  <div class="modal-box">
+    <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <span id="hLinkedCircle"></span>
+      <button class="icon-btn" id="closeFriendsX" title="Close" style="padding:4px 10px;">✕</button>
+    </h2>
+    <div class="hint" id="linkedCircleDesc"></div>
+    <div id="linkedCircleContent" style="margin-top:8px;"></div>
+    <div style="margin-top:18px;">
+      <button id="closeFriendsBtn"></button>
     </div>
   </div>
 </div>
@@ -7554,7 +7565,7 @@ const STATIC_MAP = {
   enable2faBtn:'enable2faBtn', disable2faBtn:'disable2faBtn',
   lblSettingsDeleteEmailConfirm:'lblSettingsDeleteEmailConfirm',
   lblSettingsDeletePasswordConfirm:'lblSettingsDeletePasswordConfirm', deleteAccountBtn:'deleteAccountBtn', hModerator:'hModerator', closeAccountSettingsBtn:'closeNoteBtn',
-  hLinkedCircle:'hLinkedCircle', linkedCircleDesc:'linkedCircleDesc',
+  hLinkedCircle:'hLinkedCircle', linkedCircleDesc:'linkedCircleDesc', closeFriendsBtn:'closeNoteBtn',
   writingFeedbackHeader:'writingFeedbackHeader', writingFeedbackSendBtn:'writingFeedbackSendBtn',
   lblMfaPromptTitle:'mfaPromptTitle', lblMfaPromptHint:'mfaPromptHint', mfaVerifyBtn:'mfaVerifyBtn',
   hNotebookList:'hNotebookList', lblNotebookPersonFilter:'lblNotesPersonFilter', saveNotebookBtn:'saveNoteBtn', closeNotebookBtn:'closeNoteBtn',
@@ -8163,9 +8174,23 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   const isAdmin = currentUser.email === ADMIN_EMAIL;
   document.getElementById('moderatorSection').classList.toggle('hidden', !isAdmin);
   if(isAdmin) loadModeratorUsers();
+  document.getElementById('accountSettingsModal').classList.remove('hidden');
+});
+document.getElementById('friendsBtn').addEventListener('click', async ()=>{
   await refreshLinkData();
   renderLinkedCircle();
-  document.getElementById('accountSettingsModal').classList.remove('hidden');
+  document.getElementById('friendsModal').classList.remove('hidden');
+});
+document.getElementById('closeFriendsBtn').addEventListener('click', ()=>{
+  document.getElementById('friendsModal').classList.add('hidden');
+});
+document.getElementById('closeFriendsX').addEventListener('click', ()=>{
+  document.getElementById('friendsModal').classList.add('hidden');
+});
+document.getElementById('friendsModal').addEventListener('click', (e)=>{
+  if(e.target === e.currentTarget){
+    document.getElementById('friendsModal').classList.add('hidden');
+  }
 });
 document.getElementById('closeAccountSettingsBtn').addEventListener('click', ()=>{
   document.getElementById('accountSettingsModal').classList.add('hidden');
