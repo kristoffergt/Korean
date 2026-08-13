@@ -1076,6 +1076,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         <select id="jobPersonFilter"></select>
       </div>
       <div id="jobList"></div>
+      <div id="jobListControls"></div>
     </div>
     <div class="card">
       <h2 id="hJobLB"></h2>
@@ -9621,6 +9622,52 @@ async function deleteJob(jobId){
   renderJobs();
 }
 document.getElementById('addJobBtn').addEventListener('click', addJob);
+// Own-only edit panel for an existing application row (company/role/date/
+// link) — status stays on its own dedicated dropdown in the row itself
+// since that's already a one-click control, same split courses uses
+// between the always-visible status select and the edit-panel fields.
+let expandedJobEdit = new Set();
+function buildJobEditFieldsHtml(j){
+  return `
+    <div class="field">
+      <label>${t('company')}</label>
+      <input type="text" class="je-company" value="${(j.company||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div class="field">
+      <label>${t('role')}</label>
+      <input type="text" class="je-role" value="${(j.role||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div class="field">
+      <label>${t('dateApplied')}</label>
+      <input type="date" class="je-date" value="${j.date_applied||''}">
+    </div>
+    <div class="field">
+      <label>${t('link')}</label>
+      <input type="text" class="je-link" value="${(j.link||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button class="export-btn je-save-btn" data-id="${j.id}">${t('saveChanges')}</button>
+      <button class="export-btn je-cancel-btn" data-id="${j.id}">${t('cancelEdit')}</button>
+    </div>`;
+}
+async function saveJobEdit(jobId, container){
+  const company = container.querySelector('.je-company').value.trim();
+  const role = container.querySelector('.je-role').value.trim();
+  const dateApplied = container.querySelector('.je-date').value || null;
+  const link = container.querySelector('.je-link').value.trim();
+  if(!company) return;
+  const patch = { company, role: role || null, date_applied: dateApplied, link: link || null };
+  const { data, error } = await supabaseClient.from('job_applications').update(patch).eq('id', jobId).select();
+  if(!error && data && data[0]){
+    const j = (allJobs[currentUser.id]||[]).find(x=>x.id===jobId);
+    if(j) Object.assign(j, data[0]);
+  }
+  expandedJobEdit.delete(jobId);
+  renderJobs();
+}
+// Same shared 3-preview / 10-per-page pattern as the leaderboards and
+// deadline list (see PREVIEW_SIZE/PAGE_SIZE + renderLeaderboardPage).
+let jobListState = { expanded:false, page:1 };
 function renderJobs(){
   // "Your applications" stat tiles always reflect your own applications,
   // independent of which person the list below is currently showing.
@@ -9660,10 +9707,26 @@ function renderJobs(){
     viewList = allJobs[filterVal] || [];
   }
 
+  const sortedList = viewList.slice().sort((a,b)=> (b.date_applied||'').localeCompare(a.date_applied||''));
+
   const list = document.getElementById('jobList');
+  const controls = document.getElementById('jobListControls');
   list.innerHTML = '';
-  if(viewList.length === 0){ list.innerHTML = '<div class="empty">—</div>'; }
-  viewList.slice().sort((a,b)=> (b.date_applied||'').localeCompare(a.date_applied||'')).forEach(j=>{
+  if(controls) controls.innerHTML = '';
+  if(sortedList.length === 0){ list.innerHTML = '<div class="empty">—</div>'; refreshJobLeaderboard(); return; }
+
+  const state = jobListState;
+  let toShow;
+  if(!state.expanded){
+    toShow = sortedList.slice(0, PREVIEW_SIZE);
+  } else {
+    const totalPages = Math.max(1, Math.ceil(sortedList.length / PAGE_SIZE));
+    if(state.page > totalPages) state.page = totalPages;
+    const start = (state.page - 1) * PAGE_SIZE;
+    toShow = sortedList.slice(start, start + PAGE_SIZE);
+  }
+
+  toShow.forEach(j=>{
     const isMine = j.user_id === currentUser.id;
     const ownerTag = `<span class="e-who" style="background:${colorForUser(j.user_id)}26;color:${colorForUser(j.user_id)};">${nameFor(j.user_id)}</span>`;
     // If the other core member already applied to this same company/role,
@@ -9675,6 +9738,7 @@ function renderJobs(){
       (x.role||'').trim().toLowerCase() === (j.role||'').trim().toLowerCase()
     );
     const addMyselfBtn = (!isMine && !alreadyMine) ? `<button class="linkbtn job-add-myself" data-id="${j.id}">${t('addMyselfBtn')}</button>` : '';
+    const isEditOpen = isMine && expandedJobEdit.has(j.id);
     const div = document.createElement('div');
     div.className = 'item-row';
     div.innerHTML =
@@ -9692,8 +9756,10 @@ function renderJobs(){
           <option value="withdrawn" ${j.status==='withdrawn'?'selected':''}>${jobStatusLabel('withdrawn')}</option>
         </select>` : ''}
         ${j.link ? `<a href="${j.link}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
+        ${isMine ? `<button class="linkbtn job-edit-toggle" data-id="${j.id}">${t('editBtn')}</button>` : ''}
         ${addMyselfBtn}
-      </div>`;
+      </div>
+      ${isMine ? `<div class="notes-panel ${isEditOpen?'':'hidden'}" data-job-edit-for="${j.id}">${isEditOpen ? buildJobEditFieldsHtml(j) : ''}</div>` : ''}`;
     list.appendChild(div);
   });
   list.querySelectorAll('.item-del[data-kind="job"]').forEach(btn=>{
@@ -9705,6 +9771,57 @@ function renderJobs(){
   list.querySelectorAll('.job-add-myself').forEach(btn=>{
     btn.addEventListener('click', ()=> addMyselfToJob(btn.dataset.id));
   });
+  list.querySelectorAll('.job-edit-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      if(expandedJobEdit.has(id)) expandedJobEdit.delete(id); else expandedJobEdit.add(id);
+      renderJobs();
+    });
+  });
+  list.querySelectorAll('[data-job-edit-for]').forEach(panel=>{
+    const saveBtn = panel.querySelector('.je-save-btn');
+    const cancelBtn = panel.querySelector('.je-cancel-btn');
+    if(saveBtn) saveBtn.addEventListener('click', ()=> saveJobEdit(saveBtn.dataset.id, panel));
+    if(cancelBtn) cancelBtn.addEventListener('click', ()=>{
+      expandedJobEdit.delete(cancelBtn.dataset.id);
+      renderJobs();
+    });
+  });
+
+  if(controls){
+    if(!state.expanded && sortedList.length > PREVIEW_SIZE){
+      const moreBtn = document.createElement('button');
+      moreBtn.className = 'show-more-btn';
+      moreBtn.textContent = `${t('showMore')} (${sortedList.length - PREVIEW_SIZE})`;
+      moreBtn.addEventListener('click', ()=>{ state.expanded = true; state.page = 1; renderJobs(); });
+      controls.appendChild(moreBtn);
+    } else if(state.expanded){
+      const totalPages = Math.max(1, Math.ceil(sortedList.length / PAGE_SIZE));
+      if(totalPages > 1){
+        const nav = document.createElement('div');
+        nav.className = 'list-controls';
+        const mkBtn = (label, page, disabled)=>{
+          const b = document.createElement('button');
+          b.textContent = label;
+          b.disabled = !!disabled;
+          b.className = 'page-btn' + (page === state.page ? ' active' : '');
+          b.addEventListener('click', ()=>{ state.page = page; renderJobs(); });
+          return b;
+        };
+        nav.appendChild(mkBtn('«', 1, state.page === 1));
+        nav.appendChild(mkBtn('‹', Math.max(1, state.page - 1), state.page === 1));
+        for(let p = 1; p <= totalPages; p++){ nav.appendChild(mkBtn(String(p), p, false)); }
+        nav.appendChild(mkBtn('›', Math.min(totalPages, state.page + 1), state.page === totalPages));
+        nav.appendChild(mkBtn('»', totalPages, state.page === totalPages));
+        controls.appendChild(nav);
+      }
+      const lessBtn = document.createElement('button');
+      lessBtn.className = 'show-more-btn';
+      lessBtn.textContent = t('showLess');
+      lessBtn.addEventListener('click', ()=>{ state.expanded = false; renderJobs(); });
+      controls.appendChild(lessBtn);
+    }
+  }
   refreshJobLeaderboard();
 }
 async function addMyselfToJob(sourceJobId){
@@ -20190,6 +20307,8 @@ function rebuildJobPersonFilter(){
 }
 document.getElementById('jobPersonFilter').addEventListener('change', (e)=>{
   jobPersonFilter = e.target.value;
+  jobListState.expanded = false;
+  jobListState.page = 1;
   renderJobs();
 });
 
