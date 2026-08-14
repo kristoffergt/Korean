@@ -56,11 +56,12 @@ body{background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR'
 .wrap{max-width:780px;margin:0 auto;}
 .hidden{display:none !important;}
 .topbar-controls{display:flex;gap:8px;align-items:center;}
-.lang-switch{display:flex;gap:4px;background:var(--paper-dim);padding:4px;border-radius:8px;border:1px solid var(--line);}
+.lang-switch{display:flex;align-items:center;gap:6px;background:var(--paper-dim);padding:5px 10px 5px 8px;border-radius:8px;border:1px solid var(--line);}
+.lang-switch-icon{flex:none;color:var(--ink-soft);}
 .lang-switch button{background:transparent;color:var(--ink-soft);border:none;padding:5px 10px;font-size:11.5px;font-weight:600;border-radius:5px;}
 .lang-switch button:hover{background:rgba(127,127,127,0.1);}
 .lang-switch button.active{background:var(--ink);color:var(--paper);}
-.lang-switch-select{background:var(--paper-dim);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 8px;font-size:12.5px;font-weight:600;font-family:'Inter',sans-serif;}
+.lang-switch-select{background:transparent;color:var(--ink);border:none;padding:0;font-size:12.5px;font-weight:600;font-family:'Inter',sans-serif;}
 .icon-btn{background:var(--paper-dim);border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:8px;font-size:14px;line-height:1;}
 .icon-btn:hover{background:rgba(127,127,127,0.16);}
 .auth-wrap{max-width:360px;margin:60px auto 0;}
@@ -95,8 +96,9 @@ header{display:flex;justify-content:space-between;align-items:flex-end;border-bo
 h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(10px,3.4vw,28px);margin:0 0 4px;letter-spacing:0.5px;white-space:nowrap;}
 .sub{font-size:13px;color:var(--ink-soft);letter-spacing:0.3px;}
 .who{display:flex;align-items:center;gap:clamp(4px,1.4vw,12px);flex-wrap:wrap;justify-content:flex-end;}
-.who .lang-switch{padding:clamp(2px,0.5vw,4px);}
-.who .lang-switch button{padding:clamp(3px,0.7vw,5px) clamp(5px,1.4vw,10px);font-size:clamp(9px,1.6vw,11.5px);}
+.who .lang-switch{gap:clamp(3px,0.8vw,6px);padding:clamp(3px,0.7vw,5px) clamp(5px,1.2vw,10px) clamp(3px,0.7vw,5px) clamp(4px,1vw,8px);}
+.who .lang-switch-select{font-size:clamp(9px,1.6vw,12.5px);}
+.who .lang-switch-icon{width:clamp(10px,1.6vw,14px);height:clamp(10px,1.6vw,14px);}
 .who .icon-btn{padding:clamp(4px,1vw,7px) clamp(5px,1.3vw,10px);font-size:clamp(11px,1.8vw,14px);}
 .who .name{font-size:clamp(10px,1.8vw,13px);color:var(--ink-soft);}
 .who button.textbtn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:6px 12px;font-size:12px;font-weight:500;}
@@ -299,8 +301,9 @@ button:hover{background:var(--ink-hover);}
   .who{gap:6px;justify-content:flex-end;}
   .who .icon-btn{font-size:12px;padding:5px 7px;}
   #whoName{font-size:12.5px;}
-  .lang-switch{padding:0;border:none;background:none;}
-  .lang-switch-select{font-size:11px;padding:5px 6px;}
+  .lang-switch{gap:4px;padding:4px 7px 4px 6px;}
+  .lang-switch-select{font-size:11px;}
+  .lang-switch-icon{width:12px;height:12px;}
 }
 .writing-task-box{white-space:pre-wrap;background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.6;margin-top:10px;}
 .writing-char-count{font-weight:600;}
@@ -413,7 +416,7 @@ button:hover{background:var(--ink-hover);}
 .recap-toggle button{background:var(--paper-dim);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer;}
 .recap-toggle button.active{background:var(--celadon-4);border-color:var(--celadon-4);color:#fff;}
 .recap-person{margin-bottom:14px;}
-.recap-person-name{font-weight:700;font-size:13px;margin-bottom:6px;}
+.recap-person-name{font-weight:700;font-size:13px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line);}
 .recap-stat-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line);}
 .recap-stat-row:last-child{border-bottom:none;}
 .recap-stat-value{font-family:'Space Grotesk',monospace;font-weight:700;color:var(--celadon-4);}
@@ -7892,31 +7895,31 @@ document.getElementById('darkToggleApp').addEventListener('click', ()=> applyDar
 function buildLangSwitch(container){
   container.innerHTML = '';
   const langs = [['en','English'],['ko','한국어'],['vi','Tiếng Việt']];
-  // On mobile the 3-button switch takes up too much header width, so it
-  // collapses into a single dropdown there instead — same options, same
-  // applyLanguage() call, just a different control.
-  if(isMobileDevice()){
-    const sel = document.createElement('select');
-    sel.className = 'lang-switch-select';
-    langs.forEach(([code,label])=>{
-      const opt = document.createElement('option');
-      opt.value = code;
-      opt.textContent = label;
-      if(code === currentLang) opt.selected = true;
-      sel.appendChild(opt);
-    });
-    sel.addEventListener('change', (e)=> applyLanguage(e.target.value));
-    container.appendChild(sel);
-    return;
-  }
+  // Always a single icon + dropdown pill, at every width -- the old
+  // 3-button row (desktop) vs. select (mobile <=640px) split was a hard
+  // breakpoint jump that ate too much header width in the "in-between"
+  // range and helped force the icon/name row into wrapping. One compact
+  // control everywhere is simpler and leaves more room for the rest of
+  // .who to stay on one line.
+  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  icon.setAttribute('class', 'lang-switch-icon');
+  icon.setAttribute('width', '14'); icon.setAttribute('height', '14');
+  icon.setAttribute('viewBox', '0 0 24 24');
+  icon.setAttribute('fill', 'none'); icon.setAttribute('stroke', 'currentColor');
+  icon.setAttribute('stroke-width', '2'); icon.setAttribute('stroke-linecap', 'round'); icon.setAttribute('stroke-linejoin', 'round');
+  icon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>';
+  container.appendChild(icon);
+  const sel = document.createElement('select');
+  sel.className = 'lang-switch-select';
   langs.forEach(([code,label])=>{
-    const btn = document.createElement('button');
-    btn.textContent = label;
-    btn.dataset.lang = code;
-    if(code === currentLang) btn.classList.add('active');
-    btn.addEventListener('click', ()=> applyLanguage(code));
-    container.appendChild(btn);
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = label;
+    if(code === currentLang) opt.selected = true;
+    sel.appendChild(opt);
   });
+  sel.addEventListener('change', (e)=> applyLanguage(e.target.value));
+  container.appendChild(sel);
 }
 function rebuildActivitySelect(){
   ['activityInput', 'timerActivitySelect'].forEach(id=>{
