@@ -94,7 +94,7 @@ body.dark .brand-mark h1{color:#ffffff;}
 header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:18px;gap:16px;flex-wrap:nowrap;}
 h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:28px;margin:0 0 4px;letter-spacing:0.5px;}
 .sub{font-size:13px;color:var(--ink-soft);letter-spacing:0.3px;}
-.who{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.who{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;}
 .who .name{font-size:13px;color:var(--ink-soft);}
 .who button.textbtn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:6px 12px;font-size:12px;font-weight:500;}
 .who button.textbtn:hover{background:var(--paper-dim);color:var(--ink);}
@@ -1043,6 +1043,11 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
   </div>
   <!-- JOBS TAB -->
   <div class="tab-panel hidden" id="panelJobs">
+    <div class="cal-view-toggle" id="jobsSubToggle" style="margin-bottom:16px;">
+      <button data-view="applications" class="active" id="jobsSubApplicationsBtn"></button>
+      <button data-view="certifications" id="jobsSubCertificationsBtn"></button>
+    </div>
+    <div id="jobsApplicationsSection">
     <div class="card">
       <h2 id="hJobStats"></h2>
       <div class="stat-row">
@@ -1080,9 +1085,19 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
     <div class="card">
       <h2><span id="hYourJobs"></span><button class="export-btn" id="exportJobsBtn"></button></h2>
-      <div class="field" style="margin-bottom:12px;">
-        <label for="jobPersonFilter" id="lblJobPersonFilter"></label>
-        <select id="jobPersonFilter"></select>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <div class="field" style="flex:1;min-width:160px;">
+          <label for="jobSearchInput" id="lblJobSearch"></label>
+          <input type="text" id="jobSearchInput">
+        </div>
+        <div class="field">
+          <label for="jobPersonFilter" id="lblJobPersonFilter"></label>
+          <select id="jobPersonFilter"></select>
+        </div>
+        <div class="field">
+          <label for="jobSortSelect" id="lblJobSort"></label>
+          <select id="jobSortSelect"></select>
+        </div>
       </div>
       <div id="jobList"></div>
       <div id="jobListControls"></div>
@@ -1092,6 +1107,67 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <div class="lb-head-simple"><span id="jlbHeadRank"></span><span id="jlbHeadName"></span><span id="jlbHeadApplied"></span></div>
       <div id="jobLeaderboard"></div>
       <div id="jobLeaderboardControls" style="margin-top:8px;"></div>
+    </div>
+    </div>
+    <div id="jobsCertificationsSection" class="hidden">
+    <div class="card">
+      <h2 id="hCertStats"></h2>
+      <div class="stat-row">
+        <div class="stat-mini"><div class="num" id="cStatInProgress">0</div><div class="label" id="cLabelInProgress"></div></div>
+        <div class="stat-mini"><div class="num" id="cStatAcquired">0</div><div class="label" id="cLabelAcquired"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 id="hAddCert"></h2>
+      <div class="log-form">
+        <div class="field wide">
+          <label for="certName" id="lblCertName"></label>
+          <input type="text" id="certName">
+        </div>
+        <div class="field wide">
+          <label for="certIssuer" id="lblCertIssuer"></label>
+          <input type="text" id="certIssuer">
+        </div>
+        <div class="field">
+          <label for="certStatus" id="lblCertStatus"></label>
+          <select id="certStatus"></select>
+        </div>
+        <div class="field">
+          <label for="certDate" id="lblCertDate"></label>
+          <input type="date" id="certDate">
+        </div>
+        <div class="field wide">
+          <label for="certLink" id="lblCertLink"></label>
+          <input type="text" id="certLink">
+        </div>
+        <button id="addCertBtn"></button>
+      </div>
+    </div>
+    <div class="card">
+      <h2><span id="hYourCerts"></span><button class="export-btn" id="exportCertsBtn"></button></h2>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <div class="field" style="flex:1;min-width:160px;">
+          <label for="certSearchInput" id="lblCertSearch"></label>
+          <input type="text" id="certSearchInput">
+        </div>
+        <div class="field">
+          <label for="certPersonFilter" id="lblCertPersonFilter"></label>
+          <select id="certPersonFilter"></select>
+        </div>
+        <div class="field">
+          <label for="certSortSelect" id="lblCertSort"></label>
+          <select id="certSortSelect"></select>
+        </div>
+      </div>
+      <div id="certList"></div>
+      <div id="certListControls"></div>
+    </div>
+    <div class="card">
+      <h2 id="hCertLB"></h2>
+      <div class="lb-head-simple"><span id="clbHeadRank"></span><span id="clbHeadName"></span><span id="clbHeadAcquired"></span></div>
+      <div id="certLeaderboard"></div>
+      <div id="certLeaderboardControls" style="margin-top:8px;"></div>
+    </div>
     </div>
   </div>
   <!-- CALENDAR TAB -->
@@ -7261,6 +7337,11 @@ const I18N = {
     yourApplications:'Your applications', jobApplied:'Applied', jobInterview:'Interview', jobOffer:'Offer', jobRejected:'Rejected', jobWithdrawn:'Withdrawn',
     logApplication:'Log an application', company:'Company', role:'Role', dateApplied:'Date applied', link:'Link', addApplicationBtn:'Add application',
     applicationsCombined:'Applications submitted — leaderboard',
+    jobApplicationsTab:'Job Applications', certifications:'Certifications', yourCertifications:'Your certifications',
+    certInProgress:'In progress', certAcquired:'Acquired', logCertification:'Log a certification',
+    certNameLabel:'Certificate name', certIssuerLabel:'Issuer', certDateLabel:'Date completed', addCertificationBtn:'Add certification',
+    certificationsLB:'Certifications acquired — leaderboard',
+    searchLabel:'Search', sortByLabel:'Sort by', sortByDate:'Date (newest)', sortByStatus:'Status',
     footer:'Entries are visible to everyone signed in to this tracker; only you can edit your own.',
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
@@ -7361,6 +7442,11 @@ const I18N = {
     yourApplications:'지원 현황', jobApplied:'지원함', jobInterview:'면접', jobOffer:'합격', jobRejected:'불합격', jobWithdrawn:'철회',
     logApplication:'지원 내역 기록', company:'회사', role:'직무', dateApplied:'지원일', link:'링크', addApplicationBtn:'지원 추가',
     applicationsCombined:'지원 건수 순위표',
+    jobApplicationsTab:'지원 내역', certifications:'자격증', yourCertifications:'내 자격증',
+    certInProgress:'진행 중', certAcquired:'취득', logCertification:'자격증 기록',
+    certNameLabel:'자격증 이름', certIssuerLabel:'발급 기관', certDateLabel:'완료일', addCertificationBtn:'자격증 추가',
+    certificationsLB:'취득한 자격증 순위표',
+    searchLabel:'검색', sortByLabel:'정렬 기준', sortByDate:'날짜 (최신순)', sortByStatus:'상태',
     footer:'모든 기록은 로그인한 모든 사용자에게 공개되며, 본인 기록만 수정할 수 있습니다.',
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
@@ -7461,6 +7547,11 @@ const I18N = {
     yourApplications:'Đơn ứng tuyển của bạn', jobApplied:'Đã nộp', jobInterview:'Phỏng vấn', jobOffer:'Trúng tuyển', jobRejected:'Bị từ chối', jobWithdrawn:'Đã rút',
     logApplication:'Ghi lại đơn ứng tuyển', company:'Công ty', role:'Vị trí', dateApplied:'Ngày nộp', link:'Liên kết', addApplicationBtn:'Thêm đơn',
     applicationsCombined:'Bảng xếp hạng đơn đã nộp',
+    jobApplicationsTab:'Đơn ứng tuyển', certifications:'Chứng chỉ', yourCertifications:'Chứng chỉ của bạn',
+    certInProgress:'Đang thực hiện', certAcquired:'Đã đạt được', logCertification:'Ghi lại chứng chỉ',
+    certNameLabel:'Tên chứng chỉ', certIssuerLabel:'Đơn vị cấp', certDateLabel:'Ngày hoàn thành', addCertificationBtn:'Thêm chứng chỉ',
+    certificationsLB:'Bảng xếp hạng chứng chỉ đã đạt được',
+    searchLabel:'Tìm kiếm', sortByLabel:'Sắp xếp theo', sortByDate:'Ngày (mới nhất)', sortByStatus:'Trạng thái',
     footer:'Tất cả mục nhập hiển thị cho mọi người đã đăng nhập; bạn chỉ có thể chỉnh sửa mục của mình.',
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
@@ -7560,6 +7651,12 @@ const STATIC_MAP = {
   hJobStats:'yourApplications', jLabelApplied:'jobApplied', jLabelInterview:'jobInterview', jLabelOffer:'jobOffer', jLabelRejected:'jobRejected',
   hAddJob:'logApplication', lblCompany:'company', lblRole:'role', lblJobStatus:'status', lblJobDate:'dateApplied', lblJobLink:'link', addJobBtn:'addApplicationBtn',
   hYourJobs:'yourApplications', exportJobsBtn:'exportCsv', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied', lblJobPersonFilter:'lblNotesPersonFilter',
+  lblJobSearch:'searchLabel', lblJobSort:'sortByLabel',
+  jobsSubApplicationsBtn:'jobApplicationsTab', jobsSubCertificationsBtn:'certifications',
+  hCertStats:'yourCertifications', cLabelInProgress:'certInProgress', cLabelAcquired:'certAcquired',
+  hAddCert:'logCertification', lblCertName:'certNameLabel', lblCertIssuer:'certIssuerLabel', lblCertStatus:'status', lblCertDate:'certDateLabel', lblCertLink:'link', addCertBtn:'addCertificationBtn',
+  hYourCerts:'yourCertifications', exportCertsBtn:'exportCsv', hCertLB:'certificationsLB', clbHeadRank:'lbRank', clbHeadName:'lbName', clbHeadAcquired:'certAcquired', lblCertPersonFilter:'lblNotesPersonFilter',
+  lblCertSearch:'searchLabel', lblCertSort:'sortByLabel',
   hTopik:'topikCountdown', topikRegLabel:'regOpensIn', topikTestLabel:'testIn',
   hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventEndTime:'eventEndTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', addEventBtn:'addDeadlineBtn',
   calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek', calViewDayBtn:'viewDay',
@@ -7604,11 +7701,15 @@ const STATIC_MAP = {
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
 const BOOK_STATUS_KEYS = {to_read:'statusToRead', reading:'statusReading', finished:'statusFinished'};
 const JOB_STATUS_KEYS = {applied:'jobApplied', interview:'jobInterview', offer:'jobOffer', rejected:'jobRejected', withdrawn:'jobWithdrawn'};
+const JOB_STATUS_SORT_ORDER = {applied:0, interview:1, offer:2, rejected:3, withdrawn:4};
+const CERT_STATUS_KEYS = {in_progress:'certInProgress', acquired:'certAcquired'};
+const CERT_STATUS_SORT_ORDER = {in_progress:0, acquired:1};
 let currentLang = localStorage.getItem('trackerLang') || 'en';
 function t(key){ return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key; }
 function actLabel(key){ return t(ACT_KEYS[key] || key); }
 function bookStatusLabel(status){ return t(BOOK_STATUS_KEYS[status] || status); }
 function jobStatusLabel(status){ return t(JOB_STATUS_KEYS[status] || status); }
+function certStatusLabel(status){ return t(CERT_STATUS_KEYS[status] || status); }
 const ACTIVITIES = [
   {key:'listening', color:'var(--c-listening)'},
   {key:'speaking', color:'var(--c-speaking)'},
@@ -7629,6 +7730,7 @@ let profiles = {};
 let allEntries = {};
 let allBooks = {};
 let allJobs = {};
+let allCerts = {};
 let allEvents = {};
 let mySubscriptions = {}; // eventId -> my own subscription row
 let allSubsByEvent = {}; // eventId -> { userId: subscriptionRow }
@@ -7645,7 +7747,7 @@ let grammarSrs = {}; // patternId -> { ease_factor, interval_days, repetitions, 
 let linkGroupRows = []; // link_group_members rows visible to me
 let linkSharingRows = []; // link_sharing_settings rows visible to me
 let allWritingFeedback = {}; // sample_id -> [writing_feedback rows]
-const LINK_CATEGORIES = ['study_entries','books','job_applications','grammar_notes','course_notes','writing_samples','recap','readiness'];
+const LINK_CATEGORIES = ['study_entries','books','job_applications','certifications','grammar_notes','course_notes','writing_samples','recap','readiness'];
 let profileColors = {}; // userId -> custom color hex (optional override)
 let coreMembers = {}; // userId -> boolean, true for Kristoffer/Roxy
 let dailyGoals = {}; // userId -> personal daily study-hour goal (Kristoffer/Roxy share one linked value)
@@ -7849,6 +7951,18 @@ function rebuildJobStatusSelect(){
   });
   sel.value = prev;
 }
+function rebuildCertStatusSelect(){
+  const sel = document.getElementById('certStatus');
+  if(!sel) return;
+  const prev = sel.value || 'in_progress';
+  sel.innerHTML = '';
+  ['in_progress','acquired'].forEach(s=>{
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = certStatusLabel(s);
+    sel.appendChild(opt);
+  });
+  sel.value = prev;
+}
 function rebuildEventKindSelect(){
   const sel = document.getElementById('eventKind');
   const prev = sel.value || 'deadline';
@@ -7992,6 +8106,7 @@ function applyLanguage(lang){
   rebuildActivitySelect();
   rebuildBookStatusSelect();
   rebuildJobStatusSelect();
+  rebuildCertStatusSelect();
   rebuildEventKindSelect();
   rebuildRecurFreqSelect();
   rebuildPrivacySelect();
@@ -8282,6 +8397,7 @@ function updateLinkNotifyDot(){
 function linkCatLabel(cat){
   const map = {
     study_entries:'linkCatStudyEntries', books:'linkCatBooks', job_applications:'linkCatJobApplications',
+    certifications:'certifications',
     grammar_notes:'linkCatGrammarNotes', course_notes:'linkCatCourseNotes', writing_samples:'linkCatWritingSamples',
     recap:'linkCatRecap', readiness:'linkCatReadiness'
   };
@@ -8823,6 +8939,12 @@ async function loadAllData(){
     if(!allJobs[j.user_id]) allJobs[j.user_id] = [];
     allJobs[j.user_id].push(j);
   });
+  const { data: certRows } = await supabaseClient.from('certifications').select('*').order('created_at', {ascending:false});
+  allCerts = {};
+  (certRows||[]).forEach(c=>{
+    if(!allCerts[c.user_id]) allCerts[c.user_id] = [];
+    allCerts[c.user_id].push(c);
+  });
   const { data: eventRows } = await supabaseClient.from('events').select('*').order('event_date', {ascending:true});
   allEvents = {};
   (eventRows||[]).forEach(ev=>{
@@ -8962,6 +9084,12 @@ function exportJobsCsv(){
   }));
   downloadFile('job_applications.csv', toCSV(rows, ['company','role','status','date_applied','link']), 'text/csv');
 }
+function exportCertsCsv(){
+  const rows = (allCerts[currentUser.id]||[]).map(c=>({
+    name:c.name, issuer:c.issuer||'', status:certStatusLabel(c.status), date_completed:c.date_completed||'', link:c.link||''
+  }));
+  downloadFile('certifications.csv', toCSV(rows, ['name','issuer','status','date_completed','link']), 'text/csv');
+}
 function exportEventsCsv(kind){
   const rows = (allEvents[currentUser.id]||[])
     .filter(ev => (ev.kind || 'deadline') === kind)
@@ -9014,6 +9142,7 @@ function exportIcs(){
 document.getElementById('exportStudyBtn').addEventListener('click', exportStudyCsv);
 document.getElementById('exportBooksBtn').addEventListener('click', exportBooksCsv);
 document.getElementById('exportJobsBtn').addEventListener('click', exportJobsCsv);
+document.getElementById('exportCertsBtn').addEventListener('click', exportCertsCsv);
 document.getElementById('exportEventsBtn').addEventListener('click', ()=> exportEventsCsv('deadline'));
 document.getElementById('exportEventsKindBtn').addEventListener('click', ()=> exportEventsCsv('event'));
 document.getElementById('exportIcsBtn').addEventListener('click', exportIcs);
@@ -9201,7 +9330,8 @@ document.getElementById('importIcsFile').addEventListener('change', (e)=>{
 const lbState = {
   study: { expanded:false, page:1 },
   reading: { expanded:false, page:1 },
-  jobs: { expanded:false, page:1 }
+  jobs: { expanded:false, page:1 },
+  certs: { expanded:false, page:1 }
 };
 function renderLeaderboardPage(listId, controlsId, stateKey, rows, rowBuilder){
   const list = document.getElementById(listId);
@@ -9264,6 +9394,7 @@ function renderAllLeaderboards(){
   renderLeaderboard();
   renderReadingLeaderboardList();
   renderJobLeaderboardList();
+  renderCertLeaderboardList();
 }
 function studyLeaderboardRows(){
   const userIds = Object.keys(profiles).filter(visibleOnLeaderboard);
@@ -9760,6 +9891,8 @@ async function saveJobEdit(jobId, container){
 }
 // Same shared 3-preview / 10-per-page pattern as the leaderboards and
 // deadline list (see PREVIEW_SIZE/PAGE_SIZE + renderLeaderboardPage).
+let jobSearchQuery = '';
+let jobSortMode = 'date';
 let jobListState = { expanded:false, page:1 };
 function renderJobs(){
   // "Your applications" stat tiles always reflect your own applications,
@@ -9800,7 +9933,20 @@ function renderJobs(){
     viewList = allJobs[filterVal] || [];
   }
 
-  const sortedList = viewList.slice().sort((a,b)=> (b.date_applied||'').localeCompare(a.date_applied||''));
+  const jq = jobSearchQuery.trim().toLowerCase();
+  if(jq){
+    viewList = viewList.filter(j=>
+      (j.company||'').toLowerCase().includes(jq) || (j.role||'').toLowerCase().includes(jq)
+    );
+  }
+
+  const sortedList = viewList.slice().sort((a,b)=>{
+    if(jobSortMode === 'status'){
+      const diff = (JOB_STATUS_SORT_ORDER[a.status] ?? 99) - (JOB_STATUS_SORT_ORDER[b.status] ?? 99);
+      if(diff !== 0) return diff;
+    }
+    return (b.date_applied||'').localeCompare(a.date_applied||'');
+  });
 
   const list = document.getElementById('jobList');
   const controls = document.getElementById('jobListControls');
@@ -9952,6 +10098,278 @@ function renderJobLeaderboardList(){
     return row;
   });
 }
+/* ---------- CERTIFICATIONS ---------- */
+// Sibling feature to Jobs — same shape throughout (add form, own-only edit
+// panel, list with search/sort/person-filter/pagination, public aggregate
+// leaderboard), backed by the `certifications` table (certifications_migration.sql)
+// and folded into the generalized linking system as its own share category.
+async function addCert(){
+  const name = document.getElementById('certName').value.trim();
+  const issuer = document.getElementById('certIssuer').value.trim();
+  const status = document.getElementById('certStatus').value;
+  const dateCompleted = document.getElementById('certDate').value || null;
+  const link = document.getElementById('certLink').value.trim();
+  if(!name) return;
+  const row = { user_id: currentUser.id, name, issuer: issuer || null, status, date_completed: dateCompleted, link: link || null };
+  const { data, error } = await supabaseClient.from('certifications').insert(row).select();
+  if(!error && data){
+    if(!allCerts[currentUser.id]) allCerts[currentUser.id] = [];
+    allCerts[currentUser.id].unshift(data[0]);
+  }
+  document.getElementById('certName').value = '';
+  document.getElementById('certIssuer').value = '';
+  document.getElementById('certDate').value = '';
+  document.getElementById('certLink').value = '';
+  renderCerts();
+}
+async function updateCertStatus(certId, status){
+  await supabaseClient.from('certifications').update({ status }).eq('id', certId);
+  const c = (allCerts[currentUser.id]||[]).find(x=>x.id===certId);
+  if(c) c.status = status;
+  renderCerts();
+}
+async function deleteCert(certId){
+  await supabaseClient.from('certifications').delete().eq('id', certId);
+  allCerts[currentUser.id] = (allCerts[currentUser.id]||[]).filter(x=>x.id!==certId);
+  renderCerts();
+}
+document.getElementById('addCertBtn').addEventListener('click', addCert);
+let expandedCertEdit = new Set();
+function buildCertEditFieldsHtml(c){
+  return `
+    <div class="field">
+      <label>${t('certNameLabel')}</label>
+      <input type="text" class="cte-name" value="${(c.name||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div class="field">
+      <label>${t('certIssuerLabel')}</label>
+      <input type="text" class="cte-issuer" value="${(c.issuer||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div class="field">
+      <label>${t('certDateLabel')}</label>
+      <input type="date" class="cte-date" value="${c.date_completed||''}">
+    </div>
+    <div class="field">
+      <label>${t('link')}</label>
+      <input type="text" class="cte-link" value="${(c.link||'').replace(/"/g,'&quot;')}">
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button class="export-btn cte-save-btn" data-id="${c.id}">${t('saveChanges')}</button>
+      <button class="export-btn cte-cancel-btn" data-id="${c.id}">${t('cancelEdit')}</button>
+    </div>`;
+}
+async function saveCertEdit(certId, container){
+  const name = container.querySelector('.cte-name').value.trim();
+  const issuer = container.querySelector('.cte-issuer').value.trim();
+  const dateCompleted = container.querySelector('.cte-date').value || null;
+  const link = container.querySelector('.cte-link').value.trim();
+  if(!name) return;
+  const patch = { name, issuer: issuer || null, date_completed: dateCompleted, link: link || null };
+  const { data, error } = await supabaseClient.from('certifications').update(patch).eq('id', certId).select();
+  if(!error && data && data[0]){
+    const c = (allCerts[currentUser.id]||[]).find(x=>x.id===certId);
+    if(c) Object.assign(c, data[0]);
+  }
+  expandedCertEdit.delete(certId);
+  renderCerts();
+}
+let certSearchQuery = '';
+let certSortMode = 'date';
+let certListState = { expanded:false, page:1 };
+function renderCerts(){
+  const mine = allCerts[currentUser.id] || [];
+  const cInProgress = mine.filter(c=>c.status==='in_progress').length;
+  const cAcquired = mine.filter(c=>c.status==='acquired').length;
+
+  const inProgressEl = document.getElementById('cStatInProgress');
+  const acquiredEl = document.getElementById('cStatAcquired');
+  if(inProgressEl){
+    inProgressEl.textContent = cInProgress;
+    inProgressEl.style.color = cInProgress > 0 ? '#D9A521' : 'var(--ink)';
+  }
+  if(acquiredEl){
+    acquiredEl.textContent = cAcquired;
+    acquiredEl.style.color = cAcquired > 0 ? '#27AE60' : 'var(--ink)';
+  }
+
+  const filterVal = certPersonFilter || currentUser.id;
+  let viewList;
+  if(filterVal === 'all'){
+    viewList = Object.keys(profiles).filter(uid=>coreMembers[uid])
+      .flatMap(uid => (allCerts[uid]||[]));
+  } else {
+    viewList = allCerts[filterVal] || [];
+  }
+
+  const cq = certSearchQuery.trim().toLowerCase();
+  if(cq){
+    viewList = viewList.filter(c=>
+      (c.name||'').toLowerCase().includes(cq) || (c.issuer||'').toLowerCase().includes(cq)
+    );
+  }
+
+  const sortedList = viewList.slice().sort((a,b)=>{
+    if(certSortMode === 'status'){
+      const diff = (CERT_STATUS_SORT_ORDER[a.status] ?? 99) - (CERT_STATUS_SORT_ORDER[b.status] ?? 99);
+      if(diff !== 0) return diff;
+    }
+    return (b.date_completed||b.created_at||'').localeCompare(a.date_completed||a.created_at||'');
+  });
+
+  const list = document.getElementById('certList');
+  const controls = document.getElementById('certListControls');
+  if(!list) return;
+  list.innerHTML = '';
+  if(controls) controls.innerHTML = '';
+  if(sortedList.length === 0){ list.innerHTML = '<div class="empty">—</div>'; refreshCertLeaderboard(); return; }
+
+  const state = certListState;
+  let toShow;
+  if(!state.expanded){
+    toShow = sortedList.slice(0, PREVIEW_SIZE);
+  } else {
+    const totalPages = Math.max(1, Math.ceil(sortedList.length / PAGE_SIZE));
+    if(state.page > totalPages) state.page = totalPages;
+    const start = (state.page - 1) * PAGE_SIZE;
+    toShow = sortedList.slice(start, start + PAGE_SIZE);
+  }
+
+  toShow.forEach(c=>{
+    const isMine = c.user_id === currentUser.id;
+    const ownerTag = `<span class="e-who" style="background:${colorForUser(c.user_id)}26;color:${colorForUser(c.user_id)};">${nameFor(c.user_id)}</span>`;
+    const alreadyMine = !isMine && (allCerts[currentUser.id]||[]).some(x =>
+      (x.name||'').trim().toLowerCase() === (c.name||'').trim().toLowerCase() &&
+      (x.issuer||'').trim().toLowerCase() === (c.issuer||'').trim().toLowerCase()
+    );
+    const addMyselfBtn = (!isMine && !alreadyMine) ? `<button class="linkbtn cert-add-myself" data-id="${c.id}">${t('addMyselfBtn')}</button>` : '';
+    const isEditOpen = isMine && expandedCertEdit.has(c.id);
+    const div = document.createElement('div');
+    div.className = 'item-row';
+    div.innerHTML =
+      `<div class="item-top">
+        <div><div class="item-title">${c.name} ${ownerTag}</div><div class="item-sub">${c.issuer || ''} ${c.date_completed ? '· ' + c.date_completed : ''}</div></div>
+        ${isMine ? `<button class="item-del" data-id="${c.id}" data-kind="cert" title="Delete">✕</button>` : ''}
+      </div>
+      <div class="item-meta">
+        <span class="badge ${c.status==='acquired' ? 'finished' : 'reading'}">${certStatusLabel(c.status)}</span>
+        ${isMine ? `<select data-id="${c.id}" class="cert-status-select">
+          <option value="in_progress" ${c.status==='in_progress'?'selected':''}>${certStatusLabel('in_progress')}</option>
+          <option value="acquired" ${c.status==='acquired'?'selected':''}>${certStatusLabel('acquired')}</option>
+        </select>` : ''}
+        ${c.link ? `<a href="${c.link}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
+        ${isMine ? `<button class="linkbtn cert-edit-toggle" data-id="${c.id}">${t('editBtn')}</button>` : ''}
+        ${addMyselfBtn}
+      </div>
+      ${isMine ? `<div class="notes-panel ${isEditOpen?'':'hidden'}" data-cert-edit-for="${c.id}">${isEditOpen ? buildCertEditFieldsHtml(c) : ''}</div>` : ''}`;
+    list.appendChild(div);
+  });
+  list.querySelectorAll('.item-del[data-kind="cert"]').forEach(btn=>{
+    btn.addEventListener('click', ()=> deleteCert(btn.dataset.id));
+  });
+  list.querySelectorAll('.cert-status-select').forEach(sel=>{
+    sel.addEventListener('change', ()=> updateCertStatus(sel.dataset.id, sel.value));
+  });
+  list.querySelectorAll('.cert-add-myself').forEach(btn=>{
+    btn.addEventListener('click', ()=> addMyselfToCert(btn.dataset.id));
+  });
+  list.querySelectorAll('.cert-edit-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      if(expandedCertEdit.has(id)) expandedCertEdit.delete(id); else expandedCertEdit.add(id);
+      renderCerts();
+    });
+  });
+  list.querySelectorAll('[data-cert-edit-for]').forEach(panel=>{
+    const saveBtn = panel.querySelector('.cte-save-btn');
+    const cancelBtn = panel.querySelector('.cte-cancel-btn');
+    if(saveBtn) saveBtn.addEventListener('click', ()=> saveCertEdit(saveBtn.dataset.id, panel));
+    if(cancelBtn) cancelBtn.addEventListener('click', ()=>{
+      expandedCertEdit.delete(cancelBtn.dataset.id);
+      renderCerts();
+    });
+  });
+
+  if(controls){
+    if(!state.expanded && sortedList.length > PREVIEW_SIZE){
+      const moreBtn = document.createElement('button');
+      moreBtn.className = 'show-more-btn';
+      moreBtn.textContent = `${t('showMore')} (${sortedList.length - PREVIEW_SIZE})`;
+      moreBtn.addEventListener('click', ()=>{ state.expanded = true; state.page = 1; renderCerts(); });
+      controls.appendChild(moreBtn);
+    } else if(state.expanded){
+      const totalPages = Math.max(1, Math.ceil(sortedList.length / PAGE_SIZE));
+      if(totalPages > 1){
+        const nav = document.createElement('div');
+        nav.className = 'list-controls';
+        const mkBtn = (label, page, disabled)=>{
+          const b = document.createElement('button');
+          b.textContent = label;
+          b.disabled = !!disabled;
+          b.className = 'page-btn' + (page === state.page ? ' active' : '');
+          b.addEventListener('click', ()=>{ state.page = page; renderCerts(); });
+          return b;
+        };
+        nav.appendChild(mkBtn('«', 1, state.page === 1));
+        nav.appendChild(mkBtn('‹', Math.max(1, state.page - 1), state.page === 1));
+        for(let p = 1; p <= totalPages; p++){ nav.appendChild(mkBtn(String(p), p, false)); }
+        nav.appendChild(mkBtn('›', Math.min(totalPages, state.page + 1), state.page === totalPages));
+        nav.appendChild(mkBtn('»', totalPages, state.page === totalPages));
+        controls.appendChild(nav);
+      }
+      const lessBtn = document.createElement('button');
+      lessBtn.className = 'show-more-btn';
+      lessBtn.textContent = t('showLess');
+      lessBtn.addEventListener('click', ()=>{ state.expanded = false; renderCerts(); });
+      controls.appendChild(lessBtn);
+    }
+  }
+  refreshCertLeaderboard();
+}
+async function addMyselfToCert(sourceCertId){
+  const source = Object.values(allCerts).flat().find(x=>x.id===sourceCertId);
+  if(!source) return;
+  const row = { user_id: currentUser.id, name: source.name, issuer: source.issuer, status: 'in_progress', date_completed: null, link: source.link || null };
+  const { data, error } = await supabaseClient.from('certifications').insert(row).select();
+  if(!error && data && data[0]){
+    if(!allCerts[currentUser.id]) allCerts[currentUser.id] = [];
+    allCerts[currentUser.id].unshift(data[0]);
+  }
+  renderCerts();
+}
+// Same public-leaderboard-vs-private-detail split as jobs — see
+// refreshJobLeaderboard() above and certification_leaderboard() in
+// certifications_migration.sql.
+let certLeaderboardCache = [];
+async function refreshCertLeaderboard(){
+  if(!currentUser) return;
+  const { data, error } = await supabaseClient.rpc('certification_leaderboard');
+  if(error) return;
+  const counts = {};
+  (data||[]).forEach(r=>{ counts[r.user_id] = r.acquired_count; });
+  certLeaderboardCache = Object.keys(profiles)
+    .filter(visibleOnLeaderboard)
+    .map(uid=>({ id: uid, name: nameFor(uid), count: counts[uid] || 0 }))
+    .sort((a,b)=> b.count - a.count);
+  renderCertLeaderboardList();
+}
+function renderCertLeaderboardList(){
+  renderLeaderboardPage('certLeaderboard', 'certLeaderboardControls', 'certs', certLeaderboardCache, (r, rank)=>{
+    const row = document.createElement('div');
+    row.className = 'lb-row-simple' + (r.id===currentUser.id ? ' me' : '');
+    row.innerHTML = `<span class="lb-rank">${rank}</span><span class="lb-name">${lbNameCell(r)}</span><span class="lb-stat">${r.count}</span>`;
+    return row;
+  });
+}
+function switchJobsSubTab(view){
+  const btns = { applications: 'jobsSubApplicationsBtn', certifications: 'jobsSubCertificationsBtn' };
+  const sections = { applications: 'jobsApplicationsSection', certifications: 'jobsCertificationsSection' };
+  Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
+  Object.entries(sections).forEach(([v,id])=> document.getElementById(id).classList.toggle('hidden', v!==view));
+  if(view === 'certifications') renderCerts();
+}
+document.getElementById('jobsSubApplicationsBtn').addEventListener('click', ()=> switchJobsSubTab('applications'));
+document.getElementById('jobsSubCertificationsBtn').addEventListener('click', ()=> switchJobsSubTab('certifications'));
+
 /* ---------- CALENDAR / TOPIK / DEADLINES ---------- */
 function formatCountdown(target){
   const diff = target - new Date();
@@ -11127,8 +11545,12 @@ function renderAll(){
   renderFeed();
   rebuildBookPersonFilter();
   rebuildJobPersonFilter();
+  rebuildCertPersonFilter();
+  rebuildJobSortSelect();
+  rebuildCertSortSelect();
   renderReading();
   renderJobs();
+  renderCerts();
   renderCalendarTab();
   renderCourses();
   renderNotesCourseSelect();
@@ -20403,6 +20825,82 @@ document.getElementById('jobPersonFilter').addEventListener('change', (e)=>{
   jobListState.expanded = false;
   jobListState.page = 1;
   renderJobs();
+});
+function rebuildJobSortSelect(){
+  const sel = document.getElementById('jobSortSelect');
+  if(!sel) return;
+  const prev = sel.value || 'date';
+  sel.innerHTML = '';
+  [['date','sortByDate'],['status','sortByStatus']].forEach(([val,key])=>{
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = t(key);
+    sel.appendChild(opt);
+  });
+  sel.value = prev;
+  jobSortMode = sel.value;
+}
+document.getElementById('jobSortSelect').addEventListener('change', (e)=>{
+  jobSortMode = e.target.value;
+  jobListState.expanded = false;
+  jobListState.page = 1;
+  renderJobs();
+});
+document.getElementById('jobSearchInput').addEventListener('input', (e)=>{
+  jobSearchQuery = e.target.value;
+  jobListState.expanded = false;
+  jobListState.page = 1;
+  renderJobs();
+});
+
+let certPersonFilter = null;
+function rebuildCertPersonFilter(){
+  const sel = document.getElementById('certPersonFilter');
+  if(!sel || !currentUser) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
+  sel.appendChild(allOpt);
+  const selectable = [currentUser.id, ...visiblePartnersFor('certifications')];
+  selectable.forEach(uid=>{
+    const opt = document.createElement('option');
+    opt.value = uid; opt.textContent = nameFor(uid);
+    sel.appendChild(opt);
+  });
+  const valid = prev && (prev==='all' || selectable.includes(prev));
+  sel.value = valid ? prev : currentUser.id;
+  certPersonFilter = sel.value;
+}
+document.getElementById('certPersonFilter').addEventListener('change', (e)=>{
+  certPersonFilter = e.target.value;
+  certListState.expanded = false;
+  certListState.page = 1;
+  renderCerts();
+});
+function rebuildCertSortSelect(){
+  const sel = document.getElementById('certSortSelect');
+  if(!sel) return;
+  const prev = sel.value || 'date';
+  sel.innerHTML = '';
+  [['date','sortByDate'],['status','sortByStatus']].forEach(([val,key])=>{
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = t(key);
+    sel.appendChild(opt);
+  });
+  sel.value = prev;
+  certSortMode = sel.value;
+}
+document.getElementById('certSortSelect').addEventListener('change', (e)=>{
+  certSortMode = e.target.value;
+  certListState.expanded = false;
+  certListState.page = 1;
+  renderCerts();
+});
+document.getElementById('certSearchInput').addEventListener('input', (e)=>{
+  certSearchQuery = e.target.value;
+  certListState.expanded = false;
+  certListState.page = 1;
+  renderCerts();
 });
 
 function renderLectureList(){
