@@ -9601,6 +9601,90 @@ function renderReadingLeaderboardList(){
   });
 }
 /* ---------- JOBS ---------- */
+// Paste-to-autofill for "Log an application": pasting a multi-line summary
+// (like the copy-pasteable block a chat assistant hands back after helping
+// someone apply) into the Company field fills all four fields at once
+// instead of dumping the whole block into one input. Supports two shapes:
+// labeled "Company: X / Role: Y / Status: Z / Date Applied: D / Link: L"
+// (any subset/order of the 5 keys), and a plain positional block (company
+// line, then role line, then optionally a status line, then a date line,
+// then a link line — the status line, if present, is intentionally ignored:
+// a freshly-logged application is always "applied" regardless of what that
+// line says or whether it's there at all).
+function parseDateFlexible(str){
+  str = (str||'').trim();
+  if(!str) return null;
+  let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(m){
+    const a = parseInt(m[1]), b = parseInt(m[2]), y = m[3];
+    // Ambiguous D/M vs M/D is resolved in favor of day/month/year (the
+    // format used sitewide), unless one of the two numbers can only be a
+    // day (i.e. > 12), in which case that reading is forced instead.
+    let day, month;
+    if(a > 12){ day = a; month = b; }
+    else if(b > 12){ month = a; day = b; }
+    else { day = a; month = b; }
+    if(month < 1 || month > 12 || day < 1 || day > 31) return null;
+    return `${y}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  }
+  const parsed = new Date(str);
+  if(!isNaN(parsed.getTime())){
+    return `${parsed.getFullYear()}-${String(parsed.getMonth()+1).padStart(2,'0')}-${String(parsed.getDate()).padStart(2,'0')}`;
+  }
+  return null;
+}
+function parseJobPasteText(text){
+  const rawLines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+  if(rawLines.length < 2) return null;
+
+  const labelRe = /^(company|role|status|date\s*applied|date|link)\s*:\s*(.*)$/i;
+  const labeled = {};
+  let labeledMatches = 0;
+  rawLines.forEach(line=>{
+    const m = line.match(labelRe);
+    if(m){
+      labeled[m[1].toLowerCase().replace(/\s+/g,'')] = m[2].trim();
+      labeledMatches++;
+    }
+  });
+  if(labeledMatches >= 2 && (labeled.company || labeled.role)){
+    return {
+      company: labeled.company || '',
+      role: labeled.role || '',
+      date: parseDateFlexible(labeled.dateapplied || labeled.date || ''),
+      link: labeled.link || ''
+    };
+  }
+
+  let urlIndex = rawLines.findIndex(l=> /^https?:\/\//i.test(l));
+  let dateIndex = rawLines.findIndex((l,idx)=> idx !== urlIndex && parseDateFlexible(l) !== null);
+  let infoEnd = rawLines.length;
+  if(dateIndex !== -1) infoEnd = Math.min(infoEnd, dateIndex);
+  if(urlIndex !== -1) infoEnd = Math.min(infoEnd, urlIndex);
+  const infoLines = rawLines.slice(0, infoEnd);
+  if(infoLines.length === 0) return null;
+
+  return {
+    company: infoLines[0] || '',
+    role: infoLines[1] || '',
+    date: dateIndex !== -1 ? parseDateFlexible(rawLines[dateIndex]) : null,
+    link: urlIndex !== -1 ? rawLines[urlIndex] : ''
+  };
+}
+document.getElementById('jobCompany').addEventListener('paste', (e)=>{
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  if(!text || !text.includes('\n')) return;
+  const parsed = parseJobPasteText(text);
+  if(!parsed || !parsed.company) return;
+  e.preventDefault();
+  document.getElementById('jobCompany').value = parsed.company;
+  document.getElementById('jobRole').value = parsed.role;
+  document.getElementById('jobStatus').value = 'applied';
+  document.getElementById('jobDate').value = parsed.date || todayStr();
+  document.getElementById('jobLink').value = parsed.link;
+});
 async function addJob(){
   const company = document.getElementById('jobCompany').value.trim();
   const role = document.getElementById('jobRole').value.trim();
