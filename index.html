@@ -7334,10 +7334,10 @@ const I18N = {
     yourReading:'Your reading', statusReading:'Reading', statusToRead:'To read', statusFinished:'Finished',
     addBook:'Add a book', title:'Title', author:'Author', status:'Status', totalPages:'Total pages', addBookBtn:'Add book',
     yourBooks:'Your books', booksFinishedLB:'Books finished — leaderboard',
-    yourApplications:'Your applications', jobApplied:'Applied', jobInterview:'Interview', jobOffer:'Offer', jobRejected:'Rejected', jobWithdrawn:'Withdrawn',
+    yourApplications:'Your applications', jobStatsFor:"{name}'s applications", jobStatsAll:'All applications', jobApplied:'Applied', jobInterview:'Interview', jobOffer:'Offer', jobRejected:'Rejected', jobWithdrawn:'Withdrawn',
     logApplication:'Log an application', company:'Company', role:'Role', dateApplied:'Date applied', link:'Link', addApplicationBtn:'Add application',
     applicationsCombined:'Applications submitted — leaderboard',
-    jobApplicationsTab:'Job Applications', certifications:'Certifications', yourCertifications:'Your certifications',
+    jobApplicationsTab:'Job Applications', certifications:'Certifications', yourCertifications:'Your certifications', certStatsFor:"{name}'s certifications", certStatsAll:'All certifications',
     certInProgress:'In progress', certAcquired:'Acquired', logCertification:'Log a certification',
     certNameLabel:'Certificate name', certIssuerLabel:'Issuer', certDateLabel:'Date completed', addCertificationBtn:'Add certification',
     certificationsLB:'Certifications acquired — leaderboard',
@@ -7439,10 +7439,10 @@ const I18N = {
     yourReading:'독서 현황', statusReading:'읽는 중', statusToRead:'읽을 예정', statusFinished:'완독',
     addBook:'책 추가', title:'제목', author:'저자', status:'상태', totalPages:'총 페이지', addBookBtn:'책 추가하기',
     yourBooks:'내 책 목록', booksFinishedLB:'완독 순위표',
-    yourApplications:'지원 현황', jobApplied:'지원함', jobInterview:'면접', jobOffer:'합격', jobRejected:'불합격', jobWithdrawn:'철회',
+    yourApplications:'지원 현황', jobStatsFor:'{name}의 지원 현황', jobStatsAll:'전체 지원 현황', jobApplied:'지원함', jobInterview:'면접', jobOffer:'합격', jobRejected:'불합격', jobWithdrawn:'철회',
     logApplication:'지원 내역 기록', company:'회사', role:'직무', dateApplied:'지원일', link:'링크', addApplicationBtn:'지원 추가',
     applicationsCombined:'지원 건수 순위표',
-    jobApplicationsTab:'지원 내역', certifications:'자격증', yourCertifications:'내 자격증',
+    jobApplicationsTab:'지원 내역', certifications:'자격증', yourCertifications:'내 자격증', certStatsFor:'{name}의 자격증', certStatsAll:'전체 자격증',
     certInProgress:'진행 중', certAcquired:'취득', logCertification:'자격증 기록',
     certNameLabel:'자격증 이름', certIssuerLabel:'발급 기관', certDateLabel:'완료일', addCertificationBtn:'자격증 추가',
     certificationsLB:'취득한 자격증 순위표',
@@ -7544,10 +7544,10 @@ const I18N = {
     yourReading:'Sách đang đọc', statusReading:'Đang đọc', statusToRead:'Muốn đọc', statusFinished:'Đã đọc xong',
     addBook:'Thêm sách', title:'Tên sách', author:'Tác giả', status:'Trạng thái', totalPages:'Tổng số trang', addBookBtn:'Thêm sách',
     yourBooks:'Sách của bạn', booksFinishedLB:'Bảng xếp hạng sách đã đọc',
-    yourApplications:'Đơn ứng tuyển của bạn', jobApplied:'Đã nộp', jobInterview:'Phỏng vấn', jobOffer:'Trúng tuyển', jobRejected:'Bị từ chối', jobWithdrawn:'Đã rút',
+    yourApplications:'Đơn ứng tuyển của bạn', jobStatsFor:'Đơn ứng tuyển của {name}', jobStatsAll:'Tất cả đơn ứng tuyển', jobApplied:'Đã nộp', jobInterview:'Phỏng vấn', jobOffer:'Trúng tuyển', jobRejected:'Bị từ chối', jobWithdrawn:'Đã rút',
     logApplication:'Ghi lại đơn ứng tuyển', company:'Công ty', role:'Vị trí', dateApplied:'Ngày nộp', link:'Liên kết', addApplicationBtn:'Thêm đơn',
     applicationsCombined:'Bảng xếp hạng đơn đã nộp',
-    jobApplicationsTab:'Đơn ứng tuyển', certifications:'Chứng chỉ', yourCertifications:'Chứng chỉ của bạn',
+    jobApplicationsTab:'Đơn ứng tuyển', certifications:'Chứng chỉ', yourCertifications:'Chứng chỉ của bạn', certStatsFor:'Chứng chỉ của {name}', certStatsAll:'Tất cả chứng chỉ',
     certInProgress:'Đang thực hiện', certAcquired:'Đã đạt được', logCertification:'Ghi lại chứng chỉ',
     certNameLabel:'Tên chứng chỉ', certIssuerLabel:'Đơn vị cấp', certDateLabel:'Ngày hoàn thành', addCertificationBtn:'Thêm chứng chỉ',
     certificationsLB:'Bảng xếp hạng chứng chỉ đã đạt được',
@@ -9895,13 +9895,35 @@ let jobSearchQuery = '';
 let jobSortMode = 'date';
 let jobListState = { expanded:false, page:1 };
 function renderJobs(){
-  // "Your applications" stat tiles always reflect your own applications,
-  // independent of which person the list below is currently showing.
-  const mine = allJobs[currentUser.id] || [];
-  const jApplied = mine.filter(j=>j.status==='applied').length;
-  const jInterview = mine.filter(j=>j.status==='interview').length;
-  const jOffer = mine.filter(j=>j.status==='offer').length;
-  const jRejected = mine.filter(j=>j.status==='rejected').length;
+  // The "Your applications" stat tiles and header follow the same
+  // jobPersonFilter as the list below, so linked people can see each
+  // other's stat bar too (not just their own) by switching the filter.
+  // "all" is a merged, attributed view scoped to the core circle only —
+  // the DB never returns rows outside the shared core circle anyway
+  // (see RLS), so this can't surface a third party's applications.
+  const filterVal = jobPersonFilter || currentUser.id;
+  let viewList;
+  if(filterVal === 'all'){
+    viewList = Object.keys(profiles).filter(uid=>coreMembers[uid])
+      .flatMap(uid => (allJobs[uid]||[]));
+  } else {
+    viewList = allJobs[filterVal] || [];
+  }
+  const jApplied = viewList.filter(j=>j.status==='applied').length;
+  const jInterview = viewList.filter(j=>j.status==='interview').length;
+  const jOffer = viewList.filter(j=>j.status==='offer').length;
+  const jRejected = viewList.filter(j=>j.status==='rejected').length;
+
+  const statsHeaderEl = document.getElementById('hJobStats');
+  if(statsHeaderEl){
+    if(filterVal === 'all'){
+      statsHeaderEl.textContent = t('jobStatsAll');
+    } else if(filterVal === currentUser.id){
+      statsHeaderEl.textContent = t('yourApplications');
+    } else {
+      statsHeaderEl.textContent = t('jobStatsFor').replace('{name}', nameFor(filterVal));
+    }
+  }
 
   const appliedEl = document.getElementById('jStatApplied');
   const interviewEl = document.getElementById('jStatInterview');
@@ -9919,19 +9941,6 @@ function renderJobs(){
 
   rejectedEl.textContent = jRejected;
   rejectedEl.style.color = jRejected > 0 ? 'var(--seal)' : 'var(--ink)';
-
-  // The list itself honors jobPersonFilter: "me" (default), the other core
-  // member's name, or "all" for a merged, attributed view. The DB only ever
-  // returns rows within the shared core circle (see RLS), so this can never
-  // surface a third party's applications even if 'all' is selected.
-  const filterVal = jobPersonFilter || currentUser.id;
-  let viewList;
-  if(filterVal === 'all'){
-    viewList = Object.keys(profiles).filter(uid=>coreMembers[uid])
-      .flatMap(uid => (allJobs[uid]||[]));
-  } else {
-    viewList = allJobs[filterVal] || [];
-  }
 
   const jq = jobSearchQuery.trim().toLowerCase();
   if(jq){
@@ -10177,9 +10186,29 @@ let certSearchQuery = '';
 let certSortMode = 'date';
 let certListState = { expanded:false, page:1 };
 function renderCerts(){
-  const mine = allCerts[currentUser.id] || [];
-  const cInProgress = mine.filter(c=>c.status==='in_progress').length;
-  const cAcquired = mine.filter(c=>c.status==='acquired').length;
+  // Mirrors renderJobs(): stat tiles + header follow certPersonFilter so
+  // linked people can see each other's stat bar, not just their own.
+  const filterVal = certPersonFilter || currentUser.id;
+  let viewList;
+  if(filterVal === 'all'){
+    viewList = Object.keys(profiles).filter(uid=>coreMembers[uid])
+      .flatMap(uid => (allCerts[uid]||[]));
+  } else {
+    viewList = allCerts[filterVal] || [];
+  }
+  const cInProgress = viewList.filter(c=>c.status==='in_progress').length;
+  const cAcquired = viewList.filter(c=>c.status==='acquired').length;
+
+  const certStatsHeaderEl = document.getElementById('hCertStats');
+  if(certStatsHeaderEl){
+    if(filterVal === 'all'){
+      certStatsHeaderEl.textContent = t('certStatsAll');
+    } else if(filterVal === currentUser.id){
+      certStatsHeaderEl.textContent = t('yourCertifications');
+    } else {
+      certStatsHeaderEl.textContent = t('certStatsFor').replace('{name}', nameFor(filterVal));
+    }
+  }
 
   const inProgressEl = document.getElementById('cStatInProgress');
   const acquiredEl = document.getElementById('cStatAcquired');
@@ -10190,15 +10219,6 @@ function renderCerts(){
   if(acquiredEl){
     acquiredEl.textContent = cAcquired;
     acquiredEl.style.color = cAcquired > 0 ? '#27AE60' : 'var(--ink)';
-  }
-
-  const filterVal = certPersonFilter || currentUser.id;
-  let viewList;
-  if(filterVal === 'all'){
-    viewList = Object.keys(profiles).filter(uid=>coreMembers[uid])
-      .flatMap(uid => (allCerts[uid]||[]));
-  } else {
-    viewList = allCerts[filterVal] || [];
   }
 
   const cq = certSearchQuery.trim().toLowerCase();
