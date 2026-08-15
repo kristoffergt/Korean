@@ -93,6 +93,18 @@ function dateAfter(html: string, from: number): string {
   return short ? short[0] : "";
 }
 
+// Yonsei's own list order pins certain notices (recruiting posts, etc.) to
+// the top regardless of date, mixed in with the rest in reverse-chronological
+// order. We always want newest-first on our side, so the collected items are
+// re-sorted by date before being returned; items with an unparsed (empty)
+// date are pushed to the end rather than sorted arbitrarily.
+function compareDateDesc(a: BoardItem, b: BoardItem): number {
+  if (!a.date && !b.date) return 0;
+  if (!a.date) return 1;
+  if (!b.date) return -1;
+  return b.date.localeCompare(a.date);
+}
+
 export function parseYonseiBoardHtml(html: string, maxItems = 20): BoardItem[] {
   const items: BoardItem[] = [];
   const seen = new Set<string>();
@@ -109,5 +121,5 @@ export function parseYonseiBoardHtml(html: string, maxItems = 20): BoardItem[] {
     items.push({ title, link, date: dateAfter(html, ANCHOR_RE.lastIndex) });
     if (items.length >= maxItems) break;
   }
-  return items;
+  return items.sort(compareDateDesc);
 }
