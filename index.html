@@ -10670,23 +10670,29 @@ document.getElementById('yonseiNotifyBtn').addEventListener('click', async ()=>{
 // matching the pre-existing behavior for anyone who already opted in before
 // this panel existed). Only shown once notifications are on. Built from the
 // same canonical category set the badges use ($YONSEI_BOARD_CATEGORIES
-// server-side); "All categories" is its own checkbox rather than just
-// "everything below checked", since null and [every category] aren't quite
-// the same thing (null also silently covers any brand-new category Yonsei
-// starts using tomorrow).
+// server-side).
+//
+// "All categories" is a normal select-all master checkbox, not a lock:
+// checking it checks (and saves) every individual category, unchecking it
+// unchecks all of them, and it's derived from -- not a separate state from --
+// the individual boxes, so e.g. clicking "All" then unchecking just
+// "Academics" leaves the other three checked and "All" itself unchecked,
+// same as any standard select-all list. The individual checkboxes are always
+// clickable, never disabled.
 const YONSEI_NOTIFY_CATEGORIES = ['Academics','Recruiting','Admission','General Notice'];
-let notifyYonseiCategories = null; // null = all; overwritten from profiles on load
+let notifyYonseiCategories = null; // null = all (only before the user has ever touched this panel); overwritten from profiles on load
 function renderYonseiNotifyCategoriesPanel(){
   const el = document.getElementById('yonseiNotifyCategoriesPanel');
   if(!el) return;
   el.classList.toggle('hidden', !notifyYonseiBoard);
   if(!notifyYonseiBoard) return;
-  const allChecked = notifyYonseiCategories === null;
+  const selected = notifyYonseiCategories === null ? YONSEI_NOTIFY_CATEGORIES.slice() : notifyYonseiCategories;
+  const allChecked = YONSEI_NOTIFY_CATEGORIES.every(cat=> selected.includes(cat));
   el.innerHTML = `<div class="hint" style="margin-bottom:4px;">${t('yonseiNotifyCategoriesLabel')}</div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;">
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;"><input type="checkbox" id="yonseiNotifyCatAll" ${allChecked?'checked':''}> <span>${t('yonseiCategoryAll')}</span></label>
       ${YONSEI_NOTIFY_CATEGORIES.map(cat=>
-        `<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;${allChecked?'opacity:0.5;':''}"><input type="checkbox" class="yonsei-notify-cat-check" data-cat="${escapeHtml(cat)}" ${allChecked?'disabled':''} ${(!allChecked && notifyYonseiCategories.includes(cat))?'checked':''}> <span>${escapeHtml(cat)}</span></label>`
+        `<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="yonsei-notify-cat-check" data-cat="${escapeHtml(cat)}" ${selected.includes(cat)?'checked':''}> <span>${escapeHtml(cat)}</span></label>`
       ).join('')}
     </div>`;
   async function saveNotifyCategories(next){
@@ -10696,14 +10702,13 @@ function renderYonseiNotifyCategoriesPanel(){
     return true;
   }
   document.getElementById('yonseiNotifyCatAll').addEventListener('change', async (e)=>{
-    const ok = await saveNotifyCategories(e.target.checked ? null : []);
+    const ok = await saveNotifyCategories(e.target.checked ? YONSEI_NOTIFY_CATEGORIES.slice() : []);
     if(ok) renderYonseiNotifyCategoriesPanel();
   });
   el.querySelectorAll('.yonsei-notify-cat-check').forEach(cb=>{
     cb.addEventListener('change', async (e)=>{
       const cat = e.target.dataset.cat;
-      const current = notifyYonseiCategories || [];
-      const next = e.target.checked ? [...current, cat] : current.filter(c=> c !== cat);
+      const next = e.target.checked ? [...selected, cat] : selected.filter(c=> c !== cat);
       const ok = await saveNotifyCategories(next);
       if(ok) renderYonseiNotifyCategoriesPanel();
     });
