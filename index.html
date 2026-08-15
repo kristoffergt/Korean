@@ -145,6 +145,11 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(7px,2vw,28p
 button{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:10px 20px;border:none;border-radius:6px;background:var(--ink);color:var(--paper);cursor:pointer;}
 button:hover{background:var(--ink-hover);}
 .hint{font-size:12px;color:var(--ink-soft);margin-top:10px;}
+.yonsei-board-row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;}
+.yonsei-board-row:last-child{border-bottom:none;}
+.yonsei-board-row:hover .yonsei-board-title{text-decoration:underline;}
+.yonsei-board-date{font-family:'Space Grotesk',monospace;color:var(--ink-soft);font-size:12px;flex:none;}
+.yonsei-board-title{font-size:14px;line-height:1.4;}
 .cal{display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;}
 .cal-week{display:flex;flex-direction:column;gap:4px;}
 .cal-cell{width:15px;height:15px;border-radius:3px;background:var(--paper);border:1px solid var(--line);position:relative;}
@@ -522,8 +527,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
   <div class="tabs" id="tabNav">
     <button data-tab="calendar" class="active" id="tabBtnCalendar"></button>
     <button data-tab="study" id="tabBtnStudy"></button>
-    <button data-tab="courses" id="tabBtnCourses"></button>
-    <button data-tab="notes" id="tabBtnNotes"></button>
+    <button data-tab="yonsei" id="tabBtnYonsei"></button>
     <button data-tab="reading" id="tabBtnReading"></button>
     <button data-tab="jobs" id="tabBtnJobs"></button>
   </div>
@@ -865,8 +869,14 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
   </div>
 
-  <!-- COURSES TAB -->
-  <div class="tab-panel hidden" id="panelCourses">
+  <!-- YONSEI TAB -->
+  <div class="tab-panel hidden" id="panelYonsei">
+    <div class="cal-view-toggle" id="yonseiSubToggle">
+      <button data-view="courses" class="active" id="yonseiSubCoursesBtn"></button>
+      <button data-view="notes" id="yonseiSubNotesBtn"></button>
+      <button data-view="boards" id="yonseiSubBoardsBtn"></button>
+    </div>
+    <div id="yonseiCoursesSection">
     <div class="card">
       <h2 id="hAddCourse"></h2>
       <div class="log-form">
@@ -959,10 +969,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <h2 id="hCourseList"></h2>
       <div id="courseFullList"></div>
     </div>
-  </div>
-
-  <!-- NOTES TAB -->
-  <div class="tab-panel hidden" id="panelNotes">
+    </div>
+    <div id="yonseiNotesSection" class="hidden">
     <div class="card">
       <h2 id="hNotesPick"></h2>
       <div class="log-form">
@@ -997,6 +1005,14 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
       <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
       <div class="notes-panel hidden" id="versionHistoryPanel"></div>
+    </div>
+    </div>
+    <div id="yonseiBoardsSection" class="hidden">
+      <div class="card">
+        <h2><span id="hYonseiBoards"></span> <button class="linkbtn" id="yonseiNotifyBtn" style="font-size:0.85em;"></button></h2>
+        <div class="hint hidden" id="yonseiNotifyMsg"></div>
+        <div id="yonseiBoardsList"></div>
+      </div>
     </div>
   </div>
 
@@ -1391,6 +1407,14 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       </label>
     </div>
     <div class="hint hidden" id="settingsHideLeaderboardsMsg"></div>
+
+    <div style="margin-top:10px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="settingsShowYonseiBoards" style="width:16px;height:16px;">
+        <span id="lblShowYonseiBoards"></span>
+      </label>
+    </div>
+    <div class="hint hidden" id="settingsShowYonseiBoardsMsg"></div>
 
     <div class="log-form" style="margin-top:16px;">
       <div class="field wide">
@@ -7427,7 +7451,8 @@ const I18N = {
     versionHistory:'Version history ({n})', noVersions:'No earlier versions', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', eventForUser:'For',
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
-    tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago'
+    tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
+    tabYonsei:'Yonsei', tabBoards:'Boards', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site ↗', lblShowYonseiBoards:'Show Yonsei Boards tab', showYonseiBoardsOn:'Boards tab is now visible.', showYonseiBoardsOff:'Boards tab is now hidden.', yonseiNotifyOff:'🔔 Email me new notices', yonseiNotifyOn:'🔕 Notified of new notices', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
@@ -7532,7 +7557,8 @@ const I18N = {
     versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', eventForUser:'대상',
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
-    tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전'
+    tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
+    tabYonsei:'연세', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기 ↗', lblShowYonseiBoards:'연세 게시판 탭 표시', showYonseiBoardsOn:'이제 게시판 탭이 표시됩니다.', showYonseiBoardsOff:'이제 게시판 탭이 숨겨집니다.', yonseiNotifyOff:'🔔 새 공지 이메일 받기', yonseiNotifyOn:'🔕 새 공지 알림 받는 중', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.'
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
@@ -7638,13 +7664,15 @@ const I18N = {
     versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', eventForUser:'Cho',
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
-    tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước'
+    tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
+    tabYonsei:'Yonsei', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei ↗', lblShowYonseiBoards:'Hiện tab Bảng tin Yonsei', showYonseiBoardsOn:'Tab Bảng tin hiện đã hiển thị.', showYonseiBoardsOff:'Tab Bảng tin hiện đã ẩn.', yonseiNotifyOff:'🔔 Nhận email thông báo mới', yonseiNotifyOn:'🔕 Đang nhận thông báo mới', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.'
   }
 };
 const STATIC_MAP = {
   authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password',
   headerSub:'headerSub', signOutBtn:'signOut',
-  tabBtnStudy:'tabStudy', tabBtnReading:'tabReading', tabBtnJobs:'tabJobs', tabBtnCalendar:'tabCalendar', tabBtnCourses:'tabCourses', tabBtnNotes:'tabNotes',
+  tabBtnStudy:'tabStudy', tabBtnReading:'tabReading', tabBtnJobs:'tabJobs', tabBtnCalendar:'tabCalendar', tabBtnYonsei:'tabYonsei',
+  yonseiSubCoursesBtn:'tabCourses', yonseiSubNotesBtn:'tabNotes', yonseiSubBoardsBtn:'tabBoards', hYonseiBoards:'hYonseiBoards', lblShowYonseiBoards:'lblShowYonseiBoards',
   hLeaderboard:'leaderboard', lbHeadRank:'lbRank', lbHeadName:'lbName', lbHeadStreak:'lbStreak', lbHeadWeek:'lbWeek', lbHeadTotal:'lbTotal',
   hLogStudy:'logStudy', lblDate:'date', lblActivity:'activity', lblHours:'hours', addBtn:'addSession', studyHint:'studyHint',
   hStudyTimer:'hStudyTimer', lblTimerActivity:'lblTimerActivity', timerStartBtn:'timerStartBtn', timerPauseBtn:'timerPauseBtn', timerResetBtn:'timerResetBtn', timerSaveBtn:'timerSaveBtn', timerHint:'timerHint',
@@ -7758,6 +7786,8 @@ let profileColors = {}; // userId -> custom color hex (optional override)
 let coreMembers = {}; // userId -> boolean, true for Kristoffer/Roxy
 let dailyGoals = {}; // userId -> personal daily study-hour goal (Kristoffer/Roxy share one linked value)
 let hiddenFromLeaderboards = {}; // userId -> true if they've opted out of all leaderboards
+let showYonseiBoards = true; // current user's own display preference, default on
+let notifyYonseiBoard = false; // current user's own email-notification opt-in, default off
 // Hiding is scoped per-viewer, not global: a hidden account still shows up
 // for itself and for its own core study partner (Kristoffer <-> Roxy) — it
 // only actually disappears for everyone else. Mirrors the shared_circle()
@@ -8124,6 +8154,7 @@ function applyLanguage(lang){
   rebuildCourseDaySelect();
   updateRecurFieldVisibility();
   renderTopikCountdown();
+  renderYonseiNotifyBtn();
   if(currentUser){ renderAll(); }
 }
 /* ---------- AUTH ---------- */
@@ -8326,6 +8357,7 @@ function showSettingsMsg(id, text, isError){
 document.getElementById('accountSettingsBtn').addEventListener('click', async ()=>{
   document.getElementById('settingsDisplayName').value = profiles[currentUser.id] || '';
   document.getElementById('settingsHideLeaderboards').checked = !!hiddenFromLeaderboards[currentUser.id];
+  document.getElementById('settingsShowYonseiBoards').checked = showYonseiBoards;
   document.getElementById('settingsNewEmail').value = '';
   document.getElementById('settingsEmailConfirmPassword').value = '';
   document.getElementById('settingsDeleteEmailConfirm').value = '';
@@ -8596,6 +8628,15 @@ document.getElementById('saveDisplayNameBtn').addEventListener('click', async ()
   showSettingsMsg('settingsNameMsg', t('noteSaved'), false);
 });
 
+document.getElementById('settingsShowYonseiBoards').addEventListener('change', async (e)=>{
+  const show = e.target.checked;
+  const { error } = await supabaseClient.from('profiles').update({ show_yonsei_boards: show }).eq('id', currentUser.id);
+  if(error){ e.target.checked = !show; showSettingsMsg('settingsShowYonseiBoardsMsg', error.message, true); return; }
+  showYonseiBoards = show;
+  showSettingsMsg('settingsShowYonseiBoardsMsg', show ? t('showYonseiBoardsOn') : t('showYonseiBoardsOff'), false);
+  updateYonseiBoardsVisibility();
+});
+
 document.getElementById('settingsHideLeaderboards').addEventListener('change', async (e)=>{
   const hide = e.target.checked;
   const { error } = await supabaseClient.from('profiles').update({ hide_from_leaderboards: hide }).eq('id', currentUser.id);
@@ -8861,8 +8902,7 @@ document.getElementById('tabNav').addEventListener('click', (e)=>{
   document.getElementById('panelReading').classList.toggle('hidden', activeTab!=='reading');
   document.getElementById('panelJobs').classList.toggle('hidden', activeTab!=='jobs');
   document.getElementById('panelCalendar').classList.toggle('hidden', activeTab!=='calendar');
-  document.getElementById('panelCourses').classList.toggle('hidden', activeTab!=='courses');
-  document.getElementById('panelNotes').classList.toggle('hidden', activeTab!=='notes');
+  document.getElementById('panelYonsei').classList.toggle('hidden', activeTab!=='yonsei');
 });
 /* ---------- STUDY HELPERS ---------- */
 function dayTotal(userId, dateKey){
@@ -8914,7 +8954,7 @@ async function loadAllData(){
   coreMembers = {};
   dailyGoals = {};
   hiddenFromLeaderboards = {};
-  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; });
+  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; if(p.id === currentUser.id){ showYonseiBoards = p.show_yonsei_boards !== false; notifyYonseiBoard = !!p.notify_yonsei_board; } });
   const { data: entryRows } = await supabaseClient.from('study_entries').select('*');
   allEntries = {};
   (entryRows||[]).forEach(row=>{
@@ -10396,6 +10436,107 @@ function switchJobsSubTab(view){
 document.getElementById('jobsSubApplicationsBtn').addEventListener('click', ()=> switchJobsSubTab('applications'));
 document.getElementById('jobsSubCertificationsBtn').addEventListener('click', ()=> switchJobsSubTab('certifications'));
 
+// Mirrors switchJobsSubTab(): Courses and Notes are already fully rendered
+// by renderAll() regardless of which subtab is showing (same as the rest
+// of the app), so switching to them needs no extra render call -- only
+// Boards needs an on-demand fetch, and only the first time it's opened
+// (fetchYonseiBoards() itself no-ops on a warm cache unless forced).
+function switchYonseiSubTab(view){
+  const btns = { courses: 'yonseiSubCoursesBtn', notes: 'yonseiSubNotesBtn', boards: 'yonseiSubBoardsBtn' };
+  const sections = { courses: 'yonseiCoursesSection', notes: 'yonseiNotesSection', boards: 'yonseiBoardsSection' };
+  Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
+  Object.entries(sections).forEach(([v,id])=> document.getElementById(id).classList.toggle('hidden', v!==view));
+  if(view === 'boards') fetchYonseiBoards();
+}
+document.getElementById('yonseiSubCoursesBtn').addEventListener('click', ()=> switchYonseiSubTab('courses'));
+document.getElementById('yonseiSubNotesBtn').addEventListener('click', ()=> switchYonseiSubTab('notes'));
+document.getElementById('yonseiSubBoardsBtn').addEventListener('click', ()=> switchYonseiSubTab('boards'));
+
+/* ---------- YONSEI BOARDS ---------- */
+// Best-effort pull of the public Yonsei GSIS "Official Notices" board (no
+// login required to view it). A direct fetch() from the browser to Yonsei
+// itself would be blocked by CORS, so this calls a Supabase Edge Function
+// (supabase/functions/fetch-yonsei-board) that fetches and parses the board
+// server-side and returns JSON. Only title + date are kept (no writer/
+// number/attachment icon), per the ask; the title stays a real link out to
+// the original post.
+const YONSEI_BOARD_URL = 'https://gsis.yonsei.ac.kr/gsis/community/boards1_01.do';
+const YONSEI_BOARD_FUNCTION_URL = SUPABASE_URL + '/functions/v1/fetch-yonsei-board';
+let yonseiBoardsCache = null; // null = not fetched yet; else { items:[{title,link,date}], error:bool }
+let yonseiBoardsLoading = false;
+async function fetchYonseiBoards(force){
+  if(yonseiBoardsCache && !force){ renderYonseiBoards(); return; }
+  yonseiBoardsLoading = true;
+  renderYonseiBoards();
+  try {
+    const res = await fetch(YONSEI_BOARD_FUNCTION_URL, { headers: { apikey: SUPABASE_ANON_KEY } });
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    yonseiBoardsCache = { items: data.items || [], error: !!data.error };
+  } catch(err){
+    yonseiBoardsCache = { items: [], error: true };
+  } finally {
+    yonseiBoardsLoading = false;
+    renderYonseiBoards();
+  }
+}
+function renderYonseiBoards(){
+  renderYonseiNotifyBtn();
+  const list = document.getElementById('yonseiBoardsList');
+  if(!list) return;
+  if(yonseiBoardsLoading){
+    list.innerHTML = `<div class="hint">${t('yonseiBoardsLoading')}</div>`;
+    return;
+  }
+  if(!yonseiBoardsCache){
+    list.innerHTML = '';
+    return;
+  }
+  if(yonseiBoardsCache.error || yonseiBoardsCache.items.length === 0){
+    list.innerHTML = `<div class="hint">${t('yonseiBoardsError')} <a href="${YONSEI_BOARD_URL}" target="_blank" rel="noopener noreferrer">${t('yonseiBoardsViewDirect')}</a></div>`;
+    return;
+  }
+  list.innerHTML = yonseiBoardsCache.items.map(it=>
+    `<a class="yonsei-board-row" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer"><span class="yonsei-board-date">${escapeHtml(it.date)}</span><span class="yonsei-board-title">${escapeHtml(it.title)}</span></a>`
+  ).join('');
+}
+// One-click email-notification opt-in (profiles.notify_yonsei_board, default
+// false): a single button right on the Boards card, not tucked into account
+// settings, since the ask was "simple click of the button". Plain client
+// .update() on the caller's own row, same as showYonseiBoards/
+// hiddenFromLeaderboards -- no RPC needed. The actual "did something new get
+// posted, and does it need emailing" check runs server-side on a schedule
+// (see notify-yonsei-board edge function + notify_yonsei_board_new_items()
+// in yonsei_boards_notify_migration.sql); this button only flips the
+// per-user opt-in flag that function reads.
+function renderYonseiNotifyBtn(){
+  const btn = document.getElementById('yonseiNotifyBtn');
+  if(!btn) return;
+  btn.textContent = t(notifyYonseiBoard ? 'yonseiNotifyOn' : 'yonseiNotifyOff');
+}
+document.getElementById('yonseiNotifyBtn').addEventListener('click', async ()=>{
+  const next = !notifyYonseiBoard;
+  const btn = document.getElementById('yonseiNotifyBtn');
+  btn.disabled = true;
+  const { error } = await supabaseClient.from('profiles').update({ notify_yonsei_board: next }).eq('id', currentUser.id);
+  btn.disabled = false;
+  if(error){ showSettingsMsg('yonseiNotifyMsg', error.message, true); return; }
+  notifyYonseiBoard = next;
+  renderYonseiNotifyBtn();
+  showSettingsMsg('yonseiNotifyMsg', t(next ? 'yonseiNotifyOnMsg' : 'yonseiNotifyOffMsg'), false);
+});
+// Personal display preference (profiles.show_yonsei_boards, default true):
+// hides just the Boards subtab/button for this viewer, not Courses/Notes.
+// Falls back to the Courses subtab if Boards was active when it's hidden.
+function updateYonseiBoardsVisibility(){
+  const btn = document.getElementById('yonseiSubBoardsBtn');
+  if(!btn) return;
+  btn.classList.toggle('hidden', !showYonseiBoards);
+  if(!showYonseiBoards && !document.getElementById('yonseiBoardsSection').classList.contains('hidden')){
+    switchYonseiSubTab('courses');
+  }
+}
+
 /* ---------- CALENDAR / TOPIK / DEADLINES ---------- */
 function formatCountdown(target){
   const diff = target - new Date();
@@ -11589,6 +11730,7 @@ function renderAll(){
   renderWritingList();
   rebuildNotebookPersonFilter();
   renderNotebookList();
+  updateYonseiBoardsVisibility();
 }
 let expandedGrammar = new Set();
 let gramGroupsOpen = { intermediate: false, advanced: false };
