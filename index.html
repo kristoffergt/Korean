@@ -155,13 +155,14 @@ button:hover{background:var(--ink-hover);}
 .yonsei-board-row:last-child{border-bottom:none;}
 .yonsei-board-row:hover .yonsei-board-title{text-decoration:underline;}
 .yonsei-board-tag{flex:none;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;white-space:nowrap;color:var(--tag-c);background:color-mix(in srgb, var(--tag-c) 18%, transparent);}
+.yonsei-board-subtag{flex:none;font-size:10px;font-weight:600;padding:2px 6px;border-radius:999px;white-space:nowrap;color:var(--ink-soft);border:1px solid var(--line);}
 .yonsei-tag-recruiting{--tag-c:var(--c-listening);}
 .yonsei-tag-academics{--tag-c:var(--c-grammar);}
 .yonsei-tag-admission{--tag-c:var(--c-writing);}
 .yonsei-tag-general{--tag-c:var(--c-vocabulary);}
 .yonsei-tag-other{--tag-c:var(--c-other);}
 .yonsei-board-date{font-family:'Space Grotesk',monospace;color:var(--ink-soft);font-size:12px;flex:none;}
-.yonsei-board-title{font-size:14px;line-height:1.4;flex:1;min-width:0;text-align:right;}
+.yonsei-board-title{font-size:14px;line-height:1.4;flex:1;min-width:0;text-align:left;}
 .cal{display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;}
 .cal-week{display:flex;flex-direction:column;gap:4px;}
 .cal-cell{width:15px;height:15px;border-radius:3px;background:var(--paper);border:1px solid var(--line);position:relative;}
@@ -10579,14 +10580,14 @@ function rebuildYonseiSubtagFilters(){
   if(subtags.length === 0){ el.innerHTML = ''; return; }
   el.innerHTML = `<div class="hint" style="margin-bottom:4px;">${t('yonseiHideSubtagsLabel')}</div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;">${subtags.map(tag=>
-      `<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="yonsei-subtag-check" data-subtag="${escapeHtml(tag)}" ${yonseiHiddenSubtags.includes(tag)?'':'checked'}> <span>${escapeHtml(tag)}</span></label>`
+      `<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="yonsei-subtag-check" data-subtag="${escapeHtml(tag)}" ${yonseiHiddenSubtags.includes(tag)?'checked':''}> <span>${escapeHtml(tag)}</span></label>`
     ).join('')}</div>`;
   el.querySelectorAll('.yonsei-subtag-check').forEach(cb=>{
     cb.addEventListener('change', async (e)=>{
       const tag = e.target.dataset.subtag;
       const next = e.target.checked
-        ? yonseiHiddenSubtags.filter(t2=> t2 !== tag)
-        : [...yonseiHiddenSubtags, tag];
+        ? [...yonseiHiddenSubtags, tag]
+        : yonseiHiddenSubtags.filter(t2=> t2 !== tag);
       e.target.disabled = true;
       const { error } = await supabaseClient.from('profiles').update({ yonsei_hidden_subtags: next }).eq('id', currentUser.id);
       e.target.disabled = false;
@@ -10626,7 +10627,7 @@ function renderYonseiBoards(){
     return;
   }
   list.innerHTML = filtered.map(it=>
-    `<a class="yonsei-board-row" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer"><span class="yonsei-board-date">${escapeHtml(it.date)}</span><span class="yonsei-board-title">${escapeHtml(it.title)}</span><span class="yonsei-board-tag ${yonseiCategoryClass(it.category)}">${escapeHtml(it.category)}</span></a>`
+    `<a class="yonsei-board-row" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer"><span class="yonsei-board-date">${escapeHtml(it.date)}</span><span class="yonsei-board-title">${escapeHtml(it.title)}</span>${it.subTag ? `<span class="yonsei-board-subtag">${escapeHtml(it.subTag)}</span>` : ''}<span class="yonsei-board-tag ${yonseiCategoryClass(it.category)}">${escapeHtml(it.category)}</span></a>`
   ).join('');
 }
 document.getElementById('yonseiBoardsSearchInput').addEventListener('input', (e)=>{
