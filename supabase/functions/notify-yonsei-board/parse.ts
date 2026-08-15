@@ -31,7 +31,28 @@
 // Only the anchor (link + title) and the date that follows it are used. If
 // Yonsei changes the board layout, this is the file to retune.
 
-export type BoardItem = { title: string; link: string; date: string };
+// category is always one of the canonical buckets below (never the raw
+// bracket text, and never null) -- untagged notices and unrecognized tags
+// both fall back to "General Notice" rather than going uncategorized, so
+// every item is always filterable/notifiable by category. subTag is the
+// second bracket some Academics notices carry right after the category
+// (e.g. "[Academics] [GCC] ...", a course-code marker), kept raw/uncanon-
+// icalized since it's just used as an opaque hide/show key, not displayed
+// as a colored badge the way category is.
+export type BoardItem = {
+  title: string;
+  link: string;
+  date: string;
+  category: string;
+  subTag: string | null;
+};
+
+export const YONSEI_BOARD_CATEGORIES = [
+  "Academics",
+  "Recruiting",
+  "Admission",
+  "General Notice",
+] as const;
 
 export const YONSEI_BOARD_URL =
   "https://gsis.yonsei.ac.kr/gsis/community/boards1_01.do";
@@ -90,6 +111,40 @@ function cleanTitle(innerHtml: string): string {
   return decodeEntities(text).replace(/\s+/g, " ").trim();
 }
 
+const LEADING_BRACKET_RE = /^\[([^\]]+)\]\s*/;
+
+// Raw bracket text -> canonical category. "[Current]" (seen on Dean's
+// Scholarship/financial-aid notices) reads as an academics-adjacent status
+// marker, not its own category, so it's folded into Academics. Anything not
+// matched here -- an untagged notice, or a future tag Yonsei starts using --
+// falls back to "General Notice" rather than left uncategorized.
+function canonicalCategory(raw: string | null): string {
+  if (!raw) return "General Notice";
+  const c = raw.toLowerCase();
+  if (/recruit/.test(c)) return "Recruiting";
+  if (/academic/.test(c) || /current/.test(c)) return "Academics";
+  if (/admission/.test(c)) return "Admission";
+  return "General Notice";
+}
+
+// Splits a cleaned title into { category, subTag, title }: the leading
+// "[Category]" bracket (if any) becomes the canonical category, a second
+// leading bracket right after it (if any, e.g. "[GCC]"/"[GCSD]" course-code
+// markers on some Academics notices) becomes subTag, and whatever's left is
+// the display title with both stripped out.
+function splitYonseiTitle(cleaned: string): { category: string; subTag: string | null; title: string } {
+  const m1 = cleaned.match(LEADING_BRACKET_RE);
+  if (!m1) return { category: canonicalCategory(null), subTag: null, title: cleaned };
+  const rest1 = cleaned.slice(m1[0].length);
+  const m2 = rest1.match(LEADING_BRACKET_RE);
+  if (!m2) return { category: canonicalCategory(m1[1].trim()), subTag: null, title: rest1 };
+  return {
+    category: canonicalCategory(m1[1].trim()),
+    subTag: m2[1].trim(),
+    title: rest1.slice(m2[0].length),
+  };
+}
+
 // Dates are normalised to YY.MM.DD, matching what the board's own list column
 // shows and what the app rendered before this parser existed.
 function dateAfter(html: string, from: number): string {
@@ -122,10 +177,11 @@ export function parseYonseiBoardHtml(html: string, maxItems = 20): BoardItem[] {
     const articleNo = link.match(/articleNo=(\d+)/);
     const key = articleNo ? articleNo[1] : link;
     if (seen.has(key)) continue;
-    const title = cleanTitle(m[2]);
-    if (!title) continue;
+    const cleaned = cleanTitle(m[2]);
+    if (!cleaned) continue;
     seen.add(key);
-    items.push({ title, link, date: dateAfter(html, ANCHOR_RE.lastIndex) });
+    const { category, subTag, title } = splitYonseiTitle(cleaned);
+    items.push({ title, link, date: dateAfter(html, ANCHOR_RE.lastIndex), category, subTag });
     if (items.length >= maxItems) break;
   }
   return items.sort(compareDateDesc);
