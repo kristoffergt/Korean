@@ -27,6 +27,23 @@ export type JobBoardItem = {
   deadline: string | null; // YYYY-MM-DD or null ("-" on the site)
 };
 
+const BOARD_URL = "https://gsis1.yonsei.ac.kr/cdc/board.asp";
+
+// Listing links come back relative -- specifically as "board.asp?idx=...",
+// the path *without* a leading "?" or "/" (confirmed against real ingested
+// rows: e.g. "board.asp?cmid=n02_01&mid=n02_01&act=view&...&idx=38547").
+// Unresolved, that rendered on our own site as
+// https://kristoffergt.com/board.asp?... instead of the real Yonsei URL.
+// Rather than pattern-match every possible relative form, this just takes
+// whatever query string is present (from the first "?" onward, wherever
+// it falls) and reattaches it to the known board path -- correct
+// regardless of what precedes the "?".
+function absolutize(href: string): string {
+  if (/^https?:\/\//i.test(href)) return href;
+  const qIndex = href.indexOf("?");
+  return qIndex === -1 ? BOARD_URL : BOARD_URL + href.slice(qIndex);
+}
+
 const TBODY_RE = /<tbody>([\s\S]*?)<\/tbody>/;
 const ROW_RE = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
 const CELL_RE = /<td[^>]*>([\s\S]*?)<\/td>/g;
@@ -91,7 +108,7 @@ export function parseYonseiJobBoardHtml(html: string): JobBoardItem[] {
     const [dateCell, industryCell, typeCell, titleCell, deadlineCell] = cells;
     const linkMatch = titleCell.match(LINK_RE);
     if (!linkMatch) continue;
-    const link = decodeEntities(linkMatch[1]);
+    const link = absolutize(decodeEntities(linkMatch[1]));
     const idxMatch = link.match(/[?&]idx=(\d+)/);
     if (!idxMatch) continue;
     const idx = Number(idxMatch[1]);
