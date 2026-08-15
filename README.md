@@ -4,7 +4,7 @@ A shared study and productivity tracker, live at **[kristoffergt.com](https://kr
 
 It started as a Korean-study companion for two people to track progress side by side, and grew into a general productivity tracker that anyone can sign up for and use on their own — or link up with specific people to share progress with, the same way the two original users do.
 
-It's a single self-contained HTML file (`korean_study_tracker.html`) — no build step, no framework, no server code beyond [Supabase](https://supabase.com) for the database, auth, and file storage. Deployed as a static site via GitHub Pages.
+It's a single self-contained HTML file (`index.html`, named for GitHub Pages), no build step, no framework, no server code beyond [Supabase](https://supabase.com) for the database, auth, and file storage. Deployed as a static site via GitHub Pages.
 
 ## Features
 
