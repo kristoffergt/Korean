@@ -51,6 +51,7 @@ export const YONSEI_BOARD_CATEGORIES = [
   "Academics",
   "Recruiting",
   "Admission",
+  "Event",
   "General Notice",
 ] as const;
 
@@ -124,6 +125,7 @@ function canonicalCategory(raw: string | null): string {
   if (/recruit/.test(c)) return "Recruiting";
   if (/academic/.test(c) || /current/.test(c)) return "Academics";
   if (/admission/.test(c)) return "Admission";
+  if (/event/.test(c)) return "Event";
   return "General Notice";
 }
 
