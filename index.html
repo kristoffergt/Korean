@@ -147,7 +147,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(7px,2vw,28p
 .field label{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.5px;}
 .field input, .field select, .field textarea{font-family:'Space Grotesk',monospace;font-size:15px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:150px;}
 .field input[type="checkbox"], .field input[type="radio"]{width:16px !important;height:16px !important;min-width:16px;min-height:16px;padding:0 !important;margin:0;border-radius:3px;flex-shrink:0;}
-.field.wide input, .field.wide textarea{width:220px;}
+.field.wide input, .field.wide textarea, .field.wide select{width:320px;}
 .field select{font-family:'Inter',sans-serif;font-size:14px;}
 .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
 button{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:10px 20px;border:none;border-radius:6px;background:var(--ink);color:var(--paper);cursor:pointer;}
@@ -484,8 +484,29 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 </style>
 </head>
 <body>
+<!-- PIN GATE (shown before sign-up/sign-in until this browser has entered the
+     correct site PIN once; see verify_site_pin()/site_pin_gate_migration.sql) -->
+<div id="pinGateScreen">
+  <div class="auth-topbar">
+    <div class="topbar-controls">
+      <button class="icon-btn" id="darkTogglePin" title="Toggle dark mode">🌙</button>
+      <div class="lang-switch" id="langSwitchPin"></div>
+    </div>
+  </div>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:26px;height:26px;"></div><div class="brand-icon brand-icon-dark" style="width:26px;height:26px;"></div><h1>Productivity Tracker</h1></div>
+      <div class="auth-sub" id="lblPinGate"></div>
+      <div class="auth-field">
+        <input type="text" id="pinGateInput" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="0000">
+      </div>
+      <button class="auth-submit" id="pinGateSubmitBtn"></button>
+      <div id="pinGateMsg" class="auth-msg"></div>
+    </div>
+  </div>
+</div>
 <!-- AUTH SCREEN -->
-<div id="authScreen">
+<div id="authScreen" class="hidden">
   <div class="auth-topbar">
     <div class="topbar-controls">
       <button class="icon-btn" id="darkToggleAuth" title="Toggle dark mode">🌙</button>
@@ -573,7 +594,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
   </header>
   <div class="tabs" id="tabNav">
     <button data-tab="calendar" class="active" id="tabBtnCalendar"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span id="tabBtnCalendarLabel"></span></button>
-    <button data-tab="study" id="tabBtnStudy"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg><span id="tabBtnStudyLabel"></span></button>
+    <button data-tab="study" id="tabBtnStudy"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><text x="12" y="17.5" text-anchor="middle" font-size="15" font-weight="700" stroke="none" fill="currentColor" font-family="'Noto Serif KR', serif">한</text></svg><span id="tabBtnStudyLabel"></span></button>
     <button data-tab="yonsei" id="tabBtnYonsei"><span class="tab-icon-yonsei"></span><span id="tabBtnYonseiLabel"></span></button>
     <button data-tab="reading" id="tabBtnReading"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg><span id="tabBtnReadingLabel"></span></button>
     <button data-tab="jobs" id="tabBtnJobs"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg><span id="tabBtnJobsLabel"></span></button>
@@ -705,6 +726,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
             <select id="gramJumpSelect"></select>
           </div>
         </div>
+        <button class="linkbtn" id="gramAddToggleBtn" style="margin-top:4px;"></button>
+        <div class="hidden" id="gramAddFormWrap" style="margin-top:10px;"></div>
       </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:6px;">
@@ -1014,6 +1037,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
     <div class="card">
       <h2 id="hCourseList"></h2>
+      <div class="field" style="margin-bottom:12px;">
+        <label for="coursePersonFilter" id="lblCoursePersonFilter"></label>
+        <select id="coursePersonFilter"></select>
+      </div>
       <div id="courseFullList"></div>
     </div>
     </div>
@@ -1165,6 +1192,14 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         <div class="field wide">
           <label for="jobLink" id="lblJobLink"></label>
           <input type="text" id="jobLink">
+        </div>
+        <div class="field wide">
+          <label for="jobResumeFile" id="lblJobResume"></label>
+          <input type="file" id="jobResumeFile" accept=".pdf,application/pdf">
+        </div>
+        <div class="field wide">
+          <label for="jobCoverLetterFile" id="lblJobCoverLetter"></label>
+          <input type="file" id="jobCoverLetterFile" accept=".pdf,application/pdf">
         </div>
         <button id="addJobBtn"></button>
       </div>
@@ -1342,15 +1377,15 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
           <label for="eventDate" id="lblEventDate"></label>
           <input type="date" id="eventDate">
         </div>
-        <div class="field">
+        <div class="field" id="eventTimeField">
           <label for="eventTime" id="lblEventTime"></label>
           <input type="time" id="eventTime">
         </div>
-        <div class="field">
+        <div class="field" id="eventEndTimeField">
           <label for="eventEndTime" id="lblEventEndTime"></label>
           <input type="time" id="eventEndTime">
         </div>
-        <div class="field wide">
+        <div class="field wide" id="eventNotesField">
           <label for="eventNotes" id="lblEventNotes"></label>
           <input type="text" id="eventNotes">
         </div>
@@ -1358,7 +1393,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
           <label id="lblEventForUser"></label>
           <div id="eventForUsersGroup" style="display:flex;gap:14px;flex-wrap:wrap;padding-top:6px;"></div>
         </div>
-        <div class="field">
+        <div class="field" id="eventColorField">
           <label for="eventColor" id="lblEventColor"></label>
           <input type="color" id="eventColor" value="#4F7563">
         </div>
@@ -1369,7 +1404,11 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
             <option value="1">Private</option>
           </select>
         </div>
-        <div class="field">
+        <div class="field hidden" id="eventPillVersionField">
+          <label for="eventPillVersion" id="lblPillVersion"></label>
+          <select id="eventPillVersion"></select>
+        </div>
+        <div class="field" id="eventRecurFreqField">
           <label for="eventRecurFreq" id="lblRecurFreq"></label>
           <select id="eventRecurFreq">
             <option value="">No repeat</option>
@@ -1470,6 +1509,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <div>
         <div class="hint" id="settingsSignedInAs" style="margin-top:0;"></div>
         <span id="whoEmail" style="font-size:13px;color:var(--ink);"></span>
+        <div class="hint" style="margin-top:6px;" id="settingsSitePinRow"><span id="settingsSitePinLabel"></span>: <code id="settingsSitePinValue" style="font-weight:700;letter-spacing:1px;"></code></div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <input type="color" id="myColorPicker" title="Your color" style="width:30px;height:30px;padding:2px;border-radius:6px;border:1px solid var(--line);cursor:pointer;">
@@ -1478,11 +1518,19 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
 
     <div class="log-form">
-      <div class="field wide">
-        <label for="settingsDisplayName" id="lblSettingsDisplayName"></label>
+      <div class="field wide" id="settingsNameStaticWrap">
+        <label id="lblSettingsDisplayName"></label>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="settingsNameStaticText" style="font-size:15px;font-weight:600;"></span>
+          <button class="linkbtn" id="editDisplayNameBtn"></button>
+        </div>
+      </div>
+      <div class="field wide hidden" id="settingsNameEditWrap">
+        <label for="settingsDisplayName" id="lblSettingsDisplayNameEdit"></label>
         <input type="text" id="settingsDisplayName" maxlength="12">
       </div>
-      <button class="export-btn" id="saveDisplayNameBtn"></button>
+      <button class="export-btn hidden" id="saveDisplayNameBtn"></button>
+      <button class="hidden" id="cancelDisplayNameBtn"></button>
     </div>
     <div class="hint hidden" id="settingsNameMsg"></div>
 
@@ -1565,12 +1613,20 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="hint hidden" id="settingsDeleteMsg"></div>
 
     <div id="moderatorSection" class="hidden">
+      <div class="wtc-title" style="margin-top:22px;" id="lblResumeUpload"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="file" id="resumeUploadFile" accept=".pdf,application/pdf">
+        <button class="export-btn" id="resumeUploadBtn"></button>
+        <a href="/resume" target="_blank" rel="noopener" id="resumeViewLink"></a>
+      </div>
+      <div class="hint hidden" id="resumeUploadMsg"></div>
       <div class="wtc-title" style="margin-top:22px;" id="hModerator"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">
         <input type="text" id="moderatorSearch" style="flex:1;min-width:160px;font-family:'Inter',sans-serif;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);">
         <select id="moderatorSort" style="font-family:'Inter',sans-serif;font-size:13px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);"></select>
       </div>
       <div id="moderatorUserList" style="margin-top:8px;"></div>
+      <div class="list-controls" id="moderatorUserListControls"></div>
     </div>
 
     <div style="margin-top:18px;">
@@ -7451,7 +7507,7 @@ const I18N = {
     tagline:'Korean Study · Reading · Job Hunt Tracker',
     signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
     headerSub:'Study · Reading · Job hunt', signOut:'Sign out',
-    tabStudy:'Study', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar',
+    tabStudy:'Korean', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar',
     leaderboard:'Leaderboard', lbRank:'#', lbName:'Name', lbStreak:'Streak', lbWeek:'Week', lbTotal:'Total',
     logStudy:'Log a study session', date:'Date', activity:'Activity', hours:'Hours', addSession:'Add session',
     studyHint:'This logs to your own account only.',
@@ -7464,7 +7520,7 @@ const I18N = {
     addBook:'Add a book', title:'Title', author:'Author', status:'Status', totalPages:'Total pages', addBookBtn:'Add book',
     yourBooks:'Your books', booksFinishedLB:'Books finished – Leaderboard',
     yourApplications:'Your applications', jobStatsFor:"{name}'s applications", jobStatsAll:'All applications', jobListHeader:'Application list', jobApplied:'Applied', jobInterview:'Interview', jobOffer:'Offer', jobRejected:'Rejected', jobWithdrawn:'Withdrawn',
-    logApplication:'Log an application', company:'Company', role:'Role', dateApplied:'Date applied', link:'Link', addApplicationBtn:'Add application',
+    logApplication:'Log an application', company:'Company', role:'Role', dateApplied:'Date applied', link:'Link', addApplicationBtn:'Add application', lblJobResume:'Resume (PDF, optional)', lblJobCoverLetter:'Cover letter (PDF, optional)', jobResumeView:'Resume', jobCoverLetterView:'Cover letter', jobPdfOnlyMsg:'Only PDF files are allowed.',
     applicationsCombined:'Applications submitted – Leaderboard',
     jobApplicationsTab:'Job Applications', certifications:'Certifications', yourCertifications:'Your certifications', certStatsFor:"{name}'s certifications", certStatsAll:'All certifications', certListHeader:'Certification list',
     certInProgress:'In progress', certAcquired:'Acquired', logCertification:'Log a certification',
@@ -7475,7 +7531,7 @@ const I18N = {
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
     topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed',
-    addDeadline:'Add a deadline or event', eventTitle:'Title', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color',
+    addDeadline:'Add to calendar', eventTitle:'Title', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view',
     eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
@@ -7492,8 +7548,8 @@ const I18N = {
     lblSetNewPassword:'Set a new password', lblNewPassword:'New password', updatePasswordBtn:'Update password',
     passwordUpdated:'Password updated! Signing you in...', passwordUpdateError:'Could not update password.', enterEmailFirst:'Enter your email above first.',
     lblEventPrivate:'Visibility', publicOpt:'Public', privateOpt:'Private', ownedBy:'by',
-    editBtn:'✏️ Edit', saveChanges:'Save changes', cancelEdit:'Cancel',
-    kindCourse:'Course', kindBirthday:'Birthday', repeatYear:'Year(s)',
+    editBtn:'✏️ Edit', saveChanges:'Save changes', cancelEdit:'Cancel', editDisplayNameBtn:'Edit',
+    kindCourse:'Course', kindBirthday:'Birthday', kindPill:'Pill cycle', lblPillVersion:'Pill version', pillVersionStandard:'Standard (21 active / 7 off)', repeatYear:'Year(s)', amLabel:'AM', pmLabel:'PM', countdownDaysShort:'d', countdownHoursShort:'h', countdownMinsShort:'m', countdownSecsShort:'s',
     hCoursesCal:'Courses', hBirthdays:'Birthdays',
     remindOthersLabel:'Also remind', signInWithNameHint:'Email or Username',
     duplicateName:'That display name is already taken.',
@@ -7502,7 +7558,7 @@ const I18N = {
     resendConfirmBtn:"Didn't receive it? Send again", resendConfirmSent:'Confirmation email sent again. Check your inbox and spam folder.',
     hAccountSettings:'Account settings', settingsSignedInAs:'Signed in as', settingsNameTooLong:'Name must be 12 characters or fewer.', settingsNameInvalidChars:'Name can only contain letters, numbers, spaces, hyphens, and apostrophes.', lblSettingsDisplayName:'Display name', lblSettingsNewEmail:'New email', lblSettingsNewPassword:'New password', lblSettingsConfirmPassword:'Confirm new password',
     settingsSaveNameBtn:'Save name', settingsSaveEmailBtn:'Update email', settingsSavePasswordBtn:'Update password',
-    lblHideLeaderboards:'Hide me from all leaderboards', hideLeaderboardsOn:'You are now hidden from all leaderboards.', hideLeaderboardsOff:'You are now visible on leaderboards again.', lbHiddenFromOthers:'hidden from others',
+    lblHideLeaderboards:'Hide me from all leaderboards', hideLeaderboardsOn:'You are now hidden from all leaderboards.', hideLeaderboardsOff:'You are now visible on leaderboards again.', lbHiddenFromOthers:'hidden from others', lbHiddenTag:'hidden',
     settingsEnterName:'Enter a name.', settingsEmailPending:'Confirmation email sent. Check your new inbox to complete the change.',
     settingsPasswordTooShort:'Password must be at least 6 characters.', settingsPasswordMismatch:"Passwords don't match.", settingsPasswordSaved:'Password updated.',
     lblSettingsEmailConfirmPassword:'Confirm your password', settingsEnterPassword:'Enter your password.', settingsWrongPassword:'Incorrect password.',
@@ -7517,11 +7573,13 @@ const I18N = {
     lblSettingsDeleteEmailConfirm:'Type your email to confirm', lblSettingsDeletePasswordConfirm:'Enter your password', deleteAccountBtn:'Delete my account',
     settingsDeleteMismatch:"Email doesn't match your account.", settingsDeleteWrongPassword:'Incorrect password.', settingsDeleteAdminBlocked:"The admin account can't be deleted.", settingsDeleteFailed:'Could not delete account.',
     hModerator:'Moderator – All accounts', modResetPw:'Reset password', modEditName:'Edit name', modConfirmEmail:'Confirm email', modDisableMfa:'Disable 2FA', modDeleteUser:'Delete account',
+    lblResumeUpload:'Public resume (kristoffergt.com/resume)', resumeUploadBtn:'Upload PDF', resumeViewLink:'View live page ↗', resumeUploadSuccess:'Resume uploaded.', resumeUploadFailed:'Upload failed.', resumePdfOnlyMsg:'Only PDF files are allowed.',
     modSearchPlaceholder:'Search name or email…', modSortDate:'Sort by date joined', modSort2fa:'Sort by 2FA status', modSortConfirmed:'Sort by confirmation status', modSortName:'Sort by name',
     modConfirmed:'Confirmed', modUnconfirmed:'Unconfirmed', modMfaOn:'2FA on', modMfaOff:'2FA off', modYou:'YOU', modAdmin:'Admin', modNewPasswordPrompt:'New password for this account:', modNewNamePrompt:'New display name for this account:',
     modConfirmDeleteUser:'Permanently delete this account and all of its data? This cannot be undone.', modActionFailed:'Action failed.', modActionDone:'Done.',
     modConfirmResetPw:"Reset this user's password?", modConfirmConfirmEmail:"Manually confirm this user's email?", modConfirmDisableMfa:'Disable two-factor authentication for this user?',
     mfaPromptTitle:'Enter your authentication code', mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.', mfaUseBackupBtn:'Use a backup code instead', mfaUseTotpBtn:'Use your authenticator app instead', mfaBackupCodePlaceholder:'Enter a backup code', mfaBackupWrongCode:'Invalid or already-used backup code.', download2faBackupBtn:'Download codes',
+    lblPinGate:'Enter the site PIN to continue', pinGateSubmitBtn:'Continue', pinGateWrongMsg:'Incorrect PIN.', settingsSitePinLabel:'Site sign-up/sign-in PIN',
     hAddCourse:'Add a course', courseTitle:'Course title', courseCode:'Course code', courseProfessor:'Professor',
     courseTime:'Time', courseConcentration:'Concentration', courseStatus:'Status', courseSyllabus:'Syllabus',
     courseDay:'Day', courseStartDate:'Start date (optional)', courseEndDate:'Ends (optional)', courseMidterm:'Midterm date (optional)', courseFinal:'Final date (optional)',
@@ -7538,10 +7596,10 @@ const I18N = {
     gramDifficulty:'Difficulty', gramEasy:'Easy', gramHard:'Hard',
     gramFormality:'Formality', gramCasual:'Casual', gramFormal:'Formal',
     gramPoliteness:'Politeness', gramBlunt:'Blunt', gramPolite:'Polite',
-    gramRegister:'Register', gramColloquial:'Colloquial', gramWritten:'Written', gramFavorite:'Favorite – Mark as difficult/important', gramSortFavorite:'Favorites first', gramViewSimilar:'View similar grammar forms',
+    gramRegister:'Register', gramColloquial:'Colloquial', gramWritten:'Written', gramFavorite:'Favorite – Mark as difficult/important', gramSortFavorite:'Favorites first', gramViewSimilar:'View similar grammar forms', gramQuickNote:'+ Note from this pattern', gramAddToggleBtn:'+ Add grammar', gramAddSaveBtn:'Add to grammar bank', gramAddMissingFields:'Enter a pattern and at least one sense (see the paste format hint below).', gramAddSaveFailed:'Could not save. Make sure the grammar_points table exists.',
     gramYourSentences:'Your practice sentences', gramSentencePlaceholder:'Write a sentence using this pattern...', gramAddSentence:'Add', lblGramSort:'Sort', gramSortDefault:'Default order', gramSortFreqDesc:'Most common first', gramSortFreqAsc:'Least common first', gramFrequencyHeader:'Frequency', gramLevelHeader:'Level',
     gramMarkNotReviewed:'Mark as not reviewed', gramMarkReviewedAgain:'Undo – Mark as reviewed', gramResources:'Videos & links', gramResourceUrlPlaceholder:'YouTube or website URL', gramResourceLabelPlaceholder:'Label (optional)', gramAddResource:'Add',
-    hRecap:'Recap',recapWeekBtn:'Past 7 days',recapMonthBtn:'Past 30 days',recapStudyHours:'Study hours',recapGrammarPracticed:'Grammar sentences practiced',recapBooksFinished:'Books finished',recapJobsSent:'Applications sent',hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite.',quizFromCluster:'From comparison group:',quizFillBlank:'Fill in the blank',quizCorrectAnswerLabel:'Correct answer:',quizHistoryHeader:'Your quiz history',quizMaxScoreLabel:'Best score',quizAttemptsCountLabel:'Attempts',quizAverageLabel:'Average',quizNoAttemptsYet:'No attempts yet.',quizDueCount:'{n} pattern(s) due for review',quizReviewDueBtn:'Review due patterns',hLinkedCircle:'Linked circle',linkedCircleDesc:'Link up with other people to share your study data with them. Up to 10 people, and you control what you share.',linkInvitedYou:'{name} invited you to link up.',linkAcceptBtn:'Accept',linkDeclineBtn:'Decline',linkLeaveBtn:'Leave circle',linkRosterHeader:'Your circle',linkStatusAccepted:'Linked',linkStatusPending:'Invite sent. Awaiting response',linkInviteSearchPlaceholder:'Search by name...',linkInviteBtn:'Invite',linkNoResults:'No matching users found.',linkCatStudyEntries:'Study log',linkCatBooks:'Reading list',linkCatJobApplications:'Job applications',linkCatGrammarNotes:'Grammar practice notes',linkCatCourseNotes:'Course notes',linkCatWritingSamples:'Writing samples & feedback',linkCatRecap:'Weekly/monthly recap',linkCatReadiness:'Grammar readiness',linkSharingHeader:'What you\'re sharing',linkSharingHint:'These are your own settings. Set them before you invite anyone, or change them anytime after. They apply to whoever you\'re linked with.',linkCustomizeFor:'Customize what you share with {name}',linkOverrideHint:'Overrides your defaults just for {name}.',linkResetOverridesBtn:'Reset to your defaults',linkGroupFullMsg:'Your circle is at the 10-person limit.',linkErrorGeneric:'Something went wrong. Please try again.',linkNotLinkedYet:'You\'re not linked with anyone yet. Search for someone below to send an invite.',linkInviteSentMsg:'Invite sent.',linkStatusAlwaysShared:'Always shared',writingFeedbackHeader:'Feedback',writingFeedbackPlaceholder:'Leave feedback on this sample...',writingFeedbackSendBtn:'Send',writingFeedbackEmpty:'No feedback yet.', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently. Leave a line blank to clear that field.',
+    hRecap:'Recap',recapWeekBtn:'Past 7 days',recapMonthBtn:'Past 30 days',recapStudyHours:'Study hours',recapGrammarPracticed:'Grammar sentences practiced',recapBooksFinished:'Books finished',recapJobsSent:'Applications sent',hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite.',quizFromCluster:'From comparison group:',quizFillBlank:'Fill in the blank',quizCorrectAnswerLabel:'Correct answer:',quizHistoryHeader:'Your quiz history',quizMaxScoreLabel:'Best score',quizAttemptsCountLabel:'Attempts',quizAverageLabel:'Average',quizNoAttemptsYet:'No attempts yet.',quizDueCount:'{n} pattern(s) due for review',quizReviewDueBtn:'Review due patterns',hLinkedCircle:'Linked circle',linkedCircleDesc:'Link up with other people to share your study data with them. Up to 10 people, and you control what you share.',linkInvitedYou:'{name} invited you to link up.',linkAcceptBtn:'Accept',linkDeclineBtn:'Decline',linkLeaveBtn:'Leave circle',linkRosterHeader:'Your circle',linkStatusAccepted:'Linked',linkStatusPending:'Invite sent. Awaiting response',linkJustAccepted:'Accepted!',linkRemoveBtn:'Remove from circle',linkRemoveConfirm:'Remove {name} from your circle? They will no longer see or share data with you.',linkInviteSearchPlaceholder:'Search by name...',linkInviteBtn:'Invite',linkNoResults:'No matching users found.',linkCatStudyEntries:'Study log',linkCatBooks:'Reading list',linkCatJobApplications:'Job applications',linkCatGrammarNotes:'Grammar practice notes',linkCatCourseNotes:'Course notes',linkCatWritingSamples:'Writing samples & feedback',linkCatRecap:'Weekly/monthly recap',linkCatReadiness:'Grammar readiness',linkSharingHeader:'What you\'re sharing',linkSharingHint:'These are your own settings. Set them before you invite anyone, or change them anytime after. They apply to whoever you\'re linked with.',linkCustomizeFor:'Customize what you share with {name}',linkOverrideHint:'Overrides your defaults just for {name}.',linkResetOverridesBtn:'Reset to your defaults',linkGroupFullMsg:'Your circle is at the 10-person limit.',linkErrorGeneric:'Something went wrong. Please try again.',linkNotLinkedYet:'You\'re not linked with anyone yet. Search for someone below to send an invite.',linkInviteSentMsg:'Invite sent.',linkStatusAlwaysShared:'Always shared',writingFeedbackHeader:'Feedback',writingFeedbackPlaceholder:'Leave feedback on this sample...',writingFeedbackSendBtn:'Send',writingFeedbackEmpty:'No feedback yet.', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently. Leave a line blank to clear that field.',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in', statusTeachingAssistant:'TA', statusResearchAssistant:'RA',
     hCourseList:'All courses', viewSyllabus:'Syllabus ↗',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
@@ -7551,13 +7609,13 @@ const I18N = {
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
-    tabYonsei:'Yonsei', tabBoards:'Boards', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site ↗', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', yonseiCategoryAll:'All categories', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardSortDate:'Date posted', jobBoardSortDeadline:'Deadline', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardUpdating:'Updating...'
+    tabYonsei:'Yonsei', tabBoards:'Boards', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site ↗', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardSortDate:'Date posted', jobBoardSortDeadline:'Deadline', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardUpdating:'Updating...'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
     signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
     headerSub:'공부 · 독서 · 구직', signOut:'로그아웃',
-    tabStudy:'공부', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더',
+    tabStudy:'한국어', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더',
     leaderboard:'순위표', lbRank:'#', lbName:'이름', lbStreak:'연속', lbWeek:'이번 주', lbTotal:'총합',
     logStudy:'공부 시간 기록', date:'날짜', activity:'활동', hours:'시간', addSession:'기록 추가',
     studyHint:'본인 계정에만 기록됩니다.',
@@ -7570,7 +7628,7 @@ const I18N = {
     addBook:'책 추가', title:'제목', author:'저자', status:'상태', totalPages:'총 페이지', addBookBtn:'책 추가하기',
     yourBooks:'내 책 목록', booksFinishedLB:'완독 순위표',
     yourApplications:'지원 현황', jobStatsFor:'{name}의 지원 현황', jobStatsAll:'전체 지원 현황', jobListHeader:'지원 목록', jobApplied:'지원함', jobInterview:'면접', jobOffer:'합격', jobRejected:'불합격', jobWithdrawn:'철회',
-    logApplication:'지원 내역 기록', company:'회사', role:'직무', dateApplied:'지원일', link:'링크', addApplicationBtn:'지원 추가',
+    logApplication:'지원 내역 기록', company:'회사', role:'직무', dateApplied:'지원일', link:'링크', addApplicationBtn:'지원 추가', lblJobResume:'이력서 (PDF, 선택)', lblJobCoverLetter:'자기소개서 (PDF, 선택)', jobResumeView:'이력서', jobCoverLetterView:'자기소개서', jobPdfOnlyMsg:'PDF 파일만 업로드할 수 있습니다.',
     applicationsCombined:'지원 건수 순위표',
     jobApplicationsTab:'지원 내역', certifications:'자격증', yourCertifications:'내 자격증', certStatsFor:'{name}의 자격증', certStatsAll:'전체 자격증', certListHeader:'자격증 목록',
     certInProgress:'진행 중', certAcquired:'취득', logCertification:'자격증 기록',
@@ -7581,7 +7639,7 @@ const I18N = {
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
     topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다',
-    addDeadline:'마감일 또는 일정 추가', eventTitle:'제목', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상',
+    addDeadline:'캘린더에 추가', eventTitle:'제목', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기',
     eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
@@ -7598,8 +7656,8 @@ const I18N = {
     lblSetNewPassword:'새 비밀번호 설정', lblNewPassword:'새 비밀번호', updatePasswordBtn:'비밀번호 변경',
     passwordUpdated:'비밀번호가 변경되었습니다! 로그인 중...', passwordUpdateError:'비밀번호를 변경할 수 없습니다.', enterEmailFirst:'먼저 위에 이메일을 입력하세요.',
     lblEventPrivate:'공개 범위', publicOpt:'공개', privateOpt:'비공개', ownedBy:'',
-    editBtn:'✏️ 수정', saveChanges:'변경사항 저장', cancelEdit:'취소',
-    kindCourse:'수업', kindBirthday:'생일', repeatYear:'년',
+    editBtn:'✏️ 수정', saveChanges:'변경사항 저장', cancelEdit:'취소', editDisplayNameBtn:'수정',
+    kindCourse:'수업', kindBirthday:'생일', kindPill:'피임약 주기', lblPillVersion:'피임약 종류', pillVersionStandard:'표준 (복용 21일 / 휴약 7일)', repeatYear:'년', amLabel:'오전', pmLabel:'오후', countdownDaysShort:'일', countdownHoursShort:'시간', countdownMinsShort:'분', countdownSecsShort:'초',
     hCoursesCal:'수업', hBirthdays:'생일',
     remindOthersLabel:'함께 알림 받기', signInWithNameHint:'이메일 또는 이름',
     duplicateName:'이미 사용 중인 이름입니다.',
@@ -7608,7 +7666,7 @@ const I18N = {
     resendConfirmBtn:'받지 못하셨나요? 다시 보내기', resendConfirmSent:'확인 이메일을 다시 보냈습니다. 받은편지함과 스팸함을 확인하세요.',
     hAccountSettings:'계정 설정', settingsSignedInAs:'로그인 계정', settingsNameTooLong:'이름은 12자 이하여야 합니다.', settingsNameInvalidChars:'이름에는 문자, 숫자, 공백, 하이픈, 아포스트로피만 사용할 수 있습니다.', lblSettingsDisplayName:'표시 이름', lblSettingsNewEmail:'새 이메일', lblSettingsNewPassword:'새 비밀번호', lblSettingsConfirmPassword:'새 비밀번호 확인',
     settingsSaveNameBtn:'이름 저장', settingsSaveEmailBtn:'이메일 변경', settingsSavePasswordBtn:'비밀번호 변경',
-    lblHideLeaderboards:'모든 리더보드에서 나를 숨기기', hideLeaderboardsOn:'이제 모든 리더보드에서 숨겨집니다.', hideLeaderboardsOff:'이제 다시 리더보드에 표시됩니다.', lbHiddenFromOthers:'다른 사람에게는 숨김',
+    lblHideLeaderboards:'모든 리더보드에서 나를 숨기기', hideLeaderboardsOn:'이제 모든 리더보드에서 숨겨집니다.', hideLeaderboardsOff:'이제 다시 리더보드에 표시됩니다.', lbHiddenFromOthers:'다른 사람에게는 숨김', lbHiddenTag:'숨김',
     settingsEnterName:'이름을 입력하세요.', settingsEmailPending:'확인 이메일을 보냈습니다. 새 이메일 받은편지함을 확인해 변경을 완료하세요.',
     settingsPasswordTooShort:'비밀번호는 최소 6자 이상이어야 합니다.', settingsPasswordMismatch:'비밀번호가 일치하지 않습니다.', settingsPasswordSaved:'비밀번호가 변경되었습니다.',
     lblSettingsEmailConfirmPassword:'비밀번호 확인', settingsEnterPassword:'비밀번호를 입력하세요.', settingsWrongPassword:'비밀번호가 올바르지 않습니다.',
@@ -7623,11 +7681,13 @@ const I18N = {
     lblSettingsDeleteEmailConfirm:'확인을 위해 이메일을 입력하세요', lblSettingsDeletePasswordConfirm:'비밀번호를 입력하세요', deleteAccountBtn:'계정 삭제',
     settingsDeleteMismatch:'계정 이메일과 일치하지 않습니다.', settingsDeleteWrongPassword:'비밀번호가 올바르지 않습니다.', settingsDeleteAdminBlocked:'관리자 계정은 삭제할 수 없습니다.', settingsDeleteFailed:'계정을 삭제할 수 없습니다.',
     hModerator:'관리자 – 전체 계정', modResetPw:'비밀번호 재설정', modEditName:'이름 수정', modConfirmEmail:'이메일 확인 처리', modDisableMfa:'2단계 인증 끄기', modDeleteUser:'계정 삭제',
+    lblResumeUpload:'공개 이력서 (kristoffergt.com/resume)', resumeUploadBtn:'PDF 업로드', resumeViewLink:'실시간 페이지 보기 ↗', resumeUploadSuccess:'이력서를 업로드했습니다.', resumeUploadFailed:'업로드에 실패했습니다.', resumePdfOnlyMsg:'PDF 파일만 업로드할 수 있습니다.',
     modSearchPlaceholder:'이름 또는 이메일 검색…', modSortDate:'가입일순 정렬', modSort2fa:'2FA 상태순 정렬', modSortConfirmed:'인증 상태순 정렬', modSortName:'이름순 정렬',
     modConfirmed:'확인됨', modUnconfirmed:'미확인', modMfaOn:'2FA 켜짐', modMfaOff:'2FA 꺼짐', modYou:'나', modAdmin:'관리자', modNewPasswordPrompt:'이 계정의 새 비밀번호:', modNewNamePrompt:'이 계정의 새 표시 이름:',
     modConfirmDeleteUser:'이 계정과 모든 데이터를 영구적으로 삭제하시겠습니까? 되돌릴 수 없습니다.', modActionFailed:'작업에 실패했습니다.', modActionDone:'완료되었습니다.',
     modConfirmResetPw:'이 사용자의 비밀번호를 재설정하시겠습니까?', modConfirmConfirmEmail:'이 사용자의 이메일을 수동으로 확인 처리하시겠습니까?', modConfirmDisableMfa:'이 사용자의 2단계 인증을 비활성화하시겠습니까?',
     mfaPromptTitle:'인증 코드를 입력하세요', mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.', mfaUseBackupBtn:'백업 코드 사용하기', mfaUseTotpBtn:'인증 앱 사용하기', mfaBackupCodePlaceholder:'백업 코드를 입력하세요', mfaBackupWrongCode:'백업 코드가 올바르지 않거나 이미 사용되었습니다.', download2faBackupBtn:'코드 다운로드',
+    lblPinGate:'계속하려면 사이트 PIN을 입력하세요', pinGateSubmitBtn:'계속', pinGateWrongMsg:'PIN이 올바르지 않습니다.', settingsSitePinLabel:'사이트 가입/로그인 PIN',
     hAddCourse:'수업 추가', courseTitle:'수업명', courseCode:'수업 코드', courseProfessor:'교수',
     courseTime:'시간', courseConcentration:'전공/트랙', courseStatus:'상태', courseSyllabus:'강의계획서',
     courseDay:'요일', courseStartDate:'시작일 (선택)', courseEndDate:'종료일 (선택)', courseMidterm:'중간고사 날짜 (선택)', courseFinal:'기말고사 날짜 (선택)',
@@ -7644,10 +7704,10 @@ const I18N = {
     gramDifficulty:'난이도', gramEasy:'쉬움', gramHard:'어려움',
     gramFormality:'격식', gramCasual:'비격식', gramFormal:'격식체',
     gramPoliteness:'공손함', gramBlunt:'직설적', gramPolite:'공손함',
-    gramRegister:'문체', gramColloquial:'구어체', gramWritten:'문어체', gramFavorite:'즐겨찾기 – 어렵거나 중요함으로 표시', gramSortFavorite:'즐겨찾기 우선', gramViewSimilar:'비슷한 문법 형태 보기',
+    gramRegister:'문체', gramColloquial:'구어체', gramWritten:'문어체', gramFavorite:'즐겨찾기 – 어렵거나 중요함으로 표시', gramSortFavorite:'즐겨찾기 우선', gramViewSimilar:'비슷한 문법 형태 보기', gramQuickNote:'+ 이 문법으로 노트 만들기', gramAddToggleBtn:'+ 문법 추가', gramAddSaveBtn:'문법 은행에 추가', gramAddMissingFields:'문형과 최소 하나의 의미를 입력하세요 (아래 붙여넣기 형식 힌트 참고).', gramAddSaveFailed:'저장할 수 없습니다. grammar_points 테이블이 있는지 확인하세요.',
     gramYourSentences:'나의 연습 문장', gramSentencePlaceholder:'이 문법을 사용해 문장을 써 보세요...', gramAddSentence:'추가', lblGramSort:'정렬', gramSortDefault:'기본 순서', gramSortFreqDesc:'가장 흔한 순', gramSortFreqAsc:'가장 드문 순', gramFrequencyHeader:'빈도', gramLevelHeader:'난이도',
     gramMarkNotReviewed:'복습 안 함으로 표시', gramMarkReviewedAgain:'취소 – 복습함으로 표시', gramResources:'영상 및 링크', gramResourceUrlPlaceholder:'유튜브 또는 웹사이트 URL', gramResourceLabelPlaceholder:'라벨 (선택)', gramAddResource:'추가',
-    hRecap:'요약',recapWeekBtn:'지난 7일',recapMonthBtn:'지난 30일',recapStudyHours:'공부 시간',recapGrammarPracticed:'연습한 문법 문장',recapBooksFinished:'완독한 책',recapJobsSent:'지원한 곳',hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요.',quizFromCluster:'비교 그룹:',quizFillBlank:'빈칸을 채우세요',quizCorrectAnswerLabel:'정답:',quizHistoryHeader:'나의 퀴즈 기록',quizMaxScoreLabel:'최고 점수',quizAttemptsCountLabel:'시도 횟수',quizAverageLabel:'평균',quizNoAttemptsYet:'아직 기록이 없어요.',quizDueCount:'복습할 문법 {n}개',quizReviewDueBtn:'복습할 문법 풀기',hLinkedCircle:'연결된 그룹',linkedCircleDesc:'다른 사용자와 연결해서 학습 데이터를 공유하세요. 최대 10명까지 가능하며, 무엇을 공유할지는 직접 선택할 수 있습니다.',linkInvitedYou:'{name}님이 연결을 요청했습니다.',linkAcceptBtn:'수락',linkDeclineBtn:'거절',linkLeaveBtn:'그룹 나가기',linkRosterHeader:'내 그룹',linkStatusAccepted:'연결됨',linkStatusPending:'초대 보냄. 응답 대기 중',linkInviteSearchPlaceholder:'이름으로 검색...',linkInviteBtn:'초대',linkNoResults:'일치하는 사용자가 없습니다.',linkCatStudyEntries:'학습 기록',linkCatBooks:'독서 목록',linkCatJobApplications:'구직 지원 내역',linkCatGrammarNotes:'문법 연습 노트',linkCatCourseNotes:'수업 노트',linkCatWritingSamples:'작문 및 피드백',linkCatRecap:'주간/월간 요약',linkCatReadiness:'문법 준비도',linkSharingHeader:'공유 중인 항목',linkSharingHint:'이 설정은 본인 계정에만 적용됩니다. 초대를 보내기 전에 미리 설정하거나, 연결된 후 언제든지 바꿀 수 있어요. 연결된 모든 사람에게 동일하게 적용됩니다.',linkCustomizeFor:'{name}님과 공유할 항목 설정',linkOverrideHint:'{name}님에게만 적용되는 개별 설정입니다.',linkResetOverridesBtn:'기본값으로 초기화',linkGroupFullMsg:'그룹이 최대 인원(10명)에 도달했습니다.',linkErrorGeneric:'문제가 발생했습니다. 다시 시도해 주세요.',linkNotLinkedYet:'아직 아무와도 연결되어 있지 않습니다. 아래에서 검색해 초대를 보내보세요.',linkInviteSentMsg:'초대를 보냈습니다.',linkStatusAlwaysShared:'항상 공유됨',writingFeedbackHeader:'피드백',writingFeedbackPlaceholder:'이 작문에 대한 피드백을 남겨보세요...',writingFeedbackSendBtn:'보내기',writingFeedbackEmpty:'아직 피드백이 없습니다.', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다. 비워두면 해당 항목이 지워집니다.',
+    hRecap:'요약',recapWeekBtn:'지난 7일',recapMonthBtn:'지난 30일',recapStudyHours:'공부 시간',recapGrammarPracticed:'연습한 문법 문장',recapBooksFinished:'완독한 책',recapJobsSent:'지원한 곳',hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요.',quizFromCluster:'비교 그룹:',quizFillBlank:'빈칸을 채우세요',quizCorrectAnswerLabel:'정답:',quizHistoryHeader:'나의 퀴즈 기록',quizMaxScoreLabel:'최고 점수',quizAttemptsCountLabel:'시도 횟수',quizAverageLabel:'평균',quizNoAttemptsYet:'아직 기록이 없어요.',quizDueCount:'복습할 문법 {n}개',quizReviewDueBtn:'복습할 문법 풀기',hLinkedCircle:'연결된 그룹',linkedCircleDesc:'다른 사용자와 연결해서 학습 데이터를 공유하세요. 최대 10명까지 가능하며, 무엇을 공유할지는 직접 선택할 수 있습니다.',linkInvitedYou:'{name}님이 연결을 요청했습니다.',linkAcceptBtn:'수락',linkDeclineBtn:'거절',linkLeaveBtn:'그룹 나가기',linkRosterHeader:'내 그룹',linkStatusAccepted:'연결됨',linkStatusPending:'초대 보냄. 응답 대기 중',linkJustAccepted:'수락함!',linkRemoveBtn:'그룹에서 제거',linkRemoveConfirm:'{name}님을 그룹에서 제거하시겠습니까? 더 이상 서로 데이터를 볼 수 없습니다.',linkInviteSearchPlaceholder:'이름으로 검색...',linkInviteBtn:'초대',linkNoResults:'일치하는 사용자가 없습니다.',linkCatStudyEntries:'학습 기록',linkCatBooks:'독서 목록',linkCatJobApplications:'구직 지원 내역',linkCatGrammarNotes:'문법 연습 노트',linkCatCourseNotes:'수업 노트',linkCatWritingSamples:'작문 및 피드백',linkCatRecap:'주간/월간 요약',linkCatReadiness:'문법 준비도',linkSharingHeader:'공유 중인 항목',linkSharingHint:'이 설정은 본인 계정에만 적용됩니다. 초대를 보내기 전에 미리 설정하거나, 연결된 후 언제든지 바꿀 수 있어요. 연결된 모든 사람에게 동일하게 적용됩니다.',linkCustomizeFor:'{name}님과 공유할 항목 설정',linkOverrideHint:'{name}님에게만 적용되는 개별 설정입니다.',linkResetOverridesBtn:'기본값으로 초기화',linkGroupFullMsg:'그룹이 최대 인원(10명)에 도달했습니다.',linkErrorGeneric:'문제가 발생했습니다. 다시 시도해 주세요.',linkNotLinkedYet:'아직 아무와도 연결되어 있지 않습니다. 아래에서 검색해 초대를 보내보세요.',linkInviteSentMsg:'초대를 보냈습니다.',linkStatusAlwaysShared:'항상 공유됨',writingFeedbackHeader:'피드백',writingFeedbackPlaceholder:'이 작문에 대한 피드백을 남겨보세요...',writingFeedbackSendBtn:'보내기',writingFeedbackEmpty:'아직 피드백이 없습니다.', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다. 비워두면 해당 항목이 지워집니다.',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정', statusTeachingAssistant:'조교(TA)', statusResearchAssistant:'연구조교(RA)',
     hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
@@ -7657,13 +7717,13 @@ const I18N = {
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
-    tabYonsei:'연세', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기 ↗', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', yonseiCategoryAll:'전체 카테고리', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardSortDate:'등록일', jobBoardSortDeadline:'마감일', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardUpdating:'업데이트 중...'
+    tabYonsei:'연세', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기 ↗', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardSortDate:'등록일', jobBoardSortDeadline:'마감일', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardUpdating:'업데이트 중...'
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
     signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
     headerSub:'Học tập · Đọc sách · Xin việc', signOut:'Đăng xuất',
-    tabStudy:'Học tập', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch',
+    tabStudy:'Tiếng Hàn', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch',
     leaderboard:'Bảng xếp hạng', lbRank:'#', lbName:'Tên', lbStreak:'Chuỗi ngày', lbWeek:'Tuần này', lbTotal:'Tổng cộng',
     logStudy:'Ghi lại buổi học', date:'Ngày', activity:'Hoạt động', hours:'Số giờ', addSession:'Thêm buổi học',
     studyHint:'Chỉ ghi vào tài khoản của bạn.',
@@ -7676,7 +7736,7 @@ const I18N = {
     addBook:'Thêm sách', title:'Tên sách', author:'Tác giả', status:'Trạng thái', totalPages:'Tổng số trang', addBookBtn:'Thêm sách',
     yourBooks:'Sách của bạn', booksFinishedLB:'Bảng xếp hạng sách đã đọc',
     yourApplications:'Đơn ứng tuyển của bạn', jobStatsFor:'Đơn ứng tuyển của {name}', jobStatsAll:'Tất cả đơn ứng tuyển', jobListHeader:'Danh sách đơn ứng tuyển', jobApplied:'Đã nộp', jobInterview:'Phỏng vấn', jobOffer:'Trúng tuyển', jobRejected:'Bị từ chối', jobWithdrawn:'Đã rút',
-    logApplication:'Ghi lại đơn ứng tuyển', company:'Công ty', role:'Vị trí', dateApplied:'Ngày nộp', link:'Liên kết', addApplicationBtn:'Thêm đơn',
+    logApplication:'Ghi lại đơn ứng tuyển', company:'Công ty', role:'Vị trí', dateApplied:'Ngày nộp', link:'Liên kết', addApplicationBtn:'Thêm đơn', lblJobResume:'Sơ yếu lý lịch (PDF, tùy chọn)', lblJobCoverLetter:'Thư xin việc (PDF, tùy chọn)', jobResumeView:'Sơ yếu lý lịch', jobCoverLetterView:'Thư xin việc', jobPdfOnlyMsg:'Chỉ chấp nhận tệp PDF.',
     applicationsCombined:'Bảng xếp hạng đơn đã nộp',
     jobApplicationsTab:'Đơn ứng tuyển', certifications:'Chứng chỉ', yourCertifications:'Chứng chỉ của bạn', certStatsFor:'Chứng chỉ của {name}', certStatsAll:'Tất cả chứng chỉ', certListHeader:'Danh sách chứng chỉ',
     certInProgress:'Đang thực hiện', certAcquired:'Đã đạt được', logCertification:'Ghi lại chứng chỉ',
@@ -7687,7 +7747,7 @@ const I18N = {
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
     topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc',
-    addDeadline:'Thêm hạn chót hoặc sự kiện', eventTitle:'Tiêu đề', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu',
+    addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày',
     eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
@@ -7704,8 +7764,8 @@ const I18N = {
     lblSetNewPassword:'Đặt mật khẩu mới', lblNewPassword:'Mật khẩu mới', updatePasswordBtn:'Cập nhật mật khẩu',
     passwordUpdated:'Đã cập nhật mật khẩu! Đang đăng nhập...', passwordUpdateError:'Không thể cập nhật mật khẩu.', enterEmailFirst:'Hãy nhập email của bạn ở trên trước.',
     lblEventPrivate:'Chế độ hiển thị', publicOpt:'Công khai', privateOpt:'Riêng tư', ownedBy:'bởi',
-    editBtn:'✏️ Sửa', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy',
-    kindCourse:'Khóa học', kindBirthday:'Sinh nhật', repeatYear:'Năm',
+    editBtn:'✏️ Sửa', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy', editDisplayNameBtn:'Sửa',
+    kindCourse:'Khóa học', kindBirthday:'Sinh nhật', kindPill:'Chu kỳ thuốc tránh thai', lblPillVersion:'Loại thuốc', pillVersionStandard:'Tiêu chuẩn (uống 21 ngày / nghỉ 7 ngày)', repeatYear:'Năm', amLabel:'SA', pmLabel:'CH', countdownDaysShort:'ngày', countdownHoursShort:'giờ', countdownMinsShort:'phút', countdownSecsShort:'giây',
     hCoursesCal:'Khóa học', hBirthdays:'Sinh nhật',
     remindOthersLabel:'Nhắc cả người kia', signInWithNameHint:'Email hoặc tên hiển thị',
     duplicateName:'Tên hiển thị này đã được sử dụng.',
@@ -7714,7 +7774,7 @@ const I18N = {
     resendConfirmBtn:'Chưa nhận được? Gửi lại', resendConfirmSent:'Đã gửi lại email xác nhận. Hãy kiểm tra hộp thư đến và thư mục spam.',
     hAccountSettings:'Cài đặt tài khoản', settingsSignedInAs:'Đăng nhập với', settingsNameTooLong:'Tên phải có tối đa 12 ký tự.', settingsNameInvalidChars:'Tên chỉ được chứa chữ cái, số, khoảng trắng, dấu gạch nối và dấu nháy đơn.', lblSettingsDisplayName:'Tên hiển thị', lblSettingsNewEmail:'Email mới', lblSettingsNewPassword:'Mật khẩu mới', lblSettingsConfirmPassword:'Xác nhận mật khẩu mới',
     settingsSaveNameBtn:'Lưu tên', settingsSaveEmailBtn:'Cập nhật email', settingsSavePasswordBtn:'Cập nhật mật khẩu',
-    lblHideLeaderboards:'Ẩn tôi khỏi mọi bảng xếp hạng', hideLeaderboardsOn:'Bạn hiện đã được ẩn khỏi mọi bảng xếp hạng.', hideLeaderboardsOff:'Bạn hiện lại hiển thị trên bảng xếp hạng.', lbHiddenFromOthers:'ẩn với người khác',
+    lblHideLeaderboards:'Ẩn tôi khỏi mọi bảng xếp hạng', hideLeaderboardsOn:'Bạn hiện đã được ẩn khỏi mọi bảng xếp hạng.', hideLeaderboardsOff:'Bạn hiện lại hiển thị trên bảng xếp hạng.', lbHiddenFromOthers:'ẩn với người khác', lbHiddenTag:'đã ẩn',
     settingsEnterName:'Hãy nhập tên.', settingsEmailPending:'Đã gửi email xác nhận. Kiểm tra hộp thư mới để hoàn tất thay đổi.',
     settingsPasswordTooShort:'Mật khẩu phải có ít nhất 6 ký tự.', settingsPasswordMismatch:'Mật khẩu không khớp.', settingsPasswordSaved:'Đã cập nhật mật khẩu.',
     lblSettingsEmailConfirmPassword:'Xác nhận mật khẩu của bạn', settingsEnterPassword:'Hãy nhập mật khẩu.', settingsWrongPassword:'Mật khẩu không đúng.',
@@ -7729,11 +7789,13 @@ const I18N = {
     lblSettingsDeleteEmailConfirm:'Nhập email để xác nhận', lblSettingsDeletePasswordConfirm:'Nhập mật khẩu của bạn', deleteAccountBtn:'Xóa tài khoản của tôi',
     settingsDeleteMismatch:'Email không khớp với tài khoản của bạn.', settingsDeleteWrongPassword:'Mật khẩu không đúng.', settingsDeleteAdminBlocked:'Không thể xóa tài khoản quản trị.', settingsDeleteFailed:'Không thể xóa tài khoản.',
     hModerator:'Quản trị viên – Tất cả tài khoản', modResetPw:'Đặt lại mật khẩu', modEditName:'Sửa tên', modConfirmEmail:'Xác nhận email', modDisableMfa:'Tắt 2FA', modDeleteUser:'Xóa tài khoản',
+    lblResumeUpload:'Sơ yếu lý lịch công khai (kristoffergt.com/resume)', resumeUploadBtn:'Tải PDF lên', resumeViewLink:'Xem trang trực tiếp ↗', resumeUploadSuccess:'Đã tải sơ yếu lý lịch lên.', resumeUploadFailed:'Tải lên thất bại.', resumePdfOnlyMsg:'Chỉ chấp nhận tệp PDF.',
     modSearchPlaceholder:'Tìm theo tên hoặc email…', modSortDate:'Sắp xếp theo ngày tham gia', modSort2fa:'Sắp xếp theo trạng thái 2FA', modSortConfirmed:'Sắp xếp theo trạng thái xác nhận', modSortName:'Sắp xếp theo tên',
     modConfirmed:'Đã xác nhận', modUnconfirmed:'Chưa xác nhận', modMfaOn:'2FA bật', modMfaOff:'2FA tắt', modYou:'Bạn', modAdmin:'Quản trị', modNewPasswordPrompt:'Mật khẩu mới cho tài khoản này:', modNewNamePrompt:'Tên hiển thị mới cho tài khoản này:',
     modConfirmDeleteUser:'Xóa vĩnh viễn tài khoản này và toàn bộ dữ liệu? Không thể hoàn tác.', modActionFailed:'Thao tác thất bại.', modActionDone:'Hoàn tất.',
     modConfirmResetPw:'Đặt lại mật khẩu của người dùng này?', modConfirmConfirmEmail:'Xác nhận thủ công email của người dùng này?', modConfirmDisableMfa:'Tắt xác thực hai yếu tố cho người dùng này?',
     mfaPromptTitle:'Nhập mã xác thực', mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.', mfaUseBackupBtn:'Dùng mã dự phòng thay thế', mfaUseTotpBtn:'Dùng ứng dụng xác thực thay thế', mfaBackupCodePlaceholder:'Nhập mã dự phòng', mfaBackupWrongCode:'Mã dự phòng không đúng hoặc đã được sử dụng.', download2faBackupBtn:'Tải mã xuống',
+    lblPinGate:'Nhập mã PIN của trang web để tiếp tục', pinGateSubmitBtn:'Tiếp tục', pinGateWrongMsg:'Mã PIN không đúng.', settingsSitePinLabel:'Mã PIN đăng ký/đăng nhập trang web',
     hAddCourse:'Thêm khóa học', courseTitle:'Tên khóa học', courseCode:'Mã khóa học', courseProfessor:'Giáo sư',
     courseTime:'Giờ học', courseConcentration:'Chuyên ngành', courseStatus:'Trạng thái', courseSyllabus:'Đề cương',
     courseDay:'Thứ', courseStartDate:'Ngày bắt đầu (tùy chọn)', courseEndDate:'Ngày kết thúc (tùy chọn)', courseMidterm:'Ngày thi giữa kỳ (tùy chọn)', courseFinal:'Ngày thi cuối kỳ (tùy chọn)',
@@ -7751,10 +7813,10 @@ const I18N = {
     gramDifficulty:'Độ khó', gramEasy:'Dễ', gramHard:'Khó',
     gramFormality:'Trang trọng', gramCasual:'Thân mật', gramFormal:'Trang trọng',
     gramPoliteness:'Lịch sự', gramBlunt:'Thẳng thắn', gramPolite:'Lịch sự',
-    gramRegister:'Văn phong', gramColloquial:'Khẩu ngữ', gramWritten:'Văn viết', gramFavorite:'Yêu thích – Đánh dấu khó/quan trọng', gramSortFavorite:'Yêu thích trước', gramViewSimilar:'Xem các mẫu ngữ pháp tương tự',
+    gramRegister:'Văn phong', gramColloquial:'Khẩu ngữ', gramWritten:'Văn viết', gramFavorite:'Yêu thích – Đánh dấu khó/quan trọng', gramSortFavorite:'Yêu thích trước', gramViewSimilar:'Xem các mẫu ngữ pháp tương tự', gramQuickNote:'+ Ghi chú từ mẫu này', gramAddToggleBtn:'+ Thêm ngữ pháp', gramAddSaveBtn:'Thêm vào ngân hàng ngữ pháp', gramAddMissingFields:'Nhập mẫu câu và ít nhất một nghĩa (xem gợi ý định dạng dán bên dưới).', gramAddSaveFailed:'Không thể lưu. Hãy chắc chắn bảng grammar_points tồn tại.',
     gramYourSentences:'Câu luyện tập của bạn', gramSentencePlaceholder:'Viết một câu dùng mẫu này...', gramAddSentence:'Thêm', lblGramSort:'Sắp xếp', gramSortDefault:'Mặc định', gramSortFreqDesc:'Phổ biến nhất trước', gramSortFreqAsc:'Ít phổ biến nhất trước', gramFrequencyHeader:'Tần suất', gramLevelHeader:'Cấp độ',
     gramMarkNotReviewed:'Đánh dấu chưa ôn tập', gramMarkReviewedAgain:'Hoàn tác – Đánh dấu đã ôn tập', gramResources:'Video & liên kết', gramResourceUrlPlaceholder:'URL YouTube hoặc trang web', gramResourceLabelPlaceholder:'Nhãn (tùy chọn)', gramAddResource:'Thêm',
-    hRecap:'Tổng kết',recapWeekBtn:'7 ngày qua',recapMonthBtn:'30 ngày qua',recapStudyHours:'Giờ học',recapGrammarPracticed:'Câu ngữ pháp đã luyện',recapBooksFinished:'Sách đã đọc xong',recapJobsSent:'Đơn ứng tuyển đã gửi',hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng.',quizFromCluster:'Nhóm so sánh:',quizFillBlank:'Điền vào chỗ trống',quizCorrectAnswerLabel:'Đáp án đúng:',quizHistoryHeader:'Lịch sử trắc nghiệm của bạn',quizMaxScoreLabel:'Điểm cao nhất',quizAttemptsCountLabel:'Số lần làm',quizAverageLabel:'Trung bình',quizNoAttemptsYet:'Chưa có lượt làm nào.',quizDueCount:'{n} mẫu ngữ pháp cần ôn tập',quizReviewDueBtn:'Ôn tập các mẫu cần ôn',hLinkedCircle:'Nhóm liên kết',linkedCircleDesc:'Liên kết với người dùng khác để chia sẻ dữ liệu học tập. Tối đa 10 người, và bạn tự quyết định chia sẻ những gì.',linkInvitedYou:'{name} đã mời bạn liên kết.',linkAcceptBtn:'Chấp nhận',linkDeclineBtn:'Từ chối',linkLeaveBtn:'Rời nhóm',linkRosterHeader:'Nhóm của bạn',linkStatusAccepted:'Đã liên kết',linkStatusPending:'Đã gửi lời mời. Đang chờ phản hồi',linkInviteSearchPlaceholder:'Tìm theo tên...',linkInviteBtn:'Mời',linkNoResults:'Không tìm thấy người dùng phù hợp.',linkCatStudyEntries:'Nhật ký học tập',linkCatBooks:'Danh sách đọc',linkCatJobApplications:'Đơn ứng tuyển',linkCatGrammarNotes:'Ghi chú luyện ngữ pháp',linkCatCourseNotes:'Ghi chú khóa học',linkCatWritingSamples:'Bài viết & phản hồi',linkCatRecap:'Tổng kết tuần/tháng',linkCatReadiness:'Mức độ sẵn sàng ngữ pháp',linkSharingHeader:'Những gì bạn đang chia sẻ',linkSharingHint:'Đây là cài đặt của riêng bạn. Bạn có thể đặt trước khi mời ai đó, hoặc thay đổi bất cứ lúc nào sau khi đã liên kết. Áp dụng cho tất cả những người bạn đang liên kết.',linkCustomizeFor:'Tùy chỉnh những gì bạn chia sẻ với {name}',linkOverrideHint:'Ghi đè cài đặt mặc định chỉ riêng cho {name}.',linkResetOverridesBtn:'Đặt lại về mặc định',linkGroupFullMsg:'Nhóm của bạn đã đạt giới hạn 10 người.',linkErrorGeneric:'Đã có lỗi xảy ra. Vui lòng thử lại.',linkNotLinkedYet:'Bạn chưa liên kết với ai. Hãy tìm kiếm bên dưới để gửi lời mời.',linkInviteSentMsg:'Đã gửi lời mời.',linkStatusAlwaysShared:'Luôn được chia sẻ',writingFeedbackHeader:'Phản hồi',writingFeedbackPlaceholder:'Để lại phản hồi cho bài viết này...',writingFeedbackSendBtn:'Gửi',writingFeedbackEmpty:'Chưa có phản hồi nào.', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập. Để trống dòng nào sẽ xóa trường đó.',
+    hRecap:'Tổng kết',recapWeekBtn:'7 ngày qua',recapMonthBtn:'30 ngày qua',recapStudyHours:'Giờ học',recapGrammarPracticed:'Câu ngữ pháp đã luyện',recapBooksFinished:'Sách đã đọc xong',recapJobsSent:'Đơn ứng tuyển đã gửi',hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng.',quizFromCluster:'Nhóm so sánh:',quizFillBlank:'Điền vào chỗ trống',quizCorrectAnswerLabel:'Đáp án đúng:',quizHistoryHeader:'Lịch sử trắc nghiệm của bạn',quizMaxScoreLabel:'Điểm cao nhất',quizAttemptsCountLabel:'Số lần làm',quizAverageLabel:'Trung bình',quizNoAttemptsYet:'Chưa có lượt làm nào.',quizDueCount:'{n} mẫu ngữ pháp cần ôn tập',quizReviewDueBtn:'Ôn tập các mẫu cần ôn',hLinkedCircle:'Nhóm liên kết',linkedCircleDesc:'Liên kết với người dùng khác để chia sẻ dữ liệu học tập. Tối đa 10 người, và bạn tự quyết định chia sẻ những gì.',linkInvitedYou:'{name} đã mời bạn liên kết.',linkAcceptBtn:'Chấp nhận',linkDeclineBtn:'Từ chối',linkLeaveBtn:'Rời nhóm',linkRosterHeader:'Nhóm của bạn',linkStatusAccepted:'Đã liên kết',linkStatusPending:'Đã gửi lời mời. Đang chờ phản hồi',linkJustAccepted:'Đã chấp nhận!',linkRemoveBtn:'Xóa khỏi nhóm',linkRemoveConfirm:'Xóa {name} khỏi nhóm của bạn? Hai bên sẽ không còn thấy hoặc chia sẻ dữ liệu với nhau.',linkInviteSearchPlaceholder:'Tìm theo tên...',linkInviteBtn:'Mời',linkNoResults:'Không tìm thấy người dùng phù hợp.',linkCatStudyEntries:'Nhật ký học tập',linkCatBooks:'Danh sách đọc',linkCatJobApplications:'Đơn ứng tuyển',linkCatGrammarNotes:'Ghi chú luyện ngữ pháp',linkCatCourseNotes:'Ghi chú khóa học',linkCatWritingSamples:'Bài viết & phản hồi',linkCatRecap:'Tổng kết tuần/tháng',linkCatReadiness:'Mức độ sẵn sàng ngữ pháp',linkSharingHeader:'Những gì bạn đang chia sẻ',linkSharingHint:'Đây là cài đặt của riêng bạn. Bạn có thể đặt trước khi mời ai đó, hoặc thay đổi bất cứ lúc nào sau khi đã liên kết. Áp dụng cho tất cả những người bạn đang liên kết.',linkCustomizeFor:'Tùy chỉnh những gì bạn chia sẻ với {name}',linkOverrideHint:'Ghi đè cài đặt mặc định chỉ riêng cho {name}.',linkResetOverridesBtn:'Đặt lại về mặc định',linkGroupFullMsg:'Nhóm của bạn đã đạt giới hạn 10 người.',linkErrorGeneric:'Đã có lỗi xảy ra. Vui lòng thử lại.',linkNotLinkedYet:'Bạn chưa liên kết với ai. Hãy tìm kiếm bên dưới để gửi lời mời.',linkInviteSentMsg:'Đã gửi lời mời.',linkStatusAlwaysShared:'Luôn được chia sẻ',writingFeedbackHeader:'Phản hồi',writingFeedbackPlaceholder:'Để lại phản hồi cho bài viết này...',writingFeedbackSendBtn:'Gửi',writingFeedbackEmpty:'Chưa có phản hồi nào.', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập. Để trống dòng nào sẽ xóa trường đó.',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt', statusTeachingAssistant:'Trợ giảng (TA)', statusResearchAssistant:'Trợ lý nghiên cứu (RA)',
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
@@ -7764,7 +7826,7 @@ const I18N = {
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
-    tabYonsei:'Yonsei', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei ↗', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', yonseiCategoryAll:'Tất cả danh mục', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardSortDate:'Ngày đăng', jobBoardSortDeadline:'Hạn nộp', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardUpdating:'Đang cập nhật...'
+    tabYonsei:'Yonsei', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei ↗', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardSortDate:'Ngày đăng', jobBoardSortDeadline:'Hạn nộp', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardUpdating:'Đang cập nhật...'
   }
 };
 const STATIC_MAP = {
@@ -7780,9 +7842,9 @@ const STATIC_MAP = {
   hMyEntries:'yourEntries', hFeed:'feedEveryone', exportStudyBtn:'exportCsv',
   hReadingStats:'yourReading', rLabelReading:'statusReading', rLabelToRead:'statusToRead', rLabelFinished:'statusFinished',
   hAddBook:'addBook', lblBookTitle:'title', lblBookAuthor:'author', lblBookStatus:'status', lblBookPages:'totalPages', addBookBtn:'addBookBtn',
-  hYourBooks:'yourBooks', exportBooksBtn:'exportCsv', hBookLB:'booksFinishedLB', blbHeadRank:'lbRank', blbHeadName:'lbName', blbHeadFinished:'statusFinished', lblBookPersonFilter:'lblNotesPersonFilter',
+  hYourBooks:'yourBooks', exportBooksBtn:'exportCsv', hBookLB:'booksFinishedLB', blbHeadRank:'lbRank', blbHeadName:'lbName', blbHeadFinished:'statusFinished', lblBookPersonFilter:'lblNotesPersonFilter', lblCoursePersonFilter:'lblNotesPersonFilter',
   hJobStats:'yourApplications', jLabelApplied:'jobApplied', jLabelInterview:'jobInterview', jLabelOffer:'jobOffer', jLabelRejected:'jobRejected',
-  hAddJob:'logApplication', lblCompany:'company', lblRole:'role', lblJobStatus:'status', lblJobDate:'dateApplied', lblJobLink:'link', addJobBtn:'addApplicationBtn',
+  hAddJob:'logApplication', lblCompany:'company', lblRole:'role', lblJobStatus:'status', lblJobDate:'dateApplied', lblJobLink:'link', lblJobResume:'lblJobResume', lblJobCoverLetter:'lblJobCoverLetter', addJobBtn:'addApplicationBtn',
   hYourJobs:'jobListHeader', exportJobsBtn:'exportCsv', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied', lblJobPersonFilter:'lblNotesPersonFilter',
   lblJobSearch:'searchLabel', lblJobSort:'sortByLabel', lblYonseiBoardsSearch:'lblYonseiBoardsSearch', lblYonseiBoardsCategory:'lblYonseiBoardsCategory',
   jobsSubApplicationsBtn:'jobApplicationsTab', jobsSubCertificationsBtn:'certifications', jobsSubJobBoardBtn:'jobBoardTab', hJobBoard:'jobBoardTab', lblJobBoardSearch:'searchLabel', lblJobBoardIndustry:'jobBoardIndustryLabel', lblJobBoardType:'jobBoardTypeLabel', lblJobBoardSort:'sortByLabel',
@@ -7791,7 +7853,7 @@ const STATIC_MAP = {
   hYourCerts:'certListHeader', exportCertsBtn:'exportCsv', hCertLB:'certificationsLB', clbHeadRank:'lbRank', clbHeadName:'lbName', clbHeadAcquired:'certAcquired', lblCertPersonFilter:'lblNotesPersonFilter',
   lblCertSearch:'searchLabel', lblCertSort:'sortByLabel',
   hTopik:'topikCountdown', topikRegLabel:'regOpensIn', topikTestLabel:'testIn',
-  hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventEndTime:'eventEndTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', addEventBtn:'addDeadlineBtn',
+  hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventEndTime:'eventEndTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', lblPillVersion:'lblPillVersion', addEventBtn:'addDeadlineBtn',
   calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek', calViewDayBtn:'viewDay',
   lblCourseIsTa:'statusTeachingAssistant', lblCourseIsRa:'statusResearchAssistant',
   lblRecurFreq:'lblRecurFreq', lblRecurInterval:'lblRecurInterval', lblRecurEndType:'lblRecurEndType', lblRecurEndDate:'lblRecurEndDate', recurHint:'recurHint',
@@ -7809,9 +7871,9 @@ const STATIC_MAP = {
   deleteChoiceText:'deleteRecurringQ', deleteThisOnlyBtn:'thisOccurrenceOnly', deleteAllBtn:'allOccurrences', deleteChoiceCancelBtn:'cancelBtn',
   hNotesPick:'hNotesPick', lblNotesCourse:'lblNotesCourse', lblNewLecture:'lblNewLecture', addLectureBtn:'addLectureBtn', lblNewLectureHeader:'lblCustomHeader',
   hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabel:'chooseFile',
-  studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', studySubNotebookBtn:'studySubNotebook', hGrammar:'hGrammar',
+  studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', studySubNotebookBtn:'studySubNotebook', hGrammar:'hGrammar', gramAddToggleBtn:'gramAddToggleBtn',
   hNotebookPick:'hNotesPick', lblNewNotebookTitle:'lblNewLecture', lblNewNotebookHeader:'lblCustomHeader', addNotebookBtn:'addLectureBtn',
-  hAccountSettings:'hAccountSettings', settingsSignedInAs:'settingsSignedInAs', lblSettingsDisplayName:'lblSettingsDisplayName', saveDisplayNameBtn:'settingsSaveNameBtn', lblHideLeaderboards:'lblHideLeaderboards',
+  hAccountSettings:'hAccountSettings', settingsSignedInAs:'settingsSignedInAs', settingsSitePinLabel:'settingsSitePinLabel', lblSettingsDisplayName:'lblSettingsDisplayName', lblSettingsDisplayNameEdit:'lblSettingsDisplayName', saveDisplayNameBtn:'settingsSaveNameBtn', editDisplayNameBtn:'editDisplayNameBtn', cancelDisplayNameBtn:'cancelEdit', lblHideLeaderboards:'lblHideLeaderboards',
   lblSettingsNewEmail:'lblSettingsNewEmail', lblSettingsEmailConfirmPassword:'lblSettingsEmailConfirmPassword', saveEmailBtn:'settingsSaveEmailBtn',
   lblSettingsPasswordSection:'lblSettingsPasswordSection', sendPasswordResetBtn:'sendPasswordResetBtn',
   lblSettings2fa:'lblSettings2fa', lblSettings2faCode:'lblSettings2faCode', confirm2faBtn:'confirm2faBtn', cancel2faEnrollBtn:'cancel2faEnrollBtn',
@@ -7820,9 +7882,11 @@ const STATIC_MAP = {
   enable2faBtn:'enable2faBtn', disable2faBtn:'disable2faBtn',
   lblSettingsDeleteEmailConfirm:'lblSettingsDeleteEmailConfirm',
   lblSettingsDeletePasswordConfirm:'lblSettingsDeletePasswordConfirm', deleteAccountBtn:'deleteAccountBtn', hModerator:'hModerator', closeAccountSettingsBtn:'closeNoteBtn',
+  lblResumeUpload:'lblResumeUpload', resumeUploadBtn:'resumeUploadBtn', resumeViewLink:'resumeViewLink',
   hLinkedCircle:'hLinkedCircle', linkedCircleDesc:'linkedCircleDesc', closeFriendsBtn:'closeNoteBtn',
   writingFeedbackHeader:'writingFeedbackHeader', writingFeedbackSendBtn:'writingFeedbackSendBtn',
   lblMfaPromptTitle:'mfaPromptTitle', lblMfaPromptHint:'mfaPromptHint', mfaVerifyBtn:'mfaVerifyBtn', mfaUseBackupBtn:'mfaUseBackupBtn',
+  lblPinGate:'lblPinGate', pinGateSubmitBtn:'pinGateSubmitBtn',
   hNotebookList:'hNotebookList', lblNotebookPersonFilter:'lblNotesPersonFilter', saveNotebookBtn:'saveNoteBtn', closeNotebookBtn:'closeNoteBtn',
   hNewWriting:'hNewWriting', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', deleteAllWritingBtn:'deleteAllWritingBtn', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
   lblWritingCustomTaskType:'lblWritingCustomTaskType', writingTaskTypeEssayOpt:'writingTaskTypeEssay', writingTaskTypeDataOpt:'writingTaskTypeData', lblWritingCustomDescription:'lblWritingCustomDescription', lblWritingImage:'lblWritingImage', writingImageHint:'writingImageHint',
@@ -7839,6 +7903,15 @@ const JOB_STATUS_SORT_ORDER = {applied:0, interview:1, offer:2, rejected:3, with
 const CERT_STATUS_KEYS = {in_progress:'certInProgress', acquired:'certAcquired'};
 const CERT_STATUS_SORT_ORDER = {in_progress:0, acquired:1};
 let currentLang = localStorage.getItem('trackerLang') || 'en';
+// BCP47 tag for whatever locale-formatting call needs the app's chosen
+// language rather than the browser's own locale (dates/times, "last
+// updated" timestamps) -- toLocaleDateString()/toLocaleString() with no
+// argument silently follow the browser instead of the site's language
+// switch, which is what left these un-translated before.
+const LOCALE_TAGS = { en: 'en-US', ko: 'ko-KR', vi: 'vi-VN' };
+function appLocale(){ return LOCALE_TAGS[currentLang] || 'en-US'; }
+function localDateStr(d){ return new Date(d).toLocaleDateString(appLocale()); }
+function localDateTimeStr(d){ return new Date(d).toLocaleString(appLocale()); }
 function t(key){ return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key; }
 function actLabel(key){ return t(ACT_KEYS[key] || key); }
 function bookStatusLabel(status){ return t(BOOK_STATUS_KEYS[status] || status); }
@@ -7862,6 +7935,14 @@ const ADMIN_EMAIL = 'kristoffergt@gmail.com';
 // server-side too, in admin_update_display_name).
 const DISPLAY_NAME_RE = /^[\p{L}\p{N} '-]+$/u;
 function isValidDisplayName(name){ return DISPLAY_NAME_RE.test(name); }
+// Stable per-browser id (not tied to any account) used only to let a
+// signup retry on the same device recognize its own in-progress name
+// reservation -- see reserve_display_name() / display_name_grace_period_migration.sql.
+function getDeviceToken(){
+  let tok = localStorage.getItem('deviceToken');
+  if(!tok){ tok = crypto.randomUUID(); localStorage.setItem('deviceToken', tok); }
+  return tok;
+}
 let pendingMfaUser = null;
 let pendingMfaFactorId = null;
 let mfaEnrollFactorId = null;
@@ -7897,20 +7978,28 @@ let notifyYonseiBoard = false; // current user's own email-notification opt-in, 
 // for itself and for its own core study partner (Kristoffer <-> Roxy) — it
 // only actually disappears for everyone else. Mirrors the shared_circle()
 // rule used server-side in leaderboard_expansion_migration.sql.
+function isAdminViewer(){ return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
 function visibleOnLeaderboard(uid){
   if(!hiddenFromLeaderboards[uid]) return true;
   if(currentUser && uid === currentUser.id) return true;
+  if(isAdminViewer()) return true; // the admin always sees everyone, tagged (hidden) -- see lbNameCell
   return !!(currentUser && coreMembers[currentUser.id] && coreMembers[uid]);
 }
 // Builds the name cell for a leaderboard row: your own name gets the "YOU"
 // tag, plus a muted "(hidden from others)" note if you've turned on the
 // hide-from-leaderboards setting — so you can always see your own rank/stats
 // (and your core partner still sees you too), and it's clear at a glance
-// that strangers currently can't.
+// that strangers currently can't. The admin bypasses the hide entirely (see
+// visibleOnLeaderboard) and sees a plain "(hidden)" tag on anyone else's row
+// that's opted out, so moderation isn't blind to who's hiding.
 function lbNameCell(r){
   const isMe = currentUser && r.id === currentUser.id;
   const youTag = isMe ? '<span class="tag">YOU</span>' : '';
-  const hiddenTag = (isMe && hiddenFromLeaderboards[r.id]) ? `<span class="lb-hidden-tag">(${t('lbHiddenFromOthers')})</span>` : '';
+  let hiddenTag = '';
+  if(hiddenFromLeaderboards[r.id]){
+    if(isMe) hiddenTag = `<span class="lb-hidden-tag">(${t('lbHiddenFromOthers')})</span>`;
+    else if(isAdminViewer()) hiddenTag = `<span class="lb-hidden-tag">(${t('lbHiddenTag')})</span>`;
+  }
   return `${r.name}${youTag}${hiddenTag}`;
 }
 function amICore(){ return !!(currentUser && coreMembers[currentUser.id]); }
@@ -8023,9 +8112,11 @@ function applyDarkMode(isDark){
   const icon = isDark ? '☀️' : '🌙';
   document.getElementById('darkToggleAuth').textContent = icon;
   document.getElementById('darkToggleApp').textContent = icon;
+  document.getElementById('darkTogglePin').textContent = icon;
 }
 document.getElementById('darkToggleAuth').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 document.getElementById('darkToggleApp').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
+document.getElementById('darkTogglePin').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 /* ---------- LANGUAGE APPLICATION ---------- */
 function buildLangSwitch(container){
   container.innerHTML = '';
@@ -8108,9 +8199,26 @@ function rebuildEventKindSelect(){
   const sel = document.getElementById('eventKind');
   const prev = sel.value || 'deadline';
   sel.innerHTML = '';
-  [['deadline','kindDeadline'],['event','kindEvent'],['course','kindCourse'],['birthday','kindBirthday']].forEach(([val,key])=>{
+  const kinds = [['deadline','kindDeadline'],['event','kindEvent'],['course','kindCourse'],['birthday','kindBirthday']];
+  // Pill-cycle tracking is Kristoffer-only (see PILL_CYCLE_ACCOUNT_NAME) --
+  // the option itself is simply never offered to anyone else, same pattern
+  // as the Job Board sync button being account-gated.
+  if(isPillCycleAccount()) kinds.push(['pill','kindPill']);
+  kinds.forEach(([val,key])=>{
     const opt = document.createElement('option');
     opt.value = val; opt.textContent = t(key);
+    sel.appendChild(opt);
+  });
+  sel.value = (prev === 'pill' && !isPillCycleAccount()) ? 'deadline' : prev;
+}
+function rebuildPillVersionSelect(){
+  const sel = document.getElementById('eventPillVersion');
+  if(!sel) return;
+  const prev = sel.value || PILL_CYCLE_VERSIONS[0].value;
+  sel.innerHTML = '';
+  PILL_CYCLE_VERSIONS.forEach(v=>{
+    const opt = document.createElement('option');
+    opt.value = v.value; opt.textContent = t(v.labelKey);
     sel.appendChild(opt);
   });
   sel.value = prev;
@@ -8243,12 +8351,14 @@ function applyLanguage(lang){
   document.getElementById('writingQ53Search').placeholder = t('writingSearchPlaceholder');
   buildLangSwitch(document.getElementById('langSwitchAuth'));
   buildLangSwitch(document.getElementById('langSwitchApp'));
+  buildLangSwitch(document.getElementById('langSwitchPin'));
   reorderMobileTabs();
   rebuildActivitySelect();
   rebuildBookStatusSelect();
   rebuildJobStatusSelect();
   rebuildCertStatusSelect();
   rebuildEventKindSelect();
+  rebuildPillVersionSelect();
   rebuildRecurFreqSelect();
   rebuildPrivacySelect();
   rebuildForUserSelect();
@@ -8258,6 +8368,7 @@ function applyLanguage(lang){
   rebuildCourseStatusSelect();
   rebuildCourseDaySelect();
   updateRecurFieldVisibility();
+  updateKindFieldVisibility();
   renderTopikCountdown();
   document.getElementById('brandLightboxClose').title = t('closeNoteBtn');
   document.getElementById('brandLightboxTitle').textContent = 'Productivity Tracker';
@@ -8322,6 +8433,22 @@ document.getElementById('resendConfirmBtn').addEventListener('click', async ()=>
   showAuthMsg(t('resendConfirmSent'), 'info');
   armResendConfirm(pendingConfirmEmail);
 });
+async function submitPinGate(){
+  const code = document.getElementById('pinGateInput').value.trim();
+  if(!code) return;
+  const { data: ok, error } = await supabaseClient.rpc('verify_site_pin', { candidate: code });
+  if(error || !ok){
+    document.getElementById('pinGateMsg').innerHTML = `<div class="auth-msg-inner error">${t('pinGateWrongMsg')}</div>`;
+    return;
+  }
+  localStorage.setItem('sitePinVerified', 'true');
+  document.getElementById('pinGateScreen').classList.add('hidden');
+  document.getElementById('authScreen').classList.remove('hidden');
+}
+document.getElementById('pinGateSubmitBtn').addEventListener('click', submitPinGate);
+document.getElementById('pinGateInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); submitPinGate(); }
+});
 document.getElementById('tabSignIn').addEventListener('click', ()=>setAuthMode('signin'));
 document.getElementById('tabSignUp').addEventListener('click', ()=>setAuthMode('signup'));
 document.getElementById('authSubmit').addEventListener('click', async ()=>{
@@ -8336,8 +8463,8 @@ document.getElementById('authSubmit').addEventListener('click', async ()=>{
     if(!displayName){ showAuthMsg('Enter a name.', 'error'); return; }
     if(displayName.length > 12){ showAuthMsg(t('settingsNameTooLong'), 'error'); return; }
     if(!isValidDisplayName(displayName)){ showAuthMsg(t('settingsNameInvalidChars'), 'error'); return; }
-    const { data: available, error: availError } = await supabaseClient.rpc('display_name_available', { dname: displayName });
-    if(!availError && available === false){ showAuthMsg(t('duplicateName'), 'error'); return; }
+    const { data: reserved, error: reserveError } = await supabaseClient.rpc('reserve_display_name', { p_email: email, p_name: displayName, p_browser_token: getDeviceToken() });
+    if(!reserveError && reserved === false){ showAuthMsg(t('duplicateName'), 'error'); return; }
     // Note: the display name is NOT written to `profiles` here. Supabase
     // returns a user object as soon as signUp() is called even when email
     // confirmation is still pending (data.session is null in that case), so
@@ -8498,8 +8625,30 @@ function showSettingsMsg(id, text, isError){
   el.classList.remove('hidden');
   el.style.color = isError ? 'var(--seal)' : 'var(--celadon-4)';
 }
-document.getElementById('accountSettingsBtn').addEventListener('click', async ()=>{
+// Display name shows as static text (not a permanently-open textbox) --
+// clicking Edit swaps in the input + Save/Cancel, matching how a one-off
+// rename should feel rather than an always-editable field.
+function closeDisplayNameEdit(){
+  document.getElementById('settingsNameStaticText').textContent = profiles[currentUser.id] || '';
   document.getElementById('settingsDisplayName').value = profiles[currentUser.id] || '';
+  document.getElementById('settingsNameStaticWrap').classList.remove('hidden');
+  document.getElementById('settingsNameEditWrap').classList.add('hidden');
+  document.getElementById('saveDisplayNameBtn').classList.add('hidden');
+  document.getElementById('cancelDisplayNameBtn').classList.add('hidden');
+}
+document.getElementById('editDisplayNameBtn').addEventListener('click', ()=>{
+  document.getElementById('settingsNameStaticWrap').classList.add('hidden');
+  document.getElementById('settingsNameEditWrap').classList.remove('hidden');
+  document.getElementById('saveDisplayNameBtn').classList.remove('hidden');
+  document.getElementById('cancelDisplayNameBtn').classList.remove('hidden');
+  document.getElementById('settingsDisplayName').focus();
+});
+document.getElementById('cancelDisplayNameBtn').addEventListener('click', closeDisplayNameEdit);
+document.getElementById('accountSettingsBtn').addEventListener('click', async ()=>{
+  closeDisplayNameEdit();
+  supabaseClient.rpc('get_site_pin').then(({data})=>{
+    document.getElementById('settingsSitePinValue').textContent = data || '–';
+  });
   document.getElementById('settingsHideLeaderboards').checked = !!hiddenFromLeaderboards[currentUser.id];
   renderManageTabsList();
   document.getElementById('settingsNewEmail').value = '';
@@ -8518,6 +8667,20 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   document.getElementById('moderatorSection').classList.toggle('hidden', !isAdmin);
   if(isAdmin) loadModeratorUsers();
   document.getElementById('accountSettingsModal').classList.remove('hidden');
+});
+document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
+  const file = document.getElementById('resumeUploadFile').files[0];
+  const msg = document.getElementById('resumeUploadMsg');
+  if(!file) return;
+  if(file.type !== 'application/pdf'){
+    msg.textContent = t('resumePdfOnlyMsg'); msg.style.color = 'var(--seal)'; msg.classList.remove('hidden');
+    return;
+  }
+  const { error } = await supabaseClient.storage.from('resume').upload('resume.pdf', file, { upsert: true });
+  msg.textContent = error ? t('resumeUploadFailed') : t('resumeUploadSuccess');
+  msg.style.color = error ? 'var(--seal)' : 'var(--celadon-4)';
+  msg.classList.remove('hidden');
+  if(!error) document.getElementById('resumeUploadFile').value = '';
 });
 document.getElementById('friendsBtn').addEventListener('click', async ()=>{
   await refreshLinkData();
@@ -8597,7 +8760,9 @@ async function saveSharingSetting(targetUid, cat, enabled){
 function updateLinkNotifyDot(){
   const dot = document.getElementById('linkNotifyDot');
   if(!dot) return;
-  dot.classList.toggle('hidden', myLinkStatus() !== 'pending');
+  const hasPendingInvite = myLinkStatus() === 'pending';
+  const hasUnseenAccept = linkGroupRows.some(r=> r.status === 'accepted' && r.invited_by === currentUser.id && !r.accept_notified);
+  dot.classList.toggle('hidden', !hasPendingInvite && !hasUnseenAccept);
 }
 function linkCatLabel(cat){
   const map = {
@@ -8657,12 +8822,15 @@ function renderLinkedCircle(){
         </div>` : ''}
         ${roster.map(r=>{
           const statusLabel = r.status === 'accepted' ? t('linkStatusAccepted') : t('linkStatusPending');
+          const justAccepted = r.status === 'accepted' && r.invited_by === currentUser.id && !r.accept_notified;
+          const acceptedBadge = justAccepted ? `<span class="tag" style="background:var(--celadon-4);color:#fff;margin-left:6px;">${t('linkJustAccepted')}</span>` : '';
           // Per-partner overrides only make sense once they've actually
           // accepted (an override for a still-pending invitee has nothing
           // to attach to yet, and they might decline).
           const gearHtml = r.status === 'accepted' ? `<button class="icon-btn link-partner-gear" data-uid="${r.user_id}" title="${escapeHtml(t('linkCustomizeFor').replace('{name}', nameFor(r.user_id)))}" style="padding:2px 7px;font-size:11px;">⚙</button>` : '';
+          const removeHtml = `<button class="icon-btn link-remove-member" data-uid="${r.user_id}" data-name="${escapeHtml(nameFor(r.user_id))}" title="${t('linkRemoveBtn')}" style="padding:2px 7px;font-size:11px;color:var(--seal);">✕</button>`;
           const rowHtml = `<div style="padding:4px 0;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
-            <span style="display:flex;align-items:center;gap:6px;"><span style="color:${colorForUser(r.user_id)};font-weight:600;">${nameFor(r.user_id)}</span>${gearHtml}</span><span style="color:var(--ink-soft);">${statusLabel}</span>
+            <span style="display:flex;align-items:center;gap:6px;"><span style="color:${colorForUser(r.user_id)};font-weight:600;">${nameFor(r.user_id)}</span>${acceptedBadge}${gearHtml}${removeHtml}</span><span style="color:var(--ink-soft);">${statusLabel}</span>
           </div>`;
           const panelHtml = (r.status === 'accepted' && linkOverridePanelOpenFor === r.user_id) ? `
             <div style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:-4px 0 8px;">
@@ -8692,6 +8860,15 @@ function renderLinkedCircle(){
   }
   el.innerHTML = html;
   bindLinkedCircleEvents();
+  // Now that the "just accepted" badge has actually been shown to the
+  // inviter, clear it so it doesn't keep appearing on future visits. Fire
+  // and forget -- local state is updated immediately so a re-render before
+  // the round-trip completes doesn't flash the badge twice.
+  roster.filter(r=> r.status === 'accepted' && r.invited_by === currentUser.id && !r.accept_notified).forEach(r=>{
+    r.accept_notified = true;
+    supabaseClient.rpc('link_dismiss_accept_notice', { member_user_id: r.user_id });
+  });
+  updateLinkNotifyDot();
 }
 function bindLinkedCircleEvents(){
   const acceptBtn = document.getElementById('linkAcceptBtn');
@@ -8735,6 +8912,16 @@ function bindLinkedCircleEvents(){
   });
   document.querySelectorAll('.link-partner-cat-toggle').forEach(cb=>{
     cb.addEventListener('change', ()=> saveSharingSetting(cb.dataset.uid, cb.dataset.cat, cb.checked));
+  });
+  document.querySelectorAll('.link-remove-member').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm(t('linkRemoveConfirm').replace('{name}', btn.dataset.name))) return;
+      btn.disabled = true;
+      const { error } = await supabaseClient.rpc('link_remove_member', { target_id: btn.dataset.uid });
+      if(error){ alert(error.message || t('linkErrorGeneric')); btn.disabled = false; return; }
+      await refreshLinkData();
+      renderLinkedCircle();
+    });
   });
   const resetBtn = document.getElementById('linkResetOverridesBtn');
   if(resetBtn) resetBtn.addEventListener('click', async ()=>{
@@ -8793,6 +8980,7 @@ document.getElementById('saveDisplayNameBtn').addEventListener('click', async ()
     document.getElementById('whoName').textContent = name;
     renderAll();
   }
+  closeDisplayNameEdit();
   showSettingsMsg('settingsNameMsg', t('noteSaved'), false);
 });
 
@@ -8941,6 +9129,7 @@ document.getElementById('deleteAccountBtn').addEventListener('click', async ()=>
 let moderatorUsersCache = [];
 let moderatorSearchTerm = '';
 let moderatorSortVal = 'date';
+let moderatorListState = { page: 1 };
 function rebuildModeratorSortSelect(){
   const sel = document.getElementById('moderatorSort');
   if(!sel) return;
@@ -8979,9 +9168,34 @@ function renderModeratorUserList(){
     confirmed: (a,b)=> (a.email_confirmed?1:0) - (b.email_confirmed?1:0),
   };
   rest.sort(sorters[moderatorSortVal] || sorters.date);
-  const finalRows = [...adminRows, ...rest];
+  // Same fold-out-then-paginate convention as every other list in the app
+  // (see PAGE_SIZE/listState) instead of one endless scroll -- the admin
+  // row stays pinned to page 1 regardless, same as it's pinned regardless
+  // of sort/search above.
+  const controls = document.getElementById('moderatorUserListControls');
+  controls.innerHTML = '';
+  const totalPages = Math.max(1, Math.ceil(rest.length / PAGE_SIZE));
+  if(moderatorListState.page > totalPages) moderatorListState.page = totalPages;
+  const start = (moderatorListState.page - 1) * PAGE_SIZE;
+  const pageRows = rest.slice(start, start + PAGE_SIZE);
+  const finalRows = [...adminRows, ...pageRows];
   list.innerHTML = '';
   if(finalRows.length === 0){ list.innerHTML = '<div class="empty">–</div>'; return; }
+  if(totalPages > 1){
+    const mkBtn = (label, page, disabled)=>{
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.disabled = !!disabled;
+      b.className = 'page-btn' + (page === moderatorListState.page ? ' active' : '');
+      b.addEventListener('click', ()=>{ moderatorListState.page = page; renderModeratorUserList(); });
+      return b;
+    };
+    controls.appendChild(mkBtn('«', 1, moderatorListState.page === 1));
+    controls.appendChild(mkBtn('‹', Math.max(1, moderatorListState.page - 1), moderatorListState.page === 1));
+    for(let p = 1; p <= totalPages; p++){ controls.appendChild(mkBtn(String(p), p, false)); }
+    controls.appendChild(mkBtn('›', Math.min(totalPages, moderatorListState.page + 1), moderatorListState.page === totalPages));
+    controls.appendChild(mkBtn('»', totalPages, moderatorListState.page === totalPages));
+  }
   finalRows.forEach(u=>{
     const isSelf = u.id === currentUser.id;
     const isAdminRow = u.email === ADMIN_EMAIL;
@@ -8994,7 +9208,7 @@ function renderModeratorUserList(){
       <div class="item-top">
         <div>
           <div class="item-title"><span style="color:${nameColor};">${escapeHtml(u.display_name || u.email)}</span> ${isSelf ? `<span class="tag">${t('modYou')}</span>` : ''}${isAdminRow ? `<span class="tag admin-tag">${t('modAdmin')}</span>` : ''}</div>
-          <div class="item-sub">${escapeHtml(u.email)} · <span style="color:${confirmedColor};font-weight:600;">${u.email_confirmed ? t('modConfirmed') : t('modUnconfirmed')}</span> · <span style="color:${mfaColor};font-weight:600;">${u.mfa_enrolled ? t('modMfaOn') : t('modMfaOff')}</span>${u.created_at ? ' · ' + new Date(u.created_at).toLocaleDateString() : ''}</div>
+          <div class="item-sub">${escapeHtml(u.email)} · <span style="color:${confirmedColor};font-weight:600;">${u.email_confirmed ? t('modConfirmed') : t('modUnconfirmed')}</span> · <span style="color:${mfaColor};font-weight:600;">${u.mfa_enrolled ? t('modMfaOn') : t('modMfaOff')}</span>${u.created_at ? ' · ' + localDateStr(u.created_at) : ''}</div>
         </div>
       </div>
       ${isAdminRow ? '' : `
@@ -9054,10 +9268,12 @@ function renderModeratorUserList(){
 }
 document.getElementById('moderatorSearch').addEventListener('input', (e)=>{
   moderatorSearchTerm = e.target.value;
+  moderatorListState.page = 1;
   renderModeratorUserList();
 });
 document.getElementById('moderatorSort').addEventListener('change', (e)=>{
   moderatorSortVal = e.target.value;
+  moderatorListState.page = 1;
   renderModeratorUserList();
 });
 
@@ -9086,6 +9302,7 @@ document.getElementById('updatePasswordBtn').addEventListener('click', async ()=
 
 supabaseClient.auth.onAuthStateChange((event, session)=>{
   if(event === 'PASSWORD_RECOVERY'){
+    document.getElementById('pinGateScreen').classList.add('hidden');
     document.getElementById('authScreen').classList.add('hidden');
     document.getElementById('appScreen').classList.add('hidden');
     document.getElementById('resetScreen').classList.remove('hidden');
@@ -10068,6 +10285,27 @@ document.getElementById('jobCompany').addEventListener('paste', (e)=>{
   document.getElementById('jobDate').value = parsed.date || todayStr();
   document.getElementById('jobLink').value = parsed.link;
 });
+// Uploads a PDF File to the job-application-files bucket (own user-id
+// folder, mirrors resolveImageFromInputs' writing-images pattern). Returns
+// { url, name } or null if no file was given; alerts and returns null if a
+// non-PDF file was chosen (belt-and-suspenders alongside the input's accept
+// filter and the bucket's own allowed_mime_types).
+async function uploadJobPdfFile(file){
+  if(!file) return null;
+  if(file.type !== 'application/pdf'){
+    alert(t('jobPdfOnlyMsg'));
+    return null;
+  }
+  const path = `${currentUser.id}/${Date.now()}_${file.name}`;
+  const { error: uploadError } = await supabaseClient.storage.from('job-application-files').upload(path, file);
+  if(uploadError) return null;
+  const { data: urlData } = supabaseClient.storage.from('job-application-files').getPublicUrl(path);
+  return { url: urlData.publicUrl, name: file.name };
+}
+async function uploadJobPdf(fileInputId){
+  const fileInput = document.getElementById(fileInputId);
+  return uploadJobPdfFile(fileInput && fileInput.files[0]);
+}
 async function addJob(){
   const company = document.getElementById('jobCompany').value.trim();
   const role = document.getElementById('jobRole').value.trim();
@@ -10075,7 +10313,13 @@ async function addJob(){
   const dateApplied = document.getElementById('jobDate').value || todayStr();
   const link = document.getElementById('jobLink').value.trim();
   if(!company) return;
-  const row = { user_id: currentUser.id, company, role: role || null, status, date_applied: dateApplied, link: link || null };
+  const resume = await uploadJobPdf('jobResumeFile');
+  const coverLetter = await uploadJobPdf('jobCoverLetterFile');
+  const row = {
+    user_id: currentUser.id, company, role: role || null, status, date_applied: dateApplied, link: link || null,
+    resume_url: resume ? resume.url : null, resume_name: resume ? resume.name : null,
+    cover_letter_url: coverLetter ? coverLetter.url : null, cover_letter_name: coverLetter ? coverLetter.name : null,
+  };
   const { data, error } = await supabaseClient.from('job_applications').insert(row).select();
   if(!error && data){
     if(!allJobs[currentUser.id]) allJobs[currentUser.id] = [];
@@ -10084,6 +10328,8 @@ async function addJob(){
   document.getElementById('jobCompany').value = '';
   document.getElementById('jobRole').value = '';
   document.getElementById('jobLink').value = '';
+  document.getElementById('jobResumeFile').value = '';
+  document.getElementById('jobCoverLetterFile').value = '';
   renderJobs();
 }
 async function updateJobStatus(jobId, status){
@@ -10121,6 +10367,14 @@ function buildJobEditFieldsHtml(j){
       <label>${t('link')}</label>
       <input type="text" class="je-link" value="${(j.link||'').replace(/"/g,'&quot;')}">
     </div>
+    <div class="field wide">
+      <label>${t('jobResumeView')}${j.resume_name ? ' — ' + escapeHtml(j.resume_name) : ''}</label>
+      <input type="file" class="je-resume" accept=".pdf,application/pdf">
+    </div>
+    <div class="field wide">
+      <label>${t('jobCoverLetterView')}${j.cover_letter_name ? ' — ' + escapeHtml(j.cover_letter_name) : ''}</label>
+      <input type="file" class="je-cover-letter" accept=".pdf,application/pdf">
+    </div>
     <div style="margin-top:8px;display:flex;gap:8px;">
       <button class="export-btn je-save-btn" data-id="${j.id}">${t('saveChanges')}</button>
       <button class="export-btn je-cancel-btn" data-id="${j.id}">${t('cancelEdit')}</button>
@@ -10133,6 +10387,16 @@ async function saveJobEdit(jobId, container){
   const link = container.querySelector('.je-link').value.trim();
   if(!company) return;
   const patch = { company, role: role || null, date_applied: dateApplied, link: link || null };
+  const resumeFile = container.querySelector('.je-resume').files[0];
+  const coverLetterFile = container.querySelector('.je-cover-letter').files[0];
+  if(resumeFile){
+    const resume = await uploadJobPdfFile(resumeFile);
+    if(resume){ patch.resume_url = resume.url; patch.resume_name = resume.name; }
+  }
+  if(coverLetterFile){
+    const coverLetter = await uploadJobPdfFile(coverLetterFile);
+    if(coverLetter){ patch.cover_letter_url = coverLetter.url; patch.cover_letter_name = coverLetter.name; }
+  }
   const { data, error } = await supabaseClient.from('job_applications').update(patch).eq('id', jobId).select();
   if(!error && data && data[0]){
     const j = (allJobs[currentUser.id]||[]).find(x=>x.id===jobId);
@@ -10256,6 +10520,8 @@ function renderJobs(){
           <option value="withdrawn" ${j.status==='withdrawn'?'selected':''}>${jobStatusLabel('withdrawn')}</option>
         </select>` : ''}
         ${j.link ? `<a href="${j.link}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
+        ${j.resume_url ? `<a href="${j.resume_url}" target="_blank" rel="noopener">${t('jobResumeView')}</a>` : ''}
+        ${j.cover_letter_url ? `<a href="${j.cover_letter_url}" target="_blank" rel="noopener">${t('jobCoverLetterView')}</a>` : ''}
         ${isMine ? `<button class="linkbtn job-edit-toggle" data-id="${j.id}">${t('editBtn')}</button>` : ''}
         ${addMyselfBtn}
       </div>
@@ -10674,6 +10940,20 @@ function jobBoardTypeClass(type){
   if(t.includes('intern')) return 'jobboard-type-intern';
   return '';
 }
+// Display-only ko/vi text for the small fixed set of "Type" values the
+// source board uses (Full-Time Job/Part-Time Job/Intern) -- same
+// substring-match approach as jobBoardTypeClass, since exact wording from
+// the source has varied slightly. "Industry" is deliberately left
+// untranslated: it's free text with unbounded values scraped straight from
+// the board, not a fixed enum like Type, so there's no fixed dictionary to
+// translate it against.
+function jobBoardTypeLabel(type){
+  const cls = jobBoardTypeClass(type);
+  if(cls === 'jobboard-type-full') return t('jobBoardTypeFull');
+  if(cls === 'jobboard-type-part') return t('jobBoardTypePart');
+  if(cls === 'jobboard-type-intern') return t('jobBoardTypeIntern');
+  return type;
+}
 function jobBoardDeadlineColor(deadline){
   if(!deadline) return '';
   const days = Math.round((new Date(deadline+'T00:00:00') - new Date(new Date().toDateString())) / 86400000);
@@ -10695,6 +10975,23 @@ const JOB_BOARD_SYNC_ACCOUNT_NAME = 'Kristoffer';
 function isJobBoardSyncAccount(){
   return !!currentUser && nameFor(currentUser.id) === JOB_BOARD_SYNC_ACCOUNT_NAME;
 }
+// Birth-control pill cycle tracking, personal to one account only.
+const PILL_CYCLE_ACCOUNT_NAME = 'Kristoffer';
+function isPillCycleAccount(){
+  return !!currentUser && nameFor(currentUser.id) === PILL_CYCLE_ACCOUNT_NAME;
+}
+// Cycle length in days for each supported pill version -- the "restart on
+// the same weekday every time" requirement falls out for free from using
+// day-based recurrence with an interval that's a whole number of weeks (see
+// addEvent()/updateKindFieldVisibility()): a 28-day cycle is exactly 4
+// weeks, so recur_freq:'day', recur_interval:28 lands on the same weekday
+// every restart with zero extra date-math needed. Extensible for other
+// pill versions by adding entries here (whole multiples of 7 keep the
+// same-weekday guarantee; others would restart on a shifting weekday).
+const PILL_CYCLE_VERSIONS = [
+  { value: '28', labelKey: 'pillVersionStandard' }
+];
+const PILL_CYCLE_COLOR = '#C0678C';
 // Once triggered, there's no direct channel back from the local script to
 // this tab (it's a separate OS process) -- so "did it finish" is inferred by
 // quietly re-polling yonsei_jobboard_items every few seconds and watching
@@ -10775,7 +11072,7 @@ function rebuildJobBoardFilterSelect(id, field, allLabelKey){
   sel.appendChild(allOpt);
   values.forEach(v=>{
     const opt = document.createElement('option');
-    opt.value = v; opt.textContent = v;
+    opt.value = v; opt.textContent = field === 'type' ? jobBoardTypeLabel(v) : v;
     sel.appendChild(opt);
   });
   sel.value = (prev === 'all' || values.includes(prev)) ? prev : 'all';
@@ -10824,7 +11121,7 @@ function renderJobBoard(){
   }
   if(hint){
     const latest = jobBoardItems.reduce((max,it)=> (!max || (it.updated_at||'') > max) ? it.updated_at : max, null);
-    hint.textContent = latest ? t('jobBoardUpdated').replace('{time}', new Date(latest).toLocaleString()) : '';
+    hint.textContent = latest ? t('jobBoardUpdated').replace('{time}', localDateTimeStr(latest)) : '';
   }
   const q = jobBoardSearchQuery.trim().toLowerCase();
   const filtered = jobBoardItems.filter(it=>{
@@ -10858,7 +11155,7 @@ function renderJobBoard(){
       <div class="jobboard-row-meta">
         <span class="jobboard-date">${escapeHtml(it.date_posted)}</span>
         <span class="jobboard-pill">${escapeHtml(it.industry)}</span>
-        <span class="jobboard-pill ${jobBoardTypeClass(it.type)}">${escapeHtml(it.type)}</span>
+        <span class="jobboard-pill ${jobBoardTypeClass(it.type)}">${escapeHtml(jobBoardTypeLabel(it.type))}</span>
         ${it.deadline ? `<span class="jobboard-deadline" style="color:${jobBoardDeadlineColor(it.deadline)};">${t('jobBoardDeadlineLabel')} ${escapeHtml(it.deadline)}</span>` : ''}
       </div>
     </a>`
@@ -10961,6 +11258,20 @@ function yonseiCategoryClass(category){
   if(c === 'admission') return 'yonsei-tag-admission';
   return 'yonsei-tag-general';
 }
+// Display-only ko/vi text for the canonical English category strings the
+// parser always returns (Academics/Recruiting/Admission/Event/General
+// Notice -- see canonicalCategory() in the fetch-yonsei-board Edge
+// Function). The underlying value is never translated -- it's used as a
+// filter key, a notify-preference key, and stored as-is -- only what's
+// shown to the reader changes.
+const YONSEI_CATEGORY_LABEL_KEYS = {
+  'Academics': 'yonseiCatAcademics', 'Recruiting': 'yonseiCatRecruiting',
+  'Admission': 'yonseiCatAdmission', 'Event': 'yonseiCatEvent', 'General Notice': 'yonseiCatGeneral'
+};
+function yonseiCategoryLabel(category){
+  const key = YONSEI_CATEGORY_LABEL_KEYS[category];
+  return key ? t(key) : category;
+}
 function rebuildYonseiCategoryFilter(){
   const sel = document.getElementById('yonseiBoardsCategoryFilter');
   if(!sel) return;
@@ -10972,7 +11283,7 @@ function rebuildYonseiCategoryFilter(){
   sel.appendChild(allOpt);
   categories.forEach(cat=>{
     const opt = document.createElement('option');
-    opt.value = cat; opt.textContent = cat;
+    opt.value = cat; opt.textContent = yonseiCategoryLabel(cat);
     sel.appendChild(opt);
   });
   const valid = prev === 'all' || categories.includes(prev);
@@ -11041,7 +11352,7 @@ function renderYonseiBoards(){
     return;
   }
   list.innerHTML = filtered.map(it=>
-    `<a class="yonsei-board-row" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer"><span class="yonsei-board-date">${escapeHtml(it.date)}</span><span class="yonsei-board-title">${escapeHtml(it.title)}</span>${it.subTag ? `<span class="yonsei-board-subtag">${escapeHtml(it.subTag)}</span>` : ''}<span class="yonsei-board-tag ${yonseiCategoryClass(it.category)}">${escapeHtml(it.category)}</span></a>`
+    `<a class="yonsei-board-row" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer"><span class="yonsei-board-date">${escapeHtml(it.date)}</span><span class="yonsei-board-title">${escapeHtml(it.title)}</span>${it.subTag ? `<span class="yonsei-board-subtag">${escapeHtml(it.subTag)}</span>` : ''}<span class="yonsei-board-tag ${yonseiCategoryClass(it.category)}">${escapeHtml(yonseiCategoryLabel(it.category))}</span></a>`
   ).join('');
 }
 document.getElementById('yonseiBoardsSearchInput').addEventListener('input', (e)=>{
@@ -11114,7 +11425,7 @@ function renderYonseiNotifyCategoriesPanel(){
     <div style="display:flex;gap:14px;flex-wrap:wrap;">
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;"><input type="checkbox" id="yonseiNotifyCatAll" ${allChecked?'checked':''}> <span>${t('yonseiCategoryAll')}</span></label>
       ${YONSEI_NOTIFY_CATEGORIES.map(cat=>
-        `<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="yonsei-notify-cat-check" data-cat="${escapeHtml(cat)}" ${selected.includes(cat)?'checked':''}> <span>${escapeHtml(cat)}</span></label>`
+        `<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="yonsei-notify-cat-check" data-cat="${escapeHtml(cat)}" ${selected.includes(cat)?'checked':''}> <span>${escapeHtml(yonseiCategoryLabel(cat))}</span></label>`
       ).join('')}
     </div>`;
   async function saveNotifyCategories(next){
@@ -11260,7 +11571,7 @@ function formatCountdown(target){
   const days = Math.floor(diff/86400000);
   const hours = Math.floor((diff%86400000)/3600000);
   const mins = Math.floor((diff%3600000)/60000);
-  return `${days}d ${hours}h ${mins}m`;
+  return `${days}${t('countdownDaysShort')} ${hours}${t('countdownHoursShort')} ${mins}${t('countdownMinsShort')}`;
 }
 function renderTopikCountdown(){
   const regVal = document.getElementById('topikRegVal');
@@ -11276,22 +11587,28 @@ setInterval(()=>{ if(currentUser && activeTab === 'calendar') renderDeadlineList
 let addEventInFlight = false;
 async function addEvent(){
   if(addEventInFlight) return; // guards against duplicate rows from a fast double-click
-  const title = document.getElementById('eventTitle').value.trim();
   const kind = document.getElementById('eventKind').value || 'deadline';
+  const isPill = kind === 'pill' && isPillCycleAccount(); // re-checked server-side-equivalent: never trust the hidden <select> alone
+  const title = document.getElementById('eventTitle').value.trim() || (isPill ? t('kindPill') : '');
   const date = document.getElementById('eventDate').value;
   const time = document.getElementById('eventTime').value;
   const endTime = document.getElementById('eventEndTime').value;
   const notes = document.getElementById('eventNotes').value.trim();
   const color = document.getElementById('eventColor').value || '#4F7563';
-  const forUsers = amICore()
+  const forUsers = isPill ? [currentUser.id] : (amICore()
     ? Array.from(document.querySelectorAll('#eventForUsersGroup input:checked')).map(i=>i.value)
-    : [currentUser.id];
+    : [currentUser.id]);
   const finalForUsers = forUsers.length ? forUsers : [currentUser.id];
-  const isPrivate = amICore() ? (document.getElementById('eventPrivate').value === '1') : true;
-  const recurFreq = document.getElementById('eventRecurFreq').value || null;
-  const recurInterval = parseInt(document.getElementById('eventRecurInterval').value) || 1;
-  const recurEndType = document.getElementById('eventRecurEndType').value || 'never';
-  const recurEndDate = document.getElementById('eventRecurEndDate').value || null;
+  const isPrivate = isPill ? true : (amICore() ? (document.getElementById('eventPrivate').value === '1') : true);
+  // Birthdays are always yearly/forever, regardless of what the (hidden,
+  // for this kind) recurrence controls happen to hold. The pill cycle is a
+  // fixed-length day-based recurrence (see PILL_CYCLE_VERSIONS) -- a whole
+  // number of weeks, so every restart lands on the same weekday for free.
+  const recurFreq = kind === 'birthday' ? 'year' : isPill ? 'day' : (document.getElementById('eventRecurFreq').value || null);
+  const recurInterval = kind === 'birthday' ? 1 : isPill ? (parseInt(document.getElementById('eventPillVersion').value) || 28) : (parseInt(document.getElementById('eventRecurInterval').value) || 1);
+  const recurEndType = kind === 'birthday' || isPill ? 'never' : (document.getElementById('eventRecurEndType').value || 'never');
+  const recurEndDate = kind === 'birthday' || isPill ? null : (document.getElementById('eventRecurEndDate').value || null);
+  if(kind === 'pill' && !isPillCycleAccount()) return;
   if(!title || !date) return;
   // One row per selected person (checking both Roxy & Kristoffer creates two
   // independent events, one on each of their calendars).
@@ -11499,13 +11816,61 @@ function updateRecurFieldVisibility(){
 }
 document.getElementById('eventRecurFreq').addEventListener('change', updateRecurFieldVisibility);
 document.getElementById('eventRecurEndType').addEventListener('change', updateRecurFieldVisibility);
-function formatTime12h(t){
-  if(!t) return '';
-  const [hStr, mStr] = t.split(':');
+// Birthdays only ever need a date (they're always yearly, forever) -- every
+// other field on the add-to-calendar form is just noise for that kind, so
+// it collapses down to title + date and the recurrence is forced rather
+// than left for the user to configure by hand. Feb 29 birthdays fall back
+// to Mar 1 in non-leap years for free: JS Date's setFullYear() rolls an
+// out-of-range Feb 29 forward into March on its own (expandOccurrences/
+// nextOccurrence already use native Date arithmetic for 'year' recurrence).
+// Birthdays and the pill cycle both collapse the form down to title + date
+// (everything else is either forced or irrelevant). eventForUserField/
+// eventPrivateField are handled separately below rather than through this
+// list -- rebuildForUserSelect() already owns their visibility based on
+// amICore(), and blindly unhiding them on every kind change would fight
+// that for non-core accounts.
+const SIMPLE_KIND_FIELDS = ['eventTimeField','eventEndTimeField','eventNotesField','eventColorField','eventRecurFreqField','recurIntervalField','recurEndTypeField','recurEndDateField'];
+const KIND_HIDDEN_FIELDS = {
+  birthday: SIMPLE_KIND_FIELDS,
+  pill: SIMPLE_KIND_FIELDS
+};
+function updateKindFieldVisibility(){
+  const kind = document.getElementById('eventKind').value;
+  const hidden = KIND_HIDDEN_FIELDS[kind] || [];
+  SIMPLE_KIND_FIELDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.toggle('hidden', hidden.includes(id));
+  });
+  document.getElementById('eventPillVersionField').classList.toggle('hidden', kind !== 'pill');
+  // The pill cycle is always personal (never shared to other family
+  // members) and always private -- forcibly hidden regardless of
+  // amICore(); every other kind defers back to rebuildForUserSelect()'s
+  // own amICore()-based visibility for these two fields.
+  if(kind === 'pill'){
+    document.getElementById('eventForUserField').classList.add('hidden');
+    document.getElementById('eventPrivateField').classList.add('hidden');
+    document.getElementById('eventColor').value = PILL_CYCLE_COLOR;
+  } else {
+    rebuildForUserSelect();
+  }
+  if(kind === 'birthday'){
+    document.getElementById('eventRecurFreq').value = 'year';
+    document.getElementById('eventRecurInterval').value = '1';
+    document.getElementById('eventRecurEndType').value = 'never';
+  } else if(kind !== 'pill'){
+    updateRecurFieldVisibility();
+  }
+}
+document.getElementById('eventKind').addEventListener('change', updateKindFieldVisibility);
+function formatTime12h(timeStr){
+  if(!timeStr) return '';
+  const [hStr, mStr] = timeStr.split(':');
   let h = parseInt(hStr,10);
-  const ampm = h >= 12 ? 'PM' : 'AM';
+  const ampm = t(h >= 12 ? 'pmLabel' : 'amLabel');
   h = h % 12; if(h === 0) h = 12;
-  return `${h}:${mStr} ${ampm}`;
+  // Korean convention puts 오전/오후 before the time, not after like
+  // English "3:30 PM" -- everything else keeps the suffix position.
+  return currentLang === 'ko' ? `${ampm} ${h}:${mStr}` : `${h}:${mStr} ${ampm}`;
 }
 
 function expandOccurrences(ev, rangeStartStr, rangeEndStr){
@@ -11582,11 +11947,18 @@ function itemsOfKind(kind){
   // left/ago text in buildEventRowEl, so the sort order always matches
   // what's displayed.
   const now = new Date();
-  const withTiming = all.map(ev=>{
+  let withTiming = all.map(ev=>{
     const nextDate = nextOccurrence(ev);
     const target = new Date(nextDate + 'T' + (ev.event_time || '23:59:59'));
     return { ev, target, isPast: target < now };
   });
+  // "Your events" specifically (not deadlines) drops off anything more than
+  // 48h past its own (non-recurring) occurrence -- a recurring event's
+  // nextOccurrence() is always today-or-later so this never touches those.
+  if(kind === 'event'){
+    const cutoffMs = now.getTime() - 48*3600000;
+    withTiming = withTiming.filter(x=> x.target.getTime() >= cutoffMs);
+  }
   withTiming.sort((a,b)=>{
     if(a.isPast !== b.isPast) return a.isPast ? 1 : -1;
     return a.isPast ? (b.target - a.target) : (a.target - b.target);
@@ -11605,9 +11977,9 @@ function fineCountdownText(targetMs, nowMs){
   const m = Math.floor((absMs%3600000)/60000);
   const s = Math.floor((absMs%60000)/1000);
   const parts = [];
-  if(h>0) parts.push(h+'h');
-  parts.push(m+'m');
-  if(h===0) parts.push(s+'s');
+  if(h>0) parts.push(h+t('countdownHoursShort'));
+  parts.push(m+t('countdownMinsShort'));
+  if(h===0) parts.push(s+t('countdownSecsShort'));
   const fine = parts.join(' ');
   return diffMs >= 0 ? `${fine} ${t('fineLeft')}` : `${fine} ${t('fineAgo')}`;
 }
@@ -11939,7 +12311,7 @@ function renderMonthGrid(){
   const grid = document.getElementById('monthGrid');
   grid.innerHTML = '';
   const y = calViewDate.getFullYear(), m = calViewDate.getMonth();
-  document.getElementById('monthLabel').textContent = calViewDate.toLocaleDateString(undefined, {month:'long', year:'numeric'});
+  document.getElementById('monthLabel').textContent = calViewDate.toLocaleDateString(appLocale(), {month:'long', year:'numeric'});
   ['S','M','T','W','T','F','S'].forEach(d=>{
     const el = document.createElement('div'); el.className = 'month-dow'; el.textContent = d;
     grid.appendChild(el);
@@ -12070,6 +12442,7 @@ window.addEventListener('resize', ()=>{
     reorderMobileTabs();
     buildLangSwitch(document.getElementById('langSwitchAuth'));
     buildLangSwitch(document.getElementById('langSwitchApp'));
+    buildLangSwitch(document.getElementById('langSwitchPin'));
   }, 150);
 });
 function shortenTitleForMobile(title){
@@ -12124,10 +12497,10 @@ function renderCalGrid(dates){
   const mobilePad = isMobileDevice();
 
   if(dates.length === 1){
-    document.getElementById('monthLabel').textContent = dates[0].toLocaleDateString(undefined,{weekday:'long', month:'short', day:'numeric', year:'numeric'});
+    document.getElementById('monthLabel').textContent = dates[0].toLocaleDateString(appLocale(),{weekday:'long', month:'short', day:'numeric', year:'numeric'});
   } else {
     document.getElementById('monthLabel').textContent =
-      `${dates[0].toLocaleDateString(undefined,{month:'short',day:'numeric'})} – ${dates[dates.length-1].toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
+      `${dates[0].toLocaleDateString(appLocale(),{month:'short',day:'numeric'})} – ${dates[dates.length-1].toLocaleDateString(appLocale(),{month:'short',day:'numeric',year:'numeric'})}`;
   }
 
   const topikByDate = {};
@@ -12141,7 +12514,7 @@ function renderCalGrid(dates){
     const div = document.createElement('div');
     div.className = 'week-day-header' + (key===todayKey ? ' today' : '');
     const topikLabel = topikByDate[key];
-    div.innerHTML = `<div>${d.toLocaleDateString(undefined,{weekday:'short'})}</div><div style="font-family:'Space Grotesk',monospace;">${d.getDate()}</div>${topikLabel ? `<div class="week-header-topik">${topikLabel}</div>` : ''}`;
+    div.innerHTML = `<div>${d.toLocaleDateString(appLocale(),{weekday:'short'})}</div><div style="font-family:'Space Grotesk',monospace;">${d.getDate()}</div>${topikLabel ? `<div class="week-header-topik">${topikLabel}</div>` : ''}`;
     headerRow.appendChild(div);
   });
 
@@ -12434,6 +12807,7 @@ function renderAll(){
   renderBreakdown();
   renderEntries();
   renderFeed();
+  rebuildCoursePersonFilter();
   rebuildBookPersonFilter();
   rebuildJobPersonFilter();
   rebuildCertPersonFilter();
@@ -18980,6 +19354,113 @@ function buildGrammarEditFormHtml(g){
       </div>
     </div>`;
 }
+// New-grammar entry form: same field set/layout as buildGrammarEditFormHtml
+// (and the exact same senses paste format/parser, parseSensesText below) so
+// a manually-added entry renders identically to every existing one. The
+// senses textarea IS the "paste it in from AI" flow -- same precedent as
+// parseJobPasteText for job applications: paste structured text, a parser
+// extracts the fields, no live AI call involved.
+function buildGrammarAddFormHtml(){
+  return `
+    <div class="field wide">
+      <label>${t('gramEditPattern')}</label>
+      <input type="text" id="gaPattern">
+    </div>
+    <div class="log-form">
+      <div class="field">
+        <label>${t('gramIntermediateGroup')}/${t('gramAdvancedGroup')}</label>
+        <select id="gaLevel">
+          <option value="intermediate">${t('gramIntermediateGroup')}</option>
+          <option value="advanced">${t('gramAdvancedGroup')}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>${t('gramFrequencyHeader')} (1-5)</label>
+        <input type="number" id="gaCommonality" min="1" max="5" value="3" style="width:70px;">
+      </div>
+      <div class="field">
+        <label>${t('gramDifficulty')} (1-5)</label>
+        <input type="number" id="gaDifficulty" min="1" max="5" value="3" style="width:70px;">
+      </div>
+      <div class="field">
+        <label>${t('gramFormality')} (0-100)</label>
+        <input type="number" id="gaFormality" min="0" max="100" value="50" style="width:70px;">
+      </div>
+      <div class="field">
+        <label>${t('gramPoliteness')} (0-100)</label>
+        <input type="number" id="gaPoliteness" min="0" max="100" value="50" style="width:70px;">
+      </div>
+      <div class="field">
+        <label>${t('gramRegister')} (0-100)</label>
+        <input type="number" id="gaColloquial" min="0" max="100" value="50" style="width:70px;">
+      </div>
+    </div>
+    <div class="field wide">
+      <label>${t('gramEditSenses')}</label>
+      <textarea id="gaSenses" rows="18" style="width:100%;box-sizing:border-box;font-family:'Space Grotesk',monospace;font-size:12px;" placeholder="LABEL_EN: \nFORMATION: \nDEFINITION_EN: \nNOTES_EN: \nEXAMPLES: (Korean :: English :: Vietnamese)\n가다 :: to go :: đi"></textarea>
+      <div class="hint">${t('gramEditSensesHint')}</div>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button class="export-btn" id="gaSaveBtn">${t('gramAddSaveBtn')}</button>
+      <button id="gaCancelBtn">${t('cancelEdit')}</button>
+    </div>
+    <div class="hint hidden" id="gaMsg"></div>`;
+}
+document.getElementById('gramAddToggleBtn').addEventListener('click', ()=>{
+  const wrap = document.getElementById('gramAddFormWrap');
+  const nowHidden = wrap.classList.toggle('hidden');
+  if(!nowHidden) wrap.innerHTML = buildGrammarAddFormHtml();
+  else wrap.innerHTML = '';
+  rebindGrammarAddForm();
+});
+function rebindGrammarAddForm(){
+  const saveBtn = document.getElementById('gaSaveBtn');
+  const cancelBtn = document.getElementById('gaCancelBtn');
+  if(saveBtn) saveBtn.addEventListener('click', saveNewGrammar);
+  if(cancelBtn) cancelBtn.addEventListener('click', ()=>{
+    document.getElementById('gramAddFormWrap').classList.add('hidden');
+    document.getElementById('gramAddFormWrap').innerHTML = '';
+  });
+}
+async function saveNewGrammar(){
+  const pattern = document.getElementById('gaPattern').value.trim();
+  const level = document.getElementById('gaLevel').value;
+  const commonality = parseInt(document.getElementById('gaCommonality').value) || 3;
+  const difficulty = parseInt(document.getElementById('gaDifficulty').value) || 3;
+  const formality = parseInt(document.getElementById('gaFormality').value) || 50;
+  const politeness = parseInt(document.getElementById('gaPoliteness').value) || 50;
+  const colloquial = parseInt(document.getElementById('gaColloquial').value) || 50;
+  const senses = parseSensesText(document.getElementById('gaSenses').value);
+  const msg = document.getElementById('gaMsg');
+  if(!pattern || senses.length === 0){
+    msg.textContent = t('gramAddMissingFields');
+    msg.classList.remove('hidden');
+    return;
+  }
+  const row = { pattern, level, commonality, difficulty, formality, politeness, colloquial, senses, updated_by: currentUser.id, updated_at: new Date().toISOString() };
+  const { data, error } = await supabaseClient.from('grammar_points').insert(row).select();
+  if(error || !data || !data[0]){
+    msg.textContent = t('gramAddSaveFailed');
+    msg.classList.remove('hidden');
+    return;
+  }
+  const r = data[0];
+  GRAMMAR_DATA.push({
+    id: r.id, pattern: r.pattern, level: r.level,
+    commonality: r.commonality, difficulty: r.difficulty,
+    formality: r.formality, politeness: r.politeness, colloquial: r.colloquial == null ? 50 : r.colloquial,
+    senses: r.senses, matchStrings: r.match_strings, finalOnly: r.final_only,
+    number: r.number, topik: !!r.topik, resources: r.resources || []
+  });
+  // Same renumbering the initial load fallback uses (see loadAllData) --
+  // keeps every entry's displayed number in the correct sequential order
+  // (alphabetical by pattern) the instant a new one is added, not just
+  // after a full page reload.
+  GRAMMAR_DATA.slice().sort((a,b)=>a.pattern.localeCompare(b.pattern,'ko')).forEach((g,i)=>{ g.number = i+1; });
+  document.getElementById('gramAddFormWrap').classList.add('hidden');
+  document.getElementById('gramAddFormWrap').innerHTML = '';
+  renderGrammarList();
+}
 function parseSensesText(text){
   return text.split(/\n---\n/).map(block=>{
     const lines = block.split('\n').map(l=>l.trim()).filter(l=>l.length);
@@ -19167,6 +19648,7 @@ function buildGrammarCardHtml(g){
           ${buildBarHtml('gramRegister', g.colloquial, 100, 'gramColloquial', 'gramWritten')}
         </div>
         <button class="linkbtn gram-edit-toggle" data-id="${g.id}" style="margin-top:10px;">${t('editCourse')}</button>
+        <button class="linkbtn gram-quick-note" data-id="${g.id}" data-pattern="${escapeHtml(g.pattern)}" style="margin-top:10px;margin-left:12px;">${t('gramQuickNote')}</button>
         ${cmpGroupIdx !== -1 ? `<button class="linkbtn gram-view-similar-btn" data-cmp-index="${cmpGroupIdx}" style="margin-top:10px;margin-left:12px;">${t('gramViewSimilar')}</button>` : ''}
         ${isEditOpen ? buildGrammarEditFormHtml(g) : ''}
         <div class="gram-notebook">
@@ -19266,6 +19748,12 @@ function renderGrammarGroup(level, containerId){
     btn.addEventListener('click', (e)=>{
       e.stopPropagation();
       jumpToComparisonGroup(parseInt(btn.dataset.cmpIndex));
+    });
+  });
+  container.querySelectorAll('.gram-quick-note').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      quickNoteFromGrammar(btn.dataset.pattern);
     });
   });
   container.querySelectorAll('.ge-save-btn').forEach(btn=>{
@@ -19427,7 +19915,7 @@ function buildQuizHistoryHtml(){
   const rowsHtml = quizHistory.slice(0, 10).map(r=>{
     const d = new Date(r.created_at);
     return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--ink-soft);">
-      <span>${d.toLocaleDateString()}</span><span>${r.score} / ${r.total}</span>
+      <span>${localDateStr(d)}</span><span>${r.score} / ${r.total}</span>
     </div>`;
   }).join('');
   return header + `
@@ -20518,7 +21006,7 @@ function renderWritingList(){
           </span>
           <span class="lecture-actions">${isMine ? `<button class="lecture-del" data-id="${w.id}">✕</button>` : ''}</span>
         </div>
-        <div class="item-sub" style="margin-top:2px;">${w.word_count||0} ${t('wordsLabel')||''} · ${new Date(w.created_at).toLocaleDateString()}${!isMine ? ' · ' + escapeHtml(nameFor(w.user_id)||'') : ''}</div>
+        <div class="item-sub" style="margin-top:2px;">${w.word_count||0} ${t('wordsLabel')||''} · ${localDateStr(w.created_at)}${!isMine ? ' · ' + escapeHtml(nameFor(w.user_id)||'') : ''}</div>
       </div>`;
     list.appendChild(row);
   });
@@ -20792,7 +21280,7 @@ document.getElementById('writingMockExitBtn').addEventListener('click', ()=>{
 function updateWritingLastSavedInfo(w){
   const el = document.getElementById('writingLastSavedInfo');
   if(w.updated_by && w.updated_at){
-    el.textContent = t('lastSavedBy').replace('{name}', nameFor(w.updated_by)).replace('{time}', new Date(w.updated_at).toLocaleString());
+    el.textContent = t('lastSavedBy').replace('{name}', nameFor(w.updated_by)).replace('{time}', localDateTimeStr(w.updated_at));
   } else {
     el.textContent = t('neverSaved');
   }
@@ -20860,7 +21348,7 @@ function renderWritingFeedback(sampleId, ownerUid){
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
           <span style="font-weight:700;font-size:12px;color:${colorForUser(f.author_id)};">${escapeHtml(nameFor(f.author_id)||'')}</span>
           <span style="display:flex;align-items:center;gap:8px;">
-            <span class="hint" style="margin:0;">${new Date(f.created_at).toLocaleDateString()}</span>
+            <span class="hint" style="margin:0;">${localDateStr(f.created_at)}</span>
             ${isMine ? `<button class="lecture-del" data-id="${f.id}">✕</button>` : ''}
           </span>
         </div>
@@ -20942,7 +21430,7 @@ document.getElementById('writingVersionHistoryToggle').addEventListener('click',
   } else {
     panel.innerHTML = versions.map(v=>{
       const name = nameFor(v.updated_by);
-      const time = v.updated_at ? new Date(v.updated_at).toLocaleString() : '';
+      const time = v.updated_at ? localDateTimeStr(v.updated_at) : '';
       const preview = stripHtml(v.content||'').slice(0,200);
       return `<div class="note-item"><div class="note-page">${name} · ${time}</div>${preview || '–'}</div>`;
     }).join('');
@@ -21412,9 +21900,11 @@ async function saveCourseEdit(courseId, container){
 }
 
 function renderCourses(){
-  const all = [];
-  Object.values(allCourses).forEach(arr=> all.push(...arr));
-  const mine = all.filter(c => courseParticipants(c).includes(currentUser.id));
+  const everyone = [];
+  Object.values(allCourses).forEach(arr=> everyone.push(...arr));
+  const filterVal = coursePersonFilter || 'all';
+  const all = filterVal === 'all' ? everyone : everyone.filter(c => courseParticipants(c).includes(filterVal));
+  const mine = everyone.filter(c => courseParticipants(c).includes(currentUser.id));
   document.getElementById('cStatPlanning').textContent = mine.filter(c=>c.status==='planning').length;
   document.getElementById('cStatSignedUp').textContent = mine.filter(c=>c.status==='signed_up').length;
   document.getElementById('cStatLockedIn').textContent = mine.filter(c=>c.status==='locked_in').length;
@@ -21666,6 +22156,35 @@ document.getElementById('notesPersonFilter').addEventListener('change', (e)=>{
   renderLectureList();
 });
 
+// Courses has no per-category sharing toggle (it's under the blanket
+// shared_circle() RLS policy, like notebook/Yonsei notes) so its
+// selectable list is visibleCircleMembers() rather than
+// visiblePartnersFor(). Previously had no filter at all -- every visible
+// person's courses rendered mixed together in one list with no way to
+// isolate a single person's schedule.
+let coursePersonFilter = null;
+function rebuildCoursePersonFilter(){
+  const sel = document.getElementById('coursePersonFilter');
+  if(!sel || !currentUser) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  const allOpt = document.createElement('option');
+  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
+  sel.appendChild(allOpt);
+  const selectable = [currentUser.id, ...visibleCircleMembers()];
+  selectable.forEach(uid=>{
+    const opt = document.createElement('option');
+    opt.value = uid; opt.textContent = nameFor(uid);
+    sel.appendChild(opt);
+  });
+  const valid = prev && (prev==='all' || selectable.includes(prev));
+  sel.value = valid ? prev : 'all';
+  coursePersonFilter = sel.value;
+}
+document.getElementById('coursePersonFilter').addEventListener('change', (e)=>{
+  coursePersonFilter = e.target.value;
+  renderCourses();
+});
 // Reading (books) and Jobs tabs are personal logs shared only within the
 // core circle (Roxy & Kristoffer). Default to "just me"; either person can
 // switch to the other core member's name, or "All" for a merged view.
@@ -21974,16 +22493,45 @@ const QUILL_PALETTE = [
   '#888888','#a10000','#b26b00','#b2b200','#006100','#0047b2','#6b24b2',
   '#444444','#5c0000','#663d00','#666600','#003700','#002966','#3d1466'
 ];
+// Shared by every note editor's image toolbar button (Yonsei course notes,
+// Notebook notes): opens a file picker, uploads to the note-media bucket
+// (own user-id folder, mirrors writing-images/job-application-files), then
+// embeds the resulting public URL at the cursor. Quill's own default image
+// handler just base64-inlines the file into the document instead -- fine
+// for a tiny image, but bloats every future load/save of the note for
+// anything bigger, so this replaces it everywhere images are enabled.
+function quillImageUploadHandler(){
+  const quill = this.quill;
+  const input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('accept', 'image/*');
+  input.click();
+  input.onchange = async ()=>{
+    const file = input.files[0];
+    if(!file) return;
+    const range = quill.getSelection(true);
+    const path = `${currentUser.id}/${Date.now()}_${file.name}`;
+    const { error } = await supabaseClient.storage.from('note-media').upload(path, file);
+    if(error) return;
+    const { data: urlData } = supabaseClient.storage.from('note-media').getPublicUrl(path);
+    quill.insertEmbed(range.index, 'image', urlData.publicUrl, 'user');
+    quill.setSelection(range.index + 1);
+  };
+}
 function ensureQuillInitialized(){
   if(quillEditor) return;
   quillEditor = new Quill('#quillContainer', {
     theme: 'snow',
     modules: {
-      toolbar: [
-        ['bold','italic','underline','strike'],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        ['clean']
-      ]
+      toolbar: {
+        container: [
+          ['bold','italic','underline','strike'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['image','video'],
+          ['clean']
+        ],
+        handlers: { image: quillImageUploadHandler }
+      }
     }
   });
   quillEditor.on('text-change', (delta, oldDelta, source)=>{
@@ -22105,7 +22653,7 @@ window.addEventListener('beforeunload', (e)=>{
 function updateLastSavedInfo(note){
   const el = document.getElementById('lastSavedInfo');
   if(note.updated_by && note.updated_at){
-    el.textContent = t('lastSavedBy').replace('{name}', nameFor(note.updated_by)).replace('{time}', new Date(note.updated_at).toLocaleString());
+    el.textContent = t('lastSavedBy').replace('{name}', nameFor(note.updated_by)).replace('{time}', localDateTimeStr(note.updated_at));
   } else {
     el.textContent = t('neverSaved');
   }
@@ -22123,7 +22671,7 @@ document.getElementById('versionHistoryToggle').addEventListener('click', ()=>{
   } else {
     panel.innerHTML = versions.map(v=>{
       const name = nameFor(v.updated_by);
-      const time = v.updated_at ? new Date(v.updated_at).toLocaleString() : '';
+      const time = v.updated_at ? localDateTimeStr(v.updated_at) : '';
       const preview = (v.content||'').replace(/<[^>]+>/g,' ').trim().slice(0,200);
       return `<div class="note-item"><div class="note-page">${name} · ${time}</div>${preview || '–'}</div>`;
     }).join('');
@@ -22211,6 +22759,25 @@ async function addNotebookNote(){
   renderNotebookList();
 }
 document.getElementById('addNotebookBtn').addEventListener('click', addNotebookNote);
+
+// "Make a note from this grammar pattern" -- jumps to the Notebook, creates
+// a note titled with the pattern (ungrouped, same as a plain Notebook note),
+// and opens it straight into the editor so writing can start immediately.
+async function quickNoteFromGrammar(pattern){
+  switchStudySubTab('notebook');
+  const groupKey = '__none__';
+  const existing = allNotebookNotes[groupKey] || [];
+  const maxOrder = existing.reduce((m,n)=> Math.max(m, n.sort_order||0), 0);
+  const row = { user_id: currentUser.id, header: null, lecture_title: pattern, content: '', sort_order: maxOrder+1 };
+  const { data, error } = await supabaseClient.from('notebook_notes').insert(row).select();
+  if(!error && data && data[0]){
+    if(!allNotebookNotes[groupKey]) allNotebookNotes[groupKey] = [];
+    allNotebookNotes[groupKey].push(data[0]);
+    expandedNotebookGroups.add(groupKey);
+    renderNotebookList();
+    openNotebookNote(data[0].id, groupKey);
+  }
+}
 
 async function deleteNotebookNote(noteId, groupKey){
   await supabaseClient.from('notebook_notes').delete().eq('id', noteId);
@@ -22412,7 +22979,12 @@ function ensureNotebookQuillInitialized(){
   if(notebookQuillEditor) return;
   notebookQuillEditor = new Quill('#notebookQuillContainer', {
     theme: 'snow',
-    modules: { toolbar: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']] }
+    modules: {
+      toolbar: {
+        container: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['image','video'], ['clean']],
+        handlers: { image: quillImageUploadHandler }
+      }
+    }
   });
   notebookQuillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user') notebookEditorDirty = true;
@@ -22428,7 +23000,7 @@ window.addEventListener('beforeunload', (e)=>{
 function updateNotebookLastSavedInfo(note){
   const el = document.getElementById('notebookLastSavedInfo');
   if(note.updated_by && note.updated_at){
-    el.textContent = t('lastSavedBy').replace('{name}', nameFor(note.updated_by)).replace('{time}', new Date(note.updated_at).toLocaleString());
+    el.textContent = t('lastSavedBy').replace('{name}', nameFor(note.updated_by)).replace('{time}', localDateTimeStr(note.updated_at));
   } else {
     el.textContent = t('neverSaved');
   }
@@ -22446,7 +23018,7 @@ document.getElementById('notebookVersionHistoryToggle').addEventListener('click'
   } else {
     panel.innerHTML = versions.map(v=>{
       const name = nameFor(v.updated_by);
-      const time = v.updated_at ? new Date(v.updated_at).toLocaleString() : '';
+      const time = v.updated_at ? localDateTimeStr(v.updated_at) : '';
       const preview = (v.content||'').replace(/<[^>]+>/g,' ').trim().slice(0,200);
       return `<div class="note-item"><div class="note-page">${name} · ${time}</div>${preview || '–'}</div>`;
     }).join('');
@@ -22515,7 +23087,13 @@ document.getElementById('closeNotebookBtn').addEventListener('click', ()=>{
   renderTopikCountdown();
   renderMonthGrid();
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if(session){ await checkMfaAndProceed(session.user); }
+  if(session){
+    document.getElementById('pinGateScreen').classList.add('hidden');
+    await checkMfaAndProceed(session.user);
+  } else if(localStorage.getItem('sitePinVerified') === 'true'){
+    document.getElementById('pinGateScreen').classList.add('hidden');
+    document.getElementById('authScreen').classList.remove('hidden');
+  }
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{
       navigator.serviceWorker.register('sw.js').catch(()=>{});
