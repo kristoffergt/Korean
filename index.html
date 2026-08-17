@@ -14,6 +14,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.6/quill.snow.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.6/quill.min.js"></script>
+<!-- Adds drag-to-resize corner handles when an inserted image is clicked in
+     a note editor (Quill has no built-in resize UI). Video (an iframe embed)
+     isn't covered by this module -- given a native CSS resize handle instead,
+     see .ql-video below. -->
+<script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&display=swap');
 :root{
@@ -66,6 +71,8 @@ body{background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR'
 .icon-btn:hover{background:rgba(127,127,127,0.16);}
 .auth-wrap{max-width:360px;margin:60px auto 0;}
 .auth-topbar{display:flex;justify-content:flex-end;max-width:360px;margin:0 auto;}
+.guest-banner{position:sticky;top:0;z-index:500;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:9px 16px;background:#B8860B;color:#fff;font-size:13px;font-weight:600;text-align:center;}
+.guest-banner .linkbtn{color:#fff;text-decoration:underline;font-weight:700;}
 .auth-card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:28px 26px;margin-top:14px;}
 .auth-card h1{font-family:'Noto Serif KR',serif;font-size:24px;margin:0 0 4px;}
 .brand-mark{display:flex;align-items:center;gap:10px;}
@@ -150,6 +157,9 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(7px,2vw,28p
 .field.wide input, .field.wide textarea, .field.wide select{width:320px;}
 .field select{font-family:'Inter',sans-serif;font-size:14px;}
 .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
+.person-filter-btn{font-family:'Inter',sans-serif;font-weight:400;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:220px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.person-filter-btn:hover{background:var(--paper-dim);}
+.person-filter-panel{position:relative;margin-top:6px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper-dim);width:fit-content;min-width:220px;}
 button{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:10px 20px;border:none;border-radius:6px;background:var(--ink);color:var(--paper);cursor:pointer;}
 button:hover{background:var(--ink-hover);}
 .hint{font-size:12px;color:var(--ink-soft);margin-top:10px;}
@@ -306,6 +316,10 @@ button:hover{background:var(--ink-hover);}
 .deadline-color{width:10px;height:10px;border-radius:3px;flex-shrink:0;display:inline-block;margin-right:7px;}
 .field input[type=color]{padding:2px;width:44px;height:38px;cursor:pointer;}
 .ql-toolbar.ql-snow{border-color:var(--line) !important;background:var(--paper-dim);border-radius:8px 8px 0 0;}
+/* Embedded video (an iframe, not an <img>) isn't covered by the image-resize
+   module -- native browser resize handles instead, dragged from the
+   bottom-right corner, same as a resizable <textarea>. */
+.ql-editor .ql-video{resize:both;overflow:hidden;display:block;min-width:120px;min-height:90px;}
 .ql-container.ql-snow{border-color:var(--line) !important;border-radius:0 0 8px 8px;min-height:220px;font-size:14px;}
 #quillContainer .ql-editor{color:var(--note-author-color, var(--ink));background:transparent !important;min-height:220px;}
 #writingQuillContainer .ql-editor{color:var(--writing-author-color, var(--ink));background:transparent !important;min-height:220px;max-height:min(46vh, 460px);overflow-y:auto;}
@@ -481,6 +495,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 .modal-box{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:22px 24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;}
 .modal-box h2{font-family:'Noto Serif KR',serif;font-size:16px;margin:0 0 14px;}
 .modal-box p{font-size:13.5px;color:var(--ink);margin:0;}
+.tab-icon-korea{width:14px;height:14px;flex:none;display:inline-block;background-color:currentColor;-webkit-mask-image:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNNTAsNSBBNDUsNDUgMCAwLDEgNTAsOTUgQTIyLjUsMjIuNSAwIDAsMSA1MCw1MCBBMjIuNSwyMi41IDAgMCwwIDUwLDUgWiBNNTAsMjEuNSBBNiw2IDAgMSwwIDUwLjAxLDIxLjUgWiIvPgo8Y2lyY2xlIGN4PSI1MCIgY3k9IjcyLjUiIHI9IjYiLz4KPC9zdmc+');mask-image:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNNTAsNSBBNDUsNDUgMCAwLDEgNTAsOTUgQTIyLjUsMjIuNSAwIDAsMSA1MCw1MCBBMjIuNSwyMi41IDAgMCwwIDUwLDUgWiBNNTAsMjEuNSBBNiw2IDAgMSwwIDUwLjAxLDIxLjUgWiIvPgo8Y2lyY2xlIGN4PSI1MCIgY3k9IjcyLjUiIHI9IjYiLz4KPC9zdmc+');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;}
 </style>
 </head>
 <body>
@@ -501,7 +516,36 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         <input type="text" id="pinGateInput" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="0000">
       </div>
       <button class="auth-submit" id="pinGateSubmitBtn"></button>
+      <button class="linkbtn" id="guestModeBtn" style="margin-top:10px;width:100%;text-align:center;"></button>
       <div id="pinGateMsg" class="auth-msg"></div>
+    </div>
+  </div>
+</div>
+<!-- GUEST MODE (client-only, nothing saved -- see guestModeBtn/renderGuestGrammarList()) -->
+<div id="guestScreen" class="hidden">
+  <div class="guest-banner" id="guestBanner">
+    <span id="guestBannerText"></span>
+    <button class="linkbtn" id="guestExitBtn"></button>
+  </div>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:32px;height:32px;"></div><div class="brand-icon brand-icon-dark" style="width:32px;height:32px;"></div><h1>Productivity Tracker</h1></div>
+        <div class="sub" id="lblGuestHeaderSub"></div>
+      </div>
+      <div class="who">
+        <div class="lang-switch" id="langSwitchGuest"></div>
+        <button class="icon-btn" id="darkToggleGuest" title="Toggle dark mode">🌙</button>
+      </div>
+    </header>
+    <div class="card">
+      <h2 id="lblGuestGrammarHeader"></h2>
+      <div class="log-form">
+        <div class="field wide">
+          <input type="text" id="guestGramSearch" placeholder="">
+        </div>
+      </div>
+      <div id="guestGrammarList" style="margin-top:10px;"></div>
     </div>
   </div>
 </div>
@@ -582,6 +626,17 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="who">
       <div class="lang-switch" id="langSwitchApp"></div>
       <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode">🌙</button>
+      <button class="icon-btn" id="notifBellBtn" title="Notifications" style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span id="notifBellCount" class="hidden" style="position:absolute;top:-4px;right:-4px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:var(--seal);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;"></span>
+      </button>
+      <div id="notifBellPanel" class="hidden" style="position:absolute;right:20px;top:56px;width:320px;max-height:420px;overflow-y:auto;background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.18);z-index:900;padding:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-weight:700;font-size:13px;" id="lblNotifBell"></span>
+          <button class="linkbtn" id="notifMarkAllReadBtn" style="font-size:11.5px;"></button>
+        </div>
+        <div id="notifBellList"></div>
+      </div>
       <button class="icon-btn" id="friendsBtn" title="Linked circle" style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
         <span id="linkNotifyDot" class="hidden" style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--seal);"></span>
@@ -594,7 +649,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
   </header>
   <div class="tabs" id="tabNav">
     <button data-tab="calendar" class="active" id="tabBtnCalendar"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span id="tabBtnCalendarLabel"></span></button>
-    <button data-tab="study" id="tabBtnStudy"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><text x="12" y="17.5" text-anchor="middle" font-size="15" font-weight="700" stroke="none" fill="currentColor" font-family="'Noto Serif KR', serif">한</text></svg><span id="tabBtnStudyLabel"></span></button>
+    <button data-tab="study" id="tabBtnStudy"><span class="tab-icon-korea"></span><span id="tabBtnStudyLabel"></span></button>
     <button data-tab="yonsei" id="tabBtnYonsei"><span class="tab-icon-yonsei"></span><span id="tabBtnYonseiLabel"></span></button>
     <button data-tab="reading" id="tabBtnReading"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg><span id="tabBtnReadingLabel"></span></button>
     <button data-tab="jobs" id="tabBtnJobs"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg><span id="tabBtnJobsLabel"></span></button>
@@ -844,7 +899,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         <h2><span id="hWritingSamples"></span><span><button class="export-btn" id="deleteAllWritingBtn"></button></span></h2>
         <div class="field" style="margin-bottom:12px;">
           <label for="writingPersonFilter" id="lblWritingPersonFilter"></label>
-          <select id="writingPersonFilter"></select>
+          <button type="button" class="person-filter-btn" id="writingPersonFilterBtn"></button>
+          <div class="person-filter-panel hidden" id="writingPersonFilterPanel"></div>
         </div>
         <div id="writingSampleList"></div>
       </div>
@@ -924,8 +980,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         <h2 id="hNotebookList"></h2>
         <div class="field" style="margin-bottom:12px;">
           <label for="notebookPersonFilter" id="lblNotebookPersonFilter"></label>
-          <select id="notebookPersonFilter"></select>
+          <button type="button" class="person-filter-btn" id="notebookPersonFilterBtn"></button>
+          <div class="person-filter-panel hidden" id="notebookPersonFilterPanel"></div>
         </div>
+        <div class="hint hidden" id="notebookWritingIndicator" style="font-style:italic;"></div>
         <div id="notebookList"></div>
       </div>
       <div class="card hidden" id="notebookEditorCard">
@@ -1039,7 +1097,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <h2 id="hCourseList"></h2>
       <div class="field" style="margin-bottom:12px;">
         <label for="coursePersonFilter" id="lblCoursePersonFilter"></label>
-        <select id="coursePersonFilter"></select>
+        <button type="button" class="person-filter-btn" id="coursePersonFilterBtn"></button>
+          <div class="person-filter-panel hidden" id="coursePersonFilterPanel"></div>
       </div>
       <div id="courseFullList"></div>
     </div>
@@ -1068,8 +1127,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <h2 id="hLectures"></h2>
       <div class="field" style="margin-bottom:12px;">
         <label for="notesPersonFilter" id="lblNotesPersonFilter"></label>
-        <select id="notesPersonFilter"></select>
+        <button type="button" class="person-filter-btn" id="notesPersonFilterBtn"></button>
+        <div class="person-filter-panel hidden" id="notesPersonFilterPanel"></div>
       </div>
+      <div class="hint hidden" id="notesWritingIndicator" style="font-style:italic;"></div>
       <div id="lectureList"></div>
     </div>
     <div class="card hidden" id="editorCard">
@@ -1138,7 +1199,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <h2><span id="hYourBooks"></span><button class="export-btn" id="exportBooksBtn"></button></h2>
       <div class="field" style="margin-bottom:12px;">
         <label for="bookPersonFilter" id="lblBookPersonFilter"></label>
-        <select id="bookPersonFilter"></select>
+        <button type="button" class="person-filter-btn" id="bookPersonFilterBtn"></button>
+          <div class="person-filter-panel hidden" id="bookPersonFilterPanel"></div>
       </div>
       <div id="bookList"></div>
     </div>
@@ -1161,7 +1223,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <h2 id="hJobStats"></h2>
       <div class="field" style="margin-bottom:12px;">
         <label for="jobPersonFilter" id="lblJobPersonFilter"></label>
-        <select id="jobPersonFilter"></select>
+        <button type="button" class="person-filter-btn" id="jobPersonFilterBtn"></button>
+          <div class="person-filter-panel hidden" id="jobPersonFilterPanel"></div>
       </div>
       <div class="stat-row">
         <div class="stat-mini"><div class="num" id="jStatApplied">0</div><div class="label" id="jLabelApplied"></div></div>
@@ -1231,7 +1294,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <h2 id="hCertStats"></h2>
       <div class="field" style="margin-bottom:12px;">
         <label for="certPersonFilter" id="lblCertPersonFilter"></label>
-        <select id="certPersonFilter"></select>
+        <button type="button" class="person-filter-btn" id="certPersonFilterBtn"></button>
+          <div class="person-filter-panel hidden" id="certPersonFilterPanel"></div>
       </div>
       <div class="stat-row">
         <div class="stat-mini"><div class="num" id="cStatInProgress">0</div><div class="label" id="cLabelInProgress"></div></div>
@@ -1541,6 +1605,9 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       </label>
     </div>
     <div class="hint hidden" id="settingsHideLeaderboardsMsg"></div>
+
+    <div class="wtc-title" style="margin-top:18px;" id="lblNotifPrefs"></div>
+    <div id="notifPrefsList"></div>
 
     <div style="margin-top:14px;">
       <div class="note-group-header" id="manageTabsHeader"></div>
@@ -7530,7 +7597,7 @@ const I18N = {
     footer:'Entries are visible to everyone signed in to this tracker; only you can edit your own.',
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
-    topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed',
+    topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
     addDeadline:'Add to calendar', eventTitle:'Title', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view',
     eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
@@ -7574,12 +7641,14 @@ const I18N = {
     settingsDeleteMismatch:"Email doesn't match your account.", settingsDeleteWrongPassword:'Incorrect password.', settingsDeleteAdminBlocked:"The admin account can't be deleted.", settingsDeleteFailed:'Could not delete account.',
     hModerator:'Moderator – All accounts', modResetPw:'Reset password', modEditName:'Edit name', modConfirmEmail:'Confirm email', modDisableMfa:'Disable 2FA', modDeleteUser:'Delete account',
     lblResumeUpload:'Public resume (kristoffergt.com/resume)', resumeUploadBtn:'Upload PDF', resumeViewLink:'View live page ↗', resumeUploadSuccess:'Resume uploaded.', resumeUploadFailed:'Upload failed.', resumePdfOnlyMsg:'Only PDF files are allowed.',
+    lblNotifBell:'Notifications', notifMarkAllReadBtn:'Mark all read', notifEmpty:'No notifications yet.', notifPrefsHeader:'Notification channels', notifTypeReminder:'Calendar reminders', notifTypeYonseiBoard:'Yonsei board notices', notifTypeLinkAccepted:'Link-invite accepted', notifChannelEmail:'Email', notifChannelInApp:'In-app', writingIndicator:'{name} is writing "{title}"…',
     modSearchPlaceholder:'Search name or email…', modSortDate:'Sort by date joined', modSort2fa:'Sort by 2FA status', modSortConfirmed:'Sort by confirmation status', modSortName:'Sort by name',
     modConfirmed:'Confirmed', modUnconfirmed:'Unconfirmed', modMfaOn:'2FA on', modMfaOff:'2FA off', modYou:'YOU', modAdmin:'Admin', modNewPasswordPrompt:'New password for this account:', modNewNamePrompt:'New display name for this account:',
     modConfirmDeleteUser:'Permanently delete this account and all of its data? This cannot be undone.', modActionFailed:'Action failed.', modActionDone:'Done.',
     modConfirmResetPw:"Reset this user's password?", modConfirmConfirmEmail:"Manually confirm this user's email?", modConfirmDisableMfa:'Disable two-factor authentication for this user?',
     mfaPromptTitle:'Enter your authentication code', mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.', mfaUseBackupBtn:'Use a backup code instead', mfaUseTotpBtn:'Use your authenticator app instead', mfaBackupCodePlaceholder:'Enter a backup code', mfaBackupWrongCode:'Invalid or already-used backup code.', download2faBackupBtn:'Download codes',
     lblPinGate:'Enter the site PIN to continue', pinGateSubmitBtn:'Continue', pinGateWrongMsg:'Incorrect PIN.', settingsSitePinLabel:'Site sign-up/sign-in PIN',
+    guestModeBtn:'Continue as guest', guestBannerText:"You're browsing as a guest — nothing you do here is saved.", guestExitBtn:'Sign up / sign in', lblGuestHeaderSub:'Guest mode — Korean grammar reference', lblGuestGrammarHeader:'Korean grammar reference', guestGramSearchPlaceholder:'Search grammar patterns…',
     hAddCourse:'Add a course', courseTitle:'Course title', courseCode:'Course code', courseProfessor:'Professor',
     courseTime:'Time', courseConcentration:'Concentration', courseStatus:'Status', courseSyllabus:'Syllabus',
     courseDay:'Day', courseStartDate:'Start date (optional)', courseEndDate:'Ends (optional)', courseMidterm:'Midterm date (optional)', courseFinal:'Final date (optional)',
@@ -7599,7 +7668,7 @@ const I18N = {
     gramRegister:'Register', gramColloquial:'Colloquial', gramWritten:'Written', gramFavorite:'Favorite – Mark as difficult/important', gramSortFavorite:'Favorites first', gramViewSimilar:'View similar grammar forms', gramQuickNote:'+ Note from this pattern', gramAddToggleBtn:'+ Add grammar', gramAddSaveBtn:'Add to grammar bank', gramAddMissingFields:'Enter a pattern and at least one sense (see the paste format hint below).', gramAddSaveFailed:'Could not save. Make sure the grammar_points table exists.',
     gramYourSentences:'Your practice sentences', gramSentencePlaceholder:'Write a sentence using this pattern...', gramAddSentence:'Add', lblGramSort:'Sort', gramSortDefault:'Default order', gramSortFreqDesc:'Most common first', gramSortFreqAsc:'Least common first', gramFrequencyHeader:'Frequency', gramLevelHeader:'Level',
     gramMarkNotReviewed:'Mark as not reviewed', gramMarkReviewedAgain:'Undo – Mark as reviewed', gramResources:'Videos & links', gramResourceUrlPlaceholder:'YouTube or website URL', gramResourceLabelPlaceholder:'Label (optional)', gramAddResource:'Add',
-    hRecap:'Recap',recapWeekBtn:'Past 7 days',recapMonthBtn:'Past 30 days',recapStudyHours:'Study hours',recapGrammarPracticed:'Grammar sentences practiced',recapBooksFinished:'Books finished',recapJobsSent:'Applications sent',hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite.',quizFromCluster:'From comparison group:',quizFillBlank:'Fill in the blank',quizCorrectAnswerLabel:'Correct answer:',quizHistoryHeader:'Your quiz history',quizMaxScoreLabel:'Best score',quizAttemptsCountLabel:'Attempts',quizAverageLabel:'Average',quizNoAttemptsYet:'No attempts yet.',quizDueCount:'{n} pattern(s) due for review',quizReviewDueBtn:'Review due patterns',hLinkedCircle:'Linked circle',linkedCircleDesc:'Link up with other people to share your study data with them. Up to 10 people, and you control what you share.',linkInvitedYou:'{name} invited you to link up.',linkAcceptBtn:'Accept',linkDeclineBtn:'Decline',linkLeaveBtn:'Leave circle',linkRosterHeader:'Your circle',linkStatusAccepted:'Linked',linkStatusPending:'Invite sent. Awaiting response',linkJustAccepted:'Accepted!',linkRemoveBtn:'Remove from circle',linkRemoveConfirm:'Remove {name} from your circle? They will no longer see or share data with you.',linkInviteSearchPlaceholder:'Search by name...',linkInviteBtn:'Invite',linkNoResults:'No matching users found.',linkCatStudyEntries:'Study log',linkCatBooks:'Reading list',linkCatJobApplications:'Job applications',linkCatGrammarNotes:'Grammar practice notes',linkCatCourseNotes:'Course notes',linkCatWritingSamples:'Writing samples & feedback',linkCatRecap:'Weekly/monthly recap',linkCatReadiness:'Grammar readiness',linkSharingHeader:'What you\'re sharing',linkSharingHint:'These are your own settings. Set them before you invite anyone, or change them anytime after. They apply to whoever you\'re linked with.',linkCustomizeFor:'Customize what you share with {name}',linkOverrideHint:'Overrides your defaults just for {name}.',linkResetOverridesBtn:'Reset to your defaults',linkGroupFullMsg:'Your circle is at the 10-person limit.',linkErrorGeneric:'Something went wrong. Please try again.',linkNotLinkedYet:'You\'re not linked with anyone yet. Search for someone below to send an invite.',linkInviteSentMsg:'Invite sent.',linkStatusAlwaysShared:'Always shared',writingFeedbackHeader:'Feedback',writingFeedbackPlaceholder:'Leave feedback on this sample...',writingFeedbackSendBtn:'Send',writingFeedbackEmpty:'No feedback yet.', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently. Leave a line blank to clear that field.',
+    hRecap:'Recap',recapWeekBtn:'Past 7 days',recapMonthBtn:'Past 30 days',recapStudyHours:'Study hours',recapGrammarPracticed:'Grammar sentences practiced',recapBooksFinished:'Books finished',recapJobsSent:'Applications sent',hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite.',quizFromCluster:'From comparison group:',quizFillBlank:'Fill in the blank',quizCorrectAnswerLabel:'Correct answer:',quizHistoryHeader:'Your quiz history',quizMaxScoreLabel:'Best score',quizAttemptsCountLabel:'Attempts',quizAverageLabel:'Average',quizNoAttemptsYet:'No attempts yet.',quizDueCount:'{n} pattern(s) due for review',quizReviewDueBtn:'Review due patterns',hLinkedCircle:'Linked circle',linkedCircleDesc:'Link up with other people to share your study data with them. Up to 10 people, and you control what you share.',linkInvitedYou:'{name} invited you to link up.',linkAcceptBtn:'Accept',linkDeclineBtn:'Decline',linkLeaveBtn:'Leave circle',linkRosterHeader:'Your circle',linkStatusAccepted:'Linked',linkStatusPending:'Invite sent. Awaiting response',linkJustAccepted:'Accepted!',linkRemoveBtn:'Remove from circle',linkRemoveConfirm:'Remove {name} from your circle? They will no longer see or share data with you.',linkCatSearchPlaceholder:'Search what you share…',linkInviteSearchPlaceholder:'Search by name...',linkInviteBtn:'Invite',linkNoResults:'No matching users found.',linkCatStudyEntries:'Study log',linkCatBooks:'Reading list',linkCatJobApplications:'Job applications',linkCatGrammarNotes:'Grammar practice notes',linkCatCourseNotes:'Course notes',linkCatWritingSamples:'Writing samples & feedback',linkCatRecap:'Weekly/monthly recap',linkCatReadiness:'Grammar readiness',linkSharingHeader:'What you\'re sharing',linkSharingHint:'These are your own settings. Set them before you invite anyone, or change them anytime after. They apply to whoever you\'re linked with.',linkCustomizeFor:'Customize what you share with {name}',linkOverrideHint:'Overrides your defaults just for {name}.',linkResetOverridesBtn:'Reset to your defaults',linkGroupFullMsg:'Your circle is at the 10-person limit.',linkErrorGeneric:'Something went wrong. Please try again.',linkNotLinkedYet:'You\'re not linked with anyone yet. Search for someone below to send an invite.',linkInviteSentMsg:'Invite sent.',linkStatusAlwaysShared:'Always shared',writingFeedbackHeader:'Feedback',writingFeedbackPlaceholder:'Leave feedback on this sample...',writingFeedbackSendBtn:'Send',writingFeedbackEmpty:'No feedback yet.', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently. Leave a line blank to clear that field.',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in', statusTeachingAssistant:'TA', statusResearchAssistant:'RA',
     hCourseList:'All courses', viewSyllabus:'Syllabus ↗',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
@@ -7638,7 +7707,7 @@ const I18N = {
     footer:'모든 기록은 로그인한 모든 사용자에게 공개되며, 본인 기록만 수정할 수 있습니다.',
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
-    topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다',
+    topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기',
     eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
@@ -7682,12 +7751,14 @@ const I18N = {
     settingsDeleteMismatch:'계정 이메일과 일치하지 않습니다.', settingsDeleteWrongPassword:'비밀번호가 올바르지 않습니다.', settingsDeleteAdminBlocked:'관리자 계정은 삭제할 수 없습니다.', settingsDeleteFailed:'계정을 삭제할 수 없습니다.',
     hModerator:'관리자 – 전체 계정', modResetPw:'비밀번호 재설정', modEditName:'이름 수정', modConfirmEmail:'이메일 확인 처리', modDisableMfa:'2단계 인증 끄기', modDeleteUser:'계정 삭제',
     lblResumeUpload:'공개 이력서 (kristoffergt.com/resume)', resumeUploadBtn:'PDF 업로드', resumeViewLink:'실시간 페이지 보기 ↗', resumeUploadSuccess:'이력서를 업로드했습니다.', resumeUploadFailed:'업로드에 실패했습니다.', resumePdfOnlyMsg:'PDF 파일만 업로드할 수 있습니다.',
+    lblNotifBell:'알림', notifMarkAllReadBtn:'모두 읽음으로 표시', notifEmpty:'아직 알림이 없습니다.', notifPrefsHeader:'알림 채널', notifTypeReminder:'캘린더 알림', notifTypeYonseiBoard:'연세 게시판 공지', notifTypeLinkAccepted:'연결 초대 수락', notifChannelEmail:'이메일', notifChannelInApp:'앱 내', writingIndicator:'{name}님이 "{title}"을(를) 작성 중…',
     modSearchPlaceholder:'이름 또는 이메일 검색…', modSortDate:'가입일순 정렬', modSort2fa:'2FA 상태순 정렬', modSortConfirmed:'인증 상태순 정렬', modSortName:'이름순 정렬',
     modConfirmed:'확인됨', modUnconfirmed:'미확인', modMfaOn:'2FA 켜짐', modMfaOff:'2FA 꺼짐', modYou:'나', modAdmin:'관리자', modNewPasswordPrompt:'이 계정의 새 비밀번호:', modNewNamePrompt:'이 계정의 새 표시 이름:',
     modConfirmDeleteUser:'이 계정과 모든 데이터를 영구적으로 삭제하시겠습니까? 되돌릴 수 없습니다.', modActionFailed:'작업에 실패했습니다.', modActionDone:'완료되었습니다.',
     modConfirmResetPw:'이 사용자의 비밀번호를 재설정하시겠습니까?', modConfirmConfirmEmail:'이 사용자의 이메일을 수동으로 확인 처리하시겠습니까?', modConfirmDisableMfa:'이 사용자의 2단계 인증을 비활성화하시겠습니까?',
     mfaPromptTitle:'인증 코드를 입력하세요', mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.', mfaUseBackupBtn:'백업 코드 사용하기', mfaUseTotpBtn:'인증 앱 사용하기', mfaBackupCodePlaceholder:'백업 코드를 입력하세요', mfaBackupWrongCode:'백업 코드가 올바르지 않거나 이미 사용되었습니다.', download2faBackupBtn:'코드 다운로드',
     lblPinGate:'계속하려면 사이트 PIN을 입력하세요', pinGateSubmitBtn:'계속', pinGateWrongMsg:'PIN이 올바르지 않습니다.', settingsSitePinLabel:'사이트 가입/로그인 PIN',
+    guestModeBtn:'게스트로 둘러보기', guestBannerText:'게스트로 둘러보는 중입니다 — 아무것도 저장되지 않습니다.', guestExitBtn:'가입 / 로그인', lblGuestHeaderSub:'게스트 모드 — 한국어 문법 참고', lblGuestGrammarHeader:'한국어 문법 참고', guestGramSearchPlaceholder:'문법 표현 검색…',
     hAddCourse:'수업 추가', courseTitle:'수업명', courseCode:'수업 코드', courseProfessor:'교수',
     courseTime:'시간', courseConcentration:'전공/트랙', courseStatus:'상태', courseSyllabus:'강의계획서',
     courseDay:'요일', courseStartDate:'시작일 (선택)', courseEndDate:'종료일 (선택)', courseMidterm:'중간고사 날짜 (선택)', courseFinal:'기말고사 날짜 (선택)',
@@ -7707,7 +7778,7 @@ const I18N = {
     gramRegister:'문체', gramColloquial:'구어체', gramWritten:'문어체', gramFavorite:'즐겨찾기 – 어렵거나 중요함으로 표시', gramSortFavorite:'즐겨찾기 우선', gramViewSimilar:'비슷한 문법 형태 보기', gramQuickNote:'+ 이 문법으로 노트 만들기', gramAddToggleBtn:'+ 문법 추가', gramAddSaveBtn:'문법 은행에 추가', gramAddMissingFields:'문형과 최소 하나의 의미를 입력하세요 (아래 붙여넣기 형식 힌트 참고).', gramAddSaveFailed:'저장할 수 없습니다. grammar_points 테이블이 있는지 확인하세요.',
     gramYourSentences:'나의 연습 문장', gramSentencePlaceholder:'이 문법을 사용해 문장을 써 보세요...', gramAddSentence:'추가', lblGramSort:'정렬', gramSortDefault:'기본 순서', gramSortFreqDesc:'가장 흔한 순', gramSortFreqAsc:'가장 드문 순', gramFrequencyHeader:'빈도', gramLevelHeader:'난이도',
     gramMarkNotReviewed:'복습 안 함으로 표시', gramMarkReviewedAgain:'취소 – 복습함으로 표시', gramResources:'영상 및 링크', gramResourceUrlPlaceholder:'유튜브 또는 웹사이트 URL', gramResourceLabelPlaceholder:'라벨 (선택)', gramAddResource:'추가',
-    hRecap:'요약',recapWeekBtn:'지난 7일',recapMonthBtn:'지난 30일',recapStudyHours:'공부 시간',recapGrammarPracticed:'연습한 문법 문장',recapBooksFinished:'완독한 책',recapJobsSent:'지원한 곳',hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요.',quizFromCluster:'비교 그룹:',quizFillBlank:'빈칸을 채우세요',quizCorrectAnswerLabel:'정답:',quizHistoryHeader:'나의 퀴즈 기록',quizMaxScoreLabel:'최고 점수',quizAttemptsCountLabel:'시도 횟수',quizAverageLabel:'평균',quizNoAttemptsYet:'아직 기록이 없어요.',quizDueCount:'복습할 문법 {n}개',quizReviewDueBtn:'복습할 문법 풀기',hLinkedCircle:'연결된 그룹',linkedCircleDesc:'다른 사용자와 연결해서 학습 데이터를 공유하세요. 최대 10명까지 가능하며, 무엇을 공유할지는 직접 선택할 수 있습니다.',linkInvitedYou:'{name}님이 연결을 요청했습니다.',linkAcceptBtn:'수락',linkDeclineBtn:'거절',linkLeaveBtn:'그룹 나가기',linkRosterHeader:'내 그룹',linkStatusAccepted:'연결됨',linkStatusPending:'초대 보냄. 응답 대기 중',linkJustAccepted:'수락함!',linkRemoveBtn:'그룹에서 제거',linkRemoveConfirm:'{name}님을 그룹에서 제거하시겠습니까? 더 이상 서로 데이터를 볼 수 없습니다.',linkInviteSearchPlaceholder:'이름으로 검색...',linkInviteBtn:'초대',linkNoResults:'일치하는 사용자가 없습니다.',linkCatStudyEntries:'학습 기록',linkCatBooks:'독서 목록',linkCatJobApplications:'구직 지원 내역',linkCatGrammarNotes:'문법 연습 노트',linkCatCourseNotes:'수업 노트',linkCatWritingSamples:'작문 및 피드백',linkCatRecap:'주간/월간 요약',linkCatReadiness:'문법 준비도',linkSharingHeader:'공유 중인 항목',linkSharingHint:'이 설정은 본인 계정에만 적용됩니다. 초대를 보내기 전에 미리 설정하거나, 연결된 후 언제든지 바꿀 수 있어요. 연결된 모든 사람에게 동일하게 적용됩니다.',linkCustomizeFor:'{name}님과 공유할 항목 설정',linkOverrideHint:'{name}님에게만 적용되는 개별 설정입니다.',linkResetOverridesBtn:'기본값으로 초기화',linkGroupFullMsg:'그룹이 최대 인원(10명)에 도달했습니다.',linkErrorGeneric:'문제가 발생했습니다. 다시 시도해 주세요.',linkNotLinkedYet:'아직 아무와도 연결되어 있지 않습니다. 아래에서 검색해 초대를 보내보세요.',linkInviteSentMsg:'초대를 보냈습니다.',linkStatusAlwaysShared:'항상 공유됨',writingFeedbackHeader:'피드백',writingFeedbackPlaceholder:'이 작문에 대한 피드백을 남겨보세요...',writingFeedbackSendBtn:'보내기',writingFeedbackEmpty:'아직 피드백이 없습니다.', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다. 비워두면 해당 항목이 지워집니다.',
+    hRecap:'요약',recapWeekBtn:'지난 7일',recapMonthBtn:'지난 30일',recapStudyHours:'공부 시간',recapGrammarPracticed:'연습한 문법 문장',recapBooksFinished:'완독한 책',recapJobsSent:'지원한 곳',hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요.',quizFromCluster:'비교 그룹:',quizFillBlank:'빈칸을 채우세요',quizCorrectAnswerLabel:'정답:',quizHistoryHeader:'나의 퀴즈 기록',quizMaxScoreLabel:'최고 점수',quizAttemptsCountLabel:'시도 횟수',quizAverageLabel:'평균',quizNoAttemptsYet:'아직 기록이 없어요.',quizDueCount:'복습할 문법 {n}개',quizReviewDueBtn:'복습할 문법 풀기',hLinkedCircle:'연결된 그룹',linkedCircleDesc:'다른 사용자와 연결해서 학습 데이터를 공유하세요. 최대 10명까지 가능하며, 무엇을 공유할지는 직접 선택할 수 있습니다.',linkInvitedYou:'{name}님이 연결을 요청했습니다.',linkAcceptBtn:'수락',linkDeclineBtn:'거절',linkLeaveBtn:'그룹 나가기',linkRosterHeader:'내 그룹',linkStatusAccepted:'연결됨',linkStatusPending:'초대 보냄. 응답 대기 중',linkJustAccepted:'수락함!',linkRemoveBtn:'그룹에서 제거',linkRemoveConfirm:'{name}님을 그룹에서 제거하시겠습니까? 더 이상 서로 데이터를 볼 수 없습니다.',linkCatSearchPlaceholder:'공유 항목 검색…',linkInviteSearchPlaceholder:'이름으로 검색...',linkInviteBtn:'초대',linkNoResults:'일치하는 사용자가 없습니다.',linkCatStudyEntries:'학습 기록',linkCatBooks:'독서 목록',linkCatJobApplications:'구직 지원 내역',linkCatGrammarNotes:'문법 연습 노트',linkCatCourseNotes:'수업 노트',linkCatWritingSamples:'작문 및 피드백',linkCatRecap:'주간/월간 요약',linkCatReadiness:'문법 준비도',linkSharingHeader:'공유 중인 항목',linkSharingHint:'이 설정은 본인 계정에만 적용됩니다. 초대를 보내기 전에 미리 설정하거나, 연결된 후 언제든지 바꿀 수 있어요. 연결된 모든 사람에게 동일하게 적용됩니다.',linkCustomizeFor:'{name}님과 공유할 항목 설정',linkOverrideHint:'{name}님에게만 적용되는 개별 설정입니다.',linkResetOverridesBtn:'기본값으로 초기화',linkGroupFullMsg:'그룹이 최대 인원(10명)에 도달했습니다.',linkErrorGeneric:'문제가 발생했습니다. 다시 시도해 주세요.',linkNotLinkedYet:'아직 아무와도 연결되어 있지 않습니다. 아래에서 검색해 초대를 보내보세요.',linkInviteSentMsg:'초대를 보냈습니다.',linkStatusAlwaysShared:'항상 공유됨',writingFeedbackHeader:'피드백',writingFeedbackPlaceholder:'이 작문에 대한 피드백을 남겨보세요...',writingFeedbackSendBtn:'보내기',writingFeedbackEmpty:'아직 피드백이 없습니다.', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다. 비워두면 해당 항목이 지워집니다.',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정', statusTeachingAssistant:'조교(TA)', statusResearchAssistant:'연구조교(RA)',
     hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
@@ -7746,7 +7817,7 @@ const I18N = {
     footer:'Tất cả mục nhập hiển thị cho mọi người đã đăng nhập; bạn chỉ có thể chỉnh sửa mục của mình.',
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
-    topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc',
+    topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày',
     eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
@@ -7790,12 +7861,14 @@ const I18N = {
     settingsDeleteMismatch:'Email không khớp với tài khoản của bạn.', settingsDeleteWrongPassword:'Mật khẩu không đúng.', settingsDeleteAdminBlocked:'Không thể xóa tài khoản quản trị.', settingsDeleteFailed:'Không thể xóa tài khoản.',
     hModerator:'Quản trị viên – Tất cả tài khoản', modResetPw:'Đặt lại mật khẩu', modEditName:'Sửa tên', modConfirmEmail:'Xác nhận email', modDisableMfa:'Tắt 2FA', modDeleteUser:'Xóa tài khoản',
     lblResumeUpload:'Sơ yếu lý lịch công khai (kristoffergt.com/resume)', resumeUploadBtn:'Tải PDF lên', resumeViewLink:'Xem trang trực tiếp ↗', resumeUploadSuccess:'Đã tải sơ yếu lý lịch lên.', resumeUploadFailed:'Tải lên thất bại.', resumePdfOnlyMsg:'Chỉ chấp nhận tệp PDF.',
+    lblNotifBell:'Thông báo', notifMarkAllReadBtn:'Đánh dấu đã đọc tất cả', notifEmpty:'Chưa có thông báo nào.', notifPrefsHeader:'Kênh thông báo', notifTypeReminder:'Nhắc lịch', notifTypeYonseiBoard:'Thông báo bảng tin Yonsei', notifTypeLinkAccepted:'Đã chấp nhận lời mời liên kết', notifChannelEmail:'Email', notifChannelInApp:'Trong ứng dụng', writingIndicator:'{name} đang viết "{title}"…',
     modSearchPlaceholder:'Tìm theo tên hoặc email…', modSortDate:'Sắp xếp theo ngày tham gia', modSort2fa:'Sắp xếp theo trạng thái 2FA', modSortConfirmed:'Sắp xếp theo trạng thái xác nhận', modSortName:'Sắp xếp theo tên',
     modConfirmed:'Đã xác nhận', modUnconfirmed:'Chưa xác nhận', modMfaOn:'2FA bật', modMfaOff:'2FA tắt', modYou:'Bạn', modAdmin:'Quản trị', modNewPasswordPrompt:'Mật khẩu mới cho tài khoản này:', modNewNamePrompt:'Tên hiển thị mới cho tài khoản này:',
     modConfirmDeleteUser:'Xóa vĩnh viễn tài khoản này và toàn bộ dữ liệu? Không thể hoàn tác.', modActionFailed:'Thao tác thất bại.', modActionDone:'Hoàn tất.',
     modConfirmResetPw:'Đặt lại mật khẩu của người dùng này?', modConfirmConfirmEmail:'Xác nhận thủ công email của người dùng này?', modConfirmDisableMfa:'Tắt xác thực hai yếu tố cho người dùng này?',
     mfaPromptTitle:'Nhập mã xác thực', mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.', mfaUseBackupBtn:'Dùng mã dự phòng thay thế', mfaUseTotpBtn:'Dùng ứng dụng xác thực thay thế', mfaBackupCodePlaceholder:'Nhập mã dự phòng', mfaBackupWrongCode:'Mã dự phòng không đúng hoặc đã được sử dụng.', download2faBackupBtn:'Tải mã xuống',
     lblPinGate:'Nhập mã PIN của trang web để tiếp tục', pinGateSubmitBtn:'Tiếp tục', pinGateWrongMsg:'Mã PIN không đúng.', settingsSitePinLabel:'Mã PIN đăng ký/đăng nhập trang web',
+    guestModeBtn:'Tiếp tục với tư cách khách', guestBannerText:'Bạn đang duyệt với tư cách khách — không có gì được lưu lại.', guestExitBtn:'Đăng ký / Đăng nhập', lblGuestHeaderSub:'Chế độ khách — Tài liệu ngữ pháp Hàn', lblGuestGrammarHeader:'Tài liệu ngữ pháp Hàn', guestGramSearchPlaceholder:'Tìm mẫu ngữ pháp…',
     hAddCourse:'Thêm khóa học', courseTitle:'Tên khóa học', courseCode:'Mã khóa học', courseProfessor:'Giáo sư',
     courseTime:'Giờ học', courseConcentration:'Chuyên ngành', courseStatus:'Trạng thái', courseSyllabus:'Đề cương',
     courseDay:'Thứ', courseStartDate:'Ngày bắt đầu (tùy chọn)', courseEndDate:'Ngày kết thúc (tùy chọn)', courseMidterm:'Ngày thi giữa kỳ (tùy chọn)', courseFinal:'Ngày thi cuối kỳ (tùy chọn)',
@@ -7816,7 +7889,7 @@ const I18N = {
     gramRegister:'Văn phong', gramColloquial:'Khẩu ngữ', gramWritten:'Văn viết', gramFavorite:'Yêu thích – Đánh dấu khó/quan trọng', gramSortFavorite:'Yêu thích trước', gramViewSimilar:'Xem các mẫu ngữ pháp tương tự', gramQuickNote:'+ Ghi chú từ mẫu này', gramAddToggleBtn:'+ Thêm ngữ pháp', gramAddSaveBtn:'Thêm vào ngân hàng ngữ pháp', gramAddMissingFields:'Nhập mẫu câu và ít nhất một nghĩa (xem gợi ý định dạng dán bên dưới).', gramAddSaveFailed:'Không thể lưu. Hãy chắc chắn bảng grammar_points tồn tại.',
     gramYourSentences:'Câu luyện tập của bạn', gramSentencePlaceholder:'Viết một câu dùng mẫu này...', gramAddSentence:'Thêm', lblGramSort:'Sắp xếp', gramSortDefault:'Mặc định', gramSortFreqDesc:'Phổ biến nhất trước', gramSortFreqAsc:'Ít phổ biến nhất trước', gramFrequencyHeader:'Tần suất', gramLevelHeader:'Cấp độ',
     gramMarkNotReviewed:'Đánh dấu chưa ôn tập', gramMarkReviewedAgain:'Hoàn tác – Đánh dấu đã ôn tập', gramResources:'Video & liên kết', gramResourceUrlPlaceholder:'URL YouTube hoặc trang web', gramResourceLabelPlaceholder:'Nhãn (tùy chọn)', gramAddResource:'Thêm',
-    hRecap:'Tổng kết',recapWeekBtn:'7 ngày qua',recapMonthBtn:'30 ngày qua',recapStudyHours:'Giờ học',recapGrammarPracticed:'Câu ngữ pháp đã luyện',recapBooksFinished:'Sách đã đọc xong',recapJobsSent:'Đơn ứng tuyển đã gửi',hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng.',quizFromCluster:'Nhóm so sánh:',quizFillBlank:'Điền vào chỗ trống',quizCorrectAnswerLabel:'Đáp án đúng:',quizHistoryHeader:'Lịch sử trắc nghiệm của bạn',quizMaxScoreLabel:'Điểm cao nhất',quizAttemptsCountLabel:'Số lần làm',quizAverageLabel:'Trung bình',quizNoAttemptsYet:'Chưa có lượt làm nào.',quizDueCount:'{n} mẫu ngữ pháp cần ôn tập',quizReviewDueBtn:'Ôn tập các mẫu cần ôn',hLinkedCircle:'Nhóm liên kết',linkedCircleDesc:'Liên kết với người dùng khác để chia sẻ dữ liệu học tập. Tối đa 10 người, và bạn tự quyết định chia sẻ những gì.',linkInvitedYou:'{name} đã mời bạn liên kết.',linkAcceptBtn:'Chấp nhận',linkDeclineBtn:'Từ chối',linkLeaveBtn:'Rời nhóm',linkRosterHeader:'Nhóm của bạn',linkStatusAccepted:'Đã liên kết',linkStatusPending:'Đã gửi lời mời. Đang chờ phản hồi',linkJustAccepted:'Đã chấp nhận!',linkRemoveBtn:'Xóa khỏi nhóm',linkRemoveConfirm:'Xóa {name} khỏi nhóm của bạn? Hai bên sẽ không còn thấy hoặc chia sẻ dữ liệu với nhau.',linkInviteSearchPlaceholder:'Tìm theo tên...',linkInviteBtn:'Mời',linkNoResults:'Không tìm thấy người dùng phù hợp.',linkCatStudyEntries:'Nhật ký học tập',linkCatBooks:'Danh sách đọc',linkCatJobApplications:'Đơn ứng tuyển',linkCatGrammarNotes:'Ghi chú luyện ngữ pháp',linkCatCourseNotes:'Ghi chú khóa học',linkCatWritingSamples:'Bài viết & phản hồi',linkCatRecap:'Tổng kết tuần/tháng',linkCatReadiness:'Mức độ sẵn sàng ngữ pháp',linkSharingHeader:'Những gì bạn đang chia sẻ',linkSharingHint:'Đây là cài đặt của riêng bạn. Bạn có thể đặt trước khi mời ai đó, hoặc thay đổi bất cứ lúc nào sau khi đã liên kết. Áp dụng cho tất cả những người bạn đang liên kết.',linkCustomizeFor:'Tùy chỉnh những gì bạn chia sẻ với {name}',linkOverrideHint:'Ghi đè cài đặt mặc định chỉ riêng cho {name}.',linkResetOverridesBtn:'Đặt lại về mặc định',linkGroupFullMsg:'Nhóm của bạn đã đạt giới hạn 10 người.',linkErrorGeneric:'Đã có lỗi xảy ra. Vui lòng thử lại.',linkNotLinkedYet:'Bạn chưa liên kết với ai. Hãy tìm kiếm bên dưới để gửi lời mời.',linkInviteSentMsg:'Đã gửi lời mời.',linkStatusAlwaysShared:'Luôn được chia sẻ',writingFeedbackHeader:'Phản hồi',writingFeedbackPlaceholder:'Để lại phản hồi cho bài viết này...',writingFeedbackSendBtn:'Gửi',writingFeedbackEmpty:'Chưa có phản hồi nào.', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập. Để trống dòng nào sẽ xóa trường đó.',
+    hRecap:'Tổng kết',recapWeekBtn:'7 ngày qua',recapMonthBtn:'30 ngày qua',recapStudyHours:'Giờ học',recapGrammarPracticed:'Câu ngữ pháp đã luyện',recapBooksFinished:'Sách đã đọc xong',recapJobsSent:'Đơn ứng tuyển đã gửi',hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng.',quizFromCluster:'Nhóm so sánh:',quizFillBlank:'Điền vào chỗ trống',quizCorrectAnswerLabel:'Đáp án đúng:',quizHistoryHeader:'Lịch sử trắc nghiệm của bạn',quizMaxScoreLabel:'Điểm cao nhất',quizAttemptsCountLabel:'Số lần làm',quizAverageLabel:'Trung bình',quizNoAttemptsYet:'Chưa có lượt làm nào.',quizDueCount:'{n} mẫu ngữ pháp cần ôn tập',quizReviewDueBtn:'Ôn tập các mẫu cần ôn',hLinkedCircle:'Nhóm liên kết',linkedCircleDesc:'Liên kết với người dùng khác để chia sẻ dữ liệu học tập. Tối đa 10 người, và bạn tự quyết định chia sẻ những gì.',linkInvitedYou:'{name} đã mời bạn liên kết.',linkAcceptBtn:'Chấp nhận',linkDeclineBtn:'Từ chối',linkLeaveBtn:'Rời nhóm',linkRosterHeader:'Nhóm của bạn',linkStatusAccepted:'Đã liên kết',linkStatusPending:'Đã gửi lời mời. Đang chờ phản hồi',linkJustAccepted:'Đã chấp nhận!',linkRemoveBtn:'Xóa khỏi nhóm',linkRemoveConfirm:'Xóa {name} khỏi nhóm của bạn? Hai bên sẽ không còn thấy hoặc chia sẻ dữ liệu với nhau.',linkCatSearchPlaceholder:'Tìm những gì bạn chia sẻ…',linkInviteSearchPlaceholder:'Tìm theo tên...',linkInviteBtn:'Mời',linkNoResults:'Không tìm thấy người dùng phù hợp.',linkCatStudyEntries:'Nhật ký học tập',linkCatBooks:'Danh sách đọc',linkCatJobApplications:'Đơn ứng tuyển',linkCatGrammarNotes:'Ghi chú luyện ngữ pháp',linkCatCourseNotes:'Ghi chú khóa học',linkCatWritingSamples:'Bài viết & phản hồi',linkCatRecap:'Tổng kết tuần/tháng',linkCatReadiness:'Mức độ sẵn sàng ngữ pháp',linkSharingHeader:'Những gì bạn đang chia sẻ',linkSharingHint:'Đây là cài đặt của riêng bạn. Bạn có thể đặt trước khi mời ai đó, hoặc thay đổi bất cứ lúc nào sau khi đã liên kết. Áp dụng cho tất cả những người bạn đang liên kết.',linkCustomizeFor:'Tùy chỉnh những gì bạn chia sẻ với {name}',linkOverrideHint:'Ghi đè cài đặt mặc định chỉ riêng cho {name}.',linkResetOverridesBtn:'Đặt lại về mặc định',linkGroupFullMsg:'Nhóm của bạn đã đạt giới hạn 10 người.',linkErrorGeneric:'Đã có lỗi xảy ra. Vui lòng thử lại.',linkNotLinkedYet:'Bạn chưa liên kết với ai. Hãy tìm kiếm bên dưới để gửi lời mời.',linkInviteSentMsg:'Đã gửi lời mời.',linkStatusAlwaysShared:'Luôn được chia sẻ',writingFeedbackHeader:'Phản hồi',writingFeedbackPlaceholder:'Để lại phản hồi cho bài viết này...',writingFeedbackSendBtn:'Gửi',writingFeedbackEmpty:'Chưa có phản hồi nào.', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập. Để trống dòng nào sẽ xóa trường đó.',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt', statusTeachingAssistant:'Trợ giảng (TA)', statusResearchAssistant:'Trợ lý nghiên cứu (RA)',
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
@@ -7883,10 +7956,12 @@ const STATIC_MAP = {
   lblSettingsDeleteEmailConfirm:'lblSettingsDeleteEmailConfirm',
   lblSettingsDeletePasswordConfirm:'lblSettingsDeletePasswordConfirm', deleteAccountBtn:'deleteAccountBtn', hModerator:'hModerator', closeAccountSettingsBtn:'closeNoteBtn',
   lblResumeUpload:'lblResumeUpload', resumeUploadBtn:'resumeUploadBtn', resumeViewLink:'resumeViewLink',
+  lblNotifBell:'lblNotifBell', notifMarkAllReadBtn:'notifMarkAllReadBtn', lblNotifPrefs:'notifPrefsHeader',
   hLinkedCircle:'hLinkedCircle', linkedCircleDesc:'linkedCircleDesc', closeFriendsBtn:'closeNoteBtn',
   writingFeedbackHeader:'writingFeedbackHeader', writingFeedbackSendBtn:'writingFeedbackSendBtn',
   lblMfaPromptTitle:'mfaPromptTitle', lblMfaPromptHint:'mfaPromptHint', mfaVerifyBtn:'mfaVerifyBtn', mfaUseBackupBtn:'mfaUseBackupBtn',
   lblPinGate:'lblPinGate', pinGateSubmitBtn:'pinGateSubmitBtn',
+  guestModeBtn:'guestModeBtn', guestBannerText:'guestBannerText', guestExitBtn:'guestExitBtn', lblGuestHeaderSub:'lblGuestHeaderSub', lblGuestGrammarHeader:'lblGuestGrammarHeader',
   hNotebookList:'hNotebookList', lblNotebookPersonFilter:'lblNotesPersonFilter', saveNotebookBtn:'saveNoteBtn', closeNotebookBtn:'closeNoteBtn',
   hNewWriting:'hNewWriting', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', deleteAllWritingBtn:'deleteAllWritingBtn', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
   lblWritingCustomTaskType:'lblWritingCustomTaskType', writingTaskTypeEssayOpt:'writingTaskTypeEssay', writingTaskTypeDataOpt:'writingTaskTypeData', lblWritingCustomDescription:'lblWritingCustomDescription', lblWritingImage:'lblWritingImage', writingImageHint:'writingImageHint',
@@ -7912,6 +7987,14 @@ const LOCALE_TAGS = { en: 'en-US', ko: 'ko-KR', vi: 'vi-VN' };
 function appLocale(){ return LOCALE_TAGS[currentLang] || 'en-US'; }
 function localDateStr(d){ return new Date(d).toLocaleDateString(appLocale()); }
 function localDateTimeStr(d){ return new Date(d).toLocaleString(appLocale()); }
+// Single-character weekday initials for the month grid's column header --
+// hardcoded S/M/T/W/T/F/S was always English regardless of language.
+const WEEKDAY_INITIALS = { en: ['S','M','T','W','T','F','S'], ko: ['일','월','화','수','목','금','토'], vi: ['CN','T2','T3','T4','T5','T6','T7'] };
+function weekdayInitials(){ return WEEKDAY_INITIALS[currentLang] || WEEKDAY_INITIALS.en; }
+// Vietnamese Intl formatting lower-cases month/weekday names by default
+// ("tháng 6 năm 2026") -- capitalize the first letter for calendar headers,
+// matching how it's written in running text.
+function capFirst(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 function t(key){ return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key; }
 function actLabel(key){ return t(ACT_KEYS[key] || key); }
 function bookStatusLabel(status){ return t(BOOK_STATUS_KEYS[status] || status); }
@@ -8072,6 +8155,116 @@ function visibleCircleMembers(){
   linkedPartnerIds().forEach(uid=>ids.add(uid));
   return Array.from(ids);
 }
+
+// ---------------------------------------------------------------------------
+// Generic multi-person "who to show" filter, shared by every tab that lets
+// you view yourself + your circle's data (Courses, Reading, Jobs,
+// Certifications, Writing, Notebook, Yonsei Notes). Replaces the old
+// single-choice all/me/one-partner <select> with real combinations (e.g.
+// "Grillo + Kristoffer" without Roxy): a fold-out checkbox panel (same idiom
+// as the tab-visibility settings menu) toggled by a summary button, state
+// held as an array of currently-selected user ids. "All" is never a
+// sentinel value in state -- picking it just checks every selectable id, so
+// every render function has one simple shape to filter against
+// (`showIds.includes(r.user_id)`), never a special-cased 'all' string.
+//
+// filterKey is the shared id prefix (e.g. 'jobPersonFilter'), matching the
+// <button id="{filterKey}Btn"> / <div id="{filterKey}Panel"> markup pair.
+const personFilters = {}; // filterKey -> array of currently-selected uids
+let openPersonFilterKey = null;
+
+function personFilterSelectable(category){
+  return [currentUser.id, ...(category === '__circle__' ? visibleCircleMembers() : visiblePartnersFor(category))];
+}
+// Called from the same master rebuild pass as the other rebuild*Select()
+// functions (on language change / auth / link changes) so the selectable
+// pool and button label stay current even while the panel is closed.
+function rebuildPersonFilter(filterKey, category){
+  if(!currentUser) return;
+  const selectable = personFilterSelectable(category);
+  const prev = personFilters[filterKey];
+  // Keep the previous selection if it's still fully valid (every id still
+  // selectable); otherwise default to "everyone" -- matches the old
+  // <select>'s "all" default for every tab except books/jobs/certs, which
+  // defaulted to "just me". Preserved per-tab via defaultsToMeOnly below.
+  const stillValid = prev && prev.length && prev.every(uid=>selectable.includes(uid));
+  if(stillValid){
+    personFilters[filterKey] = prev;
+  } else {
+    personFilters[filterKey] = PERSON_FILTER_DEFAULT_ME_ONLY.has(filterKey) ? [currentUser.id] : selectable.slice();
+  }
+  renderPersonFilterUi(filterKey, selectable);
+}
+// books/jobs/certs previously defaulted their single-select to "just me"
+// (see the old rebuildBookPersonFilter()/etc history); everything else
+// defaulted to "all". Preserved here so switching to the new component
+// doesn't change anyone's default view.
+const PERSON_FILTER_DEFAULT_ME_ONLY = new Set(['bookPersonFilter','jobPersonFilter','certPersonFilter','writingPersonFilter']);
+function personFilterSummaryText(filterKey, selectable){
+  const sel = personFilters[filterKey] || selectable;
+  if(sel.length === selectable.length) return t('allPeople');
+  return sel.map(uid=>nameFor(uid)).join(' + ');
+}
+function renderPersonFilterUi(filterKey, selectable){
+  const btn = document.getElementById(filterKey + 'Btn');
+  const panel = document.getElementById(filterKey + 'Panel');
+  if(!btn || !panel) return;
+  btn.textContent = personFilterSummaryText(filterKey, selectable) + ' ▾';
+  const sel = personFilters[filterKey] || selectable;
+  const allChecked = sel.length === selectable.length;
+  panel.innerHTML = `
+    <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0;cursor:pointer;font-weight:700;">
+      <input type="checkbox" class="pf-all" ${allChecked?'checked':''} style="width:14px;height:14px;">
+      <span>${t('allPeople')}</span>
+    </label>
+    ${selectable.map(uid=>`
+      <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0;cursor:pointer;">
+        <input type="checkbox" class="pf-uid" data-uid="${uid}" ${sel.includes(uid)?'checked':''} style="width:14px;height:14px;">
+        <span style="color:${colorForUser(uid)};font-weight:600;">${escapeHtml(nameFor(uid))}${uid===currentUser.id?` <span class="tag">YOU</span>`:''}</span>
+      </label>`).join('')}
+  `;
+}
+function closeAllPersonFilterPanels(){
+  document.querySelectorAll('.person-filter-panel').forEach(p=>p.classList.add('hidden'));
+  openPersonFilterKey = null;
+}
+document.addEventListener('click', closeAllPersonFilterPanels);
+// Wired once per filterKey at page init (not on every rebuild) -- the
+// listeners themselves never need to change, only the panel content does.
+function wirePersonFilter(filterKey, category, onChange){
+  const btn = document.getElementById(filterKey + 'Btn');
+  const panel = document.getElementById(filterKey + 'Panel');
+  if(!btn || !panel) return;
+  btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const willOpen = panel.classList.contains('hidden');
+    closeAllPersonFilterPanels();
+    if(willOpen){ panel.classList.remove('hidden'); openPersonFilterKey = filterKey; }
+  });
+  panel.addEventListener('click', (e)=> e.stopPropagation());
+  panel.addEventListener('change', (e)=>{
+    const selectable = personFilterSelectable(category);
+    if(e.target.classList.contains('pf-all')){
+      personFilters[filterKey] = e.target.checked ? selectable.slice() : [];
+    } else if(e.target.classList.contains('pf-uid')){
+      const uid = e.target.dataset.uid;
+      const cur = new Set(personFilters[filterKey] || []);
+      if(e.target.checked) cur.add(uid); else cur.delete(uid);
+      personFilters[filterKey] = Array.from(cur);
+    }
+    // Never allow an empty selection -- always falls back to just yourself.
+    if(!personFilters[filterKey].length) personFilters[filterKey] = [currentUser.id];
+    renderPersonFilterUi(filterKey, selectable);
+    onChange();
+  });
+}
+// Resolves the current showIds for a filter -- what every render function
+// should filter its rows against. Falls back to "just me" if the filter
+// hasn't been initialized yet (e.g. render fires before the first
+// rebuildPersonFilter() call on a cold load).
+function personFilterShowIds(filterKey){
+  return personFilters[filterKey] || (currentUser ? [currentUser.id] : []);
+}
 const DEFAULT_GOAL = 5;
 function goalFor(userId){ return Number(dailyGoals[userId]) || DEFAULT_GOAL; }
 let expandedNoteGroups = new Set();
@@ -8087,7 +8280,6 @@ let selectedNotebookNoteId = null;
 let notebookQuillEditor = null;
 let currentNotebookColor = null;
 let notebookEditorDirty = false;
-let notebookPersonFilter = 'all';
 let bdRange = 'all';
 let authMode = 'signin';
 let pendingConfirmEmail = null;
@@ -8113,10 +8305,12 @@ function applyDarkMode(isDark){
   document.getElementById('darkToggleAuth').textContent = icon;
   document.getElementById('darkToggleApp').textContent = icon;
   document.getElementById('darkTogglePin').textContent = icon;
+  document.getElementById('darkToggleGuest').textContent = icon;
 }
 document.getElementById('darkToggleAuth').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 document.getElementById('darkToggleApp').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 document.getElementById('darkTogglePin').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
+document.getElementById('darkToggleGuest').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 /* ---------- LANGUAGE APPLICATION ---------- */
 function buildLangSwitch(container){
   container.innerHTML = '';
@@ -8346,12 +8540,14 @@ function applyLanguage(lang){
   document.getElementById('moderatorSearch').placeholder = t('modSearchPlaceholder');
   rebuildModeratorSortSelect();
   document.getElementById('writingImageUrl').placeholder = t('writingImageUrlPlaceholder');
+  document.getElementById('guestGramSearch').placeholder = t('guestGramSearchPlaceholder');
   document.getElementById('writingQ53ImageUrl').placeholder = t('writingImageUrlPlaceholder');
   document.getElementById('writingEssaySearch').placeholder = t('writingSearchPlaceholder');
   document.getElementById('writingQ53Search').placeholder = t('writingSearchPlaceholder');
   buildLangSwitch(document.getElementById('langSwitchAuth'));
   buildLangSwitch(document.getElementById('langSwitchApp'));
   buildLangSwitch(document.getElementById('langSwitchPin'));
+  buildLangSwitch(document.getElementById('langSwitchGuest'));
   reorderMobileTabs();
   rebuildActivitySelect();
   rebuildBookStatusSelect();
@@ -8374,6 +8570,7 @@ function applyLanguage(lang){
   document.getElementById('brandLightboxTitle').textContent = 'Productivity Tracker';
   renderYonseiNotifyBtn();
   rebuildYonseiCategoryFilter();
+  if(calViewMode === 'month') renderMonthGrid();
   if(!document.getElementById('accountSettingsModal').classList.contains('hidden')) renderManageTabsList();
   if(currentUser){ renderAll(); }
 }
@@ -8609,6 +8806,8 @@ async function onAuthed(user){
   document.getElementById('myColorPicker').value = myColor;
   document.getElementById('whoName').style.color = myColor;
   updateLinkNotifyDot();
+  refreshNotifBell();
+  subscribeNoteRealtimeInserts();
   renderAll();
   maybeAutoTriggerJobBoardSync();
   // Tab-nav wrap measurement only works once #appScreen is actually visible
@@ -8650,6 +8849,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
     document.getElementById('settingsSitePinValue').textContent = data || '–';
   });
   document.getElementById('settingsHideLeaderboards').checked = !!hiddenFromLeaderboards[currentUser.id];
+  renderNotifPrefs();
   renderManageTabsList();
   document.getElementById('settingsNewEmail').value = '';
   document.getElementById('settingsEmailConfirmPassword').value = '';
@@ -8682,6 +8882,142 @@ document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
   msg.classList.remove('hidden');
   if(!error) document.getElementById('resumeUploadFile').value = '';
 });
+const NOTIF_PREF_TYPES = [['reminder','notifTypeReminder'],['yonsei_board','notifTypeYonseiBoard'],['link_accepted','notifTypeLinkAccepted']];
+async function renderNotifPrefs(){
+  const wrap = document.getElementById('notifPrefsList');
+  if(!wrap || !currentUser) return;
+  const { data } = await supabaseClient.from('notification_prefs').select('*').eq('user_id', currentUser.id);
+  const prefs = {};
+  (data||[]).forEach(r=>{ prefs[r.type] = r; });
+  wrap.innerHTML = NOTIF_PREF_TYPES.map(([type,labelKey])=>{
+    const p = prefs[type] || { email:true, in_app:true };
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0;font-size:13px;">
+      <span>${t(labelKey)}</span>
+      <span style="display:flex;gap:14px;">
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
+          <input type="checkbox" class="notif-pref-check" data-type="${type}" data-channel="email" ${p.email?'checked':''} style="width:14px;height:14px;"> ${t('notifChannelEmail')}
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
+          <input type="checkbox" class="notif-pref-check" data-type="${type}" data-channel="in_app" ${p.in_app?'checked':''} style="width:14px;height:14px;"> ${t('notifChannelInApp')}
+        </label>
+      </span>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.notif-pref-check').forEach(cb=>{
+    cb.addEventListener('change', async ()=>{
+      const type = cb.dataset.type;
+      const row = wrap.querySelectorAll(`.notif-pref-check[data-type="${type}"]`);
+      const email = row[0].checked, inApp = row[1].checked;
+      await supabaseClient.rpc('set_notification_pref', { ntype: type, p_email: email, p_in_app: inApp });
+    });
+  });
+}
+/* ---------- NOTIFICATION BELL ---------- */
+// Aggregates every notification source (calendar reminders, Yonsei board
+// notices, link-accept, system announcements -- see
+// notification_bell_migration.sql) into one bell/panel. Polled every 60s so
+// the unread badge stays current without the user opening the panel.
+let notifCache = [];
+async function refreshNotifBell(){
+  if(!currentUser) return;
+  const { data } = await supabaseClient.from('notifications').select('*').order('created_at', { ascending: false }).limit(30);
+  notifCache = data || [];
+  const unread = notifCache.filter(n=>!n.read_at).length;
+  const countEl = document.getElementById('notifBellCount');
+  countEl.textContent = unread > 9 ? '9+' : String(unread);
+  countEl.classList.toggle('hidden', unread === 0);
+}
+function renderNotifBellPanel(){
+  const list = document.getElementById('notifBellList');
+  if(notifCache.length === 0){ list.innerHTML = `<div class="empty">${t('notifEmpty')}</div>`; return; }
+  list.innerHTML = notifCache.map(n=>`
+    <div class="notif-row" data-id="${n.id}" style="padding:8px 4px;border-bottom:1px solid var(--line);cursor:pointer;${n.read_at ? 'opacity:0.6;' : ''}">
+      <div style="font-size:12.5px;font-weight:${n.read_at?'500':'700'};">${escapeHtml(n.title)}</div>
+      ${n.body ? `<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">${escapeHtml(n.body)}</div>` : ''}
+      <div style="font-size:10.5px;color:var(--ink-soft);margin-top:3px;">${localDateTimeStr(n.created_at)}</div>
+    </div>`).join('');
+  list.querySelectorAll('.notif-row').forEach(row=>{
+    row.addEventListener('click', async ()=>{
+      const n = notifCache.find(x=>String(x.id)===row.dataset.id);
+      if(n && !n.read_at){
+        await supabaseClient.rpc('mark_notification_read', { notification_id: n.id });
+        n.read_at = new Date().toISOString();
+        renderNotifBellPanel();
+        refreshNotifBell();
+      }
+    });
+  });
+}
+document.getElementById('notifBellBtn').addEventListener('click', async (e)=>{
+  e.stopPropagation();
+  const panel = document.getElementById('notifBellPanel');
+  const willOpen = panel.classList.contains('hidden');
+  panel.classList.add('hidden');
+  if(willOpen){
+    await refreshNotifBell();
+    renderNotifBellPanel();
+    panel.classList.remove('hidden');
+  }
+});
+document.getElementById('notifBellPanel').addEventListener('click', (e)=> e.stopPropagation());
+document.addEventListener('click', ()=> document.getElementById('notifBellPanel').classList.add('hidden'));
+document.getElementById('notifMarkAllReadBtn').addEventListener('click', async ()=>{
+  await supabaseClient.rpc('mark_all_notifications_read');
+  notifCache.forEach(n=>{ if(!n.read_at) n.read_at = new Date().toISOString(); });
+  renderNotifBellPanel();
+  refreshNotifBell();
+});
+setInterval(()=>{ if(currentUser) refreshNotifBell(); }, 60000);
+
+/* ---------- GUEST MODE ----------
+   Fully client-side: browses the static GRAMMAR_SEED reference data (no
+   Supabase reads/writes at all, no currentUser). Deliberately narrower than
+   the full authenticated app -- reusing the real Grammar tab's rendering
+   wasn't safe to do broadly here (it's entangled with favorites/quiz-
+   history/notes, all of which need a real account), so this is a separate,
+   simple, read-only browser over the same reference content instead of a
+   half-working version of the real tab. Other tabs (study log, calendar,
+   jobs, linking, leaderboards) are meaningless without persistence and
+   aren't offered in guest mode.
+   PIN gate is intentionally bypassed here -- the PIN only gates sign-up/
+   sign-in (an account action), not read-only, save-nothing browsing. */
+function enterGuestMode(){
+  document.getElementById('pinGateScreen').classList.add('hidden');
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('guestScreen').classList.remove('hidden');
+  renderGuestGrammarList();
+}
+document.getElementById('guestModeBtn').addEventListener('click', enterGuestMode);
+document.getElementById('guestExitBtn').addEventListener('click', ()=>{
+  document.getElementById('guestScreen').classList.add('hidden');
+  if(localStorage.getItem('sitePinVerified') === 'true'){
+    document.getElementById('authScreen').classList.remove('hidden');
+  } else {
+    document.getElementById('pinGateScreen').classList.remove('hidden');
+  }
+});
+function renderGuestGrammarList(){
+  const list = document.getElementById('guestGrammarList');
+  const q = document.getElementById('guestGramSearch').value.trim().toLowerCase();
+  const items = GRAMMAR_SEED.filter(g=>{
+    if(!q) return true;
+    if((g.pattern||'').toLowerCase().includes(q)) return true;
+    return (g.senses||[]).some(s=> (s.label||'').toLowerCase().includes(q) || (s.definition||'').toLowerCase().includes(q));
+  });
+  if(items.length === 0){ list.innerHTML = '<div class="empty">–</div>'; return; }
+  list.innerHTML = items.map(g=>{
+    const sensesHtml = (g.senses||[]).map(s=>`
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line);">
+        ${s.label ? `<div style="font-weight:700;font-size:12.5px;color:var(--celadon-4);">${escapeHtml(s.label)}</div>` : ''}
+        ${s.formation ? `<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px;">${escapeHtml(s.formation)}</div>` : ''}
+        <div style="font-size:13px;margin-top:4px;">${escapeHtml(s.definition||'')}</div>
+        ${(s.examples||[]).slice(0,2).map(ex=>`<div style="font-size:12.5px;margin-top:4px;">${escapeHtml(ex[0]||'')} <span style="color:var(--ink-soft);">— ${escapeHtml(ex[1]||'')}</span></div>`).join('')}
+      </div>`).join('');
+    return `<div class="item-row"><div class="item-title">${escapeHtml(g.pattern)}</div>${sensesHtml}</div>`;
+  }).join('');
+}
+document.getElementById('guestGramSearch').addEventListener('input', renderGuestGrammarList);
+
 document.getElementById('friendsBtn').addEventListener('click', async ()=>{
   await refreshLinkData();
   renderLinkedCircle();
@@ -8773,6 +9109,57 @@ function linkCatLabel(cat){
   };
   return t(map[cat]);
 }
+// Every shareable category's real on-screen tab/sub-tab location, using the
+// SAME i18n keys the actual nav renders with -- so this breadcrumb always
+// reads exactly like the tab you'd click to find that data, and stays in
+// sync automatically if a tab's label is ever renamed. The underlying
+// `category` string values (link_sharing_settings.category,
+// shared_circle_cat() in link_groups_migration.sql) are deliberately left
+// unchanged -- they're relied on by several RLS policies across multiple
+// migration files, so renaming the keys themselves would be a much riskier
+// change than just labeling them by their tab path here.
+const LINK_CATEGORY_TABPATH = {
+  study_entries: ['tabStudy','studySubLog'],
+  books: ['tabReading'],
+  job_applications: ['tabJobs','jobApplicationsTab'],
+  certifications: ['tabJobs','certifications'],
+  grammar_notes: ['tabStudy','studySubGrammar'],
+  course_notes: ['tabYonsei','tabNotes'],
+  writing_samples: ['tabStudy','studySubWriting'],
+  recap: ['tabStudy','hRecap'],
+  readiness: ['tabStudy','hGramReadiness'],
+};
+function linkCatTabPath(cat){
+  return (LINK_CATEGORY_TABPATH[cat] || []).map(k=>t(k)).join(' › ');
+}
+// Shared search-to-filter checklist for both the default sharing toggles
+// and a per-partner override panel -- each shareable category is titled
+// (linkCatLabel) and located (linkCatTabPath), typing filters down to
+// matching rows. Wired via wireLinkCatSearch() right after insertion.
+function linkCategoryChecklistHtml(inputId, checkClass, extraDataAttr, isEnabledFn){
+  const rows = LINK_CATEGORIES.map(cat=>{
+    const enabled = isEnabledFn(cat);
+    const path = linkCatTabPath(cat);
+    const searchText = escapeHtml((linkCatLabel(cat) + ' ' + path).toLowerCase());
+    return `<label class="link-cat-row" data-search="${searchText}" style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer;">
+      <input type="checkbox" class="${checkClass}" ${extraDataAttr} data-cat="${cat}" ${enabled?'checked':''} style="width:16px;height:16px;">
+      <span>${linkCatLabel(cat)}${path ? `<span style="color:var(--ink-soft);font-size:11px;"> · ${path}</span>` : ''}</span>
+    </label>`;
+  }).join('');
+  return `<input type="text" id="${inputId}" placeholder="${t('linkCatSearchPlaceholder')}" style="width:100%;box-sizing:border-box;font-family:'Inter',sans-serif;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);margin-bottom:4px;">
+    <div class="link-cat-list" id="${inputId}List">${rows}</div>`;
+}
+function wireLinkCatSearch(inputId){
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(inputId + 'List');
+  if(!input || !list) return;
+  input.addEventListener('input', ()=>{
+    const q = input.value.trim().toLowerCase();
+    list.querySelectorAll('.link-cat-row').forEach(row=>{
+      row.classList.toggle('hidden', !!q && !row.dataset.search.includes(q));
+    });
+  });
+}
 function linkInviteSearchHtml(){
   return `<div style="display:flex;gap:8px;flex-wrap:wrap;">
       <input type="text" id="linkInviteSearchInput" placeholder="${t('linkInviteSearchPlaceholder')}" style="flex:1;min-width:160px;font-family:'Inter',sans-serif;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);">
@@ -8805,13 +9192,7 @@ function renderLinkedCircle(){
   html += `<div style="font-weight:700;font-size:13px;margin-bottom:6px;">${t('linkSharingHeader')}</div>
     <div class="hint" style="margin-bottom:8px;">${t('linkSharingHint')}</div>
     <div style="margin-bottom:14px;">
-      ${LINK_CATEGORIES.map(cat=>{
-        const enabled = mySharingSetting(cat);
-        return `<label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer;">
-          <input type="checkbox" class="link-cat-toggle" data-cat="${cat}" ${enabled?'checked':''} style="width:16px;height:16px;">
-          <span>${linkCatLabel(cat)}</span>
-        </label>`;
-      }).join('')}
+      ${linkCategoryChecklistHtml('linkDefaultCatSearch', 'link-cat-toggle', '', cat=>mySharingSetting(cat))}
     </div>`;
   if(hasAnyCircle){
     html += `<div style="font-weight:700;font-size:13px;margin-bottom:6px;">${t('linkRosterHeader')}</div>
@@ -8835,13 +9216,7 @@ function renderLinkedCircle(){
           const panelHtml = (r.status === 'accepted' && linkOverridePanelOpenFor === r.user_id) ? `
             <div style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:-4px 0 8px;">
               <div class="hint" style="margin-bottom:6px;">${escapeHtml(t('linkOverrideHint').replace('{name}', nameFor(r.user_id)))}</div>
-              ${LINK_CATEGORIES.map(cat=>{
-                const enabled = mySharingSettingFor(r.user_id, cat);
-                return `<label style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer;">
-                  <input type="checkbox" class="link-partner-cat-toggle" data-uid="${r.user_id}" data-cat="${cat}" ${enabled?'checked':''} style="width:16px;height:16px;">
-                  <span>${linkCatLabel(cat)}</span>
-                </label>`;
-              }).join('')}
+              ${linkCategoryChecklistHtml('linkOverrideCatSearch-' + r.user_id, 'link-partner-cat-toggle', `data-uid="${r.user_id}"`, cat=>mySharingSettingFor(r.user_id, cat))}
               ${myHasAnyOverrideFor(r.user_id) ? `<button id="linkResetOverridesBtn" data-uid="${r.user_id}" class="linkbtn" style="margin-top:4px;">${t('linkResetOverridesBtn')}</button>` : ''}
             </div>` : '';
           return rowHtml + panelHtml;
@@ -8871,6 +9246,8 @@ function renderLinkedCircle(){
   updateLinkNotifyDot();
 }
 function bindLinkedCircleEvents(){
+  wireLinkCatSearch('linkDefaultCatSearch');
+  document.querySelectorAll('[id^="linkOverrideCatSearch-"]').forEach(el=> wireLinkCatSearch(el.id));
   const acceptBtn = document.getElementById('linkAcceptBtn');
   if(acceptBtn) acceptBtn.addEventListener('click', async ()=>{
     acceptBtn.disabled = true;
@@ -10080,18 +10457,11 @@ function renderReading(){
   finishedEl.textContent = rFinished;
   finishedEl.style.color = rFinished > 0 ? '#27AE60' : 'var(--ink)';
 
-  // The list itself honors bookPersonFilter: "me" (default), the other core
-  // member's name, or "all" for a merged, attributed view. The DB only ever
-  // returns rows within the shared core circle (see RLS), so this can never
-  // surface a third party's books even if 'all' is selected.
-  const filterVal = bookPersonFilter || currentUser.id;
-  let viewList;
-  if(filterVal === 'all'){
-    viewList = Object.keys(profiles).filter(uid=>coreMembers[uid])
-      .flatMap(uid => (allBooks[uid]||[]));
-  } else {
-    viewList = allBooks[filterVal] || [];
-  }
+  // The list itself honors bookPersonFilter's combination of selected
+  // people. The DB only ever returns rows within your visible circle (see
+  // RLS), so this can never surface a third party's books.
+  const showIds = personFilterShowIds('bookPersonFilter');
+  const viewList = showIds.flatMap(uid => allBooks[uid] || []);
 
   const list = document.getElementById('bookList');
   list.innerHTML = '';
@@ -10412,19 +10782,13 @@ let jobSortMode = 'date';
 let jobListState = { expanded:false, page:1 };
 function renderJobs(){
   // The "Your applications" stat tiles and header follow the same
-  // jobPersonFilter as the list below, so linked people can see each
-  // other's stat bar too (not just their own) by switching the filter.
-  // "all" is a merged, attributed view scoped to the core circle only —
-  // the DB never returns rows outside the shared core circle anyway
-  // (see RLS), so this can't surface a third party's applications.
-  const filterVal = jobPersonFilter || currentUser.id;
-  let viewList;
-  if(filterVal === 'all'){
-    viewList = Object.keys(profiles).filter(uid=>coreMembers[uid])
-      .flatMap(uid => (allJobs[uid]||[]));
-  } else {
-    viewList = allJobs[filterVal] || [];
-  }
+  // jobPersonFilter combination as the list below, so linked people can see
+  // each other's stat bar too (not just their own). The DB never returns
+  // rows outside your visible circle anyway (see RLS), so this can't
+  // surface a third party's applications regardless of what's selected.
+  const showIds = personFilterShowIds('jobPersonFilter');
+  const selectable = personFilterSelectable('job_applications');
+  let viewList = showIds.flatMap(uid => allJobs[uid] || []);
   const jApplied = viewList.filter(j=>j.status==='applied').length;
   const jInterview = viewList.filter(j=>j.status==='interview').length;
   const jOffer = viewList.filter(j=>j.status==='offer').length;
@@ -10432,12 +10796,12 @@ function renderJobs(){
 
   const statsHeaderEl = document.getElementById('hJobStats');
   if(statsHeaderEl){
-    if(filterVal === 'all'){
+    if(showIds.length === selectable.length){
       statsHeaderEl.textContent = t('jobStatsAll');
-    } else if(filterVal === currentUser.id){
+    } else if(showIds.length === 1 && showIds[0] === currentUser.id){
       statsHeaderEl.textContent = t('yourApplications');
     } else {
-      statsHeaderEl.textContent = t('jobStatsFor').replace('{name}', nameFor(filterVal));
+      statsHeaderEl.textContent = t('jobStatsFor').replace('{name}', showIds.map(nameFor).join(' + '));
     }
   }
 
@@ -10704,27 +11068,22 @@ let certSearchQuery = '';
 let certSortMode = 'date';
 let certListState = { expanded:false, page:1 };
 function renderCerts(){
-  // Mirrors renderJobs(): stat tiles + header follow certPersonFilter so
-  // linked people can see each other's stat bar, not just their own.
-  const filterVal = certPersonFilter || currentUser.id;
-  let viewList;
-  if(filterVal === 'all'){
-    viewList = Object.keys(profiles).filter(uid=>coreMembers[uid])
-      .flatMap(uid => (allCerts[uid]||[]));
-  } else {
-    viewList = allCerts[filterVal] || [];
-  }
+  // Mirrors renderJobs(): stat tiles + header follow certPersonFilter's
+  // combination so linked people can see each other's stat bar too.
+  const showIds = personFilterShowIds('certPersonFilter');
+  const selectable = personFilterSelectable('certifications');
+  let viewList = showIds.flatMap(uid => allCerts[uid] || []);
   const cInProgress = viewList.filter(c=>c.status==='in_progress').length;
   const cAcquired = viewList.filter(c=>c.status==='acquired').length;
 
   const certStatsHeaderEl = document.getElementById('hCertStats');
   if(certStatsHeaderEl){
-    if(filterVal === 'all'){
+    if(showIds.length === selectable.length){
       certStatsHeaderEl.textContent = t('certStatsAll');
-    } else if(filterVal === currentUser.id){
+    } else if(showIds.length === 1 && showIds[0] === currentUser.id){
       certStatsHeaderEl.textContent = t('yourCertifications');
     } else {
-      certStatsHeaderEl.textContent = t('certStatsFor').replace('{name}', nameFor(filterVal));
+      certStatsHeaderEl.textContent = t('certStatsFor').replace('{name}', showIds.map(nameFor).join(' + '));
     }
   }
 
@@ -11866,11 +12225,12 @@ function formatTime12h(timeStr){
   if(!timeStr) return '';
   const [hStr, mStr] = timeStr.split(':');
   let h = parseInt(hStr,10);
+  // Korean calendars/clocks conventionally use 24-hour time, not 12-hour
+  // with an AM/PM (오전/오후) prefix -- English/Vietnamese keep 12-hour.
+  if(currentLang === 'ko') return `${String(h).padStart(2,'0')}:${mStr}`;
   const ampm = t(h >= 12 ? 'pmLabel' : 'amLabel');
   h = h % 12; if(h === 0) h = 12;
-  // Korean convention puts 오전/오후 before the time, not after like
-  // English "3:30 PM" -- everything else keeps the suffix position.
-  return currentLang === 'ko' ? `${ampm} ${h}:${mStr}` : `${h}:${mStr} ${ampm}`;
+  return `${h}:${mStr} ${ampm}`;
 }
 
 function expandOccurrences(ev, rangeStartStr, rangeEndStr){
@@ -12311,8 +12671,8 @@ function renderMonthGrid(){
   const grid = document.getElementById('monthGrid');
   grid.innerHTML = '';
   const y = calViewDate.getFullYear(), m = calViewDate.getMonth();
-  document.getElementById('monthLabel').textContent = calViewDate.toLocaleDateString(appLocale(), {month:'long', year:'numeric'});
-  ['S','M','T','W','T','F','S'].forEach(d=>{
+  document.getElementById('monthLabel').textContent = capFirst(calViewDate.toLocaleDateString(appLocale(), {month:'long', year:'numeric'}));
+  weekdayInitials().forEach(d=>{
     const el = document.createElement('div'); el.className = 'month-dow'; el.textContent = d;
     grid.appendChild(el);
   });
@@ -12334,8 +12694,8 @@ function renderMonthGrid(){
     });
   });
   const topikByDate = {};
-  topikByDate[todayStr(TOPIK_REG)] = 'TOPIK reg.';
-  topikByDate[todayStr(TOPIK_TEST)] = 'TOPIK test';
+  topikByDate[todayStr(TOPIK_REG)] = t('topikRegShort');
+  topikByDate[todayStr(TOPIK_TEST)] = t('topikTestShort');
 
   for(let i=0;i<startOffset;i++){
     const el = document.createElement('div'); el.className='month-day empty';
@@ -12443,6 +12803,7 @@ window.addEventListener('resize', ()=>{
     buildLangSwitch(document.getElementById('langSwitchAuth'));
     buildLangSwitch(document.getElementById('langSwitchApp'));
     buildLangSwitch(document.getElementById('langSwitchPin'));
+  buildLangSwitch(document.getElementById('langSwitchGuest'));
   }, 150);
 });
 function shortenTitleForMobile(title){
@@ -12497,15 +12858,15 @@ function renderCalGrid(dates){
   const mobilePad = isMobileDevice();
 
   if(dates.length === 1){
-    document.getElementById('monthLabel').textContent = dates[0].toLocaleDateString(appLocale(),{weekday:'long', month:'short', day:'numeric', year:'numeric'});
+    document.getElementById('monthLabel').textContent = capFirst(dates[0].toLocaleDateString(appLocale(),{weekday:'long', month:'short', day:'numeric', year:'numeric'}));
   } else {
     document.getElementById('monthLabel').textContent =
-      `${dates[0].toLocaleDateString(appLocale(),{month:'short',day:'numeric'})} – ${dates[dates.length-1].toLocaleDateString(appLocale(),{month:'short',day:'numeric',year:'numeric'})}`;
+      `${capFirst(dates[0].toLocaleDateString(appLocale(),{month:'short',day:'numeric'}))} – ${dates[dates.length-1].toLocaleDateString(appLocale(),{month:'short',day:'numeric',year:'numeric'})}`;
   }
 
   const topikByDate = {};
-  topikByDate[todayStr(TOPIK_REG)] = 'TOPIK reg.';
-  topikByDate[todayStr(TOPIK_TEST)] = 'TOPIK test';
+  topikByDate[todayStr(TOPIK_REG)] = t('topikRegShort');
+  topikByDate[todayStr(TOPIK_TEST)] = t('topikTestShort');
 
   const headerRow = document.getElementById('weekHeaderRow');
   headerRow.innerHTML = '<div class="week-corner"></div>';
@@ -12514,7 +12875,7 @@ function renderCalGrid(dates){
     const div = document.createElement('div');
     div.className = 'week-day-header' + (key===todayKey ? ' today' : '');
     const topikLabel = topikByDate[key];
-    div.innerHTML = `<div>${d.toLocaleDateString(appLocale(),{weekday:'short'})}</div><div style="font-family:'Space Grotesk',monospace;">${d.getDate()}</div>${topikLabel ? `<div class="week-header-topik">${topikLabel}</div>` : ''}`;
+    div.innerHTML = `<div>${capFirst(d.toLocaleDateString(appLocale(),{weekday:'short'}))}</div><div style="font-family:'Space Grotesk',monospace;">${d.getDate()}</div>${topikLabel ? `<div class="week-header-topik">${topikLabel}</div>` : ''}`;
     headerRow.appendChild(div);
   });
 
@@ -20711,29 +21072,8 @@ function updateWritingCustomVisibility(){
 }
 document.getElementById('writingCustomTaskType').addEventListener('change', updateWritingCustomVisibility);
 
-let writingPersonFilter = null;
-function rebuildWritingPersonFilter(){
-  const sel = document.getElementById('writingPersonFilter');
-  if(!sel || !currentUser) return;
-  const prev = sel.value;
-  sel.innerHTML = '';
-  const allOpt = document.createElement('option');
-  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
-  sel.appendChild(allOpt);
-  const selectable = [currentUser.id, ...visiblePartnersFor('writing_samples')];
-  selectable.forEach(uid=>{
-    const opt = document.createElement('option');
-    opt.value = uid; opt.textContent = nameFor(uid);
-    sel.appendChild(opt);
-  });
-  const valid = prev && (prev==='all' || selectable.includes(prev));
-  sel.value = valid ? prev : currentUser.id;
-  writingPersonFilter = sel.value;
-}
-document.getElementById('writingPersonFilter').addEventListener('change', (e)=>{
-  writingPersonFilter = e.target.value;
-  renderWritingList();
-});
+function rebuildWritingPersonFilter(){ rebuildPersonFilter('writingPersonFilter', 'writing_samples'); }
+wirePersonFilter('writingPersonFilter', 'writing_samples', renderWritingList);
 
 // Uploads the chosen file (if any) to the writing-images bucket, else falls
 // back to the pasted URL in the given input pair. Used both for the Q53
@@ -20983,13 +21323,8 @@ document.getElementById('deleteAllWritingBtn').addEventListener('click', deleteA
 function renderWritingList(){
   const list = document.getElementById('writingSampleList');
   if(!list || !currentUser) return;
-  const filterVal = writingPersonFilter || currentUser.id;
-  let items;
-  if(filterVal === 'all'){
-    items = [currentUser.id, ...visiblePartnersFor('writing_samples')].flatMap(uid=>allWritingSamples[uid]||[]);
-  } else {
-    items = allWritingSamples[filterVal] || [];
-  }
+  const showIds = personFilterShowIds('writingPersonFilter');
+  let items = showIds.flatMap(uid=>allWritingSamples[uid]||[]);
   items = items.slice().sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
   list.innerHTML = '';
   if(items.length === 0){ list.innerHTML = '<div class="empty">–</div>'; return; }
@@ -21902,8 +22237,8 @@ async function saveCourseEdit(courseId, container){
 function renderCourses(){
   const everyone = [];
   Object.values(allCourses).forEach(arr=> everyone.push(...arr));
-  const filterVal = coursePersonFilter || 'all';
-  const all = filterVal === 'all' ? everyone : everyone.filter(c => courseParticipants(c).includes(filterVal));
+  const showIds = personFilterShowIds('coursePersonFilter');
+  const all = everyone.filter(c => courseParticipants(c).some(uid => showIds.includes(uid)));
   const mine = everyone.filter(c => courseParticipants(c).includes(currentUser.id));
   document.getElementById('cStatPlanning').textContent = mine.filter(c=>c.status==='planning').length;
   document.getElementById('cStatSignedUp').textContent = mine.filter(c=>c.status==='signed_up').length;
@@ -22133,106 +22468,22 @@ async function moveNote(noteId, groupKey, direction){
   renderLectureList();
 }
 
-let notesPersonFilter = 'all';
-function rebuildNotesPersonFilter(){
-  const sel = document.getElementById('notesPersonFilter');
-  if(!sel) return;
-  const prev = sel.value;
-  sel.innerHTML = '';
-  const allOpt = document.createElement('option');
-  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
-  sel.appendChild(allOpt);
-  const selectable = currentUser ? [currentUser.id, ...visiblePartnersFor('course_notes')] : Object.keys(profiles).filter(uid=>coreMembers[uid]);
-  selectable.forEach(uid=>{
-    const opt = document.createElement('option');
-    opt.value = uid; opt.textContent = nameFor(uid);
-    sel.appendChild(opt);
-  });
-  sel.value = (prev && (prev==='all'||selectable.includes(prev))) ? prev : 'all';
-  notesPersonFilter = sel.value;
-}
-document.getElementById('notesPersonFilter').addEventListener('change', (e)=>{
-  notesPersonFilter = e.target.value;
-  renderLectureList();
-});
+function rebuildNotesPersonFilter(){ rebuildPersonFilter('notesPersonFilter', 'course_notes'); }
+wirePersonFilter('notesPersonFilter', 'course_notes', renderLectureList);
 
 // Courses has no per-category sharing toggle (it's under the blanket
 // shared_circle() RLS policy, like notebook/Yonsei notes) so its
-// selectable list is visibleCircleMembers() rather than
-// visiblePartnersFor(). Previously had no filter at all -- every visible
-// person's courses rendered mixed together in one list with no way to
-// isolate a single person's schedule.
-let coursePersonFilter = null;
-function rebuildCoursePersonFilter(){
-  const sel = document.getElementById('coursePersonFilter');
-  if(!sel || !currentUser) return;
-  const prev = sel.value;
-  sel.innerHTML = '';
-  const allOpt = document.createElement('option');
-  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
-  sel.appendChild(allOpt);
-  const selectable = [currentUser.id, ...visibleCircleMembers()];
-  selectable.forEach(uid=>{
-    const opt = document.createElement('option');
-    opt.value = uid; opt.textContent = nameFor(uid);
-    sel.appendChild(opt);
-  });
-  const valid = prev && (prev==='all' || selectable.includes(prev));
-  sel.value = valid ? prev : 'all';
-  coursePersonFilter = sel.value;
-}
-document.getElementById('coursePersonFilter').addEventListener('change', (e)=>{
-  coursePersonFilter = e.target.value;
-  renderCourses();
-});
-// Reading (books) and Jobs tabs are personal logs shared only within the
-// core circle (Roxy & Kristoffer). Default to "just me"; either person can
-// switch to the other core member's name, or "All" for a merged view.
-let bookPersonFilter = null;
-function rebuildBookPersonFilter(){
-  const sel = document.getElementById('bookPersonFilter');
-  if(!sel || !currentUser) return;
-  const prev = sel.value;
-  sel.innerHTML = '';
-  const allOpt = document.createElement('option');
-  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
-  sel.appendChild(allOpt);
-  const selectable = [currentUser.id, ...visiblePartnersFor('books')];
-  selectable.forEach(uid=>{
-    const opt = document.createElement('option');
-    opt.value = uid; opt.textContent = nameFor(uid);
-    sel.appendChild(opt);
-  });
-  const valid = prev && (prev==='all' || selectable.includes(prev));
-  sel.value = valid ? prev : currentUser.id;
-  bookPersonFilter = sel.value;
-}
-document.getElementById('bookPersonFilter').addEventListener('change', (e)=>{
-  bookPersonFilter = e.target.value;
-  renderReading();
-});
+// selectable list is visibleCircleMembers() (category '__circle__') rather
+// than visiblePartnersFor().
+function rebuildCoursePersonFilter(){ rebuildPersonFilter('coursePersonFilter', '__circle__'); }
+wirePersonFilter('coursePersonFilter', '__circle__', renderCourses);
 
-let jobPersonFilter = null;
-function rebuildJobPersonFilter(){
-  const sel = document.getElementById('jobPersonFilter');
-  if(!sel || !currentUser) return;
-  const prev = sel.value;
-  sel.innerHTML = '';
-  const allOpt = document.createElement('option');
-  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
-  sel.appendChild(allOpt);
-  const selectable = [currentUser.id, ...visiblePartnersFor('job_applications')];
-  selectable.forEach(uid=>{
-    const opt = document.createElement('option');
-    opt.value = uid; opt.textContent = nameFor(uid);
-    sel.appendChild(opt);
-  });
-  const valid = prev && (prev==='all' || selectable.includes(prev));
-  sel.value = valid ? prev : currentUser.id;
-  jobPersonFilter = sel.value;
-}
-document.getElementById('jobPersonFilter').addEventListener('change', (e)=>{
-  jobPersonFilter = e.target.value;
+// Reading (books) is a personal log shared within the linked circle.
+function rebuildBookPersonFilter(){ rebuildPersonFilter('bookPersonFilter', 'books'); }
+wirePersonFilter('bookPersonFilter', 'books', renderReading);
+
+function rebuildJobPersonFilter(){ rebuildPersonFilter('jobPersonFilter', 'job_applications'); }
+wirePersonFilter('jobPersonFilter', 'job_applications', ()=>{
   jobListState.expanded = false;
   jobListState.page = 1;
   renderJobs();
@@ -22263,27 +22514,8 @@ document.getElementById('jobSearchInput').addEventListener('input', (e)=>{
   renderJobs();
 });
 
-let certPersonFilter = null;
-function rebuildCertPersonFilter(){
-  const sel = document.getElementById('certPersonFilter');
-  if(!sel || !currentUser) return;
-  const prev = sel.value;
-  sel.innerHTML = '';
-  const allOpt = document.createElement('option');
-  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
-  sel.appendChild(allOpt);
-  const selectable = [currentUser.id, ...visiblePartnersFor('certifications')];
-  selectable.forEach(uid=>{
-    const opt = document.createElement('option');
-    opt.value = uid; opt.textContent = nameFor(uid);
-    sel.appendChild(opt);
-  });
-  const valid = prev && (prev==='all' || selectable.includes(prev));
-  sel.value = valid ? prev : currentUser.id;
-  certPersonFilter = sel.value;
-}
-document.getElementById('certPersonFilter').addEventListener('change', (e)=>{
-  certPersonFilter = e.target.value;
+function rebuildCertPersonFilter(){ rebuildPersonFilter('certPersonFilter', 'certifications'); }
+wirePersonFilter('certPersonFilter', 'certifications', ()=>{
   certListState.expanded = false;
   certListState.page = 1;
   renderCerts();
@@ -22334,9 +22566,8 @@ function renderLectureList(){
     if(COURSE_LOCKED_STATUSES.includes(c.status) && !groupKeys.includes(c.id)) groupKeys.push(c.id);
   }));
 
-  if(notesPersonFilter !== 'all'){
-    groupKeys = groupKeys.filter(k => !(k in courseTitleFor) || courseOwnerFor[k] === notesPersonFilter);
-  }
+  const showIds = personFilterShowIds('notesPersonFilter');
+  groupKeys = groupKeys.filter(k => !(k in courseTitleFor) || showIds.includes(courseOwnerFor[k]));
 
   if(groupKeys.length === 0){ list.innerHTML = '<div class="empty">–</div>'; return; }
 
@@ -22349,8 +22580,8 @@ function renderLectureList(){
 
   groupKeys.forEach(groupKey=>{
     let notes = (allNotes[groupKey]||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
-    if(!(groupKey in courseTitleFor) && notesPersonFilter !== 'all'){
-      notes = notes.filter(n => n.user_id === notesPersonFilter);
+    if(!(groupKey in courseTitleFor)){
+      notes = notes.filter(n => showIds.includes(n.user_id));
     }
     const groupLabel = groupKey === '__none__' ? t('generalNotes') : (courseTitleFor[groupKey] || groupKey);
     const isExpanded = expandedNoteGroups.has(groupKey);
@@ -22493,6 +22724,82 @@ const QUILL_PALETTE = [
   '#888888','#a10000','#b26b00','#b2b200','#006100','#0047b2','#6b24b2',
   '#444444','#5c0000','#663d00','#666600','#003700','#002966','#3d1466'
 ];
+// Registers the drag-to-resize handles (see quill-image-resize-module CDN
+// script tag) once, globally, for every Quill instance in the app -- lets
+// you click an inserted image and drag its corner to resize it.
+if(window.Quill && window.ImageResize) Quill.register('modules/imageResize', ImageResize.default);
+
+/* ---------- LIVE PRESENCE + LIVE NOTE INSERTS (Notebook + Yonsei course notes) ----------
+   Two Realtime mechanisms, both scoped for free by existing RLS:
+   1. Presence channels ("X is writing '<title>'...") -- one shared channel
+      per note type, tracked while actively typing (5s idle timeout), read
+      by anyone else with that list open.
+   2. postgres_changes on INSERT -- Supabase Realtime enforces the table's
+      own RLS policy per subscriber, so a linked person's new note only
+      ever arrives here if shared_circle()/link_sharing_settings already
+      say you can see it -- same rule the initial page load already uses. */
+const notePresenceChannels = {};
+const notePresenceTimers = {};
+function ensureNotePresenceChannel(channelKey){
+  if(notePresenceChannels[channelKey]) return notePresenceChannels[channelKey];
+  const ch = supabaseClient.channel('presence-' + channelKey, { config: { presence: { key: currentUser.id } } });
+  ch.on('presence', { event: 'sync' }, ()=> renderNotePresenceIndicator(channelKey));
+  ch.subscribe();
+  notePresenceChannels[channelKey] = ch;
+  return ch;
+}
+function broadcastWriting(channelKey, title){
+  if(!currentUser) return;
+  const ch = ensureNotePresenceChannel(channelKey);
+  ch.track({ name: nameFor(currentUser.id), title: title || '' });
+  clearTimeout(notePresenceTimers[channelKey]);
+  notePresenceTimers[channelKey] = setTimeout(()=> ch.untrack(), 5000);
+}
+function stopBroadcastingWriting(channelKey){
+  clearTimeout(notePresenceTimers[channelKey]);
+  const ch = notePresenceChannels[channelKey];
+  if(ch) ch.untrack();
+}
+function renderNotePresenceIndicator(channelKey){
+  const ch = notePresenceChannels[channelKey];
+  const elId = channelKey === 'notebook-writing' ? 'notebookWritingIndicator' : 'notesWritingIndicator';
+  const el = document.getElementById(elId);
+  if(!ch || !el) return;
+  const state = ch.presenceState();
+  const others = Object.entries(state).filter(([uid])=> uid !== currentUser.id).map(([,arr])=> arr[arr.length-1]);
+  if(others.length === 0){ el.classList.add('hidden'); el.textContent = ''; return; }
+  el.textContent = others.map(o=> t('writingIndicator').replace('{name}', o.name).replace('{title}', o.title||'')).join(' · ');
+  el.classList.remove('hidden');
+}
+let noteRealtimeSubscribed = false;
+function subscribeNoteRealtimeInserts(){
+  if(noteRealtimeSubscribed || !currentUser) return;
+  noteRealtimeSubscribed = true;
+  supabaseClient.channel('notebook-notes-inserts')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notebook_notes' }, (payload)=>{
+      const row = payload.new;
+      if(row.user_id === currentUser.id) return; // own inserts are already added locally at the point of creation
+      const groupKey = (row.header && row.header.trim()) || '__none__';
+      if(!allNotebookNotes[groupKey]) allNotebookNotes[groupKey] = [];
+      if(!allNotebookNotes[groupKey].some(n=>n.id===row.id)){
+        allNotebookNotes[groupKey].push(row);
+        if(activeTab === 'study') renderNotebookList();
+      }
+    })
+    .subscribe();
+  supabaseClient.channel('course-notes-inserts')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'course_notes' }, (payload)=>{
+      const row = payload.new;
+      if(row.user_id === currentUser.id) return;
+      const groupKey = row.course_id || (row.header && row.header.trim()) || '__none__';
+      if(!allNotes[groupKey]) allNotes[groupKey] = [];
+      if(!allNotes[groupKey].some(n=>n.id===row.id)){
+        allNotes[groupKey].push(row);
+        if(activeTab === 'yonsei') renderLectureList();
+      }
+    })
+    .subscribe();
+}
 // Shared by every note editor's image toolbar button (Yonsei course notes,
 // Notebook notes): opens a file picker, uploads to the note-media bucket
 // (own user-id folder, mirrors writing-images/job-application-files), then
@@ -22531,11 +22838,16 @@ function ensureQuillInitialized(){
           ['clean']
         ],
         handlers: { image: quillImageUploadHandler }
-      }
+      },
+      imageResize: {}
     }
   });
   quillEditor.on('text-change', (delta, oldDelta, source)=>{
-    if(source === 'user') editorDirty = true;
+    if(source === 'user'){
+      editorDirty = true;
+      const note = selectedLectureId ? Object.values(allNotes).flat().find(n=>n.id===selectedLectureId) : null;
+      broadcastWriting('course-notes-writing', note ? note.lecture_title : '');
+    }
   });
   buildCustomColorControls();
 }
@@ -22800,36 +23112,16 @@ async function moveNotebookNote(noteId, groupKey, direction){
   a.sort_order = bOrder; b.sort_order = aOrder;
   renderNotebookList();
 }
-function rebuildNotebookPersonFilter(){
-  const sel = document.getElementById('notebookPersonFilter');
-  if(!sel) return;
-  const prev = sel.value;
-  sel.innerHTML = '';
-  const allOpt = document.createElement('option');
-  allOpt.value = 'all'; allOpt.textContent = t('allPeople');
-  sel.appendChild(allOpt);
-  const selectable = currentUser ? [currentUser.id, ...visibleCircleMembers()] : Object.keys(profiles).filter(uid=>coreMembers[uid]);
-  selectable.forEach(uid=>{
-    const opt = document.createElement('option');
-    opt.value = uid; opt.textContent = nameFor(uid);
-    sel.appendChild(opt);
-  });
-  sel.value = (prev && (prev==='all'||selectable.includes(prev))) ? prev : 'all';
-  notebookPersonFilter = sel.value;
-}
-document.getElementById('notebookPersonFilter').addEventListener('change', (e)=>{
-  notebookPersonFilter = e.target.value;
-  renderNotebookList();
-});
+function rebuildNotebookPersonFilter(){ rebuildPersonFilter('notebookPersonFilter', '__circle__'); }
+wirePersonFilter('notebookPersonFilter', '__circle__', renderNotebookList);
 function renderNotebookList(){
   const list = document.getElementById('notebookList');
   if(!list || !currentUser) return;
   list.innerHTML = '';
 
+  const showIds = personFilterShowIds('notebookPersonFilter');
   let groupKeys = Object.keys(allNotebookNotes).filter(k => (allNotebookNotes[k]||[]).length > 0);
-  if(notebookPersonFilter !== 'all'){
-    groupKeys = groupKeys.filter(k => (allNotebookNotes[k]||[]).some(n=>n.user_id===notebookPersonFilter));
-  }
+  groupKeys = groupKeys.filter(k => (allNotebookNotes[k]||[]).some(n=>showIds.includes(n.user_id)));
   if(groupKeys.length === 0){ list.innerHTML = '<div class="empty">–</div>'; return; }
 
   groupKeys.sort((a,b)=>{
@@ -22840,9 +23132,7 @@ function renderNotebookList(){
 
   groupKeys.forEach(groupKey=>{
     let notes = (allNotebookNotes[groupKey]||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
-    if(notebookPersonFilter !== 'all'){
-      notes = notes.filter(n => n.user_id === notebookPersonFilter);
-    }
+    notes = notes.filter(n => showIds.includes(n.user_id));
     const groupLabel = groupKey === '__none__' ? t('generalNotes') : groupKey;
     const isExpanded = expandedNotebookGroups.has(groupKey);
 
@@ -22983,11 +23273,16 @@ function ensureNotebookQuillInitialized(){
       toolbar: {
         container: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['image','video'], ['clean']],
         handlers: { image: quillImageUploadHandler }
-      }
+      },
+      imageResize: {}
     }
   });
   notebookQuillEditor.on('text-change', (delta, oldDelta, source)=>{
-    if(source === 'user') notebookEditorDirty = true;
+    if(source === 'user'){
+      notebookEditorDirty = true;
+      const note = selectedNotebookNoteId ? Object.values(allNotebookNotes).flat().find(n=>n.id===selectedNotebookNoteId) : null;
+      broadcastWriting('notebook-writing', note ? note.lecture_title : '');
+    }
   });
   buildQuillColorPicker(notebookQuillEditor, ()=>currentNotebookColor, ()=>{ notebookEditorDirty = true; });
 }
