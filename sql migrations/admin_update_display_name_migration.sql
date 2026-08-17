@@ -43,4 +43,9 @@ BEGIN
   UPDATE profiles SET display_name = trimmed WHERE id = target_user_id;
 END;
 $$;
+-- Supabase auto-grants EXECUTE to anon on every new function by default
+-- (a database-level default privilege, independent of the GRANT below) --
+-- explicit REVOKE is required to actually keep this authenticated-only,
+-- same pattern as yonsei_security_definer_hardening_migration.sql.
+REVOKE EXECUTE ON FUNCTION admin_update_display_name(uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION admin_update_display_name(uuid, text) TO authenticated;

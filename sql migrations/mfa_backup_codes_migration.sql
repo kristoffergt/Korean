@@ -51,6 +51,9 @@ BEGIN
   RETURN codes;
 END;
 $$;
+-- Supabase auto-grants EXECUTE to anon on every new function by default --
+-- explicit REVOKE is required to actually keep these authenticated-only.
+REVOKE EXECUTE ON FUNCTION mfa_backup_codes_generate() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION mfa_backup_codes_generate() TO authenticated;
 
 -- Checks a code against the calling user's unused codes; consumes it (marks
@@ -79,6 +82,7 @@ BEGIN
   RETURN true;
 END;
 $$;
+REVOKE EXECUTE ON FUNCTION mfa_backup_code_verify(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION mfa_backup_code_verify(text) TO authenticated;
 
 -- Cleanup when 2FA is turned off -- stale backup codes for a disabled
@@ -94,4 +98,5 @@ BEGIN
   DELETE FROM mfa_backup_codes WHERE user_id = auth.uid();
 END;
 $$;
+REVOKE EXECUTE ON FUNCTION mfa_backup_codes_clear() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION mfa_backup_codes_clear() TO authenticated;
