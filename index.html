@@ -344,6 +344,14 @@ button:hover{background:var(--ink-hover);}
   .lang-switch{gap:4px;padding:4px 7px 4px 6px;}
   .lang-switch-select{font-size:11px;}
   .lang-switch-icon{width:12px;height:12px;}
+  /* Fixed-px number columns (22px 1fr 60px 70px 70px) don't leave the
+     numbers enough room on narrow phone widths and they clip/overflow the
+     card edge -- shrink the columns and font instead of the numbers just
+     spilling out. */
+  .lb-row, .lb-head{grid-template-columns:16px 1fr 42px 48px 48px;gap:5px;}
+  .lb-row-simple, .lb-head-simple{grid-template-columns:16px 1fr 48px;gap:5px;}
+  .lb-row, .lb-row-simple{font-size:11.5px;}
+  .lb-head, .lb-head-simple{font-size:8.5px;}
 }
 .writing-task-box{white-space:pre-wrap;background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.6;margin-top:10px;}
 .writing-char-count{font-weight:600;}
@@ -532,10 +540,14 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:26px;height:26px;"></div><div class="brand-icon brand-icon-dark" style="width:26px;height:26px;"></div><h1>Productivity Tracker</h1></div>
     <div class="auth-sub" id="lblMfaPromptTitle"></div>
     <div class="auth-sub" id="lblMfaPromptHint"></div>
-    <div class="auth-field">
+    <div class="auth-field" id="mfaCodeField">
       <input type="text" id="mfaCodeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
     </div>
+    <div class="auth-field hidden" id="mfaBackupCodeField">
+      <input type="text" id="mfaBackupCodeInput" autocomplete="off" maxlength="9" placeholder="XXXX-XXXX">
+    </div>
     <button class="auth-submit" id="mfaVerifyBtn"></button>
+    <button class="linkbtn" id="mfaUseBackupBtn" style="margin-top:10px;width:100%;text-align:center;"></button>
     <div id="mfaMsg" class="auth-msg"></div>
   </div>
 </div>
@@ -543,7 +555,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 <div class="wrap hidden" id="appScreen">
   <header>
     <div>
-      <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:32px;height:32px;"></div><div class="brand-icon brand-icon-dark" style="width:32px;height:32px;"></div><h1>Productivity Tracker</h1></div>
+      <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:32px;height:32px;"></div><div class="brand-icon brand-icon-dark" style="width:32px;height:32px;"></div><h1 id="appTitleHome" style="cursor:pointer;">Productivity Tracker</h1></div>
       <div class="sub" id="headerSub"></div>
     </div>
     <div class="who">
@@ -1483,8 +1495,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="hint hidden" id="settingsHideLeaderboardsMsg"></div>
 
     <div style="margin-top:14px;">
-      <div class="wtc-title" id="lblManageTabs" style="margin-bottom:6px;"></div>
-      <div id="manageTabsList"></div>
+      <div class="note-group-header" id="manageTabsHeader"></div>
+      <div id="manageTabsList" class="hidden"></div>
     </div>
 
     <div class="log-form" style="margin-top:16px;">
@@ -1523,6 +1535,14 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
         <button class="export-btn" id="confirm2faBtn"></button>
         <button id="cancel2faEnrollBtn"></button>
+      </div>
+    </div>
+    <div id="settings2faBackupPanel" class="hidden" style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:8px;">
+      <div class="hint" id="settings2faBackupLabelText"></div>
+      <div id="settings2faBackupCodes" style="font-family:'Space Grotesk',monospace;font-size:15px;font-weight:700;letter-spacing:0.5px;margin:10px 0;display:flex;flex-direction:column;gap:4px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="export-btn" id="download2faBackupBtn"></button>
+        <button id="close2faBackupBtn"></button>
       </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -7480,7 +7500,7 @@ const I18N = {
     signupCheckEmail:'Account created. Check your email (and your spam folder) for a confirmation link, then sign in.',
     creatingAccountLabel:'Creating account…', signingInLabel:'Signing in…',
     resendConfirmBtn:"Didn't receive it? Send again", resendConfirmSent:'Confirmation email sent again. Check your inbox and spam folder.',
-    hAccountSettings:'Account settings', settingsSignedInAs:'Signed in as', settingsNameTooLong:'Name must be 12 characters or fewer.', lblSettingsDisplayName:'Display name', lblSettingsNewEmail:'New email', lblSettingsNewPassword:'New password', lblSettingsConfirmPassword:'Confirm new password',
+    hAccountSettings:'Account settings', settingsSignedInAs:'Signed in as', settingsNameTooLong:'Name must be 12 characters or fewer.', settingsNameInvalidChars:'Name can only contain letters, numbers, spaces, hyphens, and apostrophes.', lblSettingsDisplayName:'Display name', lblSettingsNewEmail:'New email', lblSettingsNewPassword:'New password', lblSettingsConfirmPassword:'Confirm new password',
     settingsSaveNameBtn:'Save name', settingsSaveEmailBtn:'Update email', settingsSavePasswordBtn:'Update password',
     lblHideLeaderboards:'Hide me from all leaderboards', hideLeaderboardsOn:'You are now hidden from all leaderboards.', hideLeaderboardsOff:'You are now visible on leaderboards again.', lbHiddenFromOthers:'hidden from others',
     settingsEnterName:'Enter a name.', settingsEmailPending:'Confirmation email sent. Check your new inbox to complete the change.',
@@ -7496,12 +7516,12 @@ const I18N = {
     lblSettingsDangerZone:'Danger zone', settingsDeleteExplain:'Permanently deletes your account and everything in it. This cannot be undone.',
     lblSettingsDeleteEmailConfirm:'Type your email to confirm', lblSettingsDeletePasswordConfirm:'Enter your password', deleteAccountBtn:'Delete my account',
     settingsDeleteMismatch:"Email doesn't match your account.", settingsDeleteWrongPassword:'Incorrect password.', settingsDeleteAdminBlocked:"The admin account can't be deleted.", settingsDeleteFailed:'Could not delete account.',
-    hModerator:'Moderator – All accounts', modResetPw:'Reset password', modConfirmEmail:'Confirm email', modDisableMfa:'Disable 2FA', modDeleteUser:'Delete account',
+    hModerator:'Moderator – All accounts', modResetPw:'Reset password', modEditName:'Edit name', modConfirmEmail:'Confirm email', modDisableMfa:'Disable 2FA', modDeleteUser:'Delete account',
     modSearchPlaceholder:'Search name or email…', modSortDate:'Sort by date joined', modSort2fa:'Sort by 2FA status', modSortConfirmed:'Sort by confirmation status', modSortName:'Sort by name',
-    modConfirmed:'Confirmed', modUnconfirmed:'Unconfirmed', modMfaOn:'2FA on', modMfaOff:'2FA off', modYou:'YOU', modAdmin:'Admin', modNewPasswordPrompt:'New password for this account:',
+    modConfirmed:'Confirmed', modUnconfirmed:'Unconfirmed', modMfaOn:'2FA on', modMfaOff:'2FA off', modYou:'YOU', modAdmin:'Admin', modNewPasswordPrompt:'New password for this account:', modNewNamePrompt:'New display name for this account:',
     modConfirmDeleteUser:'Permanently delete this account and all of its data? This cannot be undone.', modActionFailed:'Action failed.', modActionDone:'Done.',
     modConfirmResetPw:"Reset this user's password?", modConfirmConfirmEmail:"Manually confirm this user's email?", modConfirmDisableMfa:'Disable two-factor authentication for this user?',
-    mfaPromptTitle:'Enter your authentication code', mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.',
+    mfaPromptTitle:'Enter your authentication code', mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.', mfaUseBackupBtn:'Use a backup code instead', mfaUseTotpBtn:'Use your authenticator app instead', mfaBackupCodePlaceholder:'Enter a backup code', mfaBackupWrongCode:'Invalid or already-used backup code.', download2faBackupBtn:'Download codes',
     hAddCourse:'Add a course', courseTitle:'Course title', courseCode:'Course code', courseProfessor:'Professor',
     courseTime:'Time', courseConcentration:'Concentration', courseStatus:'Status', courseSyllabus:'Syllabus',
     courseDay:'Day', courseStartDate:'Start date (optional)', courseEndDate:'Ends (optional)', courseMidterm:'Midterm date (optional)', courseFinal:'Final date (optional)',
@@ -7531,7 +7551,7 @@ const I18N = {
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
-    tabYonsei:'Yonsei', tabBoards:'Boards', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site ↗', lblManageTabs:'Manage visible tabs', manageTabsNeedOne:'At least one tab must stay visible.', manageTabsNeedOneSub:'At least one sub-tab must stay visible.', yonseiNotifyOff:'Email me new notices', yonseiNotifyOn:'Notified of new notices', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', yonseiCategoryAll:'All categories', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardSortDate:'Date posted', jobBoardSortDeadline:'Deadline', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update now', jobBoardUpdating:'Updating...'
+    tabYonsei:'Yonsei', tabBoards:'Boards', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site ↗', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', yonseiCategoryAll:'All categories', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardSortDate:'Date posted', jobBoardSortDeadline:'Deadline', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardUpdating:'Updating...'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
@@ -7586,7 +7606,7 @@ const I18N = {
     signupCheckEmail:'계정이 생성되었습니다. 이메일(스팸함 포함)에서 확인 링크를 클릭한 후 로그인해 주세요.',
     creatingAccountLabel:'계정 생성 중…', signingInLabel:'로그인 중…',
     resendConfirmBtn:'받지 못하셨나요? 다시 보내기', resendConfirmSent:'확인 이메일을 다시 보냈습니다. 받은편지함과 스팸함을 확인하세요.',
-    hAccountSettings:'계정 설정', settingsSignedInAs:'로그인 계정', settingsNameTooLong:'이름은 12자 이하여야 합니다.', lblSettingsDisplayName:'표시 이름', lblSettingsNewEmail:'새 이메일', lblSettingsNewPassword:'새 비밀번호', lblSettingsConfirmPassword:'새 비밀번호 확인',
+    hAccountSettings:'계정 설정', settingsSignedInAs:'로그인 계정', settingsNameTooLong:'이름은 12자 이하여야 합니다.', settingsNameInvalidChars:'이름에는 문자, 숫자, 공백, 하이픈, 아포스트로피만 사용할 수 있습니다.', lblSettingsDisplayName:'표시 이름', lblSettingsNewEmail:'새 이메일', lblSettingsNewPassword:'새 비밀번호', lblSettingsConfirmPassword:'새 비밀번호 확인',
     settingsSaveNameBtn:'이름 저장', settingsSaveEmailBtn:'이메일 변경', settingsSavePasswordBtn:'비밀번호 변경',
     lblHideLeaderboards:'모든 리더보드에서 나를 숨기기', hideLeaderboardsOn:'이제 모든 리더보드에서 숨겨집니다.', hideLeaderboardsOff:'이제 다시 리더보드에 표시됩니다.', lbHiddenFromOthers:'다른 사람에게는 숨김',
     settingsEnterName:'이름을 입력하세요.', settingsEmailPending:'확인 이메일을 보냈습니다. 새 이메일 받은편지함을 확인해 변경을 완료하세요.',
@@ -7602,12 +7622,12 @@ const I18N = {
     lblSettingsDangerZone:'위험 구역', settingsDeleteExplain:'계정과 모든 데이터가 영구적으로 삭제됩니다. 되돌릴 수 없습니다.',
     lblSettingsDeleteEmailConfirm:'확인을 위해 이메일을 입력하세요', lblSettingsDeletePasswordConfirm:'비밀번호를 입력하세요', deleteAccountBtn:'계정 삭제',
     settingsDeleteMismatch:'계정 이메일과 일치하지 않습니다.', settingsDeleteWrongPassword:'비밀번호가 올바르지 않습니다.', settingsDeleteAdminBlocked:'관리자 계정은 삭제할 수 없습니다.', settingsDeleteFailed:'계정을 삭제할 수 없습니다.',
-    hModerator:'관리자 – 전체 계정', modResetPw:'비밀번호 재설정', modConfirmEmail:'이메일 확인 처리', modDisableMfa:'2단계 인증 끄기', modDeleteUser:'계정 삭제',
+    hModerator:'관리자 – 전체 계정', modResetPw:'비밀번호 재설정', modEditName:'이름 수정', modConfirmEmail:'이메일 확인 처리', modDisableMfa:'2단계 인증 끄기', modDeleteUser:'계정 삭제',
     modSearchPlaceholder:'이름 또는 이메일 검색…', modSortDate:'가입일순 정렬', modSort2fa:'2FA 상태순 정렬', modSortConfirmed:'인증 상태순 정렬', modSortName:'이름순 정렬',
-    modConfirmed:'확인됨', modUnconfirmed:'미확인', modMfaOn:'2FA 켜짐', modMfaOff:'2FA 꺼짐', modYou:'나', modAdmin:'관리자', modNewPasswordPrompt:'이 계정의 새 비밀번호:',
+    modConfirmed:'확인됨', modUnconfirmed:'미확인', modMfaOn:'2FA 켜짐', modMfaOff:'2FA 꺼짐', modYou:'나', modAdmin:'관리자', modNewPasswordPrompt:'이 계정의 새 비밀번호:', modNewNamePrompt:'이 계정의 새 표시 이름:',
     modConfirmDeleteUser:'이 계정과 모든 데이터를 영구적으로 삭제하시겠습니까? 되돌릴 수 없습니다.', modActionFailed:'작업에 실패했습니다.', modActionDone:'완료되었습니다.',
     modConfirmResetPw:'이 사용자의 비밀번호를 재설정하시겠습니까?', modConfirmConfirmEmail:'이 사용자의 이메일을 수동으로 확인 처리하시겠습니까?', modConfirmDisableMfa:'이 사용자의 2단계 인증을 비활성화하시겠습니까?',
-    mfaPromptTitle:'인증 코드를 입력하세요', mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.',
+    mfaPromptTitle:'인증 코드를 입력하세요', mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.', mfaUseBackupBtn:'백업 코드 사용하기', mfaUseTotpBtn:'인증 앱 사용하기', mfaBackupCodePlaceholder:'백업 코드를 입력하세요', mfaBackupWrongCode:'백업 코드가 올바르지 않거나 이미 사용되었습니다.', download2faBackupBtn:'코드 다운로드',
     hAddCourse:'수업 추가', courseTitle:'수업명', courseCode:'수업 코드', courseProfessor:'교수',
     courseTime:'시간', courseConcentration:'전공/트랙', courseStatus:'상태', courseSyllabus:'강의계획서',
     courseDay:'요일', courseStartDate:'시작일 (선택)', courseEndDate:'종료일 (선택)', courseMidterm:'중간고사 날짜 (선택)', courseFinal:'기말고사 날짜 (선택)',
@@ -7637,7 +7657,7 @@ const I18N = {
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
-    tabYonsei:'연세', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기 ↗', lblManageTabs:'표시할 탭 관리', manageTabsNeedOne:'적어도 하나의 탭은 표시되어야 합니다.', manageTabsNeedOneSub:'적어도 하나의 하위 탭은 표시되어야 합니다.', yonseiNotifyOff:'새 공지 이메일 받기', yonseiNotifyOn:'새 공지 알림 받는 중', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', yonseiCategoryAll:'전체 카테고리', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardSortDate:'등록일', jobBoardSortDeadline:'마감일', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'지금 업데이트', jobBoardUpdating:'업데이트 중...'
+    tabYonsei:'연세', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기 ↗', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', yonseiCategoryAll:'전체 카테고리', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardSortDate:'등록일', jobBoardSortDeadline:'마감일', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardUpdating:'업데이트 중...'
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
@@ -7692,7 +7712,7 @@ const I18N = {
     signupCheckEmail:'Đã tạo tài khoản. Vui lòng kiểm tra email (và thư mục spam) để xác nhận, sau đó đăng nhập.',
     creatingAccountLabel:'Đang tạo tài khoản…', signingInLabel:'Đang đăng nhập…',
     resendConfirmBtn:'Chưa nhận được? Gửi lại', resendConfirmSent:'Đã gửi lại email xác nhận. Hãy kiểm tra hộp thư đến và thư mục spam.',
-    hAccountSettings:'Cài đặt tài khoản', settingsSignedInAs:'Đăng nhập với', settingsNameTooLong:'Tên phải có tối đa 12 ký tự.', lblSettingsDisplayName:'Tên hiển thị', lblSettingsNewEmail:'Email mới', lblSettingsNewPassword:'Mật khẩu mới', lblSettingsConfirmPassword:'Xác nhận mật khẩu mới',
+    hAccountSettings:'Cài đặt tài khoản', settingsSignedInAs:'Đăng nhập với', settingsNameTooLong:'Tên phải có tối đa 12 ký tự.', settingsNameInvalidChars:'Tên chỉ được chứa chữ cái, số, khoảng trắng, dấu gạch nối và dấu nháy đơn.', lblSettingsDisplayName:'Tên hiển thị', lblSettingsNewEmail:'Email mới', lblSettingsNewPassword:'Mật khẩu mới', lblSettingsConfirmPassword:'Xác nhận mật khẩu mới',
     settingsSaveNameBtn:'Lưu tên', settingsSaveEmailBtn:'Cập nhật email', settingsSavePasswordBtn:'Cập nhật mật khẩu',
     lblHideLeaderboards:'Ẩn tôi khỏi mọi bảng xếp hạng', hideLeaderboardsOn:'Bạn hiện đã được ẩn khỏi mọi bảng xếp hạng.', hideLeaderboardsOff:'Bạn hiện lại hiển thị trên bảng xếp hạng.', lbHiddenFromOthers:'ẩn với người khác',
     settingsEnterName:'Hãy nhập tên.', settingsEmailPending:'Đã gửi email xác nhận. Kiểm tra hộp thư mới để hoàn tất thay đổi.',
@@ -7708,12 +7728,12 @@ const I18N = {
     lblSettingsDangerZone:'Khu vực nguy hiểm', settingsDeleteExplain:'Xóa vĩnh viễn tài khoản và toàn bộ dữ liệu của bạn. Không thể hoàn tác.',
     lblSettingsDeleteEmailConfirm:'Nhập email để xác nhận', lblSettingsDeletePasswordConfirm:'Nhập mật khẩu của bạn', deleteAccountBtn:'Xóa tài khoản của tôi',
     settingsDeleteMismatch:'Email không khớp với tài khoản của bạn.', settingsDeleteWrongPassword:'Mật khẩu không đúng.', settingsDeleteAdminBlocked:'Không thể xóa tài khoản quản trị.', settingsDeleteFailed:'Không thể xóa tài khoản.',
-    hModerator:'Quản trị viên – Tất cả tài khoản', modResetPw:'Đặt lại mật khẩu', modConfirmEmail:'Xác nhận email', modDisableMfa:'Tắt 2FA', modDeleteUser:'Xóa tài khoản',
+    hModerator:'Quản trị viên – Tất cả tài khoản', modResetPw:'Đặt lại mật khẩu', modEditName:'Sửa tên', modConfirmEmail:'Xác nhận email', modDisableMfa:'Tắt 2FA', modDeleteUser:'Xóa tài khoản',
     modSearchPlaceholder:'Tìm theo tên hoặc email…', modSortDate:'Sắp xếp theo ngày tham gia', modSort2fa:'Sắp xếp theo trạng thái 2FA', modSortConfirmed:'Sắp xếp theo trạng thái xác nhận', modSortName:'Sắp xếp theo tên',
-    modConfirmed:'Đã xác nhận', modUnconfirmed:'Chưa xác nhận', modMfaOn:'2FA bật', modMfaOff:'2FA tắt', modYou:'Bạn', modAdmin:'Quản trị', modNewPasswordPrompt:'Mật khẩu mới cho tài khoản này:',
+    modConfirmed:'Đã xác nhận', modUnconfirmed:'Chưa xác nhận', modMfaOn:'2FA bật', modMfaOff:'2FA tắt', modYou:'Bạn', modAdmin:'Quản trị', modNewPasswordPrompt:'Mật khẩu mới cho tài khoản này:', modNewNamePrompt:'Tên hiển thị mới cho tài khoản này:',
     modConfirmDeleteUser:'Xóa vĩnh viễn tài khoản này và toàn bộ dữ liệu? Không thể hoàn tác.', modActionFailed:'Thao tác thất bại.', modActionDone:'Hoàn tất.',
     modConfirmResetPw:'Đặt lại mật khẩu của người dùng này?', modConfirmConfirmEmail:'Xác nhận thủ công email của người dùng này?', modConfirmDisableMfa:'Tắt xác thực hai yếu tố cho người dùng này?',
-    mfaPromptTitle:'Nhập mã xác thực', mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.',
+    mfaPromptTitle:'Nhập mã xác thực', mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.', mfaUseBackupBtn:'Dùng mã dự phòng thay thế', mfaUseTotpBtn:'Dùng ứng dụng xác thực thay thế', mfaBackupCodePlaceholder:'Nhập mã dự phòng', mfaBackupWrongCode:'Mã dự phòng không đúng hoặc đã được sử dụng.', download2faBackupBtn:'Tải mã xuống',
     hAddCourse:'Thêm khóa học', courseTitle:'Tên khóa học', courseCode:'Mã khóa học', courseProfessor:'Giáo sư',
     courseTime:'Giờ học', courseConcentration:'Chuyên ngành', courseStatus:'Trạng thái', courseSyllabus:'Đề cương',
     courseDay:'Thứ', courseStartDate:'Ngày bắt đầu (tùy chọn)', courseEndDate:'Ngày kết thúc (tùy chọn)', courseMidterm:'Ngày thi giữa kỳ (tùy chọn)', courseFinal:'Ngày thi cuối kỳ (tùy chọn)',
@@ -7744,14 +7764,14 @@ const I18N = {
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
-    tabYonsei:'Yonsei', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei ↗', lblManageTabs:'Quản lý các tab hiển thị', manageTabsNeedOne:'Phải có ít nhất một tab được hiển thị.', manageTabsNeedOneSub:'Phải có ít nhất một tab phụ được hiển thị.', yonseiNotifyOff:'Nhận email thông báo mới', yonseiNotifyOn:'Đang nhận thông báo mới', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', yonseiCategoryAll:'Tất cả danh mục', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardSortDate:'Ngày đăng', jobBoardSortDeadline:'Hạn nộp', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật ngay', jobBoardUpdating:'Đang cập nhật...'
+    tabYonsei:'Yonsei', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei ↗', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', yonseiCategoryAll:'Tất cả danh mục', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardSortDate:'Ngày đăng', jobBoardSortDeadline:'Hạn nộp', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardUpdating:'Đang cập nhật...'
   }
 };
 const STATIC_MAP = {
   authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password',
   headerSub:'headerSub', signOutBtn:'signOut',
   tabBtnStudyLabel:'tabStudy', tabBtnReadingLabel:'tabReading', tabBtnJobsLabel:'tabJobs', tabBtnCalendarLabel:'tabCalendar', tabBtnYonseiLabel:'tabYonsei',
-  yonseiSubCoursesBtn:'tabCourses', yonseiSubNotesBtn:'tabNotes', yonseiSubBoardsBtn:'tabBoards', hYonseiBoards:'hYonseiBoards', lblManageTabs:'lblManageTabs',
+  yonseiSubCoursesBtn:'tabCourses', yonseiSubNotesBtn:'tabNotes', yonseiSubBoardsBtn:'tabBoards', hYonseiBoards:'hYonseiBoards',
   hLeaderboard:'leaderboard', lbHeadRank:'lbRank', lbHeadName:'lbName', lbHeadStreak:'lbStreak', lbHeadWeek:'lbWeek', lbHeadTotal:'lbTotal',
   hLogStudy:'logStudy', lblDate:'date', lblActivity:'activity', lblHours:'hours', addBtn:'addSession', studyHint:'studyHint',
   hStudyTimer:'hStudyTimer', lblTimerActivity:'lblTimerActivity', timerStartBtn:'timerStartBtn', timerPauseBtn:'timerPauseBtn', timerResetBtn:'timerResetBtn', timerSaveBtn:'timerSaveBtn', timerHint:'timerHint',
@@ -7796,12 +7816,13 @@ const STATIC_MAP = {
   lblSettingsPasswordSection:'lblSettingsPasswordSection', sendPasswordResetBtn:'sendPasswordResetBtn',
   lblSettings2fa:'lblSettings2fa', lblSettings2faCode:'lblSettings2faCode', confirm2faBtn:'confirm2faBtn', cancel2faEnrollBtn:'cancel2faEnrollBtn',
   settings2faSecretLabel:'settings2faSecretLabel',
+  settings2faBackupLabelText:'settings2faBackupLabel', download2faBackupBtn:'download2faBackupBtn', close2faBackupBtn:'close2faBackupBtn',
   enable2faBtn:'enable2faBtn', disable2faBtn:'disable2faBtn',
   lblSettingsDeleteEmailConfirm:'lblSettingsDeleteEmailConfirm',
   lblSettingsDeletePasswordConfirm:'lblSettingsDeletePasswordConfirm', deleteAccountBtn:'deleteAccountBtn', hModerator:'hModerator', closeAccountSettingsBtn:'closeNoteBtn',
   hLinkedCircle:'hLinkedCircle', linkedCircleDesc:'linkedCircleDesc', closeFriendsBtn:'closeNoteBtn',
   writingFeedbackHeader:'writingFeedbackHeader', writingFeedbackSendBtn:'writingFeedbackSendBtn',
-  lblMfaPromptTitle:'mfaPromptTitle', lblMfaPromptHint:'mfaPromptHint', mfaVerifyBtn:'mfaVerifyBtn',
+  lblMfaPromptTitle:'mfaPromptTitle', lblMfaPromptHint:'mfaPromptHint', mfaVerifyBtn:'mfaVerifyBtn', mfaUseBackupBtn:'mfaUseBackupBtn',
   hNotebookList:'hNotebookList', lblNotebookPersonFilter:'lblNotesPersonFilter', saveNotebookBtn:'saveNoteBtn', closeNotebookBtn:'closeNoteBtn',
   hNewWriting:'hNewWriting', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', deleteAllWritingBtn:'deleteAllWritingBtn', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
   lblWritingCustomTaskType:'lblWritingCustomTaskType', writingTaskTypeEssayOpt:'writingTaskTypeEssay', writingTaskTypeDataOpt:'writingTaskTypeData', lblWritingCustomDescription:'lblWritingCustomDescription', lblWritingImage:'lblWritingImage', writingImageHint:'writingImageHint',
@@ -7836,6 +7857,11 @@ const ACTIVITIES = [
 const ACT_MAP = Object.fromEntries(ACTIVITIES.map(a=>[a.key,a]));
 let currentUser = null;
 const ADMIN_EMAIL = 'kristoffergt@gmail.com';
+// Letters (any language), numbers, spaces, hyphens, apostrophes -- no
+// symbols/punctuation that could break rendering or lookups (matched
+// server-side too, in admin_update_display_name).
+const DISPLAY_NAME_RE = /^[\p{L}\p{N} '-]+$/u;
+function isValidDisplayName(name){ return DISPLAY_NAME_RE.test(name); }
 let pendingMfaUser = null;
 let pendingMfaFactorId = null;
 let mfaEnrollFactorId = null;
@@ -8309,6 +8335,7 @@ document.getElementById('authSubmit').addEventListener('click', async ()=>{
     const displayName = document.getElementById('displayNameInput').value.trim();
     if(!displayName){ showAuthMsg('Enter a name.', 'error'); return; }
     if(displayName.length > 12){ showAuthMsg(t('settingsNameTooLong'), 'error'); return; }
+    if(!isValidDisplayName(displayName)){ showAuthMsg(t('settingsNameInvalidChars'), 'error'); return; }
     const { data: available, error: availError } = await supabaseClient.rpc('display_name_available', { dname: displayName });
     if(!availError && available === false){ showAuthMsg(t('duplicateName'), 'error'); return; }
     // Note: the display name is NOT written to `profiles` here. Supabase
@@ -8363,6 +8390,11 @@ async function checkMfaAndProceed(user){
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('resetScreen').classList.add('hidden');
       document.getElementById('mfaCodeInput').value = '';
+      document.getElementById('mfaBackupCodeInput').value = '';
+      document.getElementById('mfaCodeField').classList.remove('hidden');
+      document.getElementById('mfaBackupCodeField').classList.add('hidden');
+      document.getElementById('mfaUseBackupBtn').textContent = t('mfaUseBackupBtn');
+      mfaBackupMode = false;
       document.getElementById('mfaMsg').innerHTML = '';
       document.getElementById('mfaScreen').classList.remove('hidden');
       return;
@@ -8370,17 +8402,45 @@ async function checkMfaAndProceed(user){
   }
   onAuthed(user);
 }
+document.getElementById('mfaCodeInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('mfaVerifyBtn').click(); }
+});
+document.getElementById('mfaBackupCodeInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('mfaVerifyBtn').click(); }
+});
+// Toggles the MFA challenge screen between the normal 6-digit TOTP input and
+// the backup-code fallback (for when the authenticator app/device is lost).
+let mfaBackupMode = false;
+document.getElementById('mfaUseBackupBtn').addEventListener('click', ()=>{
+  mfaBackupMode = !mfaBackupMode;
+  document.getElementById('mfaCodeField').classList.toggle('hidden', mfaBackupMode);
+  document.getElementById('mfaBackupCodeField').classList.toggle('hidden', !mfaBackupMode);
+  document.getElementById('mfaUseBackupBtn').textContent = t(mfaBackupMode ? 'mfaUseTotpBtn' : 'mfaUseBackupBtn');
+  document.getElementById('mfaMsg').innerHTML = '';
+  (mfaBackupMode ? document.getElementById('mfaBackupCodeInput') : document.getElementById('mfaCodeInput')).focus();
+});
 document.getElementById('mfaVerifyBtn').addEventListener('click', async ()=>{
-  const code = document.getElementById('mfaCodeInput').value.trim();
-  if(!code || !pendingMfaFactorId) return;
-  const { error } = await supabaseClient.auth.mfa.challengeAndVerify({ factorId: pendingMfaFactorId, code });
-  if(error){
-    document.getElementById('mfaMsg').innerHTML = `<div class="auth-msg-inner error">${t('mfaWrongCode')}</div>`;
-    return;
+  if(mfaBackupMode){
+    const code = document.getElementById('mfaBackupCodeInput').value.trim();
+    if(!code) return;
+    const { data: ok, error } = await supabaseClient.rpc('mfa_backup_code_verify', { code });
+    if(error || !ok){
+      document.getElementById('mfaMsg').innerHTML = `<div class="auth-msg-inner error">${t('mfaBackupWrongCode')}</div>`;
+      return;
+    }
+  } else {
+    const code = document.getElementById('mfaCodeInput').value.trim();
+    if(!code || !pendingMfaFactorId) return;
+    const { error } = await supabaseClient.auth.mfa.challengeAndVerify({ factorId: pendingMfaFactorId, code });
+    if(error){
+      document.getElementById('mfaMsg').innerHTML = `<div class="auth-msg-inner error">${t('mfaWrongCode')}</div>`;
+      return;
+    }
   }
   const user = pendingMfaUser;
   pendingMfaUser = null;
   pendingMfaFactorId = null;
+  mfaBackupMode = false;
   document.getElementById('mfaScreen').classList.add('hidden');
   onAuthed(user);
 });
@@ -8486,6 +8546,9 @@ document.addEventListener('click', (e)=>{
   if(!icon) return;
   document.getElementById('brandLightboxImg').style.backgroundImage = getComputedStyle(icon).backgroundImage;
   document.getElementById('brandLightbox').classList.remove('hidden');
+});
+document.getElementById('appTitleHome').addEventListener('click', ()=>{
+  switchTopLevelTab('calendar');
 });
 document.getElementById('brandLightboxClose').addEventListener('click', ()=>{
   document.getElementById('brandLightbox').classList.add('hidden');
@@ -8720,6 +8783,7 @@ document.getElementById('saveDisplayNameBtn').addEventListener('click', async ()
   const name = document.getElementById('settingsDisplayName').value.trim();
   if(!name){ showSettingsMsg('settingsNameMsg', t('settingsEnterName'), true); return; }
   if(name.length > 12){ showSettingsMsg('settingsNameMsg', t('settingsNameTooLong'), true); return; }
+  if(!isValidDisplayName(name)){ showSettingsMsg('settingsNameMsg', t('settingsNameInvalidChars'), true); return; }
   if(name !== (profiles[currentUser.id]||'')){
     const { data: available, error: availError } = await supabaseClient.rpc('display_name_available', { dname: name });
     if(!availError && available === false){ showSettingsMsg('settingsNameMsg', t('duplicateName'), true); return; }
@@ -8803,6 +8867,7 @@ document.getElementById('cancel2faEnrollBtn').addEventListener('click', async ()
   }
   document.getElementById('settings2faEnrollPanel').classList.add('hidden');
 });
+let latest2faBackupCodes = [];
 document.getElementById('confirm2faBtn').addEventListener('click', async ()=>{
   const code = document.getElementById('settings2faCodeInput').value.trim();
   if(!mfaEnrollFactorId || !code) return;
@@ -8810,13 +8875,38 @@ document.getElementById('confirm2faBtn').addEventListener('click', async ()=>{
   if(error){ showSettingsMsg('settings2faMsg', t('settings2faInvalidCode'), true); return; }
   mfaEnrollFactorId = null;
   document.getElementById('settings2faEnrollPanel').classList.add('hidden');
+  const { data: codes, error: genError } = await supabaseClient.rpc('mfa_backup_codes_generate');
+  if(!genError && codes){
+    latest2faBackupCodes = codes;
+    document.getElementById('settings2faBackupCodes').innerHTML = codes.map(c=>`<div>${escapeHtml(c)}</div>`).join('');
+    document.getElementById('settings2faBackupPanel').classList.remove('hidden');
+  }
   showSettingsMsg('settings2faMsg', t('settings2faEnabled'), false);
   await refreshMfaStatus();
+});
+document.getElementById('download2faBackupBtn').addEventListener('click', ()=>{
+  if(!latest2faBackupCodes.length) return;
+  const text = 'Productivity Tracker - 2FA backup codes\nEach code can be used once if you lose access to your authenticator app.\n\n' + latest2faBackupCodes.join('\n') + '\n';
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'productivity-tracker-backup-codes.txt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('close2faBackupBtn').addEventListener('click', ()=>{
+  latest2faBackupCodes = [];
+  document.getElementById('settings2faBackupCodes').innerHTML = '';
+  document.getElementById('settings2faBackupPanel').classList.add('hidden');
 });
 document.getElementById('disable2faBtn').addEventListener('click', async ()=>{
   const { data } = await supabaseClient.auth.mfa.listFactors();
   const factors = (data && data.totp) || [];
   for(const f of factors){ await supabaseClient.auth.mfa.unenroll({ factorId: f.id }); }
+  await supabaseClient.rpc('mfa_backup_codes_clear');
   showSettingsMsg('settings2faMsg', t('settings2faDisabled'), false);
   await refreshMfaStatus();
 });
@@ -8910,6 +9000,7 @@ function renderModeratorUserList(){
       ${isAdminRow ? '' : `
       <div class="item-meta">
         <button class="linkbtn mod-reset-pw" data-id="${u.id}">${t('modResetPw')}</button>
+        <button class="linkbtn mod-edit-name" data-id="${u.id}" data-name="${escapeHtml(u.display_name||'')}">${t('modEditName')}</button>
         ${u.email_confirmed ? '' : `<button class="linkbtn mod-confirm-email" data-id="${u.id}">${t('modConfirmEmail')}</button>`}
         ${u.mfa_enrolled ? `<button class="linkbtn mod-disable-mfa" data-id="${u.id}">${t('modDisableMfa')}</button>` : ''}
         <button class="linkbtn mod-delete-user" data-id="${u.id}" style="color:var(--seal);">${t('modDeleteUser')}</button>
@@ -8923,6 +9014,20 @@ function renderModeratorUserList(){
       if(!pw) return;
       const { error } = await supabaseClient.rpc('admin_reset_user_password', { target_user_id: btn.dataset.id, new_password: pw });
       alert(error ? t('modActionFailed') : t('modActionDone'));
+    });
+  });
+  list.querySelectorAll('.mod-edit-name').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const current = btn.dataset.name || '';
+      const name = prompt(t('modNewNamePrompt'), current);
+      if(name === null) return;
+      const trimmed = name.trim();
+      if(!trimmed || trimmed === current) return;
+      if(trimmed.length > 12){ alert(t('settingsNameTooLong')); return; }
+      if(!isValidDisplayName(trimmed)){ alert(t('settingsNameInvalidChars')); return; }
+      const { error } = await supabaseClient.rpc('admin_update_display_name', { target_user_id: btn.dataset.id, new_name: trimmed });
+      if(error) alert(error.message && /taken|duplicate/i.test(error.message) ? t('duplicateName') : t('modActionFailed'));
+      else { profiles[btn.dataset.id] = trimmed; loadModeratorUsers(); renderAll(); }
     });
   });
   list.querySelectorAll('.mod-confirm-email').forEach(btn=>{
@@ -10629,13 +10734,19 @@ function triggerJobBoardSync(){
   setTimeout(poll, JOB_BOARD_SYNC_POLL_MS);
 }
 // Runs once per real (local) calendar day, the first time that account logs
-// in -- not tied to opening the Job Board tab specifically. localStorage is
-// appropriate here (rather than a DB column) since this is a per-device
-// preference: it only means anything on the one laptop that has the local
-// script set up.
+// in after 3pm local time -- not tied to opening the Job Board tab
+// specifically, and not fired on an earlier-in-the-day login (job postings
+// tend to land later in the day, and a midnight-login auto-sync was just
+// noise). localStorage is appropriate here (rather than a DB column) since
+// this is a per-device preference: it only means anything on the one laptop
+// that has the local script set up. The day isn't marked done until after
+// the 3pm check passes, so an early login that skips the trigger doesn't
+// block a later-that-day login from firing it.
+const JOB_BOARD_AUTO_SYNC_HOUR = 15;
 function maybeAutoTriggerJobBoardSync(){
   if(!isJobBoardSyncAccount()) return;
   const d = new Date();
+  if(d.getHours() < JOB_BOARD_AUTO_SYNC_HOUR) return;
   const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   if(localStorage.getItem('jobBoardLastAutoSync') === today) return;
   localStorage.setItem('jobBoardLastAutoSync', today);
@@ -11087,10 +11198,21 @@ function applyTabVisibility(){
     }
   });
 }
+// Every possible key, top-level and sub, flattened -- used by Hide all/Show
+// all. A "hide everything" state is allowed (no minimum-one-visible guard):
+// unlike the tab bar itself, the settings gear that opens this modal is
+// never part of TAB_STRUCTURE and is always on screen regardless of
+// hiddenTabs, so there's always a way back in even if every tab is hidden.
+const ALL_TAB_KEYS = TAB_STRUCTURE.flatMap(t=> [t.key, ...(t.subs||[]).map(s=>s.key)]);
+let manageTabsOpen = false;
 function renderManageTabsList(){
+  const header = document.getElementById('manageTabsHeader');
   const container = document.getElementById('manageTabsList');
-  if(!container) return;
-  container.innerHTML = TAB_STRUCTURE.map(top=>{
+  if(!header || !container) return;
+  header.innerHTML = `<span>${manageTabsOpen?'▾':'▸'}</span> ${t('lblManageTabs')}`;
+  container.classList.toggle('hidden', !manageTabsOpen);
+  if(!manageTabsOpen) return;
+  const rows = TAB_STRUCTURE.map(top=>{
     const subsHtml = (top.subs||[]).map(s=>
       `<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;margin:4px 0 4px 22px;color:var(--ink-soft);">
         <input type="checkbox" class="manage-tab-check" data-key="${s.key}" ${isTabHidden(s.key)?'':'checked'} style="width:14px;height:14px;">
@@ -11102,34 +11224,22 @@ function renderManageTabsList(){
         <span>${escapeHtml(t(top.labelKey))}</span>
       </label>${subsHtml}`;
   }).join('');
+  container.innerHTML = `<div style="display:flex;gap:14px;margin-bottom:6px;">
+      <button class="linkbtn" id="manageTabsShowAllBtn">${t('manageTabsShowAll')}</button>
+      <button class="linkbtn" id="manageTabsHideAllBtn">${t('manageTabsHideAll')}</button>
+    </div>${rows}`;
+  document.getElementById('manageTabsShowAllBtn').addEventListener('click', async ()=>{
+    const ok = await saveHiddenTabs([]);
+    if(ok){ applyTabVisibility(); renderManageTabsList(); }
+  });
+  document.getElementById('manageTabsHideAllBtn').addEventListener('click', async ()=>{
+    const ok = await saveHiddenTabs(ALL_TAB_KEYS.slice());
+    if(ok){ applyTabVisibility(); renderManageTabsList(); }
+  });
   container.querySelectorAll('.manage-tab-check').forEach(cb=>{
     cb.addEventListener('change', async (e)=>{
       const key = e.target.dataset.key;
-      const isTopLevel = TAB_STRUCTURE.some(t=> t.key===key);
       const next = e.target.checked ? hiddenTabs.filter(k=>k!==key) : [...hiddenTabs, key];
-      // Never allow hiding the last visible top-level tab, or the last
-      // visible sub-tab of a group whose parent tab is itself still
-      // visible -- either would leave the user unable to get back in.
-      if(!e.target.checked){
-        if(isTopLevel){
-          const remainingVisible = TAB_STRUCTURE.filter(t=> !next.includes(t.key));
-          if(remainingVisible.length === 0){
-            e.target.checked = true;
-            alert(t('manageTabsNeedOne'));
-            return;
-          }
-        } else {
-          const parent = TAB_STRUCTURE.find(t=> (t.subs||[]).some(s=>s.key===key));
-          if(parent && !next.includes(parent.key)){
-            const remainingSubs = parent.subs.filter(s=> !next.includes(s.key));
-            if(remainingSubs.length === 0){
-              e.target.checked = true;
-              alert(t('manageTabsNeedOneSub'));
-              return;
-            }
-          }
-        }
-      }
       e.target.disabled = true;
       const ok = await saveHiddenTabs(next);
       e.target.disabled = false;
@@ -11138,6 +11248,10 @@ function renderManageTabsList(){
     });
   });
 }
+document.getElementById('manageTabsHeader').addEventListener('click', ()=>{
+  manageTabsOpen = !manageTabsOpen;
+  renderManageTabsList();
+});
 
 /* ---------- CALENDAR / TOPIK / DEADLINES ---------- */
 function formatCountdown(target){
@@ -11159,7 +11273,9 @@ function renderTopikCountdown(){
 }
 setInterval(renderTopikCountdown, 30000);
 setInterval(()=>{ if(currentUser && activeTab === 'calendar') renderDeadlineList(); }, 30000);
+let addEventInFlight = false;
 async function addEvent(){
+  if(addEventInFlight) return; // guards against duplicate rows from a fast double-click
   const title = document.getElementById('eventTitle').value.trim();
   const kind = document.getElementById('eventKind').value || 'deadline';
   const date = document.getElementById('eventDate').value;
@@ -11189,13 +11305,18 @@ async function addEvent(){
     recur_end_type: recurFreq ? recurEndType : 'never',
     recur_end_date: (recurFreq && recurEndType === 'date') ? recurEndDate : null
   }));
-  const { data, error } = await supabaseClient.from('events').insert(rows).select();
-  if(!error && data){
-    data.forEach(row=>{
-      const ownerUid = row.user_id;
-      if(!allEvents[ownerUid]) allEvents[ownerUid] = [];
-      allEvents[ownerUid].push(row);
-    });
+  addEventInFlight = true;
+  try {
+    const { data, error } = await supabaseClient.from('events').insert(rows).select();
+    if(!error && data){
+      data.forEach(row=>{
+        const ownerUid = row.user_id;
+        if(!allEvents[ownerUid]) allEvents[ownerUid] = [];
+        allEvents[ownerUid].push(row);
+      });
+    }
+  } finally {
+    addEventInFlight = false;
   }
   document.getElementById('eventTitle').value = '';
   document.getElementById('eventTime').value = '';
@@ -11600,7 +11721,7 @@ function buildEventRowEl(ev){
     const seedSub = mySubForRow || Object.values(subsForEvent)[0];
     reminderDrafts[ev.id] = {
       appliesTo: seedSub ? seedSub.applies_to : 'all',
-      reminders: (seedSub && seedSub.reminders && seedSub.reminders.length) ? JSON.parse(JSON.stringify(seedSub.reminders)) : [{value:24, unit:'hours'}],
+      reminders: (seedSub && seedSub.reminders && seedSub.reminders.length) ? JSON.parse(JSON.stringify(seedSub.reminders)) : [{value:0, unit:'hours'}],
       recipients: new Set(existingRecipients.length ? existingRecipients : [currentUser.id])
     };
   }
@@ -11694,13 +11815,13 @@ function buildEventRowEl(ev){
   wrap.querySelectorAll('.rem-remove-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       draft.reminders.splice(parseInt(btn.dataset.idx),1);
-      if(draft.reminders.length === 0) draft.reminders.push({value:24,unit:'hours'});
+      if(draft.reminders.length === 0) draft.reminders.push({value:0,unit:'hours'});
       renderCalendarTab();
     });
   });
   const addBtn = wrap.querySelector('.sub-add-reminder');
   if(addBtn) addBtn.addEventListener('click', ()=>{
-    draft.reminders.push({value:24, unit:'hours'});
+    draft.reminders.push({value:0, unit:'hours'});
     renderCalendarTab();
   });
   const saveBtn = wrap.querySelector('.sub-save');
@@ -11894,7 +12015,7 @@ async function quickToggleSubscription(eventId){
   if(mySubscriptions[eventId]){
     await removeSubscription(eventId);
   } else {
-    reminderDrafts[eventId] = { appliesTo:'all', reminders:[{value:24,unit:'hours'}], recipients: new Set([currentUser.id]) };
+    reminderDrafts[eventId] = { appliesTo:'all', reminders:[{value:0,unit:'hours'}], recipients: new Set([currentUser.id]) };
     await saveSubscription(eventId);
   }
 }
