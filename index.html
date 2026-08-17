@@ -8670,7 +8670,11 @@ document.getElementById('authSubmit').addEventListener('click', async ()=>{
     // metadata and only gets claimed in `profiles` once someone actually
     // completes a real, confirmed sign-in — see ensureProfileExists(), called
     // from onAuthed().
-    const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { display_name: displayName } } });
+    // locale rides along as auth metadata so the Supabase-dashboard email
+    // templates (confirm-signup, reset-password, etc. -- see
+    // supabase/email-templates/) can branch by {{ .Data.locale }} and send
+    // this account's actual site language instead of a fixed default.
+    const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { display_name: displayName, locale: currentLang } } });
     if(error){ showAuthMsg(error.message, 'error'); return; }
     if(data.session){ hideResendConfirm(); checkMfaAndProceed(data.user); }
     else { showAuthMsg(t('signupCheckEmail'), 'info'); armResendConfirm(email); }
