@@ -8992,6 +8992,15 @@ document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
     msg.textContent = t('resumePdfOnlyMsg'); msg.style.color = 'var(--seal)'; msg.classList.remove('hidden');
     return;
   }
+  // A tab left backgrounded for a while can end up with an access token
+  // that's technically expired but hasn't been silently refreshed yet --
+  // browsers throttle background-tab timers, and supabase-js's auto-refresh
+  // relies on one. getSession() checks the token's own expiry and refreshes
+  // it first if needed, so the upload right after always uses a live token
+  // instead of racing a stale one (which fails RLS the same way an
+  // unauthenticated request would, since an expired JWT resolves to no
+  // user at all).
+  await supabaseClient.auth.getSession();
   const { error } = await supabaseClient.storage.from('resume').upload('resume.pdf', file, { upsert: true });
   // .message alone has come back empty for at least one real failure --
   // dumping every field (including error.error/statusCode, which the
@@ -9148,6 +9157,9 @@ document.getElementById('resumeSyncSaveBtn').addEventListener('click', async ()=
     msg.style.color = 'var(--seal)';
     return;
   }
+  // Same stale-background-tab-token race the resume PDF upload had -- see
+  // the comment on resumeUploadBtn's handler.
+  await supabaseClient.auth.getSession();
   const { error } = await supabaseClient.from('resume_content').upsert({ id: 'main', content: data, updated_at: new Date().toISOString() });
   if(error){
     msg.textContent = `${t('resumeSyncFailed')} ${error.message || ''}`.trim();
