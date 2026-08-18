@@ -9002,7 +9002,13 @@ document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
   let errDetail = error ? (error.message || error.error || JSON.stringify(error)) : '';
   if(error){
     const { data: { user: whoAmI } } = await supabaseClient.auth.getUser();
-    errDetail += ` (signed in as: ${whoAmI ? whoAmI.email : 'nobody / no session'})`;
+    // The storage RLS policy re-runs the exact same current_is_admin()
+    // check -- calling it directly via a normal authenticated query at the
+    // same moment tells us whether admin status genuinely isn't resolving
+    // for this session, or whether it's fine everywhere except inside the
+    // storage upload's own auth handling specifically.
+    const { data: adminCheck, error: adminCheckErr } = await supabaseClient.rpc('current_is_admin');
+    errDetail += ` (signed in as: ${whoAmI ? whoAmI.email : 'nobody / no session'}, current_is_admin() via normal query: ${adminCheckErr ? 'ERROR: ' + adminCheckErr.message : adminCheck})`;
   }
   msg.textContent = error ? `${t('resumeUploadFailed')} ${errDetail}`.trim() : t('resumeUploadSuccess');
   msg.style.color = error ? 'var(--seal)' : 'var(--celadon-4)';
