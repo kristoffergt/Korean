@@ -7646,7 +7646,7 @@ const I18N = {
     recurHint:'Set "Repeat" to create a recurring deadline or event.', recurBadge:'Every {n} {unit}', recurUntil:'until {date}', recurForever:'no end date',
     remindMe:'Remind me', subscribed:'Reminders on', applyToLabel:'Apply to', applyAll:'All future occurrences', applyOnce:'Just this occurrence',
     unitHours:'hours before', unitDays:'days before', addReminder:'+ Add reminder', saveReminders:'Save', unsubscribe:'Turn off reminders',
-    reminderNote:'Reminder delivery requires an email service to be connected. Ask Claude to set this up.',
+    reminderNote:'Reminder delivery requires an email service to be connected. Ask Claude to set this up.', birthdayReminderNote:'Birthday reminders fire right at the set time (8:00 AM by default). Change the time via Edit above.',
     showMore:'Show more', showLess:'Show less', lblShowPastEvents:'Show past events', lblShowPastDeadlines:'Show past deadlines',
     importIcs:'Import .ics', importSuccess:'Imported {n} events', importFail:'Could not read that file',
     yourDeadlines:'Your deadlines', monthView:'Personal Calendar – Month view', daysLeft:'days left', dayLeftSingular:'day left', today:'today', overdue:'days ago', overdueSingular:'day ago',
@@ -7756,7 +7756,7 @@ const I18N = {
     recurHint:'"반복"을 설정하면 정기적인 마감일/일정을 만들 수 있습니다.', recurBadge:'{n}{unit}마다', recurUntil:'{date}까지', recurForever:'종료일 없음',
     remindMe:'알림 받기', subscribed:'알림 켜짐', applyToLabel:'적용 대상', applyAll:'앞으로 모든 일정', applyOnce:'이번 일정만',
     unitHours:'시간 전', unitDays:'일 전', addReminder:'+ 알림 추가', saveReminders:'저장', unsubscribe:'알림 끄기',
-    reminderNote:'알림 발송을 위해서는 이메일 서비스 연동이 필요합니다. Claude에게 설정을 요청하세요.',
+    reminderNote:'알림 발송을 위해서는 이메일 서비스 연동이 필요합니다. Claude에게 설정을 요청하세요.', birthdayReminderNote:'생일 알림은 설정된 시각(기본 오전 8시)에 바로 전송됩니다. 시각을 바꾸려면 위의 수정을 이용하세요.',
     showMore:'더 보기', showLess:'간단히 보기', lblShowPastEvents:'지난 일정 표시', lblShowPastDeadlines:'지난 마감일 표시',
     importIcs:'.ics 가져오기', importSuccess:'{n}개 일정을 가져왔습니다', importFail:'파일을 읽을 수 없습니다',
     yourDeadlines:'나의 마감일', monthView:'개인 캘린더 – 월간 보기', daysLeft:'일 남음', dayLeftSingular:'일 남음', today:'오늘', overdue:'일 전', overdueSingular:'일 전',
@@ -7866,7 +7866,7 @@ const I18N = {
     recurHint:'Đặt "Lặp lại" để tạo hạn chót/sự kiện định kỳ.', recurBadge:'Mỗi {n} {unit}', recurUntil:'đến {date}', recurForever:'không có ngày kết thúc',
     remindMe:'Nhắc tôi', subscribed:'Đã bật nhắc nhở', applyToLabel:'Áp dụng cho', applyAll:'Tất cả các lần tới', applyOnce:'Chỉ lần này',
     unitHours:'giờ trước', unitDays:'ngày trước', addReminder:'+ Thêm nhắc nhở', saveReminders:'Lưu', unsubscribe:'Tắt nhắc nhở',
-    reminderNote:'Việc gửi nhắc nhở cần kết nối dịch vụ email. Hãy nhờ Claude thiết lập.',
+    reminderNote:'Việc gửi nhắc nhở cần kết nối dịch vụ email. Hãy nhờ Claude thiết lập.', birthdayReminderNote:'Nhắc sinh nhật được gửi đúng vào thời gian đã đặt (mặc định 8:00 sáng). Đổi giờ qua mục Sửa ở trên.',
     showMore:'Xem thêm', showLess:'Thu gọn', lblShowPastEvents:'Hiện sự kiện đã qua', lblShowPastDeadlines:'Hiện hạn chót đã qua',
     importIcs:'Nhập .ics', importSuccess:'Đã nhập {n} sự kiện', importFail:'Không thể đọc tệp này',
     yourDeadlines:'Hạn chót của bạn', monthView:'Lịch cá nhân – Xem theo tháng', daysLeft:'ngày còn lại', dayLeftSingular:'ngày còn lại', today:'hôm nay', overdue:'ngày trước', overdueSingular:'ngày trước',
@@ -10490,7 +10490,7 @@ async function importIcsFile(file){
     event_date: ev.date,
     event_time: ev.time || null,
     notes: ev.notes || null,
-    color: ev.kind === 'course' ? '#6E8FB0' : ev.kind === 'birthday' ? '#B37B4F' : '#8B8578',
+    color: ev.kind === 'course' ? '#6E8FB0' : ev.kind === 'birthday' ? BIRTHDAY_COLOR : '#8B8578',
     recur_freq: ev.recur_freq,
     recur_interval: ev.recur_interval,
     recur_end_type: ev.recur_end_type,
@@ -11759,6 +11759,7 @@ const PILL_CYCLE_VERSIONS = [
   { value: '28', labelKey: 'pillVersionStandard' }
 ];
 const PILL_CYCLE_COLOR = '#C0678C';
+const BIRTHDAY_COLOR = '#A8E5FF';
 // Once triggered, there's no direct channel back from the local script to
 // this tab (it's a separate OS process) -- so "did it finish" is inferred by
 // quietly re-polling yonsei_jobboard_items every few seconds and watching
@@ -12646,6 +12647,7 @@ function updateKindFieldVisibility(){
   } else if(kind === 'birthday'){
     rebuildForUserSelect();
     document.getElementById('eventForUserField').classList.add('hidden');
+    document.getElementById('eventColor').value = BIRTHDAY_COLOR;
   } else {
     rebuildForUserSelect();
   }
@@ -12900,9 +12902,17 @@ function buildEventRowEl(ev){
   if(!reminderDrafts[ev.id]){
     const existingRecipients = Object.keys(subsForEvent);
     const seedSub = mySubForRow || Object.values(subsForEvent)[0];
+    // Deadlines default to a heads-up an hour ahead; events (and
+    // birthdays, which never get an hours/days offset at all -- see
+    // remRows below) default to firing right at the item's own time.
+    const defaultReminders = ev.kind === 'deadline' ? [{value:1, unit:'hours'}] : [{value:0, unit:'hours'}];
     reminderDrafts[ev.id] = {
       appliesTo: seedSub ? seedSub.applies_to : 'all',
-      reminders: (seedSub && seedSub.reminders && seedSub.reminders.length) ? JSON.parse(JSON.stringify(seedSub.reminders)) : [{value:0, unit:'hours'}],
+      // Birthdays never carry an hours/days offset, even if one was saved
+      // before this became a fixed rule -- always exactly at the
+      // birthday's own time (8am by default, editable via the Edit panel).
+      reminders: ev.kind === 'birthday' ? [{value:0, unit:'hours'}]
+        : (seedSub && seedSub.reminders && seedSub.reminders.length) ? JSON.parse(JSON.stringify(seedSub.reminders)) : defaultReminders,
       recipients: new Set(existingRecipients.length ? existingRecipients : [currentUser.id])
     };
   }
@@ -12916,7 +12926,12 @@ function buildEventRowEl(ev){
     </label>`;
   }).join('');
 
-  const remRows = draft.reminders.map((r, idx) => `
+  // Birthdays never get an hours/days-before offset -- there's only ever
+  // one meaningful moment (the birthday's own time, 8am by default), so
+  // the offset controls are replaced with a note pointing at Edit instead.
+  const remRows = ev.kind === 'birthday'
+    ? `<div class="hint" style="margin-top:6px;">${t('birthdayReminderNote')}</div>`
+    : draft.reminders.map((r, idx) => `
     <span class="note-add" style="margin-top:6px;">
       <input type="number" min="1" value="${r.value}" data-idx="${idx}" class="rem-value-input" style="width:60px;">
       <select data-idx="${idx}" class="rem-unit-select">
@@ -12952,7 +12967,7 @@ function buildEventRowEl(ev){
         </div>` : ''}
         ${remRows}
         <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="export-btn sub-add-reminder" data-id="${ev.id}">${t('addReminder')}</button>
+          ${ev.kind !== 'birthday' ? `<button class="export-btn sub-add-reminder" data-id="${ev.id}">${t('addReminder')}</button>` : ''}
           <button class="export-btn sub-save" data-id="${ev.id}">${t('saveReminders')}</button>
           ${mySubForRow ? `<button class="export-btn sub-remove" data-id="${ev.id}">${t('unsubscribe')}</button>` : ''}
         </div>
@@ -13196,7 +13211,9 @@ async function quickToggleSubscription(eventId){
   if(mySubscriptions[eventId]){
     await removeSubscription(eventId);
   } else {
-    reminderDrafts[eventId] = { appliesTo:'all', reminders:[{value:0,unit:'hours'}], recipients: new Set([currentUser.id]) };
+    const ev = findEventById(eventId);
+    const reminders = ev && ev.kind === 'deadline' ? [{value:1, unit:'hours'}] : [{value:0, unit:'hours'}];
+    reminderDrafts[eventId] = { appliesTo:'all', reminders, recipients: new Set([currentUser.id]) };
     await saveSubscription(eventId);
   }
 }
