@@ -21982,6 +21982,34 @@ function buildQuillColorPicker(editor, getActiveColor, markDirty){
   }
   editor.on('selection-change', updateTriggerColors);
   editor.on('text-change', updateTriggerColors);
+  // updateTriggerColors() above only paints the "A" button's own preview
+  // swatch -- it never actually applies that color to anything you type,
+  // so the "default" color was purely cosmetic. This makes newly
+  // typed/pasted text that doesn't already carry an explicit color
+  // (e.g. from picking a swatch, or pasted rich text) actually use the
+  // note's default color instead of falling through to the editor's plain
+  // foreground color.
+  let applyingDefaultColor = false;
+  editor.on('text-change', (delta, oldDelta, source)=>{
+    if(source !== 'user' || applyingDefaultColor) return;
+    const defaultColor = getActiveColor();
+    if(!defaultColor) return;
+    const ops = delta.ops || [];
+    if(!ops.some(op=> op.insert !== undefined)) return;
+    applyingDefaultColor = true;
+    let index = 0;
+    ops.forEach(op=>{
+      if(op.retain !== undefined){ index += op.retain; return; }
+      if(op.insert !== undefined){
+        const len = typeof op.insert === 'string' ? op.insert.length : 1;
+        if(!(op.attributes && op.attributes.color)){
+          editor.formatText(index, len, 'color', defaultColor, 'silent');
+        }
+        index += len;
+      }
+    });
+    applyingDefaultColor = false;
+  });
 
   function makePicker(labelKey, formatName){
     const wrap = document.createElement('span');
@@ -23336,6 +23364,40 @@ function stopBroadcastingWriting(channelKey){
   const ch = notePresenceChannels[channelKey];
   if(ch) ch.untrack();
 }
+// Live content sync while a note is open, on top of Realtime broadcast
+// (ephemeral -- nothing persisted beyond the normal Save button). Only
+// reaches someone else with that *same* note open at that moment, same
+// scope as the "X is writing" presence indicator above; it's not a full
+// operational-transform system, just applying the other person's Quill
+// delta straight to the local editor, which composes fine for the
+// non-overlapping edits a 2-3 person circle actually produces. Whoever's
+// currently viewing still has to hit Save themselves to persist -- this
+// only keeps what's ON SCREEN in sync, not the DB row.
+let noteLiveChannel = null;
+let noteLiveChannelKey = null;
+function ensureNoteLiveChannel(channelKey, noteId, onRemoteDelta){
+  if(noteLiveChannelKey === channelKey + ':' + noteId && noteLiveChannel) return noteLiveChannel;
+  teardownNoteLiveChannel();
+  if(!currentUser || !noteId) return null;
+  const ch = supabaseClient.channel('note-live-' + channelKey + '-' + noteId);
+  ch.on('broadcast', { event: 'delta' }, ({ payload })=>{
+    if(!payload || payload.senderId === currentUser.id) return;
+    onRemoteDelta(payload.delta);
+  });
+  ch.subscribe();
+  noteLiveChannel = ch;
+  noteLiveChannelKey = channelKey + ':' + noteId;
+  return ch;
+}
+function broadcastNoteDelta(delta){
+  if(!noteLiveChannel) return;
+  noteLiveChannel.send({ type: 'broadcast', event: 'delta', payload: { delta, senderId: currentUser.id } });
+}
+function teardownNoteLiveChannel(){
+  if(noteLiveChannel) supabaseClient.removeChannel(noteLiveChannel);
+  noteLiveChannel = null;
+  noteLiveChannelKey = null;
+}
 function renderNotePresenceIndicator(channelKey){
   const ch = notePresenceChannels[channelKey];
   const elId = channelKey === 'notebook-writing' ? 'notebookWritingIndicator' : 'notesWritingIndicator';
@@ -23473,6 +23535,32 @@ function buildCustomColorControls(){
   }
   quillEditor.on('selection-change', updateTriggerColors);
   quillEditor.on('text-change', updateTriggerColors);
+  // Same fix as buildQuillColorPicker() above (this function is a
+  // separate copy for the course-notes editor specifically): the "A"
+  // button's swatch was only ever a preview, never actually applied to
+  // typed text. Auto-applies the note's default color to any newly
+  // typed/pasted text that doesn't already carry an explicit color.
+  let applyingDefaultColorCC = false;
+  quillEditor.on('text-change', (delta, oldDelta, source)=>{
+    if(source !== 'user' || applyingDefaultColorCC) return;
+    const defaultColor = currentNoteColor;
+    if(!defaultColor) return;
+    const ops = delta.ops || [];
+    if(!ops.some(op=> op.insert !== undefined)) return;
+    applyingDefaultColorCC = true;
+    let index = 0;
+    ops.forEach(op=>{
+      if(op.retain !== undefined){ index += op.retain; return; }
+      if(op.insert !== undefined){
+        const len = typeof op.insert === 'string' ? op.insert.length : 1;
+        if(!(op.attributes && op.attributes.color)){
+          quillEditor.formatText(index, len, 'color', defaultColor, 'silent');
+        }
+        index += len;
+      }
+    });
+    applyingDefaultColorCC = false;
+  });
 
   function makePicker(labelKey, formatName){
     const wrap = document.createElement('span');
@@ -23858,6 +23946,7 @@ function ensureNotebookQuillInitialized(){
       notebookEditorDirty = true;
       const note = selectedNotebookNoteId ? Object.values(allNotebookNotes).flat().find(n=>n.id===selectedNotebookNoteId) : null;
       broadcastWriting('notebook-writing', note ? note.lecture_title : '');
+      broadcastNoteDelta(delta);
     }
   });
   buildQuillColorPicker(notebookQuillEditor, ()=>currentNotebookColor, ()=>{ notebookEditorDirty = true; });
@@ -23919,6 +24008,9 @@ function openNotebookNote(noteId, groupKey){
   if(notebookQuillEditor._updateColorTriggers) notebookQuillEditor._updateColorTriggers();
   notebookEditorDirty = false;
   updateNotebookLastSavedInfo(note);
+  ensureNoteLiveChannel('notebook', noteId, (delta)=>{
+    if(notebookQuillEditor) notebookQuillEditor.updateContents(delta, 'silent');
+  });
 }
 document.getElementById('saveNotebookBtn').addEventListener('click', async ()=>{
   if(!selectedNotebookNoteId || !notebookQuillEditor) return;
@@ -23948,6 +24040,7 @@ document.getElementById('closeNotebookBtn').addEventListener('click', ()=>{
   selectedNotebookNoteId = null;
   document.getElementById('notebookEditorCard').classList.add('hidden');
   document.getElementById('notebookVersionHistoryPanel').classList.add('hidden');
+  teardownNoteLiveChannel();
   renderNotebookList();
 });
 
