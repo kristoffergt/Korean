@@ -9001,7 +9001,12 @@ document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
   // unauthenticated request would, since an expired JWT resolves to no
   // user at all).
   await supabaseClient.auth.getSession();
-  const { error } = await supabaseClient.storage.from('resume').upload('resume.pdf', file, { upsert: true });
+  // Own-user-id-folder path, same proven-working shape as
+  // job-application-files/note-media/writing-images -- the resume bucket's
+  // path is always {uid}/resume.pdf rather than a flat resume.pdf so the
+  // exact same RLS pattern applies here too.
+  const path = `${currentUser.id}/resume.pdf`;
+  const { error } = await supabaseClient.storage.from('resume').upload(path, file, { upsert: true });
   // .message alone has come back empty for at least one real failure --
   // dumping every field (including error.error/statusCode, which the
   // storage API's JSON body actually uses) so the real cause is visible
