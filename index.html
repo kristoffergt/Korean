@@ -23671,7 +23671,10 @@ function openLecture(noteId, groupKey){
   document.getElementById('editorTitleEditPanel').classList.add('hidden');
   document.getElementById('editorTitleEditPanel').innerHTML = '';
   document.getElementById('quillContainer').style.setProperty('--note-author-color', colorForNote(note));
-  currentNoteColor = colorForNote(note);
+  // The default typing color is whoever's typing right now, not whoever
+  // created the note -- colorForNote() (note-owner's color) is still used
+  // just above for the note's own visual accent/border, a separate thing.
+  currentNoteColor = colorForUser(currentUser.id);
   ensureQuillInitialized();
   quillEditor.root.innerHTML = note.content || '';
   if(quillEditor._updateColorTriggers) quillEditor._updateColorTriggers();
@@ -24002,7 +24005,10 @@ function openNotebookNote(noteId, groupKey){
   document.getElementById('notebookTitleEditPanel').classList.add('hidden');
   document.getElementById('notebookTitleEditPanel').innerHTML = '';
   document.getElementById('notebookQuillContainer').style.setProperty('--note-author-color', colorForNote(note));
-  currentNotebookColor = colorForNote(note);
+  // Same distinction as the course-notes editor: default typing color is
+  // the current typist's own color, not the note owner's (colorForNote()
+  // just above is still the note's own visual accent/border).
+  currentNotebookColor = colorForUser(currentUser.id);
   ensureNotebookQuillInitialized();
   notebookQuillEditor.root.innerHTML = note.content || '';
   if(notebookQuillEditor._updateColorTriggers) notebookQuillEditor._updateColorTriggers();
