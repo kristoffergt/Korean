@@ -8972,7 +8972,12 @@ document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
     return;
   }
   const { error } = await supabaseClient.storage.from('resume').upload('resume.pdf', file, { upsert: true });
-  msg.textContent = error ? `${t('resumeUploadFailed')} ${error.message || ''}`.trim() : t('resumeUploadSuccess');
+  // .message alone has come back empty for at least one real failure --
+  // dumping every field (including error.error/statusCode, which the
+  // storage API's JSON body actually uses) so the real cause is visible
+  // without needing devtools.
+  const errDetail = error ? (error.message || error.error || JSON.stringify(error)) : '';
+  msg.textContent = error ? `${t('resumeUploadFailed')} ${errDetail}`.trim() : t('resumeUploadSuccess');
   msg.style.color = error ? 'var(--seal)' : 'var(--celadon-4)';
   msg.classList.remove('hidden');
   if(!error){ document.getElementById('resumeUploadFile').value = ''; document.getElementById('resumeUploadFileName').textContent = ''; }
