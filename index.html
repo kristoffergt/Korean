@@ -20101,7 +20101,7 @@ function buildGrammarAiPrompt(){
 Grammar patterns to cover:
 ${patternList}
 
-For EACH pattern listed above, output one block in this format, in the same order, separating each pattern's block from the next with a line containing only ===:
+For EACH pattern listed above, output one block in this format, in the same order, separating each pattern's block from the next with a line containing ONLY the three characters === and nothing else (no extra dashes/equals signs, no other separator lines anywhere in your answer):
 
 PATTERN: <the grammar pattern, exactly as given above>
 LEVEL: <Intermediate or Advanced -- your best judgment for a Korean learner>
@@ -20324,14 +20324,21 @@ async function saveNewGrammar(){
 // to parseSensesText() for that pattern's senses.
 function parseMultiPatternText(text){
   const headerRe = /^(PATTERN|LEVEL|FREQUENCY|DIFFICULTY|FORMALITY|POLITENESS|REGISTER):\s*(.*)$/i;
-  return text.split(/\n\s*===\s*\n/).map(block=>block.trim()).filter(Boolean).map(block=>{
+  // Some AIs draw the === divider as a long run of many = characters
+  // instead of exactly three, or add a decorative row of dashes the
+  // prompt never asked for -- matched leniently (3+) here and in
+  // parseSensesText's --- split below so a stray extra-long divider line
+  // doesn't merge every pattern into one unparseable blob.
+  return text.split(/\n[ \t]*={3,}[ \t]*\n/).map(block=>block.trim()).filter(Boolean).map(block=>{
     let pattern = '', level = 'intermediate', commonality = 3, difficulty = 3, formality = 50, politeness = 50, colloquial = 50;
     const remainingLines = [];
     block.split('\n').forEach(line=>{
       const m = line.match(headerRe);
       if(!m){ remainingLines.push(line); return; }
       const key = m[1].toUpperCase(), val = m[2].trim();
-      if(key === 'PATTERN') pattern = val;
+      // Strip a leading bullet/asterisk some AIs prepend to the pattern
+      // despite the prompt not asking for one.
+      if(key === 'PATTERN') pattern = val.replace(/^[*\-•]\s*/, '');
       else if(key === 'LEVEL') level = /advanced/i.test(val) ? 'advanced' : 'intermediate';
       else if(key === 'FREQUENCY') commonality = parseInt(val) || 3;
       else if(key === 'DIFFICULTY') difficulty = parseInt(val) || 3;
@@ -20344,7 +20351,7 @@ function parseMultiPatternText(text){
   }).filter(p => p.pattern && p.senses.length > 0);
 }
 function parseSensesText(text){
-  return text.split(/\n---\n/).map(block=>{
+  return text.split(/\n[ \t]*-{3,}[ \t]*\n/).map(block=>{
     const lines = block.split('\n').map(l=>l.trim()).filter(l=>l.length);
     let label = null, label_ko = null, label_vi = null;
     let formation = '', formation_ko = null, formation_vi = null;
