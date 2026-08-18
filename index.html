@@ -9281,6 +9281,13 @@ async function refreshLinkData(){
 // Which linked partner's per-person override panel (opened via the gear
 // icon next to their name) is currently expanded, if any.
 let linkOverridePanelOpenFor = null;
+// Per-checklist-instance (keyed by inputId, since the default toggles and
+// each partner's override panel render their own independent tree) set of
+// currently-expanded top-level group indices -- like manageTabsOpen, this
+// persists across the full re-renders that checkbox changes trigger, so
+// folding a group doesn't snap back open every time you toggle something.
+// Empty/absent = fully collapsed, matching "Manage visible tabs" starting closed.
+let linkCatTreeOpen = {};
 // Shared write path for both the top-level default toggles (targetUid ===
 // currentUser.id) and per-partner overrides (targetUid === that partner).
 async function saveSharingSetting(targetUid, cat, enabled){
@@ -9382,14 +9389,22 @@ function linkCategoryChecklistHtml(inputId, checkClass, extraDataAttr, isEnabled
       <span>${escapeHtml(t(labelKey))}</span>
     </label>`;
   };
+  const openGroups = linkCatTreeOpen[inputId] || (linkCatTreeOpen[inputId] = new Set());
   const tree = linkCategoryTree();
-  const treeHtml = tree.map(top=>{
+  const treeHtml = tree.map((top, i)=>{
     const allCatsUnderTop = [...top.cats, ...top.subs.flatMap(s=>s.cats)];
     const subsHtml = top.subs.filter(s=>s.cats.length).map(s=>
       `<div class="link-cat-sub">${parentRow(s.labelKey, s.cats, 22, false)}${s.cats.map(c=>leafRow(c, 42)).join('')}</div>`
     ).join('');
     const topCatsHtml = top.cats.map(c=>leafRow(c, 22)).join('');
-    return `<div class="link-cat-top">${parentRow(top.labelKey, allCatsUnderTop, 0, true)}${subsHtml}${topCatsHtml}</div>`;
+    const isOpen = openGroups.has(i);
+    return `<div class="link-cat-top">
+      <div style="display:flex;align-items:center;">
+        <span class="link-cat-chevron" data-group="${i}" style="cursor:pointer;width:16px;font-size:11px;text-align:center;color:var(--ink-soft);flex-shrink:0;">${isOpen?'▾':'▸'}</span>
+        ${parentRow(top.labelKey, allCatsUnderTop, 0, true)}
+      </div>
+      <div class="link-cat-children" data-group="${i}" ${isOpen?'':'style="display:none;"'}>${subsHtml}${topCatsHtml}</div>
+    </div>`;
   }).join('');
   return `<input type="text" id="${inputId}" placeholder="${t('linkCatSearchPlaceholder')}" style="width:100%;box-sizing:border-box;font-family:'Inter',sans-serif;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);margin-bottom:4px;">
     <div class="link-cat-tree" id="${inputId}List">${treeHtml}</div>`;
@@ -9400,10 +9415,24 @@ function wireLinkCatSearch(inputId){
   const list = document.getElementById(inputId + 'List');
   if(!input || !list) return;
   list.querySelectorAll('.link-cat-parent').forEach(cb=>{ cb.indeterminate = cb.dataset.indeterminate === 'true'; });
+  const openGroups = linkCatTreeOpen[inputId] || (linkCatTreeOpen[inputId] = new Set());
+  list.querySelectorAll('.link-cat-chevron').forEach(chev=>{
+    chev.addEventListener('click', ()=>{
+      const idx = Number(chev.dataset.group);
+      const childrenEl = list.querySelector(`.link-cat-children[data-group="${idx}"]`);
+      const nowOpen = !openGroups.has(idx);
+      if(nowOpen) openGroups.add(idx); else openGroups.delete(idx);
+      chev.textContent = nowOpen ? '▾' : '▸';
+      if(childrenEl) childrenEl.style.display = nowOpen ? '' : 'none';
+    });
+  });
   input.addEventListener('input', ()=>{
     const q = input.value.trim().toLowerCase();
     list.querySelectorAll('.link-cat-top').forEach(topEl=>{
-      const topLabelEl = topEl.querySelector(':scope > .link-cat-parent-row');
+      const childrenEl = topEl.querySelector(':scope > .link-cat-children');
+      const chevEl = topEl.querySelector('.link-cat-chevron');
+      const groupIdx = Number(childrenEl.dataset.group);
+      const topLabelEl = topEl.querySelector('.link-cat-parent-row');
       const topMatch = !q || topLabelEl.dataset.label.includes(q);
       let topVisible = topMatch;
       topEl.querySelectorAll('.link-cat-sub').forEach(subEl=>{
@@ -9418,12 +9447,18 @@ function wireLinkCatSearch(inputId){
         subEl.classList.toggle('hidden', !subVisible);
         if(subVisible) topVisible = true;
       });
-      topEl.querySelectorAll(':scope > .link-cat-leaf').forEach(leafEl=>{
+      childrenEl.querySelectorAll(':scope > .link-cat-leaf').forEach(leafEl=>{
         const leafMatch = topMatch || !q || leafEl.dataset.label.includes(q);
         leafEl.classList.toggle('hidden', !leafMatch);
         if(leafMatch) topVisible = true;
       });
       topEl.classList.toggle('hidden', !topVisible);
+      // While searching, force-expand any group with a visible match so
+      // results aren't hidden behind a fold; revert to each group's own
+      // persisted open/closed state once the search box is cleared.
+      const shouldShowChildren = q ? topVisible : openGroups.has(groupIdx);
+      childrenEl.style.display = shouldShowChildren ? '' : 'none';
+      if(chevEl && !q) chevEl.textContent = openGroups.has(groupIdx) ? '▾' : '▸';
     });
   });
 }
