@@ -20302,10 +20302,26 @@ async function saveNewGrammar(){
       return;
     }
   }
-  rows.forEach(r=>{ r.updated_by = currentUser.id; r.updated_at = new Date().toISOString(); });
+  // id and number are both NOT NULL with no DB default/trigger -- the
+  // client has always had to supply them itself. id mirrors the slug
+  // format existing rows already use (e.g. "피동 (Passive Voice)" ->
+  // "피동-passive-voice"); deduped against both GRAMMAR_DATA's existing ids
+  // and any collision within this same batch.
+  const existingIds = new Set(GRAMMAR_DATA.map(g=>g.id));
+  let nextNumber = GRAMMAR_DATA.reduce((max,g)=> Math.max(max, g.number||0), 0) + 1;
+  rows.forEach(r=>{
+    const base = slugifyGrammarId(r.pattern) || 'pattern';
+    let id = base, suffix = 2;
+    while(existingIds.has(id)){ id = `${base}-${suffix}`; suffix++; }
+    existingIds.add(id);
+    r.id = id;
+    r.number = nextNumber++;
+    r.updated_by = currentUser.id;
+    r.updated_at = new Date().toISOString();
+  });
   const { data, error } = await supabaseClient.from('grammar_points').insert(rows).select();
   if(error || !data || data.length === 0){
-    msg.textContent = t('gramAddSaveFailed');
+    msg.textContent = t('gramAddSaveFailed') + (error && error.message ? ' (' + error.message + ')' : '');
     msg.classList.remove('hidden');
     return;
   }
@@ -20335,6 +20351,14 @@ async function saveNewGrammar(){
 // (rather than assuming a strict leading order) so a stray blank line from
 // the AI's formatting doesn't throw off parsing; every remaining line goes
 // to parseSensesText() for that pattern's senses.
+// Matches the slug format existing grammar_points.id values already use
+// (e.g. "피동 (Passive Voice)" -> "피동-passive-voice"): lowercase, any run
+// of non-letter/non-number characters collapsed to a single hyphen, no
+// leading/trailing hyphen. \p{L}/\p{N} are unicode-aware so Korean
+// characters count as letters, not as "special characters" to strip.
+function slugifyGrammarId(pattern){
+  return pattern.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+}
 function parseMultiPatternText(text){
   const headerRe = /^(PATTERN|LEVEL|FREQUENCY|DIFFICULTY|FORMALITY|POLITENESS|REGISTER):\s*(.*)$/i;
   // Some AIs draw the === divider as a long run of many = characters
