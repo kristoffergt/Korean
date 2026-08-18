@@ -1718,31 +1718,33 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="hint hidden" id="settingsDeleteMsg"></div>
 
     <div id="moderatorSection" class="hidden">
-      <div class="wtc-title" style="margin-top:22px;" id="lblResumeUpload"></div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <label class="file-upload-btn" for="resumeUploadFile" id="chooseFileLabelResumeUpload"></label>
-        <span class="file-chosen-name" id="resumeUploadFileName"></span>
-        <input type="file" id="resumeUploadFile" accept=".pdf,application/pdf" class="hidden-file-input">
-        <button class="export-btn" id="resumeUploadBtn"></button>
-        <a href="/resume" target="_blank" rel="noopener" id="resumeViewLink"></a>
-      </div>
-      <div class="hint hidden" id="resumeUploadMsg"></div>
-
-      <div class="wtc-title" style="margin-top:22px;" id="lblResumeSync"></div>
-      <p class="hint" id="resumeSyncIntro"></p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="export-btn" id="resumeSyncCopyBtn"></button>
-      </div>
-      <div class="log-form" style="margin-top:8px;">
-        <div class="field wide">
-          <label for="resumeSyncPaste" id="lblResumeSyncPaste"></label>
-          <textarea id="resumeSyncPaste" rows="8" style="width:100%;box-sizing:border-box;font-family:'Space Grotesk',monospace;font-size:12.5px;"></textarea>
+      <div class="note-group-header" style="margin-top:22px;" id="resumePublicHeader"></div>
+      <div id="resumePublicBody" class="hidden">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <label class="file-upload-btn" for="resumeUploadFile" id="chooseFileLabelResumeUpload"></label>
+          <span class="file-chosen-name" id="resumeUploadFileName"></span>
+          <input type="file" id="resumeUploadFile" accept=".pdf,application/pdf" class="hidden-file-input">
+          <button class="export-btn" id="resumeUploadBtn"></button>
+          <a href="/resume" target="_blank" rel="noopener" id="resumeViewLink"></a>
         </div>
+        <div class="hint hidden" id="resumeUploadMsg"></div>
+
+        <div class="wtc-title" style="margin-top:22px;" id="lblResumeSync"></div>
+        <p class="hint" id="resumeSyncIntro"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="export-btn" id="resumeSyncCopyBtn"></button>
+        </div>
+        <div class="log-form" style="margin-top:8px;">
+          <div class="field wide">
+            <label for="resumeSyncPaste" id="lblResumeSyncPaste"></label>
+            <textarea id="resumeSyncPaste" rows="8" style="width:100%;box-sizing:border-box;font-family:'Space Grotesk',monospace;font-size:12.5px;"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <button class="export-btn" id="resumeSyncSaveBtn"></button>
+        </div>
+        <div class="hint hidden" id="resumeSyncMsg"></div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-        <button class="export-btn" id="resumeSyncSaveBtn"></button>
-      </div>
-      <div class="hint hidden" id="resumeSyncMsg"></div>
 
       <div class="wtc-title" style="margin-top:22px;" id="hModerator"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">
@@ -8012,7 +8014,7 @@ const STATIC_MAP = {
   enable2faBtn:'enable2faBtn', disable2faBtn:'disable2faBtn',
   lblSettingsDeleteEmailConfirm:'lblSettingsDeleteEmailConfirm',
   lblSettingsDeletePasswordConfirm:'lblSettingsDeletePasswordConfirm', deleteAccountBtn:'deleteAccountBtn', hModerator:'hModerator', closeAccountSettingsBtn:'closeNoteBtn',
-  lblResumeUpload:'lblResumeUpload', resumeUploadBtn:'resumeUploadBtn', resumeViewLink:'resumeViewLink',
+  resumeUploadBtn:'resumeUploadBtn', resumeViewLink:'resumeViewLink',
   lblResumeSync:'lblResumeSync', resumeSyncIntro:'resumeSyncIntro', resumeSyncCopyBtn:'resumeSyncCopyBtn', lblResumeSyncPaste:'lblResumeSyncPaste', resumeSyncSaveBtn:'resumeSyncSaveBtn',
   lblNotifBell:'lblNotifBell', lblNotifPrefs:'notifPrefsHeader',
   hLinkedCircle:'hLinkedCircle', linkedCircleDesc:'linkedCircleDesc', closeFriendsBtn:'closeNoteBtn',
@@ -8653,7 +8655,7 @@ function applyLanguage(lang){
   renderYonseiNotifyBtn();
   rebuildYonseiCategoryFilter();
   if(calViewMode === 'month') renderMonthGrid();
-  if(!document.getElementById('accountSettingsModal').classList.contains('hidden')) renderManageTabsList();
+  if(!document.getElementById('accountSettingsModal').classList.contains('hidden')){ renderManageTabsList(); renderResumePublicHeader(); }
   if(currentUser){ renderAll(); }
 }
 /* ---------- AUTH ---------- */
@@ -8964,6 +8966,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   document.getElementById('settingsHideCircleTooWrap').classList.toggle('hidden', !hiddenFromLeaderboards[currentUser.id]);
   renderNotifPrefs();
   renderManageTabsList();
+  renderResumePublicHeader();
   document.getElementById('settingsNewEmail').value = '';
   document.getElementById('settingsEmailConfirmPassword').value = '';
   document.getElementById('settingsDeleteEmailConfirm').value = '';
@@ -8993,8 +8996,14 @@ document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
   // .message alone has come back empty for at least one real failure --
   // dumping every field (including error.error/statusCode, which the
   // storage API's JSON body actually uses) so the real cause is visible
-  // without needing devtools.
-  const errDetail = error ? (error.message || error.error || JSON.stringify(error)) : '';
+  // without needing devtools. On an RLS failure specifically, also surface
+  // who Supabase actually thinks is signed in right now -- the policy is
+  // admin-gated, so if this isn't the admin account, that's the answer.
+  let errDetail = error ? (error.message || error.error || JSON.stringify(error)) : '';
+  if(error){
+    const { data: { user: whoAmI } } = await supabaseClient.auth.getUser();
+    errDetail += ` (signed in as: ${whoAmI ? whoAmI.email : 'nobody / no session'})`;
+  }
   msg.textContent = error ? `${t('resumeUploadFailed')} ${errDetail}`.trim() : t('resumeUploadSuccess');
   msg.style.color = error ? 'var(--seal)' : 'var(--celadon-4)';
   msg.classList.remove('hidden');
@@ -12460,6 +12469,18 @@ function applyTabVisibility(){
 // never part of TAB_STRUCTURE and is always on screen regardless of
 // hiddenTabs, so there's always a way back in even if every tab is hidden.
 const ALL_TAB_KEYS = TAB_STRUCTURE.flatMap(t=> [t.key, ...(t.subs||[]).map(s=>s.key)]);
+let resumePublicOpen = false;
+function renderResumePublicHeader(){
+  const header = document.getElementById('resumePublicHeader');
+  const body = document.getElementById('resumePublicBody');
+  if(!header || !body) return;
+  header.innerHTML = `<span>${resumePublicOpen?'▾':'▸'}</span> ${t('lblResumeUpload')}`;
+  body.classList.toggle('hidden', !resumePublicOpen);
+}
+document.getElementById('resumePublicHeader').addEventListener('click', ()=>{
+  resumePublicOpen = !resumePublicOpen;
+  renderResumePublicHeader();
+});
 let manageTabsOpen = false;
 function renderManageTabsList(){
   const header = document.getElementById('manageTabsHeader');
