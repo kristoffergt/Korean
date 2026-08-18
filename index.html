@@ -8215,6 +8215,26 @@ function visibleCircleMembers(){
 const personFilters = {}; // filterKey -> array of currently-selected uids
 let openPersonFilterKey = null;
 
+// Persisted per-user (not just per-browser) since Kristoffer and Roxy can
+// share a device -- each user's saved selections should never leak into
+// the other's session.
+function personFilterStorageKey(filterKey){
+  return currentUser ? `personFilter_${currentUser.id}_${filterKey}` : null;
+}
+function savePersonFilter(filterKey){
+  const key = personFilterStorageKey(filterKey);
+  if(!key) return;
+  try{ localStorage.setItem(key, JSON.stringify(personFilters[filterKey] || [])); }catch{}
+}
+function loadPersonFilter(filterKey){
+  const key = personFilterStorageKey(filterKey);
+  if(!key) return null;
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  }catch{ return null; }
+}
+
 function personFilterSelectable(category){
   return [currentUser.id, ...(category === '__circle__' ? visibleCircleMembers() : visiblePartnersFor(category))];
 }
@@ -8224,7 +8244,7 @@ function personFilterSelectable(category){
 function rebuildPersonFilter(filterKey, category){
   if(!currentUser) return;
   const selectable = personFilterSelectable(category);
-  const prev = personFilters[filterKey];
+  const prev = personFilters[filterKey] || loadPersonFilter(filterKey);
   // Keep the previous selection if it's still fully valid (every id still
   // selectable); otherwise default to "everyone" -- matches the old
   // <select>'s "all" default for every tab except books/jobs/certs, which
@@ -8296,6 +8316,7 @@ function wirePersonFilter(filterKey, category, onChange){
     }
     // Never allow an empty selection -- always falls back to just yourself.
     if(!personFilters[filterKey].length) personFilters[filterKey] = [currentUser.id];
+    savePersonFilter(filterKey);
     renderPersonFilterUi(filterKey, selectable);
     onChange();
   });
