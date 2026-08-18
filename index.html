@@ -1536,6 +1536,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
           <button class="export-btn" id="exportIcsBtn"></button>
         </span>
       </h2>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);cursor:pointer;margin-bottom:8px;">
+        <input type="checkbox" id="showPastDeadlinesToggle" style="width:14px;height:14px;">
+        <span id="lblShowPastDeadlines"></span>
+      </label>
       <div id="deadlineList"></div>
       <div class="list-controls" id="deadlineListControls"></div>
     </div>
@@ -7642,7 +7646,7 @@ const I18N = {
     remindMe:'Remind me', subscribed:'Reminders on', applyToLabel:'Apply to', applyAll:'All future occurrences', applyOnce:'Just this occurrence',
     unitHours:'hours before', unitDays:'days before', addReminder:'+ Add reminder', saveReminders:'Save', unsubscribe:'Turn off reminders',
     reminderNote:'Reminder delivery requires an email service to be connected. Ask Claude to set this up.',
-    showMore:'Show more', showLess:'Show less', lblShowPastEvents:'Show past events',
+    showMore:'Show more', showLess:'Show less', lblShowPastEvents:'Show past events', lblShowPastDeadlines:'Show past deadlines',
     importIcs:'Import .ics', importSuccess:'Imported {n} events', importFail:'Could not read that file',
     yourDeadlines:'Your deadlines', monthView:'Personal Calendar – Month view', daysLeft:'days left', dayLeftSingular:'day left', today:'today', overdue:'days ago', overdueSingular:'day ago',
     notesQuotes:'Notes & quotes', addNote:'Add note', page:'page', noteBtn:'Show notes',
@@ -7752,7 +7756,7 @@ const I18N = {
     remindMe:'알림 받기', subscribed:'알림 켜짐', applyToLabel:'적용 대상', applyAll:'앞으로 모든 일정', applyOnce:'이번 일정만',
     unitHours:'시간 전', unitDays:'일 전', addReminder:'+ 알림 추가', saveReminders:'저장', unsubscribe:'알림 끄기',
     reminderNote:'알림 발송을 위해서는 이메일 서비스 연동이 필요합니다. Claude에게 설정을 요청하세요.',
-    showMore:'더 보기', showLess:'간단히 보기', lblShowPastEvents:'지난 일정 표시',
+    showMore:'더 보기', showLess:'간단히 보기', lblShowPastEvents:'지난 일정 표시', lblShowPastDeadlines:'지난 마감일 표시',
     importIcs:'.ics 가져오기', importSuccess:'{n}개 일정을 가져왔습니다', importFail:'파일을 읽을 수 없습니다',
     yourDeadlines:'나의 마감일', monthView:'개인 캘린더 – 월간 보기', daysLeft:'일 남음', dayLeftSingular:'일 남음', today:'오늘', overdue:'일 전', overdueSingular:'일 전',
     notesQuotes:'메모 및 인용구', addNote:'메모 추가', page:'페이지', noteBtn:'메모 보기',
@@ -7862,7 +7866,7 @@ const I18N = {
     remindMe:'Nhắc tôi', subscribed:'Đã bật nhắc nhở', applyToLabel:'Áp dụng cho', applyAll:'Tất cả các lần tới', applyOnce:'Chỉ lần này',
     unitHours:'giờ trước', unitDays:'ngày trước', addReminder:'+ Thêm nhắc nhở', saveReminders:'Lưu', unsubscribe:'Tắt nhắc nhở',
     reminderNote:'Việc gửi nhắc nhở cần kết nối dịch vụ email. Hãy nhờ Claude thiết lập.',
-    showMore:'Xem thêm', showLess:'Thu gọn', lblShowPastEvents:'Hiện sự kiện đã qua',
+    showMore:'Xem thêm', showLess:'Thu gọn', lblShowPastEvents:'Hiện sự kiện đã qua', lblShowPastDeadlines:'Hiện hạn chót đã qua',
     importIcs:'Nhập .ics', importSuccess:'Đã nhập {n} sự kiện', importFail:'Không thể đọc tệp này',
     yourDeadlines:'Hạn chót của bạn', monthView:'Lịch cá nhân – Xem theo tháng', daysLeft:'ngày còn lại', dayLeftSingular:'ngày còn lại', today:'hôm nay', overdue:'ngày trước', overdueSingular:'ngày trước',
     notesQuotes:'Ghi chú & trích dẫn', addNote:'Thêm ghi chú', page:'trang', noteBtn:'Xem ghi chú',
@@ -7965,7 +7969,7 @@ const STATIC_MAP = {
   calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek', calViewDayBtn:'viewDay',
   lblCourseIsTa:'statusTeachingAssistant', lblCourseIsRa:'statusResearchAssistant',
   lblRecurFreq:'lblRecurFreq', lblRecurInterval:'lblRecurInterval', lblRecurEndType:'lblRecurEndType', lblRecurEndDate:'lblRecurEndDate', recurHint:'recurHint',
-  hDeadlines:'yourDeadlines', importIcsBtn:'importIcs', exportEventsBtn:'exportCsv', exportIcsBtn:'exportIcs', hEvents:'yourEvents', exportEventsKindBtn:'exportCsv', hMonthView:'monthView', lblShowPastEvents:'lblShowPastEvents',
+  hDeadlines:'yourDeadlines', importIcsBtn:'importIcs', exportEventsBtn:'exportCsv', exportIcsBtn:'exportIcs', hEvents:'yourEvents', exportEventsKindBtn:'exportCsv', hMonthView:'monthView', lblShowPastEvents:'lblShowPastEvents', lblShowPastDeadlines:'lblShowPastDeadlines',
   forgotPasswordBtn:'forgotPassword', lblSetNewPassword:'lblSetNewPassword', lblNewPassword:'lblNewPassword', updatePasswordBtn:'updatePasswordBtn',
   lblEventPrivate:'lblEventPrivate', lblEventForUser:'eventForUser',
   hCoursesCal:'hCoursesCal', hBirthdays:'hBirthdays',
@@ -12651,6 +12655,7 @@ function recurBadgeText(ev){
 const PAGE_SIZE = 10;
 const PREVIEW_SIZE = 3;
 let showPastEvents = false;
+let showPastDeadlines = false;
 const listState = {
   deadline: { expanded:false, page:1 },
   event: { expanded:false, page:1 },
@@ -12681,12 +12686,16 @@ function itemsOfKind(kind){
     const target = new Date(nextDate + 'T' + (ev.event_time || '23:59:59'));
     return { ev, target, isPast: target < now };
   });
-  // "Your events" specifically (not deadlines) drops off anything more than
-  // 48h past its own (non-recurring) occurrence -- a recurring event's
+  // Both "Your deadlines" and "Your events" drop off anything more than 48h
+  // past its own (non-recurring) occurrence -- a recurring item's
   // nextOccurrence() is always today-or-later so this never touches those.
-  // The showPastEvents toggle bypasses this so past events can still be
-  // looked up on demand instead of being gone for good.
+  // Each has its own showPast* toggle bypassing this so past items can
+  // still be looked up on demand instead of being gone for good.
   if(kind === 'event' && !showPastEvents){
+    const cutoffMs = now.getTime() - 48*3600000;
+    withTiming = withTiming.filter(x=> x.target.getTime() >= cutoffMs);
+  }
+  if(kind === 'deadline' && !showPastDeadlines){
     const cutoffMs = now.getTime() - 48*3600000;
     withTiming = withTiming.filter(x=> x.target.getTime() >= cutoffMs);
   }
@@ -13412,6 +13421,12 @@ document.getElementById('showPastEventsToggle').addEventListener('change', (e)=>
   showPastEvents = e.target.checked;
   listState.event.expanded = false;
   listState.event.page = 1;
+  renderCalendarTab();
+});
+document.getElementById('showPastDeadlinesToggle').addEventListener('change', (e)=>{
+  showPastDeadlines = e.target.checked;
+  listState.deadline.expanded = false;
+  listState.deadline.page = 1;
   renderCalendarTab();
 });
 document.getElementById('monthPrevBtn').addEventListener('click', ()=>{
