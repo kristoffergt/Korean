@@ -59,6 +59,9 @@
      with the row/sub date above it. This shifts it back into the exact
      zone the list already reserved for it. */
   .r-date-float{float:right; width:175px; margin-right:-175px; font-style:italic; text-align:right;}
+  /* Desktop-only twin of r-date-float -- see the mobile breakpoint below,
+     and the comment in renderEntry() in the script at the bottom. */
+  .r-date-mobile{display:none;}
   .r-sub{display:table; width:100%; font-style:italic; table-layout:fixed;}
   .r-sub > span:first-child{display:table-cell; text-align:left; vertical-align:top; padding-right:14px;}
   .r-sub .r-right{display:table-cell; width:175px; text-align:right; vertical-align:top;}
@@ -77,15 +80,16 @@
     .r-contact{text-align:left;}
     .r-row, .r-sub, .r-row .r-left, .r-row .r-right, .r-sub > span:first-child, .r-sub .r-right{display:block;}
     .r-row .r-right, .r-sub .r-right{text-align:left; white-space:normal; padding-left:0;}
-    /* float:none + display:block here would make the date its own line at
-       the very start of the <li> -- since it's the li's first child, that
-       pushes the bullet marker to sit next to the DATE instead of the
-       actual bullet text below it. Keeping it inline (with the li's real
-       text right after) means the bullet marker stays where it belongs,
-       at the start of the whole line. */
-    .r-date-float{float:none; display:inline; font-style:italic; margin:0;}
-    .r-date-float::before{content:"(";}
-    .r-date-float::after{content:") ";}
+    /* r-date-float lives inside the first <li>, so on mobile it's hidden
+       entirely rather than reflowed -- putting it on its own line there
+       pushed the bullet marker to sit next to the date instead of the
+       actual bullet text (r-date-float is display:block above that mark),
+       and keeping it inline read as a cramped parenthetical. r-date-mobile
+       is the same date rendered as its own plain line instead, positioned
+       right under location like r-sub's date already does when there IS a
+       subtitle -- same visual rhythm either way. */
+    .r-date-float{display:none;}
+    .r-date-mobile{display:block; font-style:italic; margin-top:1px;}
     .r-entry ul{margin-right:0;}
   }
   @media print{
@@ -136,6 +140,14 @@ function renderEntry(entry){
     bulletsHtml = bullets.length ? `<ul>${bullets.map(b=>`<li>${escapeHtml(b)}</li>`).join('')}</ul>` : '';
   } else if(bullets.length){
     const [first, ...rest] = bullets;
+    // Two renderings of the same date: r-date-float (desktop, floated into
+    // the first bullet so it shares that line instead of an empty row of
+    // its own) and r-date-mobile (a plain line matching how r-sub shows a
+    // date when there IS a subtitle) -- CSS shows exactly one of the two
+    // per breakpoint. Keeping the date inside the bulleted <li> on mobile
+    // too broke the bullet marker's position (see the r-date-float mobile
+    // rule below), so mobile gets its own non-bulleted line instead.
+    subHtml = `<div class="r-date-mobile">${escapeHtml(entry.date)}</div>`;
     bulletsHtml = `<ul><li><span class="r-date-float">${escapeHtml(entry.date)}</span>${escapeHtml(first)}</li>${rest.map(b=>`<li>${escapeHtml(b)}</li>`).join('')}</ul>`;
   } else if(entry.date){
     // No subtitle and no bullets to float the date into -- fall back to a
