@@ -8896,6 +8896,8 @@ async function onAuthed(user){
   updateLinkNotifyDot();
   refreshNotifBell();
   subscribeNoteRealtimeInserts();
+  subscribeNotifRealtime();
+  subscribeLinkRealtime();
   renderAll();
   maybeAutoTriggerJobBoardSync();
   // Tab-nav wrap measurement only works once #appScreen is actually visible
@@ -9314,6 +9316,27 @@ document.getElementById('notifBellSearch').addEventListener('input', (e)=>{
   renderNotifBellPanel();
 });
 setInterval(()=>{ if(currentUser) refreshNotifBell(); }, 60000);
+// Pushes new notifications in immediately instead of waiting up to 60s for
+// the poll -- RLS on the notifications table already scopes this to rows
+// belonging to currentUser, same as the notebook/course-notes INSERT
+// subscriptions above, so nothing extra to filter client-side.
+let notifRealtimeSubscribed = false;
+function subscribeNotifRealtime(){
+  if(notifRealtimeSubscribed || !currentUser) return;
+  notifRealtimeSubscribed = true;
+  supabaseClient.channel('notifications-inserts')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload)=>{
+      const row = payload.new;
+      if(notifCache.some(n=>n.id===row.id)) return;
+      notifCache.unshift(row);
+      const unread = notifCache.filter(n=>!n.read_at).length;
+      const countEl = document.getElementById('notifBellCount');
+      countEl.textContent = unread > 9 ? '9+' : String(unread);
+      countEl.classList.toggle('hidden', unread === 0);
+      if(!document.getElementById('notifBellPanel').classList.contains('hidden')) renderNotifBellPanel();
+    })
+    .subscribe();
+}
 // Escape closes whatever popup is currently open, checked in order:
 // a modal overlay (via its own close button, so any per-modal cleanup that
 // button already does still runs), then the notification bell dropdown,
@@ -9462,6 +9485,23 @@ async function refreshLinkData(){
   const { data: lsRows } = await supabaseClient.from('link_sharing_settings').select('*');
   linkSharingRows = lsRows || [];
   updateLinkNotifyDot();
+}
+// An incoming invite (INSERT) or someone else accepting/declining/leaving
+// (UPDATE) previously only showed up on your next page load or the next
+// time you happened to trigger refreshLinkData() yourself -- this pushes
+// it in live instead, same idea as subscribeNotifRealtime(). RLS already
+// scopes link_group_members to rows you're allowed to see, so any event
+// that arrives here is already relevant.
+let linkRealtimeSubscribed = false;
+function subscribeLinkRealtime(){
+  if(linkRealtimeSubscribed || !currentUser) return;
+  linkRealtimeSubscribed = true;
+  supabaseClient.channel('link-group-members-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'link_group_members' }, async ()=>{
+      await refreshLinkData();
+      if(!document.getElementById('accountSettingsModal').classList.contains('hidden')) renderLinkedCircle();
+    })
+    .subscribe();
 }
 // Which linked partner's per-person override panel (opened via the gear
 // icon next to their name) is currently expanded, if any.
