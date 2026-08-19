@@ -11914,6 +11914,16 @@ function jobBoardTypeLabel(type){
   if(cls === 'jobboard-type-intern') return t('jobBoardTypeIntern');
   return type;
 }
+// NEW badge is gated on both "not yet marked seen" AND "posted within the
+// last 3 days" -- otherwise a listing that's never been opened (or, like
+// the missing-RLS-policy bug, silently failed to record as seen) would
+// carry the NEW tag forever instead of it being a genuinely recent-posting
+// indicator.
+function jobBoardIsRecentlyPosted(datePosted){
+  if(!datePosted) return false;
+  const days = Math.round((new Date(new Date().toDateString()) - new Date(datePosted+'T00:00:00')) / 86400000);
+  return days < 3;
+}
 function jobBoardDeadlineColor(deadline){
   if(!deadline) return '';
   const days = Math.round((new Date(deadline+'T00:00:00') - new Date(new Date().toDateString())) / 86400000);
@@ -12115,7 +12125,7 @@ function renderJobBoard(){
   const pageItems = sorted.slice(start, start + JOB_BOARD_PAGE_SIZE);
   list.innerHTML = pageItems.map(it=>
     `<a class="jobboard-row" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer">
-      <div class="jobboard-title">${!jobBoardSeenIds.has(it.idx) ? `<span class="tag" style="background:var(--seal);color:#fff;padding:1px 6px;border-radius:4px;margin-right:6px;vertical-align:middle;">${t('jobBoardNewBadge')}</span>` : ''}${escapeHtml(it.title)}</div>
+      <div class="jobboard-title">${(!jobBoardSeenIds.has(it.idx) && jobBoardIsRecentlyPosted(it.date_posted)) ? `<span class="tag" style="background:var(--seal);color:#fff;padding:1px 6px;border-radius:4px;margin-right:6px;vertical-align:middle;">${t('jobBoardNewBadge')}</span>` : ''}${escapeHtml(it.title)}</div>
       <div class="jobboard-row-meta">
         <span class="jobboard-date">${escapeHtml(it.date_posted)}</span>
         <span class="jobboard-pill">${escapeHtml(jobBoardIndustryLabel(it.industry))}</span>
