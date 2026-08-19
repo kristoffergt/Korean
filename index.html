@@ -11850,15 +11850,23 @@ function isJobBoardVisible(){
   const section = document.getElementById('jobsJobBoardSection');
   return !!section && !section.classList.contains('hidden') && activeTab === 'jobs';
 }
-function markJobBoardItemsSeen(items){
+async function markJobBoardItemsSeen(items){
   if(!isJobBoardVisible()) return;
   const toMark = items.filter(it=> !jobBoardSeenIds.has(it.idx) && !jobBoardSeenQueued.has(it.idx));
   if(toMark.length === 0) return;
   toMark.forEach(it=> jobBoardSeenQueued.add(it.idx));
-  supabaseClient.from('jobboard_items_seen').upsert(
+  const { error } = await supabaseClient.from('jobboard_items_seen').upsert(
     toMark.map(it=> ({ user_id: currentUser.id, item_idx: it.idx })),
     { onConflict: 'user_id,item_idx' }
   );
+  // Was previously fire-and-forget, which is how a missing RLS policy on
+  // this table silently meant nothing ever actually got marked seen for
+  // who knows how long -- logging so a future permission regression here
+  // is visible in devtools instead of just quietly not working.
+  if(error){
+    console.error('markJobBoardItemsSeen upsert failed:', error);
+    toMark.forEach(it=> jobBoardSeenQueued.delete(it.idx));
+  }
 }
 let jobBoardSearchQuery = '';
 let jobBoardIndustryFilter = 'all';
