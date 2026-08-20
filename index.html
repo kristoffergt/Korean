@@ -155,7 +155,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
 .lb-head-simple{display:grid;grid-template-columns:22px 1fr 70px;gap:10px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);padding-bottom:8px;border-bottom:1px solid var(--line);}
 .lb-head-simple span:last-child{text-align:right;}
 .log-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
-.field{display:flex;flex-direction:column;gap:5px;}
+.field{display:flex;flex-direction:column;gap:5px;position:relative;}
 .field label{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.5px;}
 .field input, .field select, .field textarea{font-family:'Space Grotesk',monospace;font-size:15px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:150px;}
 .field input[type="checkbox"], .field input[type="radio"]{width:16px !important;height:16px !important;min-width:16px;min-height:16px;padding:0 !important;margin:0;border-radius:3px;flex-shrink:0;}
@@ -164,7 +164,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
 .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
 .person-filter-btn{font-family:'Inter',sans-serif;font-weight:500;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:fit-content;min-width:56px;max-width:220px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .person-filter-btn:hover{background:var(--paper-dim);}
-.person-filter-panel{position:relative;margin-top:6px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper-dim);width:fit-content;min-width:150px;}
+.person-filter-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:50;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper-dim);width:fit-content;min-width:150px;box-shadow:0 4px 16px rgba(0,0,0,0.25);}
 button{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:10px 20px;border:none;border-radius:6px;background:var(--ink);color:var(--paper);cursor:pointer;}
 button:hover{background:var(--ink-hover);}
 .hint{font-size:12px;color:var(--ink-soft);margin-top:10px;}
@@ -1451,20 +1451,22 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       </div>
     </div>
     <div class="card">
-      <div class="note-group-header" id="recapHeader"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <div class="note-group-header" id="recapHeader"></div>
+        <span class="field" style="display:flex;flex-direction:row;align-items:center;">
+          <button type="button" class="person-filter-btn" id="calPersonFilterBtn"></button>
+          <div class="person-filter-panel hidden" id="calPersonFilterPanel" style="right:0;left:auto;"></div>
+        </span>
+      </div>
       <div id="recapCard" class="hidden"></div>
     </div>
     <div class="card">
       <h2 id="hMonthView"></h2>
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:flex-start;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
         <div class="cal-view-toggle" id="calViewToggle" style="margin-bottom:0;">
           <button data-view="month" id="calViewMonthBtn"></button>
           <button data-view="week" id="calViewWeekBtn"></button>
           <button data-view="day" id="calViewDayBtn"></button>
-        </div>
-        <div style="position:relative;">
-          <button type="button" class="person-filter-btn" id="calPersonFilterBtn"></button>
-          <div class="person-filter-panel hidden" id="calPersonFilterPanel" style="position:absolute;right:0;top:calc(100% + 4px);z-index:50;"></div>
         </div>
       </div>
       <div class="month-nav">
@@ -1725,7 +1727,6 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <div id="dailyRecapDaysPicker" style="display:flex;gap:4px;margin-top:6px;"></div>
     </div>
     <div style="padding:5px 0 0;font-size:12px;" id="recapExtraOptionsWrap" class="hidden">
-      <div class="hint" id="lblRecapExcludeKinds" style="margin-bottom:4px;"></div>
       <div id="recapExcludeKindsPicker" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
     </div>
 
@@ -7783,7 +7784,7 @@ const I18N = {
     hModerator:'Moderator – All accounts', modResetPw:'Reset password', modEditName:'Edit name', modConfirmEmail:'Confirm email', modDisableMfa:'Disable 2FA', modDeleteUser:'Delete account',
     lblResumeUpload:'Public resume (kristoffergt.com/resume)', resumeUploadBtn:'Upload PDF', resumeViewLink:'View live page ↗', resumeUploadSuccess:'Resume uploaded.', resumeUploadFailed:'Upload failed.', resumePdfOnlyMsg:'Only PDF files are allowed.', lblResumeSync:'Sync resume from PDF', resumeSyncIntro:'Updating the resume itself (new job, updated bullets)? Copy this prompt into any AI chat along with your updated resume PDF, then paste its answer below and save. It rebuilds the whole page from that text.', resumeSyncCopyBtn:'Copy AI prompt', lblResumeSyncPaste:'Paste the AI\'s answer here', resumeSyncSaveBtn:'Save & publish', resumeSyncSuccess:'Resume updated.', resumeSyncFailed:'Could not save.', resumeSyncParseFailed:'Could not find a NAME field. Check the paste starts from the very top of the AI\'s answer.',
     lblNotifBell:'Notifications', notifEmpty:'No notifications yet.', notifSearchPlaceholder:'Search notifications…', notifPrefsHeader:'Notifications', lblRecapsHeader:'Recaps', notifTypeReminder:'Calendar reminders', notifTypeYonseiBoard:'Yonsei board notices', notifTypeLinkAccepted:'Link-invite accepted', notifChannelEmail:'Email', notifChannelInApp:'In-app', writingIndicator:'{name} is writing "{title}"…', notifSystemPinTitle:'New site PIN required for sign-in', notifSystemPinBody:'Signing in or creating an account now requires a 4-digit site PIN. Find it anytime in Settings.', notifReminderTitleTpl:'Reminder: {title}', notifYonseiBoardTitleOne:'New Yonsei GSIS notice', notifYonseiBoardTitleMany:'New Yonsei GSIS notices', notifLinkAcceptedTitleTpl:'{name} accepted your invite',
-    dailyRecapPrefix:'Daily recap', weeklyRecapPrefix:'Weekly recap', recapEveryWord:'every', recapTimeMorning:'morning', recapTimeNoon:'noon', recapTimeEvening:'evening', recapRelativeOnDay:'on the day', recapRelativeDayBefore:'day before', recapRelativeDayPassed:'day passed', recapWeekComing:'coming', recapWeekPassed:'passed', recapWeekBoth:'both', lblRecapExcludeKinds:'Show in recaps', recapExcludeNone:'Both', recapExcludeDailyOnly:'Weekly only', recapExcludeWeeklyOnly:'Daily only', recapExcludeBoth:'Excluded', notifDailyRecapTitleTpl:'Your day: {count} thing', notifDailyRecapTitleTplMany:'Your day: {count} things', notifWeeklyRecapTitleTpl:'Your week: {count} thing', notifWeeklyRecapTitleTplMany:'Your week: {count} things',
+    dailyRecapPrefix:'Daily recap', weeklyRecapPrefix:'Weekly recap', recapEveryWord:'every', recapTimeMorning:'morning', recapTimeNoon:'noon', recapTimeEvening:'evening', recapRelativeOnDay:'on the day', recapRelativeDayBefore:'day before', recapRelativeDayPassed:'day passed', recapWeekComing:'coming', recapWeekPassed:'passed', recapWeekBoth:'both', recapExcludeNone:'Both', recapExcludeDailyOnly:'Weekly only', recapExcludeWeeklyOnly:'Daily only', recapExcludeBoth:'Excluded', notifDailyRecapTitleTpl:'Your day: {count} thing', notifDailyRecapTitleTplMany:'Your day: {count} things', notifWeeklyRecapTitleTpl:'Your week: {count} thing', notifWeeklyRecapTitleTplMany:'Your week: {count} things',
     modSearchPlaceholder:'Search name or email…', modSortDate:'Sort by date joined', modSort2fa:'Sort by 2FA status', modSortConfirmed:'Sort by confirmation status', modSortName:'Sort by name',
     modConfirmed:'Confirmed', modUnconfirmed:'Unconfirmed', modMfaOn:'2FA on', modMfaOff:'2FA off', modYou:'YOU', modAdmin:'Admin', modNewPasswordPrompt:'New password for this account:', modNewNamePrompt:'New display name for this account:',
     modConfirmDeleteUser:'Permanently delete this account and all of its data? This cannot be undone.', modActionFailed:'Action failed.', modActionDone:'Done.',
@@ -7894,7 +7895,7 @@ const I18N = {
     hModerator:'관리자 – 전체 계정', modResetPw:'비밀번호 재설정', modEditName:'이름 수정', modConfirmEmail:'이메일 확인 처리', modDisableMfa:'2단계 인증 끄기', modDeleteUser:'계정 삭제',
     lblResumeUpload:'공개 이력서 (kristoffergt.com/resume)', resumeUploadBtn:'PDF 업로드', resumeViewLink:'실시간 페이지 보기 ↗', resumeUploadSuccess:'이력서를 업로드했습니다.', resumeUploadFailed:'업로드에 실패했습니다.', resumePdfOnlyMsg:'PDF 파일만 업로드할 수 있습니다.', lblResumeSync:'PDF로 이력서 동기화', resumeSyncIntro:'이력서 내용 자체를 업데이트하시나요 (새 직장, 수정된 항목 등)? 이 프롬프트를 업데이트된 이력서 PDF와 함께 AI 채팅에 복사해 붙여넣고, 그 답변을 아래에 붙여넣은 후 저장하세요. 그 텍스트로 페이지 전체가 다시 만들어집니다.', resumeSyncCopyBtn:'AI 프롬프트 복사', lblResumeSyncPaste:'AI의 답변을 여기에 붙여넣으세요', resumeSyncSaveBtn:'저장 및 게시', resumeSyncSuccess:'이력서가 업데이트되었습니다.', resumeSyncFailed:'저장할 수 없습니다.', resumeSyncParseFailed:'NAME 항목을 찾을 수 없습니다. AI 답변의 맨 처음부터 붙여넣었는지 확인하세요.',
     lblNotifBell:'알림', notifEmpty:'아직 알림이 없습니다.', notifSearchPlaceholder:'알림 검색…', notifPrefsHeader:'알림', lblRecapsHeader:'요약', notifTypeReminder:'캘린더 알림', notifTypeYonseiBoard:'연세 게시판 공지', notifTypeLinkAccepted:'연결 초대 수락', notifChannelEmail:'이메일', notifChannelInApp:'앱 내', writingIndicator:'{name}님이 "{title}"을(를) 작성 중…', notifSystemPinTitle:'로그인에 사이트 PIN이 필요합니다', notifSystemPinBody:'이제 로그인하거나 계정을 만들려면 4자리 사이트 PIN이 필요합니다. 설정에서 언제든지 확인할 수 있습니다.', notifReminderTitleTpl:'알림: {title}', notifYonseiBoardTitleOne:'새 연세 GSIS 공지', notifYonseiBoardTitleMany:'새 연세 GSIS 공지 여러 건', notifLinkAcceptedTitleTpl:'{name}님이 초대를 수락했습니다',
-    dailyRecapPrefix:'일간 요약', weeklyRecapPrefix:'주간 요약', recapEveryWord:'매일', recapTimeMorning:'아침', recapTimeNoon:'정오', recapTimeEvening:'저녁', recapRelativeOnDay:'당일', recapRelativeDayBefore:'전날', recapRelativeDayPassed:'지난 날', recapWeekComing:'다가오는', recapWeekPassed:'지난', recapWeekBoth:'둘 다', lblRecapExcludeKinds:'요약에 표시', recapExcludeNone:'둘 다', recapExcludeDailyOnly:'주간만', recapExcludeWeeklyOnly:'일간만', recapExcludeBoth:'제외', notifDailyRecapTitleTpl:'오늘 일정: {count}건', notifDailyRecapTitleTplMany:'오늘 일정: {count}건', notifWeeklyRecapTitleTpl:'이번 주 일정: {count}건', notifWeeklyRecapTitleTplMany:'이번 주 일정: {count}건',
+    dailyRecapPrefix:'일간 요약', weeklyRecapPrefix:'주간 요약', recapEveryWord:'매일', recapTimeMorning:'아침', recapTimeNoon:'정오', recapTimeEvening:'저녁', recapRelativeOnDay:'당일', recapRelativeDayBefore:'전날', recapRelativeDayPassed:'지난 날', recapWeekComing:'다가오는', recapWeekPassed:'지난', recapWeekBoth:'둘 다', recapExcludeNone:'둘 다', recapExcludeDailyOnly:'주간만', recapExcludeWeeklyOnly:'일간만', recapExcludeBoth:'제외', notifDailyRecapTitleTpl:'오늘 일정: {count}건', notifDailyRecapTitleTplMany:'오늘 일정: {count}건', notifWeeklyRecapTitleTpl:'이번 주 일정: {count}건', notifWeeklyRecapTitleTplMany:'이번 주 일정: {count}건',
     modSearchPlaceholder:'이름 또는 이메일 검색…', modSortDate:'가입일순 정렬', modSort2fa:'2FA 상태순 정렬', modSortConfirmed:'인증 상태순 정렬', modSortName:'이름순 정렬',
     modConfirmed:'확인됨', modUnconfirmed:'미확인', modMfaOn:'2FA 켜짐', modMfaOff:'2FA 꺼짐', modYou:'나', modAdmin:'관리자', modNewPasswordPrompt:'이 계정의 새 비밀번호:', modNewNamePrompt:'이 계정의 새 표시 이름:',
     modConfirmDeleteUser:'이 계정과 모든 데이터를 영구적으로 삭제하시겠습니까? 되돌릴 수 없습니다.', modActionFailed:'작업에 실패했습니다.', modActionDone:'완료되었습니다.',
@@ -8005,7 +8006,7 @@ const I18N = {
     hModerator:'Quản trị viên – Tất cả tài khoản', modResetPw:'Đặt lại mật khẩu', modEditName:'Sửa tên', modConfirmEmail:'Xác nhận email', modDisableMfa:'Tắt 2FA', modDeleteUser:'Xóa tài khoản',
     lblResumeUpload:'Sơ yếu lý lịch công khai (kristoffergt.com/resume)', resumeUploadBtn:'Tải PDF lên', resumeViewLink:'Xem trang trực tiếp ↗', resumeUploadSuccess:'Đã tải sơ yếu lý lịch lên.', resumeUploadFailed:'Tải lên thất bại.', resumePdfOnlyMsg:'Chỉ chấp nhận tệp PDF.', lblResumeSync:'Đồng bộ sơ yếu lý lịch từ PDF', resumeSyncIntro:'Đang cập nhật nội dung sơ yếu lý lịch (công việc mới, mục cập nhật)? Sao chép prompt này vào bất kỳ AI chat nào cùng với PDF sơ yếu lý lịch đã cập nhật, rồi dán câu trả lời vào bên dưới và lưu lại. Toàn bộ trang sẽ được dựng lại từ đoạn văn bản đó.', resumeSyncCopyBtn:'Sao chép prompt AI', lblResumeSyncPaste:'Dán câu trả lời của AI vào đây', resumeSyncSaveBtn:'Lưu & xuất bản', resumeSyncSuccess:'Đã cập nhật sơ yếu lý lịch.', resumeSyncFailed:'Không thể lưu.', resumeSyncParseFailed:'Không tìm thấy trường NAME. Hãy kiểm tra xem bạn đã dán từ đầu câu trả lời của AI chưa.',
     lblNotifBell:'Thông báo', notifEmpty:'Chưa có thông báo nào.', notifSearchPlaceholder:'Tìm kiếm thông báo…', notifPrefsHeader:'Thông báo', lblRecapsHeader:'Tóm tắt', notifTypeReminder:'Nhắc lịch', notifTypeYonseiBoard:'Thông báo bảng tin Yonsei', notifTypeLinkAccepted:'Đã chấp nhận lời mời liên kết', notifChannelEmail:'Email', notifChannelInApp:'Trong ứng dụng', writingIndicator:'{name} đang viết "{title}"…', notifSystemPinTitle:'Cần mã PIN trang web mới để đăng nhập', notifSystemPinBody:'Đăng nhập hoặc tạo tài khoản giờ đây yêu cầu mã PIN gồm 4 chữ số. Bạn có thể xem lại bất cứ lúc nào trong Cài đặt.', notifReminderTitleTpl:'Nhắc nhở: {title}', notifYonseiBoardTitleOne:'Thông báo GSIS Yonsei mới', notifYonseiBoardTitleMany:'Các thông báo GSIS Yonsei mới', notifLinkAcceptedTitleTpl:'{name} đã chấp nhận lời mời của bạn',
-    dailyRecapPrefix:'Tóm tắt hằng ngày', weeklyRecapPrefix:'Tóm tắt hằng tuần', recapEveryWord:'mỗi', recapTimeMorning:'sáng', recapTimeNoon:'trưa', recapTimeEvening:'tối', recapRelativeOnDay:'trong ngày', recapRelativeDayBefore:'ngày hôm trước', recapRelativeDayPassed:'ngày đã qua', recapWeekComing:'sắp tới', recapWeekPassed:'đã qua', recapWeekBoth:'cả hai', lblRecapExcludeKinds:'Hiển thị trong tóm tắt', recapExcludeNone:'Cả hai', recapExcludeDailyOnly:'Chỉ hằng tuần', recapExcludeWeeklyOnly:'Chỉ hằng ngày', recapExcludeBoth:'Đã ẩn', notifDailyRecapTitleTpl:'Hôm nay: {count} việc', notifDailyRecapTitleTplMany:'Hôm nay: {count} việc', notifWeeklyRecapTitleTpl:'Tuần này: {count} việc', notifWeeklyRecapTitleTplMany:'Tuần này: {count} việc',
+    dailyRecapPrefix:'Tóm tắt hằng ngày', weeklyRecapPrefix:'Tóm tắt hằng tuần', recapEveryWord:'mỗi', recapTimeMorning:'sáng', recapTimeNoon:'trưa', recapTimeEvening:'tối', recapRelativeOnDay:'trong ngày', recapRelativeDayBefore:'ngày hôm trước', recapRelativeDayPassed:'ngày đã qua', recapWeekComing:'sắp tới', recapWeekPassed:'đã qua', recapWeekBoth:'cả hai', recapExcludeNone:'Cả hai', recapExcludeDailyOnly:'Chỉ hằng tuần', recapExcludeWeeklyOnly:'Chỉ hằng ngày', recapExcludeBoth:'Đã ẩn', notifDailyRecapTitleTpl:'Hôm nay: {count} việc', notifDailyRecapTitleTplMany:'Hôm nay: {count} việc', notifWeeklyRecapTitleTpl:'Tuần này: {count} việc', notifWeeklyRecapTitleTplMany:'Tuần này: {count} việc',
     modSearchPlaceholder:'Tìm theo tên hoặc email…', modSortDate:'Sắp xếp theo ngày tham gia', modSort2fa:'Sắp xếp theo trạng thái 2FA', modSortConfirmed:'Sắp xếp theo trạng thái xác nhận', modSortName:'Sắp xếp theo tên',
     modConfirmed:'Đã xác nhận', modUnconfirmed:'Chưa xác nhận', modMfaOn:'2FA bật', modMfaOff:'2FA tắt', modYou:'Bạn', modAdmin:'Quản trị', modNewPasswordPrompt:'Mật khẩu mới cho tài khoản này:', modNewNamePrompt:'Tên hiển thị mới cho tài khoản này:',
     modConfirmDeleteUser:'Xóa vĩnh viễn tài khoản này và toàn bộ dữ liệu? Không thể hoàn tác.', modActionFailed:'Thao tác thất bại.', modActionDone:'Hoàn tất.',
@@ -10205,8 +10206,6 @@ function renderRecapPrefsRows(){
 
   const extraWrap = document.getElementById('recapExtraOptionsWrap');
   if(extraWrap) extraWrap.classList.toggle('hidden', !(dailyOn || weeklyOn));
-  const excludeLbl = document.getElementById('lblRecapExcludeKinds');
-  if(excludeLbl) excludeLbl.textContent = t('lblRecapExcludeKinds') + ':';
   const excludeWrap = document.getElementById('recapExcludeKindsPicker');
   if(excludeWrap && (dailyOn || weeklyOn)){
     excludeWrap.innerHTML = '';
@@ -10220,7 +10219,7 @@ function renderRecapPrefsRows(){
       { value:'weekly', label:t('recapExcludeWeeklyOnly') },
       { value:'both', label:t('recapExcludeBoth') },
     ];
-    [['deadline','kindDeadline'],['event','kindEvent'],['course','kindCourse'],['birthday','kindBirthday']].forEach(([kind,labelKey])=>{
+    [['event','kindEvent'],['deadline','kindDeadline'],['birthday','kindBirthday'],['course','kindCourse']].forEach(([kind,labelKey])=>{
       const inDaily = dailyRecapExcludedKinds.includes(kind);
       const inWeekly = weeklyRecapExcludedKinds.includes(kind);
       const current = inDaily && inWeekly ? 'both' : inDaily ? 'daily' : inWeekly ? 'weekly' : 'none';
@@ -14817,6 +14816,7 @@ function calPersonFilterOnChange(){
   if(calViewMode === 'month') renderMonthGrid();
   else if(calViewMode === 'week') renderWeekGrid();
   else renderDayGrid();
+  renderRecap();
 }
 wirePersonFilter('calPersonFilter', '__circle__', calPersonFilterOnChange);
 document.getElementById('showPastEventsToggle').addEventListener('change', (e)=>{
@@ -14912,9 +14912,14 @@ function renderRecap(){
     <button data-period="week" class="${recapPeriod==='week'?'active':''}">${t('recapWeekBtn')}</button>
     <button data-period="month" class="${recapPeriod==='month'?'active':''}">${t('recapMonthBtn')}</button>
   </div>`;
+  // Follows the same "who" picker as the rest of the tab (calPersonFilter)
+  // instead of its own always-everyone list, so narrowing the calendar down
+  // also narrows the recap -- but still only to people who've actually
+  // opted to share their 'recap' data with you (isSharingWithMe), so
+  // unifying the picker never bypasses someone's own sharing choice.
   html += recapPersonHtml(currentUser.id, days);
-  visiblePartnersFor('recap').forEach(uid=>{
-    html += recapPersonHtml(uid, days);
+  personFilterShowIds('calPersonFilter').forEach(uid=>{
+    if(uid !== currentUser.id && isSharingWithMe(uid, 'recap')) html += recapPersonHtml(uid, days);
   });
   el.innerHTML = html;
   el.querySelectorAll('.recap-toggle button').forEach(btn=>{
