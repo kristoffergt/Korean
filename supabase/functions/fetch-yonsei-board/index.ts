@@ -22,9 +22,12 @@ Deno.serve(async (req: Request) => {
   try {
     // articleLimit asks the board's own server to return everything in one
     // response instead of its default ~10-per-page slice -- confirmed live
-    // that it honors this (478 items back in a single ~1MB response), so a
-    // real pagination loop across the board's own "pages" isn't needed.
-    const res = await fetch(`${YONSEI_BOARD_URL}?mode=list&articleLimit=500`, {
+    // that it honors this (478 items back in a single ~1MB response, and the
+    // response doesn't grow past that either -- 478 is just every article
+    // that currently exists). 1000 gives years of headroom past the current
+    // count before this needs raising again; a real pagination loop across
+    // the board's own "pages" isn't needed.
+    const res = await fetch(`${YONSEI_BOARD_URL}?mode=list&articleLimit=1000`, {
       headers: {
         // Yonsei's server has been observed serving a different (non-list)
         // response to requests with no browser-like User-Agent.

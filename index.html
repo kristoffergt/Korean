@@ -278,13 +278,15 @@ button:hover{background:var(--ink-hover);}
 .deadline-right{display:flex;align-items:center;gap:10px;}
 .deadline-days{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--celadon-4);}
 .deadline-days.soon{color:var(--seal);}
-.month-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.month-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;position:relative;}
 .month-nav button{padding:6px 12px;font-size:13px;}
 .month-nav .month-label{font-family:'Space Grotesk',monospace;font-weight:700;font-size:14px;}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
 .month-dow{font-size:10px;text-transform:uppercase;color:var(--ink-soft);text-align:center;padding-bottom:4px;}
 .month-day{min-height:64px;border:1px solid var(--line);border-radius:6px;background:var(--paper);font-size:11px;padding:4px;position:relative;color:var(--ink-soft);display:flex;flex-direction:column;gap:2px;overflow:hidden;}
 .month-day.today{border-color:var(--celadon-4);border-width:2px;}
+.month-day.selected{background:var(--paper-dim);}
+.month-day:not(.empty){cursor:pointer;}
 .month-day .dnum{font-family:'Space Grotesk',monospace;flex-shrink:0;}
 .month-day .chip-stack{display:flex;flex-direction:column;gap:2px;overflow:hidden;}
 .month-day .event-chip{font-size:8.5px;line-height:1.3;padding:1px 4px;border-radius:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
@@ -1440,10 +1442,12 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       </div>
       <div class="month-nav">
         <button id="monthPrevBtn">‹</button>
-        <span class="month-label" id="monthLabel"></span>
+        <span class="month-label" id="monthLabel" style="cursor:pointer;" title="Jump to date"></span>
+        <input type="date" id="calJumpDateInput" style="position:absolute;top:0;left:50%;opacity:0;width:0;height:0;border:0;padding:0;pointer-events:none;">
         <button id="monthNextBtn">›</button>
       </div>
       <div class="month-grid" id="monthGrid"></div>
+      <div id="monthAgendaPanel" class="notes-panel hidden" style="margin-top:10px;"></div>
       <div class="week-grid-wrap hidden" id="weekGridWrap">
         <div class="week-header-row" id="weekHeaderRow"></div>
         <div class="week-body-scroll">
@@ -7676,7 +7680,7 @@ const I18N = {
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
     topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
-    viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view',
+    viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
     lblRecurInterval:'Every', lblRecurEndType:'Ends', recurNever:'Never', recurUntilDate:'Until date', lblRecurEndDate:'End date',
@@ -7787,7 +7791,7 @@ const I18N = {
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
     topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
-    viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기',
+    viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
     lblRecurInterval:'주기', lblRecurEndType:'종료', recurNever:'계속 반복', recurUntilDate:'날짜까지', lblRecurEndDate:'종료일',
@@ -7898,7 +7902,7 @@ const I18N = {
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
     topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
-    viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày',
+    viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
     lblRecurInterval:'Mỗi', lblRecurEndType:'Kết thúc', recurNever:'Không bao giờ', recurUntilDate:'Đến ngày', lblRecurEndDate:'Ngày kết thúc',
@@ -13544,6 +13548,13 @@ function renderMonthGrid(){
     const extra = events.length - maxShow;
     if(extra > 0){ chips += `<div class="more-count">+${extra}</div>`; }
     cell.innerHTML = `<div class="dnum">${day}</div><div class="chip-stack">${chips}</div>`;
+    if(dateKey === selectedAgendaDate) cell.classList.add('selected');
+    cell.addEventListener('click', ()=>{
+      selectedAgendaDate = selectedAgendaDate === dateKey ? null : dateKey;
+      grid.querySelectorAll('.month-day.selected').forEach(el=>el.classList.remove('selected'));
+      if(selectedAgendaDate) cell.classList.add('selected');
+      renderMonthAgenda();
+    });
     grid.appendChild(cell);
   }
   grid.querySelectorAll('.chip-bell').forEach(btn=>{
@@ -13560,9 +13571,68 @@ function renderMonthGrid(){
   });
   grid.querySelectorAll('.cal-chip').forEach(chip=>{
     chip.addEventListener('click', (e)=>{
+      e.stopPropagation();
       if(e.target.closest('.chip-bell') || e.target.closest('.chip-edit')) return;
       openQuickView(chip.dataset.ev, chip.dataset.date);
     });
+  });
+  renderMonthAgenda();
+}
+// Tapping an empty area of a month-view day cell (see the cell click
+// listener in renderMonthGrid() above -- event chips stopPropagation so
+// tapping one of THOSE opens its quick-view instead) expands this panel
+// beneath the grid with that day's full agenda, same idiom as Apple
+// Calendar's month view. "Open day view" from here hands off to the
+// existing Day view rather than duplicating its rendering.
+function renderMonthAgenda(){
+  const panel = document.getElementById('monthAgendaPanel');
+  if(!panel) return;
+  if(!selectedAgendaDate){ panel.classList.add('hidden'); panel.innerHTML = ''; return; }
+  const dateKey = selectedAgendaDate;
+  const events = [];
+  calendarVisibleUserIds().forEach(uid=>{
+    (allEvents[uid]||[]).forEach(ev=>{
+      if(expandOccurrences(ev, dateKey, dateKey).length) events.push(ev);
+    });
+  });
+  events.sort((a,b)=> (a.event_time||'99:99').localeCompare(b.event_time||'99:99'));
+  const dateObj = new Date(dateKey+'T00:00:00');
+  const label = capFirst(dateObj.toLocaleDateString(appLocale(), {weekday:'long', month:'long', day:'numeric'}));
+  const rows = events.length ? events.map(ev=>{
+    const bg = ev.color || '#4F7563';
+    const timeText = ev.event_time ? formatTime12h(ev.event_time) : '';
+    return `<div class="agenda-row" data-ev="${ev.id}" data-date="${dateKey}" style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;">
+      <span style="width:8px;height:8px;border-radius:50%;background:${bg};flex-shrink:0;"></span>
+      ${timeText ? `<span style="font-size:12px;color:var(--ink-soft);width:66px;flex-shrink:0;">${timeText}</span>` : ''}
+      <span style="font-size:13px;">${escapeHtml(ev.title)}</span>
+    </div>`;
+  }).join('') : `<div class="hint">${t('monthAgendaEmpty')}</div>`;
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div style="font-weight:700;font-size:13.5px;">${label}</div>
+      <button class="icon-btn" id="monthAgendaCloseBtn" title="Close" style="padding:2px 8px;">✕</button>
+    </div>
+    ${rows}
+    <button class="linkbtn" id="monthAgendaOpenDayBtn" style="margin-top:8px;">${t('monthAgendaOpenDay')}</button>
+  `;
+  panel.classList.remove('hidden');
+  panel.querySelectorAll('.agenda-row').forEach(row=>{
+    row.addEventListener('click', ()=> openQuickView(row.dataset.ev, row.dataset.date));
+  });
+  document.getElementById('monthAgendaCloseBtn').addEventListener('click', ()=>{
+    selectedAgendaDate = null;
+    document.querySelectorAll('.month-day.selected').forEach(el=>el.classList.remove('selected'));
+    renderMonthAgenda();
+  });
+  document.getElementById('monthAgendaOpenDayBtn').addEventListener('click', ()=>{
+    calViewDate = new Date(dateKey+'T00:00:00');
+    calViewMode = 'day';
+    selectedAgendaDate = null;
+    document.getElementById('monthGrid').classList.add('hidden');
+    document.getElementById('weekGridWrap').classList.remove('hidden');
+    setActiveCalViewBtn();
+    document.getElementById('hMonthView').textContent = t('dayViewLabel');
+    renderDayGrid();
   });
 }
 async function quickToggleSubscription(eventId){
@@ -13648,7 +13718,8 @@ function shortenTitleForMobile(title){
   if(clusters.length === 0) return title;
   return clusters.join(' ');
 }
-let calViewMode = isMobileDevice() ? 'day' : 'week';
+let calViewMode = 'month';
+let selectedAgendaDate = null; // dateKey ('YYYY-MM-DD') of the month-view cell currently expanded into the agenda panel beneath the grid, or null if none is
 // Which people's events show in the month/week/day grids, backed by the
 // same multi-select personFilters system used by every other tab (see
 // rebuildPersonFilter/wirePersonFilter). Any subset of self + circle can be
@@ -13656,7 +13727,7 @@ let calViewMode = isMobileDevice() ? 'day' : 'week';
 function calendarVisibleUserIds(){
   return personFilterShowIds('calPersonFilter');
 }
-let weekScrollInitialized = false;
+let calGridScrolledForKey = null; // startKey+'_'+endKey of the range last auto-scrolled -- re-scrolling only fires once per distinct range, so it never fights a manual scroll on an in-place re-render (e.g. toggling a bell icon)
 let HOUR_PX = 44;
 function timeToMinutes(t){
   if(!t) return 0;
@@ -13808,10 +13879,27 @@ function renderCalGrid(dates){
   body.querySelectorAll('.chip-edit').forEach(btn=>{
     btn.addEventListener('click', (e)=>{ e.stopPropagation(); openCalendarEditModal(btn.dataset.ev, btn.dataset.date); });
   });
-  if(!weekScrollInitialized){
+  const rangeKey = startKey + '_' + endKey;
+  if(calGridScrolledForKey !== rangeKey){
     const scrollWrap = document.querySelector('.week-body-scroll');
-    if(scrollWrap){ scrollWrap.scrollTop = 9 * HOUR_PX; }
-    weekScrollInitialized = true;
+    if(scrollWrap){
+      // Default to just above the earliest TIMED event in view, not a fixed
+      // hour -- untimed events (no event_time) render pinned at the very
+      // top of the grid regardless, so they're excluded from this or the
+      // scroll would just always land on 12 AM. Falls back to 9 AM (the old
+      // static default) on a day/week with no timed events at all.
+      let minStart = Infinity;
+      Object.values(eventsByDate).forEach(list=>{
+        list.forEach(ev=>{
+          if(!ev.event_time) return;
+          const startMin = timeToMinutes(ev.event_time);
+          if(startMin < minStart) minStart = startMin;
+        });
+      });
+      const targetHour = minStart === Infinity ? 9 : Math.max(0, Math.floor(minStart/60) - 1);
+      scrollWrap.scrollTop = targetHour * HOUR_PX;
+    }
+    calGridScrolledForKey = rangeKey;
   }
 }
 function renderWeekGrid(){
@@ -13825,7 +13913,7 @@ function renderDayGrid(){
 }
 document.getElementById('calViewMonthBtn').addEventListener('click', ()=>{
   calViewMode = 'month';
-  weekScrollInitialized = false;
+  calGridScrolledForKey = null;
   setActiveCalViewBtn();
   document.getElementById('monthGrid').classList.remove('hidden');
   document.getElementById('weekGridWrap').classList.add('hidden');
@@ -13834,6 +13922,7 @@ document.getElementById('calViewMonthBtn').addEventListener('click', ()=>{
 });
 document.getElementById('calViewWeekBtn').addEventListener('click', ()=>{
   calViewMode = 'week';
+  selectedAgendaDate = null;
   setActiveCalViewBtn();
   document.getElementById('monthGrid').classList.add('hidden');
   document.getElementById('weekGridWrap').classList.remove('hidden');
@@ -13842,6 +13931,7 @@ document.getElementById('calViewWeekBtn').addEventListener('click', ()=>{
 });
 document.getElementById('calViewDayBtn').addEventListener('click', ()=>{
   calViewMode = 'day';
+  selectedAgendaDate = null;
   setActiveCalViewBtn();
   document.getElementById('monthGrid').classList.add('hidden');
   document.getElementById('weekGridWrap').classList.remove('hidden');
@@ -13876,12 +13966,27 @@ document.getElementById('showPastDeadlinesToggle').addEventListener('change', (e
 document.getElementById('monthPrevBtn').addEventListener('click', ()=>{
   if(calViewMode === 'week'){ calViewDate.setDate(calViewDate.getDate()-7); renderWeekGrid(); }
   else if(calViewMode === 'day'){ calViewDate.setDate(calViewDate.getDate()-1); renderDayGrid(); }
-  else { calViewDate.setMonth(calViewDate.getMonth()-1); renderMonthGrid(); }
+  else { calViewDate.setMonth(calViewDate.getMonth()-1); selectedAgendaDate = null; renderMonthGrid(); }
 });
 document.getElementById('monthNextBtn').addEventListener('click', ()=>{
   if(calViewMode === 'week'){ calViewDate.setDate(calViewDate.getDate()+7); renderWeekGrid(); }
   else if(calViewMode === 'day'){ calViewDate.setDate(calViewDate.getDate()+1); renderDayGrid(); }
-  else { calViewDate.setMonth(calViewDate.getMonth()+1); renderMonthGrid(); }
+  else { calViewDate.setMonth(calViewDate.getMonth()+1); selectedAgendaDate = null; renderMonthGrid(); }
+});
+// The header date-range label doubles as a jump-to-date control: clicking
+// it opens a native date picker (a zero-size input hidden behind it, see
+// #calJumpDateInput in the markup) rather than building a custom calendar
+// widget for a feature that's really just "pick any date and land there".
+document.getElementById('monthLabel').addEventListener('click', ()=>{
+  const input = document.getElementById('calJumpDateInput');
+  input.value = todayStr(calViewDate);
+  if(input.showPicker) input.showPicker(); else input.click();
+});
+document.getElementById('calJumpDateInput').addEventListener('change', (e)=>{
+  if(!e.target.value) return;
+  calViewDate = new Date(e.target.value + 'T00:00:00');
+  selectedAgendaDate = null;
+  renderCalendarTab();
 });
 /* ---------- RECAP ---------- */
 // Trailing-window recap (last 7 / last 30 days including today, not fixed

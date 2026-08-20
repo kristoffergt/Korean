@@ -129,20 +129,34 @@ function canonicalCategory(raw: string | null): string {
   return "General Notice";
 }
 
+// Only these second-bracket values are real course-code markers worth
+// surfacing as a filterable sub-tag. Everything else seen in that position
+// -- "RA Recruitment"/"ODAR"/"Recruiting" (redundant with the Recruiting
+// category itself), "CALL FOR PAPERS"/"Announcement"/"Event", one-off
+// hirer names ("NOVAsia Magazine is Hiring", "UIC Recruiting"), and a long
+// tail of post-specific "updated as of <date>" stamps -- is noise that used
+// to flood the sub-tag filter list with entries nobody would ever want to
+// filter by. Case-insensitive match; the original casing is kept as the
+// displayed/stored value so it lines up with subtags already saved in
+// profiles.yonsei_hidden_subtags.
+const SUBTAG_ALLOWLIST = new Set(["GCC", "GCSD"]);
+
 // Splits a cleaned title into { category, subTag, title }: the leading
 // "[Category]" bracket (if any) becomes the canonical category, a second
-// leading bracket right after it (if any, e.g. "[GCC]"/"[GCSD]" course-code
-// markers on some Academics notices) becomes subTag, and whatever's left is
-// the display title with both stripped out.
+// leading bracket right after it (if any) becomes subTag only when it's one
+// of SUBTAG_ALLOWLIST's real course-code markers, and whatever's left is
+// the display title with both brackets stripped out either way.
 function splitYonseiTitle(cleaned: string): { category: string; subTag: string | null; title: string } {
   const m1 = cleaned.match(LEADING_BRACKET_RE);
   if (!m1) return { category: canonicalCategory(null), subTag: null, title: cleaned };
   const rest1 = cleaned.slice(m1[0].length);
   const m2 = rest1.match(LEADING_BRACKET_RE);
   if (!m2) return { category: canonicalCategory(m1[1].trim()), subTag: null, title: rest1 };
+  const rawSubTag = m2[1].trim();
+  const subTag = SUBTAG_ALLOWLIST.has(rawSubTag.toUpperCase()) ? rawSubTag : null;
   return {
     category: canonicalCategory(m1[1].trim()),
-    subTag: m2[1].trim(),
+    subTag,
     title: rest1.slice(m2[0].length),
   };
 }
