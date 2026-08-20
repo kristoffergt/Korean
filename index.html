@@ -12042,21 +12042,26 @@ function triggerJobBoardSync(){
   setTimeout(poll, JOB_BOARD_SYNC_POLL_MS);
 }
 // Runs once per real (local) calendar day, the first time that account logs
-// in after 1pm local time -- not tied to opening the Job Board tab
-// specifically, and not fired on an earlier-in-the-day login (job postings
-// tend to land later in the day, and a midnight-login auto-sync was just
-// noise). localStorage is appropriate here (rather than a DB column) since
-// this is a per-device preference: it only means anything on the one laptop
-// that has the local script set up. The day isn't marked done until after
-// the 1pm check passes, so an early login that skips the trigger doesn't
-// block a later-that-day login from firing it.
-const JOB_BOARD_AUTO_SYNC_HOUR = 13;
-function maybeAutoTriggerJobBoardSync(){
+// in AFTER a third-party page monitor (Visualping, watching
+// @yonseigsis_cdc's Instagram on its own infrastructure -- see
+// sql migrations/jobboard_instagram_signal_migration.sql and
+// supabase/functions/instagram-post-signal) has recorded a change for
+// today. Replaces the old fixed-hour check (job postings don't land on a
+// predictable clock, but CDC posting to Instagram is a good proxy for "new
+// postings are up"). Not tied to opening the Job Board tab specifically.
+// localStorage is appropriate for the "already ran today" flag (rather
+// than a DB column) since it's a per-device preference: it only means
+// anything on the one laptop that has the local script set up. The day
+// isn't marked done until after the signal check passes, so an early
+// login that finds no signal yet doesn't block a later-that-day login
+// (after Visualping's next hourly check) from firing it.
+async function maybeAutoTriggerJobBoardSync(){
   if(!isJobBoardSyncAccount()) return;
   const d = new Date();
-  if(d.getHours() < JOB_BOARD_AUTO_SYNC_HOUR) return;
   const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   if(localStorage.getItem('jobBoardLastAutoSync') === today) return;
+  const { data } = await supabaseClient.from('jobboard_instagram_signal').select('signal_date').eq('signal_date', today).maybeSingle();
+  if(!data) return;
   localStorage.setItem('jobBoardLastAutoSync', today);
   triggerJobBoardSync();
 }
