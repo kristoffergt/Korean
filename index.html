@@ -10384,13 +10384,6 @@ function appendPaginationPages(container, current, total, onPick){
   if(end > total){ start -= (end - total); end = total; }
   start = Math.max(1, start);
   end = Math.min(total, end);
-  for(let p=start; p<=end; p++){
-    const b = document.createElement('button');
-    b.textContent = String(p);
-    b.className = 'page-btn' + (p === current ? ' active' : '');
-    b.addEventListener('click', ()=> onPick(p));
-    container.appendChild(b);
-  }
   const jumpBtn = document.createElement('button');
   jumpBtn.type = 'button';
   jumpBtn.className = 'page-btn';
@@ -10427,7 +10420,21 @@ function appendPaginationPages(container, current, total, onPick){
     });
     input.addEventListener('blur', commit);
   });
-  container.appendChild(jumpBtn);
+  // The "…" jump field sits on whichever side still has pages hidden from
+  // the window -- after the numbers normally (hidden pages are ahead), but
+  // before them once the window has slid back far enough to show the last
+  // page itself, since the hidden pages are now all behind start instead.
+  // Flips back the moment the last page scrolls back out of the window.
+  const jumpBeforeNumbers = end === total && start > 1;
+  if(jumpBeforeNumbers) container.appendChild(jumpBtn);
+  for(let p=start; p<=end; p++){
+    const b = document.createElement('button');
+    b.textContent = String(p);
+    b.className = 'page-btn' + (p === current ? ' active' : '');
+    b.addEventListener('click', ()=> onPick(p));
+    container.appendChild(b);
+  }
+  if(!jumpBeforeNumbers) container.appendChild(jumpBtn);
 }
 function renderPaginationBar(container, current, total, onPick){
   container.innerHTML = '';
