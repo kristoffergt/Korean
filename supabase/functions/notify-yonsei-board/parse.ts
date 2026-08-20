@@ -144,8 +144,11 @@ const SUBTAG_ALLOWLIST = new Set(["GCC", "GCSD"]);
 // Splits a cleaned title into { category, subTag, title }: the leading
 // "[Category]" bracket (if any) becomes the canonical category, a second
 // leading bracket right after it (if any) becomes subTag only when it's one
-// of SUBTAG_ALLOWLIST's real course-code markers, and whatever's left is
-// the display title with both brackets stripped out either way.
+// of SUBTAG_ALLOWLIST's real course-code markers. When it isn't (the common
+// case), that bracket's text is folded back into the title instead of being
+// discarded -- e.g. "[Academics] [YJIS - CALL FOR PAPERS]" has nothing else
+// to show, so dropping the second bracket unconditionally (the old
+// behavior) left the title blank.
 function splitYonseiTitle(cleaned: string): { category: string; subTag: string | null; title: string } {
   const m1 = cleaned.match(LEADING_BRACKET_RE);
   if (!m1) return { category: canonicalCategory(null), subTag: null, title: cleaned };
@@ -153,11 +156,14 @@ function splitYonseiTitle(cleaned: string): { category: string; subTag: string |
   const m2 = rest1.match(LEADING_BRACKET_RE);
   if (!m2) return { category: canonicalCategory(m1[1].trim()), subTag: null, title: rest1 };
   const rawSubTag = m2[1].trim();
-  const subTag = SUBTAG_ALLOWLIST.has(rawSubTag.toUpperCase()) ? rawSubTag : null;
+  const remainder = rest1.slice(m2[0].length);
+  if (SUBTAG_ALLOWLIST.has(rawSubTag.toUpperCase())) {
+    return { category: canonicalCategory(m1[1].trim()), subTag: rawSubTag, title: remainder };
+  }
   return {
     category: canonicalCategory(m1[1].trim()),
-    subTag,
-    title: rest1.slice(m2[0].length),
+    subTag: null,
+    title: remainder ? `${rawSubTag} ${remainder}` : rawSubTag,
   };
 }
 
