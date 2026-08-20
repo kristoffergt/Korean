@@ -132,6 +132,9 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
 .page-btn.active{background:var(--ink);color:var(--paper);}
 .page-btn:disabled{opacity:0.35;cursor:default;}
 .page-jump-input{width:56px;padding:5px 6px;font-size:12px;border-radius:5px;border:1px solid var(--celadon-4);background:var(--paper);color:var(--ink);text-align:center;}
+.day-toggle-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:3px 7px;font-size:10.5px;font-weight:600;border-radius:5px;min-width:26px;}
+.day-toggle-btn:hover{background:rgba(127,127,127,0.16);}
+.day-toggle-btn.active{background:var(--celadon-4);color:#fff;border-color:var(--celadon-4);}
 .show-more-btn{width:100%;background:none;border:1px dashed var(--line);color:var(--ink-soft);padding:10px;font-size:12.5px;font-weight:600;border-radius:6px;margin-top:10px;}
 .show-more-btn:hover{background:var(--paper);color:var(--ink);}
 .lb-row{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
@@ -188,7 +191,7 @@ button:hover{background:var(--ink-hover);}
 .yonsei-tag-general{--tag-c:var(--c-vocabulary);}
 .yonsei-tag-other{--tag-c:var(--c-other);}
 .yonsei-board-date{font-family:'Space Grotesk',monospace;font-variant-numeric:tabular-nums;color:var(--ink-soft);font-size:12px;flex:0 0 58px;}
-.yonsei-board-title{font-size:14px;line-height:1.4;flex:1;min-width:0;text-align:left;}
+.yonsei-board-title{font-size:14px;line-height:1.4;flex:1;min-width:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cal{display:flex;gap:4px;overflow-x:auto;padding-bottom:6px;}
 .cal-week{display:flex;flex-direction:column;gap:4px;}
 .cal-cell{width:15px;height:15px;border-radius:3px;background:var(--paper);border:1px solid var(--line);position:relative;}
@@ -309,6 +312,7 @@ button:hover{background:var(--ink-hover);}
 .month-day.empty{visibility:hidden;}
 .cal-view-toggle{display:flex;gap:8px;margin-bottom:12px;}
 .cal-view-toggle button{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 14px;font-size:12px;font-weight:600;border-radius:6px;}
+.cal-view-toggle button:hover:not(.active){background:rgba(127,127,127,0.22);}
 .cal-view-toggle button.active{background:var(--ink);color:var(--paper);}
 .week-grid-wrap{margin-top:4px;}
 .week-header-row{display:flex;}
@@ -1676,14 +1680,33 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 
     <div class="wtc-title" style="margin-top:18px;" id="lblNotifPrefs"></div>
     <div id="notifPrefsList"></div>
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:8px;">
-      <input type="checkbox" id="notifyDailyRecapCheck" style="width:14px;height:14px;">
-      <span id="lblNotifyDailyRecap"></span>
-    </label>
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:6px;">
-      <input type="checkbox" id="notifyWeeklyRecapCheck" style="width:14px;height:14px;">
-      <span id="lblNotifyWeeklyRecap"></span>
-    </label>
+    <div style="padding:5px 0;font-size:13px;margin-top:4px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span id="dailyRecapLabel"></span>
+        <span style="display:flex;gap:14px;flex-shrink:0;">
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
+            <input type="checkbox" id="notifyDailyRecapEmailCheck" style="width:14px;height:14px;"> <span id="lblRecapChannelEmail1"></span>
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
+            <input type="checkbox" id="notifyDailyRecapInappCheck" style="width:14px;height:14px;"> <span id="lblRecapChannelInApp1"></span>
+          </label>
+        </span>
+      </div>
+      <div id="dailyRecapDaysPicker" style="display:flex;gap:4px;margin-top:6px;"></div>
+    </div>
+    <div style="padding:5px 0;font-size:13px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span id="weeklyRecapLabel"></span>
+        <span style="display:flex;gap:14px;flex-shrink:0;">
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
+            <input type="checkbox" id="notifyWeeklyRecapEmailCheck" style="width:14px;height:14px;"> <span id="lblRecapChannelEmail2"></span>
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
+            <input type="checkbox" id="notifyWeeklyRecapInappCheck" style="width:14px;height:14px;"> <span id="lblRecapChannelInApp2"></span>
+          </label>
+        </span>
+      </div>
+    </div>
 
     <div style="margin-top:14px;">
       <div class="note-group-header" id="manageTabsHeader"></div>
@@ -7739,7 +7762,7 @@ const I18N = {
     hModerator:'Moderator – All accounts', modResetPw:'Reset password', modEditName:'Edit name', modConfirmEmail:'Confirm email', modDisableMfa:'Disable 2FA', modDeleteUser:'Delete account',
     lblResumeUpload:'Public resume (kristoffergt.com/resume)', resumeUploadBtn:'Upload PDF', resumeViewLink:'View live page ↗', resumeUploadSuccess:'Resume uploaded.', resumeUploadFailed:'Upload failed.', resumePdfOnlyMsg:'Only PDF files are allowed.', lblResumeSync:'Sync resume from PDF', resumeSyncIntro:'Updating the resume itself (new job, updated bullets)? Copy this prompt into any AI chat along with your updated resume PDF, then paste its answer below and save. It rebuilds the whole page from that text.', resumeSyncCopyBtn:'Copy AI prompt', lblResumeSyncPaste:'Paste the AI\'s answer here', resumeSyncSaveBtn:'Save & publish', resumeSyncSuccess:'Resume updated.', resumeSyncFailed:'Could not save.', resumeSyncParseFailed:'Could not find a NAME field. Check the paste starts from the very top of the AI\'s answer.',
     lblNotifBell:'Notifications', notifEmpty:'No notifications yet.', notifSearchPlaceholder:'Search notifications…', notifPrefsHeader:'Notification channels', notifTypeReminder:'Calendar reminders', notifTypeYonseiBoard:'Yonsei board notices', notifTypeLinkAccepted:'Link-invite accepted', notifChannelEmail:'Email', notifChannelInApp:'In-app', writingIndicator:'{name} is writing "{title}"…', notifSystemPinTitle:'New site PIN required for sign-in', notifSystemPinBody:'Signing in or creating an account now requires a 4-digit site PIN. Find it anytime in Settings.', notifReminderTitleTpl:'Reminder: {title}', notifYonseiBoardTitleOne:'New Yonsei GSIS notice', notifYonseiBoardTitleMany:'New Yonsei GSIS notices', notifLinkAcceptedTitleTpl:'{name} accepted your invite',
-    lblNotifyDailyRecap:'Daily recap, every morning', lblNotifyWeeklyRecap:'Weekly recap, every Monday', notifDailyRecapTitleTpl:'Your day: {count} thing', notifDailyRecapTitleTplMany:'Your day: {count} things', notifWeeklyRecapTitleTpl:'Your week: {count} thing', notifWeeklyRecapTitleTplMany:'Your week: {count} things',
+    dailyRecapPrefix:'Daily recap', weeklyRecapPrefix:'Weekly recap', recapEveryWord:'every', recapTimeMorning:'morning', recapTimeNoon:'noon', recapTimeEvening:'evening', recapRelativeOnDay:'on the day', recapRelativeDayBefore:'day before', notifDailyRecapTitleTpl:'Your day: {count} thing', notifDailyRecapTitleTplMany:'Your day: {count} things', notifWeeklyRecapTitleTpl:'Your week: {count} thing', notifWeeklyRecapTitleTplMany:'Your week: {count} things',
     modSearchPlaceholder:'Search name or email…', modSortDate:'Sort by date joined', modSort2fa:'Sort by 2FA status', modSortConfirmed:'Sort by confirmation status', modSortName:'Sort by name',
     modConfirmed:'Confirmed', modUnconfirmed:'Unconfirmed', modMfaOn:'2FA on', modMfaOff:'2FA off', modYou:'YOU', modAdmin:'Admin', modNewPasswordPrompt:'New password for this account:', modNewNamePrompt:'New display name for this account:',
     modConfirmDeleteUser:'Permanently delete this account and all of its data? This cannot be undone.', modActionFailed:'Action failed.', modActionDone:'Done.',
@@ -7850,7 +7873,7 @@ const I18N = {
     hModerator:'관리자 – 전체 계정', modResetPw:'비밀번호 재설정', modEditName:'이름 수정', modConfirmEmail:'이메일 확인 처리', modDisableMfa:'2단계 인증 끄기', modDeleteUser:'계정 삭제',
     lblResumeUpload:'공개 이력서 (kristoffergt.com/resume)', resumeUploadBtn:'PDF 업로드', resumeViewLink:'실시간 페이지 보기 ↗', resumeUploadSuccess:'이력서를 업로드했습니다.', resumeUploadFailed:'업로드에 실패했습니다.', resumePdfOnlyMsg:'PDF 파일만 업로드할 수 있습니다.', lblResumeSync:'PDF로 이력서 동기화', resumeSyncIntro:'이력서 내용 자체를 업데이트하시나요 (새 직장, 수정된 항목 등)? 이 프롬프트를 업데이트된 이력서 PDF와 함께 AI 채팅에 복사해 붙여넣고, 그 답변을 아래에 붙여넣은 후 저장하세요. 그 텍스트로 페이지 전체가 다시 만들어집니다.', resumeSyncCopyBtn:'AI 프롬프트 복사', lblResumeSyncPaste:'AI의 답변을 여기에 붙여넣으세요', resumeSyncSaveBtn:'저장 및 게시', resumeSyncSuccess:'이력서가 업데이트되었습니다.', resumeSyncFailed:'저장할 수 없습니다.', resumeSyncParseFailed:'NAME 항목을 찾을 수 없습니다. AI 답변의 맨 처음부터 붙여넣었는지 확인하세요.',
     lblNotifBell:'알림', notifEmpty:'아직 알림이 없습니다.', notifSearchPlaceholder:'알림 검색…', notifPrefsHeader:'알림 채널', notifTypeReminder:'캘린더 알림', notifTypeYonseiBoard:'연세 게시판 공지', notifTypeLinkAccepted:'연결 초대 수락', notifChannelEmail:'이메일', notifChannelInApp:'앱 내', writingIndicator:'{name}님이 "{title}"을(를) 작성 중…', notifSystemPinTitle:'로그인에 사이트 PIN이 필요합니다', notifSystemPinBody:'이제 로그인하거나 계정을 만들려면 4자리 사이트 PIN이 필요합니다. 설정에서 언제든지 확인할 수 있습니다.', notifReminderTitleTpl:'알림: {title}', notifYonseiBoardTitleOne:'새 연세 GSIS 공지', notifYonseiBoardTitleMany:'새 연세 GSIS 공지 여러 건', notifLinkAcceptedTitleTpl:'{name}님이 초대를 수락했습니다',
-    lblNotifyDailyRecap:'매일 아침 하루 요약', lblNotifyWeeklyRecap:'매주 월요일 주간 요약', notifDailyRecapTitleTpl:'오늘 일정: {count}건', notifDailyRecapTitleTplMany:'오늘 일정: {count}건', notifWeeklyRecapTitleTpl:'이번 주 일정: {count}건', notifWeeklyRecapTitleTplMany:'이번 주 일정: {count}건',
+    dailyRecapPrefix:'일간 요약', weeklyRecapPrefix:'주간 요약', recapEveryWord:'매일', recapTimeMorning:'아침', recapTimeNoon:'정오', recapTimeEvening:'저녁', recapRelativeOnDay:'당일', recapRelativeDayBefore:'전날', notifDailyRecapTitleTpl:'오늘 일정: {count}건', notifDailyRecapTitleTplMany:'오늘 일정: {count}건', notifWeeklyRecapTitleTpl:'이번 주 일정: {count}건', notifWeeklyRecapTitleTplMany:'이번 주 일정: {count}건',
     modSearchPlaceholder:'이름 또는 이메일 검색…', modSortDate:'가입일순 정렬', modSort2fa:'2FA 상태순 정렬', modSortConfirmed:'인증 상태순 정렬', modSortName:'이름순 정렬',
     modConfirmed:'확인됨', modUnconfirmed:'미확인', modMfaOn:'2FA 켜짐', modMfaOff:'2FA 꺼짐', modYou:'나', modAdmin:'관리자', modNewPasswordPrompt:'이 계정의 새 비밀번호:', modNewNamePrompt:'이 계정의 새 표시 이름:',
     modConfirmDeleteUser:'이 계정과 모든 데이터를 영구적으로 삭제하시겠습니까? 되돌릴 수 없습니다.', modActionFailed:'작업에 실패했습니다.', modActionDone:'완료되었습니다.',
@@ -7961,7 +7984,7 @@ const I18N = {
     hModerator:'Quản trị viên – Tất cả tài khoản', modResetPw:'Đặt lại mật khẩu', modEditName:'Sửa tên', modConfirmEmail:'Xác nhận email', modDisableMfa:'Tắt 2FA', modDeleteUser:'Xóa tài khoản',
     lblResumeUpload:'Sơ yếu lý lịch công khai (kristoffergt.com/resume)', resumeUploadBtn:'Tải PDF lên', resumeViewLink:'Xem trang trực tiếp ↗', resumeUploadSuccess:'Đã tải sơ yếu lý lịch lên.', resumeUploadFailed:'Tải lên thất bại.', resumePdfOnlyMsg:'Chỉ chấp nhận tệp PDF.', lblResumeSync:'Đồng bộ sơ yếu lý lịch từ PDF', resumeSyncIntro:'Đang cập nhật nội dung sơ yếu lý lịch (công việc mới, mục cập nhật)? Sao chép prompt này vào bất kỳ AI chat nào cùng với PDF sơ yếu lý lịch đã cập nhật, rồi dán câu trả lời vào bên dưới và lưu lại. Toàn bộ trang sẽ được dựng lại từ đoạn văn bản đó.', resumeSyncCopyBtn:'Sao chép prompt AI', lblResumeSyncPaste:'Dán câu trả lời của AI vào đây', resumeSyncSaveBtn:'Lưu & xuất bản', resumeSyncSuccess:'Đã cập nhật sơ yếu lý lịch.', resumeSyncFailed:'Không thể lưu.', resumeSyncParseFailed:'Không tìm thấy trường NAME. Hãy kiểm tra xem bạn đã dán từ đầu câu trả lời của AI chưa.',
     lblNotifBell:'Thông báo', notifEmpty:'Chưa có thông báo nào.', notifSearchPlaceholder:'Tìm kiếm thông báo…', notifPrefsHeader:'Kênh thông báo', notifTypeReminder:'Nhắc lịch', notifTypeYonseiBoard:'Thông báo bảng tin Yonsei', notifTypeLinkAccepted:'Đã chấp nhận lời mời liên kết', notifChannelEmail:'Email', notifChannelInApp:'Trong ứng dụng', writingIndicator:'{name} đang viết "{title}"…', notifSystemPinTitle:'Cần mã PIN trang web mới để đăng nhập', notifSystemPinBody:'Đăng nhập hoặc tạo tài khoản giờ đây yêu cầu mã PIN gồm 4 chữ số. Bạn có thể xem lại bất cứ lúc nào trong Cài đặt.', notifReminderTitleTpl:'Nhắc nhở: {title}', notifYonseiBoardTitleOne:'Thông báo GSIS Yonsei mới', notifYonseiBoardTitleMany:'Các thông báo GSIS Yonsei mới', notifLinkAcceptedTitleTpl:'{name} đã chấp nhận lời mời của bạn',
-    lblNotifyDailyRecap:'Tóm tắt hằng ngày, mỗi sáng', lblNotifyWeeklyRecap:'Tóm tắt hằng tuần, mỗi thứ Hai', notifDailyRecapTitleTpl:'Hôm nay: {count} việc', notifDailyRecapTitleTplMany:'Hôm nay: {count} việc', notifWeeklyRecapTitleTpl:'Tuần này: {count} việc', notifWeeklyRecapTitleTplMany:'Tuần này: {count} việc',
+    dailyRecapPrefix:'Tóm tắt hằng ngày', weeklyRecapPrefix:'Tóm tắt hằng tuần', recapEveryWord:'mỗi', recapTimeMorning:'sáng', recapTimeNoon:'trưa', recapTimeEvening:'tối', recapRelativeOnDay:'trong ngày', recapRelativeDayBefore:'ngày hôm trước', notifDailyRecapTitleTpl:'Hôm nay: {count} việc', notifDailyRecapTitleTplMany:'Hôm nay: {count} việc', notifWeeklyRecapTitleTpl:'Tuần này: {count} việc', notifWeeklyRecapTitleTplMany:'Tuần này: {count} việc',
     modSearchPlaceholder:'Tìm theo tên hoặc email…', modSortDate:'Sắp xếp theo ngày tham gia', modSort2fa:'Sắp xếp theo trạng thái 2FA', modSortConfirmed:'Sắp xếp theo trạng thái xác nhận', modSortName:'Sắp xếp theo tên',
     modConfirmed:'Đã xác nhận', modUnconfirmed:'Chưa xác nhận', modMfaOn:'2FA bật', modMfaOff:'2FA tắt', modYou:'Bạn', modAdmin:'Quản trị', modNewPasswordPrompt:'Mật khẩu mới cho tài khoản này:', modNewNamePrompt:'Tên hiển thị mới cho tài khoản này:',
     modConfirmDeleteUser:'Xóa vĩnh viễn tài khoản này và toàn bộ dữ liệu? Không thể hoàn tác.', modActionFailed:'Thao tác thất bại.', modActionDone:'Hoàn tất.',
@@ -8057,7 +8080,8 @@ const STATIC_MAP = {
   lblSettingsDeletePasswordConfirm:'lblSettingsDeletePasswordConfirm', deleteAccountBtn:'deleteAccountBtn', hModerator:'hModerator', closeAccountSettingsBtn:'closeNoteBtn',
   resumeUploadBtn:'resumeUploadBtn', resumeViewLink:'resumeViewLink',
   lblResumeSync:'lblResumeSync', resumeSyncIntro:'resumeSyncIntro', resumeSyncCopyBtn:'resumeSyncCopyBtn', lblResumeSyncPaste:'lblResumeSyncPaste', resumeSyncSaveBtn:'resumeSyncSaveBtn',
-  lblNotifBell:'lblNotifBell', lblNotifPrefs:'notifPrefsHeader', lblNotifyDailyRecap:'lblNotifyDailyRecap', lblNotifyWeeklyRecap:'lblNotifyWeeklyRecap',
+  lblNotifBell:'lblNotifBell', lblNotifPrefs:'notifPrefsHeader',
+  lblRecapChannelEmail1:'notifChannelEmail', lblRecapChannelInApp1:'notifChannelInApp', lblRecapChannelEmail2:'notifChannelEmail', lblRecapChannelInApp2:'notifChannelInApp',
   hLinkedCircle:'hLinkedCircle', linkedCircleDesc:'linkedCircleDesc', closeFriendsBtn:'closeNoteBtn',
   writingFeedbackHeader:'writingFeedbackHeader', writingFeedbackSendBtn:'writingFeedbackSendBtn',
   lblMfaPromptTitle:'mfaPromptTitle', lblMfaPromptHint:'mfaPromptHint', mfaVerifyBtn:'mfaVerifyBtn', mfaUseBackupBtn:'mfaUseBackupBtn',
@@ -8159,8 +8183,14 @@ let hiddenFromLeaderboards = {}; // userId -> true if they've opted out of all l
 let hiddenFromCircleToo = {}; // userId -> true if the hide also removes the core-partner exception below
 let hiddenTabs = []; // current user's own hidden top-level/sub tab keys, see TAB_STRUCTURE below
 let notifyYonseiBoard = false; // current user's own email-notification opt-in, default off
-let notifyDailyRecap = false; // current user's own daily-recap opt-in, default off
-let notifyWeeklyRecap = false; // current user's own weekly-recap opt-in, default off
+let notifyDailyRecapEmail = false;
+let notifyDailyRecapInapp = false;
+let notifyWeeklyRecapEmail = false;
+let notifyWeeklyRecapInapp = false;
+let dailyRecapTime = 'morning'; // 'morning' | 'noon' | 'evening'
+let dailyRecapRelative = 'on_day'; // 'on_day' | 'day_before'
+let dailyRecapDays = [0,1,2,3,4,5,6]; // 0=Sun..6=Sat
+let weeklyRecapDay = 1; // 0=Sun..6=Sat, default Monday
 // Hiding is scoped per-viewer, not global: a hidden account still shows up
 // for itself and for its own core study partner (Kristoffer <-> Roxy) — it
 // only actually disappears for everyone else. Mirrors the shared_circle()
@@ -8698,7 +8728,7 @@ function applyLanguage(lang){
   renderYonseiNotifyBtn();
   rebuildYonseiCategoryFilter();
   if(calViewMode === 'month') renderMonthGrid();
-  if(!document.getElementById('accountSettingsModal').classList.contains('hidden')){ renderManageTabsList(); renderResumePublicHeader(); }
+  if(!document.getElementById('accountSettingsModal').classList.contains('hidden')){ renderManageTabsList(); renderResumePublicHeader(); renderRecapPrefsRows(); }
   if(currentUser){ renderAll(); }
 }
 /* ---------- AUTH ---------- */
@@ -9010,8 +9040,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   document.getElementById('settingsHideLeaderboards').checked = !!hiddenFromLeaderboards[currentUser.id];
   document.getElementById('settingsHideCircleToo').checked = !!hiddenFromCircleToo[currentUser.id];
   document.getElementById('settingsHideCircleTooWrap').classList.toggle('hidden', !hiddenFromLeaderboards[currentUser.id]);
-  document.getElementById('notifyDailyRecapCheck').checked = notifyDailyRecap;
-  document.getElementById('notifyWeeklyRecapCheck').checked = notifyWeeklyRecap;
+  renderRecapPrefsRows();
   renderNotifPrefs();
   renderManageTabsList();
   renderResumePublicHeader();
@@ -9969,18 +9998,128 @@ document.getElementById('saveDisplayNameBtn').addEventListener('click', async ()
   showSettingsMsg('settingsNameMsg', t('noteSaved'), false);
 });
 
-document.getElementById('notifyDailyRecapCheck').addEventListener('change', async (e)=>{
+document.getElementById('notifyDailyRecapEmailCheck').addEventListener('change', async (e)=>{
   const next = e.target.checked;
-  const { error } = await supabaseClient.from('profiles').update({ notify_daily_recap: next }).eq('id', currentUser.id);
+  const { error } = await supabaseClient.from('profiles').update({ notify_daily_recap_email: next }).eq('id', currentUser.id);
   if(error){ e.target.checked = !next; return; }
-  notifyDailyRecap = next;
+  notifyDailyRecapEmail = next;
 });
-document.getElementById('notifyWeeklyRecapCheck').addEventListener('change', async (e)=>{
+document.getElementById('notifyDailyRecapInappCheck').addEventListener('change', async (e)=>{
   const next = e.target.checked;
-  const { error } = await supabaseClient.from('profiles').update({ notify_weekly_recap: next }).eq('id', currentUser.id);
+  const { error } = await supabaseClient.from('profiles').update({ notify_daily_recap_inapp: next }).eq('id', currentUser.id);
   if(error){ e.target.checked = !next; return; }
-  notifyWeeklyRecap = next;
+  notifyDailyRecapInapp = next;
 });
+document.getElementById('notifyWeeklyRecapEmailCheck').addEventListener('change', async (e)=>{
+  const next = e.target.checked;
+  const { error } = await supabaseClient.from('profiles').update({ notify_weekly_recap_email: next }).eq('id', currentUser.id);
+  if(error){ e.target.checked = !next; return; }
+  notifyWeeklyRecapEmail = next;
+});
+document.getElementById('notifyWeeklyRecapInappCheck').addEventListener('change', async (e)=>{
+  const next = e.target.checked;
+  const { error } = await supabaseClient.from('profiles').update({ notify_weekly_recap_inapp: next }).eq('id', currentUser.id);
+  if(error){ e.target.checked = !next; return; }
+  notifyWeeklyRecapInapp = next;
+});
+// Daily/weekly recap settings row: label built from inline segments
+// (time-of-day, on-day/day-before, weekday) using the generic segment
+// picker (wireInlineSeg, see calendar header section above), plus a
+// day-of-week multi-select for daily and Email/In-app checkboxes matching
+// the notification-channel matrix above it.
+function recapTimeOptions(){
+  return [
+    { value:'morning', label:t('recapTimeMorning') },
+    { value:'noon', label:t('recapTimeNoon') },
+    { value:'evening', label:t('recapTimeEvening') },
+  ];
+}
+function recapRelativeOptions(){
+  return [
+    { value:'on_day', label:t('recapRelativeOnDay') },
+    { value:'day_before', label:t('recapRelativeDayBefore') },
+  ];
+}
+function recapWeekdayOptions(){
+  const opts = [];
+  for(let i=0;i<7;i++){
+    opts.push({ value:String(i), label: capFirst(new Date(2024,0,7+i).toLocaleDateString(appLocale(), {weekday:'long'})) });
+  }
+  return opts;
+}
+function recapWeekdayShortLabel(i){
+  return capFirst(new Date(2024,0,7+i).toLocaleDateString(appLocale(), {weekday:'short'}));
+}
+async function updateRecapProfileField(column, value){
+  await supabaseClient.from('profiles').update({ [column]: value }).eq('id', currentUser.id);
+}
+function renderRecapPrefsRows(){
+  const dailyLabelEl = document.getElementById('dailyRecapLabel');
+  const weeklyLabelEl = document.getElementById('weeklyRecapLabel');
+  if(!dailyLabelEl || !weeklyLabelEl || !currentUser) return;
+
+  dailyLabelEl.innerHTML = '';
+  dailyLabelEl.appendChild(document.createTextNode(t('dailyRecapPrefix') + ' (' + t('recapEveryWord') + ' '));
+  const timeOpts = recapTimeOptions();
+  const timeSeg = document.createElement('span');
+  timeSeg.textContent = (timeOpts.find(o=>o.value===dailyRecapTime)||timeOpts[0]).label;
+  wireInlineSeg(timeSeg, timeOpts, dailyRecapTime, async (val)=>{
+    dailyRecapTime = val;
+    await updateRecapProfileField('daily_recap_time', val);
+    renderRecapPrefsRows();
+  }, renderRecapPrefsRows);
+  dailyLabelEl.appendChild(timeSeg);
+  dailyLabelEl.appendChild(document.createTextNode(', '));
+  const relOpts = recapRelativeOptions();
+  const relSeg = document.createElement('span');
+  relSeg.textContent = (relOpts.find(o=>o.value===dailyRecapRelative)||relOpts[0]).label;
+  wireInlineSeg(relSeg, relOpts, dailyRecapRelative, async (val)=>{
+    dailyRecapRelative = val;
+    await updateRecapProfileField('daily_recap_relative', val);
+    renderRecapPrefsRows();
+  }, renderRecapPrefsRows);
+  dailyLabelEl.appendChild(relSeg);
+  dailyLabelEl.appendChild(document.createTextNode(')'));
+
+  weeklyLabelEl.innerHTML = '';
+  weeklyLabelEl.appendChild(document.createTextNode(t('weeklyRecapPrefix') + ' (' + t('recapEveryWord') + ' '));
+  const wdOpts = recapWeekdayOptions();
+  const wdSeg = document.createElement('span');
+  wdSeg.textContent = (wdOpts.find(o=>o.value===String(weeklyRecapDay))||wdOpts[1]).label;
+  wireInlineSeg(wdSeg, wdOpts, String(weeklyRecapDay), async (val)=>{
+    weeklyRecapDay = parseInt(val,10);
+    await updateRecapProfileField('weekly_recap_day', weeklyRecapDay);
+    renderRecapPrefsRows();
+  }, renderRecapPrefsRows);
+  weeklyLabelEl.appendChild(wdSeg);
+  weeklyLabelEl.appendChild(document.createTextNode(')'));
+
+  const daysWrap = document.getElementById('dailyRecapDaysPicker');
+  if(daysWrap){
+    daysWrap.innerHTML = '';
+    for(let i=0;i<7;i++){
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = recapWeekdayShortLabel(i);
+      b.className = 'day-toggle-btn' + (dailyRecapDays.includes(i) ? ' active' : '');
+      b.addEventListener('click', async ()=>{
+        // Always keep at least one day selected -- an empty set would
+        // silently never fire, with no visible sign why.
+        const next = dailyRecapDays.includes(i) ? dailyRecapDays.filter(d=>d!==i) : [...dailyRecapDays, i].sort((a,b2)=>a-b2);
+        if(next.length === 0) return;
+        dailyRecapDays = next;
+        await updateRecapProfileField('daily_recap_days', next);
+        renderRecapPrefsRows();
+      });
+      daysWrap.appendChild(b);
+    }
+  }
+
+  document.getElementById('notifyDailyRecapEmailCheck').checked = notifyDailyRecapEmail;
+  document.getElementById('notifyDailyRecapInappCheck').checked = notifyDailyRecapInapp;
+  document.getElementById('notifyWeeklyRecapEmailCheck').checked = notifyWeeklyRecapEmail;
+  document.getElementById('notifyWeeklyRecapInappCheck').checked = notifyWeeklyRecapInapp;
+}
 document.getElementById('settingsHideLeaderboards').addEventListener('change', async (e)=>{
   const hide = e.target.checked;
   const { error } = await supabaseClient.from('profiles').update({ hide_from_leaderboards: hide }).eq('id', currentUser.id);
@@ -10475,7 +10614,7 @@ async function loadAllData(){
   coreMembers = {};
   dailyGoals = {};
   hiddenFromLeaderboards = {};
-  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecap = !!p.notify_daily_recap; notifyWeeklyRecap = !!p.notify_weekly_recap; } });
+  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTime = p.daily_recap_time || 'morning'; dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; } });
   const { data: entryRows } = await supabaseClient.from('study_entries').select('*');
   allEntries = {};
   (entryRows||[]).forEach(row=>{
@@ -12608,7 +12747,7 @@ function renderYonseiBoards(){
   const start = (yonseiBoardsPage - 1) * YONSEI_BOARD_PAGE_SIZE;
   const pageItems = sorted.slice(start, start + YONSEI_BOARD_PAGE_SIZE);
   list.innerHTML = pageItems.map(it=>
-    `<a class="yonsei-board-row" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer"><span class="yonsei-board-date">${escapeHtml(it.date)}</span><span class="yonsei-board-title">${escapeHtml(it.title)}</span>${it.subTag ? `<span class="yonsei-board-subtag">${escapeHtml(it.subTag)}</span>` : ''}<span class="yonsei-board-tag ${yonseiCategoryClass(it.category)}">${escapeHtml(yonseiCategoryLabel(it.category))}</span></a>`
+    `<a class="yonsei-board-row" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer"><span class="yonsei-board-date">${escapeHtml(it.date)}</span><span class="yonsei-board-title" title="${escapeHtml(it.title)}">${escapeHtml(it.title)}</span>${it.subTag ? `<span class="yonsei-board-subtag">${escapeHtml(it.subTag)}</span>` : ''}<span class="yonsei-board-tag ${yonseiCategoryClass(it.category)}">${escapeHtml(yonseiCategoryLabel(it.category))}</span></a>`
   ).join('');
   if(pagination){
     // totalPages only reflects what's loaded so far -- if there's more
@@ -13927,6 +14066,93 @@ function renderCalHeaderLabel(){
     appendText(', ');
     appendSeg(String(calViewDate.getFullYear()), 'year', base);
   }
+}
+
+/* ---------- GENERIC INLINE SEGMENT PICKER ----------
+   Same click-once-for-a-list, click-again-for-free-text interaction as the
+   calendar header's date segments above (wireCalSeg et al.), generalized
+   for arbitrary option lists instead of calendar fields specifically --
+   used by the daily/weekly recap settings (time-of-day, on-day/day-before,
+   which weekday). Reuses the same .cal-seg/.cal-seg-picker/.cal-seg-input
+   visual styling for consistency, but tracks its own open-picker state
+   (inlineSegOpen) separately from the calendar's (calSegOpen) since the two
+   never need to close each other. */
+let inlineSegOpen = null;
+function closeInlineSegPicker(){
+  document.querySelectorAll('.inline-seg-picker').forEach(el=>el.remove());
+  inlineSegOpen = null;
+}
+document.addEventListener('click', (e)=>{
+  if(e.target.closest('.inline-seg') || e.target.closest('.inline-seg-picker')) return;
+  closeInlineSegPicker();
+});
+function openInlineSegList(el, options, current){
+  const panel = document.createElement('div');
+  panel.className = 'cal-seg-picker inline-seg-picker';
+  panel.innerHTML = options.map(o=>`<button type="button" data-value="${escapeHtml(o.value)}" class="${o.value===current?'active':''}">${escapeHtml(o.label)}</button>`).join('');
+  el.appendChild(panel);
+  const activeBtn = panel.querySelector('button.active');
+  if(activeBtn) panel.scrollTop = Math.max(0, activeBtn.offsetTop - panel.clientHeight/2 + activeBtn.offsetHeight/2);
+  return panel;
+}
+// wireInlineSeg(el, options, current, onCommit, rerender): options is
+// [{value,label}]; onCommit(value) is called once a new value is picked
+// (from the list, or matched from typed text); rerender() is called to
+// restore the segment's own text if the user Escapes out of text mode
+// without committing.
+function wireInlineSeg(el, options, current, onCommit, rerender){
+  el.classList.add('cal-seg', 'inline-seg');
+  el.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if(inlineSegOpen && inlineSegOpen.el === el){
+      const hadList = !!el.querySelector('.inline-seg-picker');
+      closeInlineSegPicker();
+      if(hadList){
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'cal-seg-input';
+        input.value = (options.find(o=>o.value===current)||{}).label || '';
+        el.innerHTML = '';
+        el.appendChild(input);
+        input.focus();
+        input.select();
+        let done = false;
+        const commit = ()=>{
+          if(done) return;
+          done = true;
+          const typed = input.value.trim().toLowerCase();
+          closeInlineSegPicker();
+          if(!typed) return;
+          let match = options.find(o=>o.label.toLowerCase() === typed);
+          if(!match) match = options.find(o=>o.label.toLowerCase().startsWith(typed));
+          if(!match){
+            const short = typed.slice(0,3);
+            if(short.length >= 2) match = options.find(o=>o.label.toLowerCase().startsWith(short));
+          }
+          if(match) onCommit(match.value);
+        };
+        input.addEventListener('click', (e2)=> e2.stopPropagation());
+        input.addEventListener('keydown', (e2)=>{
+          e2.stopPropagation();
+          if(e2.key === 'Enter') commit();
+          else if(e2.key === 'Escape'){ done = true; closeInlineSegPicker(); rerender(); }
+        });
+        input.addEventListener('blur', commit);
+        inlineSegOpen = { el };
+      }
+      return;
+    }
+    closeInlineSegPicker();
+    const panel = openInlineSegList(el, options, current);
+    panel.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', (e2)=>{
+        e2.stopPropagation();
+        onCommit(btn.dataset.value);
+        closeInlineSegPicker();
+      });
+    });
+    inlineSegOpen = { el };
+  });
 }
 
 function renderMonthGrid(){
