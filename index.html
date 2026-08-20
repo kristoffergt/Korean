@@ -10159,27 +10159,32 @@ async function loadModeratorUsers(){
 /* ---------- SHARED PAGINATION BAR ----------
    Rendering one button per page (the old convention every list below used)
    turns into a wall of dozens of buttons once a list has enough pages --
-   Yonsei Boards' 48 was the one that actually got there. Instead: the first
-   PAGINATION_HEAD pages as buttons, then a single "…" slot (showing the
-   current page number instead, once you've paged past the head) that turns
-   into a type-a-page-number field on click, plus «/» to jump straight to
-   the first/last page and ‹/› to step one at a time. */
-const PAGINATION_HEAD = 5;
+   Yonsei Boards' 48 was the one that actually got there. Instead: a sliding
+   window of PAGINATION_WINDOW page-number buttons centered just behind the
+   current page (one page back, current, then however many forward fills
+   the rest), sliding to show more of the tail once there's no more room
+   ahead near the end -- plus a "…" slot, ALWAYS present regardless of page
+   count, that turns into a type-a-page-number field on click, and «/» to
+   jump straight to the first/last page and ‹/› to step one at a time. */
+const PAGINATION_WINDOW = 5;
 function appendPaginationPages(container, current, total, onPick){
-  const headCount = Math.min(PAGINATION_HEAD, total);
-  for(let p=1; p<=headCount; p++){
+  let start = current - 1;
+  let end = current + (PAGINATION_WINDOW - 2); // 1 back + current + rest forward = PAGINATION_WINDOW
+  if(start < 1){ end += (1 - start); start = 1; }
+  if(end > total){ start -= (end - total); end = total; }
+  start = Math.max(1, start);
+  end = Math.min(total, end);
+  for(let p=start; p<=end; p++){
     const b = document.createElement('button');
     b.textContent = String(p);
     b.className = 'page-btn' + (p === current ? ' active' : '');
     b.addEventListener('click', ()=> onPick(p));
     container.appendChild(b);
   }
-  if(total <= PAGINATION_HEAD) return;
-  const showingCurrent = current > headCount;
   const jumpBtn = document.createElement('button');
   jumpBtn.type = 'button';
-  jumpBtn.className = 'page-btn' + (showingCurrent ? ' active' : '');
-  jumpBtn.textContent = showingCurrent ? String(current) : '…';
+  jumpBtn.className = 'page-btn';
+  jumpBtn.textContent = '…';
   jumpBtn.title = t('paginationJumpHint');
   jumpBtn.addEventListener('click', ()=>{
     const input = document.createElement('input');
@@ -10190,6 +10195,11 @@ function appendPaginationPages(container, current, total, onPick){
     jumpBtn.replaceWith(input);
     input.focus();
     let done = false;
+    const cancel = ()=>{
+      if(done) return;
+      done = true;
+      input.replaceWith(jumpBtn);
+    };
     const commit = ()=>{
       if(done) return;
       const val = parseInt(input.value, 10);
@@ -10197,12 +10207,14 @@ function appendPaginationPages(container, current, total, onPick){
         done = true;
         onPick(val);
       } else if(document.body.contains(input)){
-        done = true;
-        input.replaceWith(jumpBtn);
+        cancel();
       }
     };
     input.addEventListener('click', (e)=> e.stopPropagation());
-    input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') commit(); });
+    input.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter') commit();
+      else if(e.key === 'Escape') cancel();
+    });
     input.addEventListener('blur', commit);
   });
   container.appendChild(jumpBtn);
@@ -12322,7 +12334,7 @@ function switchYonseiSubTab(view){
   const sections = { courses: 'yonseiCoursesSection', notes: 'yonseiNotesSection', boards: 'yonseiBoardsSection' };
   Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
   Object.entries(sections).forEach(([v,id])=> document.getElementById(id).classList.toggle('hidden', v!==view));
-  if(view === 'boards' && !yonseiBoardsCache) fetchYonseiBoards(YONSEI_BOARD_PAGE_SIZE);
+  if(view === 'boards' && !yonseiBoardsCache) fetchYonseiBoards(YONSEI_BOARD_PAGE_SIZE).then(loadYonseiBoardsInBackground);
 }
 document.getElementById('yonseiSubCoursesBtn').addEventListener('click', ()=> switchYonseiSubTab('courses'));
 document.getElementById('yonseiSubNotesBtn').addEventListener('click', ()=> switchYonseiSubTab('notes'));
@@ -12354,13 +12366,11 @@ const YONSEI_BOARD_PAGE_SIZE = 10; // matches the job board's own page size
 // append, since the upstream site's own article.offset param turned out to
 // have no effect on a plain request (confirmed live: same top items come
 // back regardless of offset), so there's no way to fetch just a fresh
-// slice. Sized to whatever's actually needed right now (initial open only
-// needs one page's worth) rather than always pulling the whole board, which
-// is what made this tab slow to open in the first place.
-async function fetchYonseiBoards(limit){
-  const isFirstLoad = !yonseiBoardsCache;
-  if(isFirstLoad) yonseiBoardsLoading = true; else yonseiBoardsLoadingMore = true;
-  renderYonseiBoards();
+// slice, only "ask for a bigger top N". Returns true/false for whether it
+// succeeded; doesn't touch loading-state flags or render -- callers decide
+// whether this fetch should be visible (fetchYonseiBoards()) or silent
+// (loadYonseiBoardsInBackground()).
+async function fetchYonseiBoardsRaw(limit){
   try {
     const res = await fetch(`${YONSEI_BOARD_FUNCTION_URL}?limit=${limit}`, { headers: { apikey: SUPABASE_ANON_KEY } });
     if(!res.ok) throw new Error('bad response');
@@ -12369,12 +12379,40 @@ async function fetchYonseiBoards(limit){
     yonseiBoardsCache = { items, error: !!data.error };
     yonseiBoardsLoadedLimit = limit;
     yonseiBoardsFullyLoaded = items.length < limit;
+    return true;
   } catch(err){
-    if(isFirstLoad) yonseiBoardsCache = { items: [], error: true };
+    if(!yonseiBoardsCache) yonseiBoardsCache = { items: [], error: true };
     yonseiBoardsFullyLoaded = true; // stop retrying forever on a broken fetch
-  } finally {
-    yonseiBoardsLoading = false;
-    yonseiBoardsLoadingMore = false;
+    return false;
+  }
+}
+// User-visible fetch (initial open, or paging past what's loaded) --
+// shows the "Loading…" state (full-screen the very first time, an inline
+// hint alongside pagination after that) for however long it takes.
+async function fetchYonseiBoards(limit){
+  const isFirstLoad = !yonseiBoardsCache;
+  if(isFirstLoad) yonseiBoardsLoading = true; else yonseiBoardsLoadingMore = true;
+  renderYonseiBoards();
+  await fetchYonseiBoardsRaw(limit);
+  yonseiBoardsLoading = false;
+  yonseiBoardsLoadingMore = false;
+  renderYonseiBoards();
+}
+// The Google-results trick: the first 10 already rendered instantly (the
+// fetchYonseiBoards(YONSEI_BOARD_PAGE_SIZE) call that kicks this off), so
+// there's no rush -- keep quietly pulling bigger sets in the background
+// with no loading indicator at all, so that by the time anyone actually
+// pages, searches, or filters deeper, the data is very likely already
+// sitting in the cache instead of triggering a visible wait. Steps up
+// gradually rather than jumping straight to 1000 so a slow connection still
+// picks up some extra coverage quickly instead of one long wait for
+// everything; ensureYonseiLoadedForPage() is still there as a fallback for
+// anyone who pages ahead of this before it's caught up.
+const YONSEI_BACKGROUND_STEPS = [50, 200, 1000];
+async function loadYonseiBoardsInBackground(){
+  for(const step of YONSEI_BACKGROUND_STEPS){
+    if(yonseiBoardsFullyLoaded) return;
+    await fetchYonseiBoardsRaw(step);
     renderYonseiBoards();
   }
 }
