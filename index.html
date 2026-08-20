@@ -12042,26 +12042,31 @@ function triggerJobBoardSync(){
   setTimeout(poll, JOB_BOARD_SYNC_POLL_MS);
 }
 // Runs once per real (local) calendar day, the first time that account logs
-// in AFTER a third-party page monitor (Visualping, watching
-// @yonseigsis_cdc's Instagram on its own infrastructure -- see
-// sql migrations/jobboard_instagram_signal_migration.sql and
-// supabase/functions/instagram-post-signal) has recorded a change for
-// today. Replaces the old fixed-hour check (job postings don't land on a
-// predictable clock, but CDC posting to Instagram is a good proxy for "new
-// postings are up"). Not tied to opening the Job Board tab specifically.
-// localStorage is appropriate for the "already ran today" flag (rather
-// than a DB column) since it's a per-device preference: it only means
-// anything on the one laptop that has the local script set up. The day
-// isn't marked done until after the signal check passes, so an early
-// login that finds no signal yet doesn't block a later-that-day login
-// (after Visualping's next hourly check) from firing it.
+// in after EITHER of two conditions is true: a third-party page monitor
+// (Visualping, watching @yonseigsis_cdc's Instagram on its own
+// infrastructure -- see sql migrations/jobboard_instagram_signal_migration.sql
+// and supabase/functions/instagram-post-signal) has recorded a change for
+// today (the early-trigger path -- CDC posting to Instagram is a good
+// proxy for "new postings are up"), OR it's JOB_BOARD_AUTO_SYNC_HOUR local
+// time or later (the guaranteed fallback -- if Visualping ever misses a
+// day, the sync still runs by then regardless). Not tied to opening the
+// Job Board tab specifically. localStorage is appropriate for the
+// "already ran today" flag (rather than a DB column) since it's a
+// per-device preference: it only means anything on the one laptop that
+// has the local script set up. The day isn't marked done until one of the
+// two conditions passes, so an early login that meets neither yet doesn't
+// block a later-that-day login from firing it.
+const JOB_BOARD_AUTO_SYNC_HOUR = 15;
 async function maybeAutoTriggerJobBoardSync(){
   if(!isJobBoardSyncAccount()) return;
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   if(localStorage.getItem('jobBoardLastAutoSync') === today) return;
-  const { data } = await supabaseClient.from('jobboard_instagram_signal').select('signal_date').eq('signal_date', today).maybeSingle();
-  if(!data) return;
+  const pastFallbackHour = d.getHours() >= JOB_BOARD_AUTO_SYNC_HOUR;
+  if(!pastFallbackHour){
+    const { data } = await supabaseClient.from('jobboard_instagram_signal').select('signal_date').eq('signal_date', today).maybeSingle();
+    if(!data) return;
+  }
   localStorage.setItem('jobBoardLastAutoSync', today);
   triggerJobBoardSync();
 }
