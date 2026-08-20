@@ -162,7 +162,7 @@ function compareDateDesc(a: BoardItem, b: BoardItem): number {
   return b.date.localeCompare(a.date);
 }
 
-export function parseYonseiBoardHtml(html: string, maxItems = 20): BoardItem[] {
+export function parseYonseiBoardHtml(html: string, maxItems = 500): BoardItem[] {
   const items: BoardItem[] = [];
   const seen = new Set<string>();
   ANCHOR_RE.lastIndex = 0;
