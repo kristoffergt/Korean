@@ -135,6 +135,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
 .day-toggle-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:3px 7px;font-size:10.5px;font-weight:600;border-radius:5px;min-width:26px;}
 .day-toggle-btn:hover{background:rgba(127,127,127,0.16);}
 .day-toggle-btn.active{background:var(--celadon-4);color:#fff;border-color:var(--celadon-4);}
+.day-toggle-btn.excluded{background:var(--seal);color:#fff;border-color:var(--seal);text-decoration:line-through;}
 .show-more-btn{width:100%;background:none;border:1px dashed var(--line);color:var(--ink-soft);padding:10px;font-size:12.5px;font-weight:600;border-radius:6px;margin-top:10px;}
 .show-more-btn:hover{background:var(--paper);color:var(--ink);}
 .lb-row{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
@@ -1706,6 +1707,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         </span>
       </div>
       <div id="dailyRecapDaysPicker" style="display:flex;gap:4px;margin-top:6px;"></div>
+    </div>
+    <div style="padding:5px 0 0;font-size:12px;">
+      <div class="hint" id="lblRecapExcludeKinds" style="margin-bottom:4px;"></div>
+      <div id="recapExcludeKindsPicker" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
     </div>
 
     <div style="margin-top:14px;">
@@ -7762,7 +7767,7 @@ const I18N = {
     hModerator:'Moderator – All accounts', modResetPw:'Reset password', modEditName:'Edit name', modConfirmEmail:'Confirm email', modDisableMfa:'Disable 2FA', modDeleteUser:'Delete account',
     lblResumeUpload:'Public resume (kristoffergt.com/resume)', resumeUploadBtn:'Upload PDF', resumeViewLink:'View live page ↗', resumeUploadSuccess:'Resume uploaded.', resumeUploadFailed:'Upload failed.', resumePdfOnlyMsg:'Only PDF files are allowed.', lblResumeSync:'Sync resume from PDF', resumeSyncIntro:'Updating the resume itself (new job, updated bullets)? Copy this prompt into any AI chat along with your updated resume PDF, then paste its answer below and save. It rebuilds the whole page from that text.', resumeSyncCopyBtn:'Copy AI prompt', lblResumeSyncPaste:'Paste the AI\'s answer here', resumeSyncSaveBtn:'Save & publish', resumeSyncSuccess:'Resume updated.', resumeSyncFailed:'Could not save.', resumeSyncParseFailed:'Could not find a NAME field. Check the paste starts from the very top of the AI\'s answer.',
     lblNotifBell:'Notifications', notifEmpty:'No notifications yet.', notifSearchPlaceholder:'Search notifications…', notifPrefsHeader:'Notification channels', notifTypeReminder:'Calendar reminders', notifTypeYonseiBoard:'Yonsei board notices', notifTypeLinkAccepted:'Link-invite accepted', notifChannelEmail:'Email', notifChannelInApp:'In-app', writingIndicator:'{name} is writing "{title}"…', notifSystemPinTitle:'New site PIN required for sign-in', notifSystemPinBody:'Signing in or creating an account now requires a 4-digit site PIN. Find it anytime in Settings.', notifReminderTitleTpl:'Reminder: {title}', notifYonseiBoardTitleOne:'New Yonsei GSIS notice', notifYonseiBoardTitleMany:'New Yonsei GSIS notices', notifLinkAcceptedTitleTpl:'{name} accepted your invite',
-    dailyRecapPrefix:'Daily recap', weeklyRecapPrefix:'Weekly recap', recapEveryWord:'every', recapTimeMorning:'morning', recapTimeNoon:'noon', recapTimeEvening:'evening', recapRelativeOnDay:'on the day', recapRelativeDayBefore:'day before', recapRelativeDayPassed:'day passed', recapWeekComing:'coming', recapWeekPassed:'passed', notifDailyRecapTitleTpl:'Your day: {count} thing', notifDailyRecapTitleTplMany:'Your day: {count} things', notifWeeklyRecapTitleTpl:'Your week: {count} thing', notifWeeklyRecapTitleTplMany:'Your week: {count} things',
+    dailyRecapPrefix:'Daily recap', weeklyRecapPrefix:'Weekly recap', recapEveryWord:'every', recapTimeMorning:'morning', recapTimeNoon:'noon', recapTimeEvening:'evening', recapRelativeOnDay:'on the day', recapRelativeDayBefore:'day before', recapRelativeDayPassed:'day passed', recapWeekComing:'coming', recapWeekPassed:'passed', recapWeekBoth:'both', lblRecapExcludeKinds:'Exclude from recaps', notifDailyRecapTitleTpl:'Your day: {count} thing', notifDailyRecapTitleTplMany:'Your day: {count} things', notifWeeklyRecapTitleTpl:'Your week: {count} thing', notifWeeklyRecapTitleTplMany:'Your week: {count} things',
     modSearchPlaceholder:'Search name or email…', modSortDate:'Sort by date joined', modSort2fa:'Sort by 2FA status', modSortConfirmed:'Sort by confirmation status', modSortName:'Sort by name',
     modConfirmed:'Confirmed', modUnconfirmed:'Unconfirmed', modMfaOn:'2FA on', modMfaOff:'2FA off', modYou:'YOU', modAdmin:'Admin', modNewPasswordPrompt:'New password for this account:', modNewNamePrompt:'New display name for this account:',
     modConfirmDeleteUser:'Permanently delete this account and all of its data? This cannot be undone.', modActionFailed:'Action failed.', modActionDone:'Done.',
@@ -7873,7 +7878,7 @@ const I18N = {
     hModerator:'관리자 – 전체 계정', modResetPw:'비밀번호 재설정', modEditName:'이름 수정', modConfirmEmail:'이메일 확인 처리', modDisableMfa:'2단계 인증 끄기', modDeleteUser:'계정 삭제',
     lblResumeUpload:'공개 이력서 (kristoffergt.com/resume)', resumeUploadBtn:'PDF 업로드', resumeViewLink:'실시간 페이지 보기 ↗', resumeUploadSuccess:'이력서를 업로드했습니다.', resumeUploadFailed:'업로드에 실패했습니다.', resumePdfOnlyMsg:'PDF 파일만 업로드할 수 있습니다.', lblResumeSync:'PDF로 이력서 동기화', resumeSyncIntro:'이력서 내용 자체를 업데이트하시나요 (새 직장, 수정된 항목 등)? 이 프롬프트를 업데이트된 이력서 PDF와 함께 AI 채팅에 복사해 붙여넣고, 그 답변을 아래에 붙여넣은 후 저장하세요. 그 텍스트로 페이지 전체가 다시 만들어집니다.', resumeSyncCopyBtn:'AI 프롬프트 복사', lblResumeSyncPaste:'AI의 답변을 여기에 붙여넣으세요', resumeSyncSaveBtn:'저장 및 게시', resumeSyncSuccess:'이력서가 업데이트되었습니다.', resumeSyncFailed:'저장할 수 없습니다.', resumeSyncParseFailed:'NAME 항목을 찾을 수 없습니다. AI 답변의 맨 처음부터 붙여넣었는지 확인하세요.',
     lblNotifBell:'알림', notifEmpty:'아직 알림이 없습니다.', notifSearchPlaceholder:'알림 검색…', notifPrefsHeader:'알림 채널', notifTypeReminder:'캘린더 알림', notifTypeYonseiBoard:'연세 게시판 공지', notifTypeLinkAccepted:'연결 초대 수락', notifChannelEmail:'이메일', notifChannelInApp:'앱 내', writingIndicator:'{name}님이 "{title}"을(를) 작성 중…', notifSystemPinTitle:'로그인에 사이트 PIN이 필요합니다', notifSystemPinBody:'이제 로그인하거나 계정을 만들려면 4자리 사이트 PIN이 필요합니다. 설정에서 언제든지 확인할 수 있습니다.', notifReminderTitleTpl:'알림: {title}', notifYonseiBoardTitleOne:'새 연세 GSIS 공지', notifYonseiBoardTitleMany:'새 연세 GSIS 공지 여러 건', notifLinkAcceptedTitleTpl:'{name}님이 초대를 수락했습니다',
-    dailyRecapPrefix:'일간 요약', weeklyRecapPrefix:'주간 요약', recapEveryWord:'매일', recapTimeMorning:'아침', recapTimeNoon:'정오', recapTimeEvening:'저녁', recapRelativeOnDay:'당일', recapRelativeDayBefore:'전날', recapRelativeDayPassed:'지난 날', recapWeekComing:'다가오는', recapWeekPassed:'지난', notifDailyRecapTitleTpl:'오늘 일정: {count}건', notifDailyRecapTitleTplMany:'오늘 일정: {count}건', notifWeeklyRecapTitleTpl:'이번 주 일정: {count}건', notifWeeklyRecapTitleTplMany:'이번 주 일정: {count}건',
+    dailyRecapPrefix:'일간 요약', weeklyRecapPrefix:'주간 요약', recapEveryWord:'매일', recapTimeMorning:'아침', recapTimeNoon:'정오', recapTimeEvening:'저녁', recapRelativeOnDay:'당일', recapRelativeDayBefore:'전날', recapRelativeDayPassed:'지난 날', recapWeekComing:'다가오는', recapWeekPassed:'지난', recapWeekBoth:'둘 다', lblRecapExcludeKinds:'요약에서 제외', notifDailyRecapTitleTpl:'오늘 일정: {count}건', notifDailyRecapTitleTplMany:'오늘 일정: {count}건', notifWeeklyRecapTitleTpl:'이번 주 일정: {count}건', notifWeeklyRecapTitleTplMany:'이번 주 일정: {count}건',
     modSearchPlaceholder:'이름 또는 이메일 검색…', modSortDate:'가입일순 정렬', modSort2fa:'2FA 상태순 정렬', modSortConfirmed:'인증 상태순 정렬', modSortName:'이름순 정렬',
     modConfirmed:'확인됨', modUnconfirmed:'미확인', modMfaOn:'2FA 켜짐', modMfaOff:'2FA 꺼짐', modYou:'나', modAdmin:'관리자', modNewPasswordPrompt:'이 계정의 새 비밀번호:', modNewNamePrompt:'이 계정의 새 표시 이름:',
     modConfirmDeleteUser:'이 계정과 모든 데이터를 영구적으로 삭제하시겠습니까? 되돌릴 수 없습니다.', modActionFailed:'작업에 실패했습니다.', modActionDone:'완료되었습니다.',
@@ -7984,7 +7989,7 @@ const I18N = {
     hModerator:'Quản trị viên – Tất cả tài khoản', modResetPw:'Đặt lại mật khẩu', modEditName:'Sửa tên', modConfirmEmail:'Xác nhận email', modDisableMfa:'Tắt 2FA', modDeleteUser:'Xóa tài khoản',
     lblResumeUpload:'Sơ yếu lý lịch công khai (kristoffergt.com/resume)', resumeUploadBtn:'Tải PDF lên', resumeViewLink:'Xem trang trực tiếp ↗', resumeUploadSuccess:'Đã tải sơ yếu lý lịch lên.', resumeUploadFailed:'Tải lên thất bại.', resumePdfOnlyMsg:'Chỉ chấp nhận tệp PDF.', lblResumeSync:'Đồng bộ sơ yếu lý lịch từ PDF', resumeSyncIntro:'Đang cập nhật nội dung sơ yếu lý lịch (công việc mới, mục cập nhật)? Sao chép prompt này vào bất kỳ AI chat nào cùng với PDF sơ yếu lý lịch đã cập nhật, rồi dán câu trả lời vào bên dưới và lưu lại. Toàn bộ trang sẽ được dựng lại từ đoạn văn bản đó.', resumeSyncCopyBtn:'Sao chép prompt AI', lblResumeSyncPaste:'Dán câu trả lời của AI vào đây', resumeSyncSaveBtn:'Lưu & xuất bản', resumeSyncSuccess:'Đã cập nhật sơ yếu lý lịch.', resumeSyncFailed:'Không thể lưu.', resumeSyncParseFailed:'Không tìm thấy trường NAME. Hãy kiểm tra xem bạn đã dán từ đầu câu trả lời của AI chưa.',
     lblNotifBell:'Thông báo', notifEmpty:'Chưa có thông báo nào.', notifSearchPlaceholder:'Tìm kiếm thông báo…', notifPrefsHeader:'Kênh thông báo', notifTypeReminder:'Nhắc lịch', notifTypeYonseiBoard:'Thông báo bảng tin Yonsei', notifTypeLinkAccepted:'Đã chấp nhận lời mời liên kết', notifChannelEmail:'Email', notifChannelInApp:'Trong ứng dụng', writingIndicator:'{name} đang viết "{title}"…', notifSystemPinTitle:'Cần mã PIN trang web mới để đăng nhập', notifSystemPinBody:'Đăng nhập hoặc tạo tài khoản giờ đây yêu cầu mã PIN gồm 4 chữ số. Bạn có thể xem lại bất cứ lúc nào trong Cài đặt.', notifReminderTitleTpl:'Nhắc nhở: {title}', notifYonseiBoardTitleOne:'Thông báo GSIS Yonsei mới', notifYonseiBoardTitleMany:'Các thông báo GSIS Yonsei mới', notifLinkAcceptedTitleTpl:'{name} đã chấp nhận lời mời của bạn',
-    dailyRecapPrefix:'Tóm tắt hằng ngày', weeklyRecapPrefix:'Tóm tắt hằng tuần', recapEveryWord:'mỗi', recapTimeMorning:'sáng', recapTimeNoon:'trưa', recapTimeEvening:'tối', recapRelativeOnDay:'trong ngày', recapRelativeDayBefore:'ngày hôm trước', recapRelativeDayPassed:'ngày đã qua', recapWeekComing:'sắp tới', recapWeekPassed:'đã qua', notifDailyRecapTitleTpl:'Hôm nay: {count} việc', notifDailyRecapTitleTplMany:'Hôm nay: {count} việc', notifWeeklyRecapTitleTpl:'Tuần này: {count} việc', notifWeeklyRecapTitleTplMany:'Tuần này: {count} việc',
+    dailyRecapPrefix:'Tóm tắt hằng ngày', weeklyRecapPrefix:'Tóm tắt hằng tuần', recapEveryWord:'mỗi', recapTimeMorning:'sáng', recapTimeNoon:'trưa', recapTimeEvening:'tối', recapRelativeOnDay:'trong ngày', recapRelativeDayBefore:'ngày hôm trước', recapRelativeDayPassed:'ngày đã qua', recapWeekComing:'sắp tới', recapWeekPassed:'đã qua', recapWeekBoth:'cả hai', lblRecapExcludeKinds:'Loại trừ khỏi tóm tắt', notifDailyRecapTitleTpl:'Hôm nay: {count} việc', notifDailyRecapTitleTplMany:'Hôm nay: {count} việc', notifWeeklyRecapTitleTpl:'Tuần này: {count} việc', notifWeeklyRecapTitleTplMany:'Tuần này: {count} việc',
     modSearchPlaceholder:'Tìm theo tên hoặc email…', modSortDate:'Sắp xếp theo ngày tham gia', modSort2fa:'Sắp xếp theo trạng thái 2FA', modSortConfirmed:'Sắp xếp theo trạng thái xác nhận', modSortName:'Sắp xếp theo tên',
     modConfirmed:'Đã xác nhận', modUnconfirmed:'Chưa xác nhận', modMfaOn:'2FA bật', modMfaOff:'2FA tắt', modYou:'Bạn', modAdmin:'Quản trị', modNewPasswordPrompt:'Mật khẩu mới cho tài khoản này:', modNewNamePrompt:'Tên hiển thị mới cho tài khoản này:',
     modConfirmDeleteUser:'Xóa vĩnh viễn tài khoản này và toàn bộ dữ liệu? Không thể hoàn tác.', modActionFailed:'Thao tác thất bại.', modActionDone:'Hoàn tất.',
@@ -8191,7 +8196,8 @@ let dailyRecapTime = 'morning'; // 'morning' | 'noon' | 'evening'
 let dailyRecapRelative = 'on_day'; // 'on_day' | 'day_before'
 let dailyRecapDays = [0,1,2,3,4,5,6]; // 0=Sun..6=Sat
 let weeklyRecapDay = 1; // 0=Sun..6=Sat, default Monday
-let weeklyRecapRelative = 'coming'; // 'coming' | 'passed'
+let weeklyRecapRelative = 'coming'; // 'coming' | 'passed' | 'both'
+let recapExcludedKinds = []; // event kinds ('deadline'|'event'|'course'|'birthday') hidden from BOTH daily and weekly recaps
 // Hiding is scoped per-viewer, not global: a hidden account still shows up
 // for itself and for its own core study partner (Kristoffer <-> Roxy) — it
 // only actually disappears for everyone else. Mirrors the shared_circle()
@@ -10037,7 +10043,6 @@ function recapTimeOptions(){
 }
 function recapRelativeOptions(){
   return [
-    { value:'passed', label:t('recapRelativeDayPassed') },
     { value:'on_day', label:t('recapRelativeOnDay') },
     { value:'day_before', label:t('recapRelativeDayBefore') },
   ];
@@ -10056,6 +10061,7 @@ function recapWeekRelativeOptions(){
   return [
     { value:'coming', label:t('recapWeekComing') },
     { value:'passed', label:t('recapWeekPassed') },
+    { value:'both', label:t('recapWeekBoth') },
   ];
 }
 async function updateRecapProfileField(column, value){
@@ -10137,6 +10143,30 @@ function renderRecapPrefsRows(){
   document.getElementById('notifyDailyRecapInappCheck').checked = notifyDailyRecapInapp;
   document.getElementById('notifyWeeklyRecapEmailCheck').checked = notifyWeeklyRecapEmail;
   document.getElementById('notifyWeeklyRecapInappCheck').checked = notifyWeeklyRecapInapp;
+
+  const excludeLbl = document.getElementById('lblRecapExcludeKinds');
+  if(excludeLbl) excludeLbl.textContent = t('lblRecapExcludeKinds') + ':';
+  const excludeWrap = document.getElementById('recapExcludeKindsPicker');
+  if(excludeWrap){
+    excludeWrap.innerHTML = '';
+    [['deadline','kindDeadline'],['event','kindEvent'],['course','kindCourse'],['birthday','kindBirthday']].forEach(([kind,labelKey])=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = t(labelKey);
+      // "active" here means excluded -- a highlighted button reads as "this
+      // kind is turned off", matching the day-of-week picker's own
+      // active-means-included convention would be backwards for this one,
+      // so this uses a dedicated .excluded style instead of .active.
+      b.className = 'day-toggle-btn' + (recapExcludedKinds.includes(kind) ? ' excluded' : '');
+      b.addEventListener('click', async ()=>{
+        const next = recapExcludedKinds.includes(kind) ? recapExcludedKinds.filter(k=>k!==kind) : [...recapExcludedKinds, kind];
+        recapExcludedKinds = next;
+        await updateRecapProfileField('recap_excluded_kinds', next);
+        renderRecapPrefsRows();
+      });
+      excludeWrap.appendChild(b);
+    });
+  }
 }
 document.getElementById('settingsHideLeaderboards').addEventListener('change', async (e)=>{
   const hide = e.target.checked;
@@ -10632,7 +10662,7 @@ async function loadAllData(){
   coreMembers = {};
   dailyGoals = {};
   hiddenFromLeaderboards = {};
-  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTime = p.daily_recap_time || 'morning'; dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; weeklyRecapRelative = p.weekly_recap_relative || 'coming'; } });
+  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTime = p.daily_recap_time || 'morning'; dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; weeklyRecapRelative = p.weekly_recap_relative || 'coming'; recapExcludedKinds = p.recap_excluded_kinds || []; } });
   const { data: entryRows } = await supabaseClient.from('study_entries').select('*');
   allEntries = {};
   (entryRows||[]).forEach(row=>{
