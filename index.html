@@ -131,6 +131,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
 .page-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 10px;font-size:12px;font-weight:600;border-radius:5px;min-width:32px;}
 .page-btn.active{background:var(--ink);color:var(--paper);}
 .page-btn:disabled{opacity:0.35;cursor:default;}
+.page-jump-input{width:56px;padding:5px 6px;font-size:12px;border-radius:5px;border:1px solid var(--celadon-4);background:var(--paper);color:var(--ink);text-align:center;}
 .show-more-btn{width:100%;background:none;border:1px dashed var(--line);color:var(--ink-soft);padding:10px;font-size:12.5px;font-weight:600;border-radius:6px;margin-top:10px;}
 .show-more-btn:hover{background:var(--paper);color:var(--ink);}
 .lb-row{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
@@ -1454,6 +1455,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <div class="month-nav">
         <button id="monthPrevBtn">‹</button>
         <span class="month-label" id="monthLabel"></span>
+        <button type="button" id="calJumpDateBtn" title="Jump to date" style="background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:12px;padding:2px 4px;">▾</button>
+        <input type="date" id="calJumpDateInput" style="position:absolute;top:0;left:50%;opacity:0;width:0;height:0;border:0;padding:0;pointer-events:none;">
         <button id="monthNextBtn">›</button>
       </div>
       <div class="month-grid" id="monthGrid"></div>
@@ -7698,7 +7701,7 @@ const I18N = {
     remindMe:'Remind me', subscribed:'Reminders on', applyToLabel:'Apply to', applyAll:'All future occurrences', applyOnce:'Just this occurrence',
     unitHours:'hours before', unitDays:'days before', addReminder:'+ Add reminder', saveReminders:'Save', unsubscribe:'Turn off reminders',
     reminderNote:'Reminder delivery requires an email service to be connected. Ask Claude to set this up.', birthdayReminderNote:'Birthday reminders fire right at the set time (8:00 AM by default). Change the time via Edit above.',
-    showMore:'Show more', showLess:'Show less', lblShowPastEvents:'Show past events', lblShowPastDeadlines:'Show past deadlines',
+    showMore:'Show more', showLess:'Show less', lblShowPastEvents:'Show past events', lblShowPastDeadlines:'Show past deadlines', paginationJumpHint:'Jump to page…',
     importIcs:'Import .ics', importSuccess:'Imported {n} events', importFail:'Could not read that file',
     yourDeadlines:'Your deadlines', monthView:'Personal Calendar – Month view', daysLeft:'days left', dayLeftSingular:'day left', today:'today', overdue:'days ago', overdueSingular:'day ago',
     notesQuotes:'Notes & quotes', addNote:'Add note', page:'page', noteBtn:'Show notes',
@@ -7809,7 +7812,7 @@ const I18N = {
     remindMe:'알림 받기', subscribed:'알림 켜짐', applyToLabel:'적용 대상', applyAll:'앞으로 모든 일정', applyOnce:'이번 일정만',
     unitHours:'시간 전', unitDays:'일 전', addReminder:'+ 알림 추가', saveReminders:'저장', unsubscribe:'알림 끄기',
     reminderNote:'알림 발송을 위해서는 이메일 서비스 연동이 필요합니다. Claude에게 설정을 요청하세요.', birthdayReminderNote:'생일 알림은 설정된 시각(기본 오전 8시)에 바로 전송됩니다. 시각을 바꾸려면 위의 수정을 이용하세요.',
-    showMore:'더 보기', showLess:'간단히 보기', lblShowPastEvents:'지난 일정 표시', lblShowPastDeadlines:'지난 마감일 표시',
+    showMore:'더 보기', showLess:'간단히 보기', lblShowPastEvents:'지난 일정 표시', lblShowPastDeadlines:'지난 마감일 표시', paginationJumpHint:'페이지로 이동…',
     importIcs:'.ics 가져오기', importSuccess:'{n}개 일정을 가져왔습니다', importFail:'파일을 읽을 수 없습니다',
     yourDeadlines:'나의 마감일', monthView:'개인 캘린더 – 월간 보기', daysLeft:'일 남음', dayLeftSingular:'일 남음', today:'오늘', overdue:'일 전', overdueSingular:'일 전',
     notesQuotes:'메모 및 인용구', addNote:'메모 추가', page:'페이지', noteBtn:'메모 보기',
@@ -7920,7 +7923,7 @@ const I18N = {
     remindMe:'Nhắc tôi', subscribed:'Đã bật nhắc nhở', applyToLabel:'Áp dụng cho', applyAll:'Tất cả các lần tới', applyOnce:'Chỉ lần này',
     unitHours:'giờ trước', unitDays:'ngày trước', addReminder:'+ Thêm nhắc nhở', saveReminders:'Lưu', unsubscribe:'Tắt nhắc nhở',
     reminderNote:'Việc gửi nhắc nhở cần kết nối dịch vụ email. Hãy nhờ Claude thiết lập.', birthdayReminderNote:'Nhắc sinh nhật được gửi đúng vào thời gian đã đặt (mặc định 8:00 sáng). Đổi giờ qua mục Sửa ở trên.',
-    showMore:'Xem thêm', showLess:'Thu gọn', lblShowPastEvents:'Hiện sự kiện đã qua', lblShowPastDeadlines:'Hiện hạn chót đã qua',
+    showMore:'Xem thêm', showLess:'Thu gọn', lblShowPastEvents:'Hiện sự kiện đã qua', lblShowPastDeadlines:'Hiện hạn chót đã qua', paginationJumpHint:'Đi tới trang…',
     importIcs:'Nhập .ics', importSuccess:'Đã nhập {n} sự kiện', importFail:'Không thể đọc tệp này',
     yourDeadlines:'Hạn chót của bạn', monthView:'Lịch cá nhân – Xem theo tháng', daysLeft:'ngày còn lại', dayLeftSingular:'ngày còn lại', today:'hôm nay', overdue:'ngày trước', overdueSingular:'ngày trước',
     notesQuotes:'Ghi chú & trích dẫn', addNote:'Thêm ghi chú', page:'trang', noteBtn:'Xem ghi chú',
@@ -10152,6 +10155,76 @@ async function loadModeratorUsers(){
   moderatorUsersCache = data || [];
   renderModeratorUserList();
 }
+
+/* ---------- SHARED PAGINATION BAR ----------
+   Rendering one button per page (the old convention every list below used)
+   turns into a wall of dozens of buttons once a list has enough pages --
+   Yonsei Boards' 48 was the one that actually got there. Instead: the first
+   PAGINATION_HEAD pages as buttons, then a single "…" slot (showing the
+   current page number instead, once you've paged past the head) that turns
+   into a type-a-page-number field on click, plus «/» to jump straight to
+   the first/last page and ‹/› to step one at a time. */
+const PAGINATION_HEAD = 5;
+function appendPaginationPages(container, current, total, onPick){
+  const headCount = Math.min(PAGINATION_HEAD, total);
+  for(let p=1; p<=headCount; p++){
+    const b = document.createElement('button');
+    b.textContent = String(p);
+    b.className = 'page-btn' + (p === current ? ' active' : '');
+    b.addEventListener('click', ()=> onPick(p));
+    container.appendChild(b);
+  }
+  if(total <= PAGINATION_HEAD) return;
+  const showingCurrent = current > headCount;
+  const jumpBtn = document.createElement('button');
+  jumpBtn.type = 'button';
+  jumpBtn.className = 'page-btn' + (showingCurrent ? ' active' : '');
+  jumpBtn.textContent = showingCurrent ? String(current) : '…';
+  jumpBtn.title = t('paginationJumpHint');
+  jumpBtn.addEventListener('click', ()=>{
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '1'; input.max = String(total);
+    input.className = 'page-jump-input';
+    input.placeholder = `1–${total}`;
+    jumpBtn.replaceWith(input);
+    input.focus();
+    let done = false;
+    const commit = ()=>{
+      if(done) return;
+      const val = parseInt(input.value, 10);
+      if(!isNaN(val) && val >= 1 && val <= total){
+        done = true;
+        onPick(val);
+      } else if(document.body.contains(input)){
+        done = true;
+        input.replaceWith(jumpBtn);
+      }
+    };
+    input.addEventListener('click', (e)=> e.stopPropagation());
+    input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') commit(); });
+    input.addEventListener('blur', commit);
+  });
+  container.appendChild(jumpBtn);
+}
+function renderPaginationBar(container, current, total, onPick){
+  container.innerHTML = '';
+  if(total <= 1) return;
+  const mkNavBtn = (label, page, disabled)=>{
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.disabled = !!disabled;
+    b.className = 'page-btn';
+    b.addEventListener('click', ()=> onPick(page));
+    return b;
+  };
+  container.appendChild(mkNavBtn('«', 1, current === 1));
+  container.appendChild(mkNavBtn('‹', Math.max(1, current-1), current === 1));
+  appendPaginationPages(container, current, total, onPick);
+  container.appendChild(mkNavBtn('›', Math.min(total, current+1), current === total));
+  container.appendChild(mkNavBtn('»', total, current === total));
+}
+
 function renderModeratorUserList(){
   const list = document.getElementById('moderatorUserList');
   const term = moderatorSearchTerm.trim().toLowerCase();
@@ -10198,21 +10271,7 @@ function renderModeratorUserList(){
     const totalPages = Math.max(1, Math.ceil(rest.length / PAGE_SIZE));
     const nav = document.createElement('div');
     nav.className = 'list-controls';
-    const mkBtn = (label, page, disabled)=>{
-      const b = document.createElement('button');
-      b.textContent = label;
-      b.disabled = !!disabled;
-      b.className = 'page-btn' + (page === moderatorListState.page ? ' active' : '');
-      b.addEventListener('click', ()=>{ moderatorListState.page = page; renderModeratorUserList(); });
-      return b;
-    };
-    if(totalPages > 1){
-      nav.appendChild(mkBtn('«', 1, moderatorListState.page === 1));
-      nav.appendChild(mkBtn('‹', Math.max(1, moderatorListState.page - 1), moderatorListState.page === 1));
-      for(let p = 1; p <= totalPages; p++){ nav.appendChild(mkBtn(String(p), p, false)); }
-      nav.appendChild(mkBtn('›', Math.min(totalPages, moderatorListState.page + 1), moderatorListState.page === totalPages));
-      nav.appendChild(mkBtn('»', totalPages, moderatorListState.page === totalPages));
-    }
+    renderPaginationBar(nav, moderatorListState.page, totalPages, (p)=>{ moderatorListState.page = p; renderModeratorUserList(); });
     const lessBtn = document.createElement('button');
     lessBtn.className = 'show-more-btn';
     lessBtn.textContent = t('showLess');
@@ -10857,21 +10916,7 @@ function renderLeaderboardPage(listId, controlsId, stateKey, rows, rowBuilder){
     const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
     const nav = document.createElement('div');
     nav.className = 'list-controls';
-    const mkBtn = (label, page, disabled)=>{
-      const b = document.createElement('button');
-      b.textContent = label;
-      b.disabled = !!disabled;
-      b.className = 'page-btn' + (page === state.page ? ' active' : '');
-      b.addEventListener('click', ()=>{ state.page = page; renderAllLeaderboards(); });
-      return b;
-    };
-    if(totalPages > 1){
-      nav.appendChild(mkBtn('«', 1, state.page === 1));
-      nav.appendChild(mkBtn('‹', Math.max(1, state.page - 1), state.page === 1));
-      for(let p = 1; p <= totalPages; p++){ nav.appendChild(mkBtn(String(p), p, false)); }
-      nav.appendChild(mkBtn('›', Math.min(totalPages, state.page + 1), state.page === totalPages));
-      nav.appendChild(mkBtn('»', totalPages, state.page === totalPages));
-    }
+    renderPaginationBar(nav, state.page, totalPages, (p)=>{ state.page = p; renderAllLeaderboards(); });
     const lessBtn = document.createElement('button');
     lessBtn.className = 'show-more-btn';
     lessBtn.textContent = t('showLess');
@@ -11590,19 +11635,7 @@ function renderJobs(){
       if(totalPages > 1){
         const nav = document.createElement('div');
         nav.className = 'list-controls';
-        const mkBtn = (label, page, disabled)=>{
-          const b = document.createElement('button');
-          b.textContent = label;
-          b.disabled = !!disabled;
-          b.className = 'page-btn' + (page === state.page ? ' active' : '');
-          b.addEventListener('click', ()=>{ state.page = page; renderJobs(); });
-          return b;
-        };
-        nav.appendChild(mkBtn('«', 1, state.page === 1));
-        nav.appendChild(mkBtn('‹', Math.max(1, state.page - 1), state.page === 1));
-        for(let p = 1; p <= totalPages; p++){ nav.appendChild(mkBtn(String(p), p, false)); }
-        nav.appendChild(mkBtn('›', Math.min(totalPages, state.page + 1), state.page === totalPages));
-        nav.appendChild(mkBtn('»', totalPages, state.page === totalPages));
+        renderPaginationBar(nav, state.page, totalPages, (p)=>{ state.page = p; renderJobs(); });
         controls.appendChild(nav);
       }
       const lessBtn = document.createElement('button');
@@ -11858,19 +11891,7 @@ function renderCerts(){
       if(totalPages > 1){
         const nav = document.createElement('div');
         nav.className = 'list-controls';
-        const mkBtn = (label, page, disabled)=>{
-          const b = document.createElement('button');
-          b.textContent = label;
-          b.disabled = !!disabled;
-          b.className = 'page-btn' + (page === state.page ? ' active' : '');
-          b.addEventListener('click', ()=>{ state.page = page; renderCerts(); });
-          return b;
-        };
-        nav.appendChild(mkBtn('«', 1, state.page === 1));
-        nav.appendChild(mkBtn('‹', Math.max(1, state.page - 1), state.page === 1));
-        for(let p = 1; p <= totalPages; p++){ nav.appendChild(mkBtn(String(p), p, false)); }
-        nav.appendChild(mkBtn('›', Math.min(totalPages, state.page + 1), state.page === totalPages));
-        nav.appendChild(mkBtn('»', totalPages, state.page === totalPages));
+        renderPaginationBar(nav, state.page, totalPages, (p)=>{ state.page = p; renderCerts(); });
         controls.appendChild(nav);
       }
       const lessBtn = document.createElement('button');
@@ -12264,20 +12285,7 @@ function renderJobBoard(){
   // "have you seen this" marker should read.
   markJobBoardItemsSeen(pageItems);
   if(pagination){
-    pagination.innerHTML = '';
-    if(totalPages > 1){
-      const mkBtn = (label, page, disabled)=>{
-        const b = document.createElement('button');
-        b.textContent = label;
-        b.disabled = !!disabled;
-        b.className = 'page-btn' + (page === jobBoardPage ? ' active' : '');
-        b.addEventListener('click', ()=>{ jobBoardPage = page; renderJobBoard(); });
-        return b;
-      };
-      pagination.appendChild(mkBtn('‹', Math.max(1, jobBoardPage - 1), jobBoardPage === 1));
-      for(let p = 1; p <= totalPages; p++){ pagination.appendChild(mkBtn(String(p), p, false)); }
-      pagination.appendChild(mkBtn('›', Math.min(totalPages, jobBoardPage + 1), jobBoardPage === totalPages));
-    }
+    renderPaginationBar(pagination, jobBoardPage, totalPages, (p)=>{ jobBoardPage = p; renderJobBoard(); });
   }
 }
 document.getElementById('jobBoardSearchInput').addEventListener('input', (e)=>{
@@ -12306,13 +12314,15 @@ document.getElementById('jobBoardUpdateBtn').addEventListener('click', triggerJo
 // by renderAll() regardless of which subtab is showing (same as the rest
 // of the app), so switching to them needs no extra render call -- only
 // Boards needs an on-demand fetch, and only the first time it's opened
-// (fetchYonseiBoards() itself no-ops on a warm cache unless forced).
+// (the !yonseiBoardsCache guard here, rather than inside
+// fetchYonseiBoards() itself, since that function is also used to fetch
+// deeper pages on demand -- see ensureYonseiLoadedForPage()).
 function switchYonseiSubTab(view){
   const btns = { courses: 'yonseiSubCoursesBtn', notes: 'yonseiSubNotesBtn', boards: 'yonseiSubBoardsBtn' };
   const sections = { courses: 'yonseiCoursesSection', notes: 'yonseiNotesSection', boards: 'yonseiBoardsSection' };
   Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
   Object.entries(sections).forEach(([v,id])=> document.getElementById(id).classList.toggle('hidden', v!==view));
-  if(view === 'boards') fetchYonseiBoards();
+  if(view === 'boards' && !yonseiBoardsCache) fetchYonseiBoards(YONSEI_BOARD_PAGE_SIZE);
 }
 document.getElementById('yonseiSubCoursesBtn').addEventListener('click', ()=> switchYonseiSubTab('courses'));
 document.getElementById('yonseiSubNotesBtn').addEventListener('click', ()=> switchYonseiSubTab('notes'));
@@ -12329,27 +12339,80 @@ document.getElementById('yonseiSubBoardsBtn').addEventListener('click', ()=> swi
 const YONSEI_BOARD_URL = 'https://gsis.yonsei.ac.kr/gsis/community/boards1_01.do';
 const YONSEI_BOARD_FUNCTION_URL = SUPABASE_URL + '/functions/v1/fetch-yonsei-board';
 let yonseiBoardsCache = null; // null = not fetched yet; else { items:[{title,link,date,category,subTag}], error:bool }
-let yonseiBoardsLoading = false;
+let yonseiBoardsLoading = false; // the very first fetch -- blanks the whole list while it's in flight
+let yonseiBoardsLoadingMore = false; // a deeper re-fetch triggered by paging past what's loaded -- keeps the current page visible, just disables pagination
+let yonseiBoardsLoadedLimit = 0; // how many raw items the last successful fetch asked for (and, if not fullyLoaded, got)
+let yonseiBoardsFullyLoaded = false; // true once a fetch came back with fewer items than requested -- that's every article that exists, no point re-fetching deeper
 let yonseiBoardsSearchQuery = '';
 let yonseiBoardsCategoryFilter = 'all';
 let yonseiBoardsPeriodFilter = 'all'; // one of YONSEI_PERIOD_OPTIONS
 let yonseiBoardsSortFilter = 'newest'; // 'newest' | 'oldest'
 let yonseiBoardsPage = 1;
 const YONSEI_BOARD_PAGE_SIZE = 10; // matches the job board's own page size
-async function fetchYonseiBoards(force){
-  if(yonseiBoardsCache && !force){ renderYonseiBoards(); return; }
-  yonseiBoardsLoading = true;
+// Fetches the top `limit` items from the board (see fetch-yonsei-board/
+// index.ts) and REPLACES the cache with that set -- not an incremental
+// append, since the upstream site's own article.offset param turned out to
+// have no effect on a plain request (confirmed live: same top items come
+// back regardless of offset), so there's no way to fetch just a fresh
+// slice. Sized to whatever's actually needed right now (initial open only
+// needs one page's worth) rather than always pulling the whole board, which
+// is what made this tab slow to open in the first place.
+async function fetchYonseiBoards(limit){
+  const isFirstLoad = !yonseiBoardsCache;
+  if(isFirstLoad) yonseiBoardsLoading = true; else yonseiBoardsLoadingMore = true;
   renderYonseiBoards();
   try {
-    const res = await fetch(YONSEI_BOARD_FUNCTION_URL, { headers: { apikey: SUPABASE_ANON_KEY } });
+    const res = await fetch(`${YONSEI_BOARD_FUNCTION_URL}?limit=${limit}`, { headers: { apikey: SUPABASE_ANON_KEY } });
     if(!res.ok) throw new Error('bad response');
     const data = await res.json();
-    yonseiBoardsCache = { items: data.items || [], error: !!data.error };
+    const items = data.items || [];
+    yonseiBoardsCache = { items, error: !!data.error };
+    yonseiBoardsLoadedLimit = limit;
+    yonseiBoardsFullyLoaded = items.length < limit;
   } catch(err){
-    yonseiBoardsCache = { items: [], error: true };
+    if(isFirstLoad) yonseiBoardsCache = { items: [], error: true };
+    yonseiBoardsFullyLoaded = true; // stop retrying forever on a broken fetch
   } finally {
     yonseiBoardsLoading = false;
+    yonseiBoardsLoadingMore = false;
     renderYonseiBoards();
+  }
+}
+// Filtered+sorted view of whatever's currently loaded -- shared by
+// renderYonseiBoards() (for the actual page slice) and
+// ensureYonseiLoadedForPage() (to check whether paging further needs a
+// deeper fetch first), so the two never disagree about the page count.
+function yonseiFilteredSortedItems(){
+  if(!yonseiBoardsCache) return [];
+  const q = yonseiBoardsSearchQuery.trim().toLowerCase();
+  const cutoff = yonseiPeriodCutoff(yonseiBoardsPeriodFilter);
+  const filtered = yonseiBoardsCache.items.filter(it=>{
+    if(it.subTag && yonseiHiddenSubtags.includes(it.subTag)) return false;
+    if(yonseiBoardsCategoryFilter !== 'all' && it.category !== yonseiBoardsCategoryFilter) return false;
+    // it.date is 'YY.MM.DD' (e.g. '26.08.18'); the cutoff is 'YYYY-MM-DD' --
+    // '20' + YY.MM.DD's own digit order sorts identically to YYYY-MM-DD, so
+    // a plain string compare works without parsing either side into a Date.
+    if(cutoff && it.date && ('20' + it.date.replace(/\./g, '-')) < cutoff) return false;
+    if(q && !it.title.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  // The fetched set already arrives newest-first (see compareDateDesc in
+  // the fetch-yonsei-board edge function) -- oldest-first is just that
+  // order reversed, not a separate sort pass.
+  return yonseiBoardsSortFilter === 'oldest' ? filtered.slice().reverse() : filtered;
+}
+// Only ever fetches deeper when the FILTERED list genuinely doesn't cover
+// the requested page yet with what's already loaded -- note this can't
+// distinguish "page doesn't exist" from "page exists further back in
+// history we haven't loaded", so a narrow filter deep in an
+// under-loaded board can under-report its true page count until you've
+// paged (and thus loaded) far enough to find out. Acceptable given there's
+// no way to search the upstream board server-side to begin with.
+async function ensureYonseiLoadedForPage(targetPage){
+  while(!yonseiBoardsFullyLoaded){
+    const have = yonseiFilteredSortedItems().length;
+    if(Math.ceil(have / YONSEI_BOARD_PAGE_SIZE) >= targetPage) return;
+    await fetchYonseiBoards(Math.min(1000, targetPage * YONSEI_BOARD_PAGE_SIZE));
   }
 }
 // category/subTag now arrive pre-extracted from the edge function (see
@@ -12463,6 +12526,11 @@ function rebuildYonseiSubtagFilters(){
     });
   });
 }
+async function goToYonseiPage(p){
+  await ensureYonseiLoadedForPage(p);
+  yonseiBoardsPage = p;
+  renderYonseiBoards();
+}
 function renderYonseiBoards(){
   renderYonseiNotifyBtn();
   rebuildYonseiCategoryFilter();
@@ -12487,27 +12555,12 @@ function renderYonseiBoards(){
     if(pagination) pagination.innerHTML = '';
     return;
   }
-  const q = yonseiBoardsSearchQuery.trim().toLowerCase();
-  const cutoff = yonseiPeriodCutoff(yonseiBoardsPeriodFilter);
-  const filtered = yonseiBoardsCache.items.filter(it=>{
-    if(it.subTag && yonseiHiddenSubtags.includes(it.subTag)) return false;
-    if(yonseiBoardsCategoryFilter !== 'all' && it.category !== yonseiBoardsCategoryFilter) return false;
-    // it.date is 'YY.MM.DD' (e.g. '26.08.18'); the cutoff is 'YYYY-MM-DD' --
-    // '20' + YY.MM.DD's own digit order sorts identically to YYYY-MM-DD, so
-    // a plain string compare works without parsing either side into a Date.
-    if(cutoff && it.date && ('20' + it.date.replace(/\./g, '-')) < cutoff) return false;
-    if(q && !it.title.toLowerCase().includes(q)) return false;
-    return true;
-  });
-  if(filtered.length === 0){
+  const sorted = yonseiFilteredSortedItems();
+  if(sorted.length === 0){
     list.innerHTML = `<div class="hint">${t('yonseiBoardsNoMatches')}</div>`;
     if(pagination) pagination.innerHTML = '';
     return;
   }
-  // The fetched set already arrives newest-first (see compareDateDesc in
-  // the fetch-yonsei-board edge function) -- oldest-first is just that
-  // order reversed, not a separate sort pass.
-  const sorted = yonseiBoardsSortFilter === 'oldest' ? filtered.slice().reverse() : filtered;
   const totalPages = Math.max(1, Math.ceil(sorted.length / YONSEI_BOARD_PAGE_SIZE));
   if(yonseiBoardsPage > totalPages) yonseiBoardsPage = totalPages;
   if(yonseiBoardsPage < 1) yonseiBoardsPage = 1;
@@ -12517,19 +12570,23 @@ function renderYonseiBoards(){
     `<a class="yonsei-board-row" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer"><span class="yonsei-board-date">${escapeHtml(it.date)}</span><span class="yonsei-board-title">${escapeHtml(it.title)}</span>${it.subTag ? `<span class="yonsei-board-subtag">${escapeHtml(it.subTag)}</span>` : ''}<span class="yonsei-board-tag ${yonseiCategoryClass(it.category)}">${escapeHtml(yonseiCategoryLabel(it.category))}</span></a>`
   ).join('');
   if(pagination){
-    pagination.innerHTML = '';
-    if(totalPages > 1){
-      const mkBtn = (label, page, disabled)=>{
-        const b = document.createElement('button');
-        b.textContent = label;
-        b.disabled = !!disabled;
-        b.className = 'page-btn' + (page === yonseiBoardsPage ? ' active' : '');
-        b.addEventListener('click', ()=>{ yonseiBoardsPage = page; renderYonseiBoards(); });
-        return b;
-      };
-      pagination.appendChild(mkBtn('‹', Math.max(1, yonseiBoardsPage - 1), yonseiBoardsPage === 1));
-      for(let p = 1; p <= totalPages; p++){ pagination.appendChild(mkBtn(String(p), p, false)); }
-      pagination.appendChild(mkBtn('›', Math.min(totalPages, yonseiBoardsPage + 1), yonseiBoardsPage === totalPages));
+    // totalPages only reflects what's loaded so far -- if there's more
+    // upstream we haven't fetched yet, offer one extra clickable page so
+    // there's always a way to page into it (goToYonseiPage() fetches
+    // deeper first, then actually navigates there).
+    const pageCountForNav = yonseiBoardsFullyLoaded ? totalPages : totalPages + 1;
+    renderPaginationBar(pagination, yonseiBoardsPage, pageCountForNav, goToYonseiPage);
+    if(yonseiBoardsLoadingMore){
+      // Disabled rather than left clickable while a deeper fetch is
+      // already in flight -- goToYonseiPage() has no concurrency guard, so
+      // a second click here would fire an overlapping fetch instead of
+      // queuing behind the first.
+      pagination.querySelectorAll('button').forEach(b=> b.disabled = true);
+      const loadingHint = document.createElement('div');
+      loadingHint.className = 'hint';
+      loadingHint.style.cssText = 'width:100%;text-align:center;margin-top:6px;';
+      loadingHint.textContent = t('yonseiBoardsLoading');
+      pagination.appendChild(loadingHint);
     }
   }
 }
@@ -13539,19 +13596,7 @@ function renderKindList(kind, listId, controlsId){
     if(totalPages > 1){
       const nav = document.createElement('div');
       nav.className = 'list-controls';
-      const mkBtn = (label, page, disabled)=>{
-        const b = document.createElement('button');
-        b.textContent = label;
-        b.disabled = !!disabled;
-        b.className = 'page-btn' + (page === state.page ? ' active' : '');
-        b.addEventListener('click', ()=>{ state.page = page; renderCalendarTab(); });
-        return b;
-      };
-      nav.appendChild(mkBtn('«', 1, state.page === 1));
-      nav.appendChild(mkBtn('‹', Math.max(1, state.page - 1), state.page === 1));
-      for(let p = 1; p <= totalPages; p++){ nav.appendChild(mkBtn(String(p), p, false)); }
-      nav.appendChild(mkBtn('›', Math.min(totalPages, state.page + 1), state.page === totalPages));
-      nav.appendChild(mkBtn('»', totalPages, state.page === totalPages));
+      renderPaginationBar(nav, state.page, totalPages, (p)=>{ state.page = p; renderCalendarTab(); });
       controls.appendChild(nav);
     }
     if(items.length > PREVIEW_SIZE){
@@ -13742,7 +13787,14 @@ function openCalSegList(el, key, baseDateStr){
   panel.innerHTML = options.map(o=>`<button type="button" data-value="${o.value}" class="${o.value===current?'active':''}">${escapeHtml(o.label)}</button>`).join('');
   el.appendChild(panel);
   const activeBtn = panel.querySelector('button.active');
-  if(activeBtn) activeBtn.scrollIntoView({ block:'center' });
+  // Scroll just the picker panel itself to center the active value, not
+  // activeBtn.scrollIntoView() -- that walks every scrollable ancestor,
+  // including the page itself, so opening a picker anywhere the panel
+  // wouldn't otherwise fully fit on screen was also yanking the whole page
+  // up or down.
+  if(activeBtn){
+    panel.scrollTop = Math.max(0, activeBtn.offsetTop - panel.clientHeight/2 + activeBtn.offsetHeight/2);
+  }
   panel.querySelectorAll('button').forEach(btn=>{
     btn.addEventListener('click', (e)=>{
       e.stopPropagation();
@@ -14310,6 +14362,22 @@ document.getElementById('monthNextBtn').addEventListener('click', ()=>{
   if(calViewMode === 'week'){ calViewDate.setDate(calViewDate.getDate()+7); renderWeekGrid(); }
   else if(calViewMode === 'day'){ calViewDate.setDate(calViewDate.getDate()+1); renderDayGrid(); }
   else { calViewDate.setMonth(calViewDate.getMonth()+1); selectedAgendaDate = null; renderMonthGrid(); }
+});
+// Small arrow next to the header label, alongside the segmented picker
+// (renderCalHeaderLabel() above) -- that lets you change one field of the
+// date at a time, this opens the plain native date picker for jumping
+// anywhere in one shot instead.
+document.getElementById('calJumpDateBtn').addEventListener('click', ()=>{
+  closeCalSegPicker();
+  const input = document.getElementById('calJumpDateInput');
+  input.value = todayStr(calViewDate);
+  if(input.showPicker) input.showPicker(); else input.click();
+});
+document.getElementById('calJumpDateInput').addEventListener('change', (e)=>{
+  if(!e.target.value) return;
+  calViewDate = new Date(e.target.value + 'T00:00:00');
+  selectedAgendaDate = null;
+  renderCalendarTab();
 });
 /* ---------- RECAP ---------- */
 // Trailing-window recap (last 7 / last 30 days including today, not fixed
