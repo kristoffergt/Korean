@@ -1690,6 +1690,11 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 
     <div class="wtc-title" style="margin-top:18px;" id="lblNotifPrefs"></div>
     <div id="notifPrefsList"></div>
+    <div class="field" style="margin-top:10px;">
+      <label for="recapPersonFilter" id="lblRecapPersonFilter"></label>
+      <button type="button" class="person-filter-btn" id="recapPersonFilterBtn"></button>
+      <div class="person-filter-panel hidden" id="recapPersonFilterPanel"></div>
+    </div>
     <div style="padding:5px 0;font-size:13px;margin-top:4px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <span id="weeklyRecapLabel"></span>
@@ -8049,7 +8054,7 @@ const STATIC_MAP = {
   hStudyTimer:'hStudyTimer', lblTimerActivity:'lblTimerActivity', timerStartBtn:'timerStartBtn', timerPauseBtn:'timerPauseBtn', timerResetBtn:'timerResetBtn', timerSaveBtn:'timerSaveBtn', timerHint:'timerHint',
   hCalendar:'last12weeks', calLegendLess:'less', calLegendHit:'goalHit', lblDailyGoal:'lblDailyGoal', saveDailyGoalBtn:'saveDailyGoalBtn',
   hBreakdown:'activityBreakdown', bd7:'last7', bd30:'last30', bdAll:'allTime',
-  hMyEntries:'yourEntries', hFeed:'feedEveryone', exportStudyBtn:'exportCsv', lblStudyLogPersonFilter:'lblNotesPersonFilter',
+  hMyEntries:'yourEntries', hFeed:'feedEveryone', exportStudyBtn:'exportCsv', lblStudyLogPersonFilter:'lblNotesPersonFilter', lblRecapPersonFilter:'lblNotesPersonFilter',
   hReadingStats:'yourReading', rLabelReading:'statusReading', rLabelToRead:'statusToRead', rLabelFinished:'statusFinished',
   hAddBook:'addBook', lblBookTitle:'title', lblBookAuthor:'author', lblBookStatus:'status', lblBookPages:'totalPages', addBookBtn:'addBookBtn',
   hYourBooks:'yourBooks', exportBooksBtn:'exportCsv', hBookLB:'booksFinishedLB', blbHeadRank:'lbRank', blbHeadName:'lbName', blbHeadFinished:'statusFinished', lblBookPersonFilter:'lblNotesPersonFilter', lblCoursePersonFilter:'lblNotesPersonFilter',
@@ -8208,6 +8213,13 @@ let weeklyRecapDay = 1; // 0=Sun..6=Sat, default Monday
 let weeklyRecapRelative = 'coming'; // 'coming' | 'passed' | 'both'
 let dailyRecapExcludedKinds = []; // event kinds ('deadline'|'event'|'course'|'birthday') hidden from daily recap
 let weeklyRecapExcludedKinds = []; // same, for weekly recap -- independent of the daily list
+// Whose events (besides your own) get folded into your daily/weekly recap
+// notifications -- null means "everyone currently visible to you" (the
+// send_daily_recap/send_weekly_recap SQL functions treat null the same
+// way), an explicit array narrows it down. Shared by both recap kinds,
+// unlike the excluded-kinds lists above, since the user didn't ask for
+// separate daily/weekly control here.
+let recapIncludedUids = null;
 // Hiding is scoped per-viewer, not global: a hidden account still shows up
 // for itself and for its own core study partner (Kristoffer <-> Roxy) — it
 // only actually disappears for everyone else. Mirrors the shared_circle()
@@ -8381,6 +8393,13 @@ function renderPersonFilterUi(filterKey, selectable){
   const btn = document.getElementById(filterKey + 'Btn');
   const panel = document.getElementById(filterKey + 'Panel');
   if(!btn || !panel) return;
+  // Nobody to pick between (no circle) -- the whole row (label included,
+  // via the nearest .field wrapper where there is one) disappears rather
+  // than showing a picker whose only option is yourself.
+  const wrap = btn.closest('.field') || btn;
+  const nothingToPick = selectable.length <= 1;
+  wrap.classList.toggle('hidden', nothingToPick);
+  if(nothingToPick) return;
   btn.textContent = personFilterSummaryText(filterKey, selectable) + ' ▾';
   const sel = personFilters[filterKey] || selectable;
   const allChecked = sel.length === selectable.length;
@@ -10081,6 +10100,7 @@ function renderRecapPrefsRows(){
   const dailyLabelEl = document.getElementById('dailyRecapLabel');
   const weeklyLabelEl = document.getElementById('weeklyRecapLabel');
   if(!dailyLabelEl || !weeklyLabelEl || !currentUser) return;
+  rebuildRecapPersonFilter();
 
   dailyLabelEl.innerHTML = '';
   dailyLabelEl.appendChild(document.createTextNode(t('dailyRecapPrefix') + ' (' + t('recapEveryWord') + ' '));
@@ -10193,6 +10213,27 @@ function renderRecapPrefsRows(){
     });
   }
 }
+// "calendar" here matches the category shared_circle_cat(..., 'calendar')
+// checks server-side in send_daily_recap/send_weekly_recap -- there's no
+// per-partner toggle for it (not a valid link_sharing_settings.category),
+// so visiblePartnersFor('calendar') always resolves to every core/linked
+// partner, i.e. everyone whose events could show up in the recap at all.
+function rebuildRecapPersonFilter(){
+  if(!currentUser) return;
+  const filterKey = 'recapPersonFilter';
+  const selectable = [currentUser.id, ...visiblePartnersFor('calendar')];
+  // Unlike rebuildPersonFilter()'s other callers, this one's source of
+  // truth is the persisted profile column (recapIncludedUids), not
+  // localStorage -- the recap is generated server-side by a cron job with
+  // no access to the browser at all.
+  const stillValid = recapIncludedUids && recapIncludedUids.length && recapIncludedUids.every(uid=>selectable.includes(uid));
+  personFilters[filterKey] = stillValid ? recapIncludedUids : selectable.slice();
+  renderPersonFilterUi(filterKey, selectable);
+}
+wirePersonFilter('recapPersonFilter', 'calendar', async ()=>{
+  recapIncludedUids = personFilters['recapPersonFilter'];
+  await updateRecapProfileField('recap_included_uids', recapIncludedUids);
+});
 document.getElementById('settingsHideLeaderboards').addEventListener('change', async (e)=>{
   const hide = e.target.checked;
   const { error } = await supabaseClient.from('profiles').update({ hide_from_leaderboards: hide }).eq('id', currentUser.id);
@@ -10694,7 +10735,7 @@ async function loadAllData(){
   coreMembers = {};
   dailyGoals = {};
   hiddenFromLeaderboards = {};
-  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTime = p.daily_recap_time || 'morning'; dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; weeklyRecapRelative = p.weekly_recap_relative || 'coming'; dailyRecapExcludedKinds = p.daily_recap_excluded_kinds || []; weeklyRecapExcludedKinds = p.weekly_recap_excluded_kinds || []; } });
+  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTime = p.daily_recap_time || 'morning'; dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; weeklyRecapRelative = p.weekly_recap_relative || 'coming'; dailyRecapExcludedKinds = p.daily_recap_excluded_kinds || []; weeklyRecapExcludedKinds = p.weekly_recap_excluded_kinds || []; recapIncludedUids = p.recap_included_uids || null; } });
   const { data: entryRows } = await supabaseClient.from('study_entries').select('*');
   allEntries = {};
   (entryRows||[]).forEach(row=>{
@@ -14892,6 +14933,7 @@ function renderAll(){
   renderWritingList();
   rebuildNotebookPersonFilter();
   renderNotebookList();
+  rebuildRecapPersonFilter();
   applyTabVisibility();
 }
 let expandedGrammar = new Set();
