@@ -162,8 +162,6 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
 .field.wide input, .field.wide textarea, .field.wide select{width:320px;}
 .field select{font-family:'Inter',sans-serif;font-size:14px;}
 .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
-.recap-time-input{font-family:inherit;font-size:inherit;font-weight:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:1px 6px;cursor:pointer;}
-.recap-time-input::-webkit-calendar-picker-indicator{filter:invert(1);opacity:0.6;cursor:pointer;}
 .person-filter-btn{font-family:'Inter',sans-serif;font-weight:500;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:fit-content;min-width:56px;max-width:220px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .person-filter-btn:hover{background:var(--paper-dim);}
 .person-filter-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:50;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper-dim);width:fit-content;min-width:150px;box-shadow:0 4px 16px rgba(0,0,0,0.25);}
@@ -10073,9 +10071,10 @@ document.getElementById('notifyWeeklyRecapInappCheck').addEventListener('change'
 // picker (wireInlineSeg, see calendar header section above), plus a
 // day-of-week multi-select for daily and Email/In-app checkboxes matching
 // the notification-channel matrix above it.
-// Derives a plain-language word from an exact HH:MM for display (the
-// clock time itself is picked via a native time input; this word is
-// read-only, generated text, not a separate setting anyone chooses).
+// Derives a plain-language word from an exact HH:MM for display -- the
+// clock time itself is picked via the same inline-segment list/free-text
+// picker as everything else in this panel (recapHourOptions below); this
+// word is read-only, generated text, not a separate setting anyone picks.
 function timeOfDayWord(hhmm){
   const [h, m] = hhmm.split(':').map(Number);
   const mins = h * 60 + (m || 0);
@@ -10085,6 +10084,18 @@ function timeOfDayWord(hhmm){
   if(mins < 13*60) return t('recapTimeNoon');
   if(mins < 17*60) return t('recapTimeAfternoon');
   return t('recapTimeEvening');
+}
+// 24 on-the-hour options for the inline segment picker -- matches the
+// once-a-minute cron's own precision floor in practice (every stored
+// value ends up exactly on the hour), same list feeding both the
+// click-to-open list and the fuzzy free-text match.
+function recapHourOptions(){
+  const opts = [];
+  for(let h=0;h<24;h++){
+    const hh = String(h).padStart(2,'0') + ':00';
+    opts.push({ value:hh, label:formatTime12h(hh) });
+  }
+  return opts;
 }
 function recapRelativeOptions(){
   return [
@@ -10130,17 +10141,15 @@ function renderRecapPrefsRows(){
   dailyLabelEl.appendChild(document.createTextNode(t('dailyRecapPrefix')));
   if(dailyOn){
     dailyLabelEl.appendChild(document.createTextNode(' (' + t('recapEveryWord') + ' ' + timeOfDayWord(dailyRecapTimeOfDay) + ' ' + t('recapAtWord') + ' '));
-    const timeInput = document.createElement('input');
-    timeInput.type = 'time';
-    timeInput.className = 'recap-time-input';
-    timeInput.value = dailyRecapTimeOfDay;
-    timeInput.addEventListener('change', async (e)=>{
-      if(!e.target.value) return;
-      dailyRecapTimeOfDay = e.target.value;
-      await updateRecapProfileField('daily_recap_time_of_day', dailyRecapTimeOfDay + ':00');
+    const hourOpts = recapHourOptions();
+    const timeSeg = document.createElement('span');
+    timeSeg.textContent = (hourOpts.find(o=>o.value===dailyRecapTimeOfDay)||hourOpts[0]).label;
+    wireInlineSeg(timeSeg, hourOpts, dailyRecapTimeOfDay, async (val)=>{
+      dailyRecapTimeOfDay = val;
+      await updateRecapProfileField('daily_recap_time_of_day', val + ':00');
       renderRecapPrefsRows();
-    });
-    dailyLabelEl.appendChild(timeInput);
+    }, renderRecapPrefsRows);
+    dailyLabelEl.appendChild(timeSeg);
     dailyLabelEl.appendChild(document.createTextNode(', '));
     const relOpts = recapRelativeOptions();
     const relSeg = document.createElement('span');
@@ -10168,17 +10177,15 @@ function renderRecapPrefsRows(){
     }, renderRecapPrefsRows);
     weeklyLabelEl.appendChild(wdSeg);
     weeklyLabelEl.appendChild(document.createTextNode(' ' + t('recapAtWord') + ' '));
-    const weeklyTimeInput = document.createElement('input');
-    weeklyTimeInput.type = 'time';
-    weeklyTimeInput.className = 'recap-time-input';
-    weeklyTimeInput.value = weeklyRecapTimeOfDay;
-    weeklyTimeInput.addEventListener('change', async (e)=>{
-      if(!e.target.value) return;
-      weeklyRecapTimeOfDay = e.target.value;
-      await updateRecapProfileField('weekly_recap_time_of_day', weeklyRecapTimeOfDay + ':00');
+    const weeklyHourOpts = recapHourOptions();
+    const weeklyTimeSeg = document.createElement('span');
+    weeklyTimeSeg.textContent = (weeklyHourOpts.find(o=>o.value===weeklyRecapTimeOfDay)||weeklyHourOpts[0]).label;
+    wireInlineSeg(weeklyTimeSeg, weeklyHourOpts, weeklyRecapTimeOfDay, async (val)=>{
+      weeklyRecapTimeOfDay = val;
+      await updateRecapProfileField('weekly_recap_time_of_day', val + ':00');
       renderRecapPrefsRows();
-    });
-    weeklyLabelEl.appendChild(weeklyTimeInput);
+    }, renderRecapPrefsRows);
+    weeklyLabelEl.appendChild(weeklyTimeSeg);
     weeklyLabelEl.appendChild(document.createTextNode(', '));
     const weekRelOpts = recapWeekRelativeOptions();
     const weekRelSeg = document.createElement('span');
