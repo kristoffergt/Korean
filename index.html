@@ -12520,6 +12520,21 @@ async function maybeAutoTriggerJobBoardSync(){
   localStorage.setItem('jobBoardLastAutoSync', today);
   triggerJobBoardSync();
 }
+// The check above only means anything if it actually RUNS again after a
+// Visualping signal lands -- a tab left open all day (the normal usage
+// pattern) would otherwise only ever call this once, at that day's initial
+// sign-in, almost always before Instagram has posted yet, and then never
+// again until the next reload. So: re-check every 5 minutes for as long as
+// the tab stays open, and immediately whenever it regains focus (covers
+// laptop sleep/tab-switch, where a background tab's timers get throttled
+// or paused outright) -- either path picks up a signal that arrived while
+// nobody was watching, still capped to firing once per day by the
+// jobBoardLastAutoSync guard inside the function itself.
+const JOB_BOARD_AUTO_SYNC_CHECK_MS = 5 * 60 * 1000;
+setInterval(maybeAutoTriggerJobBoardSync, JOB_BOARD_AUTO_SYNC_CHECK_MS);
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible') maybeAutoTriggerJobBoardSync();
+});
 async function fetchJobBoardItems(){
   jobBoardLoading = true;
   renderJobBoard();
