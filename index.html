@@ -116,8 +116,20 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
 .who .name{font-size:clamp(10px,1.8vw,13px);color:var(--ink-soft);}
 .who button.textbtn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:6px 12px;font-size:12px;font-weight:500;}
 .who button.textbtn:hover{background:var(--paper-dim);color:var(--ink);}
-.tabs{display:flex;gap:4px;margin-bottom:22px;flex-wrap:nowrap;}
+.tabs{display:flex;gap:4px;margin-bottom:22px;flex-wrap:nowrap;position:relative;}
 .tabs button{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--line);padding:8px 2px;font-size:clamp(7px,1.7vw,13px);font-weight:600;border-radius:6px;}
+/* Hovering a top-level tab that has sub-tabs fans them out beneath it --
+   see showTabFlyout()/hideTabFlyout() in index.html, which position this
+   one shared container at the hovered button's bottom-center and set each
+   item's --fx/--fy landing spot (angles from FLYOUT_ANGLES: straight down
+   for one, symmetric 45s for two/three with the third centered, and a
+   wider outer pair added for four). Resting state collapses every item to
+   the anchor point itself so they visibly "fly out" from there rather than
+   just fading in already-spread-out.  */
+.tab-flyout{position:absolute;top:0;left:0;width:0;height:0;z-index:60;}
+.tab-flyout-item{position:absolute;top:0;left:0;transform:translate(-50%,-50%) translate(0,0) scale(0.3);opacity:0;pointer-events:none;transition:transform 0.25s cubic-bezier(.34,1.56,.64,1),opacity 0.18s;font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper-dim);color:var(--ink-soft);white-space:nowrap;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+.tab-flyout.visible .tab-flyout-item{transform:translate(-50%,-50%) translate(var(--fx),var(--fy)) scale(1);opacity:1;pointer-events:auto;}
+.tab-flyout-item:hover{background:var(--paper);color:var(--ink);}
 .tabs button .tab-icon,.tabs button .tab-icon-yonsei{flex:none;}
 .tabs button span:last-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tabs button:hover{background:rgba(127,127,127,0.22);}
@@ -165,8 +177,12 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
 .person-filter-btn{font-family:'Inter',sans-serif;font-weight:500;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:fit-content;min-width:56px;max-width:220px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .person-filter-btn:hover{background:var(--paper-dim);}
 .person-filter-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:50;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper-dim);width:fit-content;min-width:150px;box-shadow:0 4px 16px rgba(0,0,0,0.25);}
-.quick-nav-btn{display:flex;align-items:center;gap:8px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:9px 14px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);cursor:pointer;}
+.quick-nav-group{display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+.quick-nav-btn{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:9px 14px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);cursor:pointer;}
 .quick-nav-btn:hover{background:var(--paper-dim);}
+.quick-nav-subs{display:flex;gap:6px;flex-wrap:wrap;padding-left:2px;}
+.quick-nav-sub-btn{font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper-dim);color:var(--ink-soft);cursor:pointer;}
+.quick-nav-sub-btn:hover{background:var(--paper);color:var(--ink);}
 button{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:10px 20px;border:none;border-radius:6px;background:var(--ink);color:var(--paper);cursor:pointer;}
 button:hover{background:var(--ink-hover);}
 .hint{font-size:12px;color:var(--ink-soft);margin-top:10px;}
@@ -683,6 +699,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <button data-tab="yonsei" id="tabBtnYonsei"><span class="tab-icon-yonsei"></span><span id="tabBtnYonseiLabel"></span></button>
     <button data-tab="reading" id="tabBtnReading"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg><span id="tabBtnReadingLabel"></span></button>
     <button data-tab="jobs" id="tabBtnJobs"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg><span id="tabBtnJobsLabel"></span></button>
+    <div class="tab-flyout" id="tabFlyout"></div>
   </div>
   <!-- STUDY TAB -->
   <div class="tab-panel hidden" id="panelStudy">
@@ -1444,7 +1461,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div id="calendarOverviewSection">
       <div class="card">
         <h2 id="lblQuickNav"></h2>
-        <div id="calendarQuickNav" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+        <div id="calendarQuickNav" style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;"></div>
       </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
@@ -10836,32 +10853,36 @@ function switchCalendarSubTab(view){
 }
 document.getElementById('calendarSubOverviewBtn').addEventListener('click', ()=> switchCalendarSubTab('overview'));
 document.getElementById('calendarSubCalendarBtn').addEventListener('click', ()=> switchCalendarSubTab('calendar'));
-// One button per actual destination -- a tab's own sub-tabs (skipping
-// whichever are hidden via Manage visible tabs) if it has any, or just the
-// tab itself if it doesn't -- so this jumps straight to where you're
-// going in one click, not just to a tab's default sub-tab. Built from
-// TAB_STRUCTURE directly so it can never drift out of sync with the real
-// tab list.
+// One group per top-level tab (skipping whichever are hidden via Manage
+// visible tabs): the tab itself as the main pill, its own sub-tabs as
+// smaller pills directly beneath it (skipping hidden ones) -- so a sub-tab
+// is a single click from here instead of landing on the tab's default sub
+// first. Built from TAB_STRUCTURE directly so it can never drift out of
+// sync with the real tab list.
 function renderCalendarQuickNav(){
   const wrap = document.getElementById('calendarQuickNav');
   if(!wrap) return;
-  const targets = [];
-  TAB_STRUCTURE.filter(top=> top.key !== 'calendar' && !isTabHidden(top.key)).forEach(top=>{
-    const visibleSubs = (top.subs||[]).filter(s=> !isTabHidden(s.key));
-    if(visibleSubs.length){
-      visibleSubs.forEach(s=> targets.push({ tab:top.key, view:s.view, switchFn:top.switchFn, labelKey:s.labelKey }));
-    } else {
-      targets.push({ tab:top.key, labelKey:top.labelKey });
-    }
-  });
-  wrap.innerHTML = targets.map((tg,i)=>
-    `<button type="button" class="quick-nav-btn" data-idx="${i}">${escapeHtml(t(tg.labelKey))}</button>`
+  const groups = TAB_STRUCTURE.filter(top=> top.key !== 'calendar' && !isTabHidden(top.key)).map(top=>
+    ({ top, subs: (top.subs||[]).filter(s=> !isTabHidden(s.key)) })
+  );
+  wrap.innerHTML = groups.map(({top,subs},gi)=>
+    `<div class="quick-nav-group">
+      <button type="button" class="quick-nav-btn" data-gi="${gi}">${escapeHtml(t(top.labelKey))}</button>
+      ${subs.length ? `<div class="quick-nav-subs">${subs.map((s,si)=>
+        `<button type="button" class="quick-nav-sub-btn" data-gi="${gi}" data-si="${si}">${escapeHtml(t(s.labelKey))}</button>`
+      ).join('')}</div>` : ''}
+    </div>`
   ).join('');
   wrap.querySelectorAll('.quick-nav-btn').forEach(btn=>{
-    const tg = targets[parseInt(btn.dataset.idx, 10)];
+    const top = groups[parseInt(btn.dataset.gi, 10)].top;
+    btn.addEventListener('click', ()=> switchTopLevelTab(top.key));
+  });
+  wrap.querySelectorAll('.quick-nav-sub-btn').forEach(btn=>{
+    const { top, subs } = groups[parseInt(btn.dataset.gi, 10)];
+    const sub = subs[parseInt(btn.dataset.si, 10)];
     btn.addEventListener('click', ()=>{
-      switchTopLevelTab(tg.tab);
-      if(tg.view) tg.switchFn()(tg.view);
+      switchTopLevelTab(top.key);
+      top.switchFn()(sub.view);
     });
   });
 }
@@ -13385,6 +13406,71 @@ const TAB_STRUCTURE = [
     { key:'jobs.jobboard', labelKey:'jobBoardTab', btnId:'jobsSubJobBoardBtn', view:'jobboard' },
   ]},
 ];
+// Hover-to-fan-out sub-tab preview on the main nav (desktop only -- touch
+// devices have no hover state, so this simply never triggers there and a
+// tap behaves exactly as before). One shared flyout container repositioned
+// per hover rather than one per button, so this never touches the actual
+// tab buttons or their order (reorderMobileTabs() re-appends #tabNav's own
+// <button> children directly and would rip them out of any wrapper).
+// Angles are degrees from straight down (0), matching what was asked for:
+// one item goes straight down, two/three fan out at +-45 (three keeps a
+// center item at 0), four keeps that +-45 inner pair and adds a wider
+// outer pair alongside them.
+const FLYOUT_ANGLES = { 1:[0], 2:[-45,45], 3:[-45,0,45], 4:[-80,-45,45,80] };
+function flyoutAnglesFor(n){
+  if(FLYOUT_ANGLES[n]) return FLYOUT_ANGLES[n];
+  if(n <= 1) return [0];
+  const span = 160;
+  return Array.from({length:n}, (_,i)=> -span/2 + (span/(n-1))*i);
+}
+let tabFlyoutHideTimer = null;
+function showTabFlyout(btn, top){
+  const subs = (top.subs||[]).filter(s=> !isTabHidden(s.key));
+  if(!subs.length) return;
+  clearTimeout(tabFlyoutHideTimer);
+  const flyout = document.getElementById('tabFlyout');
+  const nav = document.getElementById('tabNav');
+  const navRect = nav.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+  const radius = 64;
+  const angles = flyoutAnglesFor(subs.length);
+  flyout.innerHTML = subs.map((s,i)=>{
+    const rad = angles[i] * Math.PI / 180;
+    const fx = Math.round(radius * Math.sin(rad));
+    const fy = Math.round(radius * Math.cos(rad));
+    return `<button type="button" class="tab-flyout-item" style="--fx:${fx}px;--fy:${fy}px;" data-view="${s.view}">${escapeHtml(t(s.labelKey))}</button>`;
+  }).join('');
+  flyout.style.left = Math.round(btnRect.left + btnRect.width/2 - navRect.left) + 'px';
+  flyout.style.top = Math.round(btnRect.bottom - navRect.top) + 'px';
+  flyout.querySelectorAll('.tab-flyout-item').forEach((item,i)=>{
+    item.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      switchTopLevelTab(top.key);
+      top.switchFn()(subs[i].view);
+      hideTabFlyout();
+    });
+  });
+  // Two rAFs: the items were just innerHTML'd in at their resting
+  // transform, so adding .visible on the very same frame can get
+  // coalesced by the browser into one style recalc and skip the
+  // transition entirely -- forcing a frame gap guarantees it animates.
+  requestAnimationFrame(()=> requestAnimationFrame(()=> flyout.classList.add('visible')));
+}
+function hideTabFlyout(){
+  document.getElementById('tabFlyout').classList.remove('visible');
+}
+function scheduleTabFlyoutHide(){
+  tabFlyoutHideTimer = setTimeout(hideTabFlyout, 150);
+}
+TAB_STRUCTURE.forEach(top=>{
+  if(!top.subs || !top.subs.length) return;
+  const btn = document.getElementById(top.btnId);
+  if(!btn) return;
+  btn.addEventListener('mouseenter', ()=> showTabFlyout(btn, top));
+  btn.addEventListener('mouseleave', scheduleTabFlyoutHide);
+});
+document.getElementById('tabFlyout').addEventListener('mouseenter', ()=> clearTimeout(tabFlyoutHideTimer));
+document.getElementById('tabFlyout').addEventListener('mouseleave', scheduleTabFlyoutHide);
 function isTabHidden(key){ return hiddenTabs.includes(key); }
 async function saveHiddenTabs(next){
   const { error } = await supabaseClient.from('profiles').update({ hidden_tabs: next }).eq('id', currentUser.id);
