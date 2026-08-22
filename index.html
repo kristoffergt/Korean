@@ -9011,6 +9011,8 @@ async function onAuthed(user){
   subscribeNoteRealtimeInserts();
   subscribeNotifRealtime();
   subscribeLinkRealtime();
+  subscribeJobBoardRealtime();
+  subscribeSharedDataRealtime();
   renderAll();
   maybeAutoTriggerJobBoardSync();
   // Tab-nav wrap measurement only works once #appScreen is actually visible
@@ -10929,6 +10931,40 @@ async function loadAllData(){
     GRAMMAR_DATA.slice().sort((a,b)=>a.pattern.localeCompare(b.pattern,'ko')).forEach((g,i)=>{ g.number = i+1; });
   }
 }
+let sharedDataRealtimeSubscribed = false;
+let sharedDataRefreshTimer = null;
+// Coalesces a burst of changes (e.g. adding a course also inserts events)
+// into one reload instead of a full loadAllData() per row changed.
+function scheduleSharedDataRefresh(){
+  if(sharedDataRefreshTimer) clearTimeout(sharedDataRefreshTimer);
+  sharedDataRefreshTimer = setTimeout(async ()=>{
+    sharedDataRefreshTimer = null;
+    await loadAllData();
+    renderAll();
+  }, 600);
+}
+// Every table here is visible to more than just its own row owner (shared
+// circle data, same class of bug the job board had -- see
+// subscribeJobBoardRealtime): the calendar, courses, the study feed,
+// reading list, job applications, certifications, grammar notes, writing
+// samples, reminder subscriptions (an event's owner writes rows for OTHER
+// people's user_ids as recipients), and profiles themselves (name/color/
+// settings everyone else's UI reads). All funnel into the same debounced
+// full reload rather than a bespoke per-table merge, since loadAllData()
+// already does exactly that correctly for every one of them.
+const SHARED_DATA_REALTIME_TABLES = [
+  'events','courses','study_entries','job_applications','certifications',
+  'writing_samples','books','grammar_notes','event_subscriptions','profiles',
+];
+function subscribeSharedDataRealtime(){
+  if(sharedDataRealtimeSubscribed || !currentUser) return;
+  sharedDataRealtimeSubscribed = true;
+  const channel = supabaseClient.channel('shared-data-changes');
+  SHARED_DATA_REALTIME_TABLES.forEach(table=>{
+    channel.on('postgres_changes', { event: '*', schema: 'public', table }, scheduleSharedDataRefresh);
+  });
+  channel.subscribe();
+}
 async function upsertMyDay(dateVal, activities){
   await supabaseClient.from('study_entries').upsert(
     { user_id: currentUser.id, entry_date: dateVal, activities },
@@ -12455,6 +12491,21 @@ const JOB_BOARD_SYNC_TIMEOUT_MS = 90000;
 const JOB_BOARD_SYNC_POLL_MS = 5000;
 function jobBoardLatestUpdatedAt(){
   return jobBoardItems.reduce((max,it)=> (!max || (it.updated_at||'') > max) ? it.updated_at : max, null);
+}
+// Pushes fresh listings to every open tab the instant the shared job board
+// table changes, not just the one that clicked Update (which already sees
+// it via the polling loop above) -- otherwise anyone else with the site
+// open (e.g. Roxy's own tab) just keeps showing a stale list until they
+// happen to manually reload.
+let jobBoardRealtimeSubscribed = false;
+function subscribeJobBoardRealtime(){
+  if(jobBoardRealtimeSubscribed || !currentUser) return;
+  jobBoardRealtimeSubscribed = true;
+  supabaseClient.channel('jobboard-items-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'yonsei_jobboard_items' }, ()=>{
+      fetchJobBoardItemsQuiet();
+    })
+    .subscribe();
 }
 async function fetchJobBoardItemsQuiet(){
   const { data, error } = await supabaseClient.from('yonsei_jobboard_items').select('*');
