@@ -133,9 +133,16 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
    fixed CSS transition. */
 .tab-flyout{position:absolute;top:0;left:0;z-index:1;display:flex;gap:6px;transform:translateY(-100%);pointer-events:none;transition:transform 0.22s cubic-bezier(.3,.9,.4,1);}
 .tab-flyout.visible{transform:translateY(4px);pointer-events:auto;}
-.tab-flyout-item{opacity:0;transition:opacity 0.18s ease;font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;padding:6px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper-dim);color:var(--ink-soft);white-space:nowrap;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+/* Scoped to .tab-flyout .tab-flyout-item (not just .tab-flyout-item) on
+   purpose -- these buttons live inside .tabs in the DOM (so the flyout can
+   be positioned relative to it), which means the plain ".tabs button" rule
+   above also matches them as a descendant and, being more specific (class
+   + type vs just one class), was silently overriding this rule's padding/
+   flex/font-size/color -- that's what was squashing every item to the
+   same width and washing out the color. */
+.tab-flyout .tab-flyout-item{position:static;flex:none;min-width:0;opacity:0;transition:opacity 0.18s ease;font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;padding:6px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper-dim);color:var(--ink-soft);white-space:nowrap;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
 .tab-flyout.visible .tab-flyout-item{opacity:1;}
-.tab-flyout-item:hover{background:var(--paper);color:var(--ink);}
+.tab-flyout .tab-flyout-item:hover{background:var(--paper);color:var(--ink);}
 .tabs button .tab-icon,.tabs button .tab-icon-yonsei{flex:none;}
 .tabs button span:last-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tabs button:hover{background:rgba(127,127,127,0.22);}
@@ -1735,10 +1742,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="log-form">
       <div class="field wide" id="settingsNameStaticWrap">
         <label id="lblSettingsDisplayName"></label>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span id="settingsNameStaticText" style="font-size:15px;font-weight:600;"></span>
-          <button class="linkbtn" id="editDisplayNameBtn"></button>
-        </div>
+        <span id="settingsNameStaticText" class="cal-seg" style="font-size:15px;font-weight:600;"></span>
       </div>
       <div class="field wide hidden" id="settingsNameEditWrap">
         <label for="settingsDisplayName" id="lblSettingsDisplayNameEdit"></label>
@@ -1871,6 +1875,21 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
     <div class="hint hidden" id="settingsDeleteMsg"></div>
 
+    <div id="notesLinkSection" class="hidden">
+      <div class="wtc-title" style="margin-top:22px;" id="lblNotesLink"></div>
+      <p class="hint" id="notesLinkIntro"></p>
+      <div class="log-form">
+        <div class="field wide">
+          <label for="notesLinkInput" id="lblNotesLinkInput"></label>
+          <input type="url" id="notesLinkInput" placeholder="https://www.icloud.com/notes/...">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">
+        <button class="export-btn" id="notesLinkSaveBtn"></button>
+      </div>
+      <div class="hint hidden" id="notesLinkMsg"></div>
+    </div>
+
     <div id="moderatorSection" class="hidden">
       <div class="note-group-header" style="margin-top:22px;" id="resumePublicHeader"></div>
       <div id="resumePublicBody" class="hidden">
@@ -1898,21 +1917,6 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
           <button class="export-btn" id="resumeSyncSaveBtn"></button>
         </div>
         <div class="hint hidden" id="resumeSyncMsg"></div>
-      </div>
-
-      <div id="notesLinkSection" class="hidden">
-        <div class="wtc-title" style="margin-top:22px;" id="lblNotesLink"></div>
-        <p class="hint" id="notesLinkIntro"></p>
-        <div class="log-form">
-          <div class="field wide">
-            <label for="notesLinkInput" id="lblNotesLinkInput"></label>
-            <input type="url" id="notesLinkInput" placeholder="https://www.icloud.com/notes/...">
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">
-          <button class="export-btn" id="notesLinkSaveBtn"></button>
-        </div>
-        <div class="hint hidden" id="notesLinkMsg"></div>
       </div>
 
       <div class="wtc-title" style="margin-top:22px;" id="hModerator"></div>
@@ -7845,7 +7849,7 @@ const I18N = {
     passwordUpdated:'Password updated! Signing you in...', passwordUpdateError:'Could not update password.', enterEmailFirst:'Enter your email above first.',
     lblEventPrivate:'Visibility', publicOpt:'Public', privateOpt:'Private', ownedBy:'by',
     lblEventReminder:'Reminder', reminderOptNone:'No reminder', reminderOptAtTime:'At the time', reminderOpt1Hour:'1 hour before', reminderOpt1Day:'1 day before',
-    editBtn:'✏️ Edit', saveChanges:'Save changes', cancelEdit:'Cancel', editDisplayNameBtn:'Edit',
+    editBtn:'✏️ Edit', saveChanges:'Save changes', cancelEdit:'Cancel',
     kindCourse:'Course', kindBirthday:'Birthday', kindPill:'Pill cycle', lblPillVersion:'Pill version', pillVersionStandard:'Standard (21 active / 7 off)', repeatYear:'Year(s)', amLabel:'AM', pmLabel:'PM', countdownDaysShort:'d', countdownHoursShort:'h', countdownMinsShort:'m', countdownSecsShort:'s',
     hCoursesCal:'Courses', hBirthdays:'Birthdays',
     remindOthersLabel:'Also remind', signInWithNameHint:'Email or Username',
@@ -7959,7 +7963,7 @@ const I18N = {
     passwordUpdated:'비밀번호가 변경되었습니다! 로그인 중...', passwordUpdateError:'비밀번호를 변경할 수 없습니다.', enterEmailFirst:'먼저 위에 이메일을 입력하세요.',
     lblEventPrivate:'공개 범위', publicOpt:'공개', privateOpt:'비공개', ownedBy:'',
     lblEventReminder:'알림', reminderOptNone:'알림 없음', reminderOptAtTime:'정시', reminderOpt1Hour:'1시간 전', reminderOpt1Day:'1일 전',
-    editBtn:'✏️ 수정', saveChanges:'변경사항 저장', cancelEdit:'취소', editDisplayNameBtn:'수정',
+    editBtn:'✏️ 수정', saveChanges:'변경사항 저장', cancelEdit:'취소',
     kindCourse:'수업', kindBirthday:'생일', kindPill:'피임약 주기', lblPillVersion:'피임약 종류', pillVersionStandard:'표준 (복용 21일 / 휴약 7일)', repeatYear:'년', amLabel:'오전', pmLabel:'오후', countdownDaysShort:'일', countdownHoursShort:'시간', countdownMinsShort:'분', countdownSecsShort:'초',
     hCoursesCal:'수업', hBirthdays:'생일',
     remindOthersLabel:'함께 알림 받기', signInWithNameHint:'이메일 또는 이름',
@@ -8072,7 +8076,7 @@ const I18N = {
     passwordUpdated:'Đã cập nhật mật khẩu! Đang đăng nhập...', passwordUpdateError:'Không thể cập nhật mật khẩu.', enterEmailFirst:'Hãy nhập email của bạn ở trên trước.',
     lblEventPrivate:'Chế độ hiển thị', publicOpt:'Công khai', privateOpt:'Riêng tư', ownedBy:'bởi',
     lblEventReminder:'Nhắc nhở', reminderOptNone:'Không nhắc', reminderOptAtTime:'Đúng giờ', reminderOpt1Hour:'1 giờ trước', reminderOpt1Day:'1 ngày trước',
-    editBtn:'✏️ Sửa', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy', editDisplayNameBtn:'Sửa',
+    editBtn:'✏️ Sửa', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy',
     kindCourse:'Khóa học', kindBirthday:'Sinh nhật', kindPill:'Chu kỳ thuốc tránh thai', lblPillVersion:'Loại thuốc', pillVersionStandard:'Tiêu chuẩn (uống 21 ngày / nghỉ 7 ngày)', repeatYear:'Năm', amLabel:'SA', pmLabel:'CH', countdownDaysShort:'ngày', countdownHoursShort:'giờ', countdownMinsShort:'phút', countdownSecsShort:'giây',
     hCoursesCal:'Khóa học', hBirthdays:'Sinh nhật',
     remindOthersLabel:'Nhắc cả người kia', signInWithNameHint:'Email hoặc tên hiển thị',
@@ -8187,7 +8191,7 @@ const STATIC_MAP = {
   hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabel:'chooseFile', chooseFileLabelJobResume:'chooseFile', chooseFileLabelJobCoverLetter:'chooseFile', chooseFileLabelResumeUpload:'chooseFile',
   studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', studySubNotebookBtn:'studySubNotebook', hGrammar:'hGrammar', gramAddToggleBtn:'gramAddToggleBtn',
   hNotebookPick:'hNotesPick', lblNewNotebookTitle:'lblNewLecture', lblNewNotebookHeader:'lblCustomHeader', addNotebookBtn:'addLectureBtn',
-  hAccountSettings:'hAccountSettings', settingsSignedInAs:'settingsSignedInAs', settingsSitePinLabel:'settingsSitePinLabel', lblSettingsDisplayName:'lblSettingsDisplayName', lblSettingsDisplayNameEdit:'lblSettingsDisplayName', saveDisplayNameBtn:'settingsSaveNameBtn', editDisplayNameBtn:'editDisplayNameBtn', cancelDisplayNameBtn:'cancelEdit', lblHideLeaderboards:'lblHideLeaderboards', lblHideCircleToo:'lblHideCircleToo',
+  hAccountSettings:'hAccountSettings', settingsSignedInAs:'settingsSignedInAs', settingsSitePinLabel:'settingsSitePinLabel', lblSettingsDisplayName:'lblSettingsDisplayName', lblSettingsDisplayNameEdit:'lblSettingsDisplayName', saveDisplayNameBtn:'settingsSaveNameBtn', cancelDisplayNameBtn:'cancelEdit', lblHideLeaderboards:'lblHideLeaderboards', lblHideCircleToo:'lblHideCircleToo',
   lblSettingsNewEmail:'lblSettingsNewEmail', lblSettingsEmailConfirmPassword:'lblSettingsEmailConfirmPassword', saveEmailBtn:'settingsSaveEmailBtn',
   lblSettingsPasswordSection:'lblSettingsPasswordSection', sendPasswordResetBtn:'sendPasswordResetBtn',
   lblSettings2fa:'lblSettings2fa', lblSettings2faCode:'lblSettings2faCode', confirm2faBtn:'confirm2faBtn', cancel2faEnrollBtn:'cancel2faEnrollBtn',
@@ -9179,7 +9183,7 @@ function closeDisplayNameEdit(){
   document.getElementById('saveDisplayNameBtn').classList.add('hidden');
   document.getElementById('cancelDisplayNameBtn').classList.add('hidden');
 }
-document.getElementById('editDisplayNameBtn').addEventListener('click', ()=>{
+document.getElementById('settingsNameStaticText').addEventListener('click', ()=>{
   document.getElementById('settingsNameStaticWrap').classList.add('hidden');
   document.getElementById('settingsNameEditWrap').classList.remove('hidden');
   document.getElementById('saveDisplayNameBtn').classList.remove('hidden');
@@ -11742,7 +11746,7 @@ function renderReading(){
           <option value="finished" ${b.status==='finished'?'selected':''}>${bookStatusLabel('finished')}</option>
         </select>` : ''}
         ${b.total_pages ? (isMine ? `<input type="number" class="book-pages-input" data-id="${b.id}" min="0" max="${b.total_pages}" value="${b.pages_read||0}" title="Pages read"> / ${b.total_pages}p` : `${b.pages_read||0} / ${b.total_pages}p`) : ''}
-        <button class="linkbtn note-toggle" data-id="${b.id}">${t('noteBtn')} (${notes.length})</button>
+        ${notes.length === 0 && !isMine ? '' : `<button class="linkbtn note-toggle" data-id="${b.id}">${notes.length === 0 ? t('addNote') : t('noteBtn') + ' (' + notes.length + ')'}</button>`}
       </div>
       ${progressHtml}
       <div class="notes-panel ${isOpen?'':'hidden'}" data-notes-for="${b.id}">
