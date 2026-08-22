@@ -117,18 +117,18 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
 .who button.textbtn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:6px 12px;font-size:12px;font-weight:500;}
 .who button.textbtn:hover{background:var(--paper-dim);color:var(--ink);}
 .tabs{display:flex;gap:4px;margin-bottom:22px;flex-wrap:nowrap;position:relative;}
-.tabs button{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--line);padding:8px 2px;font-size:clamp(7px,1.7vw,13px);font-weight:600;border-radius:6px;}
-/* Hovering a top-level tab that has sub-tabs fans them out beneath it --
-   see showTabFlyout()/hideTabFlyout() in index.html, which position this
-   one shared container at the hovered button's bottom-center and set each
-   item's --fx/--fy landing spot (angles from FLYOUT_ANGLES: straight down
-   for one, symmetric 45s for two/three with the third centered, and a
-   wider outer pair added for four). Resting state collapses every item to
-   the anchor point itself so they visibly "fly out" from there rather than
-   just fading in already-spread-out.  */
-.tab-flyout{position:absolute;top:0;left:0;width:0;height:0;z-index:60;}
-.tab-flyout-item{position:absolute;top:0;left:0;transform:translate(-50%,-50%) translate(0,0) scale(0.3);opacity:0;pointer-events:none;transition:transform 0.25s cubic-bezier(.34,1.56,.64,1),opacity 0.18s;font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper-dim);color:var(--ink-soft);white-space:nowrap;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
-.tab-flyout.visible .tab-flyout-item{transform:translate(-50%,-50%) translate(var(--fx),var(--fy)) scale(1);opacity:1;pointer-events:auto;}
+.tabs button{position:relative;z-index:2;flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--line);padding:8px 2px;font-size:clamp(7px,1.7vw,13px);font-weight:600;border-radius:6px;}
+/* Hovering a top-level tab that has sub-tabs shows them in a plain row
+   right underneath it, sliding out from behind the button rather than
+   just fading in place -- the container itself starts translated up so it
+   sits tucked behind the (higher z-index) button, then slides down to its
+   resting spot just beneath it. See showTabFlyout()/hideTabFlyout() in
+   index.html, which position this one shared container centered under the
+   hovered button. */
+.tab-flyout{position:absolute;top:0;left:0;z-index:1;display:flex;gap:6px;transform:translate(-50%,-100%);pointer-events:none;transition:transform 0.22s cubic-bezier(.3,.9,.4,1);}
+.tab-flyout.visible{transform:translate(-50%,4px);pointer-events:auto;}
+.tab-flyout-item{opacity:0;transition:opacity 0.18s ease;font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;padding:6px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper-dim);color:var(--ink-soft);white-space:nowrap;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+.tab-flyout.visible .tab-flyout-item{opacity:1;}
 .tab-flyout-item:hover{background:var(--paper);color:var(--ink);}
 .tabs button .tab-icon,.tabs button .tab-icon-yonsei{flex:none;}
 .tabs button span:last-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1890,6 +1890,20 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         </div>
         <div class="hint hidden" id="resumeSyncMsg"></div>
       </div>
+
+      <div class="wtc-title" style="margin-top:22px;" id="lblNotesLink"></div>
+      <p class="hint" id="notesLinkIntro"></p>
+      <div class="log-form">
+        <div class="field wide">
+          <label for="notesLinkInput" id="lblNotesLinkInput"></label>
+          <input type="url" id="notesLinkInput" placeholder="https://www.icloud.com/notes/...">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">
+        <button class="export-btn" id="notesLinkSaveBtn"></button>
+        <a href="#" target="_blank" rel="noopener" id="notesLinkOpenBtn" class="hidden"></a>
+      </div>
+      <div class="hint hidden" id="notesLinkMsg"></div>
 
       <div class="wtc-title" style="margin-top:22px;" id="hModerator"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;">
@@ -7847,6 +7861,7 @@ const I18N = {
     settingsDeleteMismatch:"Email doesn't match your account.", settingsDeleteWrongPassword:'Incorrect password.', settingsDeleteAdminBlocked:"The admin account can't be deleted.", settingsDeleteFailed:'Could not delete account.',
     hModerator:'Moderator – All accounts', modResetPw:'Reset password', modEditName:'Edit name', modConfirmEmail:'Confirm email', modDisableMfa:'Disable 2FA', modDeleteUser:'Delete account',
     lblResumeUpload:'Public resume (kristoffergt.com/resume)', resumeUploadBtn:'Upload PDF', resumeViewLink:'View live page ↗', resumeUploadSuccess:'Resume uploaded.', resumeUploadFailed:'Upload failed.', resumePdfOnlyMsg:'Only PDF files are allowed.', lblResumeSync:'Sync resume from PDF', resumeSyncIntro:'Updating the resume itself (new job, updated bullets)? Copy this prompt into any AI chat along with your updated resume PDF, then paste its answer below and save. It rebuilds the whole page from that text.', resumeSyncCopyBtn:'Copy AI prompt', lblResumeSyncPaste:'Paste the AI\'s answer here', resumeSyncSaveBtn:'Save & publish', resumeSyncSuccess:'Resume updated.', resumeSyncFailed:'Could not save.', resumeSyncParseFailed:'Could not find a NAME field. Check the paste starts from the very top of the AI\'s answer.',
+    lblNotesLink:'Personal notes link', notesLinkIntro:'Paste a link to a shared Apple Note (on your iPhone: Notes app -> open a note -> Share -> Collaborate -> Copy Link) to open it in one click. Only you can see or use this link, nobody else in your circle can.', lblNotesLinkInput:'Note link', notesLinkSaveBtn:'Save', notesLinkOpenBtn:'Open my notes ↗', notesLinkSavedMsg:'Saved.',
     lblNotifBell:'Notifications', notifEmpty:'No notifications yet.', notifSearchPlaceholder:'Search notifications…', notifPrefsHeader:'Notifications', lblRecapsHeader:'Recaps', notifTypeReminder:'Calendar reminders', notifTypeYonseiBoard:'Yonsei board notices', notifTypeLinkAccepted:'Link-invite accepted', notifChannelEmail:'Email', notifChannelInApp:'In-app', writingIndicator:'{name} is writing "{title}"…', notifSystemPinTitle:'New site PIN required for sign-in', notifSystemPinBody:'Signing in or creating an account now requires a 4-digit site PIN. Find it anytime in Settings.', notifReminderTitleTpl:'Reminder: {title}', notifYonseiBoardTitleOne:'New Yonsei GSIS notice', notifYonseiBoardTitleMany:'New Yonsei GSIS notices', notifLinkAcceptedTitleTpl:'{name} accepted your invite',
     dailyRecapPrefix:'Daily recap', weeklyRecapPrefix:'Weekly recap', recapEveryWord:'every', recapTimeNight:'night', recapTimeDawn:'dawn', recapTimeMorning:'morning', recapTimeNoon:'noon', recapTimeAfternoon:'afternoon', recapTimeEvening:'evening', recapAtWord:'at', recapRelativeOnDay:'on the day', recapRelativeDayBefore:'day before', recapRelativeDayPassed:'day passed', recapWeekComing:'coming', recapWeekPassed:'passed', recapWeekBoth:'both', recapExcludeNone:'Both', recapExcludeDailyOnly:'Weekly only', recapExcludeWeeklyOnly:'Daily only', recapExcludeBoth:'Excluded', notifDailyRecapTitleTpl:'Your day: {count} thing', notifDailyRecapTitleTplMany:'Your day: {count} things', notifWeeklyRecapTitleTpl:'Your week: {count} thing', notifWeeklyRecapTitleTplMany:'Your week: {count} things',
     modSearchPlaceholder:'Search name or email…', modSortDate:'Sort by date joined', modSort2fa:'Sort by 2FA status', modSortConfirmed:'Sort by confirmation status', modSortName:'Sort by name',
@@ -8173,6 +8188,7 @@ const STATIC_MAP = {
   lblSettingsDeletePasswordConfirm:'lblSettingsDeletePasswordConfirm', deleteAccountBtn:'deleteAccountBtn', hModerator:'hModerator', closeAccountSettingsBtn:'closeNoteBtn',
   resumeUploadBtn:'resumeUploadBtn', resumeViewLink:'resumeViewLink',
   lblResumeSync:'lblResumeSync', resumeSyncIntro:'resumeSyncIntro', resumeSyncCopyBtn:'resumeSyncCopyBtn', lblResumeSyncPaste:'lblResumeSyncPaste', resumeSyncSaveBtn:'resumeSyncSaveBtn',
+  lblNotesLink:'lblNotesLink', notesLinkIntro:'notesLinkIntro', lblNotesLinkInput:'lblNotesLinkInput', notesLinkSaveBtn:'notesLinkSaveBtn',
   lblNotifBell:'lblNotifBell', lblNotifPrefs:'notifPrefsHeader',
   lblRecapChannelEmail1:'notifChannelEmail', lblRecapChannelInApp1:'notifChannelInApp', lblRecapChannelEmail2:'notifChannelEmail', lblRecapChannelInApp2:'notifChannelInApp',
   hLinkedCircle:'hLinkedCircle', linkedCircleDesc:'linkedCircleDesc', closeFriendsBtn:'closeNoteBtn',
@@ -8853,7 +8869,7 @@ function applyLanguage(lang){
   renderYonseiNotifyBtn();
   rebuildYonseiCategoryFilter();
   if(calViewMode === 'month') renderMonthGrid();
-  if(!document.getElementById('accountSettingsModal').classList.contains('hidden')){ renderManageTabsList(); renderResumePublicHeader(); renderRecapPrefsRows(); }
+  if(!document.getElementById('accountSettingsModal').classList.contains('hidden')){ renderManageTabsList(); renderResumePublicHeader(); renderRecapPrefsRows(); renderNotesLinkUi(); }
   if(currentUser){ renderAll(); }
 }
 /* ---------- AUTH ---------- */
@@ -9081,6 +9097,7 @@ async function onAuthed(user){
   document.getElementById('mfaScreen').classList.add('hidden');
   document.getElementById('appScreen').classList.remove('hidden');
   await loadAllData();
+  await loadMyNotesLink();
   await ensureProfileExists(user);
   rebuildForUserSelect();
   rebuildGramLevelFilterSelect();
@@ -9172,6 +9189,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   renderNotifPrefs();
   renderManageTabsList();
   renderResumePublicHeader();
+  renderNotesLinkUi();
   document.getElementById('settingsNewEmail').value = '';
   document.getElementById('settingsEmailConfirmPassword').value = '';
   document.getElementById('settingsDeleteEmailConfirm').value = '';
@@ -13523,6 +13541,39 @@ function renderResumePublicHeader(){
 document.getElementById('resumePublicHeader').addEventListener('click', ()=>{
   resumePublicOpen = !resumePublicOpen;
   renderResumePublicHeader();
+});
+// A one-click shortcut to a private Apple Note (shared via Notes' own
+// Share -> Collaborate, which needs no Apple ID login to open/edit) --
+// deliberately its own table (personal_note_links), not a profiles column,
+// since profiles is readable by the whole circle and this link is
+// effectively a capability to edit that note. See
+// sql migrations/personal_note_links_migration.sql.
+let myNotesLink = null;
+async function loadMyNotesLink(){
+  if(!currentUser) return;
+  const { data } = await supabaseClient.from('personal_note_links').select('link').eq('user_id', currentUser.id).maybeSingle();
+  myNotesLink = data ? data.link : null;
+}
+function renderNotesLinkUi(){
+  const input = document.getElementById('notesLinkInput');
+  const openBtn = document.getElementById('notesLinkOpenBtn');
+  if(!input || !openBtn) return;
+  input.value = myNotesLink || '';
+  openBtn.classList.toggle('hidden', !myNotesLink);
+  if(myNotesLink) openBtn.href = myNotesLink;
+  openBtn.textContent = t('notesLinkOpenBtn');
+}
+document.getElementById('notesLinkSaveBtn').addEventListener('click', async ()=>{
+  const val = document.getElementById('notesLinkInput').value.trim();
+  if(!val){
+    await supabaseClient.from('personal_note_links').delete().eq('user_id', currentUser.id);
+    myNotesLink = null;
+  } else {
+    await supabaseClient.from('personal_note_links').upsert({ user_id: currentUser.id, link: val }, { onConflict:'user_id' });
+    myNotesLink = val;
+  }
+  renderNotesLinkUi();
+  showSettingsMsg('notesLinkMsg', t('notesLinkSavedMsg'), false);
 });
 let manageTabsOpen = false;
 function renderManageTabsList(){
