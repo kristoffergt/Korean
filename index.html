@@ -165,6 +165,8 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
 .person-filter-btn{font-family:'Inter',sans-serif;font-weight:500;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:fit-content;min-width:56px;max-width:220px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .person-filter-btn:hover{background:var(--paper-dim);}
 .person-filter-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:50;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper-dim);width:fit-content;min-width:150px;box-shadow:0 4px 16px rgba(0,0,0,0.25);}
+.quick-nav-btn{display:flex;align-items:center;gap:8px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:9px 14px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);cursor:pointer;}
+.quick-nav-btn:hover{background:var(--paper-dim);}
 button{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:10px 20px;border:none;border-radius:6px;background:var(--ink);color:var(--paper);cursor:pointer;}
 button:hover{background:var(--ink-hover);}
 .hint{font-size:12px;color:var(--ink-soft);margin-top:10px;}
@@ -286,7 +288,7 @@ button:hover{background:var(--ink-hover);}
 .deadline-title{font-weight:600;}
 .deadline-notes{font-size:12px;color:var(--ink-soft);margin-top:2px;}
 .deadline-right{display:flex;align-items:center;gap:10px;}
-.deadline-days{font-family:'Space Grotesk',monospace;font-size:12px;color:var(--celadon-4);}
+.deadline-days{font-family:'Space Grotesk',monospace;font-size:14px;color:var(--celadon-4);}
 .deadline-days.soon{color:var(--seal);}
 .month-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;position:relative;}
 .month-label-group{display:flex;align-items:center;gap:2px;position:relative;}
@@ -676,7 +678,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
   </header>
   <div class="tabs" id="tabNav">
-    <button data-tab="calendar" class="active" id="tabBtnCalendar"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span id="tabBtnCalendarLabel"></span></button>
+    <button data-tab="calendar" class="active" id="tabBtnCalendar"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg><span id="tabBtnCalendarLabel"></span></button>
     <button data-tab="study" id="tabBtnStudy"><span class="tab-icon-korea"></span><span id="tabBtnStudyLabel"></span></button>
     <button data-tab="yonsei" id="tabBtnYonsei"><span class="tab-icon-yonsei"></span><span id="tabBtnYonseiLabel"></span></button>
     <button data-tab="reading" id="tabBtnReading"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg><span id="tabBtnReadingLabel"></span></button>
@@ -1435,6 +1437,27 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
   </div>
   <!-- CALENDAR TAB -->
   <div class="tab-panel" id="panelCalendar">
+    <div class="cal-view-toggle" id="calendarSubToggle">
+      <button data-view="overview" class="active" id="calendarSubOverviewBtn"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg><span id="calendarSubOverviewLabel"></span></button>
+      <button data-view="calendar" id="calendarSubCalendarBtn"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span id="calendarSubCalendarLabel"></span></button>
+    </div>
+    <div id="calendarOverviewSection">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div class="note-group-header" id="recapHeader"></div>
+          <span class="field" style="display:flex;flex-direction:row;align-items:center;">
+            <button type="button" class="person-filter-btn" id="calPersonFilterBtn"></button>
+            <div class="person-filter-panel hidden" id="calPersonFilterPanel" style="right:0;left:auto;"></div>
+          </span>
+        </div>
+        <div id="recapCard" class="hidden"></div>
+      </div>
+      <div class="card">
+        <h2 id="lblQuickNav"></h2>
+        <div id="calendarQuickNav" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+    <div id="calendarCalendarSection" class="hidden">
     <div class="card">
       <h2 id="hTopik"></h2>
       <div class="topik-row">
@@ -1449,16 +1472,6 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
           <div class="tdate" id="topikTestDate"></div>
         </div>
       </div>
-    </div>
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-        <div class="note-group-header" id="recapHeader"></div>
-        <span class="field" style="display:flex;flex-direction:row;align-items:center;">
-          <button type="button" class="person-filter-btn" id="calPersonFilterBtn"></button>
-          <div class="person-filter-panel hidden" id="calPersonFilterPanel" style="right:0;left:auto;"></div>
-        </span>
-      </div>
-      <div id="recapCard" class="hidden"></div>
     </div>
     <div class="card">
       <h2 id="hMonthView"></h2>
@@ -1614,6 +1627,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <h2 id="hBirthdays"></h2>
       <div id="birthdayListKind"></div>
       <div class="list-controls" id="birthdayListControls"></div>
+    </div>
     </div>
   </div>
 </div>
@@ -7747,7 +7761,7 @@ const I18N = {
     tagline:'Korean Study · Reading · Job Hunt Tracker',
     signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
     headerSub:'Study · Reading · Jobs', signOut:'Sign out',
-    tabStudy:'Korean', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar',
+    tabStudy:'Korean', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar', tabHome:'Home', tabOverview:'Overview', lblQuickNav:'Jump to',
     leaderboard:'Leaderboard', lbRank:'#', lbName:'Name', lbStreak:'Streak', lbWeek:'Week', lbTotal:'Total',
     logStudy:'Log a study session', date:'Date', activity:'Activity', hours:'Hours', addSession:'Add session',
     studyHint:'This logs to your own account only.',
@@ -7860,7 +7874,7 @@ const I18N = {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
     signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
     headerSub:'공부 · 독서 · 구직', signOut:'로그아웃',
-    tabStudy:'한국어', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더',
+    tabStudy:'한국어', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더', tabHome:'홈', tabOverview:'개요', lblQuickNav:'바로가기',
     leaderboard:'순위표', lbRank:'#', lbName:'이름', lbStreak:'연속', lbWeek:'이번 주', lbTotal:'총합',
     logStudy:'공부 시간 기록', date:'날짜', activity:'활동', hours:'시간', addSession:'기록 추가',
     studyHint:'본인 계정에만 기록됩니다.',
@@ -7973,7 +7987,7 @@ const I18N = {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
     signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
     headerSub:'Học tập · Đọc sách · Xin việc', signOut:'Đăng xuất',
-    tabStudy:'Tiếng Hàn', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch',
+    tabStudy:'Tiếng Hàn', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch', tabHome:'Trang chủ', tabOverview:'Tổng quan', lblQuickNav:'Đi đến',
     leaderboard:'Bảng xếp hạng', lbRank:'#', lbName:'Tên', lbStreak:'Chuỗi ngày', lbWeek:'Tuần này', lbTotal:'Tổng cộng',
     logStudy:'Ghi lại buổi học', date:'Ngày', activity:'Hoạt động', hours:'Số giờ', addSession:'Thêm buổi học',
     studyHint:'Chỉ ghi vào tài khoản của bạn.',
@@ -8087,7 +8101,8 @@ const I18N = {
 const STATIC_MAP = {
   authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password',
   headerSub:'headerSub', signOutBtn:'signOut',
-  tabBtnStudyLabel:'tabStudy', tabBtnReadingLabel:'tabReading', tabBtnJobsLabel:'tabJobs', tabBtnCalendarLabel:'tabCalendar', tabBtnYonseiLabel:'tabYonsei',
+  tabBtnStudyLabel:'tabStudy', tabBtnReadingLabel:'tabReading', tabBtnJobsLabel:'tabJobs', tabBtnCalendarLabel:'tabHome', tabBtnYonseiLabel:'tabYonsei',
+  calendarSubOverviewLabel:'tabOverview', calendarSubCalendarLabel:'tabCalendar', lblQuickNav:'lblQuickNav',
   yonseiSubCoursesBtn:'tabCourses', yonseiSubNotesBtn:'tabNotes', yonseiSubBoardsBtn:'tabBoards', hYonseiBoards:'hYonseiBoards',
   hLeaderboard:'leaderboard', lbHeadRank:'lbRank', lbHeadName:'lbName', lbHeadStreak:'lbStreak', lbHeadWeek:'lbWeek', lbHeadTotal:'lbTotal',
   hLogStudy:'logStudy', lblDate:'date', lblActivity:'activity', lblHours:'hours', addBtn:'addSession', studyHint:'studyHint',
@@ -9088,6 +9103,7 @@ function handleDeepLinkParam(){
     switchYonseiSubTab('boards');
   } else if(go === 'calendar'){
     switchTopLevelTab('calendar');
+    switchCalendarSubTab('calendar');
     const date = params.get('date');
     if(date) calViewDate = new Date(date + 'T00:00:00');
     calViewMode = params.get('view') === 'week' ? 'week' : 'day';
@@ -9454,12 +9470,14 @@ function navigateToNotifTarget(n){
     switchYonseiSubTab('boards');
   } else if(n.type === 'reminder' || n.type === 'daily_recap'){
     switchTopLevelTab('calendar');
+    switchCalendarSubTab('calendar');
     if(p.date) calViewDate = new Date(p.date + 'T00:00:00');
     calViewMode = 'day';
     setActiveCalViewBtn();
     renderCalendarTab();
   } else if(n.type === 'weekly_recap'){
     switchTopLevelTab('calendar');
+    switchCalendarSubTab('calendar');
     if(p.date) calViewDate = new Date(p.date + 'T00:00:00');
     calViewMode = 'week';
     setActiveCalViewBtn();
@@ -10804,6 +10822,40 @@ document.getElementById('tabNav').addEventListener('click', (e)=>{
   if(!btn) return;
   switchTopLevelTab(btn.dataset.tab);
 });
+// Home's own sub-tabs (Overview/Calendar) -- same pattern as
+// switchYonseiSubTab/switchJobsSubTab. Deep links and notification
+// navigation that need the actual calendar grid (not just Home generally)
+// call this explicitly alongside switchTopLevelTab('calendar'), same as
+// they already pair switchTopLevelTab('yonsei') with switchYonseiSubTab.
+function switchCalendarSubTab(view){
+  const btns = { overview: 'calendarSubOverviewBtn', calendar: 'calendarSubCalendarBtn' };
+  const sections = { overview: 'calendarOverviewSection', calendar: 'calendarCalendarSection' };
+  Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
+  Object.entries(sections).forEach(([v,id])=> document.getElementById(id).classList.toggle('hidden', v!==view));
+  if(view === 'overview') renderCalendarQuickNav();
+}
+document.getElementById('calendarSubOverviewBtn').addEventListener('click', ()=> switchCalendarSubTab('overview'));
+document.getElementById('calendarSubCalendarBtn').addEventListener('click', ()=> switchCalendarSubTab('calendar'));
+// One button per other top-level tab (skips whichever are hidden via
+// Manage visible tabs), so Overview -- otherwise just Recap -- isn't a
+// dead end. Built from TAB_STRUCTURE directly so it can never drift out of
+// sync with the real tab list.
+const QUICK_NAV_ICONS = {
+  study: '<span class="tab-icon-korea"></span>',
+  yonsei: '<span class="tab-icon-yonsei"></span>',
+  reading: '<svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>',
+  jobs: '<svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
+};
+function renderCalendarQuickNav(){
+  const wrap = document.getElementById('calendarQuickNav');
+  if(!wrap) return;
+  wrap.innerHTML = TAB_STRUCTURE.filter(top=> top.key !== 'calendar' && !isTabHidden(top.key)).map(top=>
+    `<button type="button" class="quick-nav-btn" data-tab="${top.key}">${QUICK_NAV_ICONS[top.key]||''}<span>${escapeHtml(t(top.labelKey))}</span></button>`
+  ).join('');
+  wrap.querySelectorAll('.quick-nav-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> switchTopLevelTab(btn.dataset.tab));
+  });
+}
 /* ---------- STUDY HELPERS ---------- */
 function dayTotal(userId, dateKey){
   const u = allEntries[userId];
@@ -13302,7 +13354,10 @@ function renderYonseiNotifyCategoriesPanel(){
 // is itself defined) and each sub's data-view value (matching what that
 // switch function expects).
 const TAB_STRUCTURE = [
-  { key:'calendar', labelKey:'tabCalendar', btnId:'tabBtnCalendar' },
+  { key:'calendar', labelKey:'tabHome', btnId:'tabBtnCalendar', switchFn:()=>switchCalendarSubTab, subs:[
+    { key:'calendar.overview', labelKey:'tabOverview', btnId:'calendarSubOverviewBtn', view:'overview' },
+    { key:'calendar.calendar', labelKey:'tabCalendar', btnId:'calendarSubCalendarBtn', view:'calendar' },
+  ]},
   { key:'study', labelKey:'tabStudy', btnId:'tabBtnStudy', switchFn:()=>switchStudySubTab, subs:[
     { key:'study.log', labelKey:'studySubLog', btnId:'studySubLogBtn', view:'log' },
     { key:'study.grammar', labelKey:'studySubGrammar', btnId:'studySubGrammarBtn', view:'grammar' },
@@ -13354,6 +13409,7 @@ function applyTabVisibility(){
       if(firstVisibleSub) t.switchFn()(firstVisibleSub.view);
     }
   });
+  renderCalendarQuickNav();
 }
 // Every possible key, top-level and sub, flattened -- used by Hide all/Show
 // all. A "hide everything" state is allowed (no minimum-one-visible guard):
@@ -14012,7 +14068,11 @@ function buildEventRowEl(ev){
   else { const od = Math.abs(diffDays); daysText = od + ' ' + pluralUnit(od, t('overdueSingular'), t('overdue')); soon = true; }
 
   const wrap = document.createElement('div');
-  const timeText = ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '';
+  // Courses recur weekly on their own fixed day/time (already implied by
+  // the recurrence text), so the specific next-occurrence date is just
+  // clutter here -- every other kind still shows it.
+  const dateText = ev.kind === 'course' ? '' : nextDate;
+  const timeText = ev.event_time ? formatTime12h(ev.event_time) : '';
   const recurText = recurBadgeText(ev);
   const subsForEvent = allSubsByEvent[ev.id] || {};
   const mySubForRow = subsForEvent[currentUser.id];
@@ -14070,7 +14130,7 @@ function buildEventRowEl(ev){
   wrap.innerHTML =
     `<div class="deadline-left">
       <div class="deadline-title">${ownerTag}<span class="deadline-color" style="background:${ev.color||'#4F7563'}"></span>${ev.title}</div>
-      <div class="deadline-notes">${nextDate}${timeText}${ev.notes ? ' · ' + ev.notes : ''}${recurText ? ' · ↻ ' + recurText : ''}</div>
+      <div class="deadline-notes">${[dateText, timeText, ev.notes, recurText ? '↻ ' + recurText : ''].filter(Boolean).join(' · ')}</div>
       <div style="display:flex;gap:12px;margin-top:6px;">
         <button class="linkbtn sub-toggle" data-id="${ev.id}">${bellLabel}</button>
         <button class="linkbtn edit-toggle" data-id="${ev.id}">${t('editBtn')}</button>
@@ -15182,6 +15242,7 @@ function renderCalendarTab(){
   rebuildCalPersonFilter();
   renderDeadlineList();
   renderRecap();
+  renderCalendarQuickNav();
   setActiveCalViewBtn();
   document.getElementById('monthGrid').classList.toggle('hidden', calViewMode !== 'month');
   document.getElementById('weekGridWrap').classList.toggle('hidden', calViewMode === 'month');
