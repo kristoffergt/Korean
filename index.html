@@ -1875,21 +1875,6 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
     <div class="hint hidden" id="settingsDeleteMsg"></div>
 
-    <div id="notesLinkSection" class="hidden">
-      <div class="wtc-title" style="margin-top:22px;" id="lblNotesLink"></div>
-      <p class="hint" id="notesLinkIntro"></p>
-      <div class="log-form">
-        <div class="field wide">
-          <label for="notesLinkInput" id="lblNotesLinkInput"></label>
-          <input type="url" id="notesLinkInput" placeholder="https://www.icloud.com/notes/...">
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">
-        <button class="export-btn" id="notesLinkSaveBtn"></button>
-      </div>
-      <div class="hint hidden" id="notesLinkMsg"></div>
-    </div>
-
     <div id="moderatorSection" class="hidden">
       <div class="note-group-header" style="margin-top:22px;" id="resumePublicHeader"></div>
       <div id="resumePublicBody" class="hidden">
@@ -7875,7 +7860,6 @@ const I18N = {
     settingsDeleteMismatch:"Email doesn't match your account.", settingsDeleteWrongPassword:'Incorrect password.', settingsDeleteAdminBlocked:"The admin account can't be deleted.", settingsDeleteFailed:'Could not delete account.',
     hModerator:'Moderator – All accounts', modResetPw:'Reset password', modEditName:'Edit name', modConfirmEmail:'Confirm email', modDisableMfa:'Disable 2FA', modDeleteUser:'Delete account',
     lblResumeUpload:'Public resume (kristoffergt.com/resume)', resumeUploadBtn:'Upload PDF', resumeViewLink:'View live page ↗', resumeUploadSuccess:'Resume uploaded.', resumeUploadFailed:'Upload failed.', resumePdfOnlyMsg:'Only PDF files are allowed.', lblResumeSync:'Sync resume from PDF', resumeSyncIntro:'Updating the resume itself (new job, updated bullets)? Copy this prompt into any AI chat along with your updated resume PDF, then paste its answer below and save. It rebuilds the whole page from that text.', resumeSyncCopyBtn:'Copy AI prompt', lblResumeSyncPaste:'Paste the AI\'s answer here', resumeSyncSaveBtn:'Save & publish', resumeSyncSuccess:'Resume updated.', resumeSyncFailed:'Could not save.', resumeSyncParseFailed:'Could not find a NAME field. Check the paste starts from the very top of the AI\'s answer.',
-    lblNotesLink:'Personal notes link', notesLinkIntro:'Paste a link to a shared Apple Note (only you can see this).', lblNotesLinkInput:'Note link', notesLinkSaveBtn:'Save', notesLinkSavedMsg:'Saved.',
     lblNotifBell:'Notifications', notifEmpty:'No notifications yet.', notifSearchPlaceholder:'Search notifications…', notifPrefsHeader:'Notifications', lblRecapsHeader:'Recaps', notifTypeReminder:'Calendar reminders', notifTypeYonseiBoard:'Yonsei board notices', notifTypeLinkAccepted:'Link-invite accepted', notifChannelEmail:'Email', notifChannelInApp:'In-app', writingIndicator:'{name} is writing "{title}"…', notifSystemPinTitle:'New site PIN required for sign-in', notifSystemPinBody:'Signing in or creating an account now requires a 4-digit site PIN. Find it anytime in Settings.', notifReminderTitleTpl:'Reminder: {title}', notifYonseiBoardTitleOne:'New Yonsei GSIS notice', notifYonseiBoardTitleMany:'New Yonsei GSIS notices', notifLinkAcceptedTitleTpl:'{name} accepted your invite',
     dailyRecapPrefix:'Daily recap', weeklyRecapPrefix:'Weekly recap', recapEveryWord:'every', recapTimeNight:'night', recapTimeDawn:'dawn', recapTimeMorning:'morning', recapTimeNoon:'noon', recapTimeAfternoon:'afternoon', recapTimeEvening:'evening', recapAtWord:'at', recapRelativeOnDay:'on the day', recapRelativeDayBefore:'day before', recapRelativeDayPassed:'day passed', recapWeekComing:'coming', recapWeekPassed:'passed', recapWeekBoth:'both', recapExcludeNone:'Both', recapExcludeDailyOnly:'Weekly only', recapExcludeWeeklyOnly:'Daily only', recapExcludeBoth:'Excluded', notifDailyRecapTitleTpl:'Your day: {count} thing', notifDailyRecapTitleTplMany:'Your day: {count} things', notifWeeklyRecapTitleTpl:'Your week: {count} thing', notifWeeklyRecapTitleTplMany:'Your week: {count} things',
     modSearchPlaceholder:'Search name or email…', modSortDate:'Sort by date joined', modSort2fa:'Sort by 2FA status', modSortConfirmed:'Sort by confirmation status', modSortName:'Sort by name',
@@ -8202,7 +8186,6 @@ const STATIC_MAP = {
   lblSettingsDeletePasswordConfirm:'lblSettingsDeletePasswordConfirm', deleteAccountBtn:'deleteAccountBtn', hModerator:'hModerator', closeAccountSettingsBtn:'closeNoteBtn',
   resumeUploadBtn:'resumeUploadBtn', resumeViewLink:'resumeViewLink',
   lblResumeSync:'lblResumeSync', resumeSyncIntro:'resumeSyncIntro', resumeSyncCopyBtn:'resumeSyncCopyBtn', lblResumeSyncPaste:'lblResumeSyncPaste', resumeSyncSaveBtn:'resumeSyncSaveBtn',
-  lblNotesLink:'lblNotesLink', notesLinkIntro:'notesLinkIntro', lblNotesLinkInput:'lblNotesLinkInput', notesLinkSaveBtn:'notesLinkSaveBtn',
   lblNotifBell:'lblNotifBell', lblNotifPrefs:'notifPrefsHeader',
   lblRecapChannelEmail1:'notifChannelEmail', lblRecapChannelInApp1:'notifChannelInApp', lblRecapChannelEmail2:'notifChannelEmail', lblRecapChannelInApp2:'notifChannelInApp',
   hLinkedCircle:'hLinkedCircle', linkedCircleDesc:'linkedCircleDesc', closeFriendsBtn:'closeNoteBtn',
@@ -8883,7 +8866,7 @@ function applyLanguage(lang){
   renderYonseiNotifyBtn();
   rebuildYonseiCategoryFilter();
   if(calViewMode === 'month') renderMonthGrid();
-  if(!document.getElementById('accountSettingsModal').classList.contains('hidden')){ renderManageTabsList(); renderResumePublicHeader(); renderRecapPrefsRows(); renderNotesLinkUi(); }
+  if(!document.getElementById('accountSettingsModal').classList.contains('hidden')){ renderManageTabsList(); renderResumePublicHeader(); renderRecapPrefsRows(); }
   if(currentUser){ renderAll(); }
 }
 /* ---------- AUTH ---------- */
@@ -9111,7 +9094,7 @@ async function onAuthed(user){
   document.getElementById('mfaScreen').classList.add('hidden');
   document.getElementById('appScreen').classList.remove('hidden');
   await loadAllData();
-  await loadMyNotesLink();
+  renderNotesLinkHeaderBtn();
   await ensureProfileExists(user);
   rebuildForUserSelect();
   rebuildGramLevelFilterSelect();
@@ -9203,7 +9186,6 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   renderNotifPrefs();
   renderManageTabsList();
   renderResumePublicHeader();
-  renderNotesLinkUi();
   document.getElementById('settingsNewEmail').value = '';
   document.getElementById('settingsEmailConfirmPassword').value = '';
   document.getElementById('settingsDeleteEmailConfirm').value = '';
@@ -13554,12 +13536,12 @@ document.getElementById('resumePublicHeader').addEventListener('click', ()=>{
   resumePublicOpen = !resumePublicOpen;
   renderResumePublicHeader();
 });
-// A one-click shortcut to a private Apple Note (shared via Notes' own
-// Share -> Collaborate, which needs no Apple ID login to open/edit) --
-// deliberately its own table (personal_note_links), not a profiles column,
-// since profiles is readable by the whole circle and this link is
-// effectively a capability to edit that note. See
-// sql migrations/personal_note_links_migration.sql.
+// A one-click header icon that launches a local macOS Shortcut (see
+// NOTES_LINK_SHORTCUT_DEFAULT below) which opens Roxy's to-do note directly
+// in Notes.app. Used to be backed by a pasted iCloud share link stored in
+// Supabase (personal_note_links table, still in the DB but unused now --
+// see sql migrations/personal_note_links_migration.sql), before the
+// Shortcut-based approach replaced it entirely.
 // Roxy-only for now (prototyped on Kristoffer's own account first, then
 // pulled from it once confirmed working) -- same account-name-gate idiom
 // as isJobBoardSyncAccount().
@@ -13567,39 +13549,29 @@ const NOTES_LINK_ACCOUNT_NAME = 'Roxy';
 function isNotesLinkAccount(){
   return !!currentUser && nameFor(currentUser.id) === NOTES_LINK_ACCOUNT_NAME;
 }
-let myNotesLink = null;
-async function loadMyNotesLink(){
-  if(!currentUser) return;
-  const { data } = await supabaseClient.from('personal_note_links').select('link').eq('user_id', currentUser.id).maybeSingle();
-  myNotesLink = data ? data.link : null;
-  renderNotesLinkHeaderBtn();
+// The shortcut lives on Roxy's own Mac, so its name is device-local
+// config, not something worth round-tripping through Supabase. Stored in
+// localStorage; right-click the header icon to rename it if she renames
+// the Shortcut itself in the Shortcuts app.
+const NOTES_LINK_SHORTCUT_STORAGE_KEY = 'notesLinkShortcutName';
+const NOTES_LINK_SHORTCUT_DEFAULT = 'Site TO-DO List';
+function getNotesLinkShortcutName(){
+  return localStorage.getItem(NOTES_LINK_SHORTCUT_STORAGE_KEY) || NOTES_LINK_SHORTCUT_DEFAULT;
 }
-const NOTES_LINK_SHORTCUT_NAME = 'Open My Note';
 function renderNotesLinkHeaderBtn(){
   const btn = document.getElementById('notesLinkHeaderBtn');
   if(!btn) return;
-  btn.classList.toggle('hidden', !isNotesLinkAccount() || !myNotesLink);
-  btn.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(NOTES_LINK_SHORTCUT_NAME);
+  btn.classList.toggle('hidden', !isNotesLinkAccount());
+  btn.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(getNotesLinkShortcutName());
 }
-function renderNotesLinkUi(){
-  const section = document.getElementById('notesLinkSection');
-  const input = document.getElementById('notesLinkInput');
-  if(!section || !input) return;
-  section.classList.toggle('hidden', !isNotesLinkAccount());
-  input.value = myNotesLink || '';
+document.getElementById('notesLinkHeaderBtn').addEventListener('contextmenu', (e)=>{
+  e.preventDefault();
+  const val = prompt('Shortcut name:', getNotesLinkShortcutName());
+  if(val === null) return;
+  const trimmed = val.trim();
+  if(trimmed) localStorage.setItem(NOTES_LINK_SHORTCUT_STORAGE_KEY, trimmed);
+  else localStorage.removeItem(NOTES_LINK_SHORTCUT_STORAGE_KEY);
   renderNotesLinkHeaderBtn();
-}
-document.getElementById('notesLinkSaveBtn').addEventListener('click', async ()=>{
-  const val = document.getElementById('notesLinkInput').value.trim();
-  if(!val){
-    await supabaseClient.from('personal_note_links').delete().eq('user_id', currentUser.id);
-    myNotesLink = null;
-  } else {
-    await supabaseClient.from('personal_note_links').upsert({ user_id: currentUser.id, link: val }, { onConflict:'user_id' });
-    myNotesLink = val;
-  }
-  renderNotesLinkUi();
-  showSettingsMsg('notesLinkMsg', t('notesLinkSavedMsg'), false);
 });
 let manageTabsOpen = false;
 function renderManageTabsList(){
