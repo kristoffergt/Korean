@@ -7777,7 +7777,7 @@ const I18N = {
     eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
     lblRecurInterval:'Every', lblRecurEndType:'Ends', recurNever:'Never', recurUntilDate:'Until date', lblRecurEndDate:'End date',
-    recurHint:'Set "Repeat" to create a recurring deadline or event.', recurBadge:'Every {n} {unit}', recurUntil:'until {date}', recurForever:'no end date',
+    recurHint:'Set "Repeat" to create a recurring deadline or event.', recurBadge:'Every {n} {unit}', recurUntil:'until {date}',
     remindMe:'Remind me', subscribed:'Reminders on', applyToLabel:'Apply to', applyAll:'All future occurrences', applyOnce:'Just this occurrence',
     unitHours:'hours before', unitDays:'days before', addReminder:'+ Add reminder', saveReminders:'Save', unsubscribe:'Turn off reminders',
     reminderNote:'Reminder delivery requires an email service to be connected. Ask Claude to set this up.', birthdayReminderNote:'Birthday reminders fire right at the set time (8:00 AM by default). Change the time via Edit above.',
@@ -7890,7 +7890,7 @@ const I18N = {
     eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
     lblRecurInterval:'주기', lblRecurEndType:'종료', recurNever:'계속 반복', recurUntilDate:'날짜까지', lblRecurEndDate:'종료일',
-    recurHint:'"반복"을 설정하면 정기적인 마감일/일정을 만들 수 있습니다.', recurBadge:'{n}{unit}마다', recurUntil:'{date}까지', recurForever:'종료일 없음',
+    recurHint:'"반복"을 설정하면 정기적인 마감일/일정을 만들 수 있습니다.', recurBadge:'{n}{unit}마다', recurUntil:'{date}까지',
     remindMe:'알림 받기', subscribed:'알림 켜짐', applyToLabel:'적용 대상', applyAll:'앞으로 모든 일정', applyOnce:'이번 일정만',
     unitHours:'시간 전', unitDays:'일 전', addReminder:'+ 알림 추가', saveReminders:'저장', unsubscribe:'알림 끄기',
     reminderNote:'알림 발송을 위해서는 이메일 서비스 연동이 필요합니다. Claude에게 설정을 요청하세요.', birthdayReminderNote:'생일 알림은 설정된 시각(기본 오전 8시)에 바로 전송됩니다. 시각을 바꾸려면 위의 수정을 이용하세요.',
@@ -8003,7 +8003,7 @@ const I18N = {
     eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
     lblRecurInterval:'Mỗi', lblRecurEndType:'Kết thúc', recurNever:'Không bao giờ', recurUntilDate:'Đến ngày', lblRecurEndDate:'Ngày kết thúc',
-    recurHint:'Đặt "Lặp lại" để tạo hạn chót/sự kiện định kỳ.', recurBadge:'Mỗi {n} {unit}', recurUntil:'đến {date}', recurForever:'không có ngày kết thúc',
+    recurHint:'Đặt "Lặp lại" để tạo hạn chót/sự kiện định kỳ.', recurBadge:'Mỗi {n} {unit}', recurUntil:'đến {date}',
     remindMe:'Nhắc tôi', subscribed:'Đã bật nhắc nhở', applyToLabel:'Áp dụng cho', applyAll:'Tất cả các lần tới', applyOnce:'Chỉ lần này',
     unitHours:'giờ trước', unitDays:'ngày trước', addReminder:'+ Thêm nhắc nhở', saveReminders:'Lưu', unsubscribe:'Tắt nhắc nhở',
     reminderNote:'Việc gửi nhắc nhở cần kết nối dịch vụ email. Hãy nhờ Claude thiết lập.', birthdayReminderNote:'Nhắc sinh nhật được gửi đúng vào thời gian đã đặt (mặc định 8:00 sáng). Đổi giờ qua mục Sửa ở trên.',
@@ -8171,8 +8171,22 @@ let currentLang = localStorage.getItem('trackerLang') || 'en';
 // switch, which is what left these un-translated before.
 const LOCALE_TAGS = { en: 'en-US', ko: 'ko-KR', vi: 'vi-VN' };
 function appLocale(){ return LOCALE_TAGS[currentLang] || 'en-US'; }
-function localDateStr(d){ return new Date(d).toLocaleDateString(appLocale()); }
-function localDateTimeStr(d){ return new Date(d).toLocaleString(appLocale()); }
+// Deliberately NOT toLocaleDateString(appLocale()) -- that leaves the
+// field order up to the locale tag's own convention (e.g. en-US gives
+// M/D/YYYY), which isn't what was asked for. Built by hand instead so the
+// order is exactly DD/MM/YYYY for en/vi and YYYY/MM/DD for ko, regardless
+// of what either locale would otherwise default to.
+function localDateStr(d){
+  const dt = new Date(d);
+  const day = String(dt.getDate()).padStart(2,'0');
+  const month = String(dt.getMonth()+1).padStart(2,'0');
+  const year = dt.getFullYear();
+  return currentLang === 'ko' ? `${year}/${month}/${day}` : `${day}/${month}/${year}`;
+}
+function localDateTimeStr(d){
+  const dt = new Date(d);
+  return `${localDateStr(dt)}, ${dt.toLocaleTimeString(appLocale())}`;
+}
 // Single-character weekday initials for the month grid's column header --
 // hardcoded S/M/T/W/T/F/S was always English regardless of language.
 const WEEKDAY_INITIALS = { en: ['S','M','T','W','T','F','S'], ko: ['일','월','화','수','목','금','토'], vi: ['CN','T2','T3','T4','T5','T6','T7'] };
@@ -13827,8 +13841,6 @@ function recurBadgeText(ev){
   let text = t('recurBadge').replace('{n}', n).replace('{unit}', t(unitKey).toLowerCase());
   if(ev.recur_end_type === 'date' && ev.recur_end_date){
     text += ' · ' + t('recurUntil').replace('{date}', ev.recur_end_date);
-  } else {
-    text += ' · ' + t('recurForever');
   }
   return text;
 }
@@ -14058,10 +14070,11 @@ function buildEventRowEl(ev){
   wrap.innerHTML =
     `<div class="deadline-left">
       <div class="deadline-title">${ownerTag}<span class="deadline-color" style="background:${ev.color||'#4F7563'}"></span>${ev.title}</div>
-      <div class="deadline-notes">${nextDate}${timeText}${ev.notes ? ' · ' + ev.notes : ''}</div>
-      ${recurText ? `<div class="deadline-notes">↻ ${recurText}</div>` : ''}
-      <button class="linkbtn sub-toggle" data-id="${ev.id}" style="margin-top:6px;">${bellLabel}</button>
-      <button class="linkbtn edit-toggle" data-id="${ev.id}" style="margin-top:6px;margin-left:12px;">${t('editBtn')}</button>
+      <div class="deadline-notes">${nextDate}${timeText}${ev.notes ? ' · ' + ev.notes : ''}${recurText ? ' · ↻ ' + recurText : ''}</div>
+      <div style="display:flex;gap:12px;margin-top:6px;">
+        <button class="linkbtn sub-toggle" data-id="${ev.id}">${bellLabel}</button>
+        <button class="linkbtn edit-toggle" data-id="${ev.id}">${t('editBtn')}</button>
+      </div>
       <div class="notes-panel ${isEditOpen?'':'hidden'}" data-edit-for="${ev.id}">
         <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
           <button class="icon-btn panel-close-btn" data-close-edit="${ev.id}" title="Close" style="padding:2px 8px;">✕</button>
@@ -14074,7 +14087,7 @@ function buildEventRowEl(ev){
         </div>
         <div style="margin-bottom:8px;">${recipientCheckboxes}</div>
         ${ev.recur_freq ? `
-        <div class="field">
+        <div class="field wide">
           <label>${t('applyToLabel')}</label>
           <select class="sub-applies-select" data-id="${ev.id}">
             <option value="all" ${draft.appliesTo==='all'?'selected':''}>${t('applyAll')}</option>
@@ -14629,7 +14642,11 @@ function renderMonthGrid(){
     const dateKey = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const cell = document.createElement('div');
     cell.className = 'month-day' + (dateKey===todayKey ? ' today' : '');
-    const events = myEventsByDate[dateKey] || [];
+    // Same nulls-last-by-time sort as renderMonthAgenda() below -- without
+    // it, the chip stack (and which items get bumped into "+N") followed
+    // whatever order allEvents happened to be in, not the day's actual
+    // schedule.
+    const events = (myEventsByDate[dateKey] || []).slice().sort((a,b)=> (a.event_time||'99:99').localeCompare(b.event_time||'99:99'));
     const maxShow = 3;
     let chips = '';
     if(topikByDate[dateKey]){
