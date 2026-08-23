@@ -71,8 +71,10 @@ body{background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR'
 .icon-btn:hover{background:rgba(127,127,127,0.16);}
 .auth-wrap{max-width:360px;margin:60px auto 0;}
 .auth-topbar{display:flex;justify-content:flex-end;max-width:360px;margin:0 auto;}
-.guest-banner{position:sticky;top:0;z-index:500;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:9px 16px;background:#c0392b;color:#fff;font-size:13px;font-weight:600;text-align:center;}
-.guest-banner .linkbtn{color:#fff;text-decoration:underline;font-weight:700;}
+.guest-banner{position:sticky;top:0;z-index:500;display:block;width:100%;padding:8px 16px;background:#f3e0dc;color:#b8402c;font-size:12.5px;font-weight:500;text-align:center;border:none;cursor:pointer;}
+.guest-banner:hover{background:#efd4cf;}
+body.dark .guest-banner{background:#3a2422;color:#ff8a70;}
+body.dark .guest-banner:hover{background:#452a27;}
 .auth-card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:28px 26px;margin-top:14px;}
 .auth-card h1{font-family:'Noto Serif KR',serif;font-size:24px;margin:0 0 4px;}
 .brand-mark{display:flex;align-items:center;gap:10px;}
@@ -573,34 +575,12 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
   </div>
 </div>
-<!-- GUEST MODE (client-only, nothing saved -- see guestModeBtn/renderGuestGrammarList()) -->
-<div id="guestScreen" class="hidden">
-  <div class="guest-banner" id="guestBanner">
-    <span id="guestBannerText"></span>
-    <button class="linkbtn" id="guestExitBtn"></button>
-  </div>
-  <div class="wrap">
-    <header>
-      <div>
-        <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:32px;height:32px;"></div><div class="brand-icon brand-icon-dark" style="width:32px;height:32px;"></div><h1>Productivity Tracker</h1></div>
-        <div class="sub" id="lblGuestHeaderSub"></div>
-      </div>
-      <div class="who">
-        <div class="lang-switch" id="langSwitchGuest"></div>
-        <button class="icon-btn" id="darkToggleGuest" title="Toggle dark mode">🌙</button>
-      </div>
-    </header>
-    <div class="card">
-      <h2 id="lblGuestGrammarHeader"></h2>
-      <div class="log-form">
-        <div class="field wide">
-          <input type="text" id="guestGramSearch" placeholder="">
-        </div>
-      </div>
-      <div id="guestGrammarList" style="margin-top:10px;"></div>
-    </div>
-  </div>
-</div>
+<!-- GUEST MODE BANNER (client-only, nothing saved -- see enterGuestMode()).
+     Sits above the real #appScreen -- guest mode reuses the real app UI
+     wholesale rather than a separate stripped-down page. -->
+<button type="button" class="guest-banner hidden" id="guestBanner">
+  <span id="guestBannerText"></span>
+</button>
 <!-- AUTH SCREEN -->
 <div id="authScreen" class="hidden">
   <div class="auth-topbar">
@@ -1753,7 +1733,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
     <div class="hint hidden" id="settingsNameMsg"></div>
 
-    <div style="margin-top:14px;">
+    <div style="margin-top:14px;" id="settingsLeaderboardOptOutWrap">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
         <input type="checkbox" id="settingsHideLeaderboards" style="width:16px;height:16px;">
         <span id="lblHideLeaderboards"></span>
@@ -1767,14 +1747,14 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 
     <div class="wtc-title" style="margin-top:18px;" id="lblNotifPrefs"></div>
     <div id="notifPrefsList"></div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;" id="settingsRecapsHeaderRow">
       <div class="wtc-title" style="margin-bottom:0;" id="lblRecapsHeader"></div>
       <span class="field" id="recapPersonFilterWrap" style="display:flex;flex-direction:row;align-items:center;">
         <button type="button" class="person-filter-btn" id="recapPersonFilterBtn" style="padding:5px 8px;font-size:12px;"></button>
         <div class="person-filter-panel hidden" id="recapPersonFilterPanel"></div>
       </span>
     </div>
-    <div style="padding:5px 0;font-size:13px;margin-top:4px;">
+    <div style="padding:5px 0;font-size:13px;margin-top:4px;" id="settingsWeeklyRecapRow">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <span id="weeklyRecapLabel"></span>
         <span style="display:flex;gap:14px;flex-shrink:0;">
@@ -1787,7 +1767,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         </span>
       </div>
     </div>
-    <div style="padding:5px 0;font-size:13px;">
+    <div style="padding:5px 0;font-size:13px;" id="settingsDailyRecapRow">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <span id="dailyRecapLabel"></span>
         <span style="display:flex;gap:14px;flex-shrink:0;">
@@ -1810,7 +1790,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <div id="manageTabsList" class="hidden"></div>
     </div>
 
-    <div class="log-form" style="margin-top:16px;">
+    <div class="log-form" style="margin-top:16px;" id="settingsEmailChangeWrap">
       <div class="field wide">
         <label for="settingsNewEmail" id="lblSettingsNewEmail"></label>
         <input type="email" id="settingsNewEmail" autocomplete="off">
@@ -1828,7 +1808,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="hint hidden" id="settingsPasswordMsg"></div>
 
     <div class="wtc-title" style="margin-top:18px;" id="lblSettings2fa"></div>
-    <div style="margin:2px 0 8px;">
+    <div style="margin:2px 0 8px;" id="settings2faStatusWrap">
       <span id="settings2faStatus" style="font-size:13px;font-weight:700;"></span>
     </div>
     <div id="settings2faEnrollPanel" class="hidden" style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:8px;">
@@ -1856,13 +1836,13 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         <button id="close2faBackupBtn"></button>
       </div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="settings2faButtonsWrap">
       <button class="export-btn" id="enable2faBtn"></button>
       <button class="export-btn" id="disable2faBtn"></button>
     </div>
     <div class="hint hidden" id="settings2faMsg"></div>
 
-    <div class="log-form" style="margin-top:22px;">
+    <div class="log-form" style="margin-top:22px;" id="settingsDeleteAccountWrap">
       <div class="field wide">
         <label for="settingsDeleteEmailConfirm" id="lblSettingsDeleteEmailConfirm"></label>
         <input type="text" id="settingsDeleteEmailConfirm" autocomplete="off">
@@ -7782,7 +7762,11 @@ const GRAMMAR_SEED = [
 const SUPABASE_URL = 'https://kbqwitmxpmkueryjsyip.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImticXdpdG14cG1rdWVyeWpzeWlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NzIxNjUsImV4cCI6MjEwMTE0ODE2NX0.hOuxXxjfPemuSpthbMAD7tz30oxBkI3CyyZ8fwgwZTc';
 // --------------------------
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const realSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Guest mode swaps this whole binding for a localStorage-backed mock (see
+// createGuestSupabaseClient() near enterGuestMode()) rather than touching
+// any of the ~193 existing supabaseClient.* call sites across the file.
+let supabaseClient = realSupabaseClient;
 const TOPIK_REG = new Date('2026-09-01T10:00:00+09:00');
 const TOPIK_TEST = new Date('2026-11-15T12:00:00+09:00');
 /* ---------- I18N ---------- */
@@ -7868,7 +7852,7 @@ const I18N = {
     modConfirmResetPw:"Reset this user's password?", modConfirmConfirmEmail:"Manually confirm this user's email?", modConfirmDisableMfa:'Disable two-factor authentication for this user?',
     mfaPromptTitle:'Enter your authentication code', mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.', mfaUseBackupBtn:'Use a backup code instead', mfaUseTotpBtn:'Use your authenticator app instead', mfaBackupCodePlaceholder:'Enter a backup code', mfaBackupWrongCode:'Invalid or already-used backup code.', download2faBackupBtn:'Download codes',
     lblPinGate:'Enter the site PIN to continue', pinGateSubmitBtn:'Continue', pinGateWrongMsg:'Incorrect PIN.', settingsSitePinLabel:'Site sign-up/sign-in PIN',
-    guestModeBtn:'Continue as guest', guestBannerText:"You're browsing as a guest — nothing you do here is saved.", guestExitBtn:'Sign up / sign in', lblGuestHeaderSub:'Guest mode — Korean grammar reference', lblGuestGrammarHeader:'Korean grammar reference', guestGramSearchPlaceholder:'Search grammar patterns…',
+    guestModeBtn:'Continue as guest', guestBannerText:"Guest mode. Limited functionality. Nothing you add is saved to an account.", guestDisplayName:'Guest',
     hAddCourse:'Add a course', courseTitle:'Course title', courseCode:'Course code', courseProfessor:'Professor',
     courseTime:'Time', courseConcentration:'Concentration', courseStatus:'Status', courseSyllabus:'Syllabus',
     courseDay:'Day', courseStartDate:'Start date (optional)', courseEndDate:'Ends (optional)', courseMidterm:'Midterm date (optional)', courseFinal:'Final date (optional)',
@@ -7981,7 +7965,7 @@ const I18N = {
     modConfirmResetPw:'이 사용자의 비밀번호를 재설정하시겠습니까?', modConfirmConfirmEmail:'이 사용자의 이메일을 수동으로 확인 처리하시겠습니까?', modConfirmDisableMfa:'이 사용자의 2단계 인증을 비활성화하시겠습니까?',
     mfaPromptTitle:'인증 코드를 입력하세요', mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.', mfaUseBackupBtn:'백업 코드 사용하기', mfaUseTotpBtn:'인증 앱 사용하기', mfaBackupCodePlaceholder:'백업 코드를 입력하세요', mfaBackupWrongCode:'백업 코드가 올바르지 않거나 이미 사용되었습니다.', download2faBackupBtn:'코드 다운로드',
     lblPinGate:'계속하려면 사이트 PIN을 입력하세요', pinGateSubmitBtn:'계속', pinGateWrongMsg:'PIN이 올바르지 않습니다.', settingsSitePinLabel:'사이트 가입/로그인 PIN',
-    guestModeBtn:'게스트로 둘러보기', guestBannerText:'게스트로 둘러보는 중입니다 — 아무것도 저장되지 않습니다.', guestExitBtn:'가입 / 로그인', lblGuestHeaderSub:'게스트 모드 — 한국어 문법 참고', lblGuestGrammarHeader:'한국어 문법 참고', guestGramSearchPlaceholder:'문법 표현 검색…',
+    guestModeBtn:'게스트로 둘러보기', guestBannerText:'게스트 모드입니다. 기능이 제한됩니다. 추가한 내용은 계정에 저장되지 않습니다.', guestDisplayName:'게스트',
     hAddCourse:'수업 추가', courseTitle:'수업명', courseCode:'수업 코드', courseProfessor:'교수',
     courseTime:'시간', courseConcentration:'전공/트랙', courseStatus:'상태', courseSyllabus:'강의계획서',
     courseDay:'요일', courseStartDate:'시작일 (선택)', courseEndDate:'종료일 (선택)', courseMidterm:'중간고사 날짜 (선택)', courseFinal:'기말고사 날짜 (선택)',
@@ -8094,7 +8078,7 @@ const I18N = {
     modConfirmResetPw:'Đặt lại mật khẩu của người dùng này?', modConfirmConfirmEmail:'Xác nhận thủ công email của người dùng này?', modConfirmDisableMfa:'Tắt xác thực hai yếu tố cho người dùng này?',
     mfaPromptTitle:'Nhập mã xác thực', mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.', mfaUseBackupBtn:'Dùng mã dự phòng thay thế', mfaUseTotpBtn:'Dùng ứng dụng xác thực thay thế', mfaBackupCodePlaceholder:'Nhập mã dự phòng', mfaBackupWrongCode:'Mã dự phòng không đúng hoặc đã được sử dụng.', download2faBackupBtn:'Tải mã xuống',
     lblPinGate:'Nhập mã PIN của trang web để tiếp tục', pinGateSubmitBtn:'Tiếp tục', pinGateWrongMsg:'Mã PIN không đúng.', settingsSitePinLabel:'Mã PIN đăng ký/đăng nhập trang web',
-    guestModeBtn:'Tiếp tục với tư cách khách', guestBannerText:'Bạn đang duyệt với tư cách khách — không có gì được lưu lại.', guestExitBtn:'Đăng ký / Đăng nhập', lblGuestHeaderSub:'Chế độ khách — Tài liệu ngữ pháp Hàn', lblGuestGrammarHeader:'Tài liệu ngữ pháp Hàn', guestGramSearchPlaceholder:'Tìm mẫu ngữ pháp…',
+    guestModeBtn:'Tiếp tục với tư cách khách', guestBannerText:'Chế độ khách. Chức năng bị giới hạn. Mọi thứ bạn thêm vào đây sẽ không được lưu vào tài khoản.', guestDisplayName:'Khách',
     hAddCourse:'Thêm khóa học', courseTitle:'Tên khóa học', courseCode:'Mã khóa học', courseProfessor:'Giáo sư',
     courseTime:'Giờ học', courseConcentration:'Chuyên ngành', courseStatus:'Trạng thái', courseSyllabus:'Đề cương',
     courseDay:'Thứ', courseStartDate:'Ngày bắt đầu (tùy chọn)', courseEndDate:'Ngày kết thúc (tùy chọn)', courseMidterm:'Ngày thi giữa kỳ (tùy chọn)', courseFinal:'Ngày thi cuối kỳ (tùy chọn)',
@@ -8192,7 +8176,7 @@ const STATIC_MAP = {
   writingFeedbackHeader:'writingFeedbackHeader', writingFeedbackSendBtn:'writingFeedbackSendBtn',
   lblMfaPromptTitle:'mfaPromptTitle', lblMfaPromptHint:'mfaPromptHint', mfaVerifyBtn:'mfaVerifyBtn', mfaUseBackupBtn:'mfaUseBackupBtn',
   lblPinGate:'lblPinGate', pinGateSubmitBtn:'pinGateSubmitBtn',
-  guestModeBtn:'guestModeBtn', guestBannerText:'guestBannerText', guestExitBtn:'guestExitBtn', lblGuestHeaderSub:'lblGuestHeaderSub', lblGuestGrammarHeader:'lblGuestGrammarHeader',
+  guestModeBtn:'guestModeBtn', guestBannerText:'guestBannerText',
   hNotebookList:'hNotebookList', lblNotebookPersonFilter:'lblNotesPersonFilter', saveNotebookBtn:'saveNoteBtn', closeNotebookBtn:'closeNoteBtn',
   hNewWriting:'hNewWriting', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', deleteAllWritingBtn:'deleteAllWritingBtn', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
   lblWritingCustomTaskType:'lblWritingCustomTaskType', writingTaskTypeEssayOpt:'writingTaskTypeEssay', writingTaskTypeDataOpt:'writingTaskTypeData', lblWritingCustomDescription:'lblWritingCustomDescription', lblWritingImage:'lblWritingImage', writingImageHint:'writingImageHint',
@@ -8257,6 +8241,8 @@ const ACTIVITIES = [
 ];
 const ACT_MAP = Object.fromEntries(ACTIVITIES.map(a=>[a.key,a]));
 let currentUser = null;
+let guestMode = false;
+function isGuestSession(){ return guestMode; }
 const ADMIN_EMAIL = 'kristoffergt@gmail.com';
 // Letters (any language), numbers, spaces, hyphens, apostrophes -- no
 // symbols/punctuation that could break rendering or lookups (matched
@@ -8599,12 +8585,10 @@ function applyDarkMode(isDark){
   document.getElementById('darkToggleAuth').textContent = icon;
   document.getElementById('darkToggleApp').textContent = icon;
   document.getElementById('darkTogglePin').textContent = icon;
-  document.getElementById('darkToggleGuest').textContent = icon;
 }
 document.getElementById('darkToggleAuth').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 document.getElementById('darkToggleApp').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 document.getElementById('darkTogglePin').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
-document.getElementById('darkToggleGuest').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 /* ---------- LANGUAGE APPLICATION ---------- */
 function buildLangSwitch(container){
   container.innerHTML = '';
@@ -8835,14 +8819,12 @@ function applyLanguage(lang){
   document.getElementById('notifBellSearch').placeholder = t('notifSearchPlaceholder');
   rebuildModeratorSortSelect();
   document.getElementById('writingImageUrl').placeholder = t('writingImageUrlPlaceholder');
-  document.getElementById('guestGramSearch').placeholder = t('guestGramSearchPlaceholder');
   document.getElementById('writingQ53ImageUrl').placeholder = t('writingImageUrlPlaceholder');
   document.getElementById('writingEssaySearch').placeholder = t('writingSearchPlaceholder');
   document.getElementById('writingQ53Search').placeholder = t('writingSearchPlaceholder');
   buildLangSwitch(document.getElementById('langSwitchAuth'));
   buildLangSwitch(document.getElementById('langSwitchApp'));
   buildLangSwitch(document.getElementById('langSwitchPin'));
-  buildLangSwitch(document.getElementById('langSwitchGuest'));
   reorderMobileTabs();
   rebuildActivitySelect();
   rebuildBookStatusSelect();
@@ -9067,13 +9049,21 @@ document.getElementById('mfaVerifyBtn').addEventListener('click', async ()=>{
   document.getElementById('mfaScreen').classList.add('hidden');
   onAuthed(user);
 });
-document.getElementById('signOutBtn').addEventListener('click', async ()=>{
+// Shared by the real "Sign out" button and the guest banner's exit link --
+// a guest session has no real Supabase session to sign out of, so this
+// resets guestMode/supabaseClient back to real FIRST, then calls the real
+// client's signOut() (a safe no-op with nothing to sign out of).
+async function signOutOrExitGuest(){
+  guestMode = false;
+  supabaseClient = realSupabaseClient;
   await supabaseClient.auth.signOut();
   currentUser = null;
   document.getElementById('accountSettingsModal').classList.add('hidden');
+  document.getElementById('guestBanner').classList.add('hidden');
   document.getElementById('appScreen').classList.add('hidden');
   document.getElementById('authScreen').classList.remove('hidden');
-});
+}
+document.getElementById('signOutBtn').addEventListener('click', signOutOrExitGuest);
 // Claims this user's display name in `profiles` the first time they ever
 // reach a real, confirmed session. Safe to call every sign-in — it's a
 // no-op once the row exists. If the desired name got taken by someone else
@@ -9618,49 +9608,239 @@ document.addEventListener('keydown', (e)=>{
 });
 
 /* ---------- GUEST MODE ----------
-   Fully client-side: browses the static GRAMMAR_SEED reference data (no
-   Supabase reads/writes at all, no currentUser). Deliberately narrower than
-   the full authenticated app -- reusing the real Grammar tab's rendering
-   wasn't safe to do broadly here (it's entangled with favorites/quiz-
-   history/notes, all of which need a real account), so this is a separate,
-   simple, read-only browser over the same reference content instead of a
-   half-working version of the real tab. Other tabs (study log, calendar,
-   jobs, linking, leaderboards) are meaningless without persistence and
-   aren't offered in guest mode.
-   Offered on the sign-in/sign-up screen, after the site PIN -- the PIN
-   gates reaching the auth screen at all, guest mode is one of the choices
-   once you're there, not a bypass of it. */
-function enterGuestMode(){
+   A guest gets the REAL #appScreen -- same tabs, same render functions as a
+   signed-in user -- not a separate stripped-down page. What makes it "guest"
+   is that supabaseClient gets swapped for a localStorage-backed mock for the
+   duration of the session (see createGuestSupabaseClient() below), so every
+   existing read/write call site across the file keeps working completely
+   unmodified while nothing actually reaches the real Supabase project.
+   Account-only features that need another real user or a real session
+   (linked circle, leaderboards, notifications, admin tools, resume sync,
+   2FA/email/password/delete-account) are hidden by applyGuestUiRestrictions().
+   Offered on the sign-in/sign-up screen, after the site PIN -- the PIN gates
+   reaching the auth screen at all, guest mode is one of the choices once
+   you're there, not a bypass of it. */
+const GUEST_STORE_KEY = 'guestAppData_v1';
+// Shared reference content a guest should see for real (read-only -- no
+// guest UI path ever writes these): the published grammar entries, and the
+// real Yonsei job board postings. Every other table name is isolated-local
+// automatically, with no per-table code needed -- see guestFrom() below.
+const GUEST_READTHROUGH_TABLES = new Set(['grammar_points', 'yonsei_jobboard_items']);
+let guestStore = null;
+function freshGuestStore(){
+  return { version: 1, tables: { profiles: [{ id: 'guest-local', display_name: t('guestDisplayName') }] } };
+}
+function loadGuestStore(){
+  try {
+    const raw = localStorage.getItem(GUEST_STORE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && parsed.version === 1 && parsed.tables){ guestStore = parsed; return; }
+    }
+  } catch(e){ /* corrupted blob -- fall through to a fresh store */ }
+  guestStore = freshGuestStore();
+  persistGuestStore();
+}
+function persistGuestStore(){
+  try { localStorage.setItem(GUEST_STORE_KEY, JSON.stringify(guestStore)); } catch(e){ /* quota or private-mode -- guest session just won't survive a reload */ }
+}
+// Small chainable/thenable mock of the one slice of the Supabase-JS query
+// builder this file actually uses (verified by grep: select/insert/update/
+// upsert/delete/eq/order/limit/maybeSingle -- no .single()/.neq()/.in()/
+// .or()/.contains()/.match() are used anywhere as real filters).
+function guestFrom(table){
+  const state = { table, op: null, payload: null, filters: [], orderSpecs: [], limitN: null, wantSingle: false, onConflict: null };
+  const builder = {
+    select(){ if(!state.op) state.op = 'select'; return builder; },
+    insert(rows){ state.op = 'insert'; state.payload = Array.isArray(rows) ? rows : [rows]; return builder; },
+    update(patch){ state.op = 'update'; state.payload = patch; return builder; },
+    upsert(rows, opts){ state.op = 'upsert'; state.payload = Array.isArray(rows) ? rows : [rows]; state.onConflict = opts && opts.onConflict; return builder; },
+    delete(){ state.op = 'delete'; return builder; },
+    eq(col, val){ state.filters.push([col, val]); return builder; },
+    order(col, opts){ state.orderSpecs.push([col, !(opts && opts.ascending === false)]); return builder; },
+    limit(n){ state.limitN = n; return builder; },
+    maybeSingle(){ state.wantSingle = true; return builder; },
+    then(resolve, reject){ executeGuestQuery(state).then(resolve, reject); },
+    catch(onReject){ return executeGuestQuery(state).catch(onReject); }
+  };
+  return builder;
+}
+async function executeGuestQuery(state){
+  try {
+    if(GUEST_READTHROUGH_TABLES.has(state.table)){
+      let q = realSupabaseClient.from(state.table).select('*');
+      state.filters.forEach(([col, val]) => { q = q.eq(col, val); });
+      state.orderSpecs.forEach(([col, asc]) => { q = q.order(col, { ascending: asc }); });
+      if(state.limitN != null) q = q.limit(state.limitN);
+      if(state.wantSingle) q = q.maybeSingle();
+      return await q;
+    }
+    const rows = guestStore.tables[state.table] || (guestStore.tables[state.table] = []);
+    const matches = r => state.filters.every(([col, val]) => r[col] === val);
+    const newId = () => (crypto.randomUUID ? crypto.randomUUID() : 'g-' + Math.random().toString(36).slice(2));
+    let resultRows;
+    if(state.op === 'insert'){
+      resultRows = state.payload.map(row => {
+        const full = { id: row.id || newId(), created_at: row.created_at || new Date().toISOString(), ...row };
+        rows.push(full);
+        return { ...full };
+      });
+      persistGuestStore();
+    } else if(state.op === 'update'){
+      const affected = rows.filter(matches);
+      affected.forEach(r => Object.assign(r, state.payload));
+      resultRows = affected.map(r => ({ ...r }));
+      persistGuestStore();
+    } else if(state.op === 'delete'){
+      const affected = rows.filter(matches);
+      affected.forEach(r => { const i = rows.indexOf(r); if(i > -1) rows.splice(i, 1); });
+      resultRows = affected;
+      persistGuestStore();
+    } else if(state.op === 'upsert'){
+      const conflictCols = state.onConflict ? state.onConflict.split(',').map(s => s.trim()) : ['id'];
+      resultRows = state.payload.map(row => {
+        const existing = rows.find(r => conflictCols.every(c => r[c] === row[c]));
+        if(existing){ Object.assign(existing, row); return { ...existing }; }
+        const full = { id: row.id || newId(), created_at: row.created_at || new Date().toISOString(), ...row };
+        rows.push(full);
+        return { ...full };
+      });
+      persistGuestStore();
+    } else {
+      let filtered = rows.filter(matches);
+      // Apply chained .order() calls in reverse, so the FIRST-chained call
+      // ends up as the final (most-significant) stable sort pass -- matches
+      // real SQL "ORDER BY col1, col2" semantics for chained .order() calls.
+      for(let i = state.orderSpecs.length - 1; i >= 0; i--){
+        const [col, asc] = state.orderSpecs[i];
+        filtered = filtered.slice().sort((a, b) => {
+          const av = a[col], bv = b[col];
+          if(av === bv) return 0;
+          if(av == null) return asc ? -1 : 1;
+          if(bv == null) return asc ? 1 : -1;
+          return asc ? (av < bv ? -1 : 1) : (av < bv ? 1 : -1);
+        });
+      }
+      if(state.limitN != null) filtered = filtered.slice(0, state.limitN);
+      resultRows = filtered.map(r => ({ ...r }));
+    }
+    if(state.wantSingle) return { data: resultRows[0] || null, error: null };
+    return { data: resultRows, error: null };
+  } catch(e){
+    return { data: null, error: { message: String((e && e.message) || e) } };
+  }
+}
+// RPCs used across the file are all tied to account-only features hidden
+// for guests (link/circle, notifications, MFA, admin, leaderboards, etc.)
+// except these two, which get real local emulation. Every other name is a
+// safe no-op -- every real call site already null-guards its `data`.
+async function guestRpc(name, args){
+  if(name === 'set_daily_goal'){
+    const rows = guestStore.tables.profiles || (guestStore.tables.profiles = []);
+    const row = rows.find(r => r.id === 'guest-local');
+    if(row) row.daily_goal_hours = args && args.new_goal;
+    persistGuestStore();
+    return { data: null, error: null };
+  }
+  if(name === 'display_name_available') return { data: true, error: null };
+  return { data: null, error: null };
+}
+// Uploaded files live only in memory for the tab's session (not localStorage
+// -- quota risk) and don't survive a reload, consistent with the guest
+// banner's "nothing you do here is saved" copy.
+const guestFileBlobs = new Map();
+function createGuestSupabaseClient(){
+  const channelStub = { on(){ return channelStub; }, subscribe(){ return channelStub; }, track(){ return channelStub; }, send(){ return channelStub; }, unsubscribe(){} };
+  return {
+    from: guestFrom,
+    rpc: guestRpc,
+    storage: {
+      from(bucket){
+        return {
+          async upload(path, file){ guestFileBlobs.set(bucket + '/' + path, file); return { data: { path }, error: null }; },
+          getPublicUrl(path){
+            const blob = guestFileBlobs.get(bucket + '/' + path);
+            return { data: { publicUrl: blob ? URL.createObjectURL(blob) : '' } };
+          }
+        };
+      }
+    },
+    auth: {
+      getSession: async () => ({ data: { session: null }, error: null }),
+      onAuthStateChange(){ return { data: { subscription: { unsubscribe(){} } } }; },
+      signOut: async () => ({ error: null }),
+      // The 2FA section is hidden for guests, but refreshMfaStatus() still
+      // runs unconditionally whenever the Settings modal opens (it's called
+      // before the guest-only hiding pass), so this needs a benign shape
+      // rather than being left undefined.
+      mfa: {
+        getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: 'aal1', nextLevel: 'aal1' }, error: null }),
+        listFactors: async () => ({ data: { totp: [] }, error: null }),
+        enroll: async () => ({ data: null, error: { message: 'Not available in guest mode.' } }),
+        challengeAndVerify: async () => ({ data: null, error: { message: 'Not available in guest mode.' } }),
+        unenroll: async () => ({ data: null, error: null })
+      }
+    },
+    channel(){ return channelStub; },
+    removeChannel(){}
+  };
+}
+async function enterGuestMode(){
+  guestMode = true;
+  supabaseClient = createGuestSupabaseClient();
+  loadGuestStore();
+  currentUser = { id: 'guest-local', email: null };
   document.getElementById('authScreen').classList.add('hidden');
-  document.getElementById('guestScreen').classList.remove('hidden');
-  renderGuestGrammarList();
+  document.getElementById('appScreen').classList.remove('hidden');
+  await loadAllData();
+  renderNotesLinkHeaderBtn();
+  // ensureProfileExists() skipped -- the guest profile row is already
+  // seeded by freshGuestStore(), upserting it again would be pointless.
+  rebuildForUserSelect();
+  rebuildGramLevelFilterSelect();
+  rebuildGramReviewedFilterSelect();
+  rebuildCourseForUserSelect();
+  document.getElementById('whoName').textContent = profiles['guest-local'] || t('guestDisplayName');
+  document.getElementById('whoEmail').textContent = '';
+  const myColor = colorForUser('guest-local');
+  document.getElementById('myColorPicker').value = myColor;
+  document.getElementById('whoName').style.color = myColor;
+  // updateLinkNotifyDot()/refreshNotifBell()/the 5 subscribeXRealtime() calls
+  // are all skipped -- no linked circle, no notifications, and no realtime
+  // channel makes sense against a fake backend.
+  renderAll();
+  applyGuestUiRestrictions();
+  // maybeAutoTriggerJobBoardSync() skipped -- hard-gated to one real account
+  // anyway, skip explicitly to avoid its network probe.
+  reorderMobileTabs();
+  handleDeepLinkParam();
+  document.getElementById('guestBanner').classList.remove('hidden');
 }
 document.getElementById('guestModeBtn').addEventListener('click', enterGuestMode);
-document.getElementById('guestExitBtn').addEventListener('click', ()=>{
-  document.getElementById('guestScreen').classList.add('hidden');
-  document.getElementById('authScreen').classList.remove('hidden');
-});
-function renderGuestGrammarList(){
-  const list = document.getElementById('guestGrammarList');
-  const q = document.getElementById('guestGramSearch').value.trim().toLowerCase();
-  const items = GRAMMAR_SEED.filter(g=>{
-    if(!q) return true;
-    if((g.pattern||'').toLowerCase().includes(q)) return true;
-    return (g.senses||[]).some(s=> (s.label||'').toLowerCase().includes(q) || (s.definition||'').toLowerCase().includes(q));
-  });
-  if(items.length === 0){ list.innerHTML = '<div class="empty">–</div>'; return; }
-  list.innerHTML = items.map(g=>{
-    const sensesHtml = (g.senses||[]).map(s=>`
-      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line);">
-        ${s.label ? `<div style="font-weight:700;font-size:12.5px;color:var(--celadon-4);">${escapeHtml(s.label)}</div>` : ''}
-        ${s.formation ? `<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px;">${escapeHtml(s.formation)}</div>` : ''}
-        <div style="font-size:13px;margin-top:4px;">${escapeHtml(s.definition||'')}</div>
-        ${(s.examples||[]).slice(0,2).map(ex=>`<div style="font-size:12.5px;margin-top:4px;">${escapeHtml(ex[0]||'')} <span style="color:var(--ink-soft);">— ${escapeHtml(ex[1]||'')}</span></div>`).join('')}
-      </div>`).join('');
-    return `<div class="item-row"><div class="item-title">${escapeHtml(g.pattern)}</div>${sensesHtml}</div>`;
-  }).join('');
+document.getElementById('guestBanner').addEventListener('click', signOutOrExitGuest);
+// Chrome that's outside TAB_STRUCTURE (so untouched by applyTabVisibility)
+// but still needs another real user/session to mean anything. Deliberately
+// does NOT touch TAB_STRUCTURE/isTabHidden/applyTabVisibility -- those
+// already do the right thing for a guest unmodified, since a freshly seeded
+// guest profile's hidden_tabs is [], so all 5 real tabs show automatically.
+function applyGuestUiRestrictions(){
+  if(!guestMode) return;
+  const hide = id => document.getElementById(id)?.classList.add('hidden');
+  hide('notifBellBtn'); hide('notifBellPanel');
+  hide('friendsBtn');
+  hide('settingsLeaderboardOptOutWrap'); hide('settingsHideLeaderboardsMsg');
+  hide('lblNotifPrefs'); hide('notifPrefsList');
+  hide('settingsRecapsHeaderRow'); hide('settingsWeeklyRecapRow'); hide('settingsDailyRecapRow'); hide('recapExtraOptionsWrap');
+  hide('settingsEmailChangeWrap'); hide('settingsEmailMsg');
+  hide('lblSettingsPasswordSection'); hide('sendPasswordResetBtn'); hide('settingsPasswordMsg');
+  hide('lblSettings2fa'); hide('settings2faStatusWrap'); hide('settings2faEnrollPanel'); hide('settings2faBackupPanel'); hide('settings2faButtonsWrap'); hide('settings2faMsg');
+  hide('settingsDeleteAccountWrap'); hide('settingsDeleteMsg');
+  // moderatorSection already self-hides via the existing admin-email check.
+  // Leaderboard panels living inside otherwise-visible tabs (no dedicated
+  // wrapper ids -- hide by walking up to the enclosing card from each
+  // heading).
+  ['hLeaderboard', 'hBookLB', 'hJobLB', 'hCertLB'].forEach(id => document.getElementById(id)?.closest('.card')?.classList.add('hidden'));
 }
-document.getElementById('guestGramSearch').addEventListener('input', renderGuestGrammarList);
 
 document.getElementById('friendsBtn').addEventListener('click', async ()=>{
   await refreshLinkData();
@@ -15013,7 +15193,6 @@ window.addEventListener('resize', ()=>{
     buildLangSwitch(document.getElementById('langSwitchAuth'));
     buildLangSwitch(document.getElementById('langSwitchApp'));
     buildLangSwitch(document.getElementById('langSwitchPin'));
-  buildLangSwitch(document.getElementById('langSwitchGuest'));
   }, 150);
 });
 function shortenTitleForMobile(title){
@@ -15422,6 +15601,7 @@ function renderAll(){
   renderNotebookList();
   rebuildRecapPersonFilter();
   applyTabVisibility();
+  applyGuestUiRestrictions();
 }
 let expandedGrammar = new Set();
 let gramGroupsOpen = { intermediate: false, advanced: false };
