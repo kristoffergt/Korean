@@ -14262,6 +14262,9 @@ function nextOccurrence(ev){
 }
 
 function recurBadgeText(ev){
+  // A birthday is always yearly (addEvent() forces recur_freq:'year' for
+  // this kind, never user-chosen) -- saying so on every row is just noise.
+  if(ev.kind === 'birthday') return '';
   if(!ev.recur_freq) return '';
   const n = ev.recur_interval || 1;
   const unitKey = ev.recur_freq === 'day' ? 'repeatDay' : ev.recur_freq === 'week' ? 'repeatWeek' : ev.recur_freq === 'year' ? 'repeatYear' : 'repeatMonth';
@@ -14285,15 +14288,27 @@ const listState = {
 
 function itemsOfKind(kind){
   const all = [];
-  // Same calPersonFilter picker that governs the month/week/day grid --
-  // one picker for the whole Calendar tab, so the Deadlines/Events lists
-  // beside the grid show the same people instead of always combining
-  // everyone regardless of what's selected up top.
-  personFilterShowIds('calPersonFilter').forEach(uid=>{
-    (allEvents[uid] || []).forEach(ev=>{
-      if((ev.kind || 'deadline') === kind) all.push(ev);
+  if(kind === 'birthday'){
+    // Birthdays are shared regardless of whose account added them (see
+    // ownerTag suppression in buildEventRowEl) -- unlike every other kind,
+    // they ignore calPersonFilter entirely and always show all of them,
+    // never just "your own".
+    Object.keys(allEvents).forEach(uid=>{
+      (allEvents[uid] || []).forEach(ev=>{
+        if(ev.kind === 'birthday') all.push(ev);
+      });
     });
-  });
+  } else {
+    // Same calPersonFilter picker that governs the month/week/day grid --
+    // one picker for the whole Calendar tab, so the Deadlines/Events lists
+    // beside the grid show the same people instead of always combining
+    // everyone regardless of what's selected up top.
+    personFilterShowIds('calPersonFilter').forEach(uid=>{
+      (allEvents[uid] || []).forEach(ev=>{
+        if((ev.kind || 'deadline') === kind) all.push(ev);
+      });
+    });
+  }
   // Upcoming items first (soonest first). Past items sink to the bottom,
   // ordered so the most-recently-past comes right after the upcoming ones
   // and the longer ago an item is, the further down it sits. Uses the same
@@ -14450,7 +14465,9 @@ function buildEventRowEl(ev){
   const isOpen = expandedSubscribe.has(ev.id);
   const bellLabel = mySubForRow ? '🔔 ' + t('subscribed') : '🔕 ' + t('remindMe');
   const isMine = ev.user_id === currentUser.id;
-  const ownerTag = !isMine ? `<span class="e-who" style="background:${colorForUser(ev.user_id)}26;color:${colorForUser(ev.user_id)};">${nameFor(ev.user_id)}</span>` : '';
+  // Birthdays are shared regardless of who happened to add them (see
+  // itemsOfKind()) -- naming the adder is misleading, not informative.
+  const ownerTag = (!isMine && ev.kind !== 'birthday') ? `<span class="e-who" style="background:${colorForUser(ev.user_id)}26;color:${colorForUser(ev.user_id)};">${nameFor(ev.user_id)}</span>` : '';
 
   if(!reminderDrafts[ev.id]){
     const existingRecipients = Object.keys(subsForEvent);
@@ -14498,6 +14515,12 @@ function buildEventRowEl(ev){
   const editPanelHtml = isEditOpen ? buildEventEditFieldsHtml(ev) : '';
 
   wrap.className = 'deadline-row';
+  wrap.dataset.eventId = ev.id;
+  // Distinct from expandedEdit.has(ev.id): this reflects whether the edit
+  // panel is actually built into THIS DOM node right now, so renderKindList
+  // can tell "already open, safe to reuse and keep whatever's typed" apart
+  // from "just toggled open, this stale copy still needs a real rebuild".
+  wrap.dataset.editOpen = isEditOpen ? '1' : '0';
   wrap.innerHTML =
     `<div class="deadline-left">
       <div class="deadline-title">${ownerTag}<span class="deadline-color" style="background:${ev.color||'#4F7563'}"></span>${ev.title}</div>
@@ -14627,6 +14650,16 @@ async function removeSubscription(eventId){
 function renderKindList(kind, listId, controlsId){
   const list = document.getElementById(listId);
   const controls = document.getElementById(controlsId);
+  // A row currently being edited is preserved as-is rather than rebuilt --
+  // renderKindList runs unconditionally from all sorts of background
+  // refreshes (the 30s deadline-list interval, the realtime-triggered
+  // shared-data reload), and rebuilding from ev's stored data would
+  // silently throw away whatever's been typed but not yet saved (real
+  // report: edits reset a few seconds into editing).
+  const editingRows = new Map();
+  list.querySelectorAll('.deadline-row[data-event-id]').forEach(el=>{
+    if(expandedEdit.has(el.dataset.eventId) && el.dataset.editOpen === '1') editingRows.set(el.dataset.eventId, el);
+  });
   list.innerHTML = '';
   controls.innerHTML = '';
   const items = itemsOfKind(kind);
@@ -14643,7 +14676,10 @@ function renderKindList(kind, listId, controlsId){
     const start = (state.page - 1) * PAGE_SIZE;
     toShow = items.slice(start, start + PAGE_SIZE);
   }
-  toShow.forEach(ev => list.appendChild(buildEventRowEl(ev)));
+  toShow.forEach(ev => {
+    const existing = editingRows.get(String(ev.id));
+    list.appendChild(existing || buildEventRowEl(ev));
+  });
 
   if(!state.expanded && items.length > PREVIEW_SIZE){
     const moreBtn = document.createElement('button');
