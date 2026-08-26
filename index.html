@@ -13335,25 +13335,27 @@ function renderJobBoard(){
 // Every job-board link opens the Yonsei CDC site, which needs its own
 // separate login (the postings themselves are public, but applying/viewing
 // full details isn't) -- worth a nudge, but not on every single click, so
-// it's throttled to once every so often rather than shown every time.
+// it's shown once per browser session rather than every time. sessionStorage
+// (not localStorage) is what makes that "per session": it survives a reload
+// of this tab but clears the moment the tab/browser closes, so reopening the
+// site later -- a new session -- earns the reminder again on its own,
+// without a clock to get out of sync with what "today" feels like.
 // #jobBoardList's own element is stable across renderJobBoard() calls (only
 // its innerHTML gets replaced), so a delegated listener wired once here
 // keeps working for every row without needing to be re-attached per render.
-const CDC_LOGIN_WARN_KEY = 'jobBoardCdcWarnedAt';
-const CDC_LOGIN_WARN_INTERVAL_MS = 24 * 3600000;
+const CDC_LOGIN_WARN_KEY = 'jobBoardCdcWarnedThisSession';
 const CDC_LOGIN_URL = 'https://gsis1.yonsei.ac.kr/cdc/member.asp?mid=n00_02';
 let pendingCdcLink = null;
 document.getElementById('jobBoardList').addEventListener('click', (e)=>{
   const row = e.target.closest('.jobboard-row');
   if(!row) return;
-  const lastWarned = parseInt(localStorage.getItem(CDC_LOGIN_WARN_KEY)) || 0;
-  if(Date.now() - lastWarned < CDC_LOGIN_WARN_INTERVAL_MS) return;
+  if(sessionStorage.getItem(CDC_LOGIN_WARN_KEY)) return;
   e.preventDefault();
   pendingCdcLink = row.href;
   document.getElementById('cdcLoginWarnModal').classList.remove('hidden');
 });
 document.getElementById('cdcLoginWarnContinueBtn').addEventListener('click', ()=>{
-  localStorage.setItem(CDC_LOGIN_WARN_KEY, String(Date.now()));
+  sessionStorage.setItem(CDC_LOGIN_WARN_KEY, '1');
   document.getElementById('cdcLoginWarnModal').classList.add('hidden');
   if(pendingCdcLink) window.open(pendingCdcLink, '_blank', 'noopener');
   pendingCdcLink = null;
@@ -13368,7 +13370,7 @@ document.getElementById('cdcLoginWarnLoginBtn').addEventListener('click', ()=>{
 document.getElementById('cdcLoginWarnCancelBtn').addEventListener('click', ()=>{
   // Deliberately does NOT set CDC_LOGIN_WARN_KEY -- if they cancelled to go
   // log in first, they should still get the reminder on their next click
-  // rather than it going quiet for the rest of the day.
+  // rather than it going quiet for the rest of the session.
   document.getElementById('cdcLoginWarnModal').classList.add('hidden');
   pendingCdcLink = null;
 });
