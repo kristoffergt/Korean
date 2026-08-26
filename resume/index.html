@@ -46,6 +46,8 @@
     print-color-adjust:exact; -webkit-print-color-adjust:exact;
   }
   .r-body{padding:20px 40px 36px;}
+  .r-header a{color:inherit; text-decoration:none;}
+  .r-header a:hover{text-decoration:underline;}
   .r-name{font-size:23px; font-weight:700; letter-spacing:2.5px; margin:0 0 4px;}
   .r-linkedin{font-size:12px;}
   .r-contact{text-align:right; font-size:12px; line-height:1.5;}
@@ -179,15 +181,21 @@ function renderInfoSection(section){
 }
 function renderHeader(h){
   h = h || {};
+  const linkedinText = h.linkedin ? escapeHtml(h.linkedin) : '';
+  // Stored without a scheme (the sync prompt asks for "no https://", to match
+  // how it reads on a printed page), so the href needs one added back --
+  // tel:/mailto: don't have that problem, they're not what's displayed.
+  const linkedinHref = h.linkedin ? `https://${h.linkedin.replace(/^https?:\/\//i, '')}` : '';
+  const telHref = h.phone ? `tel:${h.phone.replace(/[^\d+]/g, '')}` : '';
   return `<div class="r-header">
       <div>
         <p class="r-name">${escapeHtml(h.name)}</p>
-        <div class="r-linkedin">${escapeHtml(h.linkedin)}</div>
+        <div class="r-linkedin">${h.linkedin ? `<a href="${escapeHtml(linkedinHref)}" target="_blank" rel="noopener">${linkedinText}</a>` : ''}</div>
       </div>
       <div class="r-contact">
         <div>${escapeHtml(h.location)}</div>
-        <div>${escapeHtml(h.phone)}</div>
-        <div>${escapeHtml(h.email)}</div>
+        <div>${h.phone ? `<a href="${escapeHtml(telHref)}">${escapeHtml(h.phone)}</a>` : ''}</div>
+        <div>${h.email ? `<a href="mailto:${escapeHtml(h.email)}">${escapeHtml(h.email)}</a>` : ''}</div>
       </div>
     </div>`;
 }
