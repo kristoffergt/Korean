@@ -65,7 +65,7 @@ body{background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR'
    side by side as pills in the same row, and a mismatched pair of padding
    values here is what made the language pill visibly shorter than its
    neighbors (real report, screenshot). */
-.lang-switch{display:flex;align-items:center;gap:6px;background:var(--paper-dim);padding:7px 10px 7px 8px;border-radius:8px;border:1px solid var(--line);}
+.lang-switch{position:relative;display:flex;align-items:center;gap:6px;background:var(--paper-dim);padding:7px 10px 7px 8px;border-radius:8px;border:1px solid var(--line);}
 .lang-switch-icon{flex:none;color:var(--ink-soft);}
 .lang-switch button{background:transparent;color:var(--ink-soft);border:none;padding:5px 10px;font-size:11.5px;font-weight:600;border-radius:5px;}
 .lang-switch button:hover{background:rgba(127,127,127,0.1);}
@@ -429,7 +429,19 @@ button:hover{background:var(--ink-hover);}
    header stays on one line through the whole resize instead of only once
    you're all the way down to mobile width. */
 @media (max-width: 1024px){
-  .who .lang-switch-select{color:transparent;background:transparent;width:14px;padding:0;border:0;-webkit-appearance:none;appearance:none;}
+  /* Giving the closed select a small explicit width (the earlier attempt)
+     still reserved that width inside the flex row even with the text
+     invisible, leaving a dead empty gap next to the globe (real report).
+     Taking it out of flow entirely with position:absolute -- sized to
+     exactly cover the pill via inset:0 -- means the pill's own width comes
+     from the icon and padding alone, nothing left reserved for text that
+     was never going to show. opacity:0 (not just color:transparent) is
+     what makes it fully invisible; the pill itself stays a real clickable
+     target since the invisible select still sits right on top of it.
+     Tapping still opens the OS's own native picker with full language
+     names -- unaffected by any of this, since that's the browser's own
+     chrome. */
+  .who .lang-switch-select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
 }
 @media (max-width: 640px){
   /* Everything above the header's black divider line gets smaller on
