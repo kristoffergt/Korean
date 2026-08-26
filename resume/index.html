@@ -25,18 +25,32 @@
      ink on paper) rather than inheriting the site's Inter/celadon theme --
      it's a faithful reproduction of a real printed resume layout, not a
      themed app page, so it should look the same regardless of the site's
-     own light/dark palette above. */
+     own light/dark palette above. --r-navy is this template's own accent,
+     unrelated to the app's --celadon-4, for the same reason. */
   .resume{
+    --r-navy:#1B3654;
     background:#fff; color:#111; font-family:'Times New Roman', Georgia, 'Noto Serif', serif;
-    font-size:13.5px; line-height:1.35; padding:36px 40px; border:1px solid var(--line); border-radius:10px;
+    font-size:13.5px; line-height:1.35; border:1px solid var(--line); border-radius:10px;
+    overflow:hidden; /* clips the header bar's square corners to the card's rounded ones */
   }
-  .r-header{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;}
-  .r-name{font-size:19px; font-weight:700; letter-spacing:0.3px; margin:0 0 2px;}
+  /* Header bleeds full-bleed to the card's edges (a colored band, not an
+     inset block), so its own padding does the spacing job that used to
+     belong to .resume -- .r-body carries the rest. Splitting it this way
+     (instead of negative-margining .r-header out of .resume's padding)
+     means the mobile and print overrides below only ever set ONE real
+     padding value each, not a margin that has to be kept in sync with it. */
+  .r-header{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    background:var(--r-navy); color:#fff; padding:26px 40px 20px;
+    print-color-adjust:exact; -webkit-print-color-adjust:exact;
+  }
+  .r-body{padding:20px 40px 36px;}
+  .r-name{font-size:23px; font-weight:700; letter-spacing:2.5px; margin:0 0 4px;}
   .r-linkedin{font-size:12px;}
   .r-contact{text-align:right; font-size:12px; line-height:1.5;}
   h2.r-section{
-    font-size:12.5px; font-weight:700; letter-spacing:0.3px; text-transform:uppercase;
-    border-bottom:1px solid #111; padding-bottom:1px; margin:16px 0 6px;
+    font-size:12.5px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--r-navy);
+    border-bottom:1.5px solid var(--r-navy); padding-bottom:2px; margin:16px 0 6px;
   }
   h2.r-section:first-of-type{margin-top:8px;}
   .r-entry{margin-bottom:8px;}
@@ -75,8 +89,9 @@
   .r-info-label{font-weight:700; flex:0 0 auto; min-width:78px;}
 
   @media (max-width:640px){
-    .resume{padding:22px 18px; font-size:11px;}
-    .r-header{flex-direction:column; gap:6px;}
+    .resume{font-size:11px;}
+    .r-header{flex-direction:column; gap:6px; padding:18px 18px 16px;}
+    .r-body{padding:18px 18px 22px;}
     .r-contact{text-align:left;}
     .r-row, .r-sub, .r-row .r-left, .r-row .r-right, .r-sub > span:first-child, .r-sub .r-right{display:block;}
     .r-row .r-right, .r-sub .r-right{text-align:left; white-space:normal; padding-left:0;}
@@ -96,7 +111,7 @@
     body{background:#fff;}
     .page-header, .hint{display:none;}
     .wrap{max-width:none; padding:0;}
-    .resume{border:none; border-radius:0; padding:0;}
+    .resume{border:none; border-radius:0;}
   }
 </style>
 </head>
@@ -176,12 +191,12 @@ function renderHeader(h){
     </div>`;
 }
 function renderResume(data){
-  let html = renderHeader(data.header);
+  let body = '';
   (data.sections || []).forEach(sec=>{
-    html += `<h2 class="r-section">${escapeHtml(sec.title)}</h2>`;
-    html += sec.info ? renderInfoSection(sec) : (sec.entries || []).map(renderEntry).join('');
+    body += `<h2 class="r-section">${escapeHtml(sec.title)}</h2>`;
+    body += sec.info ? renderInfoSection(sec) : (sec.entries || []).map(renderEntry).join('');
   });
-  document.getElementById('resumeRoot').innerHTML = html;
+  document.getElementById('resumeRoot').innerHTML = renderHeader(data.header) + `<div class="r-body">${body}</div>`;
 }
 fetch(`${SUPABASE_URL}/rest/v1/resume_content?id=eq.main&select=content`, {
   headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
