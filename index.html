@@ -185,6 +185,12 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
 .day-toggle-btn:hover{background:rgba(127,127,127,0.16);}
 .day-toggle-btn.active{background:var(--celadon-4);color:#fff;border-color:var(--celadon-4);}
 .day-toggle-btn.excluded{background:var(--seal);color:#fff;border-color:var(--seal);text-decoration:line-through;}
+/* .active/.excluded already paint a solid background, so the plain :hover
+   rule's translucent grey overlay above disappears against it -- same
+   specificity, but this one has an extra class so it always wins regardless
+   of source order. filter:brightness matches the existing chip-bell/chip-edit
+   hover convention rather than inventing a new hover treatment. */
+.day-toggle-btn.active:hover, .day-toggle-btn.excluded:hover{filter:brightness(1.15);}
 .show-more-btn{width:100%;background:none;border:1px dashed var(--line);color:var(--ink-soft);padding:10px;font-size:12.5px;font-weight:600;border-radius:6px;margin-top:10px;}
 .show-more-btn:hover{background:var(--paper);color:var(--ink);}
 .lb-row{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
@@ -348,6 +354,17 @@ button:hover{background:var(--ink-hover);}
 .month-label-group{display:flex;align-items:center;gap:2px;position:relative;}
 .cal-seg{cursor:pointer;position:relative;display:inline-block;}
 .cal-seg:hover{font-size:1.1em;}
+/* The Event/Deadline/Birthday/Course recap-inclusion pills are also
+   .cal-seg (they open the same inline picker), but growing a whole ROW of
+   small pills on hover reads as jittery rather than as the single clickable
+   word .cal-seg's grow is meant to read as elsewhere (e.g. the display-name
+   field below). Same specificity as .cal-seg:hover above; wins on source order. */
+.recap-kind-seg:hover{font-size:10.5px;}
+/* Was an inline style="font-size:15px" -- inline styles beat :hover's
+   selector-based font-size:1.1em outright regardless of source order, so
+   the display name never actually grew on hover, unlike every other
+   .cal-seg. A class puts it back in the same cascade as the rest. */
+.settings-name-text{font-size:15px;font-weight:600;}
 .cal-seg-picker{position:absolute;top:100%;left:0;z-index:80;background:var(--paper);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.25);max-height:220px;overflow-y:auto;min-width:90px;}
 .cal-seg-picker button{display:block;width:100%;text-align:left;padding:6px 12px;background:none;border:none;color:var(--ink);font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap;}
 .cal-seg-picker button:hover{background:var(--paper-dim);}
@@ -1825,7 +1842,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="log-form">
       <div class="field wide" id="settingsNameStaticWrap">
         <label id="lblSettingsDisplayName"></label>
-        <span id="settingsNameStaticText" class="cal-seg" style="font-size:15px;font-weight:600;"></span>
+        <span id="settingsNameStaticText" class="cal-seg settings-name-text"></span>
       </div>
       <div class="field wide hidden" id="settingsNameEditWrap">
         <label for="settingsDisplayName" id="lblSettingsDisplayNameEdit"></label>
@@ -10697,7 +10714,7 @@ function renderRecapPrefsRows(){
       // its own <button> options as children, and nesting a <button> inside
       // a <button> is invalid HTML (browsers handle it inconsistently).
       const seg = document.createElement('span');
-      seg.className = 'day-toggle-btn' + (current !== 'both' ? ' active' : '');
+      seg.className = 'day-toggle-btn recap-kind-seg' + (current !== 'both' ? ' active' : '');
       seg.textContent = t(labelKey);
       wireInlineSeg(seg, exclOptions, current, async (val)=>{
         let nd = dailyRecapExcludedKinds.filter(k=>k!==kind);
