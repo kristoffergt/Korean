@@ -115,7 +115,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 
 .who .lang-switch-select{font-size:clamp(9px,1.6vw,12.5px);}
 .who .lang-switch-icon{width:clamp(10px,1.6vw,14px);height:clamp(10px,1.6vw,14px);}
 .who .icon-btn{padding:clamp(4px,1vw,7px) clamp(5px,1.3vw,10px);font-size:clamp(11px,1.8vw,14px);}
-.who .name{font-size:clamp(10px,1.8vw,13px);color:var(--ink-soft);}
+.who .name{font-size:clamp(10px,1.8vw,13px);color:var(--ink-soft);background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:clamp(4px,1vw,7px) clamp(5px,1.3vw,10px);}
 .who button.textbtn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:6px 12px;font-size:12px;font-weight:500;}
 .who button.textbtn:hover{background:var(--paper-dim);color:var(--ink);}
 .tabs{display:flex;gap:4px;margin-bottom:22px;flex-wrap:nowrap;position:relative;z-index:60;}
@@ -403,13 +403,24 @@ button:hover{background:var(--ink-hover);}
   /* Everything above the header's black divider line gets smaller on
      mobile so the title, tagline, language control, and account controls
      all fit comfortably without crowding or wrapping awkwardly. */
-  header h1{margin:0 0 2px;}
+  header h1{margin:0 0 2px;font-size:15px;}
   header .sub{font-size:10.5px;}
   header{padding-bottom:10px;margin-bottom:14px;gap:8px;}
   .who{gap:6px;justify-content:flex-end;}
   .who .icon-btn{font-size:12px;padding:5px 7px;}
-  #whoName{font-size:12.5px;}
+  /* font-size:0 + ::first-letter is the one CSS-only way to show just the
+     first character while leaving the real full name in the DOM (title
+     tooltip, click-to-change-color target) untouched -- no JS call site
+     (onAuthed/enterGuestMode/the display-name save handler) needs to know
+     or care that mobile only wants the initial. */
+  #whoName{font-size:0;display:inline-block;}
+  #whoName::first-letter{font-size:12.5px;}
   .lang-switch{gap:4px;padding:4px 7px 4px 6px;}
+  /* Just the globe on phone -- color:transparent hides the closed select's
+     own text/arrow while leaving it a real, tappable control; the native
+     OS picker that opens on tap still renders the language names normally
+     since that's the browser's own chrome, unaffected by this. */
+  .who .lang-switch-select{color:transparent;background:transparent;width:14px;padding:0;border:0;-webkit-appearance:none;appearance:none;}
   .lang-switch-select{font-size:11px;}
   .lang-switch-icon{width:12px;height:12px;}
   /* Fixed-px number columns (22px 1fr 60px 70px 70px) don't leave the
@@ -13723,6 +13734,12 @@ const TAB_STRUCTURE = [
 // children directly and would rip them out of any wrapper).
 let tabFlyoutHideTimer = null;
 function showTabFlyout(btn, top){
+  // There's no hover on a phone -- the closest a touch screen gets is a
+  // "ghost hover" some browsers fire on first tap, which just leaves the
+  // fly-out stuck open with nothing to dismiss it. Tapping a tab still
+  // switches to it directly; its sub-tabs are reachable normally once
+  // you're on that tab.
+  if(isMobileDevice()) return;
   const subs = (top.subs||[]).filter(s=> !isTabHidden(s.key));
   if(!subs.length) return;
   clearTimeout(tabFlyoutHideTimer);
