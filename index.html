@@ -107,8 +107,26 @@ body.dark .brand-mark h1{color:#ffffff;}
 .auth-msg .auth-msg-inner{font-size:13px;margin-top:12px;padding:10px 14px;border-radius:8px;font-weight:600;line-height:1.4;}
 .auth-msg-inner.error{background:#F3D9D7;color:var(--seal-dark);border:1px solid var(--seal);border-left:4px solid var(--seal);}
 .auth-msg-inner.info{background:var(--celadon-1);color:var(--celadon-4);border:1px solid var(--celadon-3);border-left:4px solid var(--celadon-3);}
-header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:18px;gap:16px;flex-wrap:nowrap;}
-h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(20px,4vw + 8px,28px);margin:0 0 4px;letter-spacing:0.5px;white-space:nowrap;}
+/* The title has the whole top row to itself now -- .who used to share that
+   row with it (side by side, space-between), which is exactly what forced
+   the icons to wrap onto their own second line once the title's width plus
+   the icons' width stopped fitting (real report + screenshot: a merely-
+   narrowed desktop window, "English" and the name pill spilling over).
+   Moving .who down onto the tagline's own row instead gives it the whole
+   row's width to work with, since "Study · Reading · Jobs" is short. */
+header{display:flex;flex-direction:column;border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:18px;gap:6px;}
+.header-row2{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+/* The old clamp(20px, 4vw + 8px, 28px) was only actually fluid between
+   300-500px of viewport width -- it hit its own 28px ceiling by 500px and
+   sat flat all the way up, so a mobile-only override further down this
+   file (header h1 inside the 640px media query) had to force a smaller
+   fixed size for phones, which meant the title jumped abruptly at exactly
+   640px instead of resizing gradually (real report). This clamp is fluid
+   across the whole 375-1024px range instead (15px at a phone's 375px,
+   28px by the point .who's own compact-header breakpoint kicks in at
+   1024px, unchanged 28px ceiling above that) so there's no breakpoint
+   boundary left for it to jump at. */
+h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 7.5px,28px);margin:0 0 4px;letter-spacing:0.5px;white-space:nowrap;}
 .sub{font-size:13px;color:var(--ink-soft);letter-spacing:0.3px;margin-top:6px;}
 .who{display:flex;align-items:center;gap:clamp(4px,1.4vw,12px);flex-wrap:wrap;justify-content:flex-end;}
 .who .lang-switch{gap:clamp(3px,0.8vw,6px);padding:clamp(3px,0.7vw,5px) clamp(5px,1.2vw,10px) clamp(3px,0.7vw,5px) clamp(4px,1vw,8px);}
@@ -399,11 +417,21 @@ button:hover{background:var(--ink-hover);}
   .writing-mock-head-row{flex-direction:column;}
   .writing-mock-grid{flex-direction:column;}
 }
+/* A plain narrowed desktop window hits this well before the phone
+   breakpoint below -- "English" sitting fully spelled out in the language
+   pill was wide enough on its own to push the name pill onto a second row
+   (real report, screenshot of a resized desktop window, not a phone). Same
+   globe-only treatment as the phone rule, just triggered earlier so the
+   header stays on one line through the whole resize instead of only once
+   you're all the way down to mobile width. */
+@media (max-width: 1024px){
+  .who .lang-switch-select{color:transparent;background:transparent;width:14px;padding:0;border:0;-webkit-appearance:none;appearance:none;}
+}
 @media (max-width: 640px){
   /* Everything above the header's black divider line gets smaller on
      mobile so the title, tagline, language control, and account controls
      all fit comfortably without crowding or wrapping awkwardly. */
-  header h1{margin:0 0 2px;font-size:15px;}
+  header h1{margin:0 0 2px;}
   header .sub{font-size:10.5px;}
   header{padding-bottom:10px;margin-bottom:14px;gap:8px;}
   .who{gap:6px;justify-content:flex-end;}
@@ -416,11 +444,9 @@ button:hover{background:var(--ink-hover);}
   #whoName{font-size:0;display:inline-block;}
   #whoName::first-letter{font-size:12.5px;}
   .lang-switch{gap:4px;padding:4px 7px 4px 6px;}
-  /* Just the globe on phone -- color:transparent hides the closed select's
-     own text/arrow while leaving it a real, tappable control; the native
-     OS picker that opens on tap still renders the language names normally
-     since that's the browser's own chrome, unaffected by this. */
-  .who .lang-switch-select{color:transparent;background:transparent;width:14px;padding:0;border:0;-webkit-appearance:none;appearance:none;}
+  /* Globe-only .who .lang-switch-select rule lives up in the 1024px block
+     above (it already covers this narrower range too, no need to repeat it
+     here). */
   .lang-switch-select{font-size:11px;}
   .lang-switch-icon{width:12px;height:12px;}
   /* Fixed-px number columns (22px 1fr 60px 70px 70px) don't leave the
@@ -663,10 +689,9 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 <!-- APP -->
 <div class="wrap hidden" id="appScreen">
   <header>
-    <div>
-      <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:32px;height:32px;"></div><div class="brand-icon brand-icon-dark" style="width:32px;height:32px;"></div><h1 id="appTitleHome" style="cursor:pointer;">Productivity Tracker</h1></div>
-      <div class="sub" id="headerSub"></div>
-    </div>
+    <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:32px;height:32px;"></div><div class="brand-icon brand-icon-dark" style="width:32px;height:32px;"></div><h1 id="appTitleHome" style="cursor:pointer;">Productivity Tracker</h1></div>
+    <div class="header-row2">
+    <div class="sub" id="headerSub"></div>
     <div class="who">
       <div class="lang-switch" id="langSwitchApp"></div>
       <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode">🌙</button>
@@ -698,6 +723,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <span id="whoNameWrap">
         <span class="name" id="whoName" style="font-weight:700;cursor:pointer;" title="Click to change your color"></span>
       </span>
+    </div>
     </div>
   </header>
   <div class="tabs" id="tabNav">
