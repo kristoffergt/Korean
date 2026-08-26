@@ -294,6 +294,7 @@ button:hover{background:var(--ink-hover);}
 .stat-mini .num{font-family:'Space Grotesk',monospace;font-size:18px;font-weight:700;color:var(--celadon-4);}
 .stat-mini .label{font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-top:3px;}
 .stat-mini.urgent .num{color:var(--seal);}
+.stat-mini-sub{position:absolute;top:4px;right:6px;font-size:8.5px;line-height:1.2;color:var(--ink-soft);text-align:right;}
 .badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;color:#fff;}
 .badge.applied, .badge.to_read{background:var(--ink-soft);}
 .badge.interview, .badge.reading{background:var(--celadon-3);color:var(--ink);}
@@ -481,6 +482,22 @@ button:hover{background:var(--ink-hover);}
      shrinking its OWN font instead of its text wrapping.  */
   .cal-view-toggle{flex-wrap:nowrap;gap:5px;}
   .cal-view-toggle button{flex:1;min-width:0;padding:7px 3px;font-size:clamp(7px,2vw,12px);white-space:nowrap;}
+  /* The "Jump to" sub-pills (.quick-nav-sub-btn) shrink-wrap to their own
+     natural content width, so a group's wrapped rows can end up different
+     widths -- a lone pill like "Notebook" wrapping onto its own row under a
+     much wider row above it left a stretch of dead space beside it (real
+     report + screenshot). flex:1 1 0 (equal BASIS, ignoring natural size)
+     was tried first and was wrong: it forces every pill on a row to the
+     SAME width regardless of its text, so a row of "Log / Grammar / Writing"
+     crammed the long labels into the same width as "Log" and their text
+     overflowed the pill. flex-grow:1 with flex-basis:auto instead starts
+     every pill at its own natural content width and only distributes
+     LEFTOVER row space on top of that -- a lone pill gets all of it and
+     fills the row; pills sharing a row keep their own natural width and
+     just split whatever room is left. No min-width:0, so a pill can never
+     be squeezed below what its text needs. */
+  .quick-nav-subs{flex:1;}
+  .quick-nav-sub-btn{flex:1 1 auto;text-align:center;font-size:clamp(9px,3vw,11.5px);white-space:nowrap;}
   /* Fixed-px number columns (22px 1fr 60px 70px 70px) don't leave the
      numbers enough room on narrow phone widths and they clip/overflow the
      card edge -- shrink the columns and font instead of the numbers just
@@ -1358,7 +1375,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
         <div class="stat-mini"><div class="num" id="jStatTotal">0</div><div class="label" id="jLabelTotal"></div></div>
         <div class="stat-mini"><div class="num" id="jStatApplied">0</div><div class="label" id="jLabelApplied"></div></div>
         <div class="stat-mini"><div class="num" id="jStatInterview">0</div><div class="label" id="jLabelInterview"></div></div>
-        <div class="stat-mini"><div class="num" id="jStatOffer">0</div><div class="label" id="jLabelOffer"></div></div>
+        <div class="stat-mini"><div class="num" id="jStatAssignment">0</div><div class="label" id="jLabelAssignment"></div></div>
+        <div class="stat-mini" style="position:relative;"><div class="stat-mini-sub" id="jStatOfferSub"></div><div class="num" id="jStatOffer">0</div><div class="label" id="jLabelOffer"></div></div>
         <div class="stat-mini"><div class="num" id="jStatRejected">0</div><div class="label" id="jLabelRejected"></div></div>
       </div>
     </div>
@@ -7872,11 +7890,11 @@ const I18N = {
     yourReading:'Your reading', statusReading:'Reading', statusToRead:'To read', statusFinished:'Finished',
     addBook:'Add a book', title:'Title', author:'Author', status:'Status', totalPages:'Total pages', addBookBtn:'Add book',
     yourBooks:'Your books', booksFinishedLB:'Books finished – Leaderboard',
-    yourApplications:'Your applications', jobStatsFor:"{name}'s applications", jobStatsAll:'All applications', jobListHeader:'Application list', jobApplied:'Applied', jobInterview:'Interview', jobOffer:'Offer', jobRejected:'Rejected', jobWithdrawn:'Withdrawn',
+    yourApplications:'Your applications', jobStatsFor:"{name}'s applications", jobStatsAll:'All applications', jobListHeader:'Application list', jobApplied:'Applied', jobInterview:'Interview', jobOffer:'Offer', jobRejected:'Rejected', jobAssignment:'Assignment', jobOfferPending:'Pending', jobOfferAccepted:'Accepted', jobOfferDeclined:'Declined',
     interviewDateModalTitle:'Add interview to calendar', lblInterviewDate:'Date', lblInterviewTime:'Time', interviewDateSaveBtn:'Add to calendar', interviewTitlePrefix:'Interview: ',
     logApplication:'Log an application', company:'Company', role:'Role', dateApplied:'Date applied', link:'Link', addApplicationBtn:'Add application', lblJobResume:'Resume (PDF, optional)', lblJobCoverLetter:'Cover letter (PDF, optional)', jobResumeView:'Resume', jobCoverLetterView:'Cover letter', jobPdfOnlyMsg:'Only PDF files are allowed.',
     applicationsCombined:'Applications submitted – Leaderboard',
-    jobApplicationsTab:'Job Applications', certifications:'Certifications', yourCertifications:'Your certifications', certStatsFor:"{name}'s certifications", certStatsAll:'All certifications', certListHeader:'Certification list',
+    jobApplicationsTab:'Applications', certifications:'Certifications', yourCertifications:'Your certifications', certStatsFor:"{name}'s certifications", certStatsAll:'All certifications', certListHeader:'Certification list',
     certInProgress:'In progress', certAcquired:'Acquired', logCertification:'Log a certification',
     certNameLabel:'Certificate name', certIssuerLabel:'Issuer', certDateLabel:'Date completed', addCertificationBtn:'Add certification',
     certificationsLB:'Certifications acquired – Leaderboard',
@@ -7946,7 +7964,7 @@ const I18N = {
     thisOccurrenceOnly:'This event only', allOccurrences:'All events', cancelBtn:'Cancel',
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', editRemindersModalTitle:'Edit reminders', deleteEventBtn:'Delete',
-    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Korean Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header (optional)',
+    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header (optional)',
     hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?', charCountLabel:'{n} characters', charCountTarget:'{n} characters (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description (optional)', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image (optional)', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'🎲 Random', lblWritingQ53Image:'Attach an image (optional)', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'🎯 Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'🎯 Start a Q54 mock exam (35 min)', writingMockStartBtn:'🎯 Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
     lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
@@ -7967,7 +7985,7 @@ const I18N = {
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
-    tabYonsei:'Yonsei', tabBoards:'Boards', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site ↗', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', lblYonseiBoardsSince:'Period', lblYonseiBoardsSort:'Sort', yonseiPeriodAll:'All time', yonseiPeriodWeek:'Last week', yonseiPeriodMonth:'Last month', yonseiPeriod6Months:'Last 6 months', yonseiPeriodYear:'Last year', yonseiPeriod2Years:'Last 2 years', yonseiPeriod3Years:'Last 3 years', yonseiPeriod4Years:'Last 4 years', yonseiPeriod5Years:'Last 5 years', yonseiSortNewest:'Newest first', yonseiSortOldest:'Oldest first', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardSortDate:'Date posted', jobBoardSortDeadline:'Deadline', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardAiUpdateBtn:'AI Job Fetch', jobBoardAiFetching:'Fetching', jobBoardUpdating:'Updating...', jobBoardIndBankingFinance:'Banking/Finance', jobBoardIndConsumerFashion:'Consumer/Fashion', jobBoardIndForeignFirms:'Foreign firms', jobBoardIndIntlOrg:'International Organization', jobBoardIndNGO:'NGO', jobBoardIndOthers:'Others', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Public', jobBoardIndResearchInstitute:'Research Institute', jobBoardIndTechnology:'Technology', jobBoardIndTopChaebol:'Top Chaebol', jobBoardIndTrade:'Trade', jobBoardNewBadge:'NEW', cdcLoginWarnTitle:'Logged in to CDC?', cdcLoginWarnBody:'The Yonsei CDC site needs its own separate login. Make sure you\'re signed in there before opening this posting, or the page may not load right.', cdcLoginWarnContinueBtn:'Continue', cdcLoginWarnLoginBtn:'Log in', cdcLoginWarnCancelBtn:'Cancel'
+    tabYonsei:'Yonsei', tabBoards:'Boards', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site ↗', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', lblYonseiBoardsSince:'Period', lblYonseiBoardsSort:'Sort', yonseiPeriodAll:'All time', yonseiPeriodWeek:'Last week', yonseiPeriodMonth:'Last month', yonseiPeriod6Months:'Last 6 months', yonseiPeriodYear:'Last year', yonseiPeriod2Years:'Last 2 years', yonseiPeriod3Years:'Last 3 years', yonseiPeriod4Years:'Last 4 years', yonseiPeriod5Years:'Last 5 years', yonseiSortNewest:'Newest first', yonseiSortOldest:'Oldest first', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobsSubJobBoard:'Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardSortDate:'Date posted', jobBoardSortDeadline:'Deadline', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardAiUpdateBtn:'AI Job Fetch', jobBoardAiFetching:'Fetching', jobBoardUpdating:'Updating...', jobBoardIndBankingFinance:'Banking/Finance', jobBoardIndConsumerFashion:'Consumer/Fashion', jobBoardIndForeignFirms:'Foreign firms', jobBoardIndIntlOrg:'International Organization', jobBoardIndNGO:'NGO', jobBoardIndOthers:'Others', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Public', jobBoardIndResearchInstitute:'Research Institute', jobBoardIndTechnology:'Technology', jobBoardIndTopChaebol:'Top Chaebol', jobBoardIndTrade:'Trade', jobBoardNewBadge:'NEW', cdcLoginWarnTitle:'Logged in to CDC?', cdcLoginWarnBody:'The Yonsei CDC site needs its own separate login. Make sure you\'re signed in there before opening this posting, or the page may not load right.', cdcLoginWarnContinueBtn:'Continue', cdcLoginWarnLoginBtn:'Log in', cdcLoginWarnCancelBtn:'Cancel'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
@@ -7985,11 +8003,11 @@ const I18N = {
     yourReading:'독서 현황', statusReading:'읽는 중', statusToRead:'읽을 예정', statusFinished:'완독',
     addBook:'책 추가', title:'제목', author:'저자', status:'상태', totalPages:'총 페이지', addBookBtn:'책 추가하기',
     yourBooks:'내 책 목록', booksFinishedLB:'완독 순위표',
-    yourApplications:'지원 현황', jobStatsFor:'{name}의 지원 현황', jobStatsAll:'전체 지원 현황', jobListHeader:'지원 목록', jobApplied:'지원함', jobInterview:'면접', jobOffer:'합격', jobRejected:'불합격', jobWithdrawn:'철회',
+    yourApplications:'지원 현황', jobStatsFor:'{name}의 지원 현황', jobStatsAll:'전체 지원 현황', jobListHeader:'지원 목록', jobApplied:'지원함', jobInterview:'면접', jobOffer:'합격', jobRejected:'불합격', jobAssignment:'과제', jobOfferPending:'대기 중', jobOfferAccepted:'수락', jobOfferDeclined:'거절',
     interviewDateModalTitle:'면접 일정을 캘린더에 추가', lblInterviewDate:'날짜', lblInterviewTime:'시간', interviewDateSaveBtn:'캘린더에 추가', interviewTitlePrefix:'면접: ',
     logApplication:'지원 내역 기록', company:'회사', role:'직무', dateApplied:'지원일', link:'링크', addApplicationBtn:'지원 추가', lblJobResume:'이력서 (PDF, 선택)', lblJobCoverLetter:'자기소개서 (PDF, 선택)', jobResumeView:'이력서', jobCoverLetterView:'자기소개서', jobPdfOnlyMsg:'PDF 파일만 업로드할 수 있습니다.',
     applicationsCombined:'지원 건수 순위표',
-    jobApplicationsTab:'지원 내역', certifications:'자격증', yourCertifications:'내 자격증', certStatsFor:'{name}의 자격증', certStatsAll:'전체 자격증', certListHeader:'자격증 목록',
+    jobApplicationsTab:'지원', certifications:'자격증', yourCertifications:'내 자격증', certStatsFor:'{name}의 자격증', certStatsAll:'전체 자격증', certListHeader:'자격증 목록',
     certInProgress:'진행 중', certAcquired:'취득', logCertification:'자격증 기록',
     certNameLabel:'자격증 이름', certIssuerLabel:'발급 기관', certDateLabel:'완료일', addCertificationBtn:'자격증 추가',
     certificationsLB:'취득한 자격증 순위표',
@@ -8059,7 +8077,7 @@ const I18N = {
     thisOccurrenceOnly:'이 일정만', allOccurrences:'전체 일정', cancelBtn:'취소',
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', editRemindersModalTitle:'알림 수정', deleteEventBtn:'삭제',
-    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'한국어 문법', studySubWriting:'작문', studySubNotebook:'노트북', hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더 (선택)',
+    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더 (선택)',
     hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명 (선택)', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부 (선택)', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'🎲 무작위', lblWritingQ53Image:'이미지 첨부 (선택)', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'🎯 53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'🎯 54번 모의고사 시작 (35분)', writingMockStartBtn:'🎯 실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
     lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
@@ -8080,7 +8098,7 @@ const I18N = {
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
-    tabYonsei:'연세', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기 ↗', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', lblYonseiBoardsSince:'기간', lblYonseiBoardsSort:'정렬', yonseiPeriodAll:'전체 기간', yonseiPeriodWeek:'지난 1주', yonseiPeriodMonth:'지난 1개월', yonseiPeriod6Months:'지난 6개월', yonseiPeriodYear:'지난 1년', yonseiPeriod2Years:'지난 2년', yonseiPeriod3Years:'지난 3년', yonseiPeriod4Years:'지난 4년', yonseiPeriod5Years:'지난 5년', yonseiSortNewest:'최신순', yonseiSortOldest:'오래된순', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardSortDate:'등록일', jobBoardSortDeadline:'마감일', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardAiUpdateBtn:'AI 확인', jobBoardAiFetching:'가져오는 중', jobBoardUpdating:'업데이트 중...', jobBoardIndBankingFinance:'금융', jobBoardIndConsumerFashion:'소비재/패션', jobBoardIndForeignFirms:'외국계 기업', jobBoardIndIntlOrg:'국제기구', jobBoardIndNGO:'NGO', jobBoardIndOthers:'기타', jobBoardIndPRMarketing:'PR/마케팅', jobBoardIndPublic:'공공기관', jobBoardIndResearchInstitute:'연구소', jobBoardIndTechnology:'기술/IT', jobBoardIndTopChaebol:'대기업(재벌)', jobBoardIndTrade:'무역', jobBoardNewBadge:'신규', cdcLoginWarnTitle:'CDC 사이트에 로그인하셨나요?', cdcLoginWarnBody:'연세 CDC 사이트는 별도의 로그인이 필요합니다. 이 공고를 열기 전에 CDC 사이트에 로그인되어 있는지 확인하세요. 그렇지 않으면 페이지가 제대로 열리지 않을 수 있습니다.', cdcLoginWarnContinueBtn:'계속', cdcLoginWarnLoginBtn:'로그인', cdcLoginWarnCancelBtn:'취소'
+    tabYonsei:'연세', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기 ↗', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', lblYonseiBoardsSince:'기간', lblYonseiBoardsSort:'정렬', yonseiPeriodAll:'전체 기간', yonseiPeriodWeek:'지난 1주', yonseiPeriodMonth:'지난 1개월', yonseiPeriod6Months:'지난 6개월', yonseiPeriodYear:'지난 1년', yonseiPeriod2Years:'지난 2년', yonseiPeriod3Years:'지난 3년', yonseiPeriod4Years:'지난 4년', yonseiPeriod5Years:'지난 5년', yonseiSortNewest:'최신순', yonseiSortOldest:'오래된순', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobsSubJobBoard:'게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardSortDate:'등록일', jobBoardSortDeadline:'마감일', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardAiUpdateBtn:'AI 확인', jobBoardAiFetching:'가져오는 중', jobBoardUpdating:'업데이트 중...', jobBoardIndBankingFinance:'금융', jobBoardIndConsumerFashion:'소비재/패션', jobBoardIndForeignFirms:'외국계 기업', jobBoardIndIntlOrg:'국제기구', jobBoardIndNGO:'NGO', jobBoardIndOthers:'기타', jobBoardIndPRMarketing:'PR/마케팅', jobBoardIndPublic:'공공기관', jobBoardIndResearchInstitute:'연구소', jobBoardIndTechnology:'기술/IT', jobBoardIndTopChaebol:'대기업(재벌)', jobBoardIndTrade:'무역', jobBoardNewBadge:'신규', cdcLoginWarnTitle:'CDC 사이트에 로그인하셨나요?', cdcLoginWarnBody:'연세 CDC 사이트는 별도의 로그인이 필요합니다. 이 공고를 열기 전에 CDC 사이트에 로그인되어 있는지 확인하세요. 그렇지 않으면 페이지가 제대로 열리지 않을 수 있습니다.', cdcLoginWarnContinueBtn:'계속', cdcLoginWarnLoginBtn:'로그인', cdcLoginWarnCancelBtn:'취소'
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
@@ -8098,11 +8116,11 @@ const I18N = {
     yourReading:'Sách đang đọc', statusReading:'Đang đọc', statusToRead:'Muốn đọc', statusFinished:'Đã đọc xong',
     addBook:'Thêm sách', title:'Tên sách', author:'Tác giả', status:'Trạng thái', totalPages:'Tổng số trang', addBookBtn:'Thêm sách',
     yourBooks:'Sách của bạn', booksFinishedLB:'Bảng xếp hạng sách đã đọc',
-    yourApplications:'Đơn ứng tuyển của bạn', jobStatsFor:'Đơn ứng tuyển của {name}', jobStatsAll:'Tất cả đơn ứng tuyển', jobListHeader:'Danh sách đơn ứng tuyển', jobApplied:'Đã nộp', jobInterview:'Phỏng vấn', jobOffer:'Trúng tuyển', jobRejected:'Bị từ chối', jobWithdrawn:'Đã rút',
+    yourApplications:'Đơn ứng tuyển của bạn', jobStatsFor:'Đơn ứng tuyển của {name}', jobStatsAll:'Tất cả đơn ứng tuyển', jobListHeader:'Danh sách đơn ứng tuyển', jobApplied:'Đã nộp', jobInterview:'Phỏng vấn', jobOffer:'Trúng tuyển', jobRejected:'Bị từ chối', jobAssignment:'Bài tập', jobOfferPending:'Đang chờ', jobOfferAccepted:'Đã nhận', jobOfferDeclined:'Đã từ chối',
     interviewDateModalTitle:'Thêm buổi phỏng vấn vào lịch', lblInterviewDate:'Ngày', lblInterviewTime:'Giờ', interviewDateSaveBtn:'Thêm vào lịch', interviewTitlePrefix:'Phỏng vấn: ',
     logApplication:'Ghi lại đơn ứng tuyển', company:'Công ty', role:'Vị trí', dateApplied:'Ngày nộp', link:'Liên kết', addApplicationBtn:'Thêm đơn', lblJobResume:'Sơ yếu lý lịch (PDF, tùy chọn)', lblJobCoverLetter:'Thư xin việc (PDF, tùy chọn)', jobResumeView:'Sơ yếu lý lịch', jobCoverLetterView:'Thư xin việc', jobPdfOnlyMsg:'Chỉ chấp nhận tệp PDF.',
     applicationsCombined:'Bảng xếp hạng đơn đã nộp',
-    jobApplicationsTab:'Đơn ứng tuyển', certifications:'Chứng chỉ', yourCertifications:'Chứng chỉ của bạn', certStatsFor:'Chứng chỉ của {name}', certStatsAll:'Tất cả chứng chỉ', certListHeader:'Danh sách chứng chỉ',
+    jobApplicationsTab:'Đơn', certifications:'Chứng chỉ', yourCertifications:'Chứng chỉ của bạn', certStatsFor:'Chứng chỉ của {name}', certStatsAll:'Tất cả chứng chỉ', certListHeader:'Danh sách chứng chỉ',
     certInProgress:'Đang thực hiện', certAcquired:'Đã đạt được', logCertification:'Ghi lại chứng chỉ',
     certNameLabel:'Tên chứng chỉ', certIssuerLabel:'Đơn vị cấp', certDateLabel:'Ngày hoàn thành', addCertificationBtn:'Thêm chứng chỉ',
     certificationsLB:'Bảng xếp hạng chứng chỉ đã đạt được',
@@ -8173,7 +8191,7 @@ const I18N = {
     thisOccurrenceOnly:'Chỉ sự kiện này', allOccurrences:'Tất cả sự kiện', cancelBtn:'Hủy',
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', editRemindersModalTitle:'Sửa nhắc nhở', deleteEventBtn:'Xóa',
-    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp Hàn', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh (tùy chọn)',
+    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh (tùy chọn)',
     hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ (tùy chọn)', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh (tùy chọn)', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'🎲 Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh (tùy chọn)', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'🎯 Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'🎯 Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'🎯 Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
     lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
@@ -8194,7 +8212,7 @@ const I18N = {
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
-    tabYonsei:'Yonsei', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei ↗', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', lblYonseiBoardsSince:'Khoảng thời gian', lblYonseiBoardsSort:'Sắp xếp', yonseiPeriodAll:'Mọi lúc', yonseiPeriodWeek:'Tuần trước', yonseiPeriodMonth:'Tháng trước', yonseiPeriod6Months:'6 tháng qua', yonseiPeriodYear:'Năm trước', yonseiPeriod2Years:'2 năm qua', yonseiPeriod3Years:'3 năm qua', yonseiPeriod4Years:'4 năm qua', yonseiPeriod5Years:'5 năm qua', yonseiSortNewest:'Mới nhất', yonseiSortOldest:'Cũ nhất', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardSortDate:'Ngày đăng', jobBoardSortDeadline:'Hạn nộp', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardAiUpdateBtn:'Kiểm tra AI', jobBoardAiFetching:'Đang lấy dữ liệu', jobBoardUpdating:'Đang cập nhật...', jobBoardIndBankingFinance:'Ngân hàng/Tài chính', jobBoardIndConsumerFashion:'Hàng tiêu dùng/Thời trang', jobBoardIndForeignFirms:'Doanh nghiệp nước ngoài', jobBoardIndIntlOrg:'Tổ chức quốc tế', jobBoardIndNGO:'Tổ chức phi chính phủ (NGO)', jobBoardIndOthers:'Khác', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Khu vực công', jobBoardIndResearchInstitute:'Viện nghiên cứu', jobBoardIndTechnology:'Công nghệ', jobBoardIndTopChaebol:'Tập đoàn lớn (Chaebol)', jobBoardIndTrade:'Thương mại', jobBoardNewBadge:'MỚI', cdcLoginWarnTitle:'Đã đăng nhập vào CDC chưa?', cdcLoginWarnBody:'Trang CDC của Yonsei cần đăng nhập riêng. Hãy chắc chắn bạn đã đăng nhập ở đó trước khi mở tin này, nếu không trang có thể không tải đúng.', cdcLoginWarnContinueBtn:'Tiếp tục', cdcLoginWarnLoginBtn:'Đăng nhập', cdcLoginWarnCancelBtn:'Hủy'
+    tabYonsei:'Yonsei', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei ↗', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', lblYonseiBoardsSince:'Khoảng thời gian', lblYonseiBoardsSort:'Sắp xếp', yonseiPeriodAll:'Mọi lúc', yonseiPeriodWeek:'Tuần trước', yonseiPeriodMonth:'Tháng trước', yonseiPeriod6Months:'6 tháng qua', yonseiPeriodYear:'Năm trước', yonseiPeriod2Years:'2 năm qua', yonseiPeriod3Years:'3 năm qua', yonseiPeriod4Years:'4 năm qua', yonseiPeriod5Years:'5 năm qua', yonseiSortNewest:'Mới nhất', yonseiSortOldest:'Cũ nhất', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobsSubJobBoard:'Bảng', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardSortDate:'Ngày đăng', jobBoardSortDeadline:'Hạn nộp', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardAiUpdateBtn:'Kiểm tra AI', jobBoardAiFetching:'Đang lấy dữ liệu', jobBoardUpdating:'Đang cập nhật...', jobBoardIndBankingFinance:'Ngân hàng/Tài chính', jobBoardIndConsumerFashion:'Hàng tiêu dùng/Thời trang', jobBoardIndForeignFirms:'Doanh nghiệp nước ngoài', jobBoardIndIntlOrg:'Tổ chức quốc tế', jobBoardIndNGO:'Tổ chức phi chính phủ (NGO)', jobBoardIndOthers:'Khác', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Khu vực công', jobBoardIndResearchInstitute:'Viện nghiên cứu', jobBoardIndTechnology:'Công nghệ', jobBoardIndTopChaebol:'Tập đoàn lớn (Chaebol)', jobBoardIndTrade:'Thương mại', jobBoardNewBadge:'MỚI', cdcLoginWarnTitle:'Đã đăng nhập vào CDC chưa?', cdcLoginWarnBody:'Trang CDC của Yonsei cần đăng nhập riêng. Hãy chắc chắn bạn đã đăng nhập ở đó trước khi mở tin này, nếu không trang có thể không tải đúng.', cdcLoginWarnContinueBtn:'Tiếp tục', cdcLoginWarnLoginBtn:'Đăng nhập', cdcLoginWarnCancelBtn:'Hủy'
   }
 };
 const STATIC_MAP = {
@@ -8212,12 +8230,12 @@ const STATIC_MAP = {
   hReadingStats:'yourReading', rLabelReading:'statusReading', rLabelToRead:'statusToRead', rLabelFinished:'statusFinished',
   hAddBook:'addBook', lblBookTitle:'title', lblBookAuthor:'author', lblBookStatus:'status', lblBookPages:'totalPages', addBookBtn:'addBookBtn',
   hYourBooks:'yourBooks', exportBooksBtn:'exportCsv', hBookLB:'booksFinishedLB', blbHeadRank:'lbRank', blbHeadName:'lbName', blbHeadFinished:'statusFinished', lblBookPersonFilter:'lblNotesPersonFilter', lblCoursePersonFilter:'lblNotesPersonFilter',
-  hJobStats:'yourApplications', jLabelTotal:'lbTotal', jLabelApplied:'jobApplied', jLabelInterview:'jobInterview', jLabelOffer:'jobOffer', jLabelRejected:'jobRejected',
+  hJobStats:'yourApplications', jLabelTotal:'lbTotal', jLabelApplied:'jobApplied', jLabelInterview:'jobInterview', jLabelAssignment:'jobAssignment', jLabelOffer:'jobOffer', jLabelRejected:'jobRejected',
   hAddJob:'logApplication', lblCompany:'company', lblRole:'role', lblJobStatus:'status', lblJobDate:'dateApplied', lblJobLink:'link', lblJobResume:'lblJobResume', lblJobCoverLetter:'lblJobCoverLetter', addJobBtn:'addApplicationBtn',
   hYourJobs:'jobListHeader', exportJobsBtn:'exportCsv', hJobLB:'applicationsCombined', jlbHeadRank:'lbRank', jlbHeadName:'lbName', jlbHeadApplied:'jobApplied', lblJobPersonFilter:'lblNotesPersonFilter',
   interviewDateModalTitle:'interviewDateModalTitle', lblInterviewDate:'lblInterviewDate', lblInterviewTime:'lblInterviewTime', interviewDateSaveBtn:'interviewDateSaveBtn', interviewDateCancelBtn:'cancelBtn', lblInterviewReminder:'lblEventReminder',
   lblJobSearch:'searchLabel', lblJobSort:'sortByLabel', lblYonseiBoardsSearch:'lblYonseiBoardsSearch', lblYonseiBoardsCategory:'lblYonseiBoardsCategory', lblYonseiBoardsSince:'lblYonseiBoardsSince', lblYonseiBoardsSort:'lblYonseiBoardsSort',
-  jobsSubApplicationsBtn:'jobApplicationsTab', jobsSubCertificationsBtn:'certifications', jobsSubJobBoardBtn:'jobBoardTab', hJobBoard:'jobBoardTab', lblJobBoardSearch:'searchLabel', lblJobBoardIndustry:'jobBoardIndustryLabel', lblJobBoardType:'jobBoardTypeLabel', lblJobBoardSort:'sortByLabel',
+  jobsSubApplicationsBtn:'jobApplicationsTab', jobsSubCertificationsBtn:'certifications', jobsSubJobBoardBtn:'jobsSubJobBoard', hJobBoard:'jobBoardTab', lblJobBoardSearch:'searchLabel', lblJobBoardIndustry:'jobBoardIndustryLabel', lblJobBoardType:'jobBoardTypeLabel', lblJobBoardSort:'sortByLabel',
   lblCdcLoginWarnTitle:'cdcLoginWarnTitle', lblCdcLoginWarnBody:'cdcLoginWarnBody', cdcLoginWarnContinueBtn:'cdcLoginWarnContinueBtn', cdcLoginWarnLoginBtn:'cdcLoginWarnLoginBtn', cdcLoginWarnCancelBtn:'cdcLoginWarnCancelBtn',
   hCertStats:'yourCertifications', cLabelInProgress:'certInProgress', cLabelAcquired:'certAcquired',
   hAddCert:'logCertification', lblCertName:'certNameLabel', lblCertIssuer:'certIssuerLabel', lblCertStatus:'status', lblCertDate:'certDateLabel', lblCertLink:'link', addCertBtn:'addCertificationBtn',
@@ -8274,8 +8292,11 @@ const STATIC_MAP = {
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
 const BOOK_STATUS_KEYS = {to_read:'statusToRead', reading:'statusReading', finished:'statusFinished'};
-const JOB_STATUS_KEYS = {applied:'jobApplied', interview:'jobInterview', offer:'jobOffer', rejected:'jobRejected', withdrawn:'jobWithdrawn'};
-const JOB_STATUS_SORT_ORDER = {applied:0, interview:1, offer:2, rejected:3, withdrawn:4};
+const JOB_STATUS_KEYS = {applied:'jobApplied', interview:'jobInterview', offer:'jobOffer', rejected:'jobRejected', withdrawn:'jobAssignment'};
+// 'withdrawn' is the stored status value (unchanged, so existing rows keep
+// working with no migration) -- it now displays as "Assignment", a
+// take-home-test stage between Interview and Offer, per Kristoffer's rename.
+const JOB_STATUS_SORT_ORDER = {applied:0, interview:1, withdrawn:2, offer:3, rejected:4};
 const CERT_STATUS_KEYS = {in_progress:'certInProgress', acquired:'certAcquired'};
 const CERT_STATUS_SORT_ORDER = {in_progress:0, acquired:1};
 let currentLang = localStorage.getItem('trackerLang') || 'en';
@@ -8734,7 +8755,7 @@ function rebuildJobStatusSelect(){
   const sel = document.getElementById('jobStatus');
   const prev = sel.value || 'applied';
   sel.innerHTML = '';
-  ['applied','interview','offer','rejected','withdrawn'].forEach(s=>{
+  ['applied','interview','withdrawn','offer','rejected'].forEach(s=>{
     const opt = document.createElement('option');
     opt.value = s; opt.textContent = jobStatusLabel(s);
     sel.appendChild(opt);
@@ -12256,6 +12277,13 @@ async function updateJobStatus(jobId, status){
   renderJobs();
   if(status === 'interview' && j) openInterviewDateModal(j);
 }
+async function updateJobOfferResponse(jobId, offerResponse){
+  const value = offerResponse || null;
+  await supabaseClient.from('job_applications').update({ offer_response: value }).eq('id', jobId);
+  const j = (allJobs[currentUser.id]||[]).find(x=>x.id===jobId);
+  if(j) j.offer_response = value;
+  renderJobs();
+}
 // Asks when, then drops a 1-hour, default-color calendar event for it --
 // saves having to flip to the Calendar tab and re-type the company name
 // every time an application moves to Interview.
@@ -12401,8 +12429,11 @@ function renderJobs(){
   const jTotal = viewList.length;
   const jApplied = viewList.filter(j=>j.status==='applied').length;
   const jInterview = viewList.filter(j=>j.status==='interview').length;
+  const jAssignment = viewList.filter(j=>j.status==='withdrawn').length;
   const jOffer = viewList.filter(j=>j.status==='offer').length;
   const jRejected = viewList.filter(j=>j.status==='rejected').length;
+  const jOfferAccepted = viewList.filter(j=>j.status==='offer' && j.offer_response==='accepted').length;
+  const jOfferDeclined = viewList.filter(j=>j.status==='offer' && j.offer_response==='declined').length;
 
   const statsHeaderEl = document.getElementById('hJobStats');
   if(statsHeaderEl){
@@ -12418,7 +12449,9 @@ function renderJobs(){
   const totalEl = document.getElementById('jStatTotal');
   const appliedEl = document.getElementById('jStatApplied');
   const interviewEl = document.getElementById('jStatInterview');
+  const assignmentEl = document.getElementById('jStatAssignment');
   const offerEl = document.getElementById('jStatOffer');
+  const offerSubEl = document.getElementById('jStatOfferSub');
   const rejectedEl = document.getElementById('jStatRejected');
 
   totalEl.textContent = jTotal;
@@ -12429,8 +12462,20 @@ function renderJobs(){
   interviewEl.textContent = jInterview;
   interviewEl.style.color = jInterview > 0 ? '#AFC9AE' : 'var(--ink)';
 
+  assignmentEl.textContent = jAssignment;
+  assignmentEl.style.color = jAssignment > 0 ? '#B0A79A' : 'var(--ink)';
+
   offerEl.textContent = jOffer;
   offerEl.style.color = jOffer > 0 ? '#27AE60' : 'var(--ink)';
+
+  // Tiny corner sub-header on the Offer tile: how many of those offers you've
+  // since responded to. Only names the categories that are non-zero, and
+  // stays empty (not "0 accepted · 0 declined") until there's something to
+  // report -- an offer can also just sit unanswered.
+  const offerSubParts = [];
+  if(jOfferAccepted > 0) offerSubParts.push(`${jOfferAccepted} ${t('jobOfferAccepted').toLowerCase()}`);
+  if(jOfferDeclined > 0) offerSubParts.push(`${jOfferDeclined} ${t('jobOfferDeclined').toLowerCase()}`);
+  offerSubEl.textContent = offerSubParts.join(' · ');
 
   rejectedEl.textContent = jRejected;
   rejectedEl.style.color = jRejected > 0 ? 'var(--seal)' : 'var(--ink)';
@@ -12492,9 +12537,14 @@ function renderJobs(){
         ${isMine ? `<select data-id="${j.id}" class="job-status-select">
           <option value="applied" ${j.status==='applied'?'selected':''}>${jobStatusLabel('applied')}</option>
           <option value="interview" ${j.status==='interview'?'selected':''}>${jobStatusLabel('interview')}</option>
+          <option value="withdrawn" ${j.status==='withdrawn'?'selected':''}>${jobStatusLabel('withdrawn')}</option>
           <option value="offer" ${j.status==='offer'?'selected':''}>${jobStatusLabel('offer')}</option>
           <option value="rejected" ${j.status==='rejected'?'selected':''}>${jobStatusLabel('rejected')}</option>
-          <option value="withdrawn" ${j.status==='withdrawn'?'selected':''}>${jobStatusLabel('withdrawn')}</option>
+        </select>` : ''}
+        ${isMine && j.status==='offer' ? `<select data-id="${j.id}" class="job-offer-response-select">
+          <option value="" ${!j.offer_response?'selected':''}>${t('jobOfferPending')}</option>
+          <option value="accepted" ${j.offer_response==='accepted'?'selected':''}>${t('jobOfferAccepted')}</option>
+          <option value="declined" ${j.offer_response==='declined'?'selected':''}>${t('jobOfferDeclined')}</option>
         </select>` : ''}
         ${j.link ? `<a href="${j.link}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
         ${j.resume_url ? `<a href="${j.resume_url}" target="_blank" rel="noopener">${t('jobResumeView')}</a>` : ''}
@@ -12507,6 +12557,9 @@ function renderJobs(){
   });
   list.querySelectorAll('.item-del[data-kind="job"]').forEach(btn=>{
     btn.addEventListener('click', ()=> deleteJob(btn.dataset.id));
+  });
+  list.querySelectorAll('.job-offer-response-select').forEach(sel=>{
+    sel.addEventListener('change', ()=> updateJobOfferResponse(sel.dataset.id, sel.value));
   });
   list.querySelectorAll('.job-status-select').forEach(sel=>{
     sel.addEventListener('change', ()=> updateJobStatus(sel.dataset.id, sel.value));
@@ -13781,7 +13834,7 @@ const TAB_STRUCTURE = [
   { key:'jobs', labelKey:'tabJobs', btnId:'tabBtnJobs', switchFn:()=>switchJobsSubTab, subs:[
     { key:'jobs.applications', labelKey:'jobApplicationsTab', btnId:'jobsSubApplicationsBtn', view:'applications' },
     { key:'jobs.certifications', labelKey:'certifications', btnId:'jobsSubCertificationsBtn', view:'certifications' },
-    { key:'jobs.jobboard', labelKey:'jobBoardTab', btnId:'jobsSubJobBoardBtn', view:'jobboard' },
+    { key:'jobs.jobboard', labelKey:'jobsSubJobBoard', btnId:'jobsSubJobBoardBtn', view:'jobboard' },
   ]},
 ];
 // Hover sub-tab preview on the main nav (desktop only -- touch devices have
