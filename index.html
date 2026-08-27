@@ -26902,10 +26902,12 @@ function renderExpStats(){
   if(!vac) return;
   const totalCents = expExpenses.reduce((s,e)=> s + Math.round(Number(e.amount)*100), 0);
   const total = totalCents/100;
-  const start = new Date(vac.date_start+'T00:00:00');
-  const end = new Date(vac.date_end+'T00:00:00');
-  const days = Math.max(1, Math.round((end-start)/86400000)+1);
-  const avgDay = total/days;
+  // Averaged over the days that actually HAVE an expense logged, not the
+  // vacation's full planned span -- three days into a ten-day trip, dividing
+  // by ten understates what you're actually spending per day, since the
+  // seven days with nothing logged yet aren't necessarily seven free days.
+  const daysWithData = new Set(expExpenses.map(e=>e.date)).size;
+  const avgDay = daysWithData > 0 ? total/daysWithData : 0;
   const avgValue = expAvgMode==='week' ? avgDay*7 : avgDay;
   document.getElementById('expStatTotal').innerHTML = expFormatMoney(total) + expConvertedBlock(total, vac.currency);
   document.getElementById('expStatAvg').innerHTML = expFormatMoney(avgValue) + expConvertedBlock(avgValue, vac.currency);
