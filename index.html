@@ -378,6 +378,16 @@ button:hover{background:var(--ink-hover);}
 .cal-seg-picker button:hover{background:var(--paper-dim);}
 .cal-seg-picker button.active{font-weight:700;color:var(--celadon-4);}
 .cal-seg-input{width:70px;font-size:inherit;font-weight:inherit;font-family:inherit;background:var(--paper);border:1px solid var(--celadon-4);border-radius:4px;padding:1px 4px;color:var(--ink);}
+/* Expense category picker -- a native <select> can't show these as SVG
+   icons (an <option> only ever renders plain text), so this is our own
+   button + list, same idiom as .cal-seg-picker above. */
+.exp-cat-picker-btn{display:flex;align-items:center;gap:8px;font-family:'Inter',sans-serif;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:150px;cursor:pointer;text-align:left;}
+.exp-cat-picker-btn:hover{background:var(--paper-dim);}
+.exp-cat-picker-btn svg{flex-shrink:0;color:var(--ink-soft);}
+.exp-cat-picker-list{position:absolute;top:100%;left:0;z-index:80;margin-top:2px;background:var(--paper);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.25);max-height:240px;overflow-y:auto;min-width:190px;}
+.exp-cat-picker-list button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:var(--ink);font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap;}
+.exp-cat-picker-list button svg{flex-shrink:0;color:var(--ink-soft);}
+.exp-cat-picker-list button:hover{background:var(--paper-dim);}
 .month-nav button{padding:6px 12px;font-size:13px;}
 .month-nav .month-label{font-family:'Space Grotesk',monospace;font-weight:700;font-size:14px;}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
@@ -1842,7 +1852,12 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
           <option value="USD">USD</option><option value="EUR">EUR</option><option value="KRW">KRW</option>
           <option value="DKK">DKK</option><option value="GBP">GBP</option><option value="JPY">JPY</option>
           <option value="VND">VND</option><option value="CNY">CNY</option>
+          <option value="__custom__" id="optNewVacationCurrencyCustom"></option>
         </select>
+      </div>
+      <div class="field hidden" id="newVacationCustomCurrencyField">
+        <label for="newVacationCustomCurrency" id="lblNewVacationCustomCurrency"></label>
+        <input type="text" id="newVacationCustomCurrency" maxlength="10">
       </div>
       <button id="createVacationBtn"></button>
     </div>
@@ -1858,7 +1873,15 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="log-form">
       <div class="field"><label for="expFormDate" id="lblExpFormDate"></label><input type="date" id="expFormDate"></div>
       <div class="field"><label for="expFormAmount" id="lblExpFormAmount"></label><input type="number" step="0.01" min="0" id="expFormAmount"></div>
-      <div class="field"><label for="expFormCategory" id="lblExpFormCategory"></label><select id="expFormCategory"></select></div>
+      <div class="field">
+        <label id="lblExpFormCategory"></label>
+        <button type="button" class="exp-cat-picker-btn" id="expFormCategoryBtn"></button>
+        <div class="exp-cat-picker-list hidden" id="expFormCategoryList"></div>
+      </div>
+      <div class="field wide hidden" id="expCustomCategoryField">
+        <label for="expCustomCategoryName" id="lblExpCustomCategoryName"></label>
+        <input type="text" id="expCustomCategoryName">
+      </div>
       <div class="field wide"><label for="expFormDescription" id="lblExpFormDescription"></label><input type="text" id="expFormDescription"></div>
       <div class="field"><label for="expFormPaidBy" id="lblExpFormPaidBy"></label><select id="expFormPaidBy"></select></div>
       <button id="saveExpenseBtn"></button>
@@ -8127,7 +8150,7 @@ const I18N = {
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
     tabYonsei:'Yonsei', tabBoards:'Boards', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site ↗', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', lblYonseiBoardsSince:'Period', lblYonseiBoardsSort:'Sort', yonseiPeriodAll:'All time', yonseiPeriodWeek:'Last week', yonseiPeriodMonth:'Last month', yonseiPeriod6Months:'Last 6 months', yonseiPeriodYear:'Last year', yonseiPeriod2Years:'Last 2 years', yonseiPeriod3Years:'Last 3 years', yonseiPeriod4Years:'Last 4 years', yonseiPeriod5Years:'Last 5 years', yonseiSortNewest:'Newest first', yonseiSortOldest:'Oldest first', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobsSubJobBoard:'Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardSortDate:'Date posted', jobBoardSortDeadline:'Deadline', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardAiUpdateBtn:'AI Job Fetch', jobBoardAiFetching:'Fetching', jobBoardUpdating:'Updating...', jobBoardIndBankingFinance:'Banking/Finance', jobBoardIndConsumerFashion:'Consumer/Fashion', jobBoardIndForeignFirms:'Foreign firms', jobBoardIndIntlOrg:'International Organization', jobBoardIndNGO:'NGO', jobBoardIndOthers:'Others', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Public', jobBoardIndResearchInstitute:'Research Institute', jobBoardIndTechnology:'Technology', jobBoardIndTopChaebol:'Top Chaebol', jobBoardIndTrade:'Trade', jobBoardNewBadge:'NEW', cdcLoginWarnTitle:'Logged in to CDC?', cdcLoginWarnBody:'The Yonsei CDC site needs its own separate login. Make sure you\'re signed in there before opening this posting, or the page may not load right.', cdcLoginWarnContinueBtn:'Continue', cdcLoginWarnLoginBtn:'Log in', cdcLoginWarnCancelBtn:'Cancel',
-    tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet -- create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', expNoExpensesYet:'No expenses logged yet.', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default -- a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expNoCircleToInvite:'Everyone in your circle is already on this trip, or you haven\'t linked with anyone yet.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip'
+    tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet. Create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', expNoExpensesYet:'No expenses logged yet.', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default; a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expNoCircleToInvite:'Everyone in your circle is already on this trip, or you haven\'t linked with anyone yet.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip', lblExpCustomCategoryName:'Custom name (optional)', optNewVacationCurrencyCustom:'Other…', lblNewVacationCustomCurrency:'Currency code'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
@@ -8241,7 +8264,7 @@ const I18N = {
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
     tabYonsei:'연세', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기 ↗', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', lblYonseiBoardsSince:'기간', lblYonseiBoardsSort:'정렬', yonseiPeriodAll:'전체 기간', yonseiPeriodWeek:'지난 1주', yonseiPeriodMonth:'지난 1개월', yonseiPeriod6Months:'지난 6개월', yonseiPeriodYear:'지난 1년', yonseiPeriod2Years:'지난 2년', yonseiPeriod3Years:'지난 3년', yonseiPeriod4Years:'지난 4년', yonseiPeriod5Years:'지난 5년', yonseiSortNewest:'최신순', yonseiSortOldest:'오래된순', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobsSubJobBoard:'게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardSortDate:'등록일', jobBoardSortDeadline:'마감일', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardAiUpdateBtn:'AI 확인', jobBoardAiFetching:'가져오는 중', jobBoardUpdating:'업데이트 중...', jobBoardIndBankingFinance:'금융', jobBoardIndConsumerFashion:'소비재/패션', jobBoardIndForeignFirms:'외국계 기업', jobBoardIndIntlOrg:'국제기구', jobBoardIndNGO:'NGO', jobBoardIndOthers:'기타', jobBoardIndPRMarketing:'PR/마케팅', jobBoardIndPublic:'공공기관', jobBoardIndResearchInstitute:'연구소', jobBoardIndTechnology:'기술/IT', jobBoardIndTopChaebol:'대기업(재벌)', jobBoardIndTrade:'무역', jobBoardNewBadge:'신규', cdcLoginWarnTitle:'CDC 사이트에 로그인하셨나요?', cdcLoginWarnBody:'연세 CDC 사이트는 별도의 로그인이 필요합니다. 이 공고를 열기 전에 CDC 사이트에 로그인되어 있는지 확인하세요. 그렇지 않으면 페이지가 제대로 열리지 않을 수 있습니다.', cdcLoginWarnContinueBtn:'계속', cdcLoginWarnLoginBtn:'로그인', cdcLoginWarnCancelBtn:'취소',
-    tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expNoCircleToInvite:'그룹의 모든 사람이 이미 이 여행에 참여했거나, 아직 아무와도 연결되어 있지 않습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거'
+    tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expNoCircleToInvite:'그룹의 모든 사람이 이미 이 여행에 참여했거나, 아직 아무와도 연결되어 있지 않습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거', lblExpCustomCategoryName:'맞춤 이름 (선택 사항)', optNewVacationCurrencyCustom:'기타…', lblNewVacationCustomCurrency:'통화 코드'
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
@@ -8356,7 +8379,7 @@ const I18N = {
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
     tabYonsei:'Yonsei', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei ↗', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', lblYonseiBoardsSince:'Khoảng thời gian', lblYonseiBoardsSort:'Sắp xếp', yonseiPeriodAll:'Mọi lúc', yonseiPeriodWeek:'Tuần trước', yonseiPeriodMonth:'Tháng trước', yonseiPeriod6Months:'6 tháng qua', yonseiPeriodYear:'Năm trước', yonseiPeriod2Years:'2 năm qua', yonseiPeriod3Years:'3 năm qua', yonseiPeriod4Years:'4 năm qua', yonseiPeriod5Years:'5 năm qua', yonseiSortNewest:'Mới nhất', yonseiSortOldest:'Cũ nhất', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobsSubJobBoard:'Bảng', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardSortDate:'Ngày đăng', jobBoardSortDeadline:'Hạn nộp', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardAiUpdateBtn:'Kiểm tra AI', jobBoardAiFetching:'Đang lấy dữ liệu', jobBoardUpdating:'Đang cập nhật...', jobBoardIndBankingFinance:'Ngân hàng/Tài chính', jobBoardIndConsumerFashion:'Hàng tiêu dùng/Thời trang', jobBoardIndForeignFirms:'Doanh nghiệp nước ngoài', jobBoardIndIntlOrg:'Tổ chức quốc tế', jobBoardIndNGO:'Tổ chức phi chính phủ (NGO)', jobBoardIndOthers:'Khác', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Khu vực công', jobBoardIndResearchInstitute:'Viện nghiên cứu', jobBoardIndTechnology:'Công nghệ', jobBoardIndTopChaebol:'Tập đoàn lớn (Chaebol)', jobBoardIndTrade:'Thương mại', jobBoardNewBadge:'MỚI', cdcLoginWarnTitle:'Đã đăng nhập vào CDC chưa?', cdcLoginWarnBody:'Trang CDC của Yonsei cần đăng nhập riêng. Hãy chắc chắn bạn đã đăng nhập ở đó trước khi mở tin này, nếu không trang có thể không tải đúng.', cdcLoginWarnContinueBtn:'Tiếp tục', cdcLoginWarnLoginBtn:'Đăng nhập', cdcLoginWarnCancelBtn:'Hủy',
-    tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào -- tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên -- một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expNoCircleToInvite:'Mọi người trong nhóm của bạn đã ở trong chuyến đi này, hoặc bạn chưa liên kết với ai.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi'
+    tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào. Tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên. Một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expNoCircleToInvite:'Mọi người trong nhóm của bạn đã ở trong chuyến đi này, hoặc bạn chưa liên kết với ai.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi', lblExpCustomCategoryName:'Tên tùy chỉnh (không bắt buộc)', optNewVacationCurrencyCustom:'Khác…', lblNewVacationCustomCurrency:'Mã tiền tệ'
   }
 };
 const STATIC_MAP = {
@@ -8369,7 +8392,8 @@ const STATIC_MAP = {
   hExpCategoryBreakdown:'hExpCategoryBreakdown', hExpBalances:'hExpBalances',
   hNewVacation:'hNewVacation', lblNewVacationName:'lblNewVacationName', lblNewVacationStart:'lblNewVacationStart', lblNewVacationEnd:'lblNewVacationEnd', lblNewVacationCurrency:'lblNewVacationCurrency', createVacationBtn:'createVacationBtn',
   lblExpFormDate:'lblExpFormDate', lblExpFormAmount:'lblExpFormAmount', lblExpFormCategory:'lblExpFormCategory', lblExpFormDescription:'lblExpFormDescription', lblExpFormPaidBy:'lblExpFormPaidBy', saveExpenseBtn:'saveExpenseBtn', expDeleteBtn:'expDeleteBtn',
-  hInviteFromCircle:'hInviteFromCircle', hPendingVacationInvites:'hPendingVacationInvites',
+  hInviteFromCircle:'hInviteFromCircle', hPendingVacationInvites:'hPendingVacationInvites', lblExpCustomCategoryName:'lblExpCustomCategoryName',
+  optNewVacationCurrencyCustom:'optNewVacationCurrencyCustom', lblNewVacationCustomCurrency:'lblNewVacationCustomCurrency',
   yonseiSubCoursesBtn:'tabCourses', yonseiSubNotesBtn:'tabNotes', yonseiSubBoardsBtn:'tabBoards', hYonseiBoards:'hYonseiBoards',
   hLeaderboard:'leaderboard', lbHeadRank:'lbRank', lbHeadName:'lbName', lbHeadStreak:'lbStreak', lbHeadWeek:'lbWeek', lbHeadTotal:'lbTotal',
   hLogStudy:'logStudy', lblDate:'date', lblActivity:'activity', lblHours:'hours', addBtn:'addSession', studyHint:'studyHint',
@@ -26643,18 +26667,32 @@ document.getElementById('closeNotebookBtn').addEventListener('click', ()=>{
 // Categories are a small fixed list here, not a database table, matching how
 // job/book status are already handled as fixed enums elsewhere in this app.
 // ---------------------------------------------------------------------------
+// Line-art SVGs matching the app's own tab-icon convention (24x24 viewBox,
+// stroke=currentColor, round caps/joins) -- never emoji, which render as
+// whatever the OS's own emoji font happens to look like rather than this
+// app's own visual language.
+const EXP_ICON_SVG = (paths)=> `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 const EXPENSE_CATEGORIES = [
-  { key:'food', labelKey:'expCatFood', color:'#B37B4F', icon:'🍜' },
-  { key:'accommodation', labelKey:'expCatAccommodation', color:'#6E8FB0', icon:'🏨' },
-  { key:'transport', labelKey:'expCatTransport', color:'#7FA694', icon:'🚕' },
-  { key:'activities', labelKey:'expCatActivities', color:'#9C7BB0', icon:'🎟️' },
-  { key:'shopping', labelKey:'expCatShopping', color:'#B0A46E', icon:'🛍️' },
-  { key:'nightlife', labelKey:'expCatNightlife', color:'#B33B34', icon:'🍸' },
-  { key:'groceries', labelKey:'expCatGroceries', color:'#5C9E8C', icon:'🛒' },
-  { key:'fees', labelKey:'expCatFees', color:'#8B8578', icon:'💸' },
-  { key:'other', labelKey:'expCatOther', color:'#6B6D72', icon:'•' },
+  { key:'food', labelKey:'expCatFood', color:'#B37B4F', icon:EXP_ICON_SVG('<path d="M4 10h14a2 2 0 0 1 2 2 6 6 0 0 1-6 6H8a6 6 0 0 1-6-6 2 2 0 0 1 2-2z"></path><path d="M9 4c0 1-1 1-1 2s1 1 1 2"></path><path d="M13 4c0 1-1 1-1 2s1 1 1 2"></path>') },
+  { key:'accommodation', labelKey:'expCatAccommodation', color:'#6E8FB0', icon:EXP_ICON_SVG('<path d="M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7"></path><path d="M3 13h18"></path><path d="M7 13V9a1 1 0 0 1 1-1h3"></path><path d="M3 18v3"></path><path d="M21 18v3"></path>') },
+  { key:'transport', labelKey:'expCatTransport', color:'#7FA694', icon:EXP_ICON_SVG('<circle cx="7" cy="17" r="2"></circle><circle cx="17" cy="17" r="2"></circle><path d="M5 17V10l2-5h10l3 5v7"></path><path d="M5 13h14"></path>') },
+  { key:'activities', labelKey:'expCatActivities', color:'#9C7BB0', icon:EXP_ICON_SVG('<rect x="2" y="6" width="20" height="12" rx="2"></rect><line x1="8" y1="6" x2="8" y2="18" stroke-dasharray="2 2"></line>') },
+  { key:'shopping', labelKey:'expCatShopping', color:'#B0A46E', icon:EXP_ICON_SVG('<path d="M6 7l1-3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2l1 3"></path><rect x="4" y="7" width="16" height="14" rx="2"></rect><path d="M9 11a3 3 0 0 0 6 0"></path>') },
+  { key:'nightlife', labelKey:'expCatNightlife', color:'#B33B34', icon:EXP_ICON_SVG('<path d="M4 4h16l-8 9z"></path><path d="M12 13v7"></path><path d="M8 20h8"></path>') },
+  { key:'groceries', labelKey:'expCatGroceries', color:'#5C9E8C', icon:EXP_ICON_SVG('<circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle><path d="M2 3h2l2.6 12.4a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 2-1.6L21 8H6"></path>') },
+  { key:'fees', labelKey:'expCatFees', color:'#8B8578', icon:EXP_ICON_SVG('<rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="3"></circle>') },
+  { key:'other', labelKey:'expCatOther', color:'#6B6D72', icon:EXP_ICON_SVG('<circle cx="5" cy="12" r="1.3"></circle><circle cx="12" cy="12" r="1.3"></circle><circle cx="19" cy="12" r="1.3"></circle>') },
 ];
 function expCategoryInfo(key){ return EXPENSE_CATEGORIES.find(c=>c.key===key) || EXPENSE_CATEGORIES[EXPENSE_CATEGORIES.length-1]; }
+// A category is either one of the fixed keys above, or -- when "Other" was
+// given a custom name -- the raw name itself IS the stored category value.
+// expCategoryInfo() already falls back to the Other entry's color/icon for
+// any unrecognized key; this is the matching label lookup, which falls back
+// to the raw string (the custom name) instead of the word "Other".
+function expCategoryLabel(key){
+  const known = EXPENSE_CATEGORIES.find(c=>c.key===key);
+  return known ? t(known.labelKey) : key;
+}
 function expLocale(){ return currentLang==='ko' ? 'ko-KR' : currentLang==='vi' ? 'vi-VN' : 'en-US'; }
 function expTodayStr(){ return new Date().toISOString().slice(0,10); }
 
@@ -26797,7 +26835,7 @@ function renderExpCategoryBreakdown(){
     const pct = grand>0 ? Math.round(amt/grand*100) : 0;
     return `<div style="margin-bottom:8px;">
       <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;">
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${info.color};margin-right:6px;"></span>${escapeHtml(t(info.labelKey))}</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${info.color};margin-right:6px;"></span>${escapeHtml(expCategoryLabel(key))}</span>
         <span>${expFormatMoney(amt)} · ${pct}%</span>
       </div>
       <div style="background:var(--paper);border-radius:4px;height:6px;overflow:hidden;">
@@ -26852,7 +26890,7 @@ function renderExpMonthGrid(){
     const maxShow = 3;
     const chips = dayExpenses.slice(0,maxShow).map(e=>{
       const info = expCategoryInfo(e.category);
-      return `<span class="event-chip" style="background:${info.color}22;color:${info.color};">${escapeHtml(e.description || t(info.labelKey))}</span>`;
+      return `<span class="event-chip" style="background:${info.color}22;color:${info.color};">${escapeHtml(e.description || expCategoryLabel(e.category))}</span>`;
     }).join('');
     const more = dayExpenses.length>maxShow ? `<div class="more-count">+${dayExpenses.length-maxShow}</div>` : '';
     const totalHtml = dayTotal>0 ? `<div style="font-family:'Space Grotesk',monospace;font-size:9px;color:var(--celadon-4);font-weight:700;">${expFormatMoney(dayTotal)}</div>` : '';
@@ -26886,30 +26924,80 @@ function renderExpDayAgenda(){
     const info = expCategoryInfo(e.category);
     return `<div class="item-row">
       <div class="item-top">
-        <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${info.color};margin-right:6px;"></span><span class="item-title">${escapeHtml(e.description || t(info.labelKey))}</span></div>
+        <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${info.color};margin-right:6px;"></span><span class="item-title">${escapeHtml(e.description || expCategoryLabel(e.category))}</span></div>
         <span style="font-family:'Space Grotesk',monospace;font-weight:700;">${expFormatMoney(Number(e.amount))}</span>
       </div>
       <div class="item-meta">
-        <span class="badge" style="background:${info.color}22;color:${info.color};">${escapeHtml(t(info.labelKey))}</span>
+        <span class="badge" style="background:${info.color}22;color:${info.color};">${escapeHtml(expCategoryLabel(e.category))}</span>
         <span style="color:var(--ink-soft);font-size:11.5px;">${escapeHtml(t('expPaidBy'))} ${escapeHtml(nameFor(e.paid_by))}</span>
         <button class="linkbtn exp-edit-btn" data-id="${e.id}">${escapeHtml(t('editBtn'))}</button>
         <button class="item-del exp-del-btn" data-id="${e.id}" title="Delete">✕</button>
       </div>
     </div>`;
   }).join('') || `<p class="hint">${escapeHtml(t('expNoExpensesThisDay'))}</p>`;
-  panel.innerHTML = `<h3 style="font-family:'Noto Serif KR',serif;font-size:14px;margin:0 0 10px;">${escapeHtml(expSelectedDate)}</h3>${rows}<button class="export-btn" id="expAddForDayBtn" style="margin-top:10px;">+ ${escapeHtml(t('expAddExpense'))}</button>`;
+  // The add button sits ABOVE the list, not below it -- fixed in place as
+  // you log several purchases for the same day in a row, rather than
+  // drifting further down the page after every single add.
+  panel.innerHTML = `<h3 style="font-family:'Noto Serif KR',serif;font-size:14px;margin:0 0 10px;">${escapeHtml(expSelectedDate)}</h3><button class="export-btn" id="expAddForDayBtn" style="margin-bottom:10px;">+ ${escapeHtml(t('expAddExpense'))}</button>${rows}`;
   panel.querySelectorAll('.exp-edit-btn').forEach(b=> b.addEventListener('click', ()=> openExpenseModal(expExpenses.find(e=>e.id===b.dataset.id))));
   panel.querySelectorAll('.exp-del-btn').forEach(b=> b.addEventListener('click', ()=> deleteExpense(b.dataset.id)));
   document.getElementById('expAddForDayBtn').addEventListener('click', ()=> openExpenseModal(null, expSelectedDate));
 }
+
+// The category picker itself is always one of the 9 fixed keys (drives the
+// icon/color); a custom "Other" name is a separate free-text field that
+// only shows once "Other" is picked, and only actually gets used as the
+// stored category if the person typed something into it (see
+// saveExpenseSubmit). Keeps the picker's own icon/color logic simple while
+// still letting the catch-all bucket carry a real name per vacation.
+let expFormCategoryValue = 'other';
+function renderExpCategoryPickerBtn(){
+  const info = expCategoryInfo(expFormCategoryValue);
+  document.getElementById('expFormCategoryBtn').innerHTML = `${info.icon}<span>${escapeHtml(t(info.labelKey))}</span>`;
+}
+function updateExpCustomCategoryFieldVisibility(){
+  document.getElementById('expCustomCategoryField').classList.toggle('hidden', expFormCategoryValue !== 'other');
+}
+function closeExpCategoryPickerList(){
+  document.getElementById('expFormCategoryList').classList.add('hidden');
+}
+function openExpCategoryPickerList(){
+  const list = document.getElementById('expFormCategoryList');
+  list.innerHTML = EXPENSE_CATEGORIES.map(c=>
+    `<button type="button" data-key="${c.key}">${c.icon}<span>${escapeHtml(t(c.labelKey))}</span></button>`
+  ).join('');
+  list.classList.remove('hidden');
+  list.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{
+    expFormCategoryValue = b.dataset.key;
+    renderExpCategoryPickerBtn();
+    updateExpCustomCategoryFieldVisibility();
+    closeExpCategoryPickerList();
+  }));
+}
+document.getElementById('expFormCategoryBtn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const list = document.getElementById('expFormCategoryList');
+  if(list.classList.contains('hidden')) openExpCategoryPickerList();
+  else closeExpCategoryPickerList();
+});
+document.addEventListener('click', (e)=>{
+  if(e.target.closest('#expFormCategoryBtn') || e.target.closest('#expFormCategoryList')) return;
+  closeExpCategoryPickerList();
+});
 
 function openExpenseModal(existing, defaultDate){
   expEditingId = existing ? existing.id : null;
   document.getElementById('expModalTitle').textContent = existing ? t('expEditExpense') : t('expAddExpense');
   document.getElementById('expFormDate').value = existing ? existing.date : (defaultDate || expSelectedDate || expTodayStr());
   document.getElementById('expFormAmount').value = existing ? existing.amount : '';
-  document.getElementById('expFormCategory').innerHTML = EXPENSE_CATEGORIES.map(c=>`<option value="${c.key}">${c.icon} ${escapeHtml(t(c.labelKey))}</option>`).join('');
-  document.getElementById('expFormCategory').value = existing ? existing.category : 'other';
+  // A category is either one of the 9 fixed keys, or -- when it isn't -- it
+  // IS a custom "Other" name from a previous save, so the picker shows
+  // Other and the custom field is pre-filled with the real stored value.
+  const isKnownCategory = existing && EXPENSE_CATEGORIES.some(c=>c.key===existing.category);
+  expFormCategoryValue = existing ? (isKnownCategory ? existing.category : 'other') : 'other';
+  renderExpCategoryPickerBtn();
+  document.getElementById('expCustomCategoryName').value = (existing && !isKnownCategory) ? existing.category : '';
+  updateExpCustomCategoryFieldVisibility();
   document.getElementById('expFormDescription').value = existing ? (existing.description||'') : '';
   const paidBySel = document.getElementById('expFormPaidBy');
   paidBySel.innerHTML = acceptedMemberIds().map(uid=> `<option value="${uid}">${escapeHtml(nameFor(uid))}</option>`).join('');
@@ -26922,7 +27010,8 @@ async function saveExpenseSubmit(){
   if(!vac) return;
   const date = document.getElementById('expFormDate').value;
   const amount = parseFloat(document.getElementById('expFormAmount').value);
-  const category = document.getElementById('expFormCategory').value;
+  const customCategoryName = document.getElementById('expCustomCategoryName').value.trim();
+  const category = (expFormCategoryValue==='other' && customCategoryName) ? customCategoryName : expFormCategoryValue;
   const description = document.getElementById('expFormDescription').value.trim();
   const paidBy = document.getElementById('expFormPaidBy').value;
   if(!date || !amount || amount<=0 || !paidBy){ alert(t('expFormInvalid')); return; }
@@ -27019,14 +27108,24 @@ function openNewVacationModal(){
   document.getElementById('newVacationStart').value = '';
   document.getElementById('newVacationEnd').value = '';
   document.getElementById('newVacationCurrency').value = 'USD';
+  document.getElementById('newVacationCustomCurrency').value = '';
+  document.getElementById('newVacationCustomCurrencyField').classList.add('hidden');
   document.getElementById('newVacationModal').classList.remove('hidden');
 }
+document.getElementById('newVacationCurrency').addEventListener('change', (e)=>{
+  document.getElementById('newVacationCustomCurrencyField').classList.toggle('hidden', e.target.value !== '__custom__');
+});
 async function createVacationSubmit(){
   const name = document.getElementById('newVacationName').value.trim();
   const start = document.getElementById('newVacationStart').value;
   const end = document.getElementById('newVacationEnd').value;
-  const currency = document.getElementById('newVacationCurrency').value;
-  if(!name || !start || !end){ alert(t('expFormInvalid')); return; }
+  const currencySel = document.getElementById('newVacationCurrency').value;
+  // A fixed list can't cover every trip -- "Other" reveals a plain text
+  // code instead of blocking on a currency we didn't happen to list.
+  const currency = currencySel === '__custom__'
+    ? document.getElementById('newVacationCustomCurrency').value.trim().toUpperCase()
+    : currencySel;
+  if(!name || !start || !end || !currency){ alert(t('expFormInvalid')); return; }
   if(end < start){ alert(t('expDateRangeInvalid')); return; }
   const { data, error } = await supabaseClient.rpc('create_vacation', { p_name:name, p_date_start:start, p_date_end:end, p_currency:currency });
   if(error){ alert(error.message); return; }
