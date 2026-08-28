@@ -27402,16 +27402,15 @@ function renderVacationMembersModal(){
     renderExpenditure();
   }));
   const inviteWrap = document.getElementById('vacationInviteCircleList');
-  // linkedPartnerIds() only covers the opt-in link_group_members invite
-  // flow -- it's NOT the whole circle. Kristoffer and Roxy are core members
-  // (profiles.is_core_member), always linked to each other with no invite
-  // ever sent (see amICore()/coreMembers, and "Always shared" in the
-  // Linked circle modal), so a core partner has no row in link_group_members
-  // at all and was invisible here even though the Linked circle modal
-  // correctly lists them (real-user report: "I am obviously in a circle
+  // visibleCircleMembers() (core partner + linked partners, no per-category
+  // filter -- the same rule notebook_notes-style features already use) is
+  // the right list here, not a fresh linkedPartnerIds()-only union: that
+  // earlier version missed core members entirely, since a core partner
+  // (Kristoffer/Roxy, profiles.is_core_member) has no link_group_members
+  // row at all -- see amICore()/coreMembers and "Always shared" in the
+  // Linked circle modal (real-user report: "I am obviously in a circle
   // with Roxy" while this list showed nobody).
-  const coreIds = Object.keys(profiles).filter(uid=>coreMembers[uid] && uid!==currentUser.id);
-  const allCircleIds = Array.from(new Set([...linkedPartnerIds(), ...coreIds]));
+  const allCircleIds = visibleCircleMembers();
   const circleIds = allCircleIds.filter(uid => !expActiveMembers.some(m=>m.user_id===uid));
   // Two genuinely different states -- an empty Linked circle vs. a circle
   // that's fully on this trip already -- were collapsed into one hedged
