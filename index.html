@@ -852,6 +852,17 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <button data-tab="jobs" id="tabBtnJobs"><svg class="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg><span id="tabBtnJobsLabel"></span></button>
     <div class="tab-flyout" id="tabFlyout"></div>
   </div>
+  <!-- Shown in place of every real panel from the moment appScreen becomes
+       visible until loadAllData() actually resolves -- see appDataLoading.
+       That gap is where any panel's own "you have none of X" fallback text
+       can flash on screen against data that hasn't been fetched yet, and
+       there turned out to be no reliably complete way to plug that hole one
+       fallback at a time (Expenses alone had two independent copies of it).
+       One gate here covers every tab and sub-tab at once, present and
+       future, without hunting each one down. -->
+  <div class="tab-panel" id="panelLoading">
+    <div class="card"><p class="hint" id="panelLoadingText"></p></div>
+  </div>
   <!-- STUDY TAB -->
   <div class="tab-panel hidden" id="panelStudy">
     <div class="cal-view-toggle" id="studySubToggle" style="margin-bottom:16px;">
@@ -1874,7 +1885,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
          the pool of people you can invite into a vacation -- no new circle
          concept, see sql migrations/expenditure_migration.sql. -->
     <div id="calendarExpensesSection" class="hidden">
-      <div class="card">
+      <div id="expLoadingState" class="card hidden">
+        <p class="hint" id="expLoadingStateText"></p>
+      </div>
+      <div id="expVacationsCard" class="card hidden">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
           <h2 id="hExpVacations" style="margin:0;"></h2>
           <span style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -8970,6 +8984,35 @@ let authMode = 'signin';
 let pendingConfirmEmail = null;
 let resendConfirmTimer = null;
 let activeTab = 'calendar';
+// True from the moment appScreen becomes visible until loadAllData() has
+// actually resolved (set/cleared in withLoadingGate() below) -- see the
+// comment on #panelLoading. switchTopLevelTab() keeps that panel up instead
+// of whatever tab was requested for as long as this is true, so it's the
+// one place any tab could show stale/empty content ahead of its data.
+let appDataLoading = true;
+// The "Loading…" panel itself is delayed by LOADING_SCREEN_DELAY_MS -- every
+// real panel is hidden right away (never a flash of stale content), but the
+// loading screen only actually appears if the wait outlasts that delay. On
+// a normal connection loadAllData() resolves in well under that, so signing
+// in just goes straight to real content with nothing shown in between (real-
+// user report: "it says a big Loading... every time you go somewhere...
+// most sites don't have that"). A tab clicked during the wait still shows
+// the loading panel immediately regardless of the timer, via
+// switchTopLevelTab's own check -- that's a reaction to an actual action,
+// not a passive flash, and deserves feedback right away.
+const LOADING_SCREEN_DELAY_MS = 200;
+async function withLoadingGate(loadFn){
+  appDataLoading = true;
+  document.getElementById('panelLoadingText').textContent = t('recapLoadingHint');
+  ['panelStudy','panelReading','panelJobs','panelCalendar','panelYonsei','panelLoading'].forEach(id=>{
+    document.getElementById(id).classList.add('hidden');
+  });
+  const timer = setTimeout(()=>{ if(appDataLoading) switchTopLevelTab(activeTab); }, LOADING_SCREEN_DELAY_MS);
+  await loadFn();
+  clearTimeout(timer);
+  appDataLoading = false;
+  switchTopLevelTab(activeTab);
+}
 let expandedBookNotes = new Set();
 let expandedArticleNotes = new Set();
 let calViewDate = new Date();
@@ -9529,7 +9572,7 @@ async function onAuthed(user){
   document.getElementById('resetScreen').classList.add('hidden');
   document.getElementById('mfaScreen').classList.add('hidden');
   document.getElementById('appScreen').classList.remove('hidden');
-  await loadAllData();
+  await withLoadingGate(loadAllData);
   renderNotesLinkHeaderBtn();
   await ensureProfileExists(user);
   rebuildForUserSelect();
@@ -10287,7 +10330,7 @@ async function enterGuestMode(){
   currentUser = { id: 'guest-local', email: null };
   document.getElementById('authScreen').classList.add('hidden');
   document.getElementById('appScreen').classList.remove('hidden');
-  await loadAllData();
+  await withLoadingGate(loadAllData);
   renderNotesLinkHeaderBtn();
   // ensureProfileExists() skipped -- the guest profile row is already
   // seeded by freshGuestStore(), upserting it again would be pointless.
@@ -11515,11 +11558,16 @@ function switchTopLevelTab(view){
   document.querySelectorAll('#tabNav button').forEach(b=>b.classList.remove('active'));
   const btn = document.getElementById('tabNav').querySelector(`button[data-tab="${view}"]`);
   if(btn) btn.classList.add('active');
-  document.getElementById('panelStudy').classList.toggle('hidden', activeTab!=='study');
-  document.getElementById('panelReading').classList.toggle('hidden', activeTab!=='reading');
-  document.getElementById('panelJobs').classList.toggle('hidden', activeTab!=='jobs');
-  document.getElementById('panelCalendar').classList.toggle('hidden', activeTab!=='calendar');
-  document.getElementById('panelYonsei').classList.toggle('hidden', activeTab!=='yonsei');
+  // Still tracks which tab was asked for (activeTab, and the button's own
+  // active state) even while loading, so whichever one the reader actually
+  // clicked is the one that appears the moment data's ready -- only the
+  // PANELS stay pinned to the loading one until then.
+  document.getElementById('panelLoading').classList.toggle('hidden', !appDataLoading);
+  document.getElementById('panelStudy').classList.toggle('hidden', appDataLoading || activeTab!=='study');
+  document.getElementById('panelReading').classList.toggle('hidden', appDataLoading || activeTab!=='reading');
+  document.getElementById('panelJobs').classList.toggle('hidden', appDataLoading || activeTab!=='jobs');
+  document.getElementById('panelCalendar').classList.toggle('hidden', appDataLoading || activeTab!=='calendar');
+  document.getElementById('panelYonsei').classList.toggle('hidden', appDataLoading || activeTab!=='yonsei');
 }
 document.getElementById('tabNav').addEventListener('click', (e)=>{
   const btn = e.target.closest('button');
@@ -14963,10 +15011,15 @@ function openQuickView(eventId, dateKey){
   document.getElementById('calQuickViewModal').classList.remove('hidden');
 }
 async function saveEventEdit(eventId, wrap){
-  // Birthday's edit panel omits time/end-time/notes/for/color/recurrence
-  // (see buildEventEditFieldsHtml) -- those fields simply aren't in the DOM
-  // for a birthday, so each falls back to the event's own current value
-  // rather than throwing on a missing element or silently wiping it blank.
+  // Birthday's edit panel omits time/end-time/for/color/recurrence (see
+  // buildEventEditFieldsHtml) -- those fields simply aren't in the DOM for
+  // a birthday, so each falls back to the event's own current value rather
+  // than throwing on a missing element or silently wiping it blank. Notes
+  // stays in the DOM for every kind, birthday included -- it's where a
+  // birthday's own relation/nickname text lives ("Kristoffer's Grandma
+  // (Mom)"), so leaving it out the same way time/color are left out took
+  // away the one field birthdays actually needed to edit (real-user report:
+  // "I can't change the notes here").
   const ev = findEventById(eventId) || {};
   const title = wrap.querySelector('.edit-title').value.trim();
   const kind = wrap.querySelector('.edit-kind').value;
@@ -15259,10 +15312,13 @@ function fineCountdownText(targetMs, nowMs){
   return diffMs >= 0 ? `${fine} ${t('fineLeft')}` : `${fine} ${t('fineAgo')}`;
 }
 function buildEventEditFieldsHtml(ev){
-  // Birthdays force everything except title/date/visibility from addEvent()
-  // already (always yearly, always personal/no "for", auto-colored) -- the
-  // edit panel used to expose all of it anyway, letting an edit silently
-  // pull a birthday out of that shape. Only what's actually editable shows.
+  // Birthdays force everything except title/date/notes/visibility from
+  // addEvent() already (always yearly, no set time, always personal/no
+  // "for", auto-colored) -- the edit panel used to expose all of it anyway,
+  // letting an edit silently pull a birthday out of that shape. Only what's
+  // actually editable shows -- notes stays in for every kind, since that's
+  // where a birthday's own relation/nickname text lives, not something
+  // addEvent() forces.
   const isBirthday = ev.kind === 'birthday';
   return `
     <div class="field wide">
@@ -15289,12 +15345,12 @@ function buildEventEditFieldsHtml(ev){
     <div class="field">
       <label>${t('eventEndTime')}</label>
       <input type="time" class="edit-end-time" value="${ev.event_end_time||''}">
-    </div>
+    </div>`}
     <div class="field wide">
       <label>${t('eventNotes')}</label>
       <input type="text" class="edit-notes" value="${(ev.notes||'').replace(/"/g,'&quot;')}">
     </div>
-    ${amICore() ? `<div class="field">
+    ${isBirthday ? '' : `${amICore() ? `<div class="field">
       <label>${t('eventForUser')}</label>
       <select class="edit-for-user">
         ${Object.keys(profiles).filter(uid=>coreMembers[uid]).map(uid=>`<option value="${uid}" ${ev.user_id===uid?'selected':''}>${nameFor(uid)}</option>`).join('')}
@@ -27411,19 +27467,33 @@ function expFormatMoney(amount, currency){
 // Top-level orchestrator -- called on sub-tab switch and after any local
 // mutation, so every card always reflects the same in-memory state.
 function renderExpenditure(){
+  // Still checking is a THIRD state, not a variant of "no vacations" --
+  // the Vacations switcher card has its own "No vacations yet" fallback
+  // (renderExpVacationSwitcher, below) that's just as capable of flashing
+  // a false negative as the empty-state card was, and patching each box
+  // that happens to render some kind of empty text is exactly how the
+  // first fix missed this one (real-user report: "you only put the
+  // loading in one of the boxes... can't we just have loading for the
+  // whole subtab"). So this now gates the WHOLE section in one place --
+  // nothing below this block renders anything, real or empty, until the
+  // initial load has actually finished.
+  document.getElementById('expLoadingState').classList.toggle('hidden', expInitialLoadDone);
+  document.getElementById('expVacationsCard').classList.toggle('hidden', !expInitialLoadDone);
+  if(!expInitialLoadDone){
+    document.getElementById('expLoadingStateText').textContent = t('recapLoadingHint');
+    document.getElementById('expEmptyState').classList.add('hidden');
+    document.getElementById('expActiveContent').classList.add('hidden');
+    return;
+  }
   renderExpVacationSwitcher();
   const vac = activeVacation();
   document.getElementById('expEmptyState').classList.toggle('hidden', !!vac);
   document.getElementById('expActiveContent').classList.toggle('hidden', !vac);
   if(!vac){
-    // Three genuinely different facts, not one: still checking, couldn't
-    // check, or genuinely none -- see expInitialLoadDone/expLoadFailed
-    // above. Checked in that order, since "haven't looked yet" and
-    // "looked and it failed" both have to be ruled out before "confirmed
-    // empty" is the honest thing to say.
-    const textKey = !expInitialLoadDone ? 'recapLoadingHint' : expLoadFailed ? 'expLoadFailedHint' : 'expEmptyStateText';
-    document.getElementById('expEmptyStateText').textContent = t(textKey);
-    document.getElementById('expRetryLoadBtn').classList.toggle('hidden', !expLoadFailed || !expInitialLoadDone);
+    // Two facts left to tell apart now that "still checking" is handled
+    // above: couldn't check, or checked and genuinely none.
+    document.getElementById('expEmptyStateText').textContent = t(expLoadFailed ? 'expLoadFailedHint' : 'expEmptyStateText');
+    document.getElementById('expRetryLoadBtn').classList.toggle('hidden', !expLoadFailed);
     document.getElementById('expRetryLoadBtn').textContent = t('expRetryLoadBtn');
     return;
   }
