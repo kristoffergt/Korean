@@ -130,25 +130,24 @@ body.dark .brand-mark h1{color:#ffffff;}
 .auth-msg .auth-msg-inner{font-size:13px;margin-top:12px;padding:10px 14px;border-radius:8px;font-weight:600;line-height:1.4;}
 .auth-msg-inner.error{background:#F3D9D7;color:var(--seal-dark);border:1px solid var(--seal);border-left:4px solid var(--seal);}
 .auth-msg-inner.info{background:var(--celadon-1);color:var(--celadon-4);border:1px solid var(--celadon-3);border-left:4px solid var(--celadon-3);}
-/* Site PIN entry: 4 separate boxes instead of one 4-char field.
-   Redesigned after the first pass (a 7px dot arcing 22px between boxes,
-   and a 230x84 oval spun with rotate()) turned out to fail at real size --
-   the dot was too small to actually see, and rotating a non-circular oval
-   doesn't sweep like a spinner, it visibly squashes as it turns. Everything
-   below reads at the size this form is actually shown at:
-   - each box POPS (scale bounce) the instant its own digit lands --
-     per-box feedback, not a separate moving element to track
-   - a segmented progress bar under the row fills as you go, and shimmers
-     across itself while the code is being checked -- both classic,
-     reliably-legible patterns rather than a custom geometry that can
-     read as broken if the math is even slightly off
-   - the boxes breathe (a synchronized glow pulse, opacity-only so nothing
-     changes size or position) while verifying, instead of spinning
-   - success morphs the row into a checkmark badge and gives it real hold
-     time before the whole card fades out -- the old version cut straight
-     from "boxes turn green" to the next screen with nothing in between
-   - failure keeps the shake -- that part read fine -- but hits harder
-     (bigger amplitude) and the progress bar goes red with it */
+/* Animated digit-code entry (site PIN gate + authenticator challenge; one
+   shared component, see createDigitCodeRow). The first pass here (a 7px
+   dot arcing between boxes, an oval spun with rotate()) failed at real
+   size -- too small to see, and a rotated non-circle squashes rather than
+   sweeps. Everything below is built from moves that read at the size the
+   form is actually shown at, one per moment:
+   - ARRIVING: boxes cascade in one after another (pinEnter), and the
+     focused empty slot pulses softly while it waits (pinFocusPulse)
+   - TYPING: the box a digit lands in pops with a border flash (pinPop),
+     and a progress bar under the row fills as you go
+   - VERIFYING: a lift travels across the row like a wave (pinWave,
+     phase-shifted per box) while the bar shimmers -- motion that clearly
+     means "working" without anything spinning
+   - SUCCESS: green hops roll down the row, then the boxes dissolve into a
+     badge whose checkmark draws itself with a ripple behind it, held long
+     enough to actually see before the card fades out
+   - FAILURE: the whole ROW shakes once as a rigid unit, everything goes
+     red, then the cleared boxes cascade back in ready for another try */
 .pin-digits{display:flex;gap:12px;justify-content:center;position:relative;margin:8px 0 12px;}
 .pin-digit{
   width:54px;height:62px;font-family:'Space Grotesk',monospace;font-size:26px;font-weight:700;
@@ -158,26 +157,65 @@ body.dark .brand-mark h1{color:#ffffff;}
 .pin-digit:focus{outline:none;border-color:var(--celadon-4);box-shadow:0 0 0 3px rgba(79,117,99,0.18);}
 .pin-digit.filled{border-color:var(--celadon-3);}
 .pin-digit.pin-fail{border-color:var(--seal)!important;box-shadow:0 0 0 4px rgba(179,59,52,0.22)!important;color:var(--seal-dark);}
-.pin-digit.pin-success{border-color:var(--celadon-4)!important;box-shadow:0 0 0 4px rgba(79,117,99,0.32)!important;}
-.pin-digit.pin-pop{animation:pinPop 0.32s cubic-bezier(.34,1.56,.64,1);}
+/* The focused-but-empty box pulses gently, so the slot waiting for input
+   reads alive before anything is typed. Scoped to :not(.filled): the moment
+   its digit lands the pulse stops and the pop below takes over, and during
+   verify every box is .filled so this can never fight the wave. */
+.pin-digit:focus:not(.filled){animation:pinFocusPulse 1.6s ease-in-out infinite;}
+@keyframes pinFocusPulse{
+  0%,100%{box-shadow:0 0 0 3px rgba(79,117,99,0.18);}
+  50%{box-shadow:0 0 0 6px rgba(79,117,99,0.05);}
+}
+/* Entrance cascade -- boxes rise in one after another (delay set per box in
+   JS) when the screen appears, and again when a failed code clears. 'both'
+   fill keeps a box invisible until its own turn, which IS the cascade.
+   Kept AFTER the focus-pulse rule: same specificity, so source order lets
+   the entrance win on the first box (focused from the start) until it
+   lands. */
+.pin-digits .pin-digit.pin-enter{animation:pinEnter 0.3s cubic-bezier(.22,1.2,.36,1) both;}
+@keyframes pinEnter{
+  from{opacity:0;transform:translateY(12px) scale(0.94);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.pin-digit.pin-pop{animation:pinPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 @keyframes pinPop{
   0%{transform:scale(1);}
-  45%{transform:scale(1.16);box-shadow:0 0 0 6px rgba(79,117,99,0.22);}
+  40%{transform:scale(1.15);border-color:var(--celadon-4);box-shadow:0 0 0 7px rgba(79,117,99,0.20);}
   100%{transform:scale(1);}
 }
-.pin-digit.pin-shake{animation:pinShake 0.44s;}
+/* The shake lives on the ROW, not each box -- four boxes running identical
+   shakes land on slightly different subpixels and read as jitter; one
+   transform on the flex container moves them as a single rigid thing. */
+.pin-digits.pin-shake-row{animation:pinShake 0.44s;}
 @keyframes pinShake{
   10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(5px);}
   30%,50%,70%{transform:translateX(-8px);} 40%,60%{transform:translateX(8px);}
 }
-.pin-digit.pin-breathe{animation:pinBreathe 1.1s ease-in-out infinite;}
-@keyframes pinBreathe{
-  0%,100%{box-shadow:0 0 0 0 rgba(79,117,99,0.3);}
-  50%{box-shadow:0 0 0 6px rgba(79,117,99,0.04);}
+/* Verifying: a wave travels across the row -- every box runs the same bob,
+   phase-shifted by a negative animation-delay set per box in JS, so the
+   lift rolls left-to-right for as long as the check is in flight. */
+.pin-digit.pin-breathe{animation:pinWave 1s ease-in-out infinite;}
+@keyframes pinWave{
+  0%,100%{transform:translateY(0);box-shadow:0 0 0 0 rgba(79,117,99,0.22);}
+  50%{transform:translateY(-5px);box-shadow:0 8px 14px -6px rgba(79,117,99,0.4);}
+}
+/* Success: each box hops as it turns green, rolling down the row. */
+.pin-digit.pin-success{border-color:var(--celadon-4)!important;color:var(--celadon-4);box-shadow:0 0 0 4px rgba(79,117,99,0.28)!important;animation:pinSuccessHop 0.45s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pinSuccessHop{
+  0%{transform:translateY(0);}
+  40%{transform:translateY(-10px);}
+  100%{transform:translateY(0);}
 }
 .pin-digits.pin-morph-out .pin-digit{opacity:0;transform:scale(0.82);}
 
 .pin-progress-track{width:238px;height:5px;margin:0 auto 2px;border-radius:3px;background:var(--line);overflow:hidden;}
+/* The authenticator code is 6 digits, not 4 -- the site-PIN box size (54px
+   +12px gaps, 244px total) would run to 384px at 6 boxes, wider than the
+   328px an auth-card actually has to give it. .compact is that same
+   component sized down to fit, not a second implementation. */
+.pin-digits.compact{gap:7px;}
+.pin-digits.compact .pin-digit{width:39px;height:52px;font-size:19px;border-radius:9px;}
+.pin-progress-track.compact{width:269px;}
 .pin-progress-fill{height:100%;width:0%;border-radius:3px;background:var(--celadon-4);transition:width 0.3s cubic-bezier(.34,1.2,.64,1),background-color 0.2s;position:relative;overflow:hidden;}
 .pin-progress-fill.pin-progress-fail{background:var(--seal);}
 .pin-progress-fill.pin-progress-shimmer::after{
@@ -191,12 +229,35 @@ body.dark .brand-mark h1{color:#ffffff;}
   position:absolute;inset:0;margin:auto;width:60px;height:60px;border-radius:16px;
   display:flex;align-items:center;justify-content:center;
   background:var(--paper);border:2px solid var(--celadon-4);color:var(--celadon-4);
-  opacity:0;transform:scale(0.5);transition:opacity 0.26s,transform 0.26s cubic-bezier(.34,1.56,.64,1);
+  opacity:0;transform:scale(0.5);transition:opacity 0.28s,transform 0.32s cubic-bezier(.34,1.56,.64,1);
   pointer-events:none;
 }
 .pin-success-badge.active{opacity:1;transform:scale(1);}
-.auth-card.pin-card-exit{animation:pinCardExit 0.32s ease forwards;}
-@keyframes pinCardExit{ to{opacity:0;transform:scale(0.96) translateY(-6px);} }
+/* The checkmark DRAWS itself once the badge lands (24 ~= the polyline's
+   own path length, so one dashoffset sweep is one stroke of the pen), and
+   a ring ripples out behind it -- the badge arriving is the moment, so it
+   gets the flourish rather than the boxes. */
+.pin-success-badge polyline{stroke-dasharray:24;stroke-dashoffset:24;}
+.pin-success-badge.active polyline{animation:pinCheckDraw 0.45s cubic-bezier(.65,0,.35,1) 0.14s forwards;}
+@keyframes pinCheckDraw{ to{stroke-dashoffset:0;} }
+.pin-success-badge::after{content:'';position:absolute;inset:-2px;border-radius:inherit;border:2px solid var(--celadon-3);opacity:0;}
+.pin-success-badge.active::after{animation:pinRipple 0.7s ease-out 0.1s;}
+@keyframes pinRipple{
+  0%{opacity:0.7;transform:scale(1);}
+  100%{opacity:0;transform:scale(1.9);}
+}
+.auth-card.pin-card-exit{animation:pinCardExit 0.38s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes pinCardExit{ to{opacity:0;transform:scale(0.97) translateY(-8px);} }
+/* Colour states (green/red borders, filled bar) all live in plain class
+   declarations above, so turning the MOTION off leaves every state still
+   fully communicated. */
+@media (prefers-reduced-motion: reduce){
+  .pin-digit.pin-pop,.pin-digits .pin-digit.pin-enter,.pin-digit.pin-breathe,.pin-digit.pin-success,
+  .pin-digits.pin-shake-row,.pin-digit:focus:not(.filled),
+  .pin-progress-fill.pin-progress-shimmer::after,.pin-success-badge.active::after{animation:none!important;}
+  .pin-success-badge polyline{stroke-dashoffset:0;animation:none!important;}
+  .auth-card.pin-card-exit{animation:none!important;opacity:0;}
+}
 /* The title has the whole top row to itself now -- .who used to share that
    row with it (side by side, space-between), which is exactly what forced
    the icons to wrap onto their own second line once the title's width plus
@@ -885,7 +946,18 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="auth-sub" id="lblMfaPromptTitle"></div>
     <div class="auth-sub" id="lblMfaPromptHint"></div>
     <div class="auth-field" id="mfaCodeField">
-      <input type="text" id="mfaCodeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+      <div class="pin-digits compact" id="mfaDigitsWrap">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" class="pin-digit" data-idx="0">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" class="pin-digit" data-idx="1">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" class="pin-digit" data-idx="2">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" class="pin-digit" data-idx="3">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" class="pin-digit" data-idx="4">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" class="pin-digit" data-idx="5">
+        <div class="pin-success-badge" id="mfaSuccessBadge">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+      </div>
+      <div class="pin-progress-track compact"><div class="pin-progress-fill" id="mfaProgressFill"></div></div>
     </div>
     <div class="auth-field hidden" id="mfaBackupCodeField">
       <input type="text" id="mfaBackupCodeInput" autocomplete="off" maxlength="9" placeholder="XXXX-XXXX">
@@ -9499,127 +9571,162 @@ document.getElementById('resendConfirmBtn').addEventListener('click', async ()=>
   showAuthMsg(t('resendConfirmSent'), 'info');
   armResendConfirm(pendingConfirmEmail);
 });
-const PIN_LENGTH = 4;
-let pinVerifying = false;
-function pinDigitInputs(){ return Array.from(document.querySelectorAll('.pin-digit')); }
-function pinValue(){ return pinDigitInputs().map(i=>i.value).join(''); }
-function pinInputAt(idx){ return pinDigitInputs().find(i=>i.dataset.idx===String(idx)); }
-function updatePinProgress(){
-  const filledCount = pinDigitInputs().filter(i=>i.value).length;
-  document.getElementById('pinProgressFill').style.width = (filledCount / PIN_LENGTH * 100) + '%';
-}
-// Re-triggers the pop even if this box is still mid-animation from a fast
-// typist -- removing the class and forcing a reflow before re-adding it is
-// the standard way to restart a CSS animation from its own start.
-function popPinDigit(inp){
-  inp.classList.remove('pin-pop');
-  void inp.offsetWidth;
-  inp.classList.add('pin-pop');
-}
-function wirePinDigits(){
-  pinDigitInputs().forEach((inp, i)=>{
+// One animated digit-box row, reused by the site-PIN gate (4 digits) and
+// the authenticator challenge (6 digits) -- built as a factory rather than
+// a second copy-pasted block once there were two of these on the same
+// page: the original version queried '.pin-digit' globally, which would
+// have grabbed boxes from BOTH rows at once the moment a second one
+// existed. Everything here is scoped to the row's own wrapId.
+// onComplete fires once every box is filled, or on Enter regardless of
+// fill state (same as the old single-input version did) -- the caller's
+// own submit function is expected to no-op on an incomplete code.
+function createDigitCodeRow(wrapId, length, progressFillId, successBadgeId, cardSelector, onComplete){
+  const wrap = document.getElementById(wrapId);
+  const digitInputs = () => Array.from(wrap.querySelectorAll('.pin-digit'));
+  const value = () => digitInputs().map(i=>i.value).join('');
+  const inputAt = (idx) => digitInputs().find(i=>i.dataset.idx===String(idx));
+  function updateProgress(){
+    const filledCount = digitInputs().filter(i=>i.value).length;
+    document.getElementById(progressFillId).style.width = (filledCount / length * 100) + '%';
+  }
+  // Re-triggers the pop even mid-animation from a fast typist -- removing
+  // the class and forcing a reflow before re-adding it is the standard way
+  // to restart a CSS animation from its own start. Also drops any entrance
+  // cascade still running on this box (and its stagger delay), or a digit
+  // typed during the cascade would pop on the cascade's own late clock.
+  function popDigit(inp){
+    inp.classList.remove('pin-pop','pin-enter');
+    inp.style.animationDelay = '';
+    void inp.offsetWidth;
+    inp.classList.add('pin-pop');
+  }
+  // The boxes rise in one after another. animation-delay + fill:both keeps
+  // each box invisible until its own turn, which is what makes it read as
+  // a cascade rather than four late fades.
+  function playEntrance(){
+    digitInputs().forEach((inp, i)=>{
+      inp.classList.remove('pin-enter');
+      void inp.offsetWidth;
+      inp.style.animationDelay = (i*45)+'ms';
+      inp.classList.add('pin-enter');
+    });
+    setTimeout(()=>{
+      digitInputs().forEach(inp=>{ inp.classList.remove('pin-enter'); inp.style.animationDelay = ''; });
+    }, length*45 + 400);
+  }
+  digitInputs().forEach((inp, i)=>{
     inp.addEventListener('input', ()=>{
       const digit = inp.value.replace(/[^0-9]/g,'').slice(-1);
       inp.value = digit;
       inp.classList.toggle('filled', !!digit);
-      if(digit) popPinDigit(inp);
-      updatePinProgress();
-      const next = pinInputAt(i+1);
+      if(digit) popDigit(inp);
+      updateProgress();
+      const next = inputAt(i+1);
       if(digit && next) next.focus();
-      if(pinValue().length === PIN_LENGTH) submitPinGate();
+      if(value().length === length) onComplete();
     });
     inp.addEventListener('keydown', (e)=>{
       if(e.key === 'Backspace' && !inp.value){
-        const prev = pinInputAt(i-1);
-        if(prev){ prev.value = ''; prev.classList.remove('filled'); prev.focus(); updatePinProgress(); }
+        const prev = inputAt(i-1);
+        if(prev){ prev.value = ''; prev.classList.remove('filled'); prev.focus(); updateProgress(); }
       } else if(e.key === 'Enter'){
-        e.preventDefault(); submitPinGate();
+        e.preventDefault(); onComplete();
       }
     });
     inp.addEventListener('paste', (e)=>{
       e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g,'').slice(0, PIN_LENGTH);
+      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g,'').slice(0, length);
       if(!text) return;
       text.split('').forEach((ch, idx)=>{
-        const target = pinInputAt(idx);
-        if(target){ target.value = ch; target.classList.add('filled'); popPinDigit(target); }
+        const target = inputAt(idx);
+        if(target){ target.value = ch; target.classList.add('filled'); popDigit(target); }
       });
-      updatePinProgress();
-      const landOn = pinInputAt(Math.min(text.length, PIN_LENGTH-1));
+      updateProgress();
+      const landOn = inputAt(Math.min(text.length, length-1));
       if(landOn) landOn.focus();
-      if(pinValue().length === PIN_LENGTH) submitPinGate();
+      if(value().length === length) onComplete();
     });
   });
+  function reset(focusFirst){
+    digitInputs().forEach(inp=>{
+      inp.value = '';
+      inp.classList.remove('filled','pin-fail','pin-success','pin-breathe','pin-pop','pin-enter');
+      inp.style.animationDelay = '';
+    });
+    wrap.classList.remove('pin-morph-out','pin-shake-row');
+    document.getElementById(successBadgeId).classList.remove('active');
+    document.getElementById(progressFillId).classList.remove('pin-progress-fail','pin-progress-shimmer');
+    updateProgress();
+    if(focusFirst){ const first = inputAt(0); if(first) first.focus(); }
+  }
+  // A lift that travels across the row like a wave, plus a shimmer across
+  // the now-full progress bar, for as long as the check is in flight. The
+  // per-box phase shift is a NEGATIVE animation-delay: every box starts
+  // animating immediately, already partway through its own cycle, so the
+  // wave exists from the first frame instead of assembling box by box.
+  function startVerifying(){
+    digitInputs().forEach((inp,i)=>{
+      inp.style.animationDelay = (-i*0.13)+'s';
+      inp.classList.add('pin-breathe');
+    });
+    document.getElementById(progressFillId).classList.add('pin-progress-shimmer');
+  }
+  function stopVerifying(){
+    digitInputs().forEach(inp=>{ inp.classList.remove('pin-breathe'); inp.style.animationDelay = ''; });
+    document.getElementById(progressFillId).classList.remove('pin-progress-shimmer');
+  }
+  // One rigid shake of the whole row + red boxes + a red progress bar,
+  // then clear and cascade back in, ready for another try. Clearing
+  // (rather than leaving the wrong code sitting there) is deliberate: it
+  // stops a re-submit of the same wrong digits.
+  function playFailure(){
+    digitInputs().forEach(inp=> inp.classList.add('pin-fail'));
+    wrap.classList.remove('pin-shake-row');
+    void wrap.offsetWidth;
+    wrap.classList.add('pin-shake-row');
+    document.getElementById(progressFillId).classList.add('pin-progress-fail');
+    setTimeout(()=>{ reset(true); playEntrance(); }, 500);
+  }
+  // Green hops roll down the row; once the LAST hop has fully landed the
+  // boxes dissolve into the checkmark badge, whose check draws itself
+  // (pinCheckDraw) with a ripple behind it -- the hold before the card
+  // exits is sized so the draw finishes well inside it, so the moment is
+  // actually seen rather than cut off mid-stroke.
+  function playSuccess(onDone){
+    const inputs = digitInputs();
+    inputs.forEach((inp,i)=> setTimeout(()=> inp.classList.add('pin-success'), i*70));
+    const morphDelay = inputs.length*70 + 460;
+    setTimeout(()=>{
+      wrap.classList.add('pin-morph-out');
+      document.getElementById(successBadgeId).classList.add('active');
+    }, morphDelay);
+    const cardExitDelay = morphDelay + 780;
+    if(cardSelector){
+      setTimeout(()=> document.querySelector(cardSelector).classList.add('pin-card-exit'), cardExitDelay);
+    }
+    setTimeout(onDone, cardExitDelay + (cardSelector ? 380 : 0));
+  }
+  return { value, inputAt, reset, startVerifying, stopVerifying, playFailure, playSuccess, playEntrance };
 }
-wirePinDigits();
-function resetPinDigits(focusFirst){
-  pinDigitInputs().forEach(inp=>{
-    inp.value = '';
-    inp.classList.remove('filled','pin-fail','pin-success','pin-shake','pin-breathe','pin-pop');
-  });
-  document.getElementById('pinDigitsWrap').classList.remove('pin-morph-out');
-  document.getElementById('pinSuccessBadge').classList.remove('active');
-  document.getElementById('pinProgressFill').classList.remove('pin-progress-fail','pin-progress-shimmer');
-  updatePinProgress();
-  if(focusFirst){ const first = pinInputAt(0); if(first) first.focus(); }
-}
-// A synchronized glow pulse (opacity/box-shadow only -- nothing moves or
-// resizes) plus a shimmer sweeping across the now-full progress bar, for
-// as long as the RPC call is in flight. Staggered by 60ms per box so the
-// four don't pulse in dead lockstep.
-function startPinVerifying(){
-  pinDigitInputs().forEach((inp,i)=> setTimeout(()=> inp.classList.add('pin-breathe'), i*60));
-  document.getElementById('pinProgressFill').classList.add('pin-progress-shimmer');
-}
-function stopPinVerifying(){
-  pinDigitInputs().forEach(inp=> inp.classList.remove('pin-breathe'));
-  document.getElementById('pinProgressFill').classList.remove('pin-progress-shimmer');
-}
-// Shake + red flash + a red progress bar, then clear -- matching the shape
-// of feedback this app already uses for a wrong password elsewhere.
-// Clearing (rather than leaving the wrong code sitting there) is
-// deliberate: it stops a re-submit of the exact digits that just failed.
-function playPinFailure(){
-  const inputs = pinDigitInputs();
-  inputs.forEach(inp=> inp.classList.add('pin-fail','pin-shake'));
-  document.getElementById('pinProgressFill').classList.add('pin-progress-fail');
-  setTimeout(()=>{ resetPinDigits(true); }, 460);
-}
-// Boxes light up green in sequence, then dissolve into a checkmark badge
-// that gets real hold time (checked, not just flashed) before the whole
-// card fades out and the screens swap underneath that fade -- the very
-// first version cut straight from "boxes turn green" to the next screen
-// with nothing in between, which is what made the ending feel so abrupt.
-function playPinSuccess(onDone){
-  const inputs = pinDigitInputs();
-  inputs.forEach((inp,i)=> setTimeout(()=> inp.classList.add('pin-success'), i*50));
-  const morphDelay = inputs.length*50 + 150;
-  setTimeout(()=>{
-    document.getElementById('pinDigitsWrap').classList.add('pin-morph-out');
-    document.getElementById('pinSuccessBadge').classList.add('active');
-  }, morphDelay);
-  const cardExitDelay = morphDelay + 650;
-  setTimeout(()=>{
-    document.querySelector('#pinGateScreen .auth-card').classList.add('pin-card-exit');
-  }, cardExitDelay);
-  setTimeout(onDone, cardExitDelay + 320);
-}
+
+let pinVerifying = false;
+const pinBox = createDigitCodeRow('pinDigitsWrap', 4, 'pinProgressFill', 'pinSuccessBadge', '#pinGateScreen .auth-card', ()=> submitPinGate());
 async function submitPinGate(){
   if(pinVerifying) return;
-  const code = pinValue();
-  if(code.length !== PIN_LENGTH) return;
+  const code = pinBox.value();
+  if(code.length !== 4) return;
   pinVerifying = true;
   document.getElementById('pinGateMsg').innerHTML = '';
-  startPinVerifying();
+  pinBox.startVerifying();
   const { data: ok, error } = await supabaseClient.rpc('verify_site_pin', { candidate: code });
-  stopPinVerifying();
+  pinBox.stopVerifying();
   pinVerifying = false;
   if(error || !ok){
-    playPinFailure();
+    pinBox.playFailure();
     document.getElementById('pinGateMsg').innerHTML = `<div class="auth-msg-inner error">${t('pinGateWrongMsg')}</div>`;
     return;
   }
-  playPinSuccess(()=>{
+  pinBox.playSuccess(()=>{
     localStorage.setItem('sitePinVerified', 'true');
     document.getElementById('pinGateScreen').classList.add('hidden');
     document.querySelector('#pinGateScreen .auth-card').classList.remove('pin-card-exit');
@@ -9718,7 +9825,7 @@ async function checkMfaAndProceed(user){
       pendingMfaFactorId = factor.id;
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('resetScreen').classList.add('hidden');
-      document.getElementById('mfaCodeInput').value = '';
+      mfaBox.reset(true);
       document.getElementById('mfaBackupCodeInput').value = '';
       document.getElementById('mfaCodeField').classList.remove('hidden');
       document.getElementById('mfaBackupCodeField').classList.add('hidden');
@@ -9726,18 +9833,16 @@ async function checkMfaAndProceed(user){
       mfaBackupMode = false;
       document.getElementById('mfaMsg').innerHTML = '';
       document.getElementById('mfaScreen').classList.remove('hidden');
+      mfaBox.playEntrance();
       return;
     }
   }
   onAuthed(user);
 }
-document.getElementById('mfaCodeInput').addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('mfaVerifyBtn').click(); }
-});
 document.getElementById('mfaBackupCodeInput').addEventListener('keydown', (e)=>{
   if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('mfaVerifyBtn').click(); }
 });
-// Toggles the MFA challenge screen between the normal 6-digit TOTP input and
+// Toggles the MFA challenge screen between the normal 6-digit TOTP entry and
 // the backup-code fallback (for when the authenticator app/device is lost).
 let mfaBackupMode = false;
 document.getElementById('mfaUseBackupBtn').addEventListener('click', ()=>{
@@ -9746,8 +9851,42 @@ document.getElementById('mfaUseBackupBtn').addEventListener('click', ()=>{
   document.getElementById('mfaBackupCodeField').classList.toggle('hidden', !mfaBackupMode);
   document.getElementById('mfaUseBackupBtn').textContent = t(mfaBackupMode ? 'mfaUseTotpBtn' : 'mfaUseBackupBtn');
   document.getElementById('mfaMsg').innerHTML = '';
-  (mfaBackupMode ? document.getElementById('mfaBackupCodeInput') : document.getElementById('mfaCodeInput')).focus();
+  if(mfaBackupMode){
+    mfaBox.reset(false);
+    document.getElementById('mfaBackupCodeInput').focus();
+  } else {
+    document.getElementById('mfaBackupCodeInput').value = '';
+    mfaBox.reset(true);
+  }
 });
+let mfaVerifying = false;
+const mfaBox = createDigitCodeRow('mfaDigitsWrap', 6, 'mfaProgressFill', 'mfaSuccessBadge', '#mfaScreen .auth-card', ()=> attemptMfaTotpVerify());
+function finishMfaChallenge(){
+  const user = pendingMfaUser;
+  pendingMfaUser = null;
+  pendingMfaFactorId = null;
+  mfaBackupMode = false;
+  document.getElementById('mfaScreen').classList.add('hidden');
+  document.querySelector('#mfaScreen .auth-card').classList.remove('pin-card-exit');
+  onAuthed(user);
+}
+async function attemptMfaTotpVerify(){
+  if(mfaVerifying) return;
+  const code = mfaBox.value();
+  if(code.length !== 6 || !pendingMfaFactorId) return;
+  mfaVerifying = true;
+  document.getElementById('mfaMsg').innerHTML = '';
+  mfaBox.startVerifying();
+  const { error } = await supabaseClient.auth.mfa.challengeAndVerify({ factorId: pendingMfaFactorId, code });
+  mfaBox.stopVerifying();
+  mfaVerifying = false;
+  if(error){
+    mfaBox.playFailure();
+    document.getElementById('mfaMsg').innerHTML = `<div class="auth-msg-inner error">${t('mfaWrongCode')}</div>`;
+    return;
+  }
+  mfaBox.playSuccess(finishMfaChallenge);
+}
 document.getElementById('mfaVerifyBtn').addEventListener('click', async ()=>{
   if(mfaBackupMode){
     const code = document.getElementById('mfaBackupCodeInput').value.trim();
@@ -9757,21 +9896,10 @@ document.getElementById('mfaVerifyBtn').addEventListener('click', async ()=>{
       document.getElementById('mfaMsg').innerHTML = `<div class="auth-msg-inner error">${t('mfaBackupWrongCode')}</div>`;
       return;
     }
-  } else {
-    const code = document.getElementById('mfaCodeInput').value.trim();
-    if(!code || !pendingMfaFactorId) return;
-    const { error } = await supabaseClient.auth.mfa.challengeAndVerify({ factorId: pendingMfaFactorId, code });
-    if(error){
-      document.getElementById('mfaMsg').innerHTML = `<div class="auth-msg-inner error">${t('mfaWrongCode')}</div>`;
-      return;
-    }
+    finishMfaChallenge();
+    return;
   }
-  const user = pendingMfaUser;
-  pendingMfaUser = null;
-  pendingMfaFactorId = null;
-  mfaBackupMode = false;
-  document.getElementById('mfaScreen').classList.add('hidden');
-  onAuthed(user);
+  attemptMfaTotpVerify();
 });
 // Shared by the real "Sign out" button and the guest banner's exit link --
 // a guest session has no real Supabase session to sign out of, so this
@@ -28295,7 +28423,8 @@ document.getElementById('pendingVacationInvitesModal').addEventListener('click',
     document.getElementById('pinGateScreen').classList.add('hidden');
     document.getElementById('authScreen').classList.remove('hidden');
   } else {
-    pinInputAt(0)?.focus();
+    pinBox.reset(true);
+    pinBox.playEntrance();
   }
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{
