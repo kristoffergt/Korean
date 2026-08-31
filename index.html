@@ -550,7 +550,6 @@ button:hover{background:var(--ink-hover);}
 .month-day .dnum{font-family:'Space Grotesk',monospace;flex-shrink:0;}
 .month-day .chip-stack{display:flex;flex-direction:column;gap:2px;overflow:hidden;}
 .month-day .event-chip{font-size:8.5px;line-height:1.3;padding:1px 4px;border-radius:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
-.month-day .event-chip.topik{background:var(--seal);color:#fff;}
 .chip-bell{cursor:pointer;margin-right:2px;filter:brightness(1.4);}
 .chip-bell:hover{transform:scale(1.15);}
 .chip-edit{cursor:pointer;margin-right:2px;filter:brightness(1.4);}
@@ -568,7 +567,6 @@ button:hover{background:var(--ink-hover);}
 .week-corner{width:44px;flex-shrink:0;}
 .week-day-header{flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 2px;border-left:1px solid var(--line);color:var(--ink-soft);}
 .week-day-header.today{color:var(--celadon-4);}
-.week-header-topik{margin-top:3px;font-size:8.5px;font-weight:700;background:var(--seal);color:#fff;border-radius:3px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .week-body-scroll{max-height:520px;overflow-y:auto;border:1px solid var(--line);border-radius:0 0 8px 8px;position:relative;}
 /* The day/week grid is a scrollable 24h timeline -- nothing shown is ever
    capped the way month's "+N" caps a day, but an event outside the current
@@ -1884,7 +1882,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       </div>
     </div>
     <div id="calendarCalendarSection" class="hidden">
-    <div class="card">
+    <div class="card hidden" id="topikCountdownCard">
       <h2 id="hTopik"></h2>
       <div class="topik-row">
         <div class="topik-box">
@@ -2306,6 +2304,13 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 
     <div class="wtc-title" style="margin-top:18px;" id="lblNotifPrefs"></div>
     <div id="notifPrefsList"></div>
+    <div id="settingsShowTopikRow" style="margin-top:14px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="settingsShowTopikToggle" style="width:15px;height:15px;">
+        <span id="settingsShowTopikLabel"></span>
+      </label>
+      <div class="hint" id="settingsShowTopikHint" style="margin-top:4px;"></div>
+    </div>
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;" id="settingsRecapsHeaderRow">
       <div class="wtc-title" style="margin-bottom:0;" id="lblRecapsHeader"></div>
       <span class="field" id="recapPersonFilterWrap" style="display:flex;flex-direction:row;align-items:center;">
@@ -8332,8 +8337,19 @@ const realSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_A
 // createGuestSupabaseClient() near enterGuestMode()) rather than touching
 // any of the ~193 existing supabaseClient.* call sites across the file.
 let supabaseClient = realSupabaseClient;
-const TOPIK_REG = new Date('2026-09-01T10:00:00+09:00');
-const TOPIK_TEST = new Date('2026-11-15T12:00:00+09:00');
+// The one place TOPIK dates live. Wall-clock KST strings, because
+// ensureTopikEvents() writes them into events.event_date/event_time
+// verbatim -- deriving them back out of a Date object would shift by the
+// viewer's own timezone. Titles are fixed English: they're stored in the
+// events row (recap emails are English anyway), not re-translated per
+// language. A new exam cycle = a new entry here with a new key; enabled
+// accounts pick it up on their next load (see ensureTopikEvents).
+const TOPIK_CAL_EVENTS = [
+  { key:'topik-reg-2026-09-01', date:'2026-09-01', time:'10:00', title:'TOPIK: Registration opens' },
+  { key:'topik-test-2026-11-15', date:'2026-11-15', time:'12:00', title:'TOPIK: Test day' },
+];
+const TOPIK_REG = new Date(TOPIK_CAL_EVENTS[0].date + 'T' + TOPIK_CAL_EVENTS[0].time + ':00+09:00');
+const TOPIK_TEST = new Date(TOPIK_CAL_EVENTS[1].date + 'T' + TOPIK_CAL_EVENTS[1].time + ':00+09:00');
 /* ---------- I18N ---------- */
 const I18N = {
   en: {
@@ -8368,6 +8384,7 @@ const I18N = {
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
     topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
+    settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
@@ -8487,6 +8504,7 @@ const I18N = {
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
     topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
+    settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
@@ -8606,6 +8624,7 @@ const I18N = {
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
     topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
+    settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
@@ -8734,6 +8753,7 @@ const STATIC_MAP = {
   hYourCerts:'certListHeader', exportCertsBtn:'exportCsv', hCertLB:'certificationsLB', clbHeadRank:'lbRank', clbHeadName:'lbName', clbHeadAcquired:'certAcquired', lblCertPersonFilter:'lblNotesPersonFilter',
   lblCertSearch:'searchLabel', lblCertSort:'sortByLabel',
   hTopik:'topikCountdown', topikRegLabel:'regOpensIn', topikTestLabel:'testIn',
+  settingsShowTopikLabel:'settingsShowTopikLabel', settingsShowTopikHint:'settingsShowTopikHint',
   hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventEndTime:'eventEndTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', eventColorUseMyDefaultBtn:'eventColorUseMyDefaultBtn', lblPillVersion:'lblPillVersion', addEventBtn:'addDeadlineBtn',
   calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek', calViewDayBtn:'viewDay',
   lblCourseIsTa:'statusTeachingAssistant', lblCourseIsRa:'statusResearchAssistant',
@@ -8888,6 +8908,7 @@ let dailyGoals = {}; // userId -> personal daily study-hour goal (Kristoffer/Rox
 let hiddenFromLeaderboards = {}; // userId -> true if they've opted out of all leaderboards
 let hiddenFromCircleToo = {}; // userId -> true if the hide also removes the core-partner exception below
 let hiddenTabs = []; // current user's own hidden top-level/sub tab keys, see TAB_STRUCTURE below
+let showTopik = false; // profiles.show_topik -- TOPIK is opt-in, see TOPIK_CAL_EVENTS/ensureTopikEvents
 let notifyYonseiBoard = false; // current user's own email-notification opt-in, default off
 let notifyDailyRecapEmail = false;
 let notifyDailyRecapInapp = false;
@@ -10067,6 +10088,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   document.getElementById('settingsHideLeaderboards').checked = !!hiddenFromLeaderboards[currentUser.id];
   document.getElementById('settingsHideCircleToo').checked = !!hiddenFromCircleToo[currentUser.id];
   document.getElementById('settingsHideCircleTooWrap').classList.toggle('hidden', !hiddenFromLeaderboards[currentUser.id]);
+  document.getElementById('settingsShowTopikToggle').checked = showTopik;
   renderRecapPrefsRows();
   renderNotifPrefs();
   renderManageTabsList();
@@ -10768,6 +10790,7 @@ function applyGuestUiRestrictions(){
   hide('settingsLeaderboardOptOutWrap'); hide('settingsHideLeaderboardsMsg');
   hide('lblNotifPrefs'); hide('notifPrefsList');
   hide('settingsRecapsHeaderRow'); hide('settingsWeeklyRecapRow'); hide('settingsDailyRecapRow'); hide('recapExtraOptionsWrap');
+  hide('settingsShowTopikRow');
   hide('settingsEmailChangeWrap'); hide('settingsEmailMsg');
   hide('lblSettingsPasswordSection'); hide('sendPasswordResetBtn'); hide('settingsPasswordMsg');
   hide('lblSettings2fa'); hide('settings2faStatusWrap'); hide('settings2faEnrollPanel'); hide('settings2faBackupPanel'); hide('settings2faButtonsWrap'); hide('settings2faMsg');
@@ -12082,7 +12105,7 @@ async function loadAllData(){
   coreMembers = {};
   dailyGoals = {};
   hiddenFromLeaderboards = {};
-  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTimeOfDay = (p.daily_recap_time_of_day || '08:00:00').slice(0,5); weeklyRecapTimeOfDay = (p.weekly_recap_time_of_day || '18:00:00').slice(0,5); dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; weeklyRecapRelative = p.weekly_recap_relative || 'coming'; dailyRecapExcludedKinds = p.daily_recap_excluded_kinds || []; weeklyRecapExcludedKinds = p.weekly_recap_excluded_kinds || []; recapIncludedUids = p.recap_included_uids || null; } });
+  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; showTopik = !!p.show_topik; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTimeOfDay = (p.daily_recap_time_of_day || '08:00:00').slice(0,5); weeklyRecapTimeOfDay = (p.weekly_recap_time_of_day || '18:00:00').slice(0,5); dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; weeklyRecapRelative = p.weekly_recap_relative || 'coming'; dailyRecapExcludedKinds = p.daily_recap_excluded_kinds || []; weeklyRecapExcludedKinds = p.weekly_recap_excluded_kinds || []; recapIncludedUids = p.recap_included_uids || null; } });
   const { data: entryRows } = await supabaseClient.from('study_entries').select('*');
   allEntries = {};
   (entryRows||[]).forEach(row=>{
@@ -12218,6 +12241,10 @@ async function loadAllData(){
   if(GRAMMAR_DATA.some(g => !g.number)){
     GRAMMAR_DATA.slice().sort((a,b)=>a.pattern.localeCompare(b.pattern,'ko')).forEach((g,i)=>{ g.number = i+1; });
   }
+  // Runs on every load, not just the toggle: a NEW exam cycle added to
+  // TOPIK_CAL_EVENTS reaches already-opted-in accounts here. Idempotent
+  // and skips past dates, so the usual load costs zero writes.
+  await ensureTopikEvents();
   await loadExpenditureVacations();
   // In case the Expenses sub-tab is already on screen and showing its
   // "still loading" placeholder from a render that ran before this line
@@ -12330,17 +12357,10 @@ function icsRRule(ev){
   return rule;
 }
 function exportIcs(){
+  // No hardcoded TOPIK entries: for opted-in accounts the TOPIK dates are
+  // real events (topik_key rows) and export through the ordinary loop
+  // below; for everyone else TOPIK has no business in their .ics at all.
   const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Korean Tracker//EN','CALSCALE:GREGORIAN'];
-  lines.push('BEGIN:VEVENT');
-  lines.push('UID:topik-registration@korean-tracker');
-  lines.push('DTSTART:'+icsDateTimeUTC(TOPIK_REG));
-  lines.push('SUMMARY:'+icsEscape('TOPIK Registration Opens'));
-  lines.push('END:VEVENT');
-  lines.push('BEGIN:VEVENT');
-  lines.push('UID:topik-test@korean-tracker');
-  lines.push('DTSTART:'+icsDateTimeUTC(TOPIK_TEST));
-  lines.push('SUMMARY:'+icsEscape('TOPIK Test Day'));
-  lines.push('END:VEVENT');
   (allEvents[currentUser.id]||[]).forEach(ev=>{
     lines.push('BEGIN:VEVENT');
     lines.push('UID:'+ev.id+'@korean-tracker');
@@ -15052,6 +15072,8 @@ function formatTopikDateTime(d){
   return `${dateStr} · ${formatTime12h(hhmm)} KST`;
 }
 function renderTopikCountdown(){
+  document.getElementById('topikCountdownCard').classList.toggle('hidden', !showTopik);
+  if(!showTopik) return;
   const regVal = document.getElementById('topikRegVal');
   const testVal = document.getElementById('topikTestVal');
   const now = new Date();
@@ -15063,6 +15085,61 @@ function renderTopikCountdown(){
   document.getElementById('topikTestDate').textContent = formatTopikDateTime(TOPIK_TEST);
 }
 setInterval(renderTopikCountdown, 30000);
+// Creates a REAL calendar event (plus a 1-day-ahead reminder subscription)
+// for each upcoming TOPIK date, exactly as if the person had added it by
+// hand -- which is the entire trick: recaps, reminder emails and the
+// calendar grids all read the events table, so a real row rides every one
+// of those pipelines with no backend awareness of TOPIK at all (real-user
+// report: recaps/reminders never mentioned TOPIK, because the old
+// countdown/chips were client-side paint over constants, not data).
+// Idempotent per topik_key and skips past dates, so it can run on every
+// load; a manually deleted future TOPIK event does come back on the next
+// load -- the real off-switch is the setting, not deleting the row.
+async function ensureTopikEvents(){
+  if(!showTopik || guestMode || !currentUser) return;
+  if(!allEvents[currentUser.id]) allEvents[currentUser.id] = [];
+  const mine = allEvents[currentUser.id];
+  for(const te of TOPIK_CAL_EVENTS){
+    if(new Date(te.date + 'T23:59:59') < new Date()) continue;
+    if(mine.some(ev=>ev.topik_key === te.key)) continue;
+    const row = {
+      user_id: currentUser.id, title: te.title, kind: 'event',
+      event_date: te.date, event_time: te.time, event_end_time: null,
+      notes: null, color: '#B33B34', is_private: true,
+      recur_freq: null, recur_interval: 1, recur_end_type: 'never', recur_end_date: null,
+      topik_key: te.key
+    };
+    const { data, error } = await supabaseClient.from('events').insert(row).select();
+    if(error || !data || !data[0]) continue;
+    const ev = data[0];
+    mine.push(ev);
+    const sub = { event_id: ev.id, user_id: currentUser.id, applies_to: 'all', reminders: [{value:1, unit:'days'}] };
+    await supabaseClient.from('event_subscriptions').upsert(sub, { onConflict: 'event_id,user_id' });
+    if(!allSubsByEvent[ev.id]) allSubsByEvent[ev.id] = {};
+    allSubsByEvent[ev.id][currentUser.id] = sub;
+    mySubscriptions[ev.id] = sub;
+  }
+}
+// Toggle-off removes every TOPIK-tagged event this account owns, past
+// cycles included -- off means off, not "off from now on".
+async function removeTopikEvents(){
+  if(!currentUser) return;
+  const mine = (allEvents[currentUser.id]||[]).filter(ev=>ev.topik_key);
+  for(const ev of mine){
+    await supabaseClient.from('events').delete().eq('id', ev.id);
+    delete allSubsByEvent[ev.id];
+    delete mySubscriptions[ev.id];
+  }
+  allEvents[currentUser.id] = (allEvents[currentUser.id]||[]).filter(ev=>!ev.topik_key);
+}
+document.getElementById('settingsShowTopikToggle').addEventListener('change', async (e)=>{
+  showTopik = e.target.checked;
+  await supabaseClient.from('profiles').update({ show_topik: showTopik }).eq('id', currentUser.id);
+  if(showTopik) await ensureTopikEvents();
+  else await removeTopikEvents();
+  renderTopikCountdown();
+  renderCalendarTab();
+});
 setInterval(()=>{ if(currentUser && activeTab === 'calendar') renderDeadlineList(); }, 30000);
 let addEventInFlight = false;
 async function addEvent(){
@@ -16507,10 +16584,10 @@ function renderMonthGrid(){
       });
     });
   });
-  const topikByDate = {};
-  topikByDate[todayStr(TOPIK_REG)] = t('topikRegShort');
-  topikByDate[todayStr(TOPIK_TEST)] = t('topikTestShort');
-
+  // No hardcoded TOPIK chip injection here any more -- TOPIK dates are
+  // real, ordinary events now (ensureTopikEvents), so they arrive through
+  // myEventsByDate like everything else, for exactly the accounts that
+  // opted in.
   for(let i=0;i<startOffset;i++){
     const el = document.createElement('div'); el.className='month-day empty';
     grid.appendChild(el);
@@ -16526,9 +16603,6 @@ function renderMonthGrid(){
     const events = (myEventsByDate[dateKey] || []).slice().sort((a,b)=> (a.event_time||'99:99').localeCompare(b.event_time||'99:99'));
     const maxShow = 3;
     let chips = '';
-    if(topikByDate[dateKey]){
-      chips += `<div class="event-chip topik" title="${topikByDate[dateKey]}">${topikByDate[dateKey]}</div>`;
-    }
     events.slice(0, maxShow).forEach(ev=>{
       const bg = ev.color || '#4F7563';
       const recurPrefix = ev.recur_freq ? '↻ ' : '';
@@ -16759,18 +16833,16 @@ function renderCalGrid(dates){
 
   renderCalHeaderLabel();
 
-  const topikByDate = {};
-  topikByDate[todayStr(TOPIK_REG)] = t('topikRegShort');
-  topikByDate[todayStr(TOPIK_TEST)] = t('topikTestShort');
-
+  // TOPIK header badges are gone for the same reason as the month grid's
+  // chips: TOPIK dates are real events now (ensureTopikEvents), so they
+  // render as ordinary bars in the day columns for opted-in accounts.
   const headerRow = document.getElementById('weekHeaderRow');
   headerRow.innerHTML = '<div class="week-corner"></div>';
   dates.forEach(d=>{
     const key = todayStr(d);
     const div = document.createElement('div');
     div.className = 'week-day-header' + (key===todayKey ? ' today' : '');
-    const topikLabel = topikByDate[key];
-    div.innerHTML = `<div>${capFirst(d.toLocaleDateString(appLocale(),{weekday:'short'}))}</div><div style="font-family:'Space Grotesk',monospace;">${d.getDate()}</div>${topikLabel ? `<div class="week-header-topik">${topikLabel}</div>` : ''}`;
+    div.innerHTML = `<div>${capFirst(d.toLocaleDateString(appLocale(),{weekday:'short'}))}</div><div style="font-family:'Space Grotesk',monospace;">${d.getDate()}</div>`;
     headerRow.appendChild(div);
   });
 
