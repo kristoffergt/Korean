@@ -119,6 +119,30 @@ body.dark .brand-mark h1{color:#ffffff;}
 .auth-msg .auth-msg-inner{font-size:13px;margin-top:12px;padding:10px 14px;border-radius:8px;font-weight:600;line-height:1.4;}
 .auth-msg-inner.error{background:#F3D9D7;color:var(--seal-dark);border:1px solid var(--seal);border-left:4px solid var(--seal);}
 .auth-msg-inner.info{background:var(--celadon-1);color:var(--celadon-4);border:1px solid var(--celadon-3);border-left:4px solid var(--celadon-3);}
+/* Site PIN entry: 4 separate boxes instead of one 4-char field, with a
+   small comet tracing between boxes as focus advances (playPinOrbitDot)
+   and a ring that spins behind them while the code is being checked
+   (submitPinGate) -- see the JS for the "why", this is just the paint. */
+.pin-digits{display:flex;gap:12px;justify-content:center;position:relative;margin:6px 0 4px;}
+.pin-digit{
+  width:52px;height:60px;font-family:'Space Grotesk',monospace;font-size:24px;font-weight:700;
+  text-align:center;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);
+  transition:border-color 0.16s,box-shadow 0.16s,transform 0.16s,color 0.16s;
+}
+.pin-digit:focus{outline:none;border-color:var(--celadon-4);box-shadow:0 0 0 3px rgba(79,117,99,0.18);}
+.pin-digit.filled{border-color:var(--celadon-3);}
+.pin-digit.pin-fail{border-color:var(--seal)!important;box-shadow:0 0 0 3px rgba(179,59,52,0.18)!important;color:var(--seal-dark);}
+.pin-digit.pin-success{border-color:var(--celadon-4)!important;box-shadow:0 0 0 3px rgba(79,117,99,0.28)!important;}
+.pin-digit.pin-shake{animation:pinShake 0.4s;}
+@keyframes pinShake{
+  10%,90%{transform:translateX(-1px);} 20%,80%{transform:translateX(2px);}
+  30%,50%,70%{transform:translateX(-5px);} 40%,60%{transform:translateX(5px);}
+}
+.pin-orbit-dot{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--celadon-4);pointer-events:none;transform:translate(-50%,-50%);z-index:2;}
+.pin-verifying-ring{position:absolute;top:50%;left:50%;width:230px;height:84px;transform:translate(-50%,-50%);
+  border:1.5px dashed var(--celadon-3);border-radius:44px;opacity:0;pointer-events:none;transition:opacity 0.15s;z-index:0;}
+.pin-verifying-ring.active{opacity:1;animation:pinRingSpin 1s linear infinite;}
+@keyframes pinRingSpin{ to{ transform:translate(-50%,-50%) rotate(360deg); } }
 /* The title has the whole top row to itself now -- .who used to share that
    row with it (side by side, space-between), which is exactly what forced
    the icons to wrap onto their own second line once the title's width plus
@@ -722,8 +746,12 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="auth-card">
       <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:26px;height:26px;"></div><div class="brand-icon brand-icon-dark" style="width:26px;height:26px;"></div><h1>Productivity Tracker</h1></div>
       <div class="auth-sub" id="lblPinGate"></div>
-      <div class="auth-field">
-        <input type="text" id="pinGateInput" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="0000">
+      <div class="pin-digits" id="pinDigitsWrap">
+        <div class="pin-verifying-ring" id="pinVerifyingRing"></div>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" class="pin-digit" data-idx="0">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" class="pin-digit" data-idx="1">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" class="pin-digit" data-idx="2">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="1" class="pin-digit" data-idx="3">
       </div>
       <button class="auth-submit" id="pinGateSubmitBtn"></button>
       <div id="pinGateMsg" class="auth-msg"></div>
@@ -9396,22 +9424,121 @@ document.getElementById('resendConfirmBtn').addEventListener('click', async ()=>
   showAuthMsg(t('resendConfirmSent'), 'info');
   armResendConfirm(pendingConfirmEmail);
 });
+const PIN_LENGTH = 4;
+let pinVerifying = false;
+function pinDigitInputs(){ return Array.from(document.querySelectorAll('.pin-digit')); }
+function pinValue(){ return pinDigitInputs().map(i=>i.value).join(''); }
+// The little comet that traces from the box you just filled to the one
+// focus is moving into -- purely decorative, positioned by measuring the
+// two boxes' actual centers (so it still lines up if the row ever reflows)
+// and cleaned up via the Animation's own onfinish rather than a timer.
+function playPinOrbitDot(fromEl, toEl){
+  const wrap = document.getElementById('pinDigitsWrap');
+  const wrapRect = wrap.getBoundingClientRect();
+  const fromRect = fromEl.getBoundingClientRect();
+  const toRect = toEl.getBoundingClientRect();
+  const fx = fromRect.left + fromRect.width/2 - wrapRect.left;
+  const fy = fromRect.top + fromRect.height/2 - wrapRect.top;
+  const tx = toRect.left + toRect.width/2 - wrapRect.left;
+  const ty = toRect.top + toRect.height/2 - wrapRect.top;
+  const mx = (fx+tx)/2;
+  const my = Math.min(fy,ty) - 22; // arcs upward between the two boxes
+  const dot = document.createElement('div');
+  dot.className = 'pin-orbit-dot';
+  wrap.appendChild(dot);
+  const anim = dot.animate([
+    { left: fx+'px', top: fy+'px', opacity: 0.9, offset: 0 },
+    { left: mx+'px', top: my+'px', opacity: 1, offset: 0.5 },
+    { left: tx+'px', top: ty+'px', opacity: 0, offset: 1 }
+  ], { duration: 320, easing: 'ease-in-out' });
+  // onfinish alone was left stranded in a backgrounded tab in testing (the
+  // callback simply never fired even once the animation's own playState had
+  // finished) -- a timeout matching the animation's own duration cleans it
+  // up regardless, and is a no-op if onfinish already did.
+  const removeDot = () => dot.remove();
+  anim.onfinish = removeDot;
+  setTimeout(removeDot, 400);
+}
+function pinInputAt(idx){ return pinDigitInputs().find(i=>i.dataset.idx===String(idx)); }
+function wirePinDigits(){
+  pinDigitInputs().forEach((inp, i)=>{
+    inp.addEventListener('input', ()=>{
+      const digit = inp.value.replace(/[^0-9]/g,'').slice(-1);
+      inp.value = digit;
+      inp.classList.toggle('filled', !!digit);
+      const next = pinInputAt(i+1);
+      if(digit && next){
+        playPinOrbitDot(inp, next);
+        next.focus();
+      }
+      if(pinValue().length === PIN_LENGTH) submitPinGate();
+    });
+    inp.addEventListener('keydown', (e)=>{
+      if(e.key === 'Backspace' && !inp.value){
+        const prev = pinInputAt(i-1);
+        if(prev){ prev.value = ''; prev.classList.remove('filled'); prev.focus(); }
+      } else if(e.key === 'Enter'){
+        e.preventDefault(); submitPinGate();
+      }
+    });
+    inp.addEventListener('paste', (e)=>{
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g,'').slice(0, PIN_LENGTH);
+      if(!text) return;
+      text.split('').forEach((ch, idx)=>{
+        const target = pinInputAt(idx);
+        if(target){ target.value = ch; target.classList.add('filled'); }
+      });
+      const landOn = pinInputAt(Math.min(text.length, PIN_LENGTH-1));
+      if(landOn) landOn.focus();
+      if(pinValue().length === PIN_LENGTH) submitPinGate();
+    });
+  });
+}
+wirePinDigits();
+function resetPinDigits(focusFirst){
+  pinDigitInputs().forEach(inp=>{
+    inp.value = '';
+    inp.classList.remove('filled','pin-fail','pin-success','pin-shake');
+  });
+  if(focusFirst){ const first = pinInputAt(0); if(first) first.focus(); }
+}
+// Shake + red flash + clear, matching the shape of feedback this app
+// already uses for a wrong password elsewhere -- distinct from just
+// leaving the boxes full of a code that didn't work, which invites
+// re-submitting the same wrong digits by mistake.
+function playPinFailure(){
+  const inputs = pinDigitInputs();
+  inputs.forEach(inp=> inp.classList.add('pin-fail','pin-shake'));
+  setTimeout(()=>{ resetPinDigits(true); }, 420);
+}
+function playPinSuccess(onDone){
+  const inputs = pinDigitInputs();
+  inputs.forEach((inp,i)=> setTimeout(()=> inp.classList.add('pin-success'), i*40));
+  setTimeout(onDone, 420);
+}
 async function submitPinGate(){
-  const code = document.getElementById('pinGateInput').value.trim();
-  if(!code) return;
+  if(pinVerifying) return;
+  const code = pinValue();
+  if(code.length !== PIN_LENGTH) return;
+  pinVerifying = true;
+  document.getElementById('pinGateMsg').innerHTML = '';
+  document.getElementById('pinVerifyingRing').classList.add('active');
   const { data: ok, error } = await supabaseClient.rpc('verify_site_pin', { candidate: code });
+  document.getElementById('pinVerifyingRing').classList.remove('active');
+  pinVerifying = false;
   if(error || !ok){
+    playPinFailure();
     document.getElementById('pinGateMsg').innerHTML = `<div class="auth-msg-inner error">${t('pinGateWrongMsg')}</div>`;
     return;
   }
-  localStorage.setItem('sitePinVerified', 'true');
-  document.getElementById('pinGateScreen').classList.add('hidden');
-  document.getElementById('authScreen').classList.remove('hidden');
+  playPinSuccess(()=>{
+    localStorage.setItem('sitePinVerified', 'true');
+    document.getElementById('pinGateScreen').classList.add('hidden');
+    document.getElementById('authScreen').classList.remove('hidden');
+  });
 }
 document.getElementById('pinGateSubmitBtn').addEventListener('click', submitPinGate);
-document.getElementById('pinGateInput').addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter'){ e.preventDefault(); submitPinGate(); }
-});
 document.getElementById('tabSignIn').addEventListener('click', ()=>setAuthMode('signin'));
 document.getElementById('tabSignUp').addEventListener('click', ()=>setAuthMode('signup'));
 document.getElementById('authSubmit').addEventListener('click', async ()=>{
@@ -28059,6 +28186,8 @@ document.getElementById('pendingVacationInvitesModal').addEventListener('click',
   } else if(localStorage.getItem('sitePinVerified') === 'true'){
     document.getElementById('pinGateScreen').classList.add('hidden');
     document.getElementById('authScreen').classList.remove('hidden');
+  } else {
+    pinInputAt(0)?.focus();
   }
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{
