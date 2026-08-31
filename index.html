@@ -147,8 +147,9 @@ body.dark .brand-mark h1{color:#ffffff;}
    - SUCCESS: green hops roll down the row, then the boxes dissolve into a
      badge whose checkmark draws itself with a ripple behind it, held long
      enough to actually see before the card fades out
-   - FAILURE: the whole ROW shakes once as a rigid unit, everything goes
-     red, then the cleared boxes cascade back in ready for another try */
+   - FAILURE: the whole ROW shakes once as a rigid unit and everything
+     goes red -- the DIGITS STAY (a one-digit typo shouldn't cost the
+     whole code), and the red lifts the moment editing starts */
 .pin-digits{display:flex;gap:12px;justify-content:center;position:relative;margin:8px 0 12px;}
 .pin-digit{
   width:54px;height:62px;font-family:'Space Grotesk',monospace;font-size:26px;font-weight:700;
@@ -9627,17 +9628,26 @@ function createDigitCodeRow(wrapId, length, progressFillId, successBadgeId, card
   }
   digitInputs().forEach((inp, i)=>{
     inp.addEventListener('input', ()=>{
+      clearFailState();
       const digit = inp.value.replace(/[^0-9]/g,'').slice(-1);
       inp.value = digit;
       inp.classList.toggle('filled', !!digit);
       if(digit) popDigit(inp);
       updateProgress();
       const next = inputAt(i+1);
-      if(digit && next) next.focus();
+      if(digit && next){
+        next.focus();
+        // A filled next box (retyping over a failed code) gets its digit
+        // selected, so the next keystroke overwrites it -- the input
+        // handler's slice(-1) would replace it anyway, but the selection
+        // SHOWS what's about to be replaced.
+        if(next.value) next.select();
+      }
       if(value().length === length) onComplete();
     });
     inp.addEventListener('keydown', (e)=>{
       if(e.key === 'Backspace' && !inp.value){
+        clearFailState();
         const prev = inputAt(i-1);
         if(prev){ prev.value = ''; prev.classList.remove('filled'); prev.focus(); updateProgress(); }
       } else if(e.key === 'Enter'){
@@ -9648,6 +9658,7 @@ function createDigitCodeRow(wrapId, length, progressFillId, successBadgeId, card
       e.preventDefault();
       const text = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g,'').slice(0, length);
       if(!text) return;
+      clearFailState();
       text.split('').forEach((ch, idx)=>{
         const target = inputAt(idx);
         if(target){ target.value = ch; target.classList.add('filled'); popDigit(target); }
@@ -9670,12 +9681,22 @@ function createDigitCodeRow(wrapId, length, progressFillId, successBadgeId, card
     updateProgress();
     if(focusFirst){ const first = inputAt(0); if(first) first.focus(); }
   }
+  // Lifts the red failure state the moment the person starts editing --
+  // wired into every input path below, so the error look never outlives
+  // the wrong code it was about.
+  function clearFailState(){
+    if(!digitInputs().some(i=>i.classList.contains('pin-fail'))) return;
+    digitInputs().forEach(i=> i.classList.remove('pin-fail'));
+    wrap.classList.remove('pin-shake-row');
+    document.getElementById(progressFillId).classList.remove('pin-progress-fail');
+  }
   // A lift that travels across the row like a wave, plus a shimmer across
   // the now-full progress bar, for as long as the check is in flight. The
   // per-box phase shift is a NEGATIVE animation-delay: every box starts
   // animating immediately, already partway through its own cycle, so the
   // wave exists from the first frame instead of assembling box by box.
   function startVerifying(){
+    clearFailState();
     digitInputs().forEach((inp,i)=>{
       inp.style.animationDelay = (-i*0.13)+'s';
       inp.classList.add('pin-breathe');
@@ -9686,17 +9707,21 @@ function createDigitCodeRow(wrapId, length, progressFillId, successBadgeId, card
     digitInputs().forEach(inp=>{ inp.classList.remove('pin-breathe'); inp.style.animationDelay = ''; });
     document.getElementById(progressFillId).classList.remove('pin-progress-shimmer');
   }
-  // One rigid shake of the whole row + red boxes + a red progress bar,
-  // then clear and cascade back in, ready for another try. Clearing
-  // (rather than leaving the wrong code sitting there) is deliberate: it
-  // stops a re-submit of the same wrong digits.
+  // One rigid shake of the whole row + red boxes + a red progress bar --
+  // and the DIGITS STAY (real report: a one-digit typo shouldn't cost the
+  // whole code; an earlier version cleared everything here). Focus lands
+  // back on the first box with its digit selected, so retyping just
+  // overwrites, while clicking any single box lets that one digit be
+  // fixed alone -- either way the red lifts on the first edit
+  // (clearFailState above) and a full row auto-resubmits as usual.
   function playFailure(){
     digitInputs().forEach(inp=> inp.classList.add('pin-fail'));
     wrap.classList.remove('pin-shake-row');
     void wrap.offsetWidth;
     wrap.classList.add('pin-shake-row');
     document.getElementById(progressFillId).classList.add('pin-progress-fail');
-    setTimeout(()=>{ reset(true); playEntrance(); }, 500);
+    const first = inputAt(0);
+    if(first){ first.focus(); first.select(); }
   }
   // Green hops roll down the row; once the LAST hop has fully landed the
   // boxes dissolve into the checkmark badge, whose check draws itself
