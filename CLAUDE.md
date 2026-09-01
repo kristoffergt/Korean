@@ -216,13 +216,17 @@ linking system (see below) to share with specific other people.
 - **Colour says what an action does**: `--danger` for anything that removes,
   `--edit` for anything that edits, applied through `.act-remove` /
   `.act-edit` on text buttons. Both are floored by MEASUREMENT, not by eye:
-  the app's own link green holds 4.31:1 on a card, so that is the contrast an
-  action colour has to clear. Judge the HUE in OKLCH, not HSL: orange sits at
-  ~55-70, amber ~75-90, yellow ~95-105, and past ~102 it reads olive. Two
-  rounds of "still too orange" were spent before measuring that way. The
-  useful discovery is that going yellower costs nothing here -- the light
-  `--edit` (#786A00, okhue 100) scores 4.53:1, BETTER than the amber it
-  replaced, so there was never a contrast trade to make. The dark theme needs its own value for both:
+  the app's own link green holds 4.31:1 on a card. `--edit` is the one
+  deliberate exception at 3.23:1, because it is not a fresh guess: **#a8790a
+  is the `--edit` token from the Welcome Korea project** (`app/globals.css`),
+  which Kristoffer pointed at directly, so the two apps agree on what an edit
+  looks like. Take colours from there before inventing one.
+  Three attempts missed first, and the lesson is which axis to move. Judged
+  in OKLCH, the rejected ones were hue 60 (orange) and 83 (amber), both at
+  L 0.53; I answered "too orange" by pushing hue to 100, which IS yellow but
+  at that lightness reads olive. What separates gold from brown here is
+  **lightness, not hue** -- the accepted #a8790a is hue 81, right next to the
+  amber that was rejected, and works because it sits at L 0.61. The dark theme needs its own value for both:
   a yellow dark enough to read on paper is invisible on ink. Icon-only
   edit/delete buttons live inside containers that paint every button
   `--ink-soft`, so they need their own three-class rules to reach; move
@@ -269,6 +273,14 @@ linking system (see below) to share with specific other people.
   `syncFileChosenName`). Both run the same `slugify()` `createShortLink()`
   does, through `syllabusSlugBase()`, so a preview cannot promise a different
   address from the one that gets made.
+
+- **A preserved edit panel must not outlive the state that opened it.** The
+  keep-and-restore above has a trap: Save and Cancel both work by dropping
+  the id from `expandedCourseEdit` and re-rendering, so restoring the open
+  panel unconditionally puts it straight back and makes BOTH buttons look
+  dead. Restore only when the freshly built panel is itself open (`!fresh
+  .classList.contains('hidden')`) -- the fresh panel's own hidden state is
+  the authority, since it was built from the current expanded set.
 
 ## Migration files present (see folder for full current list)
 

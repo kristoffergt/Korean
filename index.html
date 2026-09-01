@@ -40,15 +40,19 @@
   --danger:#B33B34;
   /* Measured, not eyeballed. The app's own link green holds 4.31:1 on a
      card, so that is the floor an edit colour has to clear; #8A6500 comes
-     out at 4.53:1. Measured in OKLCH, where hue is perceptual: #786A00 is
-     at hue 100 (yellow), against 83 (amber) and the 60 of the first
-     attempt, which read as a second red beside --danger. Two rounds of
-     "still too orange" went into finding this, and the useful discovery is
-     that going yellower here costs NOTHING -- the yellow scores HIGHER on
-     contrast than the amber it replaces, so there was never a trade to
-     make. Past hue ~102 it starts reading olive. The dark theme needs its
-     own value: a yellow dark enough to read on paper is invisible on ink. */
-  --edit:#786A00;
+     out at 3.23:1, under that. It is used anyway because it is not a fresh
+     guess: it is the --edit token from the Welcome Korea project, which
+     Kristoffer pointed at directly, so the two apps now agree on what an
+     edit looks like.
+     Three attempts missed because I kept moving along the wrong axis. In
+     OKLCH the rejected ones were hue 60 (orange) and 83 (amber) at L 0.53,
+     and I answered "too orange" by pushing hue to 100 -- which is yellow,
+     but at that lightness reads olive. What actually separates gold from
+     brown here is LIGHTNESS: #a8790a is hue 81, near the amber that was
+     rejected, and reads correctly because it sits at L 0.61. Judge these
+     in OKLCH and move L before H. The dark theme needs its own value: a
+     yellow dark enough to read on paper is invisible on ink. */
+  --edit:#a8790a;
   --line: rgba(30,31,34,0.12);
   --ink-hover:#000000;
   --c-listening:#6E8FB0;
@@ -71,7 +75,7 @@ body.dark{
   --line: rgba(237,237,239,0.14);
   --ink-hover:#FFFFFF;
   --danger:#E8827A;
-  --edit:#E4CF7A;
+  --edit:#e0b34d;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -13886,7 +13890,7 @@ function renderJobs(){
   });
   keptJobEditPanels.forEach((panel, id)=>{
     const fresh = list.querySelector('[data-job-edit-for="' + id + '"]');
-    if(fresh) fresh.replaceWith(panel);
+    if(fresh && !fresh.classList.contains('hidden')) fresh.replaceWith(panel);
   });
   list.querySelectorAll('[data-job-edit-for]').forEach(panel=>{
     if(panel.dataset.jeWired === '1') return;
@@ -26929,7 +26933,13 @@ function renderCourses(){
   });
   keptEditPanels.forEach((panel, id)=>{
     const fresh = list.querySelector('[data-course-edit-for="' + id + '"]');
-    if(fresh) fresh.replaceWith(panel);
+    // Only restore a panel that is STILL meant to be open. Save and Cancel
+    // both work by dropping the id from expandedCourseEdit and re-rendering,
+    // so restoring unconditionally put the open panel straight back and made
+    // both buttons look dead (real-user report: "why is nothing happening
+    // when I press save changes", "cancel button also doesn't work"). The
+    // freshly built panel's own hidden state is the authority on that.
+    if(fresh && !fresh.classList.contains('hidden')) fresh.replaceWith(panel);
   });
   list.querySelectorAll('[data-course-edit-for]').forEach(panel=>{
     // A restored panel already carries its listeners; wiring it again would
