@@ -917,8 +917,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 <div id="pinGateScreen">
   <div class="auth-topbar">
     <div class="topbar-controls">
-      <button class="icon-btn" id="darkTogglePin" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
       <div class="lang-switch" id="langSwitchPin"></div>
+      <button class="icon-btn" id="darkTogglePin" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
     </div>
   </div>
   <div class="auth-wrap">
@@ -950,8 +950,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 <div id="authScreen" class="hidden">
   <div class="auth-topbar">
     <div class="topbar-controls">
-      <button class="icon-btn" id="darkToggleAuth" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
       <div class="lang-switch" id="langSwitchAuth"></div>
+      <button class="icon-btn" id="darkToggleAuth" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
     </div>
   </div>
   <div class="auth-wrap">
@@ -1038,8 +1038,8 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="header-row2">
     <div class="sub" id="headerSub"></div>
     <div class="who">
-      <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
       <div class="lang-switch" id="langSwitchApp"></div>
+      <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
       <div style="position:relative;display:inline-flex;">
         <button class="icon-btn" id="notifBellBtn" title="Notifications" style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
@@ -10767,7 +10767,46 @@ function smartNameCase(raw){
     }).join(' ');
   }).join('');
 }
+// An LLM will answer with a Markdown link if you let it, and a person will
+// paste "doi.org/..." with no scheme. Neither is a usable href, and the
+// second is the nastier one: with no scheme the browser reads it as a
+// RELATIVE path, so it opens as kristoffergt.com/doi.org/... (real-user
+// report, with the address bar to prove it).
+//
+// Returns a usable absolute http(s) URL, or null when the text cannot be
+// made into one -- a caller that gets null must render plain text rather
+// than a link, so a bad value is visibly not a link instead of a broken one.
+// Refusing every other scheme is also what keeps a javascript: URL out of an
+// href, which matters because these rows are shared with a circle.
+function safeExternalUrl(raw){
+  let v = (raw || '').trim();
+  if(!v) return null;
+  // [label](target) -- the target is the half that is a URL. Greedy on both
+  // halves so a DOI's own parentheses, 0305-750X(92)90097-F, stay inside it.
+  const md = v.match(/^\[(.*)\]\((.*)\)$/);
+  if(md) v = md[2].trim();
+  // <url> and quoted forms. Parentheses are deliberately NOT stripped here:
+  // a DOI can legitimately end in one.
+  v = v.replace(/^[<"']+/, '').replace(/[>"']+$/, '').trim();
+  if(!v) return null;
+  if(!/^[a-z][a-z0-9+.-]*:/i.test(v)) v = 'https://' + v;
+  try {
+    const u = new URL(v);
+    if(u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    if(!u.hostname || u.hostname.indexOf('.') === -1) return null;
+    return u.href;
+  } catch(e){ return null; }
+}
+// Renders a link only when the value really is one. Anything else is shown
+// as the text it is, which is how a mangled paste stays visible instead of
+// silently becoming a link to our own domain.
+function externalLinkHtml(raw, label){
+  const href = safeExternalUrl(raw);
+  if(!href) return raw ? `<span class="item-sub">${escapeHtml(raw)}</span>` : '';
+  return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+}
 function normalizeFieldValue(field, value){
+  if(field === 'link') return safeExternalUrl(value) || (value || '').trim();
   if(field === 'author') return smartNameCase(value);
   if(field === 'title' || field === 'source') return smartTitleCase(value);
   return value;
@@ -10778,10 +10817,12 @@ function normalizeFieldValue(field, value){
 // growth") is never rewritten behind your back.
 function maybeRecase(el, force){
   const field = el && el.dataset ? el.dataset.aiField : null;
-  if(!field || (field !== 'title' && field !== 'author' && field !== 'source')) return;
+  if(!field || ['title','author','source','link'].indexOf(field) === -1) return;
   const v = el.value || '';
   if(!v.trim()) return;
-  const oneCase = v === v.toUpperCase() || v === v.toLowerCase();
+  // A URL is repaired whenever it changes; the single-case test below is
+  // about prose casing and says nothing useful about a link.
+  const oneCase = field === 'link' || v === v.toUpperCase() || v === v.toLowerCase();
   if(!force && !oneCase) return;
   const next = normalizeFieldValue(field, v);
   if(next !== v) el.value = next;
@@ -10810,6 +10851,7 @@ function aiPromptFor(kind, seedTitle){
   return 'Give me the bibliographic details for this ' + subject + '.\n\n'
     + subject.charAt(0).toUpperCase() + subject.slice(1) + ': ' + (known || '<paste the title here>') + '\n\n'
     + 'Reply with ONLY this JSON object and nothing else -- no explanation, no code fence:\n\n' + shape + '\n\n'
+    + 'Every value must be plain text. The link must be a bare URL and nothing else: no Markdown link, no angle brackets, no surrounding punctuation.\n'
     + 'Leave a field as an empty string if you cannot establish it with confidence. Never invent a DOI, a URL or a page count.';
 }
 function parseAiDetails(text){
@@ -13595,7 +13637,7 @@ async function addArticle(){
   const title = document.getElementById('articleTitle').value.trim();
   const author = document.getElementById('articleAuthor').value.trim();
   const source = document.getElementById('articleSource').value.trim();
-  const link = document.getElementById('articleLink').value.trim();
+  const link = safeExternalUrl(document.getElementById('articleLink').value) || document.getElementById('articleLink').value.trim();
   const status = document.getElementById('articleStatus').value;
   if(!title) return;
   const row = { user_id: currentUser.id, title, author: author || null, source: source || null, link: link || null, status, finished_at: status==='finished' ? todayStr() : null, notes: [] };
@@ -13639,7 +13681,7 @@ async function saveArticleEdit(articleId, container){
   const title = container.querySelector('.are-title').value.trim();
   const author = container.querySelector('.are-author').value.trim();
   const source = container.querySelector('.are-source').value.trim();
-  const link = container.querySelector('.are-link').value.trim();
+  const link = safeExternalUrl(container.querySelector('.are-link').value) || container.querySelector('.are-link').value.trim();
   if(!title) return;
   const patch = { title, author: author || null, source: source || null, link: link || null };
   const { data, error } = await supabaseClient.from('articles').update(patch).eq('id', articleId).select();
@@ -13732,7 +13774,7 @@ function renderArticles(){
           <option value="reading" ${a.status==='reading'?'selected':''}>${bookStatusLabel('reading')}</option>
           <option value="finished" ${a.status==='finished'?'selected':''}>${bookStatusLabel('finished')}</option>
         </select>` : ''}
-        ${a.link ? `<a href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
+        ${externalLinkHtml(a.link, t('linkOpen'))}
         ${isMine ? `<button class="linkbtn act-edit article-edit-toggle" data-id="${a.id}">${t('editBtn')}</button>` : ''}
         ${notes.length === 0 && !isMine ? '' : `<button class="linkbtn note-toggle-article" data-id="${a.id}">${notes.length === 0 ? t('addNote') : t('noteBtn') + ' (' + notes.length + ')'}</button>`}
       </div>
@@ -13939,7 +13981,7 @@ async function addJob(){
   const role = document.getElementById('jobRole').value.trim();
   const status = document.getElementById('jobStatus').value;
   const dateApplied = document.getElementById('jobDate').value || todayStr();
-  const link = document.getElementById('jobLink').value.trim();
+  const link = safeExternalUrl(document.getElementById('jobLink').value) || document.getElementById('jobLink').value.trim();
   if(!company) return;
   const resume = await uploadJobPdf('jobResumeFile', 'jobResumeSlug');
   const coverLetter = await uploadJobPdf('jobCoverLetterFile', 'jobCoverLetterSlug');
@@ -14086,7 +14128,7 @@ async function saveJobEdit(jobId, container){
   const company = container.querySelector('.je-company').value.trim();
   const role = container.querySelector('.je-role').value.trim();
   const dateApplied = container.querySelector('.je-date').value || null;
-  const link = container.querySelector('.je-link').value.trim();
+  const link = safeExternalUrl(container.querySelector('.je-link').value) || container.querySelector('.je-link').value.trim();
   if(!company) return;
   const patch = { company, role: role || null, date_applied: dateApplied, link: link || null };
   const resumeFile = container.querySelector('.je-resume').files[0];
@@ -14254,7 +14296,7 @@ function renderJobs(){
           <option value="accepted" ${j.offer_response==='accepted'?'selected':''}>${t('jobOfferAccepted')}</option>
           <option value="declined" ${j.offer_response==='declined'?'selected':''}>${t('jobOfferDeclined')}</option>
         </select>` : ''}
-        ${j.link ? `<a href="${j.link}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
+        ${externalLinkHtml(j.link, t('linkOpen'))}
         ${j.resume_url ? `<a href="${j.resume_url}" target="_blank" rel="noopener">${t('jobResumeView')}</a>` : ''}
         ${j.cover_letter_url ? `<a href="${j.cover_letter_url}" target="_blank" rel="noopener">${t('jobCoverLetterView')}</a>` : ''}
         ${isMine ? `<button class="linkbtn act-edit job-edit-toggle" data-id="${j.id}">${t('editBtn')}</button>` : ''}
@@ -14365,7 +14407,7 @@ async function addCert(){
   const issuer = document.getElementById('certIssuer').value.trim();
   const status = document.getElementById('certStatus').value;
   const dateCompleted = document.getElementById('certDate').value || null;
-  const link = document.getElementById('certLink').value.trim();
+  const link = safeExternalUrl(document.getElementById('certLink').value) || document.getElementById('certLink').value.trim();
   if(!name) return;
   const row = { user_id: currentUser.id, name, issuer: issuer || null, status, date_completed: dateCompleted, link: link || null };
   const { data, error } = await supabaseClient.from('certifications').insert(row).select();
@@ -14419,7 +14461,7 @@ async function saveCertEdit(certId, container){
   const name = container.querySelector('.cte-name').value.trim();
   const issuer = container.querySelector('.cte-issuer').value.trim();
   const dateCompleted = container.querySelector('.cte-date').value || null;
-  const link = container.querySelector('.cte-link').value.trim();
+  const link = safeExternalUrl(container.querySelector('.cte-link').value) || container.querySelector('.cte-link').value.trim();
   if(!name) return;
   const patch = { name, issuer: issuer || null, date_completed: dateCompleted, link: link || null };
   const { data, error } = await supabaseClient.from('certifications').update(patch).eq('id', certId).select();
@@ -14519,7 +14561,7 @@ function renderCerts(){
           <option value="in_progress" ${c.status==='in_progress'?'selected':''}>${certStatusLabel('in_progress')}</option>
           <option value="acquired" ${c.status==='acquired'?'selected':''}>${certStatusLabel('acquired')}</option>
         </select>` : ''}
-        ${c.link ? `<a href="${c.link}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
+        ${externalLinkHtml(c.link, t('linkOpen'))}
         ${isMine ? `<button class="linkbtn act-edit cert-edit-toggle" data-id="${c.id}">${t('editBtn')}</button>` : ''}
         ${addMyselfBtn}
       </div>
@@ -24959,7 +25001,7 @@ function buildGrammarCardHtml(g){
   const isReviewOverridden = !!grammarReviewOverrides[currentUser.id + '::' + g.id];
   const resourcesHtml = (g.resources||[]).map((r,idx)=>`
     <div class="gram-resource-row">
-      <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${r.type==='youtube'?'▶':ICON.link(12)} ${escapeHtml(r.label || r.url)}</a>
+      ${externalLinkHtml(r.url, (r.type==='youtube'?'▶':ICON.link(12)) + ' ' + escapeHtml(r.label || r.url))}
       ${amICore() ? `<button class="gram-resource-del" data-pattern="${g.id}" data-idx="${idx}">✕</button>` : ''}
     </div>`).join('') || `<div class="empty">–</div>`;
   const isFav = isGrammarFavorited(g);
