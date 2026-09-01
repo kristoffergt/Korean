@@ -297,6 +297,27 @@ linking system (see below) to share with specific other people.
   progress bar would read over 100%. Long text fields need `.field wide`
   (320px); the bare `.field` input is 150px, which truncates a title.
 
+- **`data-ai-field` does double duty** on the book and article forms (add and
+  edit alike): it marks a field for automatic recasing AND names it as a
+  target the AI fill can write into, so one attribute keeps the two in step.
+  `smartTitleCase` / `smartNameCase` fire on PASTE (the case they exist for)
+  and on blur only when the value is entirely upper or entirely lower -- a
+  strong signal it came from somewhere else. Deliberate mixed-case typing is
+  never rewritten: **any word carrying a capital the writer put there is left
+  alone** (eBay, iPhone, EU), which is what separates this from a naive title
+  caser. An all-caps string carries no such signal, so there everything is
+  recased and `KEEP_UPPERCASE` is the only thing saving the acronyms --
+  extend that set rather than adding cleverness. Tokens with digits are never
+  touched, which is what keeps "Vol. 20, No. 2, pp. 165-186, 1992" intact.
+  Covered by 24 cases run in the browser; add to them before changing a rule.
+- **"Fill from AI" is a clipboard round trip, not an API call.** It spends no
+  key and needs no backend: Copy prompt puts a JSON-shaped request on the
+  clipboard (seeded with whatever title is typed), you hand that to any LLM,
+  and Paste details parses the answer back into the fields. The parser takes
+  the first `{` to the last `}`, so code fences and chatter around the JSON
+  are fine. `navigator.clipboard.readText()` can be refused outright, so
+  every failure path falls back to a textarea rather than a dead button.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
