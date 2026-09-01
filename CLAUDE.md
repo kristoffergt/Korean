@@ -349,6 +349,24 @@ linking system (see below) to share with specific other people.
   stored value too, for the case where a field is pasted into and saved
   without ever losing focus. 13 cases are checked in the browser.
 
+- **Never open a native picker with `.click()` on an element in a hidden
+  subtree.** The header pill used to call `.click()` on `#myColorPicker`,
+  which lives inside the Account settings MODAL (`display:none`). That works
+  well enough in desktop Chrome to look fine and does nothing at all on iOS,
+  so the control was dead in the installed app while testing clean on a
+  laptop. The fix is the pattern `.who .lang-switch-select` already used: lay
+  the real `<input type="color">` over the pill at `opacity:0`, so the tap
+  lands on a native control and needs no synthesised gesture. Verify with
+  `document.elementFromPoint()` at the pill's centre, not by calling
+  `.click()` in a console -- that proves the wrong thing.
+  Two inputs now write the colour (header and settings), so they share
+  `applyMyColor()` and `setMyColorInputs()` keeps them in step.
+- **Watch `clamp()` with a vw middle term on small viewports.** The header
+  globe was `clamp(10px,1.6vw,14px)`, which at 375px resolves to the FLOOR --
+  10px, two thirds of every other icon in the row, and in `--ink-soft` on top
+  of that. Header icons are a flat 15px in `--ink`; a vw-scaled icon in a row
+  of fixed ones will always drift at one end of the range.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql

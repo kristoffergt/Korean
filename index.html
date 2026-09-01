@@ -96,7 +96,18 @@ body{
    values here is what made the language pill visibly shorter than its
    neighbors (real report, screenshot). */
 .lang-switch{position:relative;display:flex;align-items:center;gap:6px;background:var(--paper-dim);padding:7px 10px 7px 8px;border-radius:8px;border:1px solid var(--line);}
-.lang-switch-icon{flex:none;color:var(--ink-soft);}
+.lang-switch-icon{flex:none;color:var(--ink);}
+/* The pill's own colour input, laid over it at opacity 0 -- the same trick
+   .who .lang-switch-select uses for the language dropdown, and for the same
+   reason: the tap has to land on a real native control.
+   It replaces a click handler that called .click() on the colour input over
+   in the Account settings modal, which is display:none -- so on iOS the
+   picker simply never opened and the K looked dead (real-user report: "I
+   can't click the profile now, it doesn't work on the app"). A synthetic
+   click into a hidden subtree is not a user gesture iOS will act on. */
+#whoNameWrap{position:relative;display:inline-flex;align-items:center;}
+#whoColorPicker{position:absolute;inset:0;width:100%;height:100%;opacity:0;
+  padding:0;border:none;background:none;cursor:pointer;-webkit-appearance:none;appearance:none;}
 .lang-switch button{background:transparent;color:var(--ink-soft);border:none;padding:5px 10px;font-size:11.5px;font-weight:600;border-radius:5px;}
 .lang-switch button:hover{background:rgba(127,127,127,0.1);}
 .lang-switch button.active{background:var(--ink);color:var(--paper);}
@@ -306,7 +317,13 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
 .who{display:flex;align-items:center;gap:clamp(4px,1.4vw,12px);flex-wrap:wrap;justify-content:flex-end;}
 .who .lang-switch{gap:clamp(3px,0.8vw,6px);padding:clamp(4px,1vw,7px) clamp(5px,1.2vw,10px) clamp(4px,1vw,7px) clamp(4px,1vw,8px);}
 .who .lang-switch-select{font-size:clamp(9px,1.6vw,12.5px);}
-.who .lang-switch-icon{width:clamp(10px,1.6vw,14px);height:clamp(10px,1.6vw,14px);}
+/* Was clamp(10px,1.6vw,14px), which resolves to TEN pixels at 375px -- so
+   on a phone the globe was two thirds the size of every other icon in the
+   row, and muted grey on top of that (real-user report: "the globe is
+   different from the other icons, smaller and not as clear"). Flat 15px to
+   match .icon-btn's own icons, which also makes the pill 27px tall like
+   the buttons beside it. */
+.who .lang-switch-icon{width:15px;height:15px;}
 .who .icon-btn{padding:clamp(4px,1vw,7px) clamp(5px,1.3vw,10px);font-size:clamp(11px,1.8vw,14px);}
 .who .name{font-size:clamp(10px,1.8vw,13px);color:var(--ink-soft);background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:clamp(4px,1vw,7px) clamp(5px,1.3vw,10px);}
 .who button.textbtn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:6px 12px;font-size:12px;font-weight:500;}
@@ -1067,6 +1084,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <button class="icon-btn" id="accountSettingsBtn" title="Account settings"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
       <span id="whoNameWrap">
         <span class="name" id="whoName" style="font-weight:700;cursor:pointer;" title="Click to change your color"></span>
+        <input type="color" id="whoColorPicker" aria-label="Your color">
       </span>
     </div>
     </div>
@@ -9347,7 +9365,7 @@ function buildLangSwitch(container){
   // .who to stay on one line.
   const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   icon.setAttribute('class', 'lang-switch-icon');
-  icon.setAttribute('width', '14'); icon.setAttribute('height', '14');
+  icon.setAttribute('width', '15'); icon.setAttribute('height', '15');
   icon.setAttribute('viewBox', '0 0 24 24');
   icon.setAttribute('fill', 'none'); icon.setAttribute('stroke', 'currentColor');
   icon.setAttribute('stroke-width', '2'); icon.setAttribute('stroke-linecap', 'round'); icon.setAttribute('stroke-linejoin', 'round');
@@ -10109,7 +10127,7 @@ async function onAuthed(user){
   setWhoName(profiles[user.id] || user.email);
   document.getElementById('whoEmail').textContent = user.email;
   const myColor = colorForUser(user.id);
-  document.getElementById('myColorPicker').value = myColor;
+  setMyColorInputs(myColor);
   document.getElementById('whoName').style.color = myColor;
   updateLinkNotifyDot();
   refreshNotifBell();
@@ -11346,7 +11364,7 @@ async function enterGuestMode(){
   setWhoName(profiles['guest-local'] || t('guestDisplayName'));
   document.getElementById('whoEmail').textContent = '';
   const myColor = colorForUser('guest-local');
-  document.getElementById('myColorPicker').value = myColor;
+  setMyColorInputs(myColor);
   document.getElementById('whoName').style.color = myColor;
   // updateLinkNotifyDot()/refreshNotifBell()/the 5 subscribeXRealtime() calls
   // are all skipped -- no linked circle, no notifications, and no realtime
@@ -27481,15 +27499,25 @@ function colorForUser(userId){
 function colorForNote(note){
   return (note && note.color) || colorForUser(note ? note.user_id : null);
 }
-document.getElementById('whoName').addEventListener('click', ()=>{
-  document.getElementById('myColorPicker').click();
-});
-document.getElementById('myColorPicker').addEventListener('change', async (e)=>{
-  const color = e.target.value;
+// Two inputs write the same setting -- the one over the header pill and the
+// one in Account settings -- so the handler is shared and each keeps the
+// other in step rather than the two drifting apart.
+async function applyMyColor(color){
   profileColors[currentUser.id] = color;
   document.getElementById('whoName').style.color = color;
+  setMyColorInputs(color);
   await supabaseClient.from('profiles').update({ color }).eq('id', currentUser.id);
   renderLectureList();
+}
+function setMyColorInputs(color){
+  ['myColorPicker','whoColorPicker'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = color;
+  });
+}
+['myColorPicker','whoColorPicker'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('change', (e)=> applyMyColor(e.target.value));
 });
 document.getElementById('saveDailyGoalBtn').addEventListener('click', async ()=>{
   const msgEl = document.getElementById('dailyGoalMsg');
