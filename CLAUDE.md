@@ -203,6 +203,50 @@ linking system (see below) to share with specific other people.
   (`updateYonseiBoardsVisibility()`), Courses/Notes stay visible
   regardless.
 
+- **No emoji anywhere in the UI** (real-user rule: "I don't want standard
+  emojis on the site"). An emoji is somebody else's artwork, at somebody
+  else's weight, drawn differently by every OS. Icons come from `ICON.*` in
+  the `svgIcon()` block: a 24-unit viewBox, `currentColor` stroke, 2px round
+  caps, `class="ui-icon"` (which supplies the -0.15em baseline nudge that
+  optically centres an inline SVG against text). Adding an icon means adding
+  a path to `ICON_PATHS`, never reaching for a glyph. Two exceptions, both
+  typographic rather than pictorial and both deliberate: the `✕` close/delete
+  mark and the `★`/`☆` favourite pair. Watch for `.textContent` at any site
+  being converted -- an SVG needs `.innerHTML` (this bit `applyDarkMode`).
+- **Colour says what an action does**: `--danger` for anything that removes,
+  `--edit` for anything that edits, applied through `.act-remove` /
+  `.act-edit` on text buttons. Both are floored by MEASUREMENT, not by eye:
+  the app's own link green holds 4.31:1 on a card, so that is the contrast an
+  action colour has to clear. The light `--edit` (#8A6500, 4.43:1) is a dark
+  yellow rather than an orange, which is what keeps it from reading as a
+  second red beside `--danger`. The dark theme needs its own value for both:
+  a yellow dark enough to read on paper is invisible on ink. Icon-only
+  edit/delete buttons live inside containers that paint every button
+  `--ink-soft`, so they need their own three-class rules to reach; move
+  up/down arrows stay muted, being neither an edit nor a removal.
+- **A short link's lifetime is tied to the file's**, not to the row that
+  happens to reference it. `createShortLink(url, base, label, preferred)`
+  takes an optional name typed at upload time and falls back to -2/-3 on a
+  clash; `releaseShortLink(url)` MUST be called wherever a file is removed or
+  REPLACED, or the name stays occupied by something no screen can reach
+  (which is exactly what happened, and needed `pruneOrphanShortLinks()` to
+  clear retroactively). That sweep only runs against a non-empty referenced
+  set, since an offline or failed load would otherwise look like "nothing
+  references anything" and delete every link the account has.
+
+- **Quill (1.3.6) pastes by focusing a hidden div, and that moves the page.**
+  `.ql-clipboard` is `position:absolute; top:50%` inside the editor, so
+  `container.focus()` in `Clipboard.onPaste` scrolls the editor's MIDPOINT
+  into view. Quill restores `quill.scrollingContainer.scrollTop` afterwards,
+  but that defaults to the `.ql-editor` element -- which only scrolls if the
+  editor is height-capped. The notes editors set `min-height` only, so they
+  grow with the note and the PAGE is the scroller, and the restore is a
+  no-op on the thing that moved. `keepPageStillOnPaste(quill)` must be
+  called on every `new Quill(...)`; it overrides that one `focus()` with
+  `{preventScroll:true}` (focus still lands, so the paste still arrives) and
+  falls back to restoring the scroll by hand where the browser ignores the
+  option. Measured 2418px of jump on a 4795px note before, 0 after.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql

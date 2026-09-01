@@ -38,10 +38,13 @@
      also paints solid badges/banners -- these two are text-ink tokens and
      get their own dark-theme values so they stay readable there. */
   --danger:#B33B34;
-  /* Measured, not eyeballed: #C0722A came out at 3.08:1 on a card, well
-     under the ~4.3:1 the app's own link green already holds. This clears
-     that baseline (4.45:1) and still reads orange next to --danger. */
-  --edit:#9E5A15;
+  /* Measured, not eyeballed. The app's own link green holds 4.31:1 on a
+     card, so that is the floor an edit colour has to clear; #8A6500 comes
+     out at 4.43:1. Hue 44 rather than the 27 of the first attempt, which
+     read as a second red beside --danger (real-user request: "make the
+     edit button more yellowy"). The dark theme needs its own value: a
+     yellow dark enough to read on paper is invisible on ink. */
+  --edit:#8A6500;
   --line: rgba(30,31,34,0.12);
   --ink-hover:#000000;
   --c-listening:#6E8FB0;
@@ -64,7 +67,7 @@ body.dark{
   --line: rgba(237,237,239,0.14);
   --ink-hover:#FFFFFF;
   --danger:#E8827A;
-  --edit:#E3A05A;
+  --edit:#E8C46B;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -348,8 +351,8 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
 /* .active/.excluded already paint a solid background, so the plain :hover
    rule's translucent grey overlay above disappears against it -- same
    specificity, but this one has an extra class so it always wins regardless
-   of source order. filter:brightness matches the existing chip-bell/chip-edit
-   hover convention rather than inventing a new hover treatment. */
+   of source order. filter:brightness is the app's own hover convention for a
+   control that already has a solid fill, rather than inventing a new one. */
 .day-toggle-btn.active:hover, .day-toggle-btn.excluded:hover{filter:brightness(1.15);}
 .show-more-btn{width:100%;background:none;border:1px dashed var(--line);color:var(--ink-soft);padding:10px;font-size:12.5px;font-weight:600;border-radius:6px;margin-top:10px;}
 .show-more-btn:hover{background:var(--paper);color:var(--ink);}
@@ -503,6 +506,20 @@ button:hover{background:var(--ink-hover);}
 .linkbtn.act-remove:hover{color:var(--danger);filter:brightness(1.15);}
 .linkbtn.act-edit{color:var(--edit);}
 .linkbtn.act-edit:hover{color:var(--edit);filter:brightness(1.15);}
+/* The icon-only edit and delete buttons in the note and sentence lists sit
+   inside containers that paint every button --ink-soft, so they were the
+   one place the colour convention did not reach. Three classes each, which
+   outranks those container rules (0,3,0 against 0,2,1) wherever they land
+   in source order. The move up/down arrows stay muted deliberately: they
+   are neither an edit nor a removal. */
+.lecture-row .lecture-actions .lecture-edit,
+.gram-sentence-row .gram-sentence-edit-btn{color:var(--edit);}
+.lecture-row .lecture-actions .lecture-edit:hover,
+.gram-sentence-row .gram-sentence-edit-btn:hover{color:var(--edit);filter:brightness(1.15);}
+.lecture-row .lecture-actions .lecture-del,
+.gram-sentence-row .gram-note-del{color:var(--danger);}
+.lecture-row .lecture-actions .lecture-del:hover,
+.gram-sentence-row .gram-note-del:hover{color:var(--danger);filter:brightness(1.15);}
 .progress-track{background:var(--paper);border:1px solid var(--line);border-radius:4px;height:8px;overflow:hidden;margin-top:6px;width:160px;}
 .progress-fill{height:100%;background:var(--celadon-3);}
 .notes-panel{margin-top:10px;padding:12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;}
@@ -568,10 +585,14 @@ button:hover{background:var(--ink-hover);}
 .month-day .dnum{font-family:'Space Grotesk',monospace;flex-shrink:0;}
 .month-day .chip-stack{display:flex;flex-direction:column;gap:2px;overflow:hidden;}
 .month-day .event-chip{font-size:8.5px;line-height:1.3;padding:1px 4px;border-radius:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
-.chip-bell{cursor:pointer;margin-right:2px;filter:brightness(1.4);}
-.chip-bell:hover{transform:scale(1.15);}
-.chip-edit{cursor:pointer;margin-right:2px;filter:brightness(1.4);}
-.chip-edit:hover{transform:scale(1.15);}
+/* An inline SVG sits on the text baseline, which pushes it low against the
+   letters beside it; -0.15em is the optical centre for a 24-unit box at
+   this weight. The old brightness(1.4) on the two chip icons is gone with
+   the emoji it was compensating for -- a stroke icon takes the chip's own
+   text colour, so there is nothing left to lift. */
+.ui-icon{vertical-align:-0.15em;flex-shrink:0;}
+.chip-bell,.chip-edit{cursor:pointer;margin-right:2px;display:inline-flex;align-items:center;}
+.chip-bell:hover,.chip-edit:hover{transform:scale(1.15);}
 .event-chip{position:relative;padding-right:12px !important;}
 .chip-initial{position:absolute;top:1px;right:1px;font-size:6.5px;min-width:9px;height:9px;line-height:9px;padding:0 2px;text-align:center;border-radius:5px;background:rgba(255,255,255,0.4);color:inherit;font-weight:800;box-sizing:border-box;}
 .month-day .more-count{font-size:8px;color:var(--ink-soft);}
@@ -881,7 +902,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 <div id="pinGateScreen">
   <div class="auth-topbar">
     <div class="topbar-controls">
-      <button class="icon-btn" id="darkTogglePin" title="Toggle dark mode">🌙</button>
+      <button class="icon-btn" id="darkTogglePin" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
       <div class="lang-switch" id="langSwitchPin"></div>
     </div>
   </div>
@@ -914,7 +935,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 <div id="authScreen" class="hidden">
   <div class="auth-topbar">
     <div class="topbar-controls">
-      <button class="icon-btn" id="darkToggleAuth" title="Toggle dark mode">🌙</button>
+      <button class="icon-btn" id="darkToggleAuth" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
       <div class="lang-switch" id="langSwitchAuth"></div>
     </div>
   </div>
@@ -1002,7 +1023,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="header-row2">
     <div class="sub" id="headerSub"></div>
     <div class="who">
-      <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode">🌙</button>
+      <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
       <div class="lang-switch" id="langSwitchApp"></div>
       <div style="position:relative;display:inline-flex;">
         <button class="icon-btn" id="notifBellBtn" title="Notifications" style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
@@ -1028,7 +1049,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <a class="icon-btn hidden" id="notesLinkHeaderBtn" title="My notes" target="_blank" rel="noopener">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9z"></path><path d="M15 3v6h6"></path></svg>
       </a>
-      <button class="icon-btn" id="accountSettingsBtn" title="Account settings">⚙️</button>
+      <button class="icon-btn" id="accountSettingsBtn" title="Account settings"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
       <span id="whoNameWrap">
         <span class="name" id="whoName" style="font-weight:700;cursor:pointer;" title="Click to change your color"></span>
       </span>
@@ -1491,6 +1512,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
           <label for="courseSyllabus" id="lblCourseSyllabus"></label>
           <label class="file-upload-btn" for="courseSyllabus" id="chooseFileLabel"></label>
           <input type="file" id="courseSyllabus" accept=".pdf,.doc,.docx" class="hidden-file-input">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="courseSyllabusSlug" data-ph-key="shortLinkAutoPlaceholder" style="width:190px;font-size:12px;padding:4px 7px;"></div>
         </div>
         <button id="addCourseBtn"></button>
       </div>
@@ -1742,6 +1764,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
             <span class="file-chosen-name" id="jobResumeFileName"></span>
           </div>
           <input type="file" id="jobResumeFile" accept=".pdf,application/pdf" class="hidden-file-input">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="jobResumeSlug" data-ph-key="shortLinkAutoPlaceholder" style="width:190px;font-size:12px;padding:4px 7px;"></div>
         </div>
         <div class="field wide">
           <label for="jobCoverLetterFile" id="lblJobCoverLetter"></label>
@@ -1750,6 +1773,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
             <span class="file-chosen-name" id="jobCoverLetterFileName"></span>
           </div>
           <input type="file" id="jobCoverLetterFile" accept=".pdf,application/pdf" class="hidden-file-input">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="jobCoverLetterSlug" data-ph-key="shortLinkAutoPlaceholder" style="width:190px;font-size:12px;padding:4px 7px;"></div>
         </div>
         <button id="addJobBtn"></button>
       </div>
@@ -8427,7 +8451,7 @@ const I18N = {
     lblEventReminder:'Reminder', reminderOptNone:'No reminder', reminderOptAtTime:'At the time', reminderOpt1Hour:'1 hour before', reminderOpt1Day:'1 day before', eventReminderFor:'Remind',
     reminderUnitMinute:'minute', reminderUnitMinutes:'minutes', reminderUnitHour:'hour', reminderUnitHours:'hours', reminderUnitDay:'day', reminderUnitDays:'days',
     reminderBeforeSuffix:'before', eventReminderTypeHint:'e.g. 45m, 3h, 2d', removeReminderTitle:'Remove reminder', reminderPrecisionNote:'Reminders are checked every 30 minutes, so exact minute offsets fire within that window rather than to the second.',
-    editBtn:'✏️ Edit', saveChanges:'Save changes', cancelEdit:'Cancel',
+    editBtn:'Edit', saveChanges:'Save changes', cancelEdit:'Cancel',
     kindCourse:'Course', kindBirthday:'Birthday', kindPill:'Pill cycle', lblPillVersion:'Pill version', pillVersionStandard:'Standard (21 active / 7 off)', repeatYear:'Year(s)', amLabel:'AM', pmLabel:'PM', countdownDaysShort:'d', countdownHoursShort:'h', countdownMinsShort:'m', countdownSecsShort:'s',
     hCoursesCal:'Courses', hBirthdays:'Birthdays',
     remindOthersLabel:'Also remind', signInWithNameHint:'Email or Username',
@@ -8466,12 +8490,12 @@ const I18N = {
     courseTime:'Time', courseConcentration:'Concentration', courseStatus:'Status', courseSyllabus:'Syllabus',
     courseDay:'Day', courseStartDate:'Start date (optional)', courseEndDate:'Ends (optional)', courseMidterm:'Midterm date (optional)', courseFinal:'Final date (optional)',
     dayMon:'Monday', dayTue:'Tuesday', dayWed:'Wednesday', dayThu:'Thursday', dayFri:'Friday',
-    editCourse:'✏️ Edit', saveCourseChanges:'Save changes', midtermLabel:'Midterm', finalLabel:'Final',
+    editCourse:'Edit', saveCourseChanges:'Save changes', midtermLabel:'Midterm', finalLabel:'Final',
     thisOccurrenceOnly:'This event only', allOccurrences:'All events', cancelBtn:'Cancel',
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', editRemindersModalTitle:'Edit reminders', deleteEventBtn:'Delete',
     addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header (optional)',
-    hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?', charCountLabel:'{n} characters', charCountTarget:'{n} characters (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description (optional)', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image (optional)', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'🎲 Random', lblWritingQ53Image:'Attach an image (optional)', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'🎯 Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'🎯 Start a Q54 mock exam (35 min)', writingMockStartBtn:'🎯 Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
+    hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?', charCountLabel:'{n} characters', charCountTarget:'{n} characters (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description (optional)', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image (optional)', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'Random', lblWritingQ53Image:'Attach an image (optional)', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'Start a Q54 mock exam (35 min)', writingMockStartBtn:'Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
     lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
     gramJumpPlaceholder:'- Select -', gramAllLevels:'All', gramIntermediateGroup:'Intermediate', gramAdvancedGroup:'Advanced',
@@ -8483,7 +8507,7 @@ const I18N = {
     gramMarkNotReviewed:'Mark as not reviewed', gramMarkReviewedAgain:'Undo – Mark as reviewed', gramResources:'Videos & links', gramResourceUrlPlaceholder:'YouTube or website URL', gramResourceLabelPlaceholder:'Label (optional)', gramAddResource:'Add',
     hRecap:'Recap',recapWeekBtn:'Past 7 days',recapMonthBtn:'Past 30 days',recapStudyHours:'Study hours',recapGrammarPracticed:'Grammar sentences practiced',recapBooksFinished:'Books finished',recapJobsSent:'Applications sent',hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite.',quizFromCluster:'From comparison group:',quizFillBlank:'Fill in the blank',quizCorrectAnswerLabel:'Correct answer:',quizHistoryHeader:'Your quiz history',quizMaxScoreLabel:'Best score',quizAttemptsCountLabel:'Attempts',quizAverageLabel:'Average',quizNoAttemptsYet:'No attempts yet.',quizDueCount:'{n} pattern(s) due for review',quizReviewDueBtn:'Review due patterns',hLinkedCircle:'Linked circle',linkedCircleDesc:'Link up with other people to share your study data with them. Up to 10 people, and you control what you share.',linkInvitedYou:'{name} invited you to link up.',linkAcceptBtn:'Accept',linkDeclineBtn:'Decline',linkLeaveBtn:'Leave circle',linkRosterHeader:'Your circle',linkStatusAccepted:'Linked',linkStatusPending:'Invite sent. Awaiting response',linkJustAccepted:'Accepted!',linkRemoveBtn:'Remove from circle',linkRemoveConfirm:'Remove {name} from your circle? They will no longer see or share data with you.',linkCatSearchPlaceholder:'Search what you share…',linkInviteSearchPlaceholder:'Search by name...',linkInviteBtn:'Invite',linkNoResults:'No matching users found.',linkCatStudyEntries:'Study log',linkCatBooks:'Reading list',linkCatJobApplications:'Job applications',linkCatGrammarNotes:'Grammar practice notes',linkCatCourseNotes:'Course notes',linkCatWritingSamples:'Writing samples & feedback',linkCatRecap:'Weekly/monthly recap',linkCatReadiness:'Grammar readiness',linkCatCalendar:'Calendar',linkCatNotebook:'Notebook',linkCatCourses:'Courses',linkSharingHeader:'What you\'re sharing',linkSharingHint:'These are your own settings. Set them before you invite anyone, or change them anytime after. They apply to whoever you\'re linked with.',linkCustomizeFor:'Customize what you share with {name}',linkOverrideHint:'Overrides your defaults just for {name}.',linkResetOverridesBtn:'Reset to your defaults',linkGroupFullMsg:'Your circle is at the 10-person limit.',linkErrorGeneric:'Something went wrong. Please try again.',linkNotLinkedYet:'You\'re not linked with anyone yet. Search for someone below to send an invite.',linkInviteSentMsg:'Invite sent.',linkStatusAlwaysShared:'Always shared',writingFeedbackHeader:'Feedback',writingFeedbackPlaceholder:'Leave feedback on this sample...',writingFeedbackSendBtn:'Send',writingFeedbackEmpty:'No feedback yet.', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently. Leave a line blank to clear that field.',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in', statusTeachingAssistant:'TA', statusResearchAssistant:'RA',
-    hCourseList:'All courses', viewSyllabus:'Syllabus ↗', saveShortLink:'Save link', copyLink:'Copy', shortLinkSaved:'Link saved.', shortLinkTaken:'That link is taken.', shortLinkInvalid:'Letters, numbers and hyphens only.', shortLinkCopied:'Copied!',
+    hCourseList:'All courses', viewSyllabus:'Syllabus ↗', saveShortLink:'Save link', copyLink:'Copy', shortLinkSaved:'Link saved.', shortLinkTaken:'That link is taken.', shortLinkInvalid:'Letters, numbers and hyphens only.', shortLinkCopied:'Copied!', shortLinkAutoPlaceholder:'auto',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
     generalNotes:'General notes', noNote:'No course', allPeople:'All', lblNotesPersonFilter:'Show', closeNoteBtn:'Close',
     lastSavedBy:'Last saved by {name} at {time}', neverSaved:'Not saved yet',
@@ -8547,7 +8571,7 @@ const I18N = {
     lblEventReminder:'알림', reminderOptNone:'알림 없음', reminderOptAtTime:'정시', reminderOpt1Hour:'1시간 전', reminderOpt1Day:'1일 전', eventReminderFor:'알림 대상',
     reminderUnitMinute:'분', reminderUnitMinutes:'분', reminderUnitHour:'시간', reminderUnitHours:'시간', reminderUnitDay:'일', reminderUnitDays:'일',
     reminderBeforeSuffix:'전', eventReminderTypeHint:'예: 45m, 3h, 2d', removeReminderTitle:'알림 삭제', reminderPrecisionNote:'알림은 30분마다 확인되므로, 정확한 분 단위 설정도 그 범위 안에서 전송됩니다.',
-    editBtn:'✏️ 수정', saveChanges:'변경사항 저장', cancelEdit:'취소',
+    editBtn:'수정', saveChanges:'변경사항 저장', cancelEdit:'취소',
     kindCourse:'수업', kindBirthday:'생일', kindPill:'피임약 주기', lblPillVersion:'피임약 종류', pillVersionStandard:'표준 (복용 21일 / 휴약 7일)', repeatYear:'년', amLabel:'오전', pmLabel:'오후', countdownDaysShort:'일', countdownHoursShort:'시간', countdownMinsShort:'분', countdownSecsShort:'초',
     hCoursesCal:'수업', hBirthdays:'생일',
     remindOthersLabel:'함께 알림 받기', signInWithNameHint:'이메일 또는 이름',
@@ -8586,12 +8610,12 @@ const I18N = {
     courseTime:'시간', courseConcentration:'전공/트랙', courseStatus:'상태', courseSyllabus:'강의계획서',
     courseDay:'요일', courseStartDate:'시작일 (선택)', courseEndDate:'종료일 (선택)', courseMidterm:'중간고사 날짜 (선택)', courseFinal:'기말고사 날짜 (선택)',
     dayMon:'월요일', dayTue:'화요일', dayWed:'수요일', dayThu:'목요일', dayFri:'금요일',
-    editCourse:'✏️ 수정', saveCourseChanges:'변경사항 저장', midtermLabel:'중간고사', finalLabel:'기말고사',
+    editCourse:'수정', saveCourseChanges:'변경사항 저장', midtermLabel:'중간고사', finalLabel:'기말고사',
     thisOccurrenceOnly:'이 일정만', allOccurrences:'전체 일정', cancelBtn:'취소',
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', editRemindersModalTitle:'알림 수정', deleteEventBtn:'삭제',
     addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더 (선택)',
-    hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명 (선택)', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부 (선택)', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'🎲 무작위', lblWritingQ53Image:'이미지 첨부 (선택)', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'🎯 53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'🎯 54번 모의고사 시작 (35분)', writingMockStartBtn:'🎯 실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
+    hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명 (선택)', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부 (선택)', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'무작위', lblWritingQ53Image:'이미지 첨부 (선택)', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'54번 모의고사 시작 (35분)', writingMockStartBtn:'실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
     lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
     gramJumpPlaceholder:'- 선택 -', gramAllLevels:'전체', gramIntermediateGroup:'중급', gramAdvancedGroup:'고급',
@@ -8603,7 +8627,7 @@ const I18N = {
     gramMarkNotReviewed:'복습 안 함으로 표시', gramMarkReviewedAgain:'취소 – 복습함으로 표시', gramResources:'영상 및 링크', gramResourceUrlPlaceholder:'유튜브 또는 웹사이트 URL', gramResourceLabelPlaceholder:'라벨 (선택)', gramAddResource:'추가',
     hRecap:'요약',recapWeekBtn:'지난 7일',recapMonthBtn:'지난 30일',recapStudyHours:'공부 시간',recapGrammarPracticed:'연습한 문법 문장',recapBooksFinished:'완독한 책',recapJobsSent:'지원한 곳',hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요.',quizFromCluster:'비교 그룹:',quizFillBlank:'빈칸을 채우세요',quizCorrectAnswerLabel:'정답:',quizHistoryHeader:'나의 퀴즈 기록',quizMaxScoreLabel:'최고 점수',quizAttemptsCountLabel:'시도 횟수',quizAverageLabel:'평균',quizNoAttemptsYet:'아직 기록이 없어요.',quizDueCount:'복습할 문법 {n}개',quizReviewDueBtn:'복습할 문법 풀기',hLinkedCircle:'연결된 그룹',linkedCircleDesc:'다른 사용자와 연결해서 학습 데이터를 공유하세요. 최대 10명까지 가능하며, 무엇을 공유할지는 직접 선택할 수 있습니다.',linkInvitedYou:'{name}님이 연결을 요청했습니다.',linkAcceptBtn:'수락',linkDeclineBtn:'거절',linkLeaveBtn:'그룹 나가기',linkRosterHeader:'내 그룹',linkStatusAccepted:'연결됨',linkStatusPending:'초대 보냄. 응답 대기 중',linkJustAccepted:'수락함!',linkRemoveBtn:'그룹에서 제거',linkRemoveConfirm:'{name}님을 그룹에서 제거하시겠습니까? 더 이상 서로 데이터를 볼 수 없습니다.',linkCatSearchPlaceholder:'공유 항목 검색…',linkInviteSearchPlaceholder:'이름으로 검색...',linkInviteBtn:'초대',linkNoResults:'일치하는 사용자가 없습니다.',linkCatStudyEntries:'학습 기록',linkCatBooks:'독서 목록',linkCatJobApplications:'구직 지원 내역',linkCatGrammarNotes:'문법 연습 노트',linkCatCourseNotes:'수업 노트',linkCatWritingSamples:'작문 및 피드백',linkCatRecap:'주간/월간 요약',linkCatReadiness:'문법 준비도',linkCatCalendar:'캘린더',linkCatNotebook:'노트북',linkCatCourses:'수업',linkSharingHeader:'공유 중인 항목',linkSharingHint:'이 설정은 본인 계정에만 적용됩니다. 초대를 보내기 전에 미리 설정하거나, 연결된 후 언제든지 바꿀 수 있어요. 연결된 모든 사람에게 동일하게 적용됩니다.',linkCustomizeFor:'{name}님과 공유할 항목 설정',linkOverrideHint:'{name}님에게만 적용되는 개별 설정입니다.',linkResetOverridesBtn:'기본값으로 초기화',linkGroupFullMsg:'그룹이 최대 인원(10명)에 도달했습니다.',linkErrorGeneric:'문제가 발생했습니다. 다시 시도해 주세요.',linkNotLinkedYet:'아직 아무와도 연결되어 있지 않습니다. 아래에서 검색해 초대를 보내보세요.',linkInviteSentMsg:'초대를 보냈습니다.',linkStatusAlwaysShared:'항상 공유됨',writingFeedbackHeader:'피드백',writingFeedbackPlaceholder:'이 작문에 대한 피드백을 남겨보세요...',writingFeedbackSendBtn:'보내기',writingFeedbackEmpty:'아직 피드백이 없습니다.', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다. 비워두면 해당 항목이 지워집니다.',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정', statusTeachingAssistant:'조교(TA)', statusResearchAssistant:'연구조교(RA)',
-    hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗', saveShortLink:'링크 저장', copyLink:'복사', shortLinkSaved:'링크가 저장되었습니다.', shortLinkTaken:'이미 사용 중인 링크입니다.', shortLinkInvalid:'영문, 숫자, 하이픈만 사용할 수 있습니다.', shortLinkCopied:'복사됨!',
+    hCourseList:'전체 수업', viewSyllabus:'강의계획서 ↗', saveShortLink:'링크 저장', copyLink:'복사', shortLinkSaved:'링크가 저장되었습니다.', shortLinkTaken:'이미 사용 중인 링크입니다.', shortLinkInvalid:'영문, 숫자, 하이픈만 사용할 수 있습니다.', shortLinkCopied:'복사됨!', shortLinkAutoPlaceholder:'자동',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
     generalNotes:'일반 노트', noNote:'수업 없음', allPeople:'전체', lblNotesPersonFilter:'보기', closeNoteBtn:'닫기',
     lastSavedBy:'{name}님이 {time}에 저장함', neverSaved:'아직 저장되지 않음',
@@ -8667,7 +8691,7 @@ const I18N = {
     lblEventReminder:'Nhắc nhở', reminderOptNone:'Không nhắc', reminderOptAtTime:'Đúng giờ', reminderOpt1Hour:'1 giờ trước', reminderOpt1Day:'1 ngày trước', eventReminderFor:'Nhắc cho',
     reminderUnitMinute:'phút', reminderUnitMinutes:'phút', reminderUnitHour:'giờ', reminderUnitHours:'giờ', reminderUnitDay:'ngày', reminderUnitDays:'ngày',
     reminderBeforeSuffix:'trước', eventReminderTypeHint:'vd: 45m, 3h, 2d', removeReminderTitle:'Xóa nhắc nhở', reminderPrecisionNote:'Nhắc nhở được kiểm tra mỗi 30 phút, nên mốc phút chính xác sẽ được gửi trong khoảng đó thay vì đúng từng giây.',
-    editBtn:'✏️ Sửa', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy',
+    editBtn:'Sửa', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy',
     kindCourse:'Khóa học', kindBirthday:'Sinh nhật', kindPill:'Chu kỳ thuốc tránh thai', lblPillVersion:'Loại thuốc', pillVersionStandard:'Tiêu chuẩn (uống 21 ngày / nghỉ 7 ngày)', repeatYear:'Năm', amLabel:'SA', pmLabel:'CH', countdownDaysShort:'ngày', countdownHoursShort:'giờ', countdownMinsShort:'phút', countdownSecsShort:'giây',
     hCoursesCal:'Khóa học', hBirthdays:'Sinh nhật',
     remindOthersLabel:'Nhắc cả người kia', signInWithNameHint:'Email hoặc tên hiển thị',
@@ -8707,12 +8731,12 @@ const I18N = {
     courseDay:'Thứ', courseStartDate:'Ngày bắt đầu (tùy chọn)', courseEndDate:'Ngày kết thúc (tùy chọn)', courseMidterm:'Ngày thi giữa kỳ (tùy chọn)', courseFinal:'Ngày thi cuối kỳ (tùy chọn)',
 
     dayMon:'Thứ Hai', dayTue:'Thứ Ba', dayWed:'Thứ Tư', dayThu:'Thứ Năm', dayFri:'Thứ Sáu',
-    editCourse:'✏️ Sửa', saveCourseChanges:'Lưu thay đổi', midtermLabel:'Giữa kỳ', finalLabel:'Cuối kỳ',
+    editCourse:'Sửa', saveCourseChanges:'Lưu thay đổi', midtermLabel:'Giữa kỳ', finalLabel:'Cuối kỳ',
     thisOccurrenceOnly:'Chỉ sự kiện này', allOccurrences:'Tất cả sự kiện', cancelBtn:'Hủy',
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', editRemindersModalTitle:'Sửa nhắc nhở', deleteEventBtn:'Xóa',
     addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh (tùy chọn)',
-    hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ (tùy chọn)', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh (tùy chọn)', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'🎲 Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh (tùy chọn)', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'🎯 Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'🎯 Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'🎯 Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
+    hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ (tùy chọn)', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh (tùy chọn)', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh (tùy chọn)', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
     lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
     gramJumpPlaceholder:'- Chọn -', gramAllLevels:'Tất cả', gramIntermediateGroup:'Trung cấp', gramAdvancedGroup:'Cao cấp',
@@ -8724,7 +8748,7 @@ const I18N = {
     gramMarkNotReviewed:'Đánh dấu chưa ôn tập', gramMarkReviewedAgain:'Hoàn tác – Đánh dấu đã ôn tập', gramResources:'Video & liên kết', gramResourceUrlPlaceholder:'URL YouTube hoặc trang web', gramResourceLabelPlaceholder:'Nhãn (tùy chọn)', gramAddResource:'Thêm',
     hRecap:'Tổng kết',recapWeekBtn:'7 ngày qua',recapMonthBtn:'30 ngày qua',recapStudyHours:'Giờ học',recapGrammarPracticed:'Câu ngữ pháp đã luyện',recapBooksFinished:'Sách đã đọc xong',recapJobsSent:'Đơn ứng tuyển đã gửi',hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng.',quizFromCluster:'Nhóm so sánh:',quizFillBlank:'Điền vào chỗ trống',quizCorrectAnswerLabel:'Đáp án đúng:',quizHistoryHeader:'Lịch sử trắc nghiệm của bạn',quizMaxScoreLabel:'Điểm cao nhất',quizAttemptsCountLabel:'Số lần làm',quizAverageLabel:'Trung bình',quizNoAttemptsYet:'Chưa có lượt làm nào.',quizDueCount:'{n} mẫu ngữ pháp cần ôn tập',quizReviewDueBtn:'Ôn tập các mẫu cần ôn',hLinkedCircle:'Nhóm liên kết',linkedCircleDesc:'Liên kết với người dùng khác để chia sẻ dữ liệu học tập. Tối đa 10 người, và bạn tự quyết định chia sẻ những gì.',linkInvitedYou:'{name} đã mời bạn liên kết.',linkAcceptBtn:'Chấp nhận',linkDeclineBtn:'Từ chối',linkLeaveBtn:'Rời nhóm',linkRosterHeader:'Nhóm của bạn',linkStatusAccepted:'Đã liên kết',linkStatusPending:'Đã gửi lời mời. Đang chờ phản hồi',linkJustAccepted:'Đã chấp nhận!',linkRemoveBtn:'Xóa khỏi nhóm',linkRemoveConfirm:'Xóa {name} khỏi nhóm của bạn? Hai bên sẽ không còn thấy hoặc chia sẻ dữ liệu với nhau.',linkCatSearchPlaceholder:'Tìm những gì bạn chia sẻ…',linkInviteSearchPlaceholder:'Tìm theo tên...',linkInviteBtn:'Mời',linkNoResults:'Không tìm thấy người dùng phù hợp.',linkCatStudyEntries:'Nhật ký học tập',linkCatBooks:'Danh sách đọc',linkCatJobApplications:'Đơn ứng tuyển',linkCatGrammarNotes:'Ghi chú luyện ngữ pháp',linkCatCourseNotes:'Ghi chú khóa học',linkCatWritingSamples:'Bài viết & phản hồi',linkCatRecap:'Tổng kết tuần/tháng',linkCatReadiness:'Mức độ sẵn sàng ngữ pháp',linkCatCalendar:'Lịch',linkCatNotebook:'Sổ tay',linkCatCourses:'Khóa học',linkSharingHeader:'Những gì bạn đang chia sẻ',linkSharingHint:'Đây là cài đặt của riêng bạn. Bạn có thể đặt trước khi mời ai đó, hoặc thay đổi bất cứ lúc nào sau khi đã liên kết. Áp dụng cho tất cả những người bạn đang liên kết.',linkCustomizeFor:'Tùy chỉnh những gì bạn chia sẻ với {name}',linkOverrideHint:'Ghi đè cài đặt mặc định chỉ riêng cho {name}.',linkResetOverridesBtn:'Đặt lại về mặc định',linkGroupFullMsg:'Nhóm của bạn đã đạt giới hạn 10 người.',linkErrorGeneric:'Đã có lỗi xảy ra. Vui lòng thử lại.',linkNotLinkedYet:'Bạn chưa liên kết với ai. Hãy tìm kiếm bên dưới để gửi lời mời.',linkInviteSentMsg:'Đã gửi lời mời.',linkStatusAlwaysShared:'Luôn được chia sẻ',writingFeedbackHeader:'Phản hồi',writingFeedbackPlaceholder:'Để lại phản hồi cho bài viết này...',writingFeedbackSendBtn:'Gửi',writingFeedbackEmpty:'Chưa có phản hồi nào.', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập. Để trống dòng nào sẽ xóa trường đó.',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt', statusTeachingAssistant:'Trợ giảng (TA)', statusResearchAssistant:'Trợ lý nghiên cứu (RA)',
-    hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗', saveShortLink:'Lưu liên kết', copyLink:'Sao chép', shortLinkSaved:'Đã lưu liên kết.', shortLinkTaken:'Liên kết này đã được dùng.', shortLinkInvalid:'Chỉ dùng chữ, số và dấu gạch ngang.', shortLinkCopied:'Đã sao chép!',
+    hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương ↗', saveShortLink:'Lưu liên kết', copyLink:'Sao chép', shortLinkSaved:'Đã lưu liên kết.', shortLinkTaken:'Liên kết này đã được dùng.', shortLinkInvalid:'Chỉ dùng chữ, số và dấu gạch ngang.', shortLinkCopied:'Đã sao chép!', shortLinkAutoPlaceholder:'tự động',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
     generalNotes:'Ghi chú chung', noNote:'Không có khóa học', allPeople:'Tất cả', lblNotesPersonFilter:'Hiển thị', closeNoteBtn:'Đóng',
     lastSavedBy:'Lưu lần cuối bởi {name} lúc {time}', neverSaved:'Chưa được lưu',
@@ -9250,14 +9274,43 @@ function fmt(n){ return Number(n.toFixed(2)).toString(); }
 function pluralUnit(n, singularWord, pluralWord){
   return n === 1 ? singularWord : pluralWord;
 }
+// Custom line icons, drawn in the same idiom as the header's existing SVGs
+// (24-unit box, currentColor stroke, 2px round caps) so they inherit text
+// colour and theme automatically. These replace the platform emoji that used
+// to sit in these spots: an emoji renders as somebody else's artwork, at
+// somebody else's weight, differently on every OS (real-user request: "I
+// don't want standard emojis on the site").
+function svgIcon(paths, size){
+  return '<svg class="ui-icon" width="'+(size||14)+'" height="'+(size||14)+'" viewBox="0 0 24 24" fill="none" '
+    + 'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + paths + '</svg>';
+}
+const ICON_PATHS = {
+  pencil: '<path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>',
+  bellOn: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>',
+  bellOff:'<path d="M13.73 21a2 2 0 0 1-3.46 0"></path><path d="M18.63 13A17.9 17.9 0 0 1 18 8"></path><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"></path><path d="M18 8a6 6 0 0 0-9.33-5"></path><line x1="1" y1="1" x2="23" y2="23"></line>',
+  moon:   '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>',
+  sun:    '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>',
+  gear:   '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>',
+  link:   '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>'
+};
+const ICON = {
+  pencil:  function(sz){ return svgIcon(ICON_PATHS.pencil, sz); },
+  bellOn:  function(sz){ return svgIcon(ICON_PATHS.bellOn, sz); },
+  bellOff: function(sz){ return svgIcon(ICON_PATHS.bellOff, sz); },
+  moon:    function(sz){ return svgIcon(ICON_PATHS.moon, sz); },
+  sun:     function(sz){ return svgIcon(ICON_PATHS.sun, sz); },
+  gear:    function(sz){ return svgIcon(ICON_PATHS.gear, sz); },
+  link:    function(sz){ return svgIcon(ICON_PATHS.link, sz); }
+};
 /* ---------- DARK MODE ---------- */
 function applyDarkMode(isDark){
   document.body.classList.toggle('dark', isDark);
   localStorage.setItem('trackerDark', isDark ? '1' : '0');
-  const icon = isDark ? '☀️' : '🌙';
-  document.getElementById('darkToggleAuth').textContent = icon;
-  document.getElementById('darkToggleApp').textContent = icon;
-  document.getElementById('darkTogglePin').textContent = icon;
+  const icon = isDark ? ICON.sun(15) : ICON.moon(15);
+  document.getElementById('darkToggleAuth').innerHTML = icon;
+  document.getElementById('darkToggleApp').innerHTML = icon;
+  document.getElementById('darkTogglePin').innerHTML = icon;
 }
 document.getElementById('darkToggleAuth').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 document.getElementById('darkToggleApp').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
@@ -9533,6 +9586,8 @@ function applyLanguage(lang){
   document.getElementById('writingEssaySearch').placeholder = t('writingSearchPlaceholder');
   document.getElementById('writingQ53Search').placeholder = t('writingSearchPlaceholder');
   document.getElementById('vacationInviteSearchInput').placeholder = t('vacationInviteSearchPlaceholder');
+  document.querySelectorAll('[data-ph-key]').forEach(el=>{ el.placeholder = t(el.dataset.phKey); });
+  document.querySelectorAll('.short-link-prefix').forEach(el=>{ el.textContent = location.host + SHORT_LINK_PATH; });
   document.querySelectorAll('.pw-toggle-btn').forEach(btn=>{
     const input = document.getElementById(btn.dataset.target);
     const label = t((input && input.type === 'text') ? 'hidePasswordBtn' : 'showPasswordBtn');
@@ -10625,6 +10680,17 @@ document.addEventListener('change', (e)=>{
    file belongs to and editable afterwards. Resolution happens in 404.html;
    see file_short_links_migration.sql for why that table is public-read. */
 const SHORT_LINK_PATH = '/f/';
+// The link used to be nameable only after the file was already up, so
+// uploading meant coming back to a second screen to name the thing you had
+// just added (real-user request: "I want to be able to immediately set the
+// link when I add the syllabus/files"). Same row, offered beside every file
+// chooser; left blank it auto-names exactly as it did before.
+function shortLinkPickerHtml(cls){
+  return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;">
+    <span style="font-size:12px;color:var(--ink-soft);">${location.host}${SHORT_LINK_PATH}</span>
+    <input type="text" class="${cls}" placeholder="${t('shortLinkAutoPlaceholder')}" style="width:190px;font-size:12px;padding:4px 7px;">
+  </div>`;
+}
 let fileLinksByUrl = {};  // storage url -> slug
 function shortLinkUrl(slug){ return location.origin + SHORT_LINK_PATH + slug; }
 function shortLinkForUrl(url){ return url ? (fileLinksByUrl[url] || null) : null; }
@@ -10646,11 +10712,14 @@ async function loadFileLinks(){
 // Auto-names from `base`, appending -2, -3 ... on a uniqueness clash. 23505
 // is Postgres' unique_violation: anything else is a real failure and must
 // not be retried under a different name.
-async function createShortLink(url, base, label){
+// `preferred` is a name typed into the upload form. It is used as the root
+// rather than as a hard requirement: the -2/-3 fallback still applies, so a
+// clash gives a usable link instead of silently dropping the choice.
+async function createShortLink(url, base, label, preferred){
   if(!url || !currentUser || guestMode) return null;
   const already = shortLinkForUrl(url);
   if(already) return already;
-  const root = slugify(base, 'file');
+  const root = slugify(preferred, '') || slugify(base, 'file');
   for(let i = 0; i < 25; i++){
     const candidate = i === 0 ? root : root + '-' + (i + 1);
     const { error } = await supabaseClient.from('file_links')
@@ -10683,11 +10752,45 @@ async function backfillShortLinks(){
     if(shortLinkForUrl(tgt.url)) continue;
     await createShortLink(tgt.url, tgt.base, tgt.label);
   }
+  const referenced = new Set();
+  Object.values(allCourses).flat().forEach(c=>{ if(c.syllabus_url) referenced.add(c.syllabus_url); });
+  Object.values(allJobs).flat().forEach(j=>{
+    if(j.resume_url) referenced.add(j.resume_url);
+    if(j.cover_letter_url) referenced.add(j.cover_letter_url);
+  });
+  if(referenced.size) await pruneOrphanShortLinks(referenced);
+}
+// A removed file has to give its slug back, or the name stays occupied by
+// something nothing points at any more and cannot be reached from any
+// screen to be freed (real-user report: "I removed it previously and now
+// the link is still occupied").
+async function releaseShortLink(url){
+  if(!url || !currentUser || guestMode) return;
+  const slug = shortLinkForUrl(url);
+  if(!slug) return;
+  delete fileLinksByUrl[url];
+  await supabaseClient.from('file_links').delete().eq('slug', slug).eq('owner_id', currentUser.id);
+}
+// The orphans made before releaseShortLink existed are already in the table
+// and no screen shows them, so releasing on removal alone would never free
+// them. This sweeps any link of MINE whose file is referenced by nothing I
+// hold. Deliberately generous about what counts as referenced: every loaded
+// course and job, not only my own rows, since a syllabus I uploaded can end
+// up on a course whose primary owner is somebody else in the circle.
+//
+// It runs only when the data behind `referenced` really loaded -- a failed
+// or offline load leaves those arrays empty, and pruning against an empty
+// set would delete every link the account has.
+async function pruneOrphanShortLinks(referenced){
+  if(!currentUser || guestMode) return;
+  const orphans = Object.keys(fileLinksByUrl).filter(u => !referenced.has(u));
+  for(const url of orphans) await releaseShortLink(url);
 }
 // Insert the new slug BEFORE deleting the old one -- if the name someone
 // picked is already taken, the existing link has to survive intact rather
 // than being dropped on the way to a failed rename.
 async function renameShortLink(url, rawSlug){
+  if(!currentUser || guestMode) return { ok:false, reason:'error' };
   const slug = slugify(rawSlug, '');
   if(!slug) return { ok:false, reason:'invalid' };
   const current = shortLinkForUrl(url);
@@ -11248,7 +11351,7 @@ function renderLinkedCircle(){
           // Per-partner overrides only make sense once they've actually
           // accepted (an override for a still-pending invitee has nothing
           // to attach to yet, and they might decline).
-          const gearHtml = r.status === 'accepted' ? `<button class="icon-btn link-partner-gear" data-uid="${r.user_id}" title="${escapeHtml(t('linkCustomizeFor').replace('{name}', nameFor(r.user_id)))}" style="padding:2px 7px;font-size:11px;">⚙</button>` : '';
+          const gearHtml = r.status === 'accepted' ? `<button class="icon-btn link-partner-gear" data-uid="${r.user_id}" title="${escapeHtml(t('linkCustomizeFor').replace('{name}', nameFor(r.user_id)))}" style="padding:2px 7px;font-size:11px;">${ICON.gear(12)}</button>` : '';
           const removeHtml = `<button class="icon-btn link-remove-member" data-uid="${r.user_id}" data-name="${escapeHtml(nameFor(r.user_id))}" title="${t('linkRemoveBtn')}" style="padding:2px 7px;font-size:11px;color:var(--danger);">✕</button>`;
           const rowHtml = `<div style="padding:4px 0;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
             <span style="display:flex;align-items:center;gap:6px;"><span style="color:${colorForUser(r.user_id)};font-weight:600;">${nameFor(r.user_id)}</span>${acceptedBadge}${gearHtml}${removeHtml}</span><span style="color:var(--ink-soft);">${statusLabel}</span>
@@ -13371,7 +13474,7 @@ document.getElementById('jobCompany').addEventListener('paste', (e)=>{
 // { url, name } or null if no file was given; alerts and returns null if a
 // non-PDF file was chosen (belt-and-suspenders alongside the input's accept
 // filter and the bucket's own allowed_mime_types).
-async function uploadJobPdfFile(file){
+async function uploadJobPdfFile(file, preferredSlug){
   if(!file) return null;
   if(file.type !== 'application/pdf'){
     alert(t('jobPdfOnlyMsg'));
@@ -13381,12 +13484,13 @@ async function uploadJobPdfFile(file){
   const { error: uploadError } = await supabaseClient.storage.from('job-application-files').upload(path, file);
   if(uploadError) return null;
   const { data: urlData } = supabaseClient.storage.from('job-application-files').getPublicUrl(path);
-  await createShortLink(urlData.publicUrl, file.name.replace(/\.pdf$/i, ''), file.name);
+  await createShortLink(urlData.publicUrl, file.name.replace(/\.pdf$/i, ''), file.name, preferredSlug);
   return { url: urlData.publicUrl, name: file.name };
 }
-async function uploadJobPdf(fileInputId){
+async function uploadJobPdf(fileInputId, slugInputId){
   const fileInput = document.getElementById(fileInputId);
-  return uploadJobPdfFile(fileInput && fileInput.files[0]);
+  const slugInput = slugInputId ? document.getElementById(slugInputId) : null;
+  return uploadJobPdfFile(fileInput && fileInput.files[0], slugInput ? slugInput.value : '');
 }
 async function addJob(){
   const company = document.getElementById('jobCompany').value.trim();
@@ -13395,8 +13499,8 @@ async function addJob(){
   const dateApplied = document.getElementById('jobDate').value || todayStr();
   const link = document.getElementById('jobLink').value.trim();
   if(!company) return;
-  const resume = await uploadJobPdf('jobResumeFile');
-  const coverLetter = await uploadJobPdf('jobCoverLetterFile');
+  const resume = await uploadJobPdf('jobResumeFile', 'jobResumeSlug');
+  const coverLetter = await uploadJobPdf('jobCoverLetterFile', 'jobCoverLetterSlug');
   const row = {
     user_id: currentUser.id, company, role: role || null, status, date_applied: dateApplied, link: link || null,
     resume_url: resume ? resume.url : null, resume_name: resume ? resume.name : null,
@@ -13412,6 +13516,8 @@ async function addJob(){
   document.getElementById('jobLink').value = '';
   document.getElementById('jobResumeFile').value = '';
   document.getElementById('jobCoverLetterFile').value = '';
+  document.getElementById('jobResumeSlug').value = '';
+  document.getElementById('jobCoverLetterSlug').value = '';
   document.getElementById('jobResumeFileName').textContent = '';
   document.getElementById('jobCoverLetterFileName').textContent = '';
   renderJobs();
@@ -13523,11 +13629,11 @@ function buildJobEditFieldsHtml(j){
     </div>
     <div class="field wide">
       <label>${t('jobResumeView')}${j.resume_name ? ' – ' + escapeHtml(j.resume_name) : ''}</label>
-      <label class="file-upload-btn" style="margin-top:4px;">${t('chooseFile')}<input type="file" class="je-resume hidden-file-input"></label>
+      <label class="file-upload-btn" style="margin-top:4px;">${t('chooseFile')}<input type="file" class="je-resume hidden-file-input"></label>${shortLinkPickerHtml('je-resume-slug')}
     </div>
     <div class="field wide">
       <label>${t('jobCoverLetterView')}${j.cover_letter_name ? ' – ' + escapeHtml(j.cover_letter_name) : ''}</label>
-      <label class="file-upload-btn" style="margin-top:4px;">${t('chooseFile')}<input type="file" class="je-cover-letter hidden-file-input"></label>
+      <label class="file-upload-btn" style="margin-top:4px;">${t('chooseFile')}<input type="file" class="je-cover-letter hidden-file-input"></label>${shortLinkPickerHtml('je-cover-slug')}
     </div>
     <div style="margin-top:8px;display:flex;gap:8px;">
       <button class="export-btn je-save-btn" data-id="${j.id}">${t('saveChanges')}</button>
@@ -13543,13 +13649,22 @@ async function saveJobEdit(jobId, container){
   const patch = { company, role: role || null, date_applied: dateApplied, link: link || null };
   const resumeFile = container.querySelector('.je-resume').files[0];
   const coverLetterFile = container.querySelector('.je-cover-letter').files[0];
+  const existingJob = (allJobs[currentUser.id]||[]).find(x=>x.id===jobId);
+  const resumeSlugBox = container.querySelector('.je-resume-slug');
+  const coverSlugBox = container.querySelector('.je-cover-slug');
   if(resumeFile){
-    const resume = await uploadJobPdfFile(resumeFile);
-    if(resume){ patch.resume_url = resume.url; patch.resume_name = resume.name; }
+    const resume = await uploadJobPdfFile(resumeFile, resumeSlugBox ? resumeSlugBox.value : '');
+    if(resume){
+      if(existingJob && existingJob.resume_url) await releaseShortLink(existingJob.resume_url);
+      patch.resume_url = resume.url; patch.resume_name = resume.name;
+    }
   }
   if(coverLetterFile){
-    const coverLetter = await uploadJobPdfFile(coverLetterFile);
-    if(coverLetter){ patch.cover_letter_url = coverLetter.url; patch.cover_letter_name = coverLetter.name; }
+    const coverLetter = await uploadJobPdfFile(coverLetterFile, coverSlugBox ? coverSlugBox.value : '');
+    if(coverLetter){
+      if(existingJob && existingJob.cover_letter_url) await releaseShortLink(existingJob.cover_letter_url);
+      patch.cover_letter_url = coverLetter.url; patch.cover_letter_name = coverLetter.name;
+    }
   }
   const { data, error } = await supabaseClient.from('job_applications').update(patch).eq('id', jobId).select();
   if(!error && data && data[0]){
@@ -16159,7 +16274,7 @@ function buildEventRowEl(ev){
   const subsForEvent = allSubsByEvent[ev.id] || {};
   const mySubForRow = subsForEvent[currentUser.id];
   const isOpen = expandedSubscribe.has(ev.id);
-  const bellLabel = mySubForRow ? '🔔 ' + t('subscribed') : '🔕 ' + t('remindMe');
+  const bellLabel = (mySubForRow ? ICON.bellOn() : ICON.bellOff()) + ' ' + t(mySubForRow ? 'subscribed' : 'remindMe');
   const isMine = ev.user_id === currentUser.id;
   // Birthdays are shared regardless of who happened to add them (see
   // itemsOfKind()) -- naming the adder is misleading, not informative.
@@ -16746,8 +16861,8 @@ function renderMonthGrid(){
       const recurPrefix = ev.recur_freq ? '↻ ' : '';
       const ownerSuffix = ev.user_id !== currentUser.id ? ` (${t('ownedBy')} ${nameFor(ev.user_id)})` : '';
       const tip = ev.event_time ? `${recurPrefix}${ev.title} · ${formatTime12h(ev.event_time)}${ownerSuffix}` : `${recurPrefix}${ev.title}${ownerSuffix}`;
-      const bellIcon = mySubscriptions[ev.id] ? '🔔' : '🔕';
-      chips += `<div class="event-chip cal-chip" data-ev="${ev.id}" data-date="${dateKey}" style="background:${bg};color:${textColorFor(bg)}" title="${tip}"><span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">✏️</span>${recurPrefix}${ev.title}<span class="chip-initial">${initialsForEvent(ev)}</span></div>`;
+      const bellIcon = mySubscriptions[ev.id] ? ICON.bellOn(11) : ICON.bellOff(11);
+      chips += `<div class="event-chip cal-chip" data-ev="${ev.id}" data-date="${dateKey}" style="background:${bg};color:${textColorFor(bg)}" title="${tip}"><span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">${ICON.pencil(11)}</span>${recurPrefix}${ev.title}<span class="chip-initial">${initialsForEvent(ev)}</span></div>`;
     });
     const extra = events.length - maxShow;
     if(extra > 0){ chips += `<div class="more-count">+${extra}</div>`; }
@@ -17049,7 +17164,7 @@ function renderCalGrid(dates){
       const height = Math.max(((endMin-startMin)/60)*HOUR_PX, minHeight);
       const bg = ev.color || '#4F7563';
       const recurPrefix = ev.recur_freq ? '↻ ' : '';
-      const bellIcon = mySubscriptions[ev.id] ? '🔔' : '🔕';
+      const bellIcon = mySubscriptions[ev.id] ? ICON.bellOn(11) : ICON.bellOff(11);
       const bar = document.createElement('div');
       bar.className = 'week-event-bar';
       bar.style.top = top+'px';
@@ -17080,7 +17195,7 @@ function renderCalGrid(dates){
           bodyHtml += line2 + roomLine + line3;
         }
       }
-      const editIconHtml = overlapping ? '' : `<span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">✏️</span>`;
+      const editIconHtml = overlapping ? '' : `<span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">${ICON.pencil(11)}</span>`;
       bar.innerHTML = `<span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span>${editIconHtml}${recurPrefix}${bodyHtml}<span class="week-bar-initial">${initialsForEvent(ev)}</span>`;
       bar.title = ev.title + (ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '');
       bar.addEventListener('click', (e)=>{
@@ -24353,14 +24468,14 @@ function buildGrammarCardHtml(g){
     const check = checkGrammarUsage(n.sentence, g);
     return `<div class="gram-sentence-row">
       <span><span class="author-dot" style="background:${colorForUser(n.user_id)};margin-right:6px;"></span>${authorLabel ? `<b style="color:${colorForUser(n.user_id)};">${authorLabel}:</b> ` : ''}${check.html}</span>
-      ${isMine ? `<span><button class="gram-sentence-edit-btn" data-id="${n.id}" title="Edit">✏️</button><button class="gram-note-del" data-id="${n.id}" data-pattern="${g.id}">✕</button></span>` : ''}
+      ${isMine ? `<span><button class="gram-sentence-edit-btn" data-id="${n.id}" title="Edit">${ICON.pencil()}</button><button class="gram-note-del" data-id="${n.id}" data-pattern="${g.id}">✕</button></span>` : ''}
     </div>`;
   }).join('') || `<div class="empty">–</div>`;
   const hasMatchingSentence = myNotes.some(n=>n.user_id===currentUser.id && checkGrammarUsage(n.sentence, g).matched);
   const isReviewOverridden = !!grammarReviewOverrides[currentUser.id + '::' + g.id];
   const resourcesHtml = (g.resources||[]).map((r,idx)=>`
     <div class="gram-resource-row">
-      <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${r.type==='youtube'?'▶':'🔗'} ${escapeHtml(r.label || r.url)}</a>
+      <a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${r.type==='youtube'?'▶':ICON.link(12)} ${escapeHtml(r.label || r.url)}</a>
       ${amICore() ? `<button class="gram-resource-del" data-pattern="${g.id}" data-idx="${idx}">✕</button>` : ''}
     </div>`).join('') || `<div class="empty">–</div>`;
   const isFav = isGrammarFavorited(g);
@@ -25881,6 +25996,7 @@ function ensureWritingQuillInitialized(){
     theme: 'snow',
     modules: { toolbar: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']] }
   });
+  keepPageStillOnPaste(writingQuillEditor);
   writingQuillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
       writingEditorDirty = true;
@@ -25895,6 +26011,7 @@ function ensureWritingMockQuillInitialized(){
       theme: 'snow',
       modules: { toolbar: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']] }
     });
+    keepPageStillOnPaste(writingMockQ53Quill);
     writingMockQ53Quill.on('text-change', (delta, oldDelta, source)=>{
       if(source === 'user'){ writingMockQ53Dirty = true; updateWritingMockCharCount('q53'); }
     });
@@ -25905,6 +26022,7 @@ function ensureWritingMockQuillInitialized(){
       theme: 'snow',
       modules: { toolbar: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']] }
     });
+    keepPageStillOnPaste(writingMockQ54Quill);
     writingMockQ54Quill.on('text-change', (delta, oldDelta, source)=>{
       if(source === 'user'){ writingMockQ54Dirty = true; updateWritingMockCharCount('q54'); }
     });
@@ -26432,7 +26550,7 @@ async function addCourse(){
       const { data: urlData } = supabaseClient.storage.from('syllabi').getPublicUrl(path);
       syllabusUrl = urlData.publicUrl;
       syllabusName = file.name;
-      await createShortLink(syllabusUrl, title + '-syllabus', file.name);
+      await createShortLink(syllabusUrl, title + '-syllabus', file.name, document.getElementById('courseSyllabusSlug').value);
     }
   }
 
@@ -26588,7 +26706,7 @@ function buildCourseEditFieldsHtml(c){
         <button type="button" class="linkbtn ce-slug-save">${t('saveShortLink')}</button>
         <button type="button" class="linkbtn ce-slug-copy">${t('copyLink')}</button>
         <span class="ce-slug-msg" style="font-size:11.5px;color:var(--ink-soft);"></span>
-      </div>` : `<label class="file-upload-btn">${t('chooseFile')}<input type="file" class="ce-syllabus hidden-file-input"></label>`}
+      </div>` : `<label class="file-upload-btn">${t('chooseFile')}<input type="file" class="ce-syllabus hidden-file-input"></label>${shortLinkPickerHtml('ce-new-slug')}`}
     </div>
     <div style="margin-top:8px;display:flex;gap:8px;">
       <button class="export-btn ce-save-btn" data-id="${c.id}">${t('saveCourseChanges')}</button>
@@ -26619,6 +26737,8 @@ async function saveCourseEdit(courseId, container){
   const isRa = container.querySelector('.ce-is-ra').checked;
   const fileInput = container.querySelector('.ce-syllabus');
   const file = fileInput ? fileInput.files[0] : null;
+  const slugBox = container.querySelector('.ce-new-slug');
+  const slugWanted = slugBox ? slugBox.value : '';
   if(!title || !timeSlot) return;
 
   const patch = {
@@ -26634,9 +26754,10 @@ async function saveCourseEdit(courseId, container){
     const { error: uploadError } = await supabaseClient.storage.from('syllabi').upload(path, file);
     if(!uploadError){
       const { data: urlData } = supabaseClient.storage.from('syllabi').getPublicUrl(path);
+      if(existingCourse && existingCourse.syllabus_url) await releaseShortLink(existingCourse.syllabus_url);
       patch.syllabus_url = urlData.publicUrl;
       patch.syllabus_name = file.name;
-      await createShortLink(patch.syllabus_url, title + '-syllabus', file.name);
+      await createShortLink(patch.syllabus_url, title + '-syllabus', file.name, slugWanted);
     }
   }
   const { data, error } = await supabaseClient.from('courses').update(patch).eq('id', courseId).select();
@@ -26783,6 +26904,8 @@ function renderCourses(){
   });
 }
 async function removeCourseSyllabus(courseId){
+  const existing = findCourseById(courseId);
+  if(existing && existing.syllabus_url) await releaseShortLink(existing.syllabus_url);
   await supabaseClient.from('courses').update({ syllabus_url: null, syllabus_name: null }).eq('id', courseId);
   Object.values(allCourses).forEach(list=>{
     const c = list.find(x=>x.id===courseId);
@@ -27081,7 +27204,7 @@ function renderLectureList(){
               ${n.lecture_title}
             </span>
             <span class="lecture-actions">
-              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${groupKey}" title="Edit">✏️</button>` : ''}
+              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${groupKey}" title="Edit">${ICON.pencil()}</button>` : ''}
               ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${groupKey}" ${idx===0?'disabled':''} title="Move up">↑</button>` : ''}
               ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${groupKey}" ${idx===notes.length-1?'disabled':''} title="Move down">↓</button>` : ''}
               ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${groupKey}" title="Delete">✕</button>` : ''}
@@ -27194,6 +27317,62 @@ const QUILL_PALETTE = [
 // Registers the drag-to-resize handles (see quill-image-resize-module CDN
 // script tag) once, globally, for every Quill instance in the app -- lets
 // you click an inserted image and drag its corner to resize it.
+// Quill 1.3.6 pastes by focusing a hidden .ql-clipboard div and letting the
+// browser drop the clipboard into it. That div is position:absolute at
+// top:50% of the editor, so focusing it scrolls its midpoint into view --
+// and the notes editors set only a min-height, so they are as tall as the
+// note and the PAGE is what scrolls. Measured on a 4795px note: the page
+// jumped 2418px on the focus and did not come back (real-user report: "when
+// I copy paste something into notes, it scrolls to the top of the page").
+//
+// Quill does try to put it back, but it restores
+// quill.scrollingContainer.scrollTop, which defaults to the .ql-editor
+// element itself -- an element that never scrolls here, so the restore is a
+// no-op on the one thing that actually moved. The writing editors were
+// never affected because they DO cap their height and scroll internally,
+// which is exactly why this only ever showed up in notes.
+// Deliberately `var` and lazy: three of the five editors are built by
+// functions that sit ABOVE this line in the file, so a const evaluated here
+// would be in its temporal dead zone if any of them ran first. Computing it
+// on first use also means the DOM probe happens well after document.body
+// exists.
+var _focusPreventScrollSupported;
+function focusPreventScrollSupported(){
+  if(typeof _focusPreventScrollSupported === 'boolean') return _focusPreventScrollSupported;
+  let read = false;
+  try {
+    const probe = document.createElement('div');
+    probe.tabIndex = -1;
+    probe.style.cssText = 'position:absolute;top:-9999px;left:-9999px;';
+    document.body.appendChild(probe);
+    probe.focus(Object.defineProperty({}, 'preventScroll', { get(){ read = true; return true; } }));
+    probe.blur();
+    probe.remove();
+  } catch(e){}
+  return (_focusPreventScrollSupported = read);
+}
+function keepPageStillOnPaste(quill){
+  const clip = quill && quill.container && quill.container.querySelector('.ql-clipboard');
+  if(!clip || clip.dataset.pasteScrollPatched) return;
+  clip.dataset.pasteScrollPatched = '1';
+  if(focusPreventScrollSupported()){
+    // Focus still LANDS with preventScroll (verified in a browser), so the
+    // browser still delivers the paste into the div and Quill reads it
+    // exactly as before. Only the scroll-into-view is suppressed.
+    const nativeFocus = clip.focus.bind(clip);
+    clip.focus = () => nativeFocus({ preventScroll: true });
+    return;
+  }
+  // Safari before 15.4 ignores preventScroll, so there the position has to
+  // be put back by hand -- after Quill's own 1ms timeout, which is the last
+  // thing that touches the scroll. Capture phase, so the position is read
+  // before Quill's handler has moved anything.
+  quill.root.addEventListener('paste', ()=>{
+    const x = window.scrollX, y = window.scrollY;
+    setTimeout(()=> window.scrollTo(x, y), 2);
+    setTimeout(()=> window.scrollTo(x, y), 20);
+  }, true);
+}
 if(window.Quill && window.ImageResize) Quill.register('modules/imageResize', ImageResize.default);
 
 /* ---------- LIVE PRESENCE + LIVE NOTE INSERTS (Notebook + Yonsei course notes) ----------
@@ -27408,6 +27587,7 @@ function ensureQuillInitialized(){
       imageResize: {}
     }
   });
+  keepPageStillOnPaste(quillEditor);
   quillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
       editorDirty = true;
@@ -27768,7 +27948,7 @@ function renderNotebookList(){
               ${n.lecture_title}
             </span>
             <span class="lecture-actions">
-              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${groupKey}" title="Edit">✏️</button>` : ''}
+              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${groupKey}" title="Edit">${ICON.pencil()}</button>` : ''}
               ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${groupKey}" ${idx===0?'disabled':''} title="Move up">↑</button>` : ''}
               ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${groupKey}" ${idx===notes.length-1?'disabled':''} title="Move down">↓</button>` : ''}
               ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${groupKey}" title="Delete">✕</button>` : ''}
@@ -27881,6 +28061,7 @@ function ensureNotebookQuillInitialized(){
       imageResize: {}
     }
   });
+  keepPageStillOnPaste(notebookQuillEditor);
   notebookQuillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
       notebookEditorDirty = true;
