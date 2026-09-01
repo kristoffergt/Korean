@@ -217,9 +217,12 @@ linking system (see below) to share with specific other people.
   `--edit` for anything that edits, applied through `.act-remove` /
   `.act-edit` on text buttons. Both are floored by MEASUREMENT, not by eye:
   the app's own link green holds 4.31:1 on a card, so that is the contrast an
-  action colour has to clear. The light `--edit` (#8A6500, 4.43:1) is a dark
-  yellow rather than an orange, which is what keeps it from reading as a
-  second red beside `--danger`. The dark theme needs its own value for both:
+  action colour has to clear. Judge the HUE in OKLCH, not HSL: orange sits at
+  ~55-70, amber ~75-90, yellow ~95-105, and past ~102 it reads olive. Two
+  rounds of "still too orange" were spent before measuring that way. The
+  useful discovery is that going yellower costs nothing here -- the light
+  `--edit` (#786A00, okhue 100) scores 4.53:1, BETTER than the amber it
+  replaced, so there was never a contrast trade to make. The dark theme needs its own value for both:
   a yellow dark enough to read on paper is invisible on ink. Icon-only
   edit/delete buttons live inside containers that paint every button
   `--ink-soft`, so they need their own three-class rules to reach; move
@@ -246,6 +249,26 @@ linking system (see below) to share with specific other people.
   `{preventScroll:true}` (focus still lands, so the paste still arrives) and
   falls back to restoring the scroll by hand where the browser ignores the
   option. Measured 2418px of jump on a 4795px note before, 0 after.
+
+- **A list re-render must not eat an open edit panel.** `renderAll()` runs on
+  a 600ms-debounced realtime echo of ANY shared table, so `list.innerHTML =
+  ''` routinely fires while someone is filling in a form -- including right
+  after their own write echoes back. It throws away typed text and, worse,
+  the chosen file, because an `<input type="file">` loses its `FileList` the
+  instant the element is replaced (real-user report: "I have to select the
+  file two times"). Both the course and job lists now lift any open
+  `[data-*-edit-for]` panel out before the wipe and put the same node back
+  after, listeners intact, guarded by a `data-*Wired` flag so the wiring pass
+  does not attach every handler twice. Any future list with an inline edit
+  form needs the same treatment.
+- **A slug box previews the link it would create, never the word "auto".**
+  `shortLinkPickerHtml(cls, from, base)` takes `from` because the two callers
+  auto-name from different things: a course syllabus after the COURSE TITLE
+  (so its preview follows the title field as it is typed), a job file after
+  the FILE (so its preview fills in when one is chosen, via
+  `syncFileChosenName`). Both run the same `slugify()` `createShortLink()`
+  does, through `syllabusSlugBase()`, so a preview cannot promise a different
+  address from the one that gets made.
 
 ## Migration files present (see folder for full current list)
 

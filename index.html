@@ -40,11 +40,15 @@
   --danger:#B33B34;
   /* Measured, not eyeballed. The app's own link green holds 4.31:1 on a
      card, so that is the floor an edit colour has to clear; #8A6500 comes
-     out at 4.43:1. Hue 44 rather than the 27 of the first attempt, which
-     read as a second red beside --danger (real-user request: "make the
-     edit button more yellowy"). The dark theme needs its own value: a
-     yellow dark enough to read on paper is invisible on ink. */
-  --edit:#8A6500;
+     out at 4.53:1. Measured in OKLCH, where hue is perceptual: #786A00 is
+     at hue 100 (yellow), against 83 (amber) and the 60 of the first
+     attempt, which read as a second red beside --danger. Two rounds of
+     "still too orange" went into finding this, and the useful discovery is
+     that going yellower here costs NOTHING -- the yellow scores HIGHER on
+     contrast than the amber it replaces, so there was never a trade to
+     make. Past hue ~102 it starts reading olive. The dark theme needs its
+     own value: a yellow dark enough to read on paper is invisible on ink. */
+  --edit:#786A00;
   --line: rgba(30,31,34,0.12);
   --ink-hover:#000000;
   --c-listening:#6E8FB0;
@@ -67,7 +71,7 @@ body.dark{
   --line: rgba(237,237,239,0.14);
   --ink-hover:#FFFFFF;
   --danger:#E8827A;
-  --edit:#E8C46B;
+  --edit:#E4CF7A;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -1512,7 +1516,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
           <label for="courseSyllabus" id="lblCourseSyllabus"></label>
           <label class="file-upload-btn" for="courseSyllabus" id="chooseFileLabel"></label>
           <input type="file" id="courseSyllabus" accept=".pdf,.doc,.docx" class="hidden-file-input">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="courseSyllabusSlug" data-ph-key="shortLinkAutoPlaceholder" style="width:190px;font-size:12px;padding:4px 7px;"></div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="courseSyllabusSlug" class="slug-preview" data-slug-from="title" data-ph-key="shortLinkAutoPlaceholder" style="width:190px;font-size:12px;padding:4px 7px;"></div>
         </div>
         <button id="addCourseBtn"></button>
       </div>
@@ -1764,7 +1768,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
             <span class="file-chosen-name" id="jobResumeFileName"></span>
           </div>
           <input type="file" id="jobResumeFile" accept=".pdf,application/pdf" class="hidden-file-input">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="jobResumeSlug" data-ph-key="shortLinkAutoPlaceholder" style="width:190px;font-size:12px;padding:4px 7px;"></div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="jobResumeSlug" class="slug-preview" data-slug-from="file" data-ph-key="shortLinkAutoPlaceholder" style="width:190px;font-size:12px;padding:4px 7px;"></div>
         </div>
         <div class="field wide">
           <label for="jobCoverLetterFile" id="lblJobCoverLetter"></label>
@@ -1773,7 +1777,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
             <span class="file-chosen-name" id="jobCoverLetterFileName"></span>
           </div>
           <input type="file" id="jobCoverLetterFile" accept=".pdf,application/pdf" class="hidden-file-input">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="jobCoverLetterSlug" data-ph-key="shortLinkAutoPlaceholder" style="width:190px;font-size:12px;padding:4px 7px;"></div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="jobCoverLetterSlug" class="slug-preview" data-slug-from="file" data-ph-key="shortLinkAutoPlaceholder" style="width:190px;font-size:12px;padding:4px 7px;"></div>
         </div>
         <button id="addJobBtn"></button>
       </div>
@@ -10664,13 +10668,31 @@ function syncFileChosenName(input){
     nameEl.style.marginLeft = '8px';
     anchor.insertAdjacentElement('afterend', nameEl);
   }
-  nameEl.textContent = (input.files && input.files[0]) ? input.files[0].name : '';
+  const file = input.files && input.files[0];
+  nameEl.textContent = file ? file.name : '';
+  // A job file auto-names its link after the file itself, so this is the
+  // moment its preview can be filled in.
+  const slugBox = scope ? scope.querySelector('.slug-preview[data-slug-from="file"]') : null;
+  if(slugBox) refreshSlugPreview(slugBox, file ? file.name.replace(/\.[^.]+$/, '') : '');
 }
 document.addEventListener('change', (e)=>{
   const el = e.target;
   if(el && el.tagName === 'INPUT' && el.type === 'file' && el.classList.contains('hidden-file-input')){
     syncFileChosenName(el);
   }
+});
+// A title-derived preview follows the field as it is typed, so the link is
+// never a guess about what the title will end up being. Delegated for the
+// same reason the file listener is: the edit panels are template strings
+// with no wiring of their own.
+document.addEventListener('input', (e)=>{
+  const el = e.target;
+  if(!el || el.tagName !== 'INPUT') return;
+  const isTitle = el.id === 'courseTitle' || el.classList.contains('ce-title');
+  if(!isTitle) return;
+  const scope = el.closest('[data-course-edit-for]') || el.closest('.card') || document;
+  const box = scope.querySelector('.slug-preview[data-slug-from="title"]');
+  if(box) refreshSlugPreview(box, syllabusSlugBase(el.value.trim()));
 });
 
 /* ---------- SHORT FILE LINKS ----------
@@ -10685,11 +10707,30 @@ const SHORT_LINK_PATH = '/f/';
 // just added (real-user request: "I want to be able to immediately set the
 // link when I add the syllabus/files"). Same row, offered beside every file
 // chooser; left blank it auto-names exactly as it did before.
-function shortLinkPickerHtml(cls){
+// The box shows the link that WOULD be created, not the word "auto" -- a
+// placeholder naming the mechanism tells you nothing about the address you
+// are about to publish (real-user request: "the auto thing should show the
+// url that would be added"). `from` says where that preview comes from, and
+// it has to differ because the two callers auto-name from different things:
+// a course syllabus is named after the COURSE TITLE, a job file after the
+// FILE. So a course preview follows the title field as it is typed, and a
+// job preview appears when a file is chosen. Both run the same slugify()
+// createShortLink() will, so the preview cannot promise a different name
+// from the one that gets made.
+function shortLinkPickerHtml(cls, from, base){
+  const preview = base ? slugify(base, '') : '';
   return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;">
     <span style="font-size:12px;color:var(--ink-soft);">${location.host}${SHORT_LINK_PATH}</span>
-    <input type="text" class="${cls}" placeholder="${t('shortLinkAutoPlaceholder')}" style="width:190px;font-size:12px;padding:4px 7px;">
+    <input type="text" class="${cls} slug-preview" data-slug-from="${from}" placeholder="${preview || t('shortLinkAutoPlaceholder')}" style="width:190px;font-size:12px;padding:4px 7px;">
   </div>`;
+}
+// One place decides what the auto-name for a course syllabus is, so the
+// preview and createShortLink()'s own `base` cannot drift apart.
+function syllabusSlugBase(title){ return (title || '') + '-syllabus'; }
+function refreshSlugPreview(input, base){
+  if(!input) return;
+  const slug = slugify(base, '');
+  input.placeholder = slug || t('shortLinkAutoPlaceholder');
 }
 let fileLinksByUrl = {};  // storage url -> slug
 function shortLinkUrl(slug){ return location.origin + SHORT_LINK_PATH + slug; }
@@ -13629,11 +13670,11 @@ function buildJobEditFieldsHtml(j){
     </div>
     <div class="field wide">
       <label>${t('jobResumeView')}${j.resume_name ? ' – ' + escapeHtml(j.resume_name) : ''}</label>
-      <label class="file-upload-btn" style="margin-top:4px;">${t('chooseFile')}<input type="file" class="je-resume hidden-file-input"></label>${shortLinkPickerHtml('je-resume-slug')}
+      <label class="file-upload-btn" style="margin-top:4px;">${t('chooseFile')}<input type="file" class="je-resume hidden-file-input"></label>${shortLinkPickerHtml('je-resume-slug', 'file', '')}
     </div>
     <div class="field wide">
       <label>${t('jobCoverLetterView')}${j.cover_letter_name ? ' – ' + escapeHtml(j.cover_letter_name) : ''}</label>
-      <label class="file-upload-btn" style="margin-top:4px;">${t('chooseFile')}<input type="file" class="je-cover-letter hidden-file-input"></label>${shortLinkPickerHtml('je-cover-slug')}
+      <label class="file-upload-btn" style="margin-top:4px;">${t('chooseFile')}<input type="file" class="je-cover-letter hidden-file-input"></label>${shortLinkPickerHtml('je-cover-slug', 'file', '')}
     </div>
     <div style="margin-top:8px;display:flex;gap:8px;">
       <button class="export-btn je-save-btn" data-id="${j.id}">${t('saveChanges')}</button>
@@ -13759,6 +13800,13 @@ function renderJobs(){
 
   const list = document.getElementById('jobList');
   const controls = document.getElementById('jobListControls');
+  // Same rule as the course list: an open edit panel holds unsaved input
+  // (and a chosen file, which cannot survive its input being replaced), so
+  // it is lifted out and put back rather than rebuilt from the DB.
+  const keptJobEditPanels = new Map();
+  list.querySelectorAll('[data-job-edit-for]').forEach(panel=>{
+    if(!panel.classList.contains('hidden')) keptJobEditPanels.set(panel.dataset.jobEditFor, panel);
+  });
   list.innerHTML = '';
   if(controls) controls.innerHTML = '';
   if(sortedList.length === 0){ list.innerHTML = '<div class="empty">–</div>'; refreshJobLeaderboard(); return; }
@@ -13836,7 +13884,13 @@ function renderJobs(){
       renderJobs();
     });
   });
+  keptJobEditPanels.forEach((panel, id)=>{
+    const fresh = list.querySelector('[data-job-edit-for="' + id + '"]');
+    if(fresh) fresh.replaceWith(panel);
+  });
   list.querySelectorAll('[data-job-edit-for]').forEach(panel=>{
+    if(panel.dataset.jeWired === '1') return;
+    panel.dataset.jeWired = '1';
     const saveBtn = panel.querySelector('.je-save-btn');
     const cancelBtn = panel.querySelector('.je-cancel-btn');
     if(saveBtn) saveBtn.addEventListener('click', ()=> saveJobEdit(saveBtn.dataset.id, panel));
@@ -26582,6 +26636,8 @@ async function addCourse(){
   document.getElementById('courseIsRa').checked = false;
   fileInput.value = '';
   syncFileChosenName(fileInput); // clearing the input doesn't fire 'change'
+  document.getElementById('courseSyllabusSlug').value = '';
+  refreshSlugPreview(document.getElementById('courseSyllabusSlug'), '');
   renderCourses();
   renderCalendarTab();
   renderNotesCourseSelect();
@@ -26702,11 +26758,11 @@ function buildCourseEditFieldsHtml(c){
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;">
         <span style="font-size:12px;color:var(--ink-soft);">${location.host}${SHORT_LINK_PATH}</span>
-        <input type="text" class="ce-slug" data-url="${(c.syllabus_url||'').replace(/"/g,'&quot;')}" value="${shortLinkForUrl(c.syllabus_url)||''}" placeholder="${slugify(c.title,'syllabus')}" style="width:190px;font-size:12px;padding:4px 7px;">
+        <input type="text" class="ce-slug" data-url="${(c.syllabus_url||'').replace(/"/g,'&quot;')}" value="${shortLinkForUrl(c.syllabus_url)||''}" placeholder="${slugify(syllabusSlugBase(c.title),'syllabus')}" style="width:190px;font-size:12px;padding:4px 7px;">
         <button type="button" class="linkbtn ce-slug-save">${t('saveShortLink')}</button>
         <button type="button" class="linkbtn ce-slug-copy">${t('copyLink')}</button>
         <span class="ce-slug-msg" style="font-size:11.5px;color:var(--ink-soft);"></span>
-      </div>` : `<label class="file-upload-btn">${t('chooseFile')}<input type="file" class="ce-syllabus hidden-file-input"></label>${shortLinkPickerHtml('ce-new-slug')}`}
+      </div>` : `<label class="file-upload-btn">${t('chooseFile')}<input type="file" class="ce-syllabus hidden-file-input"></label>${shortLinkPickerHtml('ce-new-slug', 'title', syllabusSlugBase(c.title))}`}
     </div>
     <div style="margin-top:8px;display:flex;gap:8px;">
       <button class="export-btn ce-save-btn" data-id="${c.id}">${t('saveCourseChanges')}</button>
@@ -26791,6 +26847,19 @@ function renderCourses(){
   document.getElementById('cStatLockedIn').textContent = all.filter(c=>c.status==='locked_in').length;
 
   const list = document.getElementById('courseFullList');
+  // A re-render must not eat an edit in progress. renderAll() runs on a
+  // 600ms-debounced realtime echo of ANY shared table -- including the
+  // courses UPDATE that "Remove syllabus" itself writes -- so a rebuild
+  // routinely lands while the form is being filled in. That threw away
+  // everything typed AND the chosen file, because an <input type="file">
+  // loses its FileList the moment the element is replaced (real-user
+  // report: "I have to select the file two times for it to show up").
+  // Open panels are lifted out whole and put back, listeners intact, so
+  // nothing in them has to be serialised and restored field by field.
+  const keptEditPanels = new Map();
+  list.querySelectorAll('[data-course-edit-for]').forEach(panel=>{
+    if(!panel.classList.contains('hidden')) keptEditPanels.set(panel.dataset.courseEditFor, panel);
+  });
   list.innerHTML = '';
   if(all.length === 0){ list.innerHTML = '<div class="empty">–</div>'; return; }
   all.slice().sort((a,b)=>{
@@ -26858,7 +26927,15 @@ function renderCourses(){
       renderCourses();
     });
   });
+  keptEditPanels.forEach((panel, id)=>{
+    const fresh = list.querySelector('[data-course-edit-for="' + id + '"]');
+    if(fresh) fresh.replaceWith(panel);
+  });
   list.querySelectorAll('[data-course-edit-for]').forEach(panel=>{
+    // A restored panel already carries its listeners; wiring it again would
+    // fire every handler twice.
+    if(panel.dataset.ceWired === '1') return;
+    panel.dataset.ceWired = '1';
     const saveBtn = panel.querySelector('.ce-save-btn');
     const cancelBtn = panel.querySelector('.ce-cancel-btn');
     const removeSyllabusBtn = panel.querySelector('.ce-syllabus-remove');
