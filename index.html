@@ -33,6 +33,15 @@
   --celadon-4:#4F7563;
   --seal:#B33B34;
   --seal-dark:#8C2C27;
+  /* One meaning per colour, applied app-wide: anything that REMOVES is
+     reddish, anything that EDITS is orange. Separate from --seal, which
+     also paints solid badges/banners -- these two are text-ink tokens and
+     get their own dark-theme values so they stay readable there. */
+  --danger:#B33B34;
+  /* Measured, not eyeballed: #C0722A came out at 3.08:1 on a card, well
+     under the ~4.3:1 the app's own link green already holds. This clears
+     that baseline (4.45:1) and still reads orange next to --danger. */
+  --edit:#9E5A15;
   --line: rgba(30,31,34,0.12);
   --ink-hover:#000000;
   --c-listening:#6E8FB0;
@@ -54,6 +63,8 @@ body.dark{
   --celadon-2:#3C4F45;
   --line: rgba(237,237,239,0.14);
   --ink-hover:#FFFFFF;
+  --danger:#E8827A;
+  --edit:#E3A05A;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -450,8 +461,8 @@ button:hover{background:var(--ink-hover);}
 .e-chips{display:flex;flex-wrap:wrap;gap:6px;}
 .e-chip{display:flex;align-items:center;gap:5px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:3px 9px 3px 7px;font-size:11.5px;}
 .e-chip .dot{width:7px;height:7px;border-radius:50%;}
-.e-chip .del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:12px;padding:0 0 0 3px;line-height:1;}
-.e-chip .del:hover{color:var(--seal);}
+.e-chip .del{background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:0 0 0 3px;line-height:1;}
+.e-chip .del:hover{color:var(--danger);filter:brightness(1.15);}
 .empty{color:var(--ink-soft);font-size:13px;padding:10px 0;}
 .stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:0;}
 .stat-mini{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 16px;text-align:center;flex:1;min-width:110px;}
@@ -483,15 +494,22 @@ button:hover{background:var(--ink-hover);}
 @keyframes iconPillSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 .icon-pill-btn svg.spin{animation:iconPillSpin 0.9s linear infinite;}
 .item-meta .linkbtn{background:none;border:none;color:var(--celadon-4);font-size:12px;padding:0;text-decoration:underline;font-weight:600;}
-.item-del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:15px;}
-.item-del:hover{background:none;color:var(--seal);}
+.item-del{background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px;}
+.item-del:hover{background:none;color:var(--danger);filter:brightness(1.15);}
+/* .act-remove / .act-edit carry the convention onto text buttons. They
+   override .linkbtn's green, so they must come AFTER it in source order
+   (same specificity). */
+.linkbtn.act-remove{color:var(--danger);}
+.linkbtn.act-remove:hover{color:var(--danger);filter:brightness(1.15);}
+.linkbtn.act-edit{color:var(--edit);}
+.linkbtn.act-edit:hover{color:var(--edit);filter:brightness(1.15);}
 .progress-track{background:var(--paper);border:1px solid var(--line);border-radius:4px;height:8px;overflow:hidden;margin-top:6px;width:160px;}
 .progress-fill{height:100%;background:var(--celadon-3);}
 .notes-panel{margin-top:10px;padding:12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;}
 .note-item{padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
 .note-item:last-child{border-bottom:none;}
 .note-item .note-page{font-size:10.5px;color:var(--ink-soft);margin-bottom:2px;}
-.note-item .note-del{float:right;background:none;border:none;color:var(--ink-soft);font-size:12px;cursor:pointer;}
+.note-item .note-del{float:right;background:none;border:none;color:var(--danger);font-size:12px;cursor:pointer;}
 .note-add{display:flex;gap:6px;margin-top:8px;align-items:flex-end;flex-wrap:wrap;}
 .note-add textarea{flex:1;min-width:160px;height:44px;resize:vertical;font-family:'Inter',sans-serif;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:5px;background:var(--paper-dim);color:var(--ink);}
 .note-add input{width:60px;font-family:'Space Grotesk',monospace;font-size:12px;padding:6px;border:1px solid var(--line);border-radius:5px;background:var(--paper-dim);color:var(--ink);}
@@ -2176,7 +2194,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <div class="field wide"><label for="expFormDescription" id="lblExpFormDescription"></label><input type="text" id="expFormDescription"></div>
       <div class="field"><label for="expFormPaidBy" id="lblExpFormPaidBy"></label><select id="expFormPaidBy"></select></div>
       <button id="saveExpenseBtn"></button>
-      <button id="expDeleteBtn" class="hidden" style="color:var(--seal);"></button>
+      <button id="expDeleteBtn" class="hidden" style="color:var(--danger);"></button>
     </div>
   </div>
 </div>
@@ -10642,6 +10660,30 @@ async function createShortLink(url, base, label){
   }
   return null;
 }
+// Files uploaded before short links existed have no slug, so their edit
+// panel would open with an empty box and nothing to copy (real-user report:
+// "why can't I change the link?"). This gives every file the account already
+// owns a link on the next load, so the editor is always populated and the
+// auto-setup promise holds for old files too.
+//
+// Restricted to rows this account OWNS: file_links.owner_id must equal
+// auth.uid(), so attempting it for a circle partner's course would just be
+// refused by RLS. Missing links only -- an ordinary load makes no writes.
+async function backfillShortLinks(){
+  if(!currentUser || guestMode) return;
+  const jobs = (allJobs[currentUser.id] || []);
+  const courses = Object.values(allCourses).flat().filter(c=> c.user_id === currentUser.id);
+  const targets = [];
+  courses.forEach(c=>{ if(c.syllabus_url) targets.push({ url:c.syllabus_url, base:(c.title||'course') + '-syllabus', label:c.syllabus_name }); });
+  jobs.forEach(j=>{
+    if(j.resume_url) targets.push({ url:j.resume_url, base:(j.company||'job') + '-resume', label:j.resume_name });
+    if(j.cover_letter_url) targets.push({ url:j.cover_letter_url, base:(j.company||'job') + '-cover-letter', label:j.cover_letter_name });
+  });
+  for(const tgt of targets){
+    if(shortLinkForUrl(tgt.url)) continue;
+    await createShortLink(tgt.url, tgt.base, tgt.label);
+  }
+}
 // Insert the new slug BEFORE deleting the old one -- if the name someone
 // picked is already taken, the existing link has to survive intact rather
 // than being dropped on the way to a failed rename.
@@ -11207,7 +11249,7 @@ function renderLinkedCircle(){
           // accepted (an override for a still-pending invitee has nothing
           // to attach to yet, and they might decline).
           const gearHtml = r.status === 'accepted' ? `<button class="icon-btn link-partner-gear" data-uid="${r.user_id}" title="${escapeHtml(t('linkCustomizeFor').replace('{name}', nameFor(r.user_id)))}" style="padding:2px 7px;font-size:11px;">⚙</button>` : '';
-          const removeHtml = `<button class="icon-btn link-remove-member" data-uid="${r.user_id}" data-name="${escapeHtml(nameFor(r.user_id))}" title="${t('linkRemoveBtn')}" style="padding:2px 7px;font-size:11px;color:var(--seal);">✕</button>`;
+          const removeHtml = `<button class="icon-btn link-remove-member" data-uid="${r.user_id}" data-name="${escapeHtml(nameFor(r.user_id))}" title="${t('linkRemoveBtn')}" style="padding:2px 7px;font-size:11px;color:var(--danger);">✕</button>`;
           const rowHtml = `<div style="padding:4px 0;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
             <span style="display:flex;align-items:center;gap:6px;"><span style="color:${colorForUser(r.user_id)};font-weight:600;">${nameFor(r.user_id)}</span>${acceptedBadge}${gearHtml}${removeHtml}</span><span style="color:var(--ink-soft);">${statusLabel}</span>
           </div>`;
@@ -11970,10 +12012,10 @@ function renderModeratorUserList(){
       ${isAdminRow ? '' : `
       <div class="item-meta">
         <button class="linkbtn mod-reset-pw" data-id="${u.id}">${t('modResetPw')}</button>
-        <button class="linkbtn mod-edit-name" data-id="${u.id}" data-name="${escapeHtml(u.display_name||'')}">${t('modEditName')}</button>
+        <button class="linkbtn act-edit mod-edit-name" data-id="${u.id}" data-name="${escapeHtml(u.display_name||'')}">${t('modEditName')}</button>
         ${u.email_confirmed ? '' : `<button class="linkbtn mod-confirm-email" data-id="${u.id}">${t('modConfirmEmail')}</button>`}
         ${u.mfa_enrolled ? `<button class="linkbtn mod-disable-mfa" data-id="${u.id}">${t('modDisableMfa')}</button>` : ''}
-        <button class="linkbtn mod-delete-user" data-id="${u.id}" style="color:var(--seal);">${t('modDeleteUser')}</button>
+        <button class="linkbtn act-remove mod-delete-user" data-id="${u.id}">${t('modDeleteUser')}</button>
       </div>`}`;
     list.appendChild(row);
   });
@@ -12337,6 +12379,7 @@ async function loadAllData(){
   // TOPIK_CAL_EVENTS reaches already-opted-in accounts here. Idempotent
   // and skips past dates, so the usual load costs zero writes.
   await loadFileLinks();
+  await backfillShortLinks();
   await ensureTopikEvents();
   await loadExpenditureVacations();
   // In case the Expenses sub-tab is already on screen and showing its
@@ -13653,7 +13696,7 @@ function renderJobs(){
         ${j.link ? `<a href="${j.link}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
         ${j.resume_url ? `<a href="${j.resume_url}" target="_blank" rel="noopener">${t('jobResumeView')}</a>` : ''}
         ${j.cover_letter_url ? `<a href="${j.cover_letter_url}" target="_blank" rel="noopener">${t('jobCoverLetterView')}</a>` : ''}
-        ${isMine ? `<button class="linkbtn job-edit-toggle" data-id="${j.id}">${t('editBtn')}</button>` : ''}
+        ${isMine ? `<button class="linkbtn act-edit job-edit-toggle" data-id="${j.id}">${t('editBtn')}</button>` : ''}
         ${addMyselfBtn}
       </div>
       ${isMine ? `<div class="notes-panel ${isEditOpen?'':'hidden'}" data-job-edit-for="${j.id}">${isEditOpen ? buildJobEditFieldsHtml(j) : ''}</div>` : ''}`;
@@ -13912,7 +13955,7 @@ function renderCerts(){
           <option value="acquired" ${c.status==='acquired'?'selected':''}>${certStatusLabel('acquired')}</option>
         </select>` : ''}
         ${c.link ? `<a href="${c.link}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
-        ${isMine ? `<button class="linkbtn cert-edit-toggle" data-id="${c.id}">${t('editBtn')}</button>` : ''}
+        ${isMine ? `<button class="linkbtn act-edit cert-edit-toggle" data-id="${c.id}">${t('editBtn')}</button>` : ''}
         ${addMyselfBtn}
       </div>
       ${isMine ? `<div class="notes-panel ${isEditOpen?'':'hidden'}" data-cert-edit-for="${c.id}">${isEditOpen ? buildCertEditFieldsHtml(c) : ''}</div>` : ''}`;
@@ -15367,7 +15410,7 @@ function renderEventReminderChips(){
   wrap.innerHTML = newEventReminders.map((r, idx)=>`
     <span class="reminder-chip" style="display:inline-flex;align-items:center;gap:5px;background:var(--celadon-1);color:var(--celadon-4);border-radius:20px;padding:4px 6px 4px 12px;font-size:12px;font-weight:600;white-space:nowrap;">
       <span>${escapeHtml(formatReminderOffset(r))}</span>
-      <button type="button" class="reminder-chip-remove" data-idx="${idx}" title="${t('removeReminderTitle')}" style="background:none;border:none;color:inherit;cursor:pointer;padding:0 2px;font-size:12px;line-height:1;opacity:0.7;">✕</button>
+      <button type="button" class="reminder-chip-remove" data-idx="${idx}" title="${t('removeReminderTitle')}" style="background:none;border:none;color:var(--danger);cursor:pointer;padding:0 2px;font-size:12px;line-height:1;opacity:0.7;">✕</button>
     </span>`).join('')
     + `<span class="reminder-add-trigger" id="eventReminderAddTrigger" style="display:inline-flex;align-items:center;color:var(--celadon-4);font-weight:600;font-size:12px;padding:4px 10px;border:1px dashed var(--celadon-3);border-radius:20px;">${t('addReminder')}</span>`;
   wrap.querySelectorAll('.reminder-chip-remove').forEach(btn=>{
@@ -16140,7 +16183,7 @@ function buildEventRowEl(ev){
       <div class="deadline-notes">${[dateText, timeText, ev.notes, recurText ? '↻ ' + recurText : ''].filter(Boolean).join(' · ')}</div>
       <div style="display:flex;gap:12px;margin-top:6px;">
         <button class="linkbtn sub-toggle" data-id="${ev.id}">${bellLabel}</button>
-        <button class="linkbtn edit-toggle" data-id="${ev.id}">${t('editBtn')}</button>
+        <button class="linkbtn act-edit edit-toggle" data-id="${ev.id}">${t('editBtn')}</button>
       </div>
       <div class="notes-panel ${isEditOpen?'':'hidden'}" data-edit-for="${ev.id}">
         <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
@@ -24336,7 +24379,7 @@ function buildGrammarCardHtml(g){
           ${buildBarHtml('gramPoliteness', g.politeness, 100, 'gramBlunt', 'gramPolite')}
           ${buildBarHtml('gramRegister', g.colloquial, 100, 'gramColloquial', 'gramWritten')}
         </div>
-        <button class="linkbtn gram-edit-toggle" data-id="${g.id}" style="margin-top:10px;">${t('editCourse')}</button>
+        <button class="linkbtn act-edit gram-edit-toggle" data-id="${g.id}" style="margin-top:10px;">${t('editCourse')}</button>
         <button class="linkbtn gram-quick-note" data-id="${g.id}" data-pattern="${escapeHtml(g.pattern)}" style="margin-top:10px;margin-left:12px;">${t('gramQuickNote')}</button>
         ${cmpGroupIdx !== -1 ? `<button class="linkbtn gram-view-similar-btn" data-cmp-index="${cmpGroupIdx}" style="margin-top:10px;margin-left:12px;">${t('gramViewSimilar')}</button>` : ''}
         ${isEditOpen ? buildGrammarEditFormHtml(g) : ''}
@@ -26537,7 +26580,7 @@ function buildCourseEditFieldsHtml(c){
       <label>${t('courseSyllabus')}</label>
       ${c.syllabus_url ? `<div style="display:flex;align-items:center;gap:8px;">
         <a href="${shortLinkForUrl(c.syllabus_url) ? shortLinkUrl(shortLinkForUrl(c.syllabus_url)) : c.syllabus_url}" target="_blank" rel="noopener" style="font-size:12px;">${c.syllabus_name||'file'}</a>
-        <button type="button" class="linkbtn ce-syllabus-remove" data-id="${c.id}">${t('removeSyllabus')}</button>
+        <button type="button" class="linkbtn act-remove ce-syllabus-remove" data-id="${c.id}">${t('removeSyllabus')}</button>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;">
         <span style="font-size:12px;color:var(--ink-soft);">${location.host}${SHORT_LINK_PATH}</span>
@@ -26668,7 +26711,7 @@ function renderCourses(){
           <option value="locked_in">${t('statusLockedIn')}</option>
         </select>`}
         ${c.syllabus_url ? `<a href="${shortLinkForUrl(c.syllabus_url) ? shortLinkUrl(shortLinkForUrl(c.syllabus_url)) : c.syllabus_url}" target="_blank" rel="noopener">${t('viewSyllabus')}</a>` : ''}
-        <button class="linkbtn course-edit-toggle" data-id="${c.id}">${t('editCourse')}</button>
+        <button class="linkbtn act-edit course-edit-toggle" data-id="${c.id}">${t('editCourse')}</button>
       </div>
       <div class="notes-panel ${isEditOpen?'':'hidden'}" data-course-edit-for="${c.id}">${isEditOpen ? buildCourseEditFieldsHtml(c) : ''}</div>`;
     list.appendChild(div);
@@ -28379,7 +28422,7 @@ function renderExpDayAgenda(){
       <div class="item-meta">
         <span class="badge" style="background:${info.color}22;color:${info.color};">${escapeHtml(expCategoryLabel(e.category))}</span>
         <span style="color:var(--ink-soft);font-size:11.5px;">${escapeHtml(t('expPaidBy'))} ${escapeHtml(nameFor(e.paid_by))}</span>
-        <button class="linkbtn exp-edit-btn" data-id="${e.id}">${escapeHtml(t('editBtn'))}</button>
+        <button class="linkbtn act-edit exp-edit-btn" data-id="${e.id}">${escapeHtml(t('editBtn'))}</button>
         <button class="item-del exp-del-btn" data-id="${e.id}" title="Delete">✕</button>
       </div>
     </div>`;
@@ -28627,7 +28670,7 @@ function renderVacationMembersModal(){
   const list = document.getElementById('vacationMembersList');
   list.innerHTML = expActiveMembers.map(m=>{
     const statusLabel = m.status==='accepted' ? (m.role==='owner'?t('expRoleOwner'):t('expStatusAccepted')) : m.status==='pending' ? t('expStatusPending') : t('expStatusDeclined');
-    const removeBtn = (isOwner && m.user_id!==currentUser.id) ? ` <button class="linkbtn exp-remove-member" data-id="${m.user_id}">${escapeHtml(t('expRemoveMemberBtn'))}</button>` : '';
+    const removeBtn = (isOwner && m.user_id!==currentUser.id) ? ` <button class="linkbtn act-remove exp-remove-member" data-id="${m.user_id}">${escapeHtml(t('expRemoveMemberBtn'))}</button>` : '';
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;">
       <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorForUser(m.user_id)};margin-right:6px;"></span>${escapeHtml(nameFor(m.user_id))}</span>
       <span style="color:var(--ink-soft);font-size:12px;">${escapeHtml(statusLabel)}${removeBtn}</span>

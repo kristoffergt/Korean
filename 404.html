@@ -33,6 +33,20 @@
   a.btn:hover{background:rgba(30,31,34,0.05);}
   a.btn.primary{background:var(--celadon-4); border-color:var(--celadon-4); color:#fff;}
   a.btn.primary:hover{filter:brightness(1.08);}
+  /* File viewer: the file is shown INSIDE the site rather than the browser
+     being sent off to the storage host, so the address bar keeps saying
+     kristoffergt.com (real-user request: "it shouldn't redirect to the
+     supabase, I want it to be part of the website"). body is centred for
+     the 404 card, so the viewer takes over the layout when it opens. */
+  body.viewing{display:block; padding:0;}
+  .viewer{display:flex; flex-direction:column; height:100vh;}
+  .viewer-bar{
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:10px 16px; border-bottom:1px solid var(--line); background:var(--paper-dim);
+  }
+  .viewer-name{font-size:14px; font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .viewer-frame{flex:1; width:100%; border:0; background:var(--paper-dim);}
+  .viewer-fallback{padding:40px 16px; text-align:center;}
 </style>
 </head>
 <body>
@@ -74,10 +88,39 @@
     document.getElementById('msg').textContent = text;
     document.getElementById('links').style.display = '';
   }
-  fetch(SUPABASE_URL + '/rest/v1/file_links?slug=eq.' + encodeURIComponent(slug) + '&select=url', {
+  // Renders the file IN PLACE instead of navigating to the storage host, so
+  // the URL the reader sees stays kristoffergt.com/f/<slug>. A PDF goes in
+  // an iframe; anything else (.doc/.docx, which the syllabus field also
+  // accepts) can't render inline in a browser, so that case gets an honest
+  // download card rather than an empty grey frame.
+  function show(url, label){
+    var name = label || decodeURIComponent((url.split('/').pop() || '').split('?')[0]).replace(/^\d+_/, '') || slug;
+    var isPdf = /\.pdf(\?|$)/i.test(url);
+    document.title = name;
+    document.body.className = 'viewing';
+    var bar = '<div class="viewer-bar">'
+      + '<span class="viewer-name"></span>'
+      + '<a class="btn" href="/">Home</a>'
+      + '<a class="btn primary" id="dl" download>Download</a>'
+      + '</div>';
+    document.body.innerHTML = '<div class="viewer">' + bar
+      + (isPdf
+          ? '<iframe class="viewer-frame" id="frame" title="File"></iframe>'
+          : '<div class="viewer-fallback"><p>This file type can’t be previewed in the browser.</p></div>')
+      + '</div>';
+    // Assigned as properties, never interpolated into the HTML above -- the
+    // name and URL come from the database and must not be able to inject
+    // markup into this page.
+    document.querySelector('.viewer-name').textContent = name;
+    var dl = document.getElementById('dl');
+    dl.href = url;
+    var frame = document.getElementById('frame');
+    if(frame) frame.src = url;
+  }
+  fetch(SUPABASE_URL + '/rest/v1/file_links?slug=eq.' + encodeURIComponent(slug) + '&select=url,label', {
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
   }).then(function(r){ return r.ok ? r.json() : []; }).then(function(rows){
-    if(rows && rows[0] && rows[0].url) location.replace(rows[0].url);
+    if(rows && rows[0] && rows[0].url) show(rows[0].url, rows[0].label);
     else fail('That short link doesn’t point anywhere any more.');
   }).catch(function(){ fail('Couldn’t reach the server. Check your connection and try again.'); });
 })();
