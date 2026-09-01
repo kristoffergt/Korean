@@ -37,13 +37,50 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="code">404</div>
-  <h1>Page not found</h1>
-  <p>That page doesn't exist, or the link is out of date.</p>
-  <div class="links">
+  <div class="code" id="code">404</div>
+  <h1 id="title">Page not found</h1>
+  <p id="msg">That page doesn't exist, or the link is out of date.</p>
+  <div class="links" id="links">
     <a class="btn primary" href="/">Go home</a>
     <a class="btn" href="/resume/">View resume ↗</a>
   </div>
 </div>
+<script>
+/* Short file links: kristoffergt.com/f/<slug> -> the real storage URL.
+   This lives in 404.html because the site is static GitHub Pages, which has
+   no server-side redirects -- an unmatched path lands here, and this reads
+   the slug back off the path. The one cost is the HTTP status being 404;
+   browsers render and redirect from it exactly the same, which is what
+   matters for a link someone opens.
+
+   The lookup is a plain REST call with the anon key rather than the
+   supabase-js bundle: this page must resolve a link for a signed-OUT
+   visitor as fast as possible, and pulling a whole SDK to read one row
+   would just slow that down. file_links is public-read by design (see
+   file_short_links_migration.sql). */
+(function(){
+  var m = location.pathname.match(/^\/f\/([A-Za-z0-9][A-Za-z0-9-]{0,63})\/?$/);
+  if(!m) return; // a genuine 404 -- leave the page exactly as it is
+  var slug = m[1].toLowerCase();
+  var SUPABASE_URL = 'https://kbqwitmxpmkueryjsyip.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImticXdpdG14cG1rdWVyeWpzeWlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NzIxNjUsImV4cCI6MjEwMTE0ODE2NX0.hOuxXxjfPemuSpthbMAD7tz30oxBkI3CyyZ8fwgwZTc';
+  document.getElementById('code').textContent = '';
+  document.getElementById('title').textContent = 'Opening file…';
+  document.getElementById('msg').textContent = '';
+  document.getElementById('links').style.display = 'none';
+  function fail(text){
+    document.getElementById('code').textContent = '404';
+    document.getElementById('title').textContent = 'Link not found';
+    document.getElementById('msg').textContent = text;
+    document.getElementById('links').style.display = '';
+  }
+  fetch(SUPABASE_URL + '/rest/v1/file_links?slug=eq.' + encodeURIComponent(slug) + '&select=url', {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+  }).then(function(r){ return r.ok ? r.json() : []; }).then(function(rows){
+    if(rows && rows[0] && rows[0].url) location.replace(rows[0].url);
+    else fail('That short link doesn’t point anywhere any more.');
+  }).catch(function(){ fail('Couldn’t reach the server. Check your connection and try again.'); });
+})();
+</script>
 </body>
 </html>
