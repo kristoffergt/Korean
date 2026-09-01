@@ -10657,6 +10657,29 @@ document.addEventListener('keydown', (e)=>{
 // markup already provides one, and injects one right after the button when
 // it doesn't -- so a panel rebuilt from a template string needs no wiring of
 // its own.
+// The four inline edit panels (courses, jobs, books, articles) are all
+// preserved across a re-render so unsaved typing and chosen files survive a
+// realtime echo. Two things have to be true for a panel to be handed back:
+// it must still be OPEN (Save and Cancel both close by re-rendering, so
+// restoring regardless makes both buttons look dead), and it must be in the
+// language the app is now in -- a preserved panel keeps the labels it was
+// built with, so a language switch mid-edit would otherwise leave it in the
+// old one until it was closed and reopened.
+function captureOpenPanels(list, attr){
+  const kept = new Map();
+  list.querySelectorAll('[' + attr + ']').forEach(panel=>{
+    if(panel.classList.contains('hidden')) return;
+    if(panel.dataset.panelLang && panel.dataset.panelLang !== currentLang) return;
+    kept.set(panel.getAttribute(attr), panel);
+  });
+  return kept;
+}
+function restoreOpenPanels(list, attr, kept){
+  kept.forEach((panel, id)=>{
+    const fresh = list.querySelector('[' + attr + '="' + id + '"]');
+    if(fresh && !fresh.classList.contains('hidden')) fresh.replaceWith(panel);
+  });
+}
 function syncFileChosenName(input){
   if(!input) return;
   const prev = input.previousElementSibling;
@@ -13080,6 +13103,52 @@ async function addBook(){
   document.getElementById('bookPages').value = '';
   renderReading();
 }
+// Books and articles were the only owned lists with no way to correct a
+// typo -- status and pages could be changed inline, but a mistyped title,
+// author, source or link could only be fixed by deleting the row and adding
+// it again, losing its notes with it (real-user request: "need to be able
+// to edit books and articles"). Same inline-panel shape as courses, jobs and
+// certifications, so all five behave identically.
+//
+// Status stays OUT of these forms deliberately: it already has its own
+// dropdown on the row, and two controls for one field that could disagree is
+// worse than the trip to the panel it saves. Pages read likewise.
+let expandedBookEdit = new Set();
+function buildBookEditFieldsHtml(b){
+  return `
+    <div class="field wide">
+      <label>${t('title')}</label>
+      <input type="text" class="bke-title" value="${escapeHtml(b.title||'')}">
+    </div>
+    <div class="field wide">
+      <label>${t('author')}</label>
+      <input type="text" class="bke-author" value="${escapeHtml(b.author||'')}">
+    </div>
+    <div class="field">
+      <label>${t('totalPages')}</label>
+      <input type="number" class="bke-pages" min="0" value="${b.total_pages == null ? '' : b.total_pages}">
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button class="export-btn bke-save-btn" data-id="${b.id}">${t('saveChanges')}</button>
+      <button class="export-btn bke-cancel-btn" data-id="${b.id}">${t('cancelEdit')}</button>
+    </div>`;
+}
+async function saveBookEdit(bookId, container){
+  const title = container.querySelector('.bke-title').value.trim();
+  const author = container.querySelector('.bke-author').value.trim();
+  const rawPages = container.querySelector('.bke-pages').value.trim();
+  if(!title) return;
+  const totalPages = rawPages === '' ? null : (parseInt(rawPages) || null);
+  const patch = { title, author: author || null, total_pages: totalPages };
+  // Shortening a book below where you had already read to would leave the
+  // progress bar over 100%, so the read count is pulled back with it.
+  const existing = (allBooks[currentUser.id]||[]).find(x=>x.id===bookId);
+  if(totalPages != null && existing && (existing.pages_read||0) > totalPages) patch.pages_read = totalPages;
+  const { data, error } = await supabaseClient.from('books').update(patch).eq('id', bookId).select();
+  if(!error && data && data[0] && existing) Object.assign(existing, data[0]);
+  expandedBookEdit.delete(bookId);
+  renderReading();
+}
 async function updateBookStatus(bookId, status){
   const patch = { status };
   if(status === 'finished') patch.finished_at = todayStr();
@@ -13143,6 +13212,11 @@ function renderReading(){
   finishedEl.style.color = rFinished > 0 ? '#27AE60' : 'var(--ink)';
 
   const list = document.getElementById('bookList');
+  // An open edit panel holds unsaved typing, and renderAll() fires on a
+  // debounced realtime echo of any shared table -- see the course list for
+  // the full account. Restored only while it is still meant to be open, or
+  // Save and Cancel would put it straight back.
+  const keptBookEditPanels = captureOpenPanels(list, 'data-book-edit-for');
   list.innerHTML = '';
   if(viewList.length === 0){ list.innerHTML = '<div class="empty">–</div>'; }
   const order = {reading:0, to_read:1, finished:2};
@@ -13177,9 +13251,11 @@ function renderReading(){
           <option value="finished" ${b.status==='finished'?'selected':''}>${bookStatusLabel('finished')}</option>
         </select>` : ''}
         ${b.total_pages ? (isMine ? `<input type="number" class="book-pages-input" data-id="${b.id}" min="0" max="${b.total_pages}" value="${b.pages_read||0}" title="Pages read"> / ${b.total_pages}p` : `${b.pages_read||0} / ${b.total_pages}p`) : ''}
+        ${isMine ? `<button class="linkbtn act-edit book-edit-toggle" data-id="${b.id}">${t('editBtn')}</button>` : ''}
         ${notes.length === 0 && !isMine ? '' : `<button class="linkbtn note-toggle" data-id="${b.id}">${notes.length === 0 ? t('addNote') : t('noteBtn') + ' (' + notes.length + ')'}</button>`}
       </div>
       ${progressHtml}
+      ${isMine ? `<div class="notes-panel ${expandedBookEdit.has(b.id)?'':'hidden'}" data-book-edit-for="${b.id}">${expandedBookEdit.has(b.id) ? buildBookEditFieldsHtml(b) : ''}</div>` : ''}
       <div class="notes-panel ${isOpen?'':'hidden'}" data-notes-for="${b.id}">
         ${notesListHtml}
         ${isMine ? `<div class="note-add">
@@ -13189,6 +13265,26 @@ function renderReading(){
         </div>` : ''}
       </div>`;
     list.appendChild(div);
+  });
+  restoreOpenPanels(list, 'data-book-edit-for', keptBookEditPanels);
+  list.querySelectorAll('.book-edit-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      if(expandedBookEdit.has(id)) expandedBookEdit.delete(id); else expandedBookEdit.add(id);
+      renderReading();
+    });
+  });
+  list.querySelectorAll('[data-book-edit-for]').forEach(panel=>{
+    if(panel.dataset.bkeWired === '1') return;
+    panel.dataset.bkeWired = '1';
+    panel.dataset.panelLang = currentLang;
+    const saveBtn = panel.querySelector('.bke-save-btn');
+    const cancelBtn = panel.querySelector('.bke-cancel-btn');
+    if(saveBtn) saveBtn.addEventListener('click', ()=> saveBookEdit(saveBtn.dataset.id, panel));
+    if(cancelBtn) cancelBtn.addEventListener('click', ()=>{
+      expandedBookEdit.delete(cancelBtn.dataset.id);
+      renderReading();
+    });
   });
   list.querySelectorAll('.item-del[data-kind="book"]').forEach(btn=>{
     btn.addEventListener('click', ()=> deleteBook(btn.dataset.id));
@@ -13276,6 +13372,45 @@ async function addArticle(){
   document.getElementById('articleLink').value = '';
   renderArticles();
 }
+let expandedArticleEdit = new Set();
+function buildArticleEditFieldsHtml(a){
+  return `
+    <div class="field wide">
+      <label>${t('lblArticleTitle')}</label>
+      <input type="text" class="are-title" value="${escapeHtml(a.title||'')}">
+    </div>
+    <div class="field wide">
+      <label>${t('lblArticleAuthor')}</label>
+      <input type="text" class="are-author" value="${escapeHtml(a.author||'')}">
+    </div>
+    <div class="field wide">
+      <label>${t('lblArticleSource')}</label>
+      <input type="text" class="are-source" value="${escapeHtml(a.source||'')}">
+    </div>
+    <div class="field wide">
+      <label>${t('lblArticleLink')}</label>
+      <input type="text" class="are-link" value="${escapeHtml(a.link||'')}">
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button class="export-btn are-save-btn" data-id="${a.id}">${t('saveChanges')}</button>
+      <button class="export-btn are-cancel-btn" data-id="${a.id}">${t('cancelEdit')}</button>
+    </div>`;
+}
+async function saveArticleEdit(articleId, container){
+  const title = container.querySelector('.are-title').value.trim();
+  const author = container.querySelector('.are-author').value.trim();
+  const source = container.querySelector('.are-source').value.trim();
+  const link = container.querySelector('.are-link').value.trim();
+  if(!title) return;
+  const patch = { title, author: author || null, source: source || null, link: link || null };
+  const { data, error } = await supabaseClient.from('articles').update(patch).eq('id', articleId).select();
+  if(!error && data && data[0]){
+    const a = (allArticles[currentUser.id]||[]).find(x=>x.id===articleId);
+    if(a) Object.assign(a, data[0]);
+  }
+  expandedArticleEdit.delete(articleId);
+  renderArticles();
+}
 async function updateArticleStatus(articleId, status){
   const patch = { status };
   if(status === 'finished') patch.finished_at = todayStr();
@@ -13328,6 +13463,7 @@ function renderArticles(){
   finishedEl.style.color = aFinished > 0 ? '#27AE60' : 'var(--ink)';
 
   const list = document.getElementById('articleList');
+  const keptArticleEditPanels = captureOpenPanels(list, 'data-article-edit-for');
   list.innerHTML = '';
   if(viewList.length === 0){ list.innerHTML = '<div class="empty">–</div>'; }
   const order = {reading:0, to_read:1, finished:2};
@@ -13358,8 +13494,10 @@ function renderArticles(){
           <option value="finished" ${a.status==='finished'?'selected':''}>${bookStatusLabel('finished')}</option>
         </select>` : ''}
         ${a.link ? `<a href="${escapeHtml(a.link)}" target="_blank" rel="noopener">${t('linkOpen')}</a>` : ''}
+        ${isMine ? `<button class="linkbtn act-edit article-edit-toggle" data-id="${a.id}">${t('editBtn')}</button>` : ''}
         ${notes.length === 0 && !isMine ? '' : `<button class="linkbtn note-toggle-article" data-id="${a.id}">${notes.length === 0 ? t('addNote') : t('noteBtn') + ' (' + notes.length + ')'}</button>`}
       </div>
+      ${isMine ? `<div class="notes-panel ${expandedArticleEdit.has(a.id)?'':'hidden'}" data-article-edit-for="${a.id}">${expandedArticleEdit.has(a.id) ? buildArticleEditFieldsHtml(a) : ''}</div>` : ''}
       <div class="notes-panel ${isOpen?'':'hidden'}" data-notes-for="${a.id}">
         ${notesListHtml}
         ${isMine ? `<div class="note-add">
@@ -13369,6 +13507,26 @@ function renderArticles(){
         </div>` : ''}
       </div>`;
     list.appendChild(div);
+  });
+  restoreOpenPanels(list, 'data-article-edit-for', keptArticleEditPanels);
+  list.querySelectorAll('.article-edit-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      if(expandedArticleEdit.has(id)) expandedArticleEdit.delete(id); else expandedArticleEdit.add(id);
+      renderArticles();
+    });
+  });
+  list.querySelectorAll('[data-article-edit-for]').forEach(panel=>{
+    if(panel.dataset.areWired === '1') return;
+    panel.dataset.areWired = '1';
+    panel.dataset.panelLang = currentLang;
+    const saveBtn = panel.querySelector('.are-save-btn');
+    const cancelBtn = panel.querySelector('.are-cancel-btn');
+    if(saveBtn) saveBtn.addEventListener('click', ()=> saveArticleEdit(saveBtn.dataset.id, panel));
+    if(cancelBtn) cancelBtn.addEventListener('click', ()=>{
+      expandedArticleEdit.delete(cancelBtn.dataset.id);
+      renderArticles();
+    });
   });
   list.querySelectorAll('.item-del[data-kind="article"]').forEach(btn=>{
     btn.addEventListener('click', ()=> deleteArticle(btn.dataset.id));
@@ -13807,10 +13965,7 @@ function renderJobs(){
   // Same rule as the course list: an open edit panel holds unsaved input
   // (and a chosen file, which cannot survive its input being replaced), so
   // it is lifted out and put back rather than rebuilt from the DB.
-  const keptJobEditPanels = new Map();
-  list.querySelectorAll('[data-job-edit-for]').forEach(panel=>{
-    if(!panel.classList.contains('hidden')) keptJobEditPanels.set(panel.dataset.jobEditFor, panel);
-  });
+  const keptJobEditPanels = captureOpenPanels(list, 'data-job-edit-for');
   list.innerHTML = '';
   if(controls) controls.innerHTML = '';
   if(sortedList.length === 0){ list.innerHTML = '<div class="empty">–</div>'; refreshJobLeaderboard(); return; }
@@ -13888,13 +14043,11 @@ function renderJobs(){
       renderJobs();
     });
   });
-  keptJobEditPanels.forEach((panel, id)=>{
-    const fresh = list.querySelector('[data-job-edit-for="' + id + '"]');
-    if(fresh && !fresh.classList.contains('hidden')) fresh.replaceWith(panel);
-  });
+  restoreOpenPanels(list, 'data-job-edit-for', keptJobEditPanels);
   list.querySelectorAll('[data-job-edit-for]').forEach(panel=>{
     if(panel.dataset.jeWired === '1') return;
     panel.dataset.jeWired = '1';
+    panel.dataset.panelLang = currentLang;
     const saveBtn = panel.querySelector('.je-save-btn');
     const cancelBtn = panel.querySelector('.je-cancel-btn');
     if(saveBtn) saveBtn.addEventListener('click', ()=> saveJobEdit(saveBtn.dataset.id, panel));
@@ -26860,10 +27013,7 @@ function renderCourses(){
   // report: "I have to select the file two times for it to show up").
   // Open panels are lifted out whole and put back, listeners intact, so
   // nothing in them has to be serialised and restored field by field.
-  const keptEditPanels = new Map();
-  list.querySelectorAll('[data-course-edit-for]').forEach(panel=>{
-    if(!panel.classList.contains('hidden')) keptEditPanels.set(panel.dataset.courseEditFor, panel);
-  });
+  const keptEditPanels = captureOpenPanels(list, 'data-course-edit-for');
   list.innerHTML = '';
   if(all.length === 0){ list.innerHTML = '<div class="empty">–</div>'; return; }
   all.slice().sort((a,b)=>{
@@ -26931,21 +27081,13 @@ function renderCourses(){
       renderCourses();
     });
   });
-  keptEditPanels.forEach((panel, id)=>{
-    const fresh = list.querySelector('[data-course-edit-for="' + id + '"]');
-    // Only restore a panel that is STILL meant to be open. Save and Cancel
-    // both work by dropping the id from expandedCourseEdit and re-rendering,
-    // so restoring unconditionally put the open panel straight back and made
-    // both buttons look dead (real-user report: "why is nothing happening
-    // when I press save changes", "cancel button also doesn't work"). The
-    // freshly built panel's own hidden state is the authority on that.
-    if(fresh && !fresh.classList.contains('hidden')) fresh.replaceWith(panel);
-  });
+  restoreOpenPanels(list, 'data-course-edit-for', keptEditPanels);
   list.querySelectorAll('[data-course-edit-for]').forEach(panel=>{
     // A restored panel already carries its listeners; wiring it again would
     // fire every handler twice.
     if(panel.dataset.ceWired === '1') return;
     panel.dataset.ceWired = '1';
+    panel.dataset.panelLang = currentLang;
     const saveBtn = panel.querySelector('.ce-save-btn');
     const cancelBtn = panel.querySelector('.ce-cancel-btn');
     const removeSyllabusBtn = panel.querySelector('.ce-syllabus-remove');
