@@ -333,6 +333,22 @@ linking system (see below) to share with specific other people.
   what `.who .icon-btn` resolves to beside it, so the row stays one height.
   Compact, the tooltip carries the name, since it is nowhere else on screen.
 
+- **A user-entered URL never goes straight into an `href`.** `safeExternalUrl()`
+  unwraps what people and LLMs actually paste (`[label](target)` Markdown,
+  `<url>`, quoted forms), adds a scheme when there is none, and returns null
+  for anything that cannot be made into an http(s) URL. Two failures made it
+  necessary, and the second is the one to remember: **a URL with no scheme is
+  RELATIVE**, so "doi.org/..." opened as kristoffergt.com/doi.org/... .
+  Refusing every other scheme is also what keeps `javascript:` out of an href
+  on rows a circle can write. Parentheses are deliberately never stripped --
+  a DOI can end in one (0305-750X(92)90097-F).
+  Render through `externalLinkHtml()`, which falls back to plain text when
+  the value is not a link, so a bad paste is visibly not a link rather than a
+  broken one. It runs at render time, so rows saved before this self-heal on
+  screen; the six save paths (article/job/cert, add and edit) repair the
+  stored value too, for the case where a field is pasted into and saved
+  without ever losing focus. 13 cases are checked in the browser.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
