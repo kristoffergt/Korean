@@ -318,6 +318,21 @@ linking system (see below) to share with specific other people.
   are fine. `navigator.clipboard.readText()` can be refused outright, so
   every failure path falls back to a textarea rather than a dead button.
 
+- **The header account pill shows the INITIAL below 640px, not a clipped
+  name.** It used to get there with `max-width` on the real text, which shows
+  the first letter plus whatever sliver of the second one fitted, at the
+  row's small type. `setWhoName()` stores the full name on the element
+  (`data-full-name`) and `applyWhoNameForWidth()` decides what to render;
+  the debounced resize listener calls it, so it survives a rotation. The
+  four places that set the name all go through `setWhoName()`.
+  The NODE is deliberately unchanged: the colour picker and its click target
+  hang off this same element, which is why the earlier fix clipped real text
+  rather than using a pseudo-element (a `font-size:0` + `::before` version
+  let the visible letter and the tappable box drift apart on iOS). With one
+  letter as the content, the pill is a fixed 27px square -- measured to match
+  what `.who .icon-btn` resolves to beside it, so the row stays one height.
+  Compact, the tooltip carries the name, since it is nowhere else on screen.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql

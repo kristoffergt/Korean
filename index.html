@@ -714,7 +714,14 @@ button:hover{background:var(--ink-hover);}
      the same "just the initial, full name still in the DOM for the tooltip
      and the click target" result, but the box that's clipped IS the box
      that's clicked -- no pseudo-element sizing for the two to disagree on. */
-  #whoName{display:inline-block;overflow:hidden;white-space:nowrap;max-width:calc(1.05em + 12px);padding:5px 6px;}
+  /* A fixed square rather than a clip: the content is exactly one letter
+     now, so the pill can be sized to it and the letter sized to the pill.
+     27px matches the height .who .icon-btn resolves to beside it (15px icon
+     + its 5px vertical padding + 1px border each side), measured rather
+     than assumed, so the row stays one height. */
+  #whoName{display:inline-flex;align-items:center;justify-content:center;
+    width:27px;height:27px;padding:0;font-size:15px;line-height:1;
+    overflow:hidden;white-space:nowrap;}
   /* Scoped to .who specifically (not the bare .lang-switch used on the
      auth/pin screens) -- a plain .lang-switch{} here has LOWER specificity
      than the .who .lang-switch{} rule above and would silently lose to it
@@ -10099,7 +10106,7 @@ async function onAuthed(user){
   // sign-in until now.
   rebuildEventKindSelect();
   rebuildPillVersionSelect();
-  document.getElementById('whoName').textContent = profiles[user.id] || user.email;
+  setWhoName(profiles[user.id] || user.email);
   document.getElementById('whoEmail').textContent = user.email;
   const myColor = colorForUser(user.id);
   document.getElementById('myColorPicker').value = myColor;
@@ -11294,7 +11301,7 @@ async function enterGuestMode(){
   rebuildGramLevelFilterSelect();
   rebuildGramReviewedFilterSelect();
   rebuildCourseForUserSelect();
-  document.getElementById('whoName').textContent = profiles['guest-local'] || t('guestDisplayName');
+  setWhoName(profiles['guest-local'] || t('guestDisplayName'));
   document.getElementById('whoEmail').textContent = '';
   const myColor = colorForUser('guest-local');
   document.getElementById('myColorPicker').value = myColor;
@@ -11809,7 +11816,7 @@ document.getElementById('saveDisplayNameBtn').addEventListener('click', async ()
     const { error } = await supabaseClient.from('profiles').update({ display_name: name }).eq('id', currentUser.id);
     if(error){ showSettingsMsg('settingsNameMsg', error.message, true); return; }
     profiles[currentUser.id] = name;
-    document.getElementById('whoName').textContent = name;
+    setWhoName(name);
     renderAll();
   }
   closeDisplayNameEdit();
@@ -17428,6 +17435,39 @@ function wireChipBellClicks(btn){
 
 /* ---------- WEEK VIEW ---------- */
 function isMobileDevice(){ return window.innerWidth <= 640; }
+// On a phone the account pill is one letter wide, and it used to get there
+// by CLIPPING the full name -- which shows the first letter plus whatever
+// sliver of the second one happened to fit, at the row's small type (real
+// user request: "the profile name should just be one letter, bigger size
+// though so it fills out that tiny pill"). It renders the INITIAL now, so
+// there is nothing to clip and the letter can be sized to the badge.
+//
+// The full name is kept on the element itself rather than re-derived, since
+// the four places that set the name are spread across sign-in, guest mode
+// and the rename form. The NODE is untouched either way: the colour picker
+// and its click target hang off this same element, which is the whole
+// reason the old fix clipped real text instead of using a pseudo-element.
+function whoInitial(name){
+  const m = (name || '').match(/[\p{L}\p{N}]/u);
+  return m ? m[0].toUpperCase() : '?';
+}
+function applyWhoNameForWidth(){
+  const el = document.getElementById('whoName');
+  if(!el) return;
+  if(el.dataset.fullTitle === undefined) el.dataset.fullTitle = el.getAttribute('title') || '';
+  const name = el.dataset.fullName || '';
+  const compact = isMobileDevice();
+  el.textContent = compact ? whoInitial(name) : name;
+  // Compact, the name is nowhere else on screen, so the tooltip is the only
+  // thing that can say whose account this is.
+  el.setAttribute('title', compact && name ? name : el.dataset.fullTitle);
+}
+function setWhoName(fullName){
+  const el = document.getElementById('whoName');
+  if(!el) return;
+  el.dataset.fullName = (fullName || '').trim();
+  applyWhoNameForWidth();
+}
 // NOTE: .tabs is now flex-wrap:nowrap (buttons shrink via clamp() instead
 // of wrapping to a second row — see the .tabs/.tabs button CSS rules), so
 // this function is dormant in practice: rowCapacity always equals total
@@ -17474,6 +17514,7 @@ window.addEventListener('resize', ()=>{
   clearTimeout(tabReorderResizeTimer);
   tabReorderResizeTimer = setTimeout(()=>{
     reorderMobileTabs();
+    applyWhoNameForWidth();
     buildLangSwitch(document.getElementById('langSwitchAuth'));
     buildLangSwitch(document.getElementById('langSwitchApp'));
     buildLangSwitch(document.getElementById('langSwitchPin'));
