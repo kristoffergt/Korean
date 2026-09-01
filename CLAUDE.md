@@ -274,13 +274,28 @@ linking system (see below) to share with specific other people.
   does, through `syllabusSlugBase()`, so a preview cannot promise a different
   address from the one that gets made.
 
-- **A preserved edit panel must not outlive the state that opened it.** The
-  keep-and-restore above has a trap: Save and Cancel both work by dropping
-  the id from `expandedCourseEdit` and re-rendering, so restoring the open
-  panel unconditionally puts it straight back and makes BOTH buttons look
-  dead. Restore only when the freshly built panel is itself open (`!fresh
-  .classList.contains('hidden')`) -- the fresh panel's own hidden state is
-  the authority, since it was built from the current expanded set.
+- **All four inline edit panels go through `captureOpenPanels()` /
+  `restoreOpenPanels()`** (courses, jobs, books, articles). Two conditions
+  gate a restore, and both were learned by breaking them:
+  1. The panel must still be OPEN. Save and Cancel both work by dropping the
+     id from the expanded set and re-rendering, so restoring regardless puts
+     the panel straight back and makes BOTH buttons look dead. The freshly
+     built panel's own hidden state is the authority.
+  2. The panel must be in the CURRENT language. A preserved node keeps the
+     labels it was built with, so a language switch mid-edit would leave it
+     in the old one until closed and reopened. Panels are stamped with
+     `data-panel-lang` as they are wired.
+  Any new list with an inline edit form should use the same two helpers
+  rather than open-coding a third copy of this.
+
+- **Books and articles are editable in place**, same shape as courses, jobs
+  and certifications: an `act-edit` toggle in the row's meta line and a
+  `notes-panel` below it. Status and pages-read stay OUT of those forms --
+  they already have their own inline controls, and two controls for one
+  field that can disagree is worse than the trip to the panel it saves.
+  Shortening a book's page count pulls `pages_read` down with it, or the
+  progress bar would read over 100%. Long text fields need `.field wide`
+  (320px); the bare `.field` input is 150px, which truncates a title.
 
 ## Migration files present (see folder for full current list)
 
