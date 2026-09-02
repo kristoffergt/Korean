@@ -393,7 +393,21 @@ linking system (see below) to share with specific other people.
   query change.
 
 - **The active tab is one element that travels** (`.tab-slider`), not a fill
-  each tab paints. Three things that are easy to get wrong:
+  each tab paints. It applies to every row in `SLIDER_ROWS` -- the main tab
+  bar and the six `.cal-view-toggle` sub-tab rows -- and is driven by a
+  MutationObserver per row rather than by hooking each switch function:
+  seven rows have their own switchers, plus deep links and notification
+  navigation that set the active button directly, and an observer cannot
+  fall out of step with a route added later.
+  **The opt-in rules must come after EVERY row's own `.active` rule.**
+  `.has-slider > button.active` and `.cal-view-toggle button.active` both
+  score (0,2,1), so source order decides; written earlier, the active
+  sub-tab kept painting its own ink fill on top of the travelling pill.
+  A row inside a hidden panel measures 0 and stays UNPARKED so it places
+  itself the moment it is visible; `refreshRowSliders(false)` is what does
+  that, called both when a panel is shown and after any sub-tab change,
+  since a section can carry a row of its own.
+  Three more things that are easy to get wrong:
   1. **The tabs it passes must not be opaque**, or the pill is invisible
      mid-flight. `.has-slider` (added by JS) makes them transparent and keeps
      their border. Because JS adds it, the old solid-fill look is the
