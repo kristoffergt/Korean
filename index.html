@@ -385,10 +385,6 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
    .has-slider is added by JS, so the old solid-fill look is what shows if
    the slider never installs (a thrown error, an ancient browser). Nothing
    here can leave the active tab with no fill at all. */
-.tabs.has-slider button{background:transparent;transition:color 0.24s ease;}
-.tabs.has-slider button:hover{background:rgba(127,127,127,0.14);}
-.tabs.has-slider button.active{background:transparent;}
-.tabs.has-slider button.active:hover{background:transparent;box-shadow:none;}
 /* z-index 0 sits under the fly-out (1) and the buttons (2), both inside
    .tabs' own stacking context. width is written per move rather than folded
    into the transform: scaleX on a rounded box stretches the corners into
@@ -399,17 +395,12 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
   transition:transform 0.42s cubic-bezier(.34,1.56,.64,1),
              width 0.42s cubic-bezier(.34,1.56,.64,1),
              opacity 0.2s ease;}
-.tabs.no-slide-anim .tab-slider{transition:none;}
-/* The pill passes UNDER the tabs it crosses, and for those few hundred
-   milliseconds their labels are dark ink on a dark pill. Receding them for
-   the length of the trip fixes the legibility and reads as the row getting
-   out of the way, which suits the effect. */
-.tabs.sliding button:not(.active){opacity:0.4;}
+.no-slide-anim .tab-slider{transition:none;}
 @keyframes tabPop{0%{transform:scale(1);}45%{transform:scale(1.13);}100%{transform:scale(1);}}
-.tabs button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
+button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 @media (prefers-reduced-motion: reduce){
   .tab-slider{transition:opacity 0.2s ease;}
-  .tabs button.tab-popped > *{animation:none;}
+  button.tab-popped > *{animation:none;}
 }
 .card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:22px;}
 .card h2{font-family:'Noto Serif KR',serif;font-size:15px;margin:0 0 14px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:10px;}
@@ -685,6 +676,21 @@ button:hover{background:var(--ink-hover);}
 .cal-view-toggle button{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 14px;font-size:12px;font-weight:600;border-radius:6px;}
 .cal-view-toggle button:hover:not(.active){background:rgba(127,127,127,0.22);}
 .cal-view-toggle button.active{background:var(--ink);color:var(--paper);}
+/* ---------- WHAT THE SLIDING PILL NEEDS FROM EVERY ROW IT IS IN ----------
+   Deliberately placed after BOTH .tabs' and .cal-view-toggle's own .active
+   rules: these carry the same specificity (0,2,1), so source order is what
+   decides, and written any earlier the active button keeps its own ink fill
+   and paints on top of the pill. Anything else that opts a row in has to be
+   added below this line too. */
+.has-slider > button{background:transparent;transition:color 0.24s ease;}
+.has-slider > button:hover{background:rgba(127,127,127,0.14);}
+.has-slider > button.active{background:transparent;}
+.has-slider > button.active:hover{background:transparent;box-shadow:none;}
+/* The sub-tab rows are plain flex containers, so they need a positioning
+   context of their own and their buttons need to sit above the pill. */
+.cal-view-toggle{position:relative;}
+.cal-view-toggle button{position:relative;z-index:2;}
+
 .week-grid-wrap{margin-top:4px;}
 .week-header-row{display:flex;}
 .week-corner{width:44px;flex-shrink:0;}
@@ -12633,71 +12639,112 @@ supabaseClient.auth.onAuthStateChange((event, session)=>{
    The pill is one element that travels, rather than each tab painting its
    own fill. width/transform are written straight onto it and the transition
    does the rest -- no rAF loop, nothing to keep in step. */
-let tabSliderEl = null;
-let tabSliderParked = false;   // has it ever been placed? a first placement is not a journey
-let tabStretchTimer = null;
-let tabSlideEndTimer = null;
-function ensureTabSlider(){
-  const nav = document.getElementById('tabNav');
-  if(!nav) return null;
-  if(!tabSliderEl || !nav.contains(tabSliderEl)){
-    tabSliderEl = document.createElement('div');
-    tabSliderEl.className = 'tab-slider';
-    // First child, so the fly-out and the buttons keep their DOM order and
-    // their z-index above it.
-    nav.insertBefore(tabSliderEl, nav.firstChild);
-    nav.classList.add('has-slider');
-  }
-  return tabSliderEl;
+const SLIDER_ROWS = '#tabNav, .cal-view-toggle';
+const rowSliderState = new WeakMap();
+function sliderState(row){
+  let st = rowSliderState.get(row);
+  if(!st){ st = { parked:false, stretchTimer:null, lastActive:null, observer:null }; rowSliderState.set(row, st); }
+  return st;
 }
-function moveTabSlider(opts){
+function ensureRowSlider(row){
+  if(!row) return null;
+  let el = row.querySelector(':scope > .tab-slider');
+  if(!el){
+    el = document.createElement('div');
+    el.className = 'tab-slider';
+    // First child, so everything else in the row keeps its DOM order and
+    // its z-index above the pill.
+    row.insertBefore(el, row.firstChild);
+    row.classList.add('has-slider');
+  }
+  return el;
+}
+function moveRowSlider(row, opts){
   const instant = !!(opts && opts.instant);
-  const nav = document.getElementById('tabNav');
-  const slider = ensureTabSlider();
-  if(!nav || !slider) return;
-  const active = nav.querySelector('button.active');
+  if(!row) return;
+  const slider = ensureRowSlider(row);
+  if(!slider) return;
+  const st = sliderState(row);
+  const active = row.querySelector(':scope > button.active');
   if(!active){ slider.style.opacity = '0'; return; }
-  const navBox = nav.getBoundingClientRect();
+  const rowBox = row.getBoundingClientRect();
   const box = active.getBoundingClientRect();
-  // A hidden nav measures 0 and would park the pill at the far left, so it
-  // waits to be asked again once the row is actually on screen.
-  if(box.width === 0 || navBox.width === 0){ slider.style.opacity = '0'; tabSliderParked = false; return; }
-  const x = Math.round(box.left - navBox.left);
+  // A row inside a hidden panel measures 0 and would park the pill at the
+  // far left. It stays UNPARKED so it places itself the moment it is
+  // actually on screen.
+  if(box.width === 0 || rowBox.width === 0){ slider.style.opacity = '0'; st.parked = false; return; }
+  const x = Math.round(box.left - rowBox.left);
   // The very first placement must not travel from the left edge -- there is
-  // nowhere it came from. Same reasoning as a freshly mounted element not
-  // transitioning from nothing.
-  const jump = instant || !tabSliderParked;
-  if(jump) nav.classList.add('no-slide-anim');
+  // nowhere it came from.
+  const jump = instant || !st.parked;
+  if(jump) row.classList.add('no-slide-anim');
   slider.style.opacity = '1';
   slider.style.width = Math.round(box.width) + 'px';
+  slider.style.height = Math.round(box.height) + 'px';
   slider.style.transform = 'translateX(' + x + 'px)' + (jump ? '' : ' scaleX(1.07) scaleY(0.88)');
   if(jump){
-    // Force the no-transition write to land before the class comes off,
-    // or the browser coalesces both and animates from the old position.
+    // Force the no-transition write to land before the class comes off, or
+    // the browser coalesces the two and animates from the old position.
     void slider.offsetWidth;
-    nav.classList.remove('no-slide-anim');
-    tabSliderParked = true;
+    row.classList.remove('no-slide-anim');
+    st.parked = true;
     return;
   }
   // The stretch leans into the move and then relaxes, so it reads as weight
-  // rather than a box teleporting. Released at ~55% of the travel, which is
-  // where the overshoot in the curve is doing its work.
-  clearTimeout(tabStretchTimer);
-  nav.classList.add('sliding');
-  tabStretchTimer = setTimeout(()=>{
+  // rather than a box teleporting.
+  clearTimeout(st.stretchTimer);
+  st.stretchTimer = setTimeout(()=>{
     slider.style.transform = 'translateX(' + x + 'px)';
   }, 230);
-  clearTimeout(tabSlideEndTimer);
-  tabSlideEndTimer = setTimeout(()=> nav.classList.remove('sliding'), 460);
 }
-function popActiveTab(){
-  const nav = document.getElementById('tabNav');
-  const active = nav && nav.querySelector('button.active');
+function popActiveIn(row){
+  const active = row && row.querySelector(':scope > button.active');
   if(!active) return;
   active.classList.remove('tab-popped');
   void active.offsetWidth;   // restart the animation on a repeat click
   active.classList.add('tab-popped');
   setTimeout(()=> active.classList.remove('tab-popped'), 400);
+}
+// Watching the DOM rather than hooking each switcher: there are seven rows
+// with their own switch functions, plus deep links and notification
+// navigation that set the active button directly. An observer catches all
+// of them without a call site per path, and cannot fall out of step with a
+// route somebody adds later.
+function watchRowSliders(){
+  document.querySelectorAll(SLIDER_ROWS).forEach(row=>{
+    const st = sliderState(row);
+    if(st.observer) return;
+    ensureRowSlider(row);
+    moveRowSlider(row, { instant: true });
+    st.lastActive = row.querySelector(':scope > button.active');
+    st.observer = new MutationObserver(()=>{
+      const active = row.querySelector(':scope > button.active');
+      // Fires for the row's own no-slide-anim/has-slider toggles and for
+      // tab-popped on a button too, so this guard is what keeps it to a
+      // real change of tab.
+      if(active === st.lastActive) return;
+      st.lastActive = active;
+      moveRowSlider(row);
+      popActiveIn(row);
+      // Switching a sub-tab also reveals SECTIONS, and a section can carry
+      // a row of its own (the month/week/day toggle lives inside the Home >
+      // Calendar section). Those measured 0 while hidden, so this is where
+      // they get their first real placement. Only unparked rows are
+      // touched, so a pill already in flight is left alone.
+      refreshRowSliders(false);
+    });
+    st.observer.observe(row, { attributes:true, attributeFilter:['class'], subtree:true });
+  });
+}
+// force re-measures every row (a resize, a language change, a tab hidden);
+// without it only rows that have never managed to place themselves are
+// touched -- which is exactly the row that just came out of a hidden panel,
+// and leaves a pill already in flight alone.
+function refreshRowSliders(force){
+  document.querySelectorAll(SLIDER_ROWS).forEach(row=>{
+    const st = sliderState(row);
+    if(force || !st.parked) moveRowSlider(row, { instant: true });
+  });
 }
 /* ---------- TAB SWITCHING ---------- */
 // Pulled out of the click handler so applyTabVisibility() can also call
@@ -12707,8 +12754,6 @@ function switchTopLevelTab(view){
   document.querySelectorAll('#tabNav button').forEach(b=>b.classList.remove('active'));
   const btn = document.getElementById('tabNav').querySelector(`button[data-tab="${view}"]`);
   if(btn) btn.classList.add('active');
-  moveTabSlider();
-  popActiveTab();
   // Still tracks which tab was asked for (activeTab, and the button's own
   // active state) even while loading, so whichever one the reader actually
   // clicked is the one that appears the moment data's ready -- only the
@@ -12719,6 +12764,9 @@ function switchTopLevelTab(view){
   document.getElementById('panelJobs').classList.toggle('hidden', appDataLoading || activeTab!=='jobs');
   document.getElementById('panelCalendar').classList.toggle('hidden', appDataLoading || activeTab!=='calendar');
   document.getElementById('panelYonsei').classList.toggle('hidden', appDataLoading || activeTab!=='yonsei');
+  // A panel that just became visible carries sub-tab rows that measured 0
+  // while it was hidden, so they place themselves now.
+  refreshRowSliders(false);
 }
 document.getElementById('tabNav').addEventListener('click', (e)=>{
   const btn = e.target.closest('button');
@@ -15838,7 +15886,7 @@ function applyTabVisibility(){
     }
   });
   renderCalendarQuickNav();
-  moveTabSlider({ instant: true });
+  refreshRowSliders(true);
 }
 // Every possible key, top-level and sub, flattened -- used by Hide all/Show
 // all. A "hide everything" state is allowed (no minimum-one-visible guard):
@@ -17699,9 +17747,10 @@ function setWhoName(fullName){
 let tabNavCanonicalOrder = null;
 function reorderMobileTabs(){
   reorderMobileTabsInner();
-  // Whatever the row just did to itself, the pill has to be measured
+  // Whatever the row just did to itself, every pill has to be measured
   // against it again -- and without animating, since nothing was chosen.
-  moveTabSlider({ instant: true });
+  watchRowSliders();
+  refreshRowSliders(true);
 }
 function reorderMobileTabsInner(){
   const nav = document.getElementById('tabNav');
