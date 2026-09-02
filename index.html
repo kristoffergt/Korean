@@ -330,6 +330,23 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
 .who button.textbtn:hover{background:var(--paper-dim);color:var(--ink);}
 .tabs{display:flex;gap:4px;margin-bottom:22px;flex-wrap:nowrap;position:relative;z-index:60;}
 .tabs button{position:relative;z-index:2;flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--line);padding:8px 2px;font-size:clamp(7px,1.7vw,13px);font-weight:600;border-radius:6px;}
+/* On a phone the pills were mostly empty air: icon and label centred with
+   2px of side padding, and the label's own clamp bottoming out at SEVEN
+   pixels (1.7vw is 6.4px at 375) (real-user request: "make the tabs more
+   filled out ... icons further on the left ... text larger"). Left-aligned
+   with real padding and a 10px floor, the content starts where the eye
+   does, and an ellipsis eats the end of a word rather than both ends. */
+@media (max-width: 640px){
+  /* The label has to survive the change, so the numbers are measured rather
+     than picked: five tabs in (width - 32 page padding - 16 gaps) leaves
+     ~68px each at 390. Take off 7 left, 3 right, a 14px icon, a 4px gap and
+     2px of border and 38px is left for the word -- which is what "Reading",
+     the longest of the five, needs at 2.5vw. Bigger than that and it
+     ellipsises, which is a worse trade than a slightly smaller word.
+     Still a ~40% jump from the 7px floor the old 1.7vw bottomed out at. */
+  .tabs button{justify-content:flex-start;padding:9px 3px 9px 7px;gap:4px;
+    font-size:clamp(9px,2.5vw,13px);}
+}
 /* Hovering a top-level tab that has sub-tabs shows them in a plain row
    right underneath it, sliding out from behind the button rather than
    just fading in place -- the container itself starts translated up so it
@@ -360,6 +377,40 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
 .tabs button:hover{background:rgba(127,127,127,0.22);}
 .tabs button.active{background:var(--ink);color:var(--paper);}
 .tabs button.active:hover{background:var(--ink);box-shadow:inset 0 0 0 2px var(--celadon-3);}
+/* ---------- THE ACTIVE TAB SLIDES ----------
+   One element travels between the tabs instead of each tab painting its own
+   fill. For it to be VISIBLE in flight, the tabs it passes have to stop
+   being opaque -- which is what .has-slider does; they keep their border, so
+   the row still reads as a row of pills.
+   .has-slider is added by JS, so the old solid-fill look is what shows if
+   the slider never installs (a thrown error, an ancient browser). Nothing
+   here can leave the active tab with no fill at all. */
+.tabs.has-slider button{background:transparent;transition:color 0.24s ease;}
+.tabs.has-slider button:hover{background:rgba(127,127,127,0.14);}
+.tabs.has-slider button.active{background:transparent;}
+.tabs.has-slider button.active:hover{background:transparent;box-shadow:none;}
+/* z-index 0 sits under the fly-out (1) and the buttons (2), both inside
+   .tabs' own stacking context. width is written per move rather than folded
+   into the transform: scaleX on a rounded box stretches the corners into
+   ellipses, and these are 6px pills. The overshoot in the curve is the
+   "over the top" part -- it carries past the target and settles back. */
+.tab-slider{position:absolute;top:0;left:0;z-index:0;height:100%;border-radius:6px;
+  background:var(--ink);opacity:0;pointer-events:none;transform-origin:center center;
+  transition:transform 0.42s cubic-bezier(.34,1.56,.64,1),
+             width 0.42s cubic-bezier(.34,1.56,.64,1),
+             opacity 0.2s ease;}
+.tabs.no-slide-anim .tab-slider{transition:none;}
+/* The pill passes UNDER the tabs it crosses, and for those few hundred
+   milliseconds their labels are dark ink on a dark pill. Receding them for
+   the length of the trip fixes the legibility and reads as the row getting
+   out of the way, which suits the effect. */
+.tabs.sliding button:not(.active){opacity:0.4;}
+@keyframes tabPop{0%{transform:scale(1);}45%{transform:scale(1.13);}100%{transform:scale(1);}}
+.tabs button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
+@media (prefers-reduced-motion: reduce){
+  .tab-slider{transition:opacity 0.2s ease;}
+  .tabs button.tab-popped > *{animation:none;}
+}
 .card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:22px;}
 .card h2{font-family:'Noto Serif KR',serif;font-size:15px;margin:0 0 14px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:10px;}
 .export-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:5px 10px;font-size:11px;font-weight:600;border-radius:6px;}
@@ -12578,6 +12629,76 @@ supabaseClient.auth.onAuthStateChange((event, session)=>{
     document.getElementById('resetScreen').classList.remove('hidden');
   }
 });
+/* ---------- THE ACTIVE TAB SLIDES ----------
+   The pill is one element that travels, rather than each tab painting its
+   own fill. width/transform are written straight onto it and the transition
+   does the rest -- no rAF loop, nothing to keep in step. */
+let tabSliderEl = null;
+let tabSliderParked = false;   // has it ever been placed? a first placement is not a journey
+let tabStretchTimer = null;
+let tabSlideEndTimer = null;
+function ensureTabSlider(){
+  const nav = document.getElementById('tabNav');
+  if(!nav) return null;
+  if(!tabSliderEl || !nav.contains(tabSliderEl)){
+    tabSliderEl = document.createElement('div');
+    tabSliderEl.className = 'tab-slider';
+    // First child, so the fly-out and the buttons keep their DOM order and
+    // their z-index above it.
+    nav.insertBefore(tabSliderEl, nav.firstChild);
+    nav.classList.add('has-slider');
+  }
+  return tabSliderEl;
+}
+function moveTabSlider(opts){
+  const instant = !!(opts && opts.instant);
+  const nav = document.getElementById('tabNav');
+  const slider = ensureTabSlider();
+  if(!nav || !slider) return;
+  const active = nav.querySelector('button.active');
+  if(!active){ slider.style.opacity = '0'; return; }
+  const navBox = nav.getBoundingClientRect();
+  const box = active.getBoundingClientRect();
+  // A hidden nav measures 0 and would park the pill at the far left, so it
+  // waits to be asked again once the row is actually on screen.
+  if(box.width === 0 || navBox.width === 0){ slider.style.opacity = '0'; tabSliderParked = false; return; }
+  const x = Math.round(box.left - navBox.left);
+  // The very first placement must not travel from the left edge -- there is
+  // nowhere it came from. Same reasoning as a freshly mounted element not
+  // transitioning from nothing.
+  const jump = instant || !tabSliderParked;
+  if(jump) nav.classList.add('no-slide-anim');
+  slider.style.opacity = '1';
+  slider.style.width = Math.round(box.width) + 'px';
+  slider.style.transform = 'translateX(' + x + 'px)' + (jump ? '' : ' scaleX(1.07) scaleY(0.88)');
+  if(jump){
+    // Force the no-transition write to land before the class comes off,
+    // or the browser coalesces both and animates from the old position.
+    void slider.offsetWidth;
+    nav.classList.remove('no-slide-anim');
+    tabSliderParked = true;
+    return;
+  }
+  // The stretch leans into the move and then relaxes, so it reads as weight
+  // rather than a box teleporting. Released at ~55% of the travel, which is
+  // where the overshoot in the curve is doing its work.
+  clearTimeout(tabStretchTimer);
+  nav.classList.add('sliding');
+  tabStretchTimer = setTimeout(()=>{
+    slider.style.transform = 'translateX(' + x + 'px)';
+  }, 230);
+  clearTimeout(tabSlideEndTimer);
+  tabSlideEndTimer = setTimeout(()=> nav.classList.remove('sliding'), 460);
+}
+function popActiveTab(){
+  const nav = document.getElementById('tabNav');
+  const active = nav && nav.querySelector('button.active');
+  if(!active) return;
+  active.classList.remove('tab-popped');
+  void active.offsetWidth;   // restart the animation on a repeat click
+  active.classList.add('tab-popped');
+  setTimeout(()=> active.classList.remove('tab-popped'), 400);
+}
 /* ---------- TAB SWITCHING ---------- */
 // Pulled out of the click handler so applyTabVisibility() can also call
 // this programmatically (redirecting away from a tab that just got hidden).
@@ -12586,6 +12707,8 @@ function switchTopLevelTab(view){
   document.querySelectorAll('#tabNav button').forEach(b=>b.classList.remove('active'));
   const btn = document.getElementById('tabNav').querySelector(`button[data-tab="${view}"]`);
   if(btn) btn.classList.add('active');
+  moveTabSlider();
+  popActiveTab();
   // Still tracks which tab was asked for (activeTab, and the button's own
   // active state) even while loading, so whichever one the reader actually
   // clicked is the one that appears the moment data's ready -- only the
@@ -15715,6 +15838,7 @@ function applyTabVisibility(){
     }
   });
   renderCalendarQuickNav();
+  moveTabSlider({ instant: true });
 }
 // Every possible key, top-level and sub, flattened -- used by Hide all/Show
 // all. A "hide everything" state is allowed (no minimum-one-visible guard):
@@ -17574,6 +17698,12 @@ function setWhoName(fullName){
 // after the first `remainder` tabs.
 let tabNavCanonicalOrder = null;
 function reorderMobileTabs(){
+  reorderMobileTabsInner();
+  // Whatever the row just did to itself, the pill has to be measured
+  // against it again -- and without animating, since nothing was chosen.
+  moveTabSlider({ instant: true });
+}
+function reorderMobileTabsInner(){
   const nav = document.getElementById('tabNav');
   if(!nav) return;
   if(!tabNavCanonicalOrder){
