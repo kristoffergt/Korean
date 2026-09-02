@@ -1,0 +1,14 @@
+-- Where you sit the TOPIK exam, entered from the countdown card (real-user
+-- request: "allow for you to add your location for the test day").
+--
+-- It goes on EVENTS rather than on profiles, because the location belongs to
+-- one sitting and not to the account: TOPIK_CAL_EVENTS gains a new cycle
+-- every few months, ensureTopikEvents() creates a fresh row for it, and that
+-- row starts with no location -- which is correct. A single
+-- profiles.topik_location would quietly carry last cycle's venue into the
+-- next one.
+--
+-- Nullable and untouched by RLS: the existing events policies are row-level
+-- and already cover who may read or write a given row, so a new column needs
+-- no policy of its own.
+alter table events add column location text;
