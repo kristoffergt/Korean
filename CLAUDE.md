@@ -392,6 +392,29 @@ linking system (see below) to share with specific other people.
   mid-word. Events are read with `select('*')`, so the new column needs no
   query change.
 
+- **The active tab is one element that travels** (`.tab-slider`), not a fill
+  each tab paints. Three things that are easy to get wrong:
+  1. **The tabs it passes must not be opaque**, or the pill is invisible
+     mid-flight. `.has-slider` (added by JS) makes them transparent and keeps
+     their border. Because JS adds it, the old solid-fill look is the
+     fallback if the slider never installs -- nothing can leave the active
+     tab with no fill.
+  2. **width is written, not `scaleX`.** These are 6px-radius pills, and
+     scaling a rounded box stretches the corners into ellipses.
+  3. **The first placement is not a journey** -- it jumps, guarded by
+     `no-slide-anim` plus a forced reflow, or the pill sails in from the
+     left edge on load. Same reasoning as an element not transitioning from
+     nothing.
+  `reorderMobileTabs()` wraps `reorderMobileTabsInner()` so the pill
+  re-measures after EVERY relayout: that body has four early returns, and
+  the row's geometry changes in all of them.
+- **Verifying an animation in the preview pane needs care.** A hidden pane
+  freezes CSS transitions at their start value, so `getBoundingClientRect()`
+  reads the OLD position however long you wait, and a working slide looks
+  broken. Prove the target geometry by disabling the transition
+  (`no-slide-anim`) and measuring, and prove the motion with successive
+  screenshots, which force the pane to paint.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
