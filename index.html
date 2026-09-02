@@ -561,6 +561,14 @@ button:hover{background:var(--ink-hover);}
 .topik-box .tlabel{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-bottom:6px;}
 .topik-box .tval{font-family:'Space Grotesk',monospace;font-size:22px;font-weight:700;color:var(--seal);}
 .topik-box .tdate{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+/* Reads as a line of the card until you touch it, so an empty venue is an
+   invitation rather than an empty form field sitting in a countdown. */
+.topik-box .tloc{margin-top:8px;width:100%;font-family:'Inter',sans-serif;font-size:12px;
+  color:var(--ink);background:transparent;border:1px solid transparent;border-radius:6px;
+  padding:4px 6px;margin-left:-6px;}
+.topik-box .tloc::placeholder{color:var(--ink-soft);}
+.topik-box .tloc:hover{border-color:var(--line);}
+.topik-box .tloc:focus{outline:none;border-color:var(--celadon-3);background:var(--paper-dim);}
 .deadline-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;gap:10px;}
 .deadline-row:last-child{border-bottom:none;}
 .deadline-left{display:flex;flex-direction:column;align-items:flex-start;}
@@ -1967,14 +1975,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
       <h2 id="hTopik"></h2>
       <div class="topik-row">
         <div class="topik-box">
-          <div class="tlabel" id="topikRegLabel"></div>
-          <div class="tval" id="topikRegVal">–</div>
-          <div class="tdate" id="topikRegDate"></div>
-        </div>
-        <div class="topik-box">
           <div class="tlabel" id="topikTestLabel"></div>
           <div class="tval" id="topikTestVal">–</div>
           <div class="tdate" id="topikTestDate"></div>
+          <input type="text" id="topikTestLocation" class="tloc" data-ph-key="topikLocationPlaceholder">
         </div>
       </div>
     </div>
@@ -8465,7 +8469,7 @@ const I18N = {
     footer:'Entries are visible to everyone signed in to this tracker; only you can edit your own.',
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
-    topikCountdown:'TOPIK countdown', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
+    topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
     settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
@@ -8586,7 +8590,7 @@ const I18N = {
     footer:'모든 기록은 로그인한 모든 사용자에게 공개되며, 본인 기록만 수정할 수 있습니다.',
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
-    topikCountdown:'TOPIK 카운트다운', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
+    topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
     settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
@@ -8707,7 +8711,7 @@ const I18N = {
     footer:'Tất cả mục nhập hiển thị cho mọi người đã đăng nhập; bạn chỉ có thể chỉnh sửa mục của mình.',
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
-    topikCountdown:'Đếm ngược TOPIK', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
+    topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
     settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
@@ -8836,7 +8840,7 @@ const STATIC_MAP = {
   hAddCert:'logCertification', lblCertName:'certNameLabel', lblCertIssuer:'certIssuerLabel', lblCertStatus:'status', lblCertDate:'certDateLabel', lblCertLink:'link', addCertBtn:'addCertificationBtn',
   hYourCerts:'certListHeader', exportCertsBtn:'exportCsv', hCertLB:'certificationsLB', clbHeadRank:'lbRank', clbHeadName:'lbName', clbHeadAcquired:'certAcquired', lblCertPersonFilter:'lblNotesPersonFilter',
   lblCertSearch:'searchLabel', lblCertSort:'sortByLabel',
-  hTopik:'topikCountdown', topikRegLabel:'regOpensIn', topikTestLabel:'testIn',
+  hTopik:'topikCountdown', topikTestLabel:'testIn',
   settingsShowTopikLabel:'settingsShowTopikLabel', settingsShowTopikHint:'settingsShowTopikHint',
   hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventEndTime:'eventEndTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', eventColorUseMyDefaultBtn:'eventColorUseMyDefaultBtn', lblPillVersion:'lblPillVersion', addEventBtn:'addDeadlineBtn',
   calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek', calViewDayBtn:'viewDay',
@@ -15836,16 +15840,42 @@ function formatTopikDateTime(d){
 function renderTopikCountdown(){
   document.getElementById('topikCountdownCard').classList.toggle('hidden', !showTopik);
   if(!showTopik) return;
-  const regVal = document.getElementById('topikRegVal');
   const testVal = document.getElementById('topikTestVal');
-  const now = new Date();
-  const regCd = formatCountdown(TOPIK_REG);
   const testCd = formatCountdown(TOPIK_TEST);
-  regVal.textContent = regCd ? regCd : (now < TOPIK_TEST ? t('regIsOpen') : t('examPassed'));
   testVal.textContent = testCd ? testCd : t('examPassed');
-  document.getElementById('topikRegDate').textContent = formatTopikDateTime(TOPIK_REG);
   document.getElementById('topikTestDate').textContent = formatTopikDateTime(TOPIK_TEST);
+  syncTopikLocationInput();
 }
+// The venue lives on the TOPIK test EVENT, not on the profile, so it belongs
+// to one sitting: a new cycle creates a new event and starts blank rather
+// than carrying the last venue forward. See topik_test_location_migration.
+function topikTestEvent(){
+  if(!currentUser) return null;
+  const testKey = (TOPIK_CAL_EVENTS.find(e=>e.key.indexOf('-test-') !== -1) || {}).key;
+  if(!testKey) return null;
+  return (allEvents[currentUser.id] || []).find(ev=>ev.topik_key === testKey) || null;
+}
+function syncTopikLocationInput(){
+  const input = document.getElementById('topikTestLocation');
+  if(!input) return;
+  const ev = topikTestEvent();
+  // No event row yet (a guest, or the very first load before
+  // ensureTopikEvents has run) means there is nothing to save onto, so the
+  // box is not offered rather than silently dropping what is typed in it.
+  input.classList.toggle('hidden', !ev);
+  if(ev && document.activeElement !== input) input.value = ev.location || '';
+}
+async function saveTopikLocation(){
+  const input = document.getElementById('topikTestLocation');
+  const ev = topikTestEvent();
+  if(!input || !ev) return;
+  const location = input.value.trim() || null;
+  if((ev.location || null) === location) return;
+  ev.location = location;
+  await supabaseClient.from('events').update({ location }).eq('id', ev.id);
+}
+document.getElementById('topikTestLocation').addEventListener('change', saveTopikLocation);
+document.getElementById('topikTestLocation').addEventListener('blur', saveTopikLocation);
 setInterval(renderTopikCountdown, 30000);
 // Creates a REAL calendar event (plus a 1-day-ahead reminder subscription)
 // for each upcoming TOPIK date, exactly as if the person had added it by
@@ -17626,6 +17656,10 @@ function renderCalGrid(dates){
   const endKey = todayStr(dates[dates.length-1]);
   const todayKey = todayStr();
   const mobileShorten = dates.length > 1 && isMobileDevice();
+  // One date means the day view, where a bar has the whole grid width to
+  // itself -- room the week view does not have, and the reason the class
+  // number can be sized up there and only there.
+  const isDayView = dates.length === 1;
   const mobilePad = isMobileDevice();
 
   renderCalHeaderLabel();
@@ -17732,11 +17766,43 @@ function renderCalGrid(dates){
           const line2 = course.professor ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:${detailMargin};">${course.professor}</div>` : '';
           const line3Text = [course.code, course.concentration].filter(Boolean).join(' · ');
           const line3 = line3Text ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:${detailMargin};">${line3Text}</div>` : '';
+          // In the day view the class number gets its own line at 18px --
+          // twice the 9px it shares with everything else in the week view
+          // (real-user request). It is split OUT of line 3 rather than
+          // scaled with it: the concentration is context, and blowing that
+          // up too would just make the bar shouty.
+          //
+          // It also has to move up under the TITLE. A bar is
+          // overflow:hidden, so whatever sits last is what gets cut, and an
+          // 18px line left in fourth place was simply clipped in half --
+          // bigger AND less readable than before. Ordered this way the two
+          // things worth enlarging for are the two that always survive, and
+          // what gets trimmed on a short bar is the concentration, which is
+          // the least of it.
+          //
+          // Two guards, because the room to do this is exactly what the
+          // exceptions lack: a bar sharing its column with an overlapping
+          // class is narrow again, and a 30-minute class has no vertical
+          // room for a title plus an 18px line (44px, or 58 where the
+          // mobile layout reserves 14px above the title).
+          const bigCodeFits = height >= (mobilePad ? 58 : 44);
+          const bigCode = isDayView && !overlapping && !!course.code && bigCodeFits;
+          const codeLine = bigCode
+            ? `<div style="font-size:18px;font-weight:700;line-height:1.15;margin-top:4px;">${escapeHtml(course.code)}</div>`
+            : '';
+          const concLine = bigCode && course.concentration
+            ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:4px;">${escapeHtml(course.concentration)}</div>`
+            : '';
           // The room gets its own line at full weight rather than joining
           // line 3's muted code/concentration -- standing in the hallway,
           // which room to walk into is the one fact this bar is FOR.
           const roomLine = course.classroom ? `<div style="font-size:${detailSize};font-weight:600;margin-top:${detailMargin};">${course.classroom}</div>` : '';
-          bodyHtml += line2 + roomLine + line3;
+          // Order in the enlarged form is what survives the clip, so it is
+          // the priority order: class number, then the ROOM (the roomLine
+          // comment above already argues that is what the bar is for),
+          // then the professor and the concentration, which are the two
+          // worth losing on a bar too short to hold everything.
+          bodyHtml += bigCode ? (codeLine + roomLine + line2 + concLine) : (line2 + roomLine + line3);
         }
       }
       const editIconHtml = overlapping ? '' : `<span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">${ICON.pencil(11)}</span>`;

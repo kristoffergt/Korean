@@ -367,6 +367,31 @@ linking system (see below) to share with specific other people.
   of that. Header icons are a flat 15px in `--ink`; a vw-scaled icon in a row
   of fixed ones will always drift at one end of the range.
 
+- **The day view enlarges the class number; the week view must not.** Both go
+  through `renderCalGrid(dates)`, so `dates.length === 1` is what
+  distinguishes them. The code renders at 18px against the 9px every other
+  detail line uses, and is split out of the shared `code · concentration`
+  line so the concentration is not scaled with it.
+  An event bar is `overflow:hidden`, so **the order of the lines is the
+  priority order** -- whatever sits last is what gets cut. Enlarging the code
+  in its original fourth position simply clipped it in half, which is bigger
+  AND less readable. Enlarged, the order is class number, room, professor,
+  concentration. Two guards keep it to bars with the room for it: not when
+  the bar shares its column with an overlapping class, and not under 44px
+  tall (58 where the mobile layout reserves 14px above the title).
+
+- **The TOPIK countdown is the test day only.** The "registration opens in"
+  tile is gone (real-user request); its calendar EVENT and 1-day reminder
+  are deliberately kept, since those still tell you when to sign up. The
+  venue is `events.location` on the TOPIK test row, not a profile field:
+  a location belongs to one sitting, so a new cycle creates a new event and
+  starts blank instead of carrying last cycle's venue forward. The input is
+  hidden until that event exists, or there would be nothing to save onto and
+  what you typed would vanish; and a re-render (the card ticks every 30s)
+  skips the value while the field has focus, or it would overwrite you
+  mid-word. Events are read with `select('*')`, so the new column needs no
+  query change.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
