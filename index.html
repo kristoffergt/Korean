@@ -649,7 +649,14 @@ button:hover{background:var(--ink-hover);}
 .exp-cat-picker-list button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:var(--ink);font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap;}
 .exp-cat-picker-list button svg{flex-shrink:0;color:var(--ink-soft);}
 .exp-cat-picker-list button:hover{background:var(--paper-dim);}
-.month-nav button{padding:6px 12px;font-size:13px;}
+/* Without this the arrows fall through to the global button rule, whose
+   background is var(--ink) -- near-black in the light theme, which looked
+   deliberate, and near-WHITE in the dark one, where they read as two blank
+   blocks either side of the month (real-user report). Same treatment as
+   .export-btn: a bordered ghost button that takes the row's own ink. */
+.month-nav button{padding:5px 11px;font-size:14px;line-height:1;
+  background:none;border:1px solid var(--line);color:var(--ink-soft);border-radius:6px;}
+.month-nav button:hover{background:rgba(127,127,127,0.16);color:var(--ink);}
 .month-nav .month-label{font-family:'Space Grotesk',monospace;font-weight:700;font-size:14px;}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
 .month-dow{font-size:10px;text-transform:uppercase;color:var(--ink-soft);text-align:center;padding-bottom:4px;}
@@ -668,9 +675,19 @@ button:hover{background:var(--ink-hover);}
 .ui-icon{vertical-align:-0.15em;flex-shrink:0;}
 .chip-bell,.chip-edit{cursor:pointer;margin-right:2px;display:inline-flex;align-items:center;}
 .chip-bell:hover,.chip-edit:hover{transform:scale(1.15);}
-.event-chip{position:relative;padding-right:12px !important;}
+/* The 12px on the right is room for .chip-initial, and ONLY the personal
+   calendar's chips have one. Applied to every .event-chip (with
+   !important, so nothing could opt out) it took a fifth of the width of an
+   expense chip in a ~40px cell for a badge that is not there -- which is
+   what reduced those to "B..." and "C...". Scoped to chips that actually
+   carry an initial now. */
+.event-chip{position:relative;}
+.event-chip:has(> .chip-initial){padding-right:12px;}
 .chip-initial{position:absolute;top:1px;right:1px;font-size:6.5px;min-width:9px;height:9px;line-height:9px;padding:0 2px;text-align:center;border-radius:5px;background:rgba(255,255,255,0.4);color:inherit;font-weight:800;box-sizing:border-box;}
 .month-day .more-count{font-size:8px;color:var(--ink-soft);}
+.month-day .month-day-total{font-family:'Space Grotesk',monospace;font-size:8.5px;
+  color:var(--celadon-4);font-weight:700;flex-shrink:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .month-day.empty{visibility:hidden;}
 .cal-view-toggle{display:flex;gap:8px;margin-bottom:12px;}
 .cal-view-toggle button{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 14px;font-size:12px;font-weight:600;border-radius:6px;}
@@ -29194,6 +29211,36 @@ async function loadActiveVacationDetails(){
 function activeVacation(){ return expVacations.find(v=>v.id===expActiveVacationId) || null; }
 function acceptedMemberIds(){ return expActiveMembers.filter(m=>m.status==='accepted').map(m=>m.user_id); }
 
+// A month cell is about 40px wide, so a full "₩100,000" is clipped
+// mid-glyph however small the type gets (real-user report, with the cell
+// cut off at "₩100,0"). Thousands and millions are abbreviated instead,
+// which is what fits and still says the size of the day at a glance; the
+// exact figure is one tap away in the day agenda below.
+function expFormatMoneyCompact(amount, currency){
+  const cur = currency || (activeVacation()||{}).currency || 'USD';
+  const abs = Math.abs(amount);
+  // 1000, not 10000: a cell's content box is about 32px, and "₩8,000" at
+  // 9.5px already needs more than that -- it ellipsised to "₩8,...", which
+  // is the same fault one order of magnitude down. Under a thousand there
+  // are at most four characters, which fits.
+  if(abs < 1000) return expFormatMoney(Math.round(amount), cur);
+  const symbol = expFormatMoney(0, cur).replace(/[\d.,\s]/g, '');
+  // A decimal only under ten, which caps the whole string at five
+  // characters (₩1.3M, ₩117k). Allowing it up to 100 let "₩12.5k" through,
+  // which is six and does not fit.
+  const body = (v)=> Math.abs(v) < 10 && Math.round(v*10)%10 !== 0
+    ? v.toFixed(1) : String(Math.round(v));
+  let div = abs >= 1000000 ? 1000000 : 1000;
+  let out = body(amount / div);
+  // Rounding can carry across the tier: 999,999 divided by a thousand is
+  // 999.999, which rounds to "1000k" -- so the tier is re-picked from the
+  // ROUNDED figure, giving 1M.
+  if(div === 1000 && Math.abs(parseFloat(out)) >= 1000){
+    div = 1000000;
+    out = body(amount / div);
+  }
+  return symbol + out + (div === 1000000 ? 'M' : 'k');
+}
 function expFormatMoney(amount, currency){
   const cur = currency || (activeVacation()||{}).currency || 'USD';
   const zeroDecimal = cur==='KRW' || cur==='JPY' || cur==='VND';
@@ -29381,7 +29428,7 @@ function renderExpMonthGrid(){
       return `<span class="event-chip" style="background:${info.color}22;color:${info.color};">${escapeHtml(e.description || expCategoryLabel(e.category))}</span>`;
     }).join('');
     const more = dayExpenses.length>maxShow ? `<div class="more-count">+${dayExpenses.length-maxShow}</div>` : '';
-    const totalHtml = dayTotal>0 ? `<div style="font-family:'Space Grotesk',monospace;font-size:9px;color:var(--celadon-4);font-weight:700;">${expFormatMoney(dayTotal)}${expConvertedInline(dayTotal, vac.currency)}</div>` : '';
+    const totalHtml = dayTotal>0 ? `<div class="month-day-total" title="${escapeHtml(expFormatMoney(dayTotal))}">${escapeHtml(expFormatMoneyCompact(dayTotal))}</div>` : '';
     cell.innerHTML = `<div class="dnum">${day}</div>${totalHtml}<div class="chip-stack">${chips}</div>${more}`;
     cell.addEventListener('click', ()=>{
       expSelectedDate = dateKey;

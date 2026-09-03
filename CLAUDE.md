@@ -429,6 +429,29 @@ linking system (see below) to share with specific other people.
   (`no-slide-anim`) and measuring, and prove the motion with successive
   screenshots, which force the pane to paint.
 
+- **A month cell has about 30px of content width**, which is the constraint
+  behind three separate faults found in one screenshot of the expense
+  calendar:
+  1. `.event-chip{padding-right:12px !important}` reserved room for
+     `.chip-initial`, which ONLY the personal calendar's chips carry. With
+     `!important` nothing could opt out, so an expense chip lost a fifth of
+     its width to a badge that was not there and read as "B..." / "C...".
+     Scoped with `:has(> .chip-initial)` now.
+  2. A full "₩100,000" cannot fit at any readable size and was clipped
+     mid-glyph. `expFormatMoneyCompact()` abbreviates from a THOUSAND up
+     (₩8k, ₩117k, ₩1.3M), with a decimal only under ten so the string
+     never exceeds five characters, and the exact figure in the `title`.
+     Watch the tier boundary: 999,999 divided by a thousand rounds to
+     "1000k", so the tier is re-picked from the rounded figure.
+  3. `.month-nav button` had no background of its own and fell through to
+     the global `button{background:var(--ink)}` -- near-black in the light
+     theme, which looked deliberate, and near-WHITE in the dark one, where
+     the arrows read as two blank blocks. Any bare `<button>` inherits that
+     solid fill; give it a style or it will surprise you in one theme.
+  When checking for clipping, compare `scrollWidth > clientWidth` exactly --
+  a `+1` tolerance hid a genuine one-pixel overflow that rendered as an
+  ellipsis.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
