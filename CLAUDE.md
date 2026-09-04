@@ -12,10 +12,11 @@ linking system (see below) to share with specific other people.
 
 ## Standing instructions (do these automatically, every session)
 
-1. **After any edit to `index.html`, remind the user to push it to GitHub.**
-   (The folder is now a proper git checkout tracked in GitHub Desktop, so
-   "push" means the normal commit-and-push flow there, not copy-pasting
-   into the github.com web editor.)
+1. **COMMIT the work yourself; the user pushes.** (Changed 4 Sep, superseding
+   both "remind the user to push" and the older "suggest a commit title he
+   can paste into GitHub Desktop" -- do neither now, just commit.) Same
+   message style as before: short, imperative, describing what changed.
+   Never push, and never commit on a dirty tree you did not create.
 2. **SQL migrations — do NOT assume old migrations are still pending.**
    The user has said past migrations should be treated as already applied
    unless told otherwise. Only ever flag a migration as needing to be run
@@ -451,6 +452,21 @@ linking system (see below) to share with specific other people.
   When checking for clipping, compare `scrollWidth > clientWidth` exactly --
   a `+1` tolerance hid a genuine one-pixel overflow that rendered as an
   ellipsis.
+
+- **A category can be parked out of the expense totals**, by clicking its row
+  in the breakdown (real-user request: "so you can see averages and totals
+  without those"). `expMutedCategories` is a plain Set that is deliberately
+  NOT persisted or synced -- "temporarily" is the point, and a filter that
+  survives a reload is how a total quietly lies to you a fortnight later.
+  Everything that adds money up goes through `expCountedExpenses()`, so the
+  stat tiles, the day totals in the month grid and the breakdown's own
+  percentages cannot disagree about what is in play; percentages are of the
+  COUNTED total, so what is left still sums to 100. A parked row keeps its
+  amount, is faded rather than removed, and says "not counted"; the chips in
+  the grid fade with it but stay, since an excluded expense still happened.
+  A reset appears only while something is parked -- the same rule the rest of
+  the app follows, so a filter can never be hiding money with nothing on
+  screen to say so.
 
 ## Migration files present (see folder for full current list)
 
