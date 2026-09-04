@@ -488,6 +488,22 @@ linking system (see below) to share with specific other people.
   also where presence is shown, since who is about is what makes you want to
   say something. It is hidden entirely for a guest or an empty circle, so it
   is never a button that opens an empty room.
+- **A new realtime table MUST be added to the `supabase_realtime`
+  publication.** `postgres_changes` on a table outside it delivers NOTHING,
+  and the subscription still reports SUBSCRIBED -- so the failure is
+  completely silent and reads as a client bug. That is what made messages
+  need a refresh to appear. Check with
+  `select tablename from pg_publication_tables where pubname='supabase_realtime'`
+  whenever live updates "don't work"; every other realtime table here is
+  already in it.
+- **Enter in a chat box must respect the IME.** Two rows were landing 1ms
+  apart for one send -- the full message and then just its last word -- which
+  is what an IME leaves behind: Enter is seen once while a word is still
+  composing, and again after the keyboard commits that word back into the
+  box. Guard on `compositionstart`/`compositionend`, `e.isComposing` AND
+  `keyCode === 229`, and keep a single-flight flag so a second concurrent
+  send is impossible whatever caused it. The DB is what proved this: pairs
+  1ms apart with different lengths, not a human sending twice.
 - **Attachments use the project's ONLY private bucket**
   (`circle-attachments`). Every other bucket here is public, which is an
   accepted trade for syllabi and CVs; these are private messages, so files
