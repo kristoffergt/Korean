@@ -488,6 +488,31 @@ linking system (see below) to share with specific other people.
   also where presence is shown, since who is about is what makes you want to
   say something. It is hidden entirely for a guest or an empty circle, so it
   is never a button that opens an empty room.
+- **Attachments use the project's ONLY private bucket**
+  (`circle-attachments`). Every other bucket here is public, which is an
+  accepted trade for syllabi and CVs; these are private messages, so files
+  are reached through short-lived signed URLs and the storage read policy
+  repeats the MESSAGE's own visibility predicate rather than guessing at it
+  again. Signed URLs are minted one batch per render and cached until they
+  are nearly expired. An image that cannot load (expired URL, deleted
+  object, offline) falls back to the same named card a non-image gets --
+  without it a failure is an EMPTY bubble with no clue what was in it.
+- **Search and the files view run on the SERVER**, which is the whole point:
+  they reach past the 300-message window the client holds, so "go further
+  back by searching" actually does. Body search is ILIKE over a pg_trgm
+  index (short chat text, people search fragments, stemming would not help);
+  the files view is a partial index on messages that have an attachment. A
+  date filter's end day is `T23:59:59.999`, not midnight, or the last day
+  you pick is excluded.
+- **Bubbles are tinted with the SENDER'S own colour**, the one their name
+  wears everywhere else, rather than one colour for me and one for everyone
+  else -- the colour at low alpha with a solid edge, so it stays legible in
+  both themes without needing a paired foreground per person.
+- **"X is typing" is broadcast, not presence**: it is a pulse, not a state,
+  so nothing is left behind if a tab dies. Pings are throttled to one per
+  1.5s to keep a 4s flag alive, keyed by thread so typing in one
+  conversation does not show in another, and ignored from anyone outside
+  your circle.
 - **Messages are one table for both kinds of thread**
   (`circle_messages_migration`): a NULL `recipient_id` is the group message,
   a set one is a direct message. The audience is the app's existing
