@@ -468,6 +468,29 @@ linking system (see below) to share with specific other people.
   the app follows, so a filter can never be hiding money with nothing on
   screen to say so.
 
+- **Who is online, and texting your circle**, both under the circle button.
+  Presence is a single Realtime channel joined for the session
+  (`ensureOnlinePresence`): nothing is written, going offline is the socket
+  closing, and the circle filter is applied on the CLIENT, so the channel
+  itself carries only a user id. Two Realtime rules cost real time to find:
+  presence callbacks must be registered BEFORE `subscribe()` or the client
+  never keeps the state at all, and supabase-js returns an EXISTING channel
+  for a topic rather than a new one, so a stale one has to be removed first
+  or `.on()` throws -- out of `onAuthed()`, which is why the whole setup is
+  wrapped in a try/catch. A missing dot must never be a failed sign-in.
+- **Messages are one table for both kinds of thread**
+  (`circle_messages_migration`): a NULL `recipient_id` is the group message,
+  a set one is a direct message. The audience is the app's existing
+  `shared_circle()` rather than a new membership concept that could drift
+  from link groups. Note the deliberate asymmetry: a group message is
+  readable by the SENDER'S circle, so what you send reaches the people you
+  share with. The client keeps the same idea in one string --
+  `CIRCLE_THREAD` or a user id -- and that string is also the key of
+  `circle_message_reads`, so unread counts need no second notion of a
+  thread. Delivery is `postgres_changes`, which applies the table's own
+  SELECT policy per subscriber: nothing about who may read what lives in
+  the client.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
