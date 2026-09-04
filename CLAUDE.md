@@ -410,10 +410,14 @@ linking system (see below) to share with specific other people.
   since a section can carry a row of its own.
   Three more things that are easy to get wrong:
   1. **The tabs it passes must not be opaque**, or the pill is invisible
-     mid-flight. `.has-slider` (added by JS) makes them transparent and keeps
-     their border. Because JS adds it, the old solid-fill look is the
-     fallback if the slider never installs -- nothing can leave the active
-     tab with no fill.
+     mid-flight. That treatment is gated on `.slider-ready`, which
+     `moveRowSlider()` adds only once the pill has really been PLACED --
+     not on `.has-slider`, which merely says the row opted in. An active
+     button is painted in `--paper` (near white) and is legible only against
+     the pill behind it, so a row that could not measure itself (inside a
+     closed modal) rendered white text on a light background and the tab was
+     invisible. The class comes back off whenever the row stops being
+     measurable, so light-on-light cannot happen.
   2. **width is written, not `scaleX`.** These are 6px-radius pills, and
      scaling a rounded box stretches the corners into ellipses.
   3. **The first placement is not a journey** -- it jumps, guarded by
@@ -478,6 +482,12 @@ linking system (see below) to share with specific other people.
   for a topic rather than a new one, so a stale one has to be removed first
   or `.on()` throws -- out of `onAuthed()`, which is why the whole setup is
   wrapped in a try/catch. A missing dot must never be a failed sign-in.
+- **Messaging lives in its own dock, bottom-right** (`#chatDock`), not in
+  the circle settings modal -- texting is something you do while using the
+  app, not a preference you go and find (real-user request). The dock is
+  also where presence is shown, since who is about is what makes you want to
+  say something. It is hidden entirely for a guest or an empty circle, so it
+  is never a button that opens an empty room.
 - **Messages are one table for both kinds of thread**
   (`circle_messages_migration`): a NULL `recipient_id` is the group message,
   a set one is a direct message. The audience is the app's existing
