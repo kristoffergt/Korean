@@ -542,6 +542,47 @@ linking system (see below) to share with specific other people.
   SELECT policy per subscriber: nothing about who may read what lives in
   the client.
 
+### Native date inputs, and the "ensure" that returned null
+
+Three traps met in one round of chat work, each of which produced a control
+that looked fine and did nothing.
+
+- **An `input[type=date]` never matches `:focus`.** Focus lands on one of its
+  own shadow sub-fields, so the host matches `:focus-within` instead --
+  measured, `document.activeElement` IS the input while `matches(':focus')` is
+  false. Worse, Chrome will not *style* the host off `:focus-within` either,
+  though `.matches()` reports true. And `blur` on the host does not reliably
+  fire when focus leaves it. **Drive a date field's open/closed state from a
+  class toggled on `focusin`/`focusout`** -- the bubbling pair -- never from
+  `:focus`, `:focus-within` or `blur`.
+- **A programmatic `.focus()` fires no focus event while the pane is not
+  focused**, though `activeElement` still updates. So a focus-driven style
+  cannot be tested with `el.focus()` in the harness; drive a real click with
+  the `computer` tool, which gives the pane input focus. Synthetic typing still
+  will not reach a date control's sub-fields, so native typing there cannot be
+  verified in the harness at all.
+- **An `ensureX()` must return the existing X.** `ensureTypingChannel` read
+  `if(typingChannel || ...) return null;`, so every call after the first bailed
+  and typing was never broadcast. **Test the SEND path, not only the receive
+  path** -- driving the receive side by hand from a second client is exactly
+  how this survived a test.
+
+### Repainting off an async state change
+
+Paint a control that reflects a view from the **render function**, not from the
+click handler, whenever the handler awaits before setting the view.
+`loadCircleFiles` sets `circleChatView` only once its query returns, so a
+`paintFilesToggle()` at the press caught the view it was leaving.
+
+### Animating something that is display:none
+
+`.hidden{display:none!important}` cuts a transition off on its first frame. To
+animate a panel open: remove `hidden`, read a layout value (`void
+el.offsetWidth`) so the transition starts from the closed state, then add the
+`.open` class. To close: remove `.open` and only add `hidden` on a timer past
+the transition. Anything asking "is it open" must then read `.open`, not
+`.hidden`, or it reports open all through the closing animation.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
