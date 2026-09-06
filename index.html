@@ -956,6 +956,29 @@ body.dark .cm-msg.mine{background:var(--celadon-2);}
    around them. Hidden rather than un-rendered so nothing reflows and the
    capture measures the same boxes the reader is looking at. */
 body.cal-exporting #calViewToggle,
+/* Picking on the calendar: the SAME dialog, docked out of the way and no
+   longer blocking the thing it is asking about. The overlay stops taking
+   clicks so the calendar underneath stays live, and the box takes them back.
+   One dialog in two presentations rather than two that could drift. */
+#calExportModal.pickmode{background:transparent;pointer-events:none;
+  align-items:flex-end;padding-bottom:18px;}
+#calExportModal.pickmode .modal-box{pointer-events:auto;max-width:560px;
+  box-shadow:0 10px 34px rgba(0,0,0,0.30);}
+#calExportModal.pickmode #calExportList{display:none;}
+/* PNG and PDF are two buttons in a dialog with room to spare, so they must not
+   take the Month/Week/Day row's phone clamp: that is font-size:clamp(7px,2vw,12px)
+   for a row of five sharing 375px, and it resolved to 7.5px here, which
+   rendered both labels as good as blank. An id beats the class wherever the
+   media query sits. */
+#calExportFormat button{font-size:12px;padding:6px 16px;flex:0 0 auto;}
+/* Ticked off: still on the calendar and still clickable to put back, just
+   plainly not going in the picture. Faded rather than hidden (real-user
+   request: "they fade out (not fully)") -- you have to be able to see what
+   you left out to change your mind about it. */
+body.cal-picking .cal-chip.cal-ex-off,
+body.cal-picking .week-event-bar.cal-ex-off{opacity:0.28;}
+body.cal-picking .cal-chip,
+body.cal-picking .week-event-bar{cursor:pointer;}
 body.cal-exporting #calDownloadBtn,
 body.cal-exporting #monthPrevBtn,
 body.cal-exporting #monthNextBtn,
@@ -2588,14 +2611,19 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">
       <span style="font-weight:700;font-size:13px;" id="lblCalExportInclude"></span>
-      <span style="display:flex;gap:8px;">
+      <span style="display:flex;gap:8px;align-items:center;">
+        <span class="hint" id="calExportCount" style="margin:0;"></span>
         <button type="button" class="linkbtn" id="calExportAllBtn"></button>
         <button type="button" class="linkbtn" id="calExportNoneBtn"></button>
       </span>
     </div>
+    <div class="hint hidden" id="calExportHint" style="margin:0 0 8px;"></div>
     <div id="calExportList" class="cal-export-list"></div>
     <div class="hint hidden" id="calExportMsg" style="margin-top:8px;"></div>
-    <button id="calExportGoBtn" style="margin-top:14px;width:100%;"></button>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:14px;">
+      <button type="button" class="linkbtn" id="calExportSwitchBtn" style="white-space:nowrap;"></button>
+      <button id="calExportGoBtn" style="flex:1;"></button>
+    </div>
   </div>
 </div>
 <div class="modal-overlay hidden" id="newVacationModal">
@@ -8917,7 +8945,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
-    calExportTitle:'Download calendar', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
+    calExportTitle:'Download calendar', calExportUseList:'Pick from list', calExportUseCalendar:'Pick on calendar', calExportPickHint:'Click events on the calendar to leave them out.', calExportCountTpl:'{in} of {total}', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
     lblRecurInterval:'Every', lblRecurEndType:'Ends', recurNever:'Never', recurUntilDate:'Until date', lblRecurEndDate:'End date',
     recurBadge:'Every {n} {unit}', recurUntil:'until {date}', recurEveryWeekday:'Every {day}', recurEveryOtherWeekday:'Every other {day}', daySun:'Sunday', daySat:'Saturday',
@@ -9038,7 +9066,7 @@ const I18N = {
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
-    calExportTitle:'캘린더 내려받기', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
+    calExportTitle:'캘린더 내려받기', calExportUseList:'목록에서 선택', calExportUseCalendar:'캘린더에서 선택', calExportPickHint:'캘린더에서 일정을 클릭하면 제외됩니다.', calExportCountTpl:'{total}개 중 {in}개', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
     lblRecurInterval:'주기', lblRecurEndType:'종료', recurNever:'계속 반복', recurUntilDate:'날짜까지', lblRecurEndDate:'종료일',
     recurBadge:'{n}{unit}마다', recurUntil:'{date}까지', recurEveryWeekday:'매주 {day}', recurEveryOtherWeekday:'격주 {day}', daySun:'일요일', daySat:'토요일',
@@ -9159,7 +9187,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
-    calExportTitle:'Tải lịch về', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
+    calExportTitle:'Tải lịch về', calExportUseList:'Chọn từ danh sách', calExportUseCalendar:'Chọn trên lịch', calExportPickHint:'Nhấp vào sự kiện trên lịch để loại bỏ.', calExportCountTpl:'{in}/{total}', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
     lblRecurInterval:'Mỗi', lblRecurEndType:'Kết thúc', recurNever:'Không bao giờ', recurUntilDate:'Đến ngày', lblRecurEndDate:'Ngày kết thúc',
     recurBadge:'Mỗi {n} {unit}', recurUntil:'đến {date}', recurEveryWeekday:'Mỗi {day}', recurEveryOtherWeekday:'Cách tuần vào {day}', daySun:'Chủ Nhật', daySat:'Thứ Bảy',
@@ -18897,10 +18925,10 @@ function renderMonthGrid(){
   const myEventsByDate = {};
   calendarVisibleUserIds().forEach(uid=>{
     (allEvents[uid]||[]).forEach(ev=>{
-      // Held out of the picture only. The reader ticked it off in the export
-      // dialog, which says nothing about the calendar itself, and the set is
-      // empty again the moment the capture is done.
-      if(calExportExclude.has(ev.id)) return;
+      // Held out of the PICTURE, and only while the picture is being taken.
+      // With the dialog open on the calendar the chip has to stay put --
+      // faded, and still clickable, or there is no way to put it back.
+      if(calExportOut(ev) && document.body.classList.contains('cal-exporting')) return;
       const occ = expandOccurrences(ev, monthStart, monthEnd);
       occ.forEach(dateKey=>{
         if(!myEventsByDate[dateKey]) myEventsByDate[dateKey] = [];
@@ -19231,10 +19259,10 @@ function renderCalGrid(dates){
   const eventsByDate = {};
   calendarVisibleUserIds().forEach(uid=>{
     (allEvents[uid]||[]).forEach(ev=>{
-      // Held out of the picture only. The reader ticked it off in the export
-      // dialog, which says nothing about the calendar itself, and the set is
-      // empty again the moment the capture is done.
-      if(calExportExclude.has(ev.id)) return;
+      // Held out of the PICTURE, and only while the picture is being taken.
+      // With the dialog open on the calendar the chip has to stay put --
+      // faded, and still clickable, or there is no way to put it back.
+      if(calExportOut(ev) && document.body.classList.contains('cal-exporting')) return;
       const occ = expandOccurrences(ev, startKey, endKey);
       occ.forEach(dateKey=>{
         if(!eventsByDate[dateKey]) eventsByDate[dateKey] = [];
@@ -19287,6 +19315,8 @@ function renderCalGrid(dates){
       const bellIcon = mySubscriptions[ev.id] ? ICON.bellOn(11) : ICON.bellOff(11);
       const bar = document.createElement('div');
       bar.className = 'week-event-bar';
+      // So the export picker can find it the way it finds a month chip.
+      bar.dataset.ev = ev.id;
       bar.style.top = top+'px';
       bar.style.height = height+'px';
       const widthPct = 100 / totalCols;
@@ -19470,6 +19500,21 @@ document.getElementById('calViewDayBtn').addEventListener('click', ()=>{
 // view, and a second renderer drifts from this one the first time either is
 // touched.
 let calExportExclude = new Set();
+// Ids arrive as strings off a dataset and as whatever the row holds off an
+// event, so everything goes through one form rather than half-matching.
+const calExportOut = (ev)=> calExportExclude.has(String(ev.id));
+// Which way the reader picks what goes in: on the calendar itself, or from the
+// dialog's list. A display preference, so it lives where the theme and the
+// language do -- localStorage, per device. Absent means CALENDAR, which is the
+// default and what was asked for; nobody opts in to it.
+const CAL_EXPORT_PICK_KEY = 'trackerCalExportPick';
+function calExportPickMode(){
+  return localStorage.getItem(CAL_EXPORT_PICK_KEY) === 'list' ? 'list' : 'calendar';
+}
+// True only while the dialog is open on the calendar. It is what makes an
+// excluded chip fade rather than vanish, and what makes a click on the
+// calendar tick something off instead of opening it.
+let calExportPicking = false;
 let calExportFormat = 'png';
 
 const calDateFromKey = (k)=>{ const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
@@ -19561,7 +19606,7 @@ function buildCalExportList(){
           + (ev.event_time ? ' ' + formatTime12h(ev.event_time) : '');
       const owner = ev.user_id !== currentUser.id ? ` (${nameFor(ev.user_id)})` : '';
       return `<label class="cal-export-row">
-        <input type="checkbox" checked data-ev="${escapeHtml(String(ev.id))}" data-kind="${escapeHtml(kind)}">
+        <input type="checkbox" ${calExportOut(ev) ? '' : 'checked'} data-ev="${escapeHtml(String(ev.id))}" data-kind="${escapeHtml(kind)}">
         <span class="cal-export-swatch" style="background:${escapeHtml(ev.color || '#4F7563')}"></span>
         <span class="cal-export-when">${escapeHtml(when)}</span>
         <span class="cal-export-title">${escapeHtml((ev.recur_freq ? '↻ ' : '') + (ev.title || '') + owner)}</span>
@@ -19586,14 +19631,57 @@ function syncCalExportKindBoxes(){
   });
 }
 
-function openCalExportModal(){
+// The fade is painted AFTER the grid renders rather than baked into the chip,
+// so a redraw for any other reason cannot quietly lose it.
+function paintCalExportPicking(){
+  document.body.classList.toggle('cal-picking', calExportPicking);
+  document.querySelectorAll('#calendarCalendarSection .cal-chip, #calendarCalendarSection .week-event-bar')
+    .forEach(el=>{
+      el.classList.toggle('cal-ex-off', calExportPicking && calExportExclude.has(String(el.dataset.ev)));
+    });
+  const n = document.getElementById('calExportCount');
+  if(n && !document.getElementById('calExportModal').classList.contains('hidden')){
+    const items = calExportItems();
+    const kept = items.filter(it=> !calExportOut(it.ev)).length;
+    n.textContent = t('calExportCountTpl').replace('{in}', kept).replace('{total}', items.length);
+  }
+}
+function setCalExportAll(on){
+  // Both modes off one set: the list's boxes are a view of it, never the
+  // source, or the two ways of picking would disagree about what is in.
+  calExportExclude = on ? new Set() : new Set(calExportItems().map(it=> String(it.ev.id)));
+  document.querySelectorAll('#calExportList input[type=checkbox]').forEach(b=> b.checked = on);
+  syncCalExportKindBoxes();
+  paintCalExportPicking();
+}
+function closeCalExport(){
+  document.getElementById('calExportModal').classList.add('hidden');
+  calExportPicking = false;
+  calExportExclude = new Set();
+  paintCalExportPicking();
+}
+function openCalExportModal(keepExclusions){
+  // Everything is in every time it opens; a ticked-off event is a decision
+  // about ONE picture, not a setting.
+  if(!keepExclusions) calExportExclude = new Set();
+  const modal = document.getElementById('calExportModal');
+  calExportPicking = calExportPickMode() === 'calendar';
+  modal.classList.toggle('pickmode', calExportPicking);
   buildCalExportList();
   syncCalExportKindBoxes();
   document.getElementById('calExportRangeLabel').textContent = calExportRangeText();
+  // Named for what pressing it GIVES you, the way the rest of this app's
+  // switches are.
+  document.getElementById('calExportSwitchBtn').textContent =
+    t(calExportPicking ? 'calExportUseList' : 'calExportUseCalendar');
+  const hint = document.getElementById('calExportHint');
+  hint.textContent = calExportPicking ? t('calExportPickHint') : '';
+  hint.classList.toggle('hidden', !calExportPicking);
   const msg = document.getElementById('calExportMsg');
   msg.classList.add('hidden'); msg.textContent = '';
   document.getElementById('calExportGoBtn').disabled = false;
-  document.getElementById('calExportModal').classList.remove('hidden');
+  modal.classList.remove('hidden');
+  paintCalExportPicking();
 }
 
 /* ---------- capture ---------- */
@@ -19618,7 +19706,7 @@ function calExportHourRange(){
   let lo = 24, hi = 0, any = false;
   calendarVisibleUserIds().forEach(uid=>{
     (allEvents[uid]||[]).forEach(ev=>{
-      if(calExportExclude.has(ev.id)) return;
+      if(calExportOut(ev)) return;
       if(!expandOccurrences(ev, start, end).length) return;
       any = true;
       const st = timeToMinutes(ev.event_time || '00:00');
@@ -19732,18 +19820,24 @@ function redrawCalGrid(){
   if(calViewMode === 'month') renderMonthGrid();
   else if(calViewMode === 'week') renderWeekGrid();
   else renderDayGrid();
+  // A redraw builds fresh chips, so the fade has to be put back on them. This
+  // runs for every redraw rather than only the export's own, because the month
+  // can be paged and the view switched while the picker is open.
+  if(calExportPicking) paintCalExportPicking();
 }
 
 async function runCalExport(){
   const go = document.getElementById('calExportGoBtn');
   const msg = document.getElementById('calExportMsg');
-  const excluded = [...document.querySelectorAll('#calExportList input[data-ev]')]
-    .filter(b=> !b.checked).map(b=> b.dataset.ev);
   go.disabled = true;
   msg.classList.remove('hidden');
   msg.style.color = '';
   msg.textContent = t('calExportWorking');
-  calExportExclude = new Set(excluded);
+  // calExportExclude is already the answer: the list's boxes and the calendar's
+  // own chips both write into it as they are ticked, so there is nothing to
+  // read back and no second copy that could disagree.
+  calExportPicking = false;
+  document.body.classList.remove('cal-picking');
   document.body.classList.add('cal-exporting');
   redrawCalGrid();
   try {
@@ -19755,24 +19849,62 @@ async function runCalExport(){
       const png = await new Promise(r=> canvas.toBlob(r, 'image/png'));
       downloadBlob(png, base + '.png');
     }
-    document.getElementById('calExportModal').classList.add('hidden');
+    closeCalExport();
   } catch(e){
     msg.style.color = 'var(--seal)';
     msg.textContent = t('calExportFailed');
   } finally {
-    // Whatever happened, the calendar goes back to being the calendar.
-    calExportExclude = new Set();
+    // Whatever happened, the calendar goes back to being the calendar. The
+    // exclusions are NOT cleared here: a failure leaves the dialog open, and
+    // the ticks have to survive it so the reader can simply press Download
+    // again rather than picking everything a second time. Closing is what
+    // clears them, and the success path closes.
     document.body.classList.remove('cal-exporting');
+    calExportPicking = !document.getElementById('calExportModal').classList.contains('hidden')
+      && calExportPickMode() === 'calendar';
     redrawCalGrid();
+    paintCalExportPicking();
     go.disabled = false;
   }
 }
 
 document.getElementById('calDownloadBtn').addEventListener('click', openCalExportModal);
-document.getElementById('calExportCloseX').addEventListener('click', ()=>
-  document.getElementById('calExportModal').classList.add('hidden'));
+document.getElementById('calExportCloseX').addEventListener('click', closeCalExport);
 document.getElementById('calExportModal').addEventListener('click', (e)=>{
-  if(e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+  // Only the backdrop, and in calendar mode there is no backdrop to hit: the
+  // overlay takes no clicks at all there, so a click on the calendar picks an
+  // event instead of throwing the dialog away.
+  if(e.target === e.currentTarget) closeCalExport();
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Escape') return;
+  if(document.getElementById('calExportModal').classList.contains('hidden')) return;
+  closeCalExport();
+});
+// A click on the calendar ticks an event off while the picker is up. Captured
+// on the way DOWN, because the chip's own listener would otherwise open the
+// event first -- that listener is what this has to pre-empt, not follow.
+document.addEventListener('click', (e)=>{
+  if(!calExportPicking) return;
+  const el = e.target.closest('.cal-chip, .week-event-bar');
+  if(!el || !el.dataset.ev) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const id = String(el.dataset.ev);
+  if(calExportExclude.has(id)) calExportExclude.delete(id); else calExportExclude.add(id);
+  // The list is the same set seen another way, so keep its boxes in step for
+  // whenever the reader switches over to it.
+  document.querySelectorAll(`#calExportList input[data-ev="${CSS.escape(id)}"]`)
+    .forEach(b=> b.checked = !calExportExclude.has(id));
+  syncCalExportKindBoxes();
+  paintCalExportPicking();
+}, true);
+document.getElementById('calExportSwitchBtn').addEventListener('click', ()=>{
+  localStorage.setItem(CAL_EXPORT_PICK_KEY,
+    calExportPickMode() === 'calendar' ? 'list' : 'calendar');
+  // Whatever has already been ticked off survives the switch: it is the same
+  // question asked a different way, not a different question.
+  openCalExportModal(true);
 });
 document.getElementById('calExportFormat').addEventListener('click', (e)=>{
   const btn = e.target.closest('button[data-fmt]');
@@ -19787,16 +19919,15 @@ document.getElementById('calExportList').addEventListener('change', (e)=>{
     document.querySelectorAll(`#calExportList input[data-kind="${CSS.escape(head.dataset.kindAll)}"]`)
       .forEach(b=> b.checked = head.checked);
   }
+  document.querySelectorAll('#calExportList input[data-ev]').forEach(b=>{
+    const id = String(b.dataset.ev);
+    if(b.checked) calExportExclude.delete(id); else calExportExclude.add(id);
+  });
   syncCalExportKindBoxes();
+  paintCalExportPicking();
 });
-document.getElementById('calExportAllBtn').addEventListener('click', ()=>{
-  document.querySelectorAll('#calExportList input[type=checkbox]').forEach(b=> b.checked = true);
-  syncCalExportKindBoxes();
-});
-document.getElementById('calExportNoneBtn').addEventListener('click', ()=>{
-  document.querySelectorAll('#calExportList input[type=checkbox]').forEach(b=> b.checked = false);
-  syncCalExportKindBoxes();
-});
+document.getElementById('calExportAllBtn').addEventListener('click', ()=> setCalExportAll(true));
+document.getElementById('calExportNoneBtn').addEventListener('click', ()=> setCalExportAll(false));
 document.getElementById('calExportGoBtn').addEventListener('click', runCalExport);
 
 function setActiveCalViewBtn(){

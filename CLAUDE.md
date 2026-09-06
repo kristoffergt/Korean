@@ -724,6 +724,84 @@ for a reader who never presses Download.
   weekday earns its place on a single day (day view) and is noise across a
   range, so the two ends match now and only the later one carries the year.
 
+## A sticky bar that CONDENSES must not change the document's height (6 Sep)
+
+Reported as scrolling slowly near the top making the page jump back up over and
+over, "like it cancels my scroll". Measured off the recording rather than
+argued about: phase-correlating consecutive frames, the page alternated by
+**69px on EVERY frame at 30fps** for as long as a slow scroll sat in the band.
+A one-frame-period oscillation is a feedback loop, not a stutter.
+
+**The bar is sticky, it condenses by ~60px, and it sits in NORMAL FLOW.** So
+the shrink pulled the whole document up with it (scrollHeight 2215 to 2155,
+measured), Chrome's **scroll anchoring** then corrected the scroll to hold the
+visible content still, that put the bar back under its own threshold, it
+un-condensed, everything moved again. Round and round at frame rate.
+
+**The fix is that nothing below the bar may move.** `#topBarSpacer`, a sibling
+straight after it, grows by exactly what the bar loses, so the flow height is
+constant and anchoring has nothing to correct.
+
+- **Written in the SAME frame as the class.** One frame of shift is enough for
+  anchoring to fire, so `syncTopBarSpacer()` is called synchronously inside the
+  same block that toggles `.stuck`, not from an effect or the next frame.
+- **A ResizeObserver tracks the 0.18s ease**, so the sum holds all the way
+  through rather than only at the two ends.
+- **The full height is refreshed off the live box whenever the bar is NOT
+  condensed**, rather than measured once. Measured once at reveal it read 358
+  against a settled 298, which left 60px of blank paper at the top of the page
+  for good. Measuring at init does not work either: the app screen is hidden
+  until sign-in, so the bar is a 0x0 box until then, which is why both reveal
+  paths (`onAuthed` and the guest one) re-measure.
+- **Hysteresis is not the answer here and cannot be.** Once pinned, a sticky
+  element's `rect.top` is clamped to its own offset, so a release test written
+  against that rect can never fire. Removing the layout shift is what breaks
+  the loop.
+
+Verified across the threshold a pixel at a time: a visible card holds ONE
+document position, the document height holds one value, the scroll never
+self-adjusts on any sample, and the stuck state reads `0000011111111` -- it
+crosses once and stays.
+
+## The export is picked ON the calendar, and the list is the other way (6 Sep)
+
+The first pass put the tick list in the dialog, and that was a misreading:
+"i wanted to be able to tick them off WITHIN the calendar". So both exist now,
+with a switch between them, and **the calendar is the default**.
+
+- **The excluded event FADES rather than vanishing** (`opacity: 0.28`, real-user
+  request: "they fade out (not fully)"). It has to still be there and still be
+  clickable, or there is no way to change your mind about it.
+- **One dialog in two presentations, not two dialogs.** In calendar mode the
+  overlay goes `background: transparent; pointer-events: none` and docks its
+  box to the bottom; the box takes pointer events back. So the calendar
+  underneath stays live and there is no backdrop to accidentally close on.
+- **The exclusion set is the single source of truth.** The list's checkboxes
+  and the calendar's own chips both WRITE into it and are only ever a view of
+  it. It used to be read back off the checkboxes at export time, which cannot
+  work once there is a second way to pick.
+- **The click is captured on the way DOWN.** A chip already has its own click
+  listener that opens the event, so the picker has to pre-empt it rather than
+  follow it: a capture-phase listener on the document with `stopPropagation`.
+  That also covers the bell and the pencil inside a chip for free.
+- **The render hook gates on `cal-exporting`, not on the set.** An excluded
+  event is dropped from the picture only while the picture is being taken;
+  every other time it renders and is merely faded.
+- **`redrawCalGrid` repaints the fade.** A redraw builds fresh chips, and the
+  month can be paged and the view switched while the picker is open.
+- **Exclusions survive the switch** (the same question asked another way) and
+  survive a FAILED export (so Download can simply be pressed again). Closing is
+  what clears them, and the success path closes.
+- **`#calExportFormat` needs its own font-size.** It reuses `.cal-view-toggle`,
+  whose phone rule is `clamp(7px,2vw,12px)` for a row of five sharing 375px --
+  which resolved to **7.5px** here and rendered PNG and PDF as good as blank.
+  Two buttons in a roomy dialog do not want that row's clamp.
+
+Verified end to end: at capture the grid holds 3 chips of 5 with two ticked off
+on the calendar, the PNG is produced, and afterwards the modal is closed, the
+set is empty, both body classes are gone and all 5 chips are back unfaded. The
+mode persists across a reload and falls back to the calendar with no key set.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
