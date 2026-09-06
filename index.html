@@ -926,6 +926,29 @@ body.dark .cm-msg.mine{background:var(--celadon-2);}
   color:var(--celadon-4);font-weight:700;flex-shrink:0;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .month-day.empty{visibility:hidden;}
+.cal-export-list{max-height:min(46vh,340px);overflow-y:auto;border:1px solid var(--line);
+  border-radius:8px;padding:6px 4px;background:var(--paper);}
+.cal-export-group{margin:2px 0 8px;}
+.cal-export-group:last-child{margin-bottom:2px;}
+.cal-export-kind{display:flex;align-items:center;gap:8px;padding:5px 8px;font-size:12.5px;
+  font-weight:700;position:sticky;top:-6px;background:var(--paper);z-index:1;}
+.cal-export-row{display:flex;align-items:center;gap:8px;padding:4px 8px 4px 24px;font-size:12.5px;cursor:pointer;}
+.cal-export-row:hover{background:rgba(127,127,127,0.12);border-radius:6px;}
+.cal-export-swatch{flex:none;width:10px;height:10px;border-radius:3px;}
+.cal-export-when{flex:none;color:var(--ink-soft);font-size:11.5px;font-family:'Space Grotesk',monospace;}
+.cal-export-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cal-export-empty{padding:14px 8px;color:var(--ink-soft);font-size:12.5px;text-align:center;}
+/* What the picture is OF: the grid and the month label, not the controls
+   around them. Hidden rather than un-rendered so nothing reflows and the
+   capture measures the same boxes the reader is looking at. */
+body.cal-exporting #calViewToggle,
+body.cal-exporting #calDownloadBtn,
+body.cal-exporting #monthPrevBtn,
+body.cal-exporting #monthNextBtn,
+body.cal-exporting #calJumpDateBtn,
+body.cal-exporting #monthAgendaPanel,
+body.cal-exporting #weekMoreAbove,
+body.cal-exporting #weekMoreBelow{visibility:hidden;}
 .cal-view-toggle{display:flex;gap:8px;margin-bottom:12px;}
 .cal-view-toggle button{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 14px;font-size:12px;font-weight:600;border-radius:6px;}
 .cal-view-toggle button:hover:not(.active){background:rgba(127,127,127,0.22);}
@@ -2313,6 +2336,7 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
           <button data-view="week" id="calViewWeekBtn"></button>
           <button data-view="day" id="calViewDayBtn"></button>
         </div>
+        <button class="icon-btn" id="calDownloadBtn" title="" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;"></button>
       </div>
       <div class="month-nav">
         <button id="monthPrevBtn">‹</button>
@@ -2531,6 +2555,32 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 </div>
 
 <!-- NEW VACATION MODAL -->
+<!-- Download the calendar as a picture. The list is what is ON the calendar
+     in the range being exported, so unticking something takes it out of the
+     export and nothing else -- the app's own data is never touched. -->
+<div class="modal-overlay hidden" id="calExportModal">
+  <div class="modal-box" style="max-width:520px;">
+    <h2 style="display:flex;justify-content:space-between;align-items:center;">
+      <span id="hCalExport"></span>
+      <button class="icon-btn" id="calExportCloseX" title="Close" style="padding:4px 10px;">✕</button>
+    </h2>
+    <div class="hint" id="calExportRangeLabel" style="margin:-4px 0 12px;"></div>
+    <div class="cal-view-toggle" id="calExportFormat" style="margin-bottom:14px;">
+      <button type="button" data-fmt="png" class="active">PNG</button>
+      <button type="button" data-fmt="pdf">PDF</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">
+      <span style="font-weight:700;font-size:13px;" id="lblCalExportInclude"></span>
+      <span style="display:flex;gap:8px;">
+        <button type="button" class="linkbtn" id="calExportAllBtn"></button>
+        <button type="button" class="linkbtn" id="calExportNoneBtn"></button>
+      </span>
+    </div>
+    <div id="calExportList" class="cal-export-list"></div>
+    <div class="hint hidden" id="calExportMsg" style="margin-top:8px;"></div>
+    <button id="calExportGoBtn" style="margin-top:14px;width:100%;"></button>
+  </div>
+</div>
 <div class="modal-overlay hidden" id="newVacationModal">
   <div class="modal-box" style="max-width:420px;">
     <h2 style="display:flex;justify-content:space-between;align-items:center;">
@@ -8850,7 +8900,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
-    eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
+    calExportTitle:'Download calendar', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
     lblRecurInterval:'Every', lblRecurEndType:'Ends', recurNever:'Never', recurUntilDate:'Until date', lblRecurEndDate:'End date',
     recurBadge:'Every {n} {unit}', recurUntil:'until {date}', recurEveryWeekday:'Every {day}', recurEveryOtherWeekday:'Every other {day}', daySun:'Sunday', daySat:'Saturday',
@@ -8971,7 +9021,7 @@ const I18N = {
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
-    eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
+    calExportTitle:'캘린더 내려받기', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
     lblRecurInterval:'주기', lblRecurEndType:'종료', recurNever:'계속 반복', recurUntilDate:'날짜까지', lblRecurEndDate:'종료일',
     recurBadge:'{n}{unit}마다', recurUntil:'{date}까지', recurEveryWeekday:'매주 {day}', recurEveryOtherWeekday:'격주 {day}', daySun:'일요일', daySat:'토요일',
@@ -9092,7 +9142,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
-    eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
+    calExportTitle:'Tải lịch về', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
     lblRecurInterval:'Mỗi', lblRecurEndType:'Kết thúc', recurNever:'Không bao giờ', recurUntilDate:'Đến ngày', lblRecurEndDate:'Ngày kết thúc',
     recurBadge:'Mỗi {n} {unit}', recurUntil:'đến {date}', recurEveryWeekday:'Mỗi {day}', recurEveryOtherWeekday:'Cách tuần vào {day}', daySun:'Chủ Nhật', daySat:'Thứ Bảy',
@@ -9220,6 +9270,8 @@ const STATIC_MAP = {
   hTopik:'topikCountdown', topikTestLabel:'testIn',
   circleMessageSendBtn:'circleSendBtn', chatTitle:'circleTabMessages',
   settingsStickyTopBarLabel:'settingsStickyTopBarLabel', settingsStickyTopBarHint:'settingsStickyTopBarHint',
+  hCalExport:'calExportTitle', lblCalExportInclude:'calExportInclude',
+  calExportAllBtn:'calExportAll', calExportNoneBtn:'calExportNone', calExportGoBtn:'calExportGo',
   settingsShowTopikLabel:'settingsShowTopikLabel', settingsShowTopikHint:'settingsShowTopikHint',
   hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventEndTime:'eventEndTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', eventColorUseMyDefaultBtn:'eventColorUseMyDefaultBtn', lblPillVersion:'lblPillVersion', addEventBtn:'addDeadlineBtn',
   calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek', calViewDayBtn:'viewDay',
@@ -9719,7 +9771,8 @@ const ICON_PATHS = {
   check:  '<polyline points="20 6 9 17 4 12"></polyline>',
   eye:    '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>',
   chevR:  '<polyline points="9 18 15 12 9 6"></polyline>',
-  chevL:  '<polyline points="15 18 9 12 15 6"></polyline>'
+  chevL:  '<polyline points="15 18 9 12 15 6"></polyline>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>'
 };
 const ICON = {
   pencil:  function(sz){ return svgIcon(ICON_PATHS.pencil, sz); },
@@ -9734,7 +9787,8 @@ const ICON = {
   check:   function(sz){ return svgIcon(ICON_PATHS.check, sz); },
   eye:     function(sz){ return svgIcon(ICON_PATHS.eye, sz); },
   chevR:   function(sz){ return svgIcon(ICON_PATHS.chevR, sz); },
-  chevL:   function(sz){ return svgIcon(ICON_PATHS.chevL, sz); }
+  chevL:   function(sz){ return svgIcon(ICON_PATHS.chevL, sz); },
+  download:function(sz){ return svgIcon(ICON_PATHS.download, sz); }
 };
 /* ---------- DARK MODE ---------- */
 function applyDarkMode(isDark){
@@ -10027,6 +10081,11 @@ function applyLanguage(lang){
   const al = document.getElementById('circleAttachLabel');
   if(al) al.title = t('circleAttach');
   paintFilesToggle();
+  const dl = document.getElementById('calDownloadBtn');
+  if(dl){
+    dl.innerHTML = ICON.download(14) + `<span>${escapeHtml(t('calExportBtn'))}</span>`;
+    dl.title = t('calExportTitle');
+  }
   const st = document.getElementById('circleSearchToggle');
   if(st){ st.innerHTML = ICON.search(15); st.title = t('circleSearchMessages'); }
   const sc = document.getElementById('circleSearchClose');
@@ -18760,6 +18819,10 @@ function renderMonthGrid(){
   const myEventsByDate = {};
   calendarVisibleUserIds().forEach(uid=>{
     (allEvents[uid]||[]).forEach(ev=>{
+      // Held out of the picture only. The reader ticked it off in the export
+      // dialog, which says nothing about the calendar itself, and the set is
+      // empty again the moment the capture is done.
+      if(calExportExclude.has(ev.id)) return;
       const occ = expandOccurrences(ev, monthStart, monthEnd);
       occ.forEach(dateKey=>{
         if(!myEventsByDate[dateKey]) myEventsByDate[dateKey] = [];
@@ -19090,6 +19153,10 @@ function renderCalGrid(dates){
   const eventsByDate = {};
   calendarVisibleUserIds().forEach(uid=>{
     (allEvents[uid]||[]).forEach(ev=>{
+      // Held out of the picture only. The reader ticked it off in the export
+      // dialog, which says nothing about the calendar itself, and the set is
+      // empty again the moment the capture is done.
+      if(calExportExclude.has(ev.id)) return;
       const occ = expandOccurrences(ev, startKey, endKey);
       occ.forEach(dateKey=>{
         if(!eventsByDate[dateKey]) eventsByDate[dateKey] = [];
@@ -19318,6 +19385,342 @@ document.getElementById('calViewDayBtn').addEventListener('click', ()=>{
   document.getElementById('hMonthView').textContent = t('dayViewLabel');
   renderDayGrid();
 });
+/* ---------- DOWNLOAD THE CALENDAR ---------- */
+// The picture is made by re-running the calendar's OWN renderer with some
+// event ids held out, then photographing the result. Drawing a second
+// calendar onto a canvas would be a picture of something that is not the
+// view, and a second renderer drifts from this one the first time either is
+// touched.
+let calExportExclude = new Set();
+let calExportFormat = 'png';
+
+const calDateFromKey = (k)=>{ const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
+
+function calExportRange(){
+  if(calViewMode === 'month'){
+    const y = calViewDate.getFullYear(), m = calViewDate.getMonth();
+    return { start: `${y}-${String(m+1).padStart(2,'0')}-01`, end: todayStr(new Date(y, m+1, 0)) };
+  }
+  if(calViewMode === 'week'){
+    const st = getWeekStart(calViewDate); const en = new Date(st); en.setDate(en.getDate()+6);
+    return { start: todayStr(st), end: todayStr(en) };
+  }
+  const k = todayStr(calViewDate);
+  return { start: k, end: k };
+}
+
+// Everything the calendar would draw in the range being exported. A
+// repeating event is ONE row however many times it lands in there: it is one
+// thing you either want in the picture or you do not.
+function calExportItems(){
+  const { start, end } = calExportRange();
+  const seen = new Map();
+  calendarVisibleUserIds().forEach(uid=>{
+    (allEvents[uid]||[]).forEach(ev=>{
+      const occ = expandOccurrences(ev, start, end);
+      if(!occ.length) return;
+      if(!seen.has(ev.id)) seen.set(ev.id, { ev, dates: [] });
+      seen.get(ev.id).dates.push(...occ);
+    });
+  });
+  return [...seen.values()].sort((a,b)=>
+    (a.dates[0]||'').localeCompare(b.dates[0]||'')
+    || (a.ev.event_time||'99:99').localeCompare(b.ev.event_time||'99:99')
+    || String(a.ev.title||'').localeCompare(String(b.ev.title||'')));
+}
+
+function calExportKindLabel(kind){
+  const key = { deadline:'kindDeadline', event:'kindEvent', course:'kindCourse',
+                birthday:'kindBirthday', pill:'kindPill' }[kind];
+  return key ? t(key) : (kind || t('kindEvent'));
+}
+
+function calExportRangeText(){
+  const { start, end } = calExportRange();
+  const opts = { weekday:'short', day:'numeric', month:'short', year:'numeric' };
+  if(start === end) return capFirst(calDateFromKey(start).toLocaleDateString(appLocale(), opts));
+  // A weekday earns its place on a single day and is noise across a range, so
+  // the two ends match: neither carries one, and only the later end says which
+  // year it is, since a range cannot span two of them here.
+  const short = { day:'numeric', month:'short' };
+  const long = { day:'numeric', month:'short', year:'numeric' };
+  return capFirst(calDateFromKey(start).toLocaleDateString(appLocale(), short)) + ' – ' +
+         capFirst(calDateFromKey(end).toLocaleDateString(appLocale(), long));
+}
+
+function calExportFileBase(){
+  const { start, end } = calExportRange();
+  if(calViewMode === 'month') return 'calendar-' + start.slice(0,7);
+  if(calViewMode === 'day') return 'calendar-' + start;
+  return `calendar-${start}_${end}`;
+}
+
+function buildCalExportList(){
+  const list = document.getElementById('calExportList');
+  const items = calExportItems();
+  if(!items.length){
+    list.innerHTML = `<div class="cal-export-empty">${escapeHtml(t('calExportEmpty'))}</div>`;
+    return;
+  }
+  // Grouped by KIND rather than by day: "no birthdays in this one" is the
+  // coarse cut people actually want, and it keeps a busy month legible.
+  const order = ['deadline','event','course','birthday','pill'];
+  const groups = new Map();
+  items.forEach(it=>{
+    const k = it.ev.kind || 'event';
+    if(!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(it);
+  });
+  const kinds = [...groups.keys()].sort((a,b)=>{
+    const ai = order.indexOf(a), bi = order.indexOf(b);
+    return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
+  });
+  list.innerHTML = kinds.map(kind=>{
+    const rows = groups.get(kind).map(({ev, dates})=>{
+      const when = dates.length > 1
+        ? `${dates.length}x`
+        : capFirst(calDateFromKey(dates[0]).toLocaleDateString(appLocale(), { day:'numeric', month:'short' }))
+          + (ev.event_time ? ' ' + formatTime12h(ev.event_time) : '');
+      const owner = ev.user_id !== currentUser.id ? ` (${nameFor(ev.user_id)})` : '';
+      return `<label class="cal-export-row">
+        <input type="checkbox" checked data-ev="${escapeHtml(String(ev.id))}" data-kind="${escapeHtml(kind)}">
+        <span class="cal-export-swatch" style="background:${escapeHtml(ev.color || '#4F7563')}"></span>
+        <span class="cal-export-when">${escapeHtml(when)}</span>
+        <span class="cal-export-title">${escapeHtml((ev.recur_freq ? '↻ ' : '') + (ev.title || '') + owner)}</span>
+      </label>`;
+    }).join('');
+    return `<div class="cal-export-group">
+      <label class="cal-export-kind">
+        <input type="checkbox" checked data-kind-all="${escapeHtml(kind)}">
+        <span>${escapeHtml(calExportKindLabel(kind))}</span>
+        <span style="color:var(--ink-soft);font-weight:400;">${groups.get(kind).length}</span>
+      </label>${rows}</div>`;
+  }).join('');
+}
+
+function syncCalExportKindBoxes(){
+  document.querySelectorAll('#calExportList [data-kind-all]').forEach(head=>{
+    const kind = head.dataset.kindAll;
+    const boxes = [...document.querySelectorAll(`#calExportList input[data-kind="${CSS.escape(kind)}"]`)];
+    const on = boxes.filter(b=> b.checked).length;
+    head.checked = on > 0;
+    head.indeterminate = on > 0 && on < boxes.length;
+  });
+}
+
+function openCalExportModal(){
+  buildCalExportList();
+  syncCalExportKindBoxes();
+  document.getElementById('calExportRangeLabel').textContent = calExportRangeText();
+  const msg = document.getElementById('calExportMsg');
+  msg.classList.add('hidden'); msg.textContent = '';
+  document.getElementById('calExportGoBtn').disabled = false;
+  document.getElementById('calExportModal').classList.remove('hidden');
+}
+
+/* ---------- capture ---------- */
+function loadHtml2Canvas(){
+  if(window.html2canvas) return Promise.resolve(window.html2canvas);
+  return new Promise((res, rej)=>{
+    const el = document.createElement('script');
+    el.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    el.onload = ()=> window.html2canvas ? res(window.html2canvas) : rej(new Error('html2canvas missing'));
+    el.onerror = ()=> rej(new Error('html2canvas failed to load'));
+    document.head.appendChild(el);
+  });
+}
+
+// A day column is 24 hours tall and a day is not, so the picture is cropped
+// to the hours that have something in them. Cropped by LAYOUT rather than on
+// the canvas afterwards: shifting the body under a clipped wrapper is
+// exactly what its own scrollbar does, so the capture needs no arithmetic to
+// undo and the hour labels move with the columns for free.
+function calExportHourRange(){
+  const { start, end } = calExportRange();
+  let lo = 24, hi = 0, any = false;
+  calendarVisibleUserIds().forEach(uid=>{
+    (allEvents[uid]||[]).forEach(ev=>{
+      if(calExportExclude.has(ev.id)) return;
+      if(!expandOccurrences(ev, start, end).length) return;
+      any = true;
+      const st = timeToMinutes(ev.event_time || '00:00');
+      let en = ev.event_end_time ? timeToMinutes(ev.event_end_time) : st + 60;
+      if(en <= st) en = st + 60;
+      lo = Math.min(lo, Math.floor(st/60));
+      hi = Math.max(hi, Math.ceil(en/60));
+    });
+  });
+  if(!any) return { from: 8, to: 20 };
+  return { from: Math.max(0, lo - 1), to: Math.min(24, Math.max(hi + 1, lo + 3)) };
+}
+
+async function captureCalendar(){
+  const h2c = await loadHtml2Canvas();
+  const card = document.getElementById('monthGrid').closest('.card');
+  const scroll = document.querySelector('#weekGridWrap .week-body-scroll');
+  const body = document.getElementById('weekBody');
+  const saved = { h: scroll.style.height, mh: scroll.style.maxHeight,
+                  ov: scroll.style.overflow, mt: body.style.marginTop };
+  if(calViewMode !== 'month'){
+    const { from, to } = calExportHourRange();
+    scroll.style.maxHeight = 'none';
+    scroll.style.height = ((to - from) * HOUR_PX) + 'px';
+    scroll.style.overflow = 'hidden';
+    body.style.marginTop = (-from * HOUR_PX) + 'px';
+  }
+  try {
+    return await h2c(card, {
+      backgroundColor: getComputedStyle(document.body).backgroundColor,
+      scale: 2,
+      logging: false,
+      useCORS: true,
+    });
+  } finally {
+    scroll.style.height = saved.h; scroll.style.maxHeight = saved.mh;
+    scroll.style.overflow = saved.ov; body.style.marginTop = saved.mt;
+  }
+}
+
+/* ---------- the two file formats ---------- */
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 5000);
+}
+
+// A whole PDF library to wrap one picture is not worth 350 KB, and this is
+// the smallest legal file that holds one: catalog, pages, page, the image,
+// and a content stream that paints it. FlateDecode is what PDF calls zlib,
+// which is exactly what a "deflate" CompressionStream emits, so the pixels
+// go in lossless with no encoder shipped; a browser without one falls back
+// to the JPEG the canvas can already make.
+async function canvasToPdfBlob(canvas){
+  const w = canvas.width, h = canvas.height;
+  let data, filter;
+  if(typeof CompressionStream === 'function'){
+    const rgba = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+    const rgb = new Uint8Array(w * h * 3);
+    for(let i = 0, j = 0; i < rgba.length; i += 4, j += 3){
+      rgb[j] = rgba[i]; rgb[j+1] = rgba[i+1]; rgb[j+2] = rgba[i+2];
+    }
+    data = new Uint8Array(await new Response(
+      new Blob([rgb]).stream().pipeThrough(new CompressionStream('deflate'))
+    ).arrayBuffer());
+    filter = '/FlateDecode';
+  } else {
+    const jpeg = await new Promise(r=> canvas.toBlob(r, 'image/jpeg', 0.95));
+    data = new Uint8Array(await jpeg.arrayBuffer());
+    filter = '/DCTDecode';
+  }
+  // A4, turned to match the picture, with the image fitted inside a margin.
+  const A4_SHORT = 595.28, A4_LONG = 841.89;
+  const pw = w >= h ? A4_LONG : A4_SHORT;
+  const ph = w >= h ? A4_SHORT : A4_LONG;
+  const margin = 24;
+  const k = Math.min((pw - 2*margin) / w, (ph - 2*margin) / h);
+  const dw = w * k, dh = h * k, dx = (pw - dw) / 2, dy = (ph - dh) / 2;
+
+  const enc = new TextEncoder();
+  const chunks = []; let len = 0; const offsets = [];
+  const push = (u8)=>{ chunks.push(u8); len += u8.length; };
+  const str = (x)=> push(enc.encode(x));
+  const obj = (n, bodyText)=>{ offsets[n] = len; str(`${n} 0 obj\n${bodyText}\nendobj\n`); };
+
+  str('%PDF-1.4\n');
+  push(new Uint8Array([0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A]));
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw.toFixed(2)} ${ph.toFixed(2)}]`
+       + ` /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+  offsets[4] = len;
+  str(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h}`
+    + ` /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter ${filter}`
+    + ` /Length ${data.length} >>\nstream\n`);
+  push(data);
+  str('\nendstream\nendobj\n');
+  const content = `q ${dw.toFixed(2)} 0 0 ${dh.toFixed(2)} ${dx.toFixed(2)} ${dy.toFixed(2)} cm /Im0 Do Q\n`;
+  obj(5, `<< /Length ${content.length} >>\nstream\n${content}endstream`);
+  const startxref = len;
+  let x = 'xref\n0 6\n0000000000 65535 f \n';
+  for(let i = 1; i <= 5; i++) x += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+  x += `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${startxref}\n%%EOF\n`;
+  str(x);
+  return new Blob(chunks, { type: 'application/pdf' });
+}
+
+function redrawCalGrid(){
+  if(calViewMode === 'month') renderMonthGrid();
+  else if(calViewMode === 'week') renderWeekGrid();
+  else renderDayGrid();
+}
+
+async function runCalExport(){
+  const go = document.getElementById('calExportGoBtn');
+  const msg = document.getElementById('calExportMsg');
+  const excluded = [...document.querySelectorAll('#calExportList input[data-ev]')]
+    .filter(b=> !b.checked).map(b=> b.dataset.ev);
+  go.disabled = true;
+  msg.classList.remove('hidden');
+  msg.style.color = '';
+  msg.textContent = t('calExportWorking');
+  calExportExclude = new Set(excluded);
+  document.body.classList.add('cal-exporting');
+  redrawCalGrid();
+  try {
+    const canvas = await captureCalendar();
+    const base = calExportFileBase();
+    if(calExportFormat === 'pdf'){
+      downloadBlob(await canvasToPdfBlob(canvas), base + '.pdf');
+    } else {
+      const png = await new Promise(r=> canvas.toBlob(r, 'image/png'));
+      downloadBlob(png, base + '.png');
+    }
+    document.getElementById('calExportModal').classList.add('hidden');
+  } catch(e){
+    msg.style.color = 'var(--seal)';
+    msg.textContent = t('calExportFailed');
+  } finally {
+    // Whatever happened, the calendar goes back to being the calendar.
+    calExportExclude = new Set();
+    document.body.classList.remove('cal-exporting');
+    redrawCalGrid();
+    go.disabled = false;
+  }
+}
+
+document.getElementById('calDownloadBtn').addEventListener('click', openCalExportModal);
+document.getElementById('calExportCloseX').addEventListener('click', ()=>
+  document.getElementById('calExportModal').classList.add('hidden'));
+document.getElementById('calExportModal').addEventListener('click', (e)=>{
+  if(e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+});
+document.getElementById('calExportFormat').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-fmt]');
+  if(!btn) return;
+  calExportFormat = btn.dataset.fmt;
+  document.querySelectorAll('#calExportFormat button').forEach(b=>
+    b.classList.toggle('active', b === btn));
+});
+document.getElementById('calExportList').addEventListener('change', (e)=>{
+  const head = e.target.closest('input[data-kind-all]');
+  if(head){
+    document.querySelectorAll(`#calExportList input[data-kind="${CSS.escape(head.dataset.kindAll)}"]`)
+      .forEach(b=> b.checked = head.checked);
+  }
+  syncCalExportKindBoxes();
+});
+document.getElementById('calExportAllBtn').addEventListener('click', ()=>{
+  document.querySelectorAll('#calExportList input[type=checkbox]').forEach(b=> b.checked = true);
+  syncCalExportKindBoxes();
+});
+document.getElementById('calExportNoneBtn').addEventListener('click', ()=>{
+  document.querySelectorAll('#calExportList input[type=checkbox]').forEach(b=> b.checked = false);
+  syncCalExportKindBoxes();
+});
+document.getElementById('calExportGoBtn').addEventListener('click', runCalExport);
+
 function setActiveCalViewBtn(){
   document.getElementById('calViewMonthBtn').classList.toggle('active', calViewMode==='month');
   document.getElementById('calViewWeekBtn').classList.toggle('active', calViewMode==='week');

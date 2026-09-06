@@ -660,6 +660,70 @@ good. Stuck, the tagline collapses and the title and mark shrink, taking it to
   reported light while the theme was dark, because that transition is frozen.
   Compare the TOKEN (`--paper`) instead of the transitioning property.
 
+## The calendar downloads as a picture, and the crop is LAYOUT (6 Sep)
+
+A Download button in the view-toggle row, offered in all three views. It opens
+a dialog that lists everything in range with a tick beside it, all ticked, so
+the reader takes things OUT rather than building a selection up (real-user
+request). PNG by default, PDF beside it.
+
+**What is excluded is held out of the PICTURE, not out of the calendar.**
+`calExportExclude` is a Set of event ids consulted by the two grid renderers,
+filled for the length of the capture and emptied in a `finally`. So the
+dialog says nothing about the calendar itself, and a failed export cannot
+leave the reader's own calendar missing events.
+
+- **The hook goes in exactly TWO renderers**, `renderMonthGrid` and
+  `renderCalGrid`. A blind edit finds three -- `renderMonthAgenda` gathers
+  events the same way and is deliberately left alone, since the agenda panel
+  is hidden during a capture anyway and filtering it would be a second place
+  to keep in step for nothing.
+- **The controls are hidden with `visibility:hidden`, not `display:none`.**
+  `body.cal-exporting` takes out the view toggle, the Download button, the
+  month arrows, the jump-date button, the agenda panel and the week's
+  more-above/more-below markers. Visibility rather than display so nothing
+  reflows: the grid has to be captured at the size it is on screen.
+
+**The week and day views are cropped by LAYOUT, never by cutting the canvas.**
+Those views scroll inside their own box, so a bitmap crop would have to know
+where the header ends and how tall an hour is in device pixels. Instead the
+scroll box is given an explicit height of `(to - from) * HOUR_PX` and the body
+inside it a negative top margin of `-from * HOUR_PX`, so the browser lays out
+exactly the hours that are wanted and html2canvas photographs it. Both are
+restored to `''` in a `finally`. Measured: day 10:00-22:00 comes out
+2480x1450 and week 0:00-22:00 2480x2330, which is 44px an hour at scale 2 in
+both -- the two agree because neither is guessing.
+
+**The PDF is hand-built, and `CompressionStream('deflate')` is why it is
+short.** That stream emits zlib, which is exactly PDF's own `/FlateDecode`, so
+the canvas's RGB bytes go in with no encoder: catalog, pages, page, image
+XObject and content stream, then an xref table of real byte offsets. A JPEG
+`/DCTDecode` path stands in where the stream is unavailable. Verified by
+checking every xref offset lands on its object, that the deflate stream starts
+`78 9c` and ends on its declared length, and then by opening it in Chrome's own
+PDF viewer -- a hand-built file that parses is not the same as one that draws.
+
+**html2canvas is lazily fetched from jsDelivr** on the first export, in the
+same way the app's four other CDN scripts are loaded. Nothing is downloaded
+for a reader who never presses Download.
+
+### Three ways this went wrong that were mine, not the app's
+
+- **"html2canvas ignores `visibility:hidden`" was a bad test.** The pixel
+  probe sampled `--paper` off the card's rounded CORNER as its reference,
+  where the card's own ground is `--paper-dim`, so everything differed from
+  everything. Comparing the same region captured WITH and WITHOUT the class
+  settled it in one go: both control areas collapse to a single uniform
+  `234,234,236`. **Compare a region against itself under the two conditions;
+  never against a colour you reasoned your way to.**
+- **A 0x0 capture was the test setup.** `#calendarCalendarSection` still
+  carried `hidden`, so the target had no size. Check the thing being
+  photographed is actually on screen before believing the capture is broken.
+- **The range label was lopsided and only reading it caught it**: "Sep 1 --
+  Wed, Sep 30, 2026", a weekday on one end of a month and not the other. A
+  weekday earns its place on a single day (day view) and is noise across a
+  range, so the two ends match now and only the later one carries the year.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
