@@ -583,6 +583,46 @@ el.offsetWidth`) so the transition starts from the closed state, then add the
 the transition. Anything asking "is it open" must then read `.open`, not
 `.hidden`, or it reports open all through the closing animation.
 
+### The sticky header, and three ways it can be quietly wrong
+
+The header and the tab row are one wrapper (`#topBar`) pinned at the top, so
+the tabs stay reachable down a long list. Three things had to be measured
+rather than assumed.
+
+- **A last child's bottom margin collapses OUT of its parent.** The tab row
+  carried `margin-bottom:22px`, so the sticky wrapper measured 22px shorter
+  than it looked and content scrolled over that strip. The gap belongs to the
+  wrapper as `padding-bottom`, with the child's margin zeroed.
+- **A hidden element measures as pinned.** `#appScreen` is hidden until
+  sign-in, so anything initialising against it reads a 0x0 box -- and
+  `rect.top <= top` is trivially true at zero, which latched the condensed
+  state on and left it that way until the first scroll. The test needs a
+  `rect.height > 0` guard, and the reveal path has to re-evaluate rather than
+  trusting a ResizeObserver to fire.
+- **Compare against the element's own resting `top`**, not a literal 0. Body
+  padding-top carries `env(safe-area-inset-top)`, so where the bar comes to
+  rest differs between a browser tab and an installed phone app.
+
+**It CONDENSES when stuck, and that is not decoration.** Measured first: the
+full bar is 184px of a 375x812 phone, 23% of the screen given to chrome for
+good. Stuck, the tagline collapses and the title and mark shrink, taking it to
+128px (16%); the tabs keep their size, since they are the point. Desktop 175 to
+124.
+
+### Two more harness traps, both of which look like app bugs
+
+- **This preview pane dispatches NO scroll events.** `scrollTo()` moves the
+  page -- `getBoundingClientRect()` proves it -- and a probe listener on
+  `window` counts zero. A scroll-driven class will look completely dead; drive
+  it by dispatching `new Event('scroll')` and check the geometry, which is
+  layout and therefore honest.
+- **It composites `position:sticky` at a stale offset while hidden**, so a
+  screenshot can draw a pinned bar most of a screen away from where
+  `getBoundingClientRect().top` says it is. Trust the rect. For the same
+  reason a transitioned property reads as its START value: `body`'s background
+  reported light while the theme was dark, because that transition is frozen.
+  Compare the TOKEN (`--paper`) instead of the transitioning property.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
