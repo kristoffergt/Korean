@@ -372,6 +372,20 @@ body.dark #topBar::after{background:linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,
 /* Turned off, the bar is an ordinary block again: no pinning, and no
    condensing either, since there is nothing to condense FOR. */
 body.topbar-loose #topBar{position:static;}
+/* The bar is sticky, it CONDENSES by 60px, and it sits in NORMAL FLOW -- so
+   the shrink pulled the whole document up with it (scrollHeight 2215 to 2155,
+   measured). Chrome's scroll anchoring then corrected the scroll to hold the
+   content still, which put the bar back under its own threshold, which
+   un-condensed it, which moved everything again. Measured off a recording:
+   the page alternated by 69px on EVERY frame at 30fps for as long as a slow
+   scroll sat in that band (real-user report: "it keeps jumping back up, like
+   it cancels my scroll").
+   So the spacer grows by exactly what the bar loses. The flow height never
+   changes, nothing below the bar ever moves, and with nothing moving there is
+   nothing for anchoring to correct. Written in the same frame as the class,
+   so there is not even one frame of shift. */
+#topBarSpacer{height:0;flex:none;pointer-events:none;}
+body.topbar-loose #topBarSpacer{height:0 !important;}
 /* So scrollIntoView and any anchor jump clear the bar instead of landing
    underneath it. */
 html{scroll-padding-top:var(--topbar-h,0px);}
@@ -1451,6 +1465,9 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
     <div class="tab-flyout" id="tabFlyout"></div>
   </div>
   </div>
+  <!-- Takes back exactly the height the bar gives up when it condenses; see
+       the CSS for why the page must not be allowed to move. -->
+  <div id="topBarSpacer" aria-hidden="true"></div>
   <!-- Shown in place of every real panel from the moment appScreen becomes
        visible until loadAllData() actually resolves -- see appDataLoading.
        That gap is where any panel's own "you have none of X" fallback text
@@ -10582,7 +10599,10 @@ async function onAuthed(user){
   document.getElementById('resetScreen').classList.add('hidden');
   document.getElementById('mfaScreen').classList.add('hidden');
   document.getElementById('appScreen').classList.remove('hidden');
-  updateTopBarStuck(); syncTopBarMetrics();
+  // Measured HERE rather than at init: the app screen is hidden until sign-in,
+  // so the bar is a 0x0 box until this moment and the full height reads as
+  // nothing, which would leave the spacer permanently flat.
+  measureTopBarFullH(); updateTopBarStuck(); syncTopBarSpacer(); syncTopBarMetrics();
   await withLoadingGate(loadAllData);
   renderNotesLinkHeaderBtn();
   await ensureProfileExists(user);
@@ -11834,7 +11854,10 @@ async function enterGuestMode(){
   currentUser = { id: 'guest-local', email: null };
   document.getElementById('authScreen').classList.add('hidden');
   document.getElementById('appScreen').classList.remove('hidden');
-  updateTopBarStuck(); syncTopBarMetrics();
+  // Measured HERE rather than at init: the app screen is hidden until sign-in,
+  // so the bar is a 0x0 box until this moment and the full height reads as
+  // nothing, which would leave the spacer permanently flat.
+  measureTopBarFullH(); updateTopBarStuck(); syncTopBarSpacer(); syncTopBarMetrics();
   await withLoadingGate(loadAllData);
   renderNotesLinkHeaderBtn();
   // ensureProfileExists() skipped -- the guest profile row is already
@@ -13980,10 +14003,54 @@ function applyStickyTopBarPref(){
   // Drop the condensed state with it, or a bar switched off while scrolled
   // stays shrunk for good with nothing left to un-shrink it.
   if(bar && !on){ bar.classList.remove('stuck'); topBarStuck = false; }
+  measureTopBarFullH();
   updateTopBarStuck();
+  syncTopBarSpacer();
   syncTopBarMetrics();
 }
 let topBarStuck = false;
+// The bar's height when it is NOT condensed. The spacer gives back the
+// difference, so the document's own height never changes as the bar shrinks.
+let topBarFullH = 0;
+function measureTopBarFullH(){
+  const bar = document.getElementById('topBar');
+  if(!bar || !stickyTopBarEnabled()) return;
+  if(!bar.classList.contains('stuck')){
+    const h = bar.getBoundingClientRect().height;
+    if(h > 0) topBarFullH = h;
+    return;
+  }
+  // Already condensed: read the full height and put it back inside one
+  // synchronous block, with the 0.18s ease suppressed so the measurement is
+  // the settled value and nothing is ever painted in between.
+  const kill = document.createElement('style');
+  kill.textContent = '#topBar,#topBar *{transition:none !important;}';
+  document.head.appendChild(kill);
+  bar.classList.remove('stuck');
+  const h = bar.getBoundingClientRect().height;
+  bar.classList.add('stuck');
+  void bar.offsetHeight;
+  kill.remove();
+  if(h > 0) topBarFullH = h;
+}
+function syncTopBarSpacer(){
+  const bar = document.getElementById('topBar');
+  const sp = document.getElementById('topBarSpacer');
+  if(!bar || !sp) return;
+  if(!stickyTopBarEnabled()){ if(sp.style.height !== '0px') sp.style.height = '0px'; return; }
+  const h = bar.getBoundingClientRect().height;
+  if(!bar.classList.contains('stuck')){
+    // Not condensed, so the bar IS its full height: keep the reference current
+    // off the live box rather than trusting one reading taken at reveal, before
+    // the header had settled. Self-correcting, and it follows a window resize
+    // or a wrapped control row for free.
+    if(h > 0) topBarFullH = h;
+    if(sp.style.height !== '0px') sp.style.height = '0px';
+    return;
+  }
+  const give = Math.max(0, Math.round(topBarFullH - h));
+  if(sp.style.height !== give + 'px') sp.style.height = give + 'px';
+}
 function updateTopBarStuck(){
   const bar = document.getElementById('topBar');
   if(!bar || !stickyTopBarEnabled()) return;
@@ -13999,18 +14066,29 @@ function updateTopBarStuck(){
     rect.top <= (parseFloat(getComputedStyle(bar).top) || 0) + 1;
   // Written only on the transition: this runs on every scroll event, and a
   // class write per frame would invalidate style for the whole subtree.
-  if(next !== topBarStuck){ topBarStuck = next; bar.classList.toggle('stuck', next); }
+  if(next !== topBarStuck){
+    topBarStuck = next;
+    bar.classList.toggle('stuck', next);
+    // Same frame as the class: the bar shrinking and the spacer growing have
+    // to be one layout, or the single frame between them moves the page and
+    // scroll anchoring corrects for it, which is the whole bug.
+    syncTopBarSpacer();
+  }
 }
 function initStickyTopBar(){
   const bar = document.getElementById('topBar');
   if(!bar) return;
   window.addEventListener('scroll', updateTopBarStuck, { passive: true });
-  window.addEventListener('resize', ()=>{ updateTopBarStuck(); syncTopBarMetrics(); });
+  window.addEventListener('resize', ()=>{
+    measureTopBarFullH(); updateTopBarStuck(); syncTopBarSpacer(); syncTopBarMetrics();
+  });
   // A ResizeObserver rather than hooking the places the banner is toggled:
   // display:none reports a 0x0 box, so showing and hiding it both arrive
   // here, and so does the bar condensing or the window changing width.
   if(window.ResizeObserver){
-    const ro = new ResizeObserver(()=>{ updateTopBarStuck(); syncTopBarMetrics(); });
+    // The condense EASES over 0.18s, so the bar's height passes through every
+    // value in between; the spacer tracks it the whole way, not just the ends.
+    const ro = new ResizeObserver(()=>{ updateTopBarStuck(); syncTopBarSpacer(); syncTopBarMetrics(); });
     ro.observe(bar);
     const banner = document.getElementById('guestBanner');
     if(banner) ro.observe(banner);
