@@ -116,7 +116,7 @@ body{
 .icon-btn:hover{background:rgba(127,127,127,0.16);}
 .auth-wrap{max-width:360px;margin:60px auto 0;}
 .auth-topbar{display:flex;justify-content:flex-end;max-width:360px;margin:0 auto;}
-.guest-banner{-webkit-appearance:none;appearance:none;position:sticky;top:0;left:0;z-index:500;display:block;width:100%;margin:0;padding:8px 16px;background:#f3e0dc;color:#b8402c;font-size:12.5px;font-weight:500;text-align:center;border:none;border-radius:0;box-shadow:none;box-sizing:border-box;font-family:inherit;cursor:pointer;}
+.guest-banner{-webkit-appearance:none;appearance:none;position:sticky;top:env(safe-area-inset-top);left:0;z-index:500;display:block;width:100%;margin:0;padding:8px 16px;background:#f3e0dc;color:#b8402c;font-size:12.5px;font-weight:500;text-align:center;border:none;border-radius:0;box-shadow:none;box-sizing:border-box;font-family:inherit;cursor:pointer;}
 .guest-banner:hover{background:#efd4cf;}
 body.dark .guest-banner{background:#3a2422;color:#ff8a70;}
 body.dark .guest-banner:hover{background:#452a27;}
@@ -311,20 +311,57 @@ header{display:flex;flex-direction:column;border-bottom:2px solid var(--ink);pad
    The 22px is the tab row's own margin moved here as PADDING: a last child's
    bottom margin collapses out of its parent, which would leave the bar 22px
    shorter than it looks and content scrolling over that strip. */
-#topBar{position:sticky;top:var(--topbar-top,0px);z-index:200;background:var(--paper);
+/* The safe-area inset is part of the offset, not just of the body's padding.
+   top:0 is the top of the VIEWPORT, and with viewport-fit=cover that is
+   behind the notch and the status bar -- so on the installed app the bar
+   pinned up out of sight (real-user report: "it's fixed way too high, it
+   completely goes out"). It is 0 in an ordinary browser tab, so the desktop
+   is unaffected. */
+#topBar{position:sticky;top:calc(var(--topbar-top,0px) + env(safe-area-inset-top));
+  z-index:200;background:var(--paper);
   padding-bottom:22px;transition:padding-bottom 0.18s ease;}
+/* And the strip the bar now sits below still has the page running through
+   it, so it is painted rather than left as a window onto scrolling content. */
+#topBar::before{content:'';position:absolute;left:0;right:0;bottom:100%;
+  height:calc(var(--topbar-top,0px) + env(safe-area-inset-top));
+  background:var(--paper);pointer-events:none;}
 #topBar #tabNav{margin-bottom:0;}
 /* Stuck, it CONDENSES. Measured before it was written: the full bar is 184px
    of a 375x812 phone, 23% of the screen given over to chrome for good. The
    tagline goes, the title and mark shrink, the paddings tighten; the tabs are
    the point of the exercise and keep their size. */
 #topBar .sub{max-height:22px;overflow:hidden;
-  transition:opacity 0.18s ease,max-height 0.18s ease,margin-top 0.18s ease;}
+  transition:opacity 0.18s ease,max-height 0.18s ease,margin-top 0.18s ease,width 0.18s ease;}
 #topBar.stuck{padding-bottom:10px;}
-#topBar.stuck header{padding-bottom:8px;margin-bottom:10px;gap:0;}
-#topBar.stuck .sub{opacity:0;max-height:0;margin-top:0;}
-#topBar.stuck h1{font-size:clamp(13px,0.9vw + 9px,19px);margin-bottom:0;}
-#topBar.stuck .brand-icon{width:21px;height:21px;}
+/* One line: the mark and the title on the left, the controls hard right.
+   The header is a COLUMN at rest (brand row, then tagline + controls), and
+   stuck it becomes a row -- flex-direction cannot be transitioned, so the
+   change of layout snaps while the sizes still ease. */
+#topBar.stuck header{flex-direction:row;align-items:center;gap:6px;
+  padding-bottom:7px;margin-bottom:9px;}
+#topBar.stuck .brand-mark{flex:0 1 auto;min-width:0;gap:6px;}
+/* The floor is 11.5 rather than 12 because at 375 the title wanted 137px
+   against 136 of room -- one pixel, and an ellipsis for it. Half a point of
+   type buys six. Below about 340 it truncates and should: there is no size
+   the whole title fits at once the controls have what they need. */
+#topBar.stuck h1{font-size:clamp(11.5px,0.8vw + 9px,18px);margin-bottom:0;
+  /* Whatever room the controls leave. The controls are the useful half. */
+  min-width:0;overflow:hidden;text-overflow:ellipsis;}
+#topBar.stuck .brand-icon{width:20px;height:20px;}
+#topBar.stuck .header-row2{flex:1 1 auto;min-width:0;justify-content:flex-end;
+  flex-wrap:nowrap;gap:0;}
+/* Zero WIDTH as well as height: collapsed to nothing vertically it was still
+   a flex item claiming the width of "Study · Reading · Jobs" on the row. */
+#topBar.stuck .sub{opacity:0;max-height:0;width:0;flex:0 0 0;margin:0;padding:0;}
+/* Measured rather than picked: at 375 the title wants 137px and the controls
+   were leaving it 127, so it ellipsised. Six controls at 27px with 4px
+   between them is 183; a tighter gap, a pixel off each side and a 12px glyph
+   frees 23, which clears the title with room to spare. */
+#topBar.stuck .who{flex-wrap:nowrap;gap:3px;}
+#topBar.stuck .who .icon-btn{padding:4px 5px;}
+#topBar.stuck .who .icon-btn .ui-icon,
+#topBar.stuck .who .icon-btn svg,
+#topBar.stuck .who .lang-switch-icon{width:12px;height:12px;}
 /* Says the bar is a layer over the page rather than part of it. Its own
    element, so it can sit BELOW the bar without a second background. */
 #topBar::after{content:'';position:absolute;left:0;right:0;top:100%;height:10px;
@@ -13866,7 +13903,11 @@ function syncTopBarMetrics(){
     ? Math.round(banner.getBoundingClientRect().height) : 0;
   const root = document.documentElement;
   root.style.setProperty('--topbar-top', gh + 'px');
-  root.style.setProperty('--topbar-h', Math.round(bar.getBoundingClientRect().height) + gh + 'px');
+  // Read the RESOLVED top rather than adding the pieces up again: it is a
+  // calc() carrying env(safe-area-inset-top), which only the browser can
+  // resolve, and it is exactly how much of the screen sits above the bar.
+  const top = parseFloat(getComputedStyle(bar).top) || 0;
+  root.style.setProperty('--topbar-h', Math.round(bar.getBoundingClientRect().height + top) + 'px');
 }
 // A display preference, so it lives where the theme and the language do:
 // localStorage, per device. Absent means ON -- the default is pinned, and

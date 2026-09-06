@@ -603,6 +603,35 @@ rather than assumed.
   padding-top carries `env(safe-area-inset-top)`, so where the bar comes to
   rest differs between a browser tab and an installed phone app.
 
+**`env(safe-area-inset-top)` belongs in the sticky OFFSET, not only in the
+body's padding.** `top:0` is the top of the VIEWPORT, and with
+`viewport-fit=cover` that is behind the notch and the status bar -- so on the
+installed app the bar pinned up out of sight (real-user report: "it's fixed
+way too high, it completely goes out") while a browser tab, where env() is 0,
+looked perfect. The offset is a calc carrying the inset, a `::before` paints
+the strip the bar now sits below (the page still runs through it), and
+`--topbar-h` is read back off the RESOLVED `top` rather than adding the pieces
+up again, since only the browser can resolve an env().
+
+**Stuck, the header is ONE row**: mark and title left, controls hard right
+(real-user request). `flex-direction` cannot be transitioned, so the change of
+layout snaps while the sizes still ease. Two things it needs that are easy to
+miss: the tagline needs zero WIDTH as well as zero height, or collapsed flat
+it is still a flex item claiming the width of its own text on the row; and
+the room is genuinely tight, so it was measured -- at 375 the title wants
+137px and the controls were leaving it 136, one pixel and an ellipsis for it.
+A 3px gap, a pixel off each button and a 12px glyph buy it back. Below about
+340 it truncates and should: there is no size the whole title fits at once
+the controls have what they need. Phone 184 to **89px (11% of the screen)**,
+desktop 175 to 95.
+
+**A screenshot of a condensing bar in this pane is a frame PARTWAY through the
+transition**, since transitions only advance when it paints -- the title read
+as ellipsised in three consecutive screenshots and was not. Kill transitions
+before judging a settled state. And `scrollWidth` under-reports a truncated
+flex item (it came back equal to `clientWidth` on text that was visibly cut),
+so neither the picture nor that property is trustworthy alone.
+
 **It can be turned off** in Account settings, and is ON by default -- absence
 of the key means pinned, so nobody opts in to it. A display preference, so it
 lives where the theme and the language do: localStorage, per device, not a
