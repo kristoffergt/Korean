@@ -603,6 +603,14 @@ rather than assumed.
   padding-top carries `env(safe-area-inset-top)`, so where the bar comes to
   rest differs between a browser tab and an installed phone app.
 
+**It can be turned off** in Account settings, and is ON by default -- absence
+of the key means pinned, so nobody opts in to it. A display preference, so it
+lives where the theme and the language do: localStorage, per device, not a
+profile column. Off, the bar is `position:static` and `--topbar-h` goes to 0,
+since nothing is covering the top of the page for a scrollIntoView to clear;
+the condensed class is dropped with it, or a bar switched off while scrolled
+stays shrunk with nothing left to un-shrink it.
+
 **It CONDENSES when stuck, and that is not decoration.** Measured first: the
 full bar is 184px of a 375x812 phone, 23% of the screen given to chrome for
 good. Stuck, the tagline collapses and the title and mark shrink, taking it to

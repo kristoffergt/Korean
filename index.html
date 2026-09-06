@@ -332,6 +332,9 @@ header{display:flex;flex-direction:column;border-bottom:2px solid var(--ink);pad
   background:linear-gradient(rgba(30,31,34,0.13),rgba(30,31,34,0));}
 #topBar.stuck::after{opacity:1;}
 body.dark #topBar::after{background:linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0));}
+/* Turned off, the bar is an ordinary block again: no pinning, and no
+   condensing either, since there is nothing to condense FOR. */
+body.topbar-loose #topBar{position:static;}
 /* So scrollIntoView and any anchor jump clear the bar instead of landing
    underneath it. */
 html{scroll-padding-top:var(--topbar-h,0px);}
@@ -2672,6 +2675,13 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
 
     <div class="wtc-title" style="margin-top:18px;" id="lblNotifPrefs"></div>
     <div id="notifPrefsList"></div>
+    <div id="settingsStickyTopBarRow" style="margin-top:14px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="settingsStickyTopBarToggle" style="width:15px;height:15px;">
+        <span id="settingsStickyTopBarLabel"></span>
+      </label>
+      <div class="hint" id="settingsStickyTopBarHint" style="margin-top:4px;"></div>
+    </div>
     <div id="settingsShowTopikRow" style="margin-top:14px;">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
         <input type="checkbox" id="settingsShowTopikToggle" style="width:15px;height:15px;">
@@ -8800,7 +8810,7 @@ const I18N = {
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
     topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
-    settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.',
+    settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
@@ -8921,7 +8931,7 @@ const I18N = {
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
     topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
-    settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.',
+    settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
@@ -9042,7 +9052,7 @@ const I18N = {
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
     topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
-    settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.',
+    settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
@@ -9172,6 +9182,7 @@ const STATIC_MAP = {
   lblCertSearch:'searchLabel', lblCertSort:'sortByLabel',
   hTopik:'topikCountdown', topikTestLabel:'testIn',
   circleMessageSendBtn:'circleSendBtn', chatTitle:'circleTabMessages',
+  settingsStickyTopBarLabel:'settingsStickyTopBarLabel', settingsStickyTopBarHint:'settingsStickyTopBarHint',
   settingsShowTopikLabel:'settingsShowTopikLabel', settingsShowTopikHint:'settingsShowTopikHint',
   hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventEndTime:'eventEndTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', eventColorUseMyDefaultBtn:'eventColorUseMyDefaultBtn', lblPillVersion:'lblPillVersion', addEventBtn:'addDeadlineBtn',
   calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek', calViewDayBtn:'viewDay',
@@ -10579,6 +10590,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   document.getElementById('settingsHideLeaderboards').checked = !!hiddenFromLeaderboards[currentUser.id];
   document.getElementById('settingsHideCircleToo').checked = !!hiddenFromCircleToo[currentUser.id];
   document.getElementById('settingsHideCircleTooWrap').classList.toggle('hidden', !hiddenFromLeaderboards[currentUser.id]);
+  document.getElementById('settingsStickyTopBarToggle').checked = stickyTopBarEnabled();
   document.getElementById('settingsShowTopikToggle').checked = showTopik;
   renderRecapPrefsRows();
   renderNotifPrefs();
@@ -13842,6 +13854,13 @@ function refreshRowSliders(force){
 function syncTopBarMetrics(){
   const bar = document.getElementById('topBar');
   if(!bar) return;
+  if(!stickyTopBarEnabled()){
+    // Nothing is covering the top of the page, so nothing should be reserved
+    // above a scrollIntoView target either.
+    document.documentElement.style.setProperty('--topbar-top', '0px');
+    document.documentElement.style.setProperty('--topbar-h', '0px');
+    return;
+  }
   const banner = document.getElementById('guestBanner');
   const gh = (banner && !banner.classList.contains('hidden'))
     ? Math.round(banner.getBoundingClientRect().height) : 0;
@@ -13849,10 +13868,25 @@ function syncTopBarMetrics(){
   root.style.setProperty('--topbar-top', gh + 'px');
   root.style.setProperty('--topbar-h', Math.round(bar.getBoundingClientRect().height) + gh + 'px');
 }
+// A display preference, so it lives where the theme and the language do:
+// localStorage, per device. Absent means ON -- the default is pinned, and
+// nobody should have to opt in to it.
+const STICKY_TOPBAR_KEY = 'trackerStickyTopBar';
+function stickyTopBarEnabled(){ return localStorage.getItem(STICKY_TOPBAR_KEY) !== '0'; }
+function applyStickyTopBarPref(){
+  const on = stickyTopBarEnabled();
+  document.body.classList.toggle('topbar-loose', !on);
+  const bar = document.getElementById('topBar');
+  // Drop the condensed state with it, or a bar switched off while scrolled
+  // stays shrunk for good with nothing left to un-shrink it.
+  if(bar && !on){ bar.classList.remove('stuck'); topBarStuck = false; }
+  updateTopBarStuck();
+  syncTopBarMetrics();
+}
 let topBarStuck = false;
 function updateTopBarStuck(){
   const bar = document.getElementById('topBar');
-  if(!bar) return;
+  if(!bar || !stickyTopBarEnabled()) return;
   const rect = bar.getBoundingClientRect();
   // Not rendered yet is not "stuck". The app screen is hidden until sign-in,
   // so this runs first against a box of nothing, where every measurement is
@@ -13881,10 +13915,13 @@ function initStickyTopBar(){
     const banner = document.getElementById('guestBanner');
     if(banner) ro.observe(banner);
   }
-  updateTopBarStuck();
-  syncTopBarMetrics();
+  applyStickyTopBarPref();
 }
 initStickyTopBar();
+document.getElementById('settingsStickyTopBarToggle').addEventListener('change', (e)=>{
+  localStorage.setItem(STICKY_TOPBAR_KEY, e.target.checked ? '1' : '0');
+  applyStickyTopBarPref();
+});
 
 /* ---------- TAB SWITCHING ---------- */
 // Pulled out of the click handler so applyTabVisibility() can also call
