@@ -1343,6 +1343,105 @@ The rule the bug is worth remembering for: **a lookup table keyed by a string
 passed in from five call sites needs the call sites checked against the table**,
 which is three lines of node and is now part of the verification pass.
 
+## The marks fill their pills, and the little people get something to do (8 Sep, later)
+
+### Nineteen letters, nineteen jobs
+
+"The people who turn into letters should be productive in various ways. And
+for the tracker part, should be tracking various things." So each figure keeps
+the letterform pose from the round above and gains ONE prop: a laptop, a pen
+and the line it just wrote, a bulb, an open book, a list, a broom, a case, a
+hammer, a parcel, a mug, a cog and a paint roller across Productivity; a
+magnifying glass, binoculars, a map pin, a stopwatch, a rising line, a ticked
+box and a calendar across Tracker.
+
+- **Keyed by POSITION, not by letter.** r, c and t each appear in both words,
+  and what a letter is doing is decided by the word it is in, so `LETTER_PROPS`
+  is a nineteen-entry array read by the same index that drives the stagger.
+- **Each prop goes where that letterform leaves the box EMPTY**, so it never
+  crosses a stroke the reading depends on -- the P's laptop sits right of its
+  bowl, the t's case hangs off the end of its arm, the k's chart runs off its
+  raised hand.
+- **And it is thinner AND dimmer than the glyph** (1.05 against 1.7, at 0.7).
+  At full weight the nineteen props formed a second row of marks above the
+  letters and the name stopped reading, which is the one thing this drawing
+  exists to protect. Checked by looking at the hovered title at 2.4x.
+
+### The pills were mostly air
+
+15px marks in a 31px pill (real-user report, with the row screenshotted).
+**19px, with 2px less padding on every side**, so the pill does not move: 15+20
+and 19+16 are both 35 of ink and padding, 15+14 and 19+10 both 29. Applied to
+the two control ROWS (`.who`, `.topbar-controls`) rather than to `.icon-btn`,
+which is a text pill in three dozen other places where 8px would be tight, and
+the three responsive padding rules each lost their 2px so the row still
+collapses the way it did. Measured after: button 37x31, mark 19x19.
+
+### A cloud that does not hide anything is a cloud-shaped hole
+
+The sun's two clouds were outlines, so they drifted THROUGH the disc rather
+than in front of it (real-user request: "fill them, so they cover parts of the
+sun"). The fill is the button's own hovered background, mixed rather than
+guessed: `.icon-btn:hover` REPLACES the background with a translucent grey, so
+what is really behind the mark is 16% of that grey over the page's paper, and
+`color-mix(in srgb, var(--paper) 84%, rgb(127 127 127))` is exactly that in
+both themes. They only ever show on hover, so that is the only state the fill
+has to match. The moon's cloud uses the same rule.
+
+### The moon is a BOWL, and the angler has a whole beat
+
+"The guy who fishes on the moon should fly in from a sky, sit down on the
+bottom edge of the moon (btw you need to make the moon more oblong for this),
+does some fishing in a pond ... then he jumps in, the water disappears, and the
+cloud flies back in with him on."
+
+- **Same crescent, turned and stretched about its own centre** (`rotate(-40)
+  scale(.8 1.1)`), which turns the notch into a bowl with a lip to sit on. Its
+  stroke is 2.15 rather than 2 to pay for the scale: `vector-effect:
+  non-scaling-stroke` was tried first and is wrong here, because it pins the
+  stroke to SCREEN pixels and this icon is drawn at more than one size.
+- **The seat and the waterline are MEASURED off the crescent, not guessed.**
+  Sampling the inner arc in a browser puts the bowl's floor at (13.8, 10.7) and
+  its left lip at (10.1, 9.8), so the water lies at y 9.6 and he stands at
+  x 10.4 -- far enough right that his feet clear the moon's own arm, which they
+  did not at first.
+- **The cloud and the guy are keyed at the SAME percentages**, and his track is
+  simply the cloud's plus (1.8, -2.6), which is where somebody standing on it
+  is. That is what keeps them in register while he is aboard without nesting
+  one inside the other, and it means the loop is seamless: he arrives from the
+  left, is dropped, fishes, jumps in, and the cloud comes back from the right
+  and carries him out the left again, which is where the loop began.
+- **He is teleported while invisible.** Between jumping in and being picked up
+  he is at opacity 0, and that is the window the keyframes use to move him from
+  the pond to off-screen right, so nothing is ever seen to jump.
+- **The rod's line pivots on `transform-box: fill-box`**, not a viewBox
+  coordinate: the whole figure is translated all over the icon, and a fixed
+  point in the viewBox stops being the rod tip the moment he moves.
+- **The water waves.** Two straight rules under a swinging line read as a
+  bench, which is exactly how the first pass looked.
+
+### The linked circle MORPHS
+
+"The linked circle looks stupid. I wanted them to properly morph, not just show
+a different image animated." It was two drawings cross-faded, and that can
+never read as a morph: nothing on screen travels between the poses.
+
+It is ONE drawing at two sets of coordinates now -- two people standing, who
+shrink and walk into a ring while a third grows out of the middle and takes
+their hands. The morph is CSS on the geometry itself: `cx`/`cy`/`r` on a head
+and `d` on a torso, its legs and its arms.
+
+- **Every part has to keep its COMMAND LIST across both poses** or the browser
+  stops interpolating and cuts. So a torso is always M+V, legs are always
+  M+l+M+l, and an arm is always M+Q -- which is why the idle figures have one
+  curved arm each rather than the straight ones that would be natural.
+- **Both poses are written in the stylesheet**, not left on the attribute for
+  one end, so there is nothing to interpolate FROM that the sheet cannot see.
+- **The ring only starts turning once the morph has landed** (a 0.4s animation
+  delay), or it rotates while it is still forming.
+- Verified in the browser at 6x: the idle mark reads as two people, the hover
+  lands on three in a ring, and the rotation follows.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
