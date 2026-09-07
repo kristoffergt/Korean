@@ -272,24 +272,34 @@ body:not(.no-anim-header) #friendsBtn:hover .fr-armB{
 @keyframes sun-turn{to{transform:rotate(360deg);}}
 #darkToggleApp:hover .sun-core, #darkTogglePin:hover .sun-core,
 #darkToggleAuth:hover .sun-core{animation:sun-turn 9s linear infinite;}
+/* And each ray glints, a beat behind the one before it, so the light runs
+   round the sun instead of the whole mark pulsing. Scaled about the sun's own
+   centre, which lengthens the ray and pushes its tip out -- which is what a
+   ray catching the light looks like, where a plain opacity fade is a lamp on
+   a dimmer. */
+.sun-ray{transform-box:view-box;transform-origin:12px 12px;}
+@keyframes sun-shimmer{
+  0%,100%{transform:scale(1);opacity:.5;}
+  50%{transform:scale(1.13);opacity:1;}}
+#darkToggleApp:hover .sun-ray, #darkTogglePin:hover .sun-ray,
+#darkToggleAuth:hover .sun-ray{
+  animation:sun-shimmer 1.7s ease-in-out infinite;
+  animation-delay:calc(var(--r,0) * -0.17s);}
 /* The clouds cross the whole face and fade at both edges, so they arrive and
    leave rather than popping on over the disc. */
 @keyframes cloud-drift{
   0%{transform:translateX(-16px);opacity:0;}
   18%{opacity:1;} 82%{opacity:1;}
   100%{transform:translateX(20px);opacity:0;}}
-/* FILLED, so a cloud passing the sun actually hides the part of it behind
-   (real-user request: "fill them, so they cover parts of the sun"). The fill
-   is the button's own hovered background rather than a token: this only ever
-   shows on hover, and .icon-btn:hover REPLACES the background with a
-   translucent grey, so what is really behind the mark is 16% of that grey
-   over the page's paper. Mixed rather than guessed, so it holds in both
-   themes -- and taken a shade PAST it (72 rather than 84), so the cloud has a
-   body of its own. At the exact backdrop colour it occludes perfectly well
-   and still reads as the sun being erased rather than as a cloud in front of
-   it, which is what "the clouds are not filled" was about. */
-.sun-cloud{transform-box:view-box;
-  fill:color-mix(in srgb, var(--paper) 84%, rgb(127 127 127));}
+/* SOLID, in the mark's own ink -- white in the dark theme, near-black in the
+   light one (real-user request: "they should simply be all white"). Two
+   earlier passes filled them with the colour BEHIND the icon instead, on the
+   reasoning that a cloud should hide the sun without becoming a blob; both
+   read as the sun being rubbed out rather than as a cloud in front of it,
+   because a shape the colour of its own background is not a shape.
+   currentColor makes it a silhouette, which is what a cloud crossing a bright
+   sun actually is. */
+.sun-cloud{transform-box:view-box;fill:currentColor;}
 #darkToggleApp:hover .sun-cloud, #darkTogglePin:hover .sun-cloud,
 #darkToggleAuth:hover .sun-cloud{
   animation:cloud-drift 4.2s linear infinite;
@@ -302,9 +312,8 @@ body:not(.no-anim-header) #friendsBtn:hover .fr-armB{
    simply the cloud's plus (2, -3.4), which is where somebody standing on it
    is. Everything is a translate, so none of it costs a layout. */
 .moon-cloud, .moon-guy, .moon-water, .moon-tackle{transform-box:view-box;}
-/* Filled for the same reason the sun's clouds are: a cloud that does not hide
-   the moon behind it is a cloud-shaped hole. */
-.moon-cloud{fill:color-mix(in srgb, var(--paper) 84%, rgb(127 127 127));}
+/* Solid, in the mark's own ink, for the same reason the sun's clouds are. */
+.moon-cloud{fill:currentColor;}
 @keyframes moon-cloud-run{
   0%{transform:translate(-14px,7px);}
   14%,20%{transform:translate(3.2px,10.4px);}
@@ -399,16 +408,40 @@ body:not(.no-anim-title) #appTitleHome:hover .tl-char{color:var(--on);}
   transition:transform 0.65s linear;}
 body:not(.no-anim-title) #appTitleHome:hover .tl-meter{opacity:1;}
 body:not(.no-anim-title) #appTitleHome:hover .tl-meter > i{transform:scaleX(1);}
-/* The check lands when the bar gets there, and is placed OUTSIDE the track's
-   own width so a title that grows a mark does not reflow the row. */
-.tl-done{position:absolute;left:100%;top:50%;width:0.62em;height:0.62em;
-  margin-left:0.2em;color:var(--on);pointer-events:none;
-  opacity:0;transform:translateY(-50%) scale(0.4);
-  transition:opacity 0.18s ease, transform 0.32s cubic-bezier(0.34,1.5,0.64,1);}
+/* Something RUNS the length of the title while the letters tick over, hopping
+   as it goes, and the check is what it draws when it gets to the end
+   (real-user request). It travels on `left`, because the distance it has to
+   cover is the track's own width and a transform percentage is a share of the
+   element's own size, not its parent's. One element, only while hovered, so
+   the layout it touches is its own. */
+.tl-runner{position:absolute;left:0;top:-0.12em;width:0.3em;height:0.3em;
+  margin-left:-0.15em;opacity:0;pointer-events:none;}
+.tl-runner > i{display:block;width:100%;height:100%;border-radius:50%;
+  background:var(--on);}
+@keyframes tl-run{
+  0%{left:0;opacity:1;} 92%{opacity:1;} 100%{left:100%;opacity:0;}}
+/* The hop is on the INNER element: the run owns `left` and the bounce owns
+   `transform`, and one element cannot animate one property from two places. */
+@keyframes tl-hop{
+  0%,100%{transform:translateY(0);} 50%{transform:translateY(-0.5em);}}
+body:not(.no-anim-title) #appTitleHome:hover .tl-runner{
+  animation:tl-run 0.66s linear forwards;}
+body:not(.no-anim-title) #appTitleHome:hover .tl-runner > i{
+  animation:tl-hop 0.11s ease-in-out infinite;}
+/* The check is DRAWN, not faded in -- the runner arrives and the stroke
+   follows it. Placed OUTSIDE the track's own width so a title that grows a
+   mark does not reflow the row, and sized against the cap height rather than
+   at the token size, which read as a footnote beside a 22px title. */
+.tl-done{position:absolute;left:100%;top:50%;width:0.92em;height:0.92em;
+  margin-left:0.16em;color:var(--on);pointer-events:none;
+  opacity:0;transform:translateY(-50%);}
 .tl-done svg{width:100%;height:100%;display:block;}
+.tl-done path{stroke-dasharray:24;stroke-dashoffset:24;}
+@keyframes tl-draw{to{stroke-dashoffset:0;}}
 body:not(.no-anim-title) #appTitleHome:hover .tl-done{
-  opacity:1;transform:translateY(-50%) scale(1);
-  transition-delay:0.6s;}
+  opacity:1;transition:opacity 0.1s ease 0.62s;}
+body:not(.no-anim-title) #appTitleHome:hover .tl-done path{
+  animation:tl-draw 0.3s ease-out 0.64s forwards;}
 
 /* The animation switches. Each one is a body class that turns its own group
    off and nothing else (real-user request: "can turn animations off in
@@ -423,10 +456,13 @@ body.no-anim-header #friendsBtn:hover .fr-spin,
 body.no-anim-header #whoNameWrap:hover #whoName,
 body.no-anim-header .theme-icon-in,
 body.no-anim-header .sun-core, body.no-anim-header .sun-cloud,
+body.no-anim-header .sun-ray,
 body.no-anim-header .moon-line, body.no-anim-header .moon-cloud,
 body.no-anim-header .moon-guy, body.no-anim-header .moon-water,
 body.no-anim-header .moon-tackle, body.no-anim-header .moon-star{animation:none;}
 body.no-anim-header .sun-clouds, body.no-anim-header .moon-angler{opacity:0;}
+body.no-anim-title .tl-runner{display:none;}
+body.no-anim-title .tl-done path{stroke-dashoffset:0;}
 body.no-anim-header .fr-head, body.no-anim-header .fr-body,
 body.no-anim-header .fr-leg, body.no-anim-header .fr-arm,
 body.no-anim-header .friends-morph{transition:none;}
@@ -450,10 +486,15 @@ body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transfo
   .tl-char, .tl-meter, .tl-meter > i, .tl-done{transition:none;}
   #appTitleHome:hover .tl-char{transition-delay:0s;}
   #appTitleHome:hover .tl-done{transition-delay:0s;}
+  /* Nothing runs and nothing draws: the check is simply there. */
+  #appTitleHome:hover .tl-runner, #appTitleHome:hover .tl-runner > i{animation:none;}
+  .tl-runner{display:none;}
+  .tl-done path{stroke-dashoffset:0;}
+  #appTitleHome:hover .tl-done path{animation:none;}
   .lang-switch:hover .globe-mer, #accountSettingsBtn:hover .ui-icon,
   #notifBellBtn:hover svg, #notifBellBtn:hover::before, #notifBellBtn:hover::after,
   #friendsBtn:hover .fr-spin, #whoNameWrap:hover #whoName, .theme-icon-in,
-  .sun-core, .sun-cloud, .moon-line, .moon-cloud, .moon-guy,
+  .sun-core, .sun-cloud, .sun-ray, .moon-line, .moon-cloud, .moon-guy,
   .moon-water, .moon-tackle, .moon-star,
   .lang-menu{animation:none;}
 }
@@ -10516,6 +10557,11 @@ function buildTitleMorph(){
   meter.setAttribute('aria-hidden', 'true');
   meter.innerHTML = '<i></i>';
   track.appendChild(meter);
+  const runner = document.createElement('span');
+  runner.className = 'tl-runner';
+  runner.setAttribute('aria-hidden', 'true');
+  runner.innerHTML = '<i></i>';
+  track.appendChild(runner);
   const done = document.createElement('span');
   done.className = 'tl-done';
   done.setAttribute('aria-hidden', 'true');
@@ -10542,8 +10588,19 @@ function themeIconHtml(isDark){
     // Sun: the rays turn, and two clouds cross the face. The DISC does not
     // turn -- a circle rotating is a circle, so the rays are what carries it.
     return open
+      // The eight rays are eight PATHS rather than one, so each can glint on
+      // its own beat -- ordered round the circle from the top, which is what
+      // makes the shimmer travel rather than blink (real-user request: "you
+      // can make the sun rays shimmer a bit too, in a sunny way").
       + '<g class="sun-core"><circle cx="12" cy="12" r="4"></circle>'
-      + '<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></g>'
+      + '<path class="sun-ray" style="--r:0" d="M12 2v2"></path>'
+      + '<path class="sun-ray" style="--r:1" d="M17.7 6.3l1.4-1.4"></path>'
+      + '<path class="sun-ray" style="--r:2" d="M20 12h2"></path>'
+      + '<path class="sun-ray" style="--r:3" d="M17.7 17.7l1.4 1.4"></path>'
+      + '<path class="sun-ray" style="--r:4" d="M12 20v2"></path>'
+      + '<path class="sun-ray" style="--r:5" d="M4.9 19.1l1.4-1.4"></path>'
+      + '<path class="sun-ray" style="--r:6" d="M2 12h2"></path>'
+      + '<path class="sun-ray" style="--r:7" d="M4.9 4.9l1.4 1.4"></path></g>'
       + '<g class="sun-clouds" stroke-width="1.6">'
       + '<path class="sun-cloud" style="--c:0" d="M3 14h5.4a1.7 1.7 0 0 0 0-3.4 2.6 2.6 0 0 0-4.7-.7A2 2 0 0 0 3 14z"></path>'
       + '<path class="sun-cloud" style="--c:1" d="M5 18.6h4a1.3 1.3 0 0 0 0-2.6 2 2 0 0 0-3.6-.5A1.5 1.5 0 0 0 5 18.6z"></path>'

@@ -1533,6 +1533,41 @@ gone.
   they read as a face: two eyes over a wide mouth. At 3.6 and 2.4, offset
   further right, they read as one person in front of another.
 
+## A cloud is a silhouette, and something runs the title (8 Sep, fifth pass)
+
+### "They should simply be all white"
+
+Two passes filled the sun's clouds with the colour BEHIND the icon, reasoning
+that a cloud should hide the sun without becoming a blob. Both read as the sun
+being rubbed out rather than as a cloud in front of it, because **a shape the
+colour of its own background is not a shape**. `fill: currentColor` -- white in
+the dark theme, near-black in the light one -- makes it a silhouette, which is
+what a cloud crossing a bright sun actually is. The moon's cloud with it.
+
+### The rays glint one at a time
+
+The eight rays were ONE path, so the only thing they could do together was
+pulse. They are eight paths now, ordered round the circle from the top and
+carrying their own index, so a 0.17s stagger sends the light travelling round
+the sun instead of the whole mark breathing. **Scaled about the sun's own
+centre**, which lengthens each ray and pushes its tip out; a plain opacity fade
+is a lamp on a dimmer, not a glint.
+
+### Something runs the length of the title and draws the check
+
+The check was `0.62em` and read as a footnote beside a 22px title. It is
+`0.92em` now, and it is DRAWN rather than faded in: a dot hops along above the
+letters while they tick over, and the stroke follows it in as it lands.
+
+- **The runner travels on `left`, not on a transform.** The distance it has to
+  cover is the TRACK's width, and a transform percentage is a share of the
+  element's own size. One element, only while hovered.
+- **The hop is on an inner element.** The run owns `left` and the bounce owns
+  `transform`, and one element cannot animate one property from two places.
+- **The check draws with `stroke-dasharray`/`dashoffset`** (24 units, which is
+  that path's own length), starting at 0.64s -- the same 0.65s the letters and
+  the meter take, so all three finish together. Those numbers move as a set.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
