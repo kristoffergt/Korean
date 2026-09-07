@@ -112,10 +112,18 @@ html,body{margin:0;padding:0;}
 body{
   background:var(--paper);color:var(--ink);font-family:'Inter','Noto Sans KR',sans-serif;
   padding:calc(32px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
-  min-height:100vh;transition:background 0.2s,color 0.2s;
+  min-height:100vh;
+  /* No transition here on purpose: the only thing that ever changed body's
+     background was the theme, and easing it is exactly what made the page
+     switch in pieces. See applyDarkMode. */
 }
 .wrap{max-width:1400px;margin:0 auto;}
 .hidden{display:none !important;}
+/* Everything, including pseudo-elements: a pill's hover transition is on
+   background-color, which is precisely what the theme swaps. */
+body.theme-swapping, body.theme-swapping *,
+body.theme-swapping *::before, body.theme-swapping *::after{
+  transition:none !important;}
 .topbar-controls{display:flex;gap:8px;align-items:center;}
 /* Vertical padding matches .icon-btn's exactly (7px) -- these two sit
    side by side as pills in the same row, and a mismatched pair of padding
@@ -223,29 +231,30 @@ body{
 .fr-armT{d:path("M8.6 13Q13.1 13 17.7 13");}
 .fr-armB{d:path("M8.6 13Q13.1 13 17.7 13");}
 body:not(.no-anim-header) #friendsBtn:hover .friends-morph{stroke-width:1.7;}
-body:not(.no-anim-header) #friendsBtn:hover .fr-headL{cx:6.3;cy:8.4;r:2.2;}
+body:not(.no-anim-header) #friendsBtn:hover .fr-headL{cx:7.4;cy:7.6;r:2.9;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-bodyL{
-  d:path("M6.3 10.6C6.3 12.2 6.3 13.8 6.3 15.4C5.8 16.6 5.2 17.8 4.7 19");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-headR{cx:17.7;cy:8.4;r:2.2;}
+  d:path("M7.4 10.5C7.4 12.4 7.4 14.3 7.4 16.2C6.8 17.5 6.2 18.8 5.6 20.1");}
+body:not(.no-anim-header) #friendsBtn:hover .fr-headR{cx:16.6;cy:7.6;r:2.9;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-bodyR{
-  d:path("M17.7 10.6C17.7 12.2 17.7 13.8 17.7 15.4C18.2 16.6 18.8 17.8 19.3 19");}
+  d:path("M16.6 10.5C16.6 12.4 16.6 14.3 16.6 16.2C17.2 17.5 17.8 18.8 18.4 20.1");}
 body:not(.no-anim-header) #friendsBtn:hover .fr-legL{
-  d:path("M6.3 15.4C6.8 16.6 7.4 17.8 7.9 19");opacity:1;}
+  d:path("M7.4 16.2C8 17.5 8.6 18.8 9.2 20.1");opacity:1;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-legR{
-  d:path("M17.7 15.4C17.2 16.6 16.6 17.8 16.1 19");opacity:1;}
+  d:path("M16.6 16.2C16 17.5 15.4 18.8 14.8 20.1");opacity:1;}
 /* The two arms are the same span curved opposite ways, so together they close
    a circle between the pair -- which is the whole point of the mark. */
 body:not(.no-anim-header) #friendsBtn:hover .fr-armT{
-  d:path("M6.3 11.7Q12 7.9 17.7 11.7");opacity:1;}
+  d:path("M7.4 11.6Q12 8.2 16.6 11.6");opacity:1;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-armB{
-  d:path("M6.3 11.7Q12 15.5 17.7 11.7");opacity:1;}
+  d:path("M7.4 11.6Q12 15 16.6 11.6");opacity:1;}
 /* The arms take a beat longer, so the two of them are seen to stand up and
    only then reach for each other. */
 .fr-arm{transition-delay:.12s;}
-/* Turning together, slowly, and only once the morph has landed. */
+/* And it does NOT turn. Three people in a ring read as a ring seen from
+   above, so rotating them was the ring turning; TWO holding a circle between
+   them are seen from the front, and rotating that is two people falling over.
+   The group is kept because the rest of the sheet names it. */
 .fr-spin{transform-box:view-box;transform-origin:12px 12.4px;}
-@keyframes ring-walk{to{transform:rotate(360deg);}}
-#friendsBtn:hover .fr-spin{animation:ring-walk 9s linear infinite .5s;}
 
 /* The name is the one thing here that is a WORD, so it jiggles rather than
    turning -- and the jiggle carries its own scale, because the shared
@@ -305,15 +314,18 @@ body:not(.no-anim-header) #friendsBtn:hover .fr-armB{
   animation:cloud-drift 4.2s linear infinite;
   animation-delay:calc(var(--c,0) * -2.1s);}
 /* The angler is a whole beat rather than a pose (real-user request): he flies
-   in on a cloud, steps off onto the bowl's lip, fishes while the water moves
-   under him, jumps in, the water goes, and the cloud comes back for him.
+   in on a cloud, hops down to the crescent's bottom tip, fishes into the
+   ripples below it, jumps in, the rings go, and the cloud comes back for him.
    ONE loop drives it, and the cloud and the guy are keyed at the same
    percentages so they stay in register while he is aboard -- his track is
-   simply the cloud's plus (2, -3.4), which is where somebody standing on it
-   is. Everything is a translate, so none of it costs a layout. */
+   simply the cloud's plus (2.2, -4.8), which puts his feet on the cloud's own
+   top edge rather than inside it, where he vanished into the outline.
+   Everything is a translate, so none of it costs a layout. */
 .moon-cloud, .moon-guy, .moon-water, .moon-tackle{transform-box:view-box;}
-/* Solid, in the mark's own ink, for the same reason the sun's clouds are. */
-.moon-cloud{fill:currentColor;}
+/* NOT filled, unlike the sun's (real-user correction: "only for sun ones,
+   they should be full white"). A solid cloud is right when nothing is on it;
+   this one is carrying somebody, and filled it swallowed him whole. */
+.moon-cloud{fill:none;}
 @keyframes moon-cloud-run{
   0%{transform:translate(-14px,7px);}
   14%,20%{transform:translate(3.2px,10.4px);}
@@ -321,16 +333,16 @@ body:not(.no-anim-header) #friendsBtn:hover .fr-armB{
   88%{transform:translate(3.2px,10.4px);}
   100%{transform:translate(-14px,7px);}}
 @keyframes moon-guy-run{
-  0%{transform:translate(-12.2px,4.4px);opacity:1;}
-  14%{transform:translate(5px,7.8px);}
+  0%{transform:translate(-11.8px,2.2px);opacity:1;}
+  14%{transform:translate(5.4px,5.6px);}
   20%,60%{transform:translate(7.6px,15.4px);}
   66%{transform:translate(6.4px,14.2px);}
   70%{transform:translate(4.6px,18.4px);opacity:1;}
   71%{transform:translate(4.6px,18.4px);opacity:0;}
-  75%{transform:translate(27.8px,3.4px);opacity:0;}
-  76%{transform:translate(27.8px,3.4px);opacity:1;}
-  88%{transform:translate(5px,7.8px);opacity:1;}
-  100%{transform:translate(-12.2px,4.4px);opacity:1;}}
+  75%{transform:translate(28.2px,1.2px);opacity:0;}
+  76%{transform:translate(28.2px,1.2px);opacity:1;}
+  88%{transform:translate(5.4px,5.6px);opacity:1;}
+  100%{transform:translate(-11.8px,2.2px);opacity:1;}}
 /* The rod only exists while he is fishing; before that he is holding on to a
    cloud and afterwards he is in the water. */
 @keyframes moon-tackle-show{
@@ -452,7 +464,6 @@ body.no-anim-header #accountSettingsBtn:hover .ui-icon,
 body.no-anim-header #notifBellBtn:hover svg,
 body.no-anim-header #notifBellBtn:hover::before,
 body.no-anim-header #notifBellBtn:hover::after,
-body.no-anim-header #friendsBtn:hover .fr-spin,
 body.no-anim-header #whoNameWrap:hover #whoName,
 body.no-anim-header .theme-icon-in,
 body.no-anim-header .sun-core, body.no-anim-header .sun-cloud,
@@ -493,7 +504,7 @@ body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transfo
   #appTitleHome:hover .tl-done path{animation:none;}
   .lang-switch:hover .globe-mer, #accountSettingsBtn:hover .ui-icon,
   #notifBellBtn:hover svg, #notifBellBtn:hover::before, #notifBellBtn:hover::after,
-  #friendsBtn:hover .fr-spin, #whoNameWrap:hover #whoName, .theme-icon-in,
+  #whoNameWrap:hover #whoName, .theme-icon-in,
   .sun-core, .sun-cloud, .sun-ray, .moon-line, .moon-cloud, .moon-guy,
   .moon-water, .moon-tackle, .moon-star,
   .lang-menu{animation:none;}
@@ -10641,7 +10652,24 @@ function themeIconHtml(isDark){
     + '</g></svg>';
 }
 let themeIconAnimates = false;
+// The theme is a swap of custom properties, and every surface that paints one
+// of them changes at whatever rate ITS OWN transition says -- so the page came
+// apart while it switched: body eased its background over 0.2s, the fixed top
+// bar has no transition and snapped, and the header's pills eased over their
+// own 0.15s hover transition (real-user report, with a recording: "the
+// dark/light mode doesnt apply simultaneously and makes it look funky").
+// Giving the top bar a matching transition would only fix the two surfaces
+// anybody happened to notice; there are dozens more, and each would have to be
+// found. So NOTHING transitions while the swap happens: one class kills every
+// transition on the page, the tokens change under it, and it comes off two
+// frames later. Animations are untouched, which is what leaves the icon's own
+// spin alone.
 function applyDarkMode(isDark){
+  document.body.classList.add('theme-swapping');
+  // Read a layout property so the class is in effect BEFORE the tokens move;
+  // without it both changes land in one style recalculation and the browser
+  // is free to transition anyway.
+  void document.body.offsetWidth;
   document.body.classList.toggle('dark', isDark);
   localStorage.setItem('trackerDark', isDark ? '1' : '0');
   const icon = themeIconHtml(isDark);
@@ -10654,6 +10682,14 @@ function applyDarkMode(isDark){
     // glitch rather than as a response to a press.
     if(themeIconAnimates) btn.firstElementChild?.classList.add('theme-icon-in');
   });
+  // Two frames: one for the new colours to be painted, one more before
+  // transitions are allowed again, or the removal itself can start one. The
+  // timer is a backstop rather than a duplicate: a tab in the background gets
+  // no animation frames at all, and a page that came back with every
+  // transition still switched off would be a strange thing to leave behind.
+  const done = ()=> document.body.classList.remove('theme-swapping');
+  requestAnimationFrame(()=>requestAnimationFrame(done));
+  setTimeout(done, 120);
 }
 themeIconAnimates = true;
 document.getElementById('darkToggleAuth').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));

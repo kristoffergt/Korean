@@ -1568,6 +1568,65 @@ letters while they tick over, and the stroke follows it in as it lands.
   that path's own length), starting at 0.64s -- the same 0.65s the letters and
   the meter take, so all three finish together. Those numbers move as a set.
 
+## The theme lands in ONE frame, and the pair stay where they are (8 Sep, sixth pass)
+
+### A theme swap is not one repaint, it is however many transitions the page has
+
+Reported with a recording: "since the two parts of the site are kinda split,
+the dark/light mode doesnt apply simultaneously and makes it look funky."
+
+The theme is a swap of custom properties, and every surface that paints one
+changes at whatever rate ITS OWN transition says. So the page came apart while
+it switched:
+
+| | |
+|---|---|
+| `body` | eased its background over **0.2s** |
+| `#topBar` | fixed, paints its own `--paper`, **no transition** -- snapped |
+| the header's pills | eased over their own **0.15s** hover transition |
+
+**Giving the top bar a matching transition fixes the two surfaces somebody
+happened to notice and nothing else.** There are dozens more -- every card,
+input, chip and sheet that paints a token -- and each would have to be found
+and kept in step for good. So **nothing transitions while the swap happens**:
+`body.theme-swapping` sets `transition:none !important` on every element and
+both pseudo-elements, the tokens change under it, and it comes off two frames
+later. Measured during a real toggle: body, `#topBar` and the theme button all
+report `transition-property: none`, and 0.7s later the button is back to its
+own six.
+
+- **A layout property is read between adding the class and toggling `dark`.**
+  Without that forced reflow both changes land in one style recalculation and
+  the browser is free to transition anyway.
+- **Animations are untouched**, which is what leaves the icon's own spin alone.
+- **A timer backs up the two `requestAnimationFrame`s.** A backgrounded tab
+  gets no frames at all, and a page that came back with every transition still
+  switched off would be a strange thing to leave behind.
+- `body`'s own `transition:background,color` is gone. The only thing that ever
+  changed that background was the theme, so easing it bought nothing and was
+  half the fault.
+
+### Filled is right for the sun and wrong for the moon
+
+The moon's cloud is carrying somebody, and solid it swallowed him whole
+(real-user correction: "only for sun ones, they should be full white"). It is
+an outline again -- and **he rides ON it rather than in it**: his offset from
+the cloud went to (2.2, -4.8), which puts his feet on the cloud's own top edge
+rather than 1.1 units down inside its shape.
+
+### The pair hold hands where they already stand
+
+"Why cant you just animate these where the guy in the back comes to the right
+and the guy in the front is on the left and then they join together in a
+circle? so you dont have to shift the entire icon image."
+
+Each figure now stays in the HALF of the icon its own bust already occupied --
+the front one steps left, the one behind comes out to the right -- so the mark
+never picks itself up and moves. **And it does not turn.** Three people in a
+ring read as a ring seen from above, so rotating them was the ring turning;
+two holding a circle between them are seen from the front, and rotating that
+is two people falling over.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
