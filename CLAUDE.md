@@ -936,6 +936,59 @@ so a fixed one needs the max-width and body padding replicated, and the resting
 offset written per scroll), not a tweak, and it should not be attempted without
 a way to test a real scroll.
 
+## The condensed header is back, because the bar left the document (7 Sep)
+
+"I want the non-full size AND scrolling behaving. You can do it." The entry
+above ends by describing this restructure as the way to get the condense back;
+this is that work, so its last paragraph is now history rather than a plan.
+
+**A `position: fixed` bar's height cannot reach the document, so it may
+condense as freely as it likes.** That is the whole change, and it is why this
+one is checkable where the three spacer versions were not: they compensated for
+a height change the reader could still be scrolling through, and being one
+frame late was invisible until it locked. Here there is no height change in the
+document to be late about.
+
+- **`#topBar` is `position: fixed`, full-bleed, and `#topBarSpacer` holds its
+  RESTING height for good** -- written once per measure, never on a scroll. The
+  page below sits at the same offset condensed or not.
+- **`top` is a `max()` of the pinned offset and the resting one**, and JS writes
+  only `--topbar-rest` (the resting document offset less the scroll). The pinned
+  branch carries an `env(safe-area-inset-top)`, which only the browser can
+  resolve, so it never enters the arithmetic -- it is read back once by pushing
+  the resting branch to `-99999px` and asking for the computed `top`.
+- **A scroll costs one custom property and nothing else.** No layout read, no
+  class write, and the stuck test is arithmetic against numbers measured off the
+  scroll path (`scrollY >= restTop - pinTop`), so the bar's own height can never
+  feed back into the decision that changes the bar's height.
+- **The bar sits UNDER the guest banner, whose height is read rather than
+  assumed** -- it is sticky at the top and comes first in the document, and it
+  wraps to two lines on a phone (31px desktop, 47px at 375).
+- **The ResizeObserver watches `.topbar-inner` and the banner, never `#topBar`.**
+  Observing the bar means condensing it calls the thing that measures it.
+
+**The column is reproduced with padding on the BAR and `max-width` on the
+inner, not both on the inner.** Both-on-the-inner is right until the max-width
+actually binds: past 1440px the page's column and the bar's are centred as
+different-sized boxes and the bar's content sits 20px in from everything else.
+Measured with the max-width forced to bind: content runs 340..940 for both.
+
+### What was measured, and what still cannot be
+
+The pane still refuses a real wheel, so the rule from the entry above stands.
+What made this testable anyway is that scroll anchoring corrects a document
+whose geometry moved, and that can be checked without a wheel:
+
+- **Toggling `.stuck` by hand**: document height 724 both ways, a visible card
+  at the same document offset both ways, spacer unchanged, bar 175 -> 95.
+- **A 50-step crawl at 3px a step straight through the threshold** (the exact
+  rate and band that used to lock): every step advanced exactly 3px, **zero
+  scroll corrections**, the document height one value throughout, and the bar's
+  top matched `max(pinTop, restTop - scrollY)` to the pixel on every step.
+- Both at 1280 and at 375, and with the preference off (`body.topbar-loose`),
+  where the bar goes back to `position: static`, drops `.stuck`, and the spacer
+  and `--topbar-h` collapse to 0.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
