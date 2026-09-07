@@ -385,6 +385,19 @@ body.topbar-loose #topBar{position:static;}
    nothing for anchoring to correct. Written in the same frame as the class,
    so there is not even one frame of shift. */
 #topBarSpacer{height:0;flex:none;pointer-events:none;}
+/* Nothing INSIDE the bar may be chosen as the scroll anchor. The tabs live in
+   it and move up by the whole condense when it sticks, so the browser holding
+   THEM still means yanking the page by exactly that. The anchor belongs in the
+   page content, which the spacer keeps genuinely still. */
+#topBar, #topBarSpacer{overflow-anchor:none;}
+/* And the condense is ATOMIC. Every property that changes the bar's HEIGHT
+   lands in the same layout pass as the spacer, so the two cannot disagree even
+   for one frame; a frame of disagreement is a frame the browser will correct
+   the scroll for. flex-direction already snapped, so easing the rest only made
+   the header half-glide while the page was held still around it. Opacity and
+   the shadow still ease, since neither is layout. */
+#topBar, #topBar header, #topBar header *, #topBar .sub, #topBar h1{
+  transition-property:opacity,background-color,color,border-color,box-shadow,transform;}
 body.topbar-loose #topBarSpacer{height:0 !important;}
 /* So scrollIntoView and any anchor jump clear the bar instead of landing
    underneath it. */
@@ -14043,20 +14056,19 @@ let topBarFullH = 0;
 function measureTopBarFullH(){
   const bar = document.getElementById('topBar');
   if(!bar || !stickyTopBarEnabled()) return;
-  if(!bar.classList.contains('stuck')){
-    const h = bar.getBoundingClientRect().height;
-    if(h > 0) topBarFullH = h;
-    return;
-  }
-  // Already condensed: read the full height and put it back inside one
-  // synchronous block, with the 0.18s ease suppressed so the measurement is
-  // the settled value and nothing is ever painted in between.
+  // The ease is suppressed WHICHEVER state the bar is in, because an
+  // unstuck bar can still be halfway through growing back and a height read
+  // then is not the full one. This is the only writer of topBarFullH: reading
+  // it off the live box on the way past is what poisoned it with the
+  // condensed height. Removing and restoring the class happens inside one
+  // synchronous block, so nothing is ever painted in between.
+  const was = bar.classList.contains('stuck');
   const kill = document.createElement('style');
   kill.textContent = '#topBar,#topBar *{transition:none !important;}';
   document.head.appendChild(kill);
   bar.classList.remove('stuck');
   const h = bar.getBoundingClientRect().height;
-  bar.classList.add('stuck');
+  bar.classList.toggle('stuck', was);
   void bar.offsetHeight;
   kill.remove();
   if(h > 0) topBarFullH = h;
@@ -14065,17 +14077,29 @@ function syncTopBarSpacer(){
   const bar = document.getElementById('topBar');
   const sp = document.getElementById('topBarSpacer');
   if(!bar || !sp) return;
-  if(!stickyTopBarEnabled()){ if(sp.style.height !== '0px') sp.style.height = '0px'; return; }
-  const h = bar.getBoundingClientRect().height;
-  if(!bar.classList.contains('stuck')){
-    // Not condensed, so the bar IS its full height: keep the reference current
-    // off the live box rather than trusting one reading taken at reveal, before
-    // the header had settled. Self-correcting, and it follows a window resize
-    // or a wrapped control row for free.
-    if(h > 0) topBarFullH = h;
+  if(!stickyTopBarEnabled() || !topBarFullH){
     if(sp.style.height !== '0px') sp.style.height = '0px';
     return;
   }
+  // ALWAYS the difference, with no branch on the stuck class. Zeroing it the
+  // moment the class came off was the lock: the class goes first and the bar's
+  // own height follows, so at that instant the bar is still condensed and
+  // "bar + spacer" fell from 298 to 89 in one frame -- a 209px collapse the
+  // browser then corrected by moving the scroll, which put the bar back over
+  // its threshold and condensed it again. Measured off a recording of it, the
+  // page advanced 4 to 8px a frame and was yanked back 58 every dozen frames,
+  // for a net of TWO pixels over 161 frames. Written this way the sum is the
+  // full height at every instant, in both directions, and a bar that really is
+  // at full height gives 0 on its own.
+  const h = bar.getBoundingClientRect().height;
+  // Safe to refresh off the live box ONLY because the condense is atomic: with
+  // no height transition there is no halfway state, so an unstuck reading is
+  // always the settled full height. It was this reading, taken while the bar
+  // was still easing back, that latched the CONDENSED height and broke the
+  // compensation; and dropping the refresh entirely instead left a stale
+  // reveal-time 358 against a settled 298. Atomic height is what makes it
+  // correct rather than merely convenient.
+  if(!bar.classList.contains('stuck') && h > 0) topBarFullH = h;
   const give = Math.max(0, Math.round(topBarFullH - h));
   if(sp.style.height !== give + 'px') sp.style.height = give + 'px';
 }
@@ -14094,6 +14118,12 @@ function updateTopBarStuck(){
     rect.top <= (parseFloat(getComputedStyle(bar).top) || 0) + 1;
   // Written only on the transition: this runs on every scroll event, and a
   // class write per frame would invalidate style for the whole subtree.
+  // Every scroll, not only on the transition: the full height is read off the
+  // live box while the bar is at rest, and at reveal it measured 358 against a
+  // settled 298. Waiting for a state change meant the FIRST condense was
+  // computed against that stale number and the page moved by the difference.
+  // One rect read and a guarded style write per scroll.
+  syncTopBarSpacer();
   if(next !== topBarStuck){
     topBarStuck = next;
     bar.classList.toggle('stuck', next);
@@ -14107,6 +14137,9 @@ function initStickyTopBar(){
   const bar = document.getElementById('topBar');
   if(!bar) return;
   window.addEventListener('scroll', updateTopBarStuck, { passive: true });
+  // Re-measure only while the bar is at rest and settled, which is the one
+  // moment the reading is trustworthy. Cheap: it runs on a timer, not a scroll.
+  setInterval(()=>{ if(!topBarStuck && !document.hidden) measureTopBarFullH(); }, 2000);
   window.addEventListener('resize', ()=>{
     measureTopBarFullH(); updateTopBarStuck(); syncTopBarSpacer(); syncTopBarMetrics();
   });
