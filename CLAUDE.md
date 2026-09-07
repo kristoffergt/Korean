@@ -872,6 +872,27 @@ as well), all checked after.
 The file input's own JS finds its label as the PREVIOUS SIBLING, so that pair
 has to stay adjacent through any rewrap.
 
+**Corrected the same day: there is no button at all now.** The field's own
+LABEL is the control (real-user request: "maybe we can just make syllabus
+clickable"), and it turned out it always had been -- every one of these labels
+already carried the `for`, so clicking the word "Syllabus" had opened the
+picker all along. It simply never looked pressable, so a second element was
+added to say so. It wears the field label's own type with a paperclip and a
+dotted underline instead.
+
+- **All seven pickers, not just the reported one** ("and other choose file
+  places"): the add-course syllabus, both job files, the public resume upload,
+  and the three inside edit-panel TEMPLATE STRINGS, which are the ones a grep
+  for markup misses.
+- **Two shapes, one class.** A `for=` label sits before its input; a template's
+  label WRAPS it. `syncFileChosenName` already handled both (closest, then
+  previous sibling), which is why the merge needed no JS change.
+- **Where a field had no label of its own** -- the public resume upload -- the
+  trigger keeps the words "Choose file". Everywhere else the duplicate plain
+  label was deleted, since the point is one element doing one job.
+- Removing the three button ids meant removing their `STATIC_MAP` entries too,
+  or `applyLanguage` writes into nothing.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql

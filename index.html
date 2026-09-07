@@ -1318,8 +1318,22 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
 .course-picker-empty{color:var(--ink-soft);font-size:13px;}
 footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
 .hidden-file-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;}
-label.file-upload-btn{display:inline-flex;align-items:center;align-self:flex-start;width:fit-content;height:40px;background:var(--ink);color:var(--paper);padding:0 14px;border-radius:6px;font-size:13px;font-weight:500;text-transform:none;letter-spacing:normal;cursor:pointer;}
-label.file-upload-btn:hover{background:var(--ink-hover);}
+/* The field's own LABEL is the control: click "Syllabus" and the picker
+   opens. It used to be a solid dark button reading "Choose file" stacked
+   under a label that already said Syllabus -- two elements doing one job,
+   and the button read as the form's primary action sitting right beside the
+   real one (real-user request: "maybe we can just make syllabus
+   clickable"). So it wears the field label's own type, with a paperclip and
+   a dotted underline to say it is pressable. The label already carried the
+   `for`, so it was clickable all along; it simply never looked it. */
+label.file-upload-btn{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;
+  width:fit-content;background:none;color:var(--ink-soft);padding:0;border-radius:0;
+  font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;
+  text-decoration:underline;text-decoration-style:dotted;text-decoration-color:var(--line);
+  text-underline-offset:3px;}
+label.file-upload-btn::before{content:'';width:12px;height:12px;flex:none;
+  background-color:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'/%3E%3C/svg%3E") center/contain no-repeat;}
+label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-color:currentColor;}
 .file-chosen-name{font-size:12.5px;color:var(--ink-soft);}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
 .modal-box{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:22px 24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;}
@@ -1954,10 +1968,10 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
              aligns to flex-end, so the extra height stuck up out of the row and
              read as a line of its own. -->
         <div class="field">
-          <label for="courseSyllabus" id="lblCourseSyllabus"></label>
+          <label class="file-upload-btn" for="courseSyllabus" id="lblCourseSyllabus"></label>
+          <input type="file" id="courseSyllabus" accept=".pdf,.doc,.docx" class="hidden-file-input">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <label class="file-upload-btn" for="courseSyllabus" id="chooseFileLabel"></label>
-            <input type="file" id="courseSyllabus" accept=".pdf,.doc,.docx" class="hidden-file-input">
+            <span class="file-chosen-name" id="courseSyllabusFileName"></span>
             <span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="courseSyllabusSlug" class="slug-preview" data-slug-from="title" data-ph-key="shortLinkAutoPlaceholder" style="width:170px;font-size:12px;padding:4px 7px;">
           </div>
         </div>
@@ -2207,20 +2221,14 @@ label.file-upload-btn:hover{background:var(--ink-hover);}
           <input type="text" id="jobLink">
         </div>
         <div class="field wide">
-          <label for="jobResumeFile" id="lblJobResume"></label>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <label class="file-upload-btn" for="jobResumeFile" id="chooseFileLabelJobResume"></label>
-            <span class="file-chosen-name" id="jobResumeFileName"></span>
-          </div>
+          <label class="file-upload-btn" for="jobResumeFile" id="lblJobResume"></label>
+          <span class="file-chosen-name" id="jobResumeFileName"></span>
           <input type="file" id="jobResumeFile" accept=".pdf,application/pdf" class="hidden-file-input">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="jobResumeSlug" class="slug-preview" data-slug-from="file" data-ph-key="shortLinkAutoPlaceholder" style="width:190px;font-size:12px;padding:4px 7px;"></div>
         </div>
         <div class="field wide">
-          <label for="jobCoverLetterFile" id="lblJobCoverLetter"></label>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <label class="file-upload-btn" for="jobCoverLetterFile" id="chooseFileLabelJobCoverLetter"></label>
-            <span class="file-chosen-name" id="jobCoverLetterFileName"></span>
-          </div>
+          <label class="file-upload-btn" for="jobCoverLetterFile" id="lblJobCoverLetter"></label>
+          <span class="file-chosen-name" id="jobCoverLetterFileName"></span>
           <input type="file" id="jobCoverLetterFile" accept=".pdf,application/pdf" class="hidden-file-input">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;"><span style="font-size:12px;color:var(--ink-soft);" class="short-link-prefix"></span><input type="text" id="jobCoverLetterSlug" class="slug-preview" data-slug-from="file" data-ph-key="shortLinkAutoPlaceholder" style="width:190px;font-size:12px;padding:4px 7px;"></div>
         </div>
@@ -9356,7 +9364,7 @@ const STATIC_MAP = {
   calModalDeleteBtn:'deleteEventBtn', calModalCloseBtn:'cancelBtn',
   deleteChoiceText:'deleteRecurringQ', deleteThisOnlyBtn:'thisOccurrenceOnly', deleteAllBtn:'allOccurrences', deleteChoiceCancelBtn:'cancelBtn',
   hNotesPick:'hNotesPick', lblNotesCourse:'lblNotesCourse', lblNewLecture:'lblNewLecture', addLectureBtn:'addLectureBtn', lblNewLectureHeader:'lblCustomHeader',
-  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabel:'chooseFile', chooseFileLabelJobResume:'chooseFile', chooseFileLabelJobCoverLetter:'chooseFile', chooseFileLabelResumeUpload:'chooseFile',
+  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabelResumeUpload:'chooseFile',
   studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', studySubNotebookBtn:'studySubNotebook', hGrammar:'hGrammar', gramAddToggleBtn:'gramAddToggleBtn',
   hNotebookPick:'hNotesPick', lblNewNotebookTitle:'lblNewLecture', lblNewNotebookHeader:'lblCustomHeader', addNotebookBtn:'addLectureBtn',
   hAccountSettings:'hAccountSettings', settingsSignedInAs:'settingsSignedInAs', settingsSitePinLabel:'settingsSitePinLabel', lblSettingsDisplayName:'lblSettingsDisplayName', lblSettingsDisplayNameEdit:'lblSettingsDisplayName', saveDisplayNameBtn:'settingsSaveNameBtn', cancelDisplayNameBtn:'cancelEdit', lblHideLeaderboards:'lblHideLeaderboards', lblHideCircleToo:'lblHideCircleToo',
@@ -15728,12 +15736,10 @@ function buildJobEditFieldsHtml(j){
       <input type="text" class="je-link" value="${(j.link||'').replace(/"/g,'&quot;')}">
     </div>
     <div class="field wide">
-      <label>${t('jobResumeView')}${j.resume_name ? ' – ' + escapeHtml(j.resume_name) : ''}</label>
-      <label class="file-upload-btn" style="margin-top:4px;">${t('chooseFile')}<input type="file" class="je-resume hidden-file-input"></label>${shortLinkPickerHtml('je-resume-slug', 'file', '')}
+      <label class="file-upload-btn">${t('jobResumeView')}${j.resume_name ? ' – ' + escapeHtml(j.resume_name) : ''}<input type="file" class="je-resume hidden-file-input"></label>${shortLinkPickerHtml('je-resume-slug', 'file', '')}
     </div>
     <div class="field wide">
-      <label>${t('jobCoverLetterView')}${j.cover_letter_name ? ' – ' + escapeHtml(j.cover_letter_name) : ''}</label>
-      <label class="file-upload-btn" style="margin-top:4px;">${t('chooseFile')}<input type="file" class="je-cover-letter hidden-file-input"></label>${shortLinkPickerHtml('je-cover-slug', 'file', '')}
+      <label class="file-upload-btn">${t('jobCoverLetterView')}${j.cover_letter_name ? ' – ' + escapeHtml(j.cover_letter_name) : ''}<input type="file" class="je-cover-letter hidden-file-input"></label>${shortLinkPickerHtml('je-cover-slug', 'file', '')}
     </div>
     <div style="margin-top:8px;display:flex;gap:8px;">
       <button class="export-btn je-save-btn" data-id="${j.id}">${t('saveChanges')}</button>
@@ -29356,8 +29362,7 @@ function buildCourseEditFieldsHtml(c){
       </div>
     </div>
     <div class="field wide">
-      <label>${t('courseSyllabus')}</label>
-      ${c.syllabus_url ? `<div style="display:flex;align-items:center;gap:8px;">
+      ${c.syllabus_url ? `<label>${t('courseSyllabus')}</label><div style="display:flex;align-items:center;gap:8px;">
         <a href="${shortLinkForUrl(c.syllabus_url) ? shortLinkUrl(shortLinkForUrl(c.syllabus_url)) : c.syllabus_url}" target="_blank" rel="noopener" style="font-size:12px;">${c.syllabus_name||'file'}</a>
         <button type="button" class="linkbtn act-remove ce-syllabus-remove" data-id="${c.id}">${t('removeSyllabus')}</button>
       </div>
@@ -29367,7 +29372,7 @@ function buildCourseEditFieldsHtml(c){
         <button type="button" class="linkbtn ce-slug-save">${t('saveShortLink')}</button>
         <button type="button" class="linkbtn ce-slug-copy">${t('copyLink')}</button>
         <span class="ce-slug-msg" style="font-size:11.5px;color:var(--ink-soft);"></span>
-      </div>` : `<label class="file-upload-btn">${t('chooseFile')}<input type="file" class="ce-syllabus hidden-file-input"></label>${shortLinkPickerHtml('ce-new-slug', 'title', syllabusSlugBase(c.title))}`}
+      </div>` : `<label class="file-upload-btn">${t('courseSyllabus')}<input type="file" class="ce-syllabus hidden-file-input"></label>${shortLinkPickerHtml('ce-new-slug', 'title', syllabusSlugBase(c.title))}`}
     </div>
     <div style="margin-top:8px;display:flex;gap:8px;">
       <button class="export-btn ce-save-btn" data-id="${c.id}">${t('saveCourseChanges')}</button>
