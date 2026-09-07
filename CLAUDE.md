@@ -989,6 +989,54 @@ whose geometry moved, and that can be checked without a wheel:
   where the bar goes back to `position: static`, drops `.stuck`, and the spacer
   and `--topbar-h` collapse to 0.
 
+## The whole pill is the button, and the pinned bar breathes (7 Sep)
+
+Three off one screenshot of the header.
+
+**The language pill answers a click anywhere on it now.** The native `<select>`
+sat INLINE beside the globe, so only its own text box was a target: the globe,
+the padding and the chevron were dead pixels on something that plainly reads as
+one button. It is laid over the whole pill at `opacity: 0` instead, and the
+words and the chevron are drawn by us underneath -- which is exactly the trick
+the narrow-width rule already used, and the same one the name pill uses for its
+colour input. It stays a real select, because that is what opens the phone's own
+language wheel; what changed is only what is DRAWN. Verified by asking
+`elementFromPoint` at all four corners, the centre and over the globe: the
+select takes all six.
+
+- **The overlay is unconditional now**, so the 1024px rule is down to hiding the
+  label and the chevron, which is all "globe-only" ever meant.
+- The font-size clamps moved off the select and onto the label with it -- the
+  select is invisible, so its own size stopped deciding the pill's width.
+
+**The controls animate.** They had a hover FILL and nothing else: no ease onto
+it, and nothing at all under the finger, so a press read as a page that had not
+noticed. 150ms on background, border, colour and shadow, and a **squeeze** on
+`:active` (0.94, 60ms) -- a press wants to land at once, and a fill that only
+deepens says what the hover already said.
+
+- **Only duration and timing are set on the controls.** Inside `#topBar` the
+  transition-PROPERTY list belongs to the condense rule (`#topBar header *`,
+  which outranks a class selector), and its list already covers every property
+  here. Nothing animates padding or width, which is what the condense snaps.
+- **The name pill is hovered and pressed through its colour input, which is its
+  SIBLING**, so `#whoName:hover` never fires and the rule has to go through
+  `#whoNameWrap`. The language pill's select is a CHILD, so that one is fine.
+- `prefers-reduced-motion` keeps the fill and drops the movement.
+
+**And the pinned bar sits 12px off the top.** Condensed, the bar's own top edge
+IS the top of the screen (or the underside of the guest banner), and with no
+padding the title was hard against the browser's chrome. 12px is the gap the
+condensed header already keeps below itself before the tabs, so the row is
+centred in its own bar rather than pushed against one edge.
+
+The condense is 68px now rather than 60, so the out-of-flow invariant was
+re-measured rather than assumed: 50 steps of 3px through the threshold, **zero
+scroll corrections**, one document height throughout, and the bar's top exact on
+`max(pinTop, restTop - scrollY)` at every step -- with the guest banner up
+(pinTop 31) and without it (pinTop 0). The row is still one height and one row
+at 1280 and at 375, and nothing overflows.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql

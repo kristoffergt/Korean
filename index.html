@@ -95,8 +95,18 @@ body{
    side by side as pills in the same row, and a mismatched pair of padding
    values here is what made the language pill visibly shorter than its
    neighbors (real report, screenshot). */
-.lang-switch{position:relative;display:flex;align-items:center;gap:6px;background:var(--paper-dim);padding:7px 10px 7px 8px;border-radius:8px;border:1px solid var(--line);}
+.lang-switch{position:relative;display:flex;align-items:center;gap:6px;background:var(--paper-dim);padding:7px 10px 7px 8px;border-radius:8px;border:1px solid var(--line);cursor:pointer;}
 .lang-switch-icon{flex:none;color:var(--ink);}
+/* The whole pill is the target, at EVERY width. The native <select> is laid
+   over it at opacity 0 rather than sitting beside the globe as a control of
+   its own -- inline, only the select's own text box answered a click, so the
+   globe, the padding and the chevron were all dead pixels on a control that
+   plainly reads as one button (real-user report: "you should be able to click
+   the WHOLE language pill"). It stays a real native select because that is
+   what opens the OS's own language wheel on a phone; what is DRAWN is ours. */
+.lang-switch-label{font-weight:600;color:var(--ink);white-space:nowrap;}
+.lang-switch-caret{flex:none;color:var(--ink-soft);}
+.lang-switch-select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
 /* The pill's own colour input, laid over it at opacity 0 -- the same trick
    .who .lang-switch-select uses for the language dropdown, and for the same
    reason: the tap has to land on a real native control.
@@ -111,9 +121,30 @@ body{
 .lang-switch button{background:transparent;color:var(--ink-soft);border:none;padding:5px 10px;font-size:11.5px;font-weight:600;border-radius:5px;}
 .lang-switch button:hover{background:rgba(127,127,127,0.1);}
 .lang-switch button.active{background:var(--ink);color:var(--paper);}
-.lang-switch-select{background:transparent;color:var(--ink);border:none;padding:0;font-size:12.5px;font-weight:600;font-family:'Inter',sans-serif;}
+.lang-switch-label{font-size:12.5px;}
 .icon-btn{background:var(--paper-dim);border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:8px;font-size:14px;line-height:1;}
-.icon-btn:hover{background:rgba(127,127,127,0.16);}
+/* The header's controls had a hover FILL and nothing else -- no ease onto it
+   and nothing at all under the finger, so a press read as a page that had not
+   noticed (real-user report: "these buttons need animations"). Only duration
+   and timing are set here: inside #topBar the property list is owned by the
+   condense rule further down, whose list already covers every one of these,
+   and outside it this rule's own list is what applies.
+   NOT padding or width -- those are what the condense snaps, and easing them
+   is the half-glide that rule exists to prevent. */
+.icon-btn, .lang-switch, .who .name, #whoName{
+  transition-property:background-color,border-color,color,box-shadow,transform;
+  transition-duration:0.15s;transition-timing-function:cubic-bezier(0.4,0,0.2,1);}
+/* The name pill is hovered and pressed through the colour input laid over
+   it, which is its SIBLING rather than its child -- so :hover on the pill
+   itself never fires and the wrapper is what has to be asked. */
+.icon-btn:hover, .lang-switch:hover, #whoNameWrap:hover #whoName{
+  background:rgba(127,127,127,0.16);border-color:var(--ink-soft);}
+/* The press is a SQUEEZE, not a colour: a fill that only deepens says the
+   same thing the hover already said, where a control that gives under the
+   pointer is felt rather than read. 60ms, because a press wants to land at
+   once and only the release is worth easing. */
+.icon-btn:active, .lang-switch:active, #whoNameWrap:active #whoName{
+  transform:scale(0.94);transition-duration:0.06s;}
 .auth-wrap{max-width:360px;margin:60px auto 0;}
 .auth-topbar{display:flex;justify-content:flex-end;max-width:360px;margin:0 auto;}
 .guest-banner{-webkit-appearance:none;appearance:none;position:sticky;top:env(safe-area-inset-top);left:0;z-index:500;display:block;width:100%;margin:0;padding:8px 16px;background:#f3e0dc;color:#b8402c;font-size:12.5px;font-weight:500;text-align:center;border:none;border-radius:0;box-shadow:none;box-sizing:border-box;font-family:inherit;cursor:pointer;}
@@ -356,7 +387,13 @@ header{display:flex;flex-direction:column;border-bottom:2px solid var(--ink);pad
    its resting height and never changes, so the page cannot notice.
    flex-direction cannot be transitioned, so this snaps; the sizes are left
    un-eased with it, since a half-glide beside a snap reads worse than either. */
-#topBar.stuck{padding-bottom:10px;}
+/* Pinned, the bar's own top edge IS the top of the screen (or the underside
+   of the guest banner), so with no padding the title sat hard against the
+   browser's chrome (real-user report: "the bar is way too close to the top
+   when having scrolled down"). 12px in, which is the gap the condensed header
+   already keeps below itself before the tabs, so the row is centred in its own
+   bar rather than pushed against one edge of it. */
+#topBar.stuck{padding-top:12px;padding-bottom:10px;}
 #topBar.stuck header{flex-direction:row;align-items:center;gap:6px;
   padding-bottom:7px;margin-bottom:9px;}
 #topBar.stuck .brand-mark{flex:0 1 auto;min-width:0;gap:6px;}
@@ -420,7 +457,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
 .sub{font-size:13px;color:var(--ink-soft);letter-spacing:0.3px;margin-top:6px;}
 .who{display:flex;align-items:center;gap:clamp(4px,1.4vw,12px);flex-wrap:wrap;justify-content:flex-end;}
 .who .lang-switch{gap:clamp(3px,0.8vw,6px);padding:clamp(4px,1vw,7px) clamp(5px,1.2vw,10px) clamp(4px,1vw,7px) clamp(4px,1vw,8px);}
-.who .lang-switch-select{font-size:clamp(9px,1.6vw,12.5px);}
+.who .lang-switch-label{font-size:clamp(9px,1.6vw,12.5px);}
 /* Was clamp(10px,1.6vw,14px), which resolves to TEN pixels at 375px -- so
    on a phone the globe was two thirds the size of every other icon in the
    row, and muted grey on top of that (real-user report: "the globe is
@@ -906,7 +943,12 @@ button:hover{background:var(--ink-hover);}
 .wave-dots span{display:inline-block;animation:cmWave 1.1s ease-in-out infinite;}
 .wave-dots span:nth-child(2){animation-delay:0.15s;}
 .wave-dots span:nth-child(3){animation-delay:0.3s;}
-@media (prefers-reduced-motion: reduce){ .wave-dots span{animation:none;opacity:1;} }
+@media (prefers-reduced-motion: reduce){ .wave-dots span{animation:none;opacity:1;}
+  /* The hover fill still lands, because it is what says the control is live;
+     what goes is the movement. */
+  .icon-btn, .lang-switch, .who .name, #whoName{transition-duration:0s;}
+  .icon-btn:active, .lang-switch:active, #whoNameWrap:active #whoName{transform:none;}
+}
 .cm-threads{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 8px;}
 .cm-thread{display:inline-flex;align-items:center;gap:5px;background:var(--paper);
   border:1px solid var(--line);color:var(--ink-soft);border-radius:999px;
@@ -1101,8 +1143,11 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
      target since the invisible select still sits right on top of it.
      Tapping still opens the OS's own native picker with full language
      names -- unaffected by any of this, since that's the browser's own
-     chrome. */
-  .who .lang-switch-select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+     chrome. The overlay itself is no longer part of this rule: the select
+     covers the pill at every width now, so all that is left to do here is
+     drop the words. Scoped to .who, since the auth and PIN screens have a
+     whole row to themselves and no reason to go globe-only. */
+  .who .lang-switch-label, .who .lang-switch-caret{display:none;}
 }
 /* iOS Safari auto-zooms the whole page when a focused form control's
    font-size is under 16px -- every text input in this app is 14-15px, so
@@ -1148,10 +1193,9 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
      tab fly-out's .tabs button vs .tab-flyout-item mixup). Matches
      .who .icon-btn's own 5px vertical padding right below. */
   .who .lang-switch{gap:4px;padding:5px 7px 5px 6px;}
-  /* Globe-only .who .lang-switch-select rule lives up in the 1024px block
-     above (it already covers this narrower range too, no need to repeat it
-     here). */
-  .lang-switch-select{font-size:11px;}
+  /* Globe-only .who rule lives up in the 1024px block above (it already
+     covers this narrower range too, no need to repeat it here). */
+  .lang-switch-label{font-size:11px;}
   .lang-switch-icon{width:12px;height:12px;}
   /* Sub-tab bars (Log/Korean Grammar/Writing/Notebook, Courses/Notes/
      Boards, etc.) had no mobile treatment at all -- at phone widths the
@@ -9899,8 +9943,24 @@ function buildLangSwitch(container){
   icon.setAttribute('stroke-width', '2'); icon.setAttribute('stroke-linecap', 'round'); icon.setAttribute('stroke-linejoin', 'round');
   icon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>';
   container.appendChild(icon);
+  // The words and the chevron are OURS, drawn under an invisible select that
+  // covers the whole pill -- so a click anywhere on it opens the picker, and
+  // what a phone shows is still the OS's own language wheel. See the CSS.
+  const nameEl = document.createElement('span');
+  nameEl.className = 'lang-switch-label';
+  nameEl.textContent = (langs.find(([code])=> code === currentLang) || langs[0])[1];
+  container.appendChild(nameEl);
+  const caret = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  caret.setAttribute('class', 'lang-switch-caret');
+  caret.setAttribute('width', '12'); caret.setAttribute('height', '12');
+  caret.setAttribute('viewBox', '0 0 24 24');
+  caret.setAttribute('fill', 'none'); caret.setAttribute('stroke', 'currentColor');
+  caret.setAttribute('stroke-width', '2.5'); caret.setAttribute('stroke-linecap', 'round'); caret.setAttribute('stroke-linejoin', 'round');
+  caret.innerHTML = '<polyline points="6 9 12 15 18 9"></polyline>';
+  container.appendChild(caret);
   const sel = document.createElement('select');
   sel.className = 'lang-switch-select';
+  sel.setAttribute('aria-label', 'Language');
   langs.forEach(([code,label])=>{
     const opt = document.createElement('option');
     opt.value = code;
