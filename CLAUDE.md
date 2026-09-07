@@ -1037,6 +1037,96 @@ scroll corrections**, one document height throughout, and the bar's top exact on
 (pinTop 31) and without it (pinTop 0). The row is still one height and one row
 at 1280 and at 375, and nothing overflows.
 
+## Settings are six headings, and green means ON (8 Sep)
+
+Four asks off one screenshot, two of them explicitly systemic.
+
+### Settings fold into sections
+
+It was one flat scroll of fifteen unrelated blocks, so finding anything meant
+reading all of it (real-user request: "consolidate settings a bit better, so
+there's a better overview"). Six groups now, all folded shut: Profile,
+Appearance and layout, Notifications and messaging, Privacy, Account and
+security, Delete account. **The closed list IS the overview** -- the whole of
+settings fits one short card, and nothing is more than one press deep.
+
+- **Every block is the same markup with the same ids, only moved.** The
+  regroup was done by cutting each block out of the file verbatim and
+  reassembling, with a byte count either side to prove nothing was dropped
+  (9,261 in, 9,243 accounted, the slack being whitespace between blocks). None
+  of the JS that fills these knows it happened; all 11 spot-checked ids still
+  resolve exactly once.
+- **The caret is drawn from `aria-expanded`**, not written by JS, so the arrow
+  cannot drift out of step with the fold and the state is announced for free.
+- **`syncSettingsSections()` hides a section whose every row is hidden**, asked
+  of the markup rather than of a list of ids. A guest has no notifications, no
+  privacy row and no account to delete, so a guest sees two headings and not
+  four empty ones -- and anything gated in future takes its section with it.
+
+### Messaging can be turned off
+
+`MESSAGING_KEY`, same shape as the sticky bar beside it: localStorage, per
+device, absent means ON. It gates `updateChatDockVisibility` (the dock) **and
+the unread count on the circle button**, which lives on a button the dock does
+not own and would otherwise go on asking to be read. Measured with the other
+two gates stood up so the pref was the only variable: dock visible on, gone
+off, back on.
+
+### One grow, for every control that is a WORD
+
+"For things where you have to click the word for it to work, it should grow
+like some of the things we have in settings. Syllabus, for example, currently
+does not. Systemic." The grow existed only on `.cal-seg`. It is one rule now,
+over `.cal-seg`, file-picker labels, `.linkbtn`, the reminder trigger, and a
+`.tap-word` utility for anything new -- 25 controls on the guest screen alone.
+
+- **It is a TRANSFORM, not font-size.** Growing type reflows, which is why the
+  recap pills had an exception carved out of the old rule for reading as
+  "jittery"; that exception is deleted, because a scale moves nothing around
+  it. It is also the same squeeze-on-press the header controls got on 7 Sep, so
+  the app has one motion vocabulary rather than two.
+- **The vocabulary is a WORD grows, a ROW or PILL lights.** Anything with its
+  own border or fill already says where its edges are.
+- **`:not(:has(.cal-seg-picker))`**, because an open picker is a CHILD of the
+  word and scaling the word would scale the menu hanging off it.
+- **And Syllabus still would not have grown**, because `.hidden-file-input` is
+  `position:absolute` with no offsets: its 1px box sits at its static position,
+  right on the label that drives it and later in the DOM, so it took the
+  pointer there. Found by hovering the word and watching the hover land on the
+  INPUT. `pointer-events:none` -- it is only ever opened through the label.
+  Verified after: hovering "Syllabus" gives `matrix(1.08, 0, 0, 1.08, 0, 0)`.
+
+### Green means ON
+
+"Reminders on is good as green, but when they're not on, why are they green?"
+Third meaning in the series `--danger` (removes) and `--edit` (edits):
+
+| | |
+|---|---|
+| `--on` / `--on-soft` | a state that IS on, set, active, selected |
+| `--ink` / `--ink-soft` | everything else, INCLUDING the affordance that would turn something on |
+
+**An invitation is not a state.** The reminder chips and their "Add reminder"
+trigger both wore the same green, so green said nothing; the chips keep it
+(a set reminder is on) and the trigger is plain ink. Both moved out of a
+template literal into real rules, which is what lets the doctrine be stated
+once rather than per call site.
+
+- Swept the rest: day pills, recap toggles, the active lecture, read receipts,
+  status badges, 2FA status, save/fail messages, the moderator list, money, the
+  selected tab. **The presence dot was a THIRD green** (`#3aa675`, close enough
+  to look like a mistake beside the real one and far enough to be one).
+- **Hover is emphasis, not a state.** Three headers turned green under the
+  pointer, which now reads as "this one is on" -- and on a lecture list the row
+  next to it really is, in the same colour. They are `--ink-hover` now.
+- **The green keeps a second, older job, deliberately**: the app's accent, on
+  links, today markers, stat numbers, progress fills, chart bars. Those are
+  never on/off. The test is whether the thing can be ON; that is why both names
+  exist, and why `--celadon-4` is still named directly in ~45 places.
+- **Dark needed its own value.** The light green is 4.31:1 on a card; the same
+  value on `#18191B` is 3.3:1, under the floor. Measured after: **light 4.75
+  on paper / 4.31 on card, dark 7.58 / 6.68.**
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql

@@ -53,6 +53,26 @@
      in OKLCH and move L before H. The dark theme needs its own value: a
      yellow dark enough to read on paper is invisible on ink. */
   --edit:#a8790a;
+  /* GREEN MEANS ON. Third meaning in the same series as --danger and
+     --edit, and the one that was being spent carelessly: an "Add reminder"
+     trigger wore the same green as a reminder that was actually set, so
+     green stopped saying anything (real-user report: "Reminders on is good
+     as green, but when they're not on, why are they green?").
+     The rule, applied app-wide:
+       --on / --on-soft   a state that IS on, set, active, selected
+       --danger           removes, or a warning to act on
+       --edit             edits
+       --ink / --ink-soft everything else, INCLUDING the affordance that
+                          would turn something on. An invitation is not a
+                          state, so it is never painted as one.
+     The green has a SECOND, older job that is deliberately left alone: it
+     is the app's accent, on links, today markers, stat numbers, progress
+     fills and chart bars. Those are never on/off, so they never read as a
+     status and they keep --celadon-4 by name. If a thing can be ON, use
+     --on; if it is only decoration or emphasis, it is an accent. That is
+     the whole test, and it is why both names exist. */
+  --on:#4F7563;
+  --on-soft:#DCE7DA;
   --line: rgba(30,31,34,0.12);
   --ink-hover:#000000;
   --c-listening:#6E8FB0;
@@ -76,6 +96,12 @@ body.dark{
   --ink-hover:#FFFFFF;
   --danger:#E8827A;
   --edit:#e0b34d;
+  /* The light theme's green is text on paper at 4.3:1; the same value on
+     #18191B is 3.3:1, which is under the floor. On-state text has to be
+     legible in both, so dark gets its own lift (7.9:1) rather than
+     inheriting a number picked against white. */
+  --on:#86B49F;
+  --on-soft:#2E3A34;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -517,7 +543,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
 .tabs button span:last-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tabs button:hover{background:rgba(127,127,127,0.22);}
 .tabs button.active{background:var(--ink);color:var(--paper);}
-.tabs button.active:hover{background:var(--ink);box-shadow:inset 0 0 0 2px var(--celadon-3);}
+.tabs button.active:hover{background:var(--ink);box-shadow:inset 0 0 0 2px var(--on);}
 /* ---------- THE ACTIVE TAB SLIDES ----------
    One element travels between the tabs instead of each tab painting its own
    fill. For it to be VISIBLE in flight, the tabs it passes have to stop
@@ -554,7 +580,7 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 .page-jump-input{width:56px;padding:5px 6px;font-size:12px;border-radius:5px;border:1px solid var(--celadon-4);background:var(--paper);color:var(--ink);text-align:center;}
 .day-toggle-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:3px 7px;font-size:10.5px;font-weight:600;border-radius:5px;min-width:26px;}
 .day-toggle-btn:hover{background:rgba(127,127,127,0.16);}
-.day-toggle-btn.active{background:var(--celadon-4);color:#fff;border-color:var(--celadon-4);}
+.day-toggle-btn.active{background:var(--on);color:#fff;border-color:var(--on);}
 .day-toggle-btn.excluded{background:var(--seal);color:#fff;border-color:var(--seal);text-decoration:line-through;}
 /* .active/.excluded already paint a solid background, so the plain :hover
    rule's translucent grey overlay above disappears against it -- same
@@ -569,7 +595,10 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 .lb-row.me{background:rgba(127,166,148,0.12);border-radius:6px;padding:10px 0;}
 .lb-rank{color:var(--ink-soft);font-family:'Space Grotesk',monospace;}
 .lb-name{font-weight:600;}
-.tag{font-size:10px;color:var(--celadon-4);font-weight:700;margin-left:5px;text-transform:uppercase;letter-spacing:0.3px;}
+/* "YOU" is emphasis, not a state -- it was green, which said "on" about a
+   row that is not switched on, it is simply yours. Bold uppercase ink is
+   what makes it findable; the green was only ever decoration. */
+.tag{font-size:10px;color:var(--ink);font-weight:700;margin-left:5px;text-transform:uppercase;letter-spacing:0.3px;}
 .tag.admin-tag{color:var(--ink-soft);text-transform:none;}
 .lb-name .lb-hidden-tag{font-size:10px;color:var(--ink-soft);font-weight:600;margin-left:5px;}
 .lb-stat{text-align:right;font-family:'Space Grotesk',monospace;}
@@ -684,7 +713,7 @@ button:hover{background:var(--ink-hover);}
 .badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;color:#fff;}
 .badge.applied, .badge.to_read{background:var(--ink-soft);}
 .badge.interview, .badge.reading{background:var(--celadon-3);color:var(--ink);}
-.badge.offer, .badge.finished{background:var(--celadon-4);}
+.badge.offer, .badge.finished{background:var(--on);}
 .badge.rejected{background:var(--seal);}
 .badge.withdrawn{background:#B0A79A;color:var(--ink);}
 .item-row{padding:14px 0;border-bottom:1px solid var(--line);}
@@ -763,13 +792,38 @@ button:hover{background:var(--ink-hover);}
 .month-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;position:relative;}
 .month-label-group{display:flex;align-items:center;gap:2px;position:relative;}
 .cal-seg{cursor:pointer;position:relative;display:inline-block;}
-.cal-seg:hover{font-size:1.1em;}
-/* The Event/Deadline/Birthday/Course recap-inclusion pills are also
-   .cal-seg (they open the same inline picker), but growing a whole ROW of
-   small pills on hover reads as jittery rather than as the single clickable
-   word .cal-seg's grow is meant to read as elsewhere (e.g. the display-name
-   field below). Same specificity as .cal-seg:hover above; wins on source order. */
-.recap-kind-seg:hover{font-size:10.5px;}
+/* THE WORD IS THE CONTROL, so the word grows -- one rule for every one of
+   them rather than a grow some of them happened to get (real-user report:
+   "for things where you have to click the word for it to work, it should
+   grow like some of the things we have in settings. Syllabus, for example,
+   currently does not"). The two halves of the vocabulary:
+       a WORD grows       -- .cal-seg, a file-picker label, a .linkbtn
+       a ROW/PILL lights  -- anything with its own border or fill already
+                             says where its edges are, so it fills instead
+   Add `tap-word` to anything new whose only affordance is the text itself.
+
+   It is a TRANSFORM, not font-size. Growing type reflows, which is why the
+   recap pills needed an exception carved out of the old rule for reading as
+   "jittery" -- a scale is compositor-only, moves nothing around it, and so
+   works on a row of pills and a lone word alike. It is also the same
+   squeeze-on-press the header controls use, so the whole app now has one
+   motion vocabulary rather than two.
+   `:not(:has(...))` because an OPEN picker is a CHILD of the word, and
+   scaling the word would scale the menu hanging off it. */
+.tap-word, .cal-seg, label.file-upload-btn, .linkbtn, .reminder-add-trigger{
+  transform-origin:left center;
+  transition:transform 0.13s cubic-bezier(0.4,0,0.2,1),color 0.13s cubic-bezier(0.4,0,0.2,1);}
+.tap-word:hover, .cal-seg:not(:has(.cal-seg-picker)):not(:has(.inline-seg-picker)):hover,
+label.file-upload-btn:hover, .linkbtn:hover, .reminder-add-trigger:hover{
+  transform:scale(1.08);}
+.tap-word:active, .cal-seg:active, label.file-upload-btn:active,
+.linkbtn:active, .reminder-add-trigger:active{transform:scale(0.98);transition-duration:0.06s;}
+@media (prefers-reduced-motion: reduce){
+  .tap-word, .cal-seg, label.file-upload-btn, .linkbtn, .reminder-add-trigger{transition-duration:0s;}
+  .tap-word:hover, .cal-seg:hover, label.file-upload-btn:hover, .linkbtn:hover,
+  .reminder-add-trigger:hover, .tap-word:active, .cal-seg:active,
+  label.file-upload-btn:active, .linkbtn:active, .reminder-add-trigger:active{transform:none;}
+}
 /* Was an inline style="font-size:15px" -- inline styles beat :hover's
    selector-based font-size:1.1em outright regardless of source order, so
    the display name never actually grew on hover, unlike every other
@@ -778,7 +832,7 @@ button:hover{background:var(--ink-hover);}
 .cal-seg-picker{position:absolute;top:100%;left:0;z-index:80;background:var(--paper);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.25);max-height:220px;overflow-y:auto;min-width:90px;}
 .cal-seg-picker button{display:block;width:100%;text-align:left;padding:6px 12px;background:none;border:none;color:var(--ink);font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap;}
 .cal-seg-picker button:hover{background:var(--paper-dim);}
-.cal-seg-picker button.active{font-weight:700;color:var(--celadon-4);}
+.cal-seg-picker button.active{font-weight:700;color:var(--on);}
 .cal-seg-input{width:70px;font-size:inherit;font-weight:inherit;font-family:inherit;background:var(--paper);border:1px solid var(--celadon-4);border-radius:4px;padding:1px 4px;color:var(--ink);}
 /* Expense category picker -- a native <select> can't show these as SVG
    icons (an <option> only ever renders plain text), so this is our own
@@ -972,7 +1026,7 @@ body.dark .cm-msg.mine{background:var(--celadon-2);}
 .cm-time{font-size:9.5px;color:var(--ink-soft);margin-top:3px;text-align:right;
   display:flex;align-items:center;justify-content:flex-end;gap:4px;}
 .cm-receipt{display:inline-flex;align-items:center;color:var(--ink-soft);}
-.cm-receipt.read{color:var(--celadon-4);}
+.cm-receipt.read{color:var(--on);}
 .cm-compose{display:flex;gap:8px;align-items:flex-end;margin-top:10px;}
 .cm-compose textarea{flex:1;min-width:0;resize:vertical;font-family:'Inter',sans-serif;
   font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
@@ -980,8 +1034,11 @@ body.dark .cm-msg.mine{background:var(--celadon-2);}
 /* A member who is online. A dot rather than a badge: it sits next to a
    name in a list and has to read at a glance without becoming the loudest
    thing in the row. */
+/* Online IS an on-state, so it wears the app's own green rather than the
+   third one it used to carry (#3aa675, close enough to look like a mistake
+   beside the real one and far enough to be one). */
 .online-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none;
-  background:#3aa675;box-shadow:0 0 0 2px rgba(58,166,117,0.25);}
+  background:var(--on);box-shadow:0 0 0 2px color-mix(in srgb, var(--on) 25%, transparent);}
 .exp-cat-row{display:block;width:100%;text-align:left;background:none;border:none;
   padding:0;margin:0 0 8px;font:inherit;color:inherit;cursor:pointer;border-radius:4px;
   transition:opacity 0.18s ease;}
@@ -1284,14 +1341,14 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
 .lecture-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
 .lecture-row:last-child{border-bottom:none;}
 .lecture-row .lecture-title-btn{cursor:pointer;flex:1;display:flex;align-items:center;gap:8px;}
-.lecture-row .lecture-title-btn:hover{color:var(--celadon-4);}
-.lecture-row.active .lecture-title-btn{color:var(--celadon-4);font-weight:700;}
+.lecture-row .lecture-title-btn:hover{color:var(--ink);}
+.lecture-row.active .lecture-title-btn{color:var(--on);font-weight:700;}
 .lecture-row .lecture-actions{display:flex;gap:4px;align-items:center;}
 .lecture-row .lecture-actions button{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:13px;padding:2px 5px;}
 .lecture-row .lecture-actions button:hover{color:var(--ink);}
 .author-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block;}
 .note-group-header{display:flex;align-items:center;gap:8px;padding:10px 0;font-weight:700;font-size:13.5px;cursor:pointer;border-bottom:1px solid var(--line);}
-.note-group-header:hover{color:var(--celadon-4);}
+.note-group-header:hover{color:var(--ink-hover);}
 .note-group-count{font-weight:400;color:var(--ink-soft);font-size:11.5px;}
 .note-group-body{padding-left:12px;}
 .gram-row{border-bottom:1px solid var(--line);padding:12px 0;}
@@ -1351,7 +1408,7 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
 .quiz-results-score{font-size:32px;font-weight:700;font-family:'Space Grotesk',monospace;color:var(--celadon-4);margin:8px 0;}
 .recap-toggle{display:flex;gap:8px;margin-bottom:12px;}
 .recap-toggle button{background:var(--paper-dim);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer;}
-.recap-toggle button.active{background:var(--celadon-4);border-color:var(--celadon-4);color:#fff;}
+.recap-toggle button.active{background:var(--on);border-color:var(--on);color:#fff;}
 .recap-person{margin-bottom:14px;}
 .recap-person-name{font-weight:700;font-size:13px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line);}
 .recap-stat-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;}
@@ -1363,7 +1420,13 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
 .gram-sentence-row button{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:12px;}
 .course-picker-empty{color:var(--ink-soft);font-size:13px;}
 footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
-.hidden-file-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;}
+/* pointer-events:none because it is absolutely positioned with no offsets,
+   so its 1px box sits at its static position -- right on top of the label
+   that drives it, and later in the DOM, so it wins the pointer there. Found
+   by hovering "Syllabus" and watching the hover land on the INPUT: a dead
+   spot on the one word that is the control. It is only ever opened through
+   the label, so it has no business taking a pointer at all. */
+.hidden-file-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none;}
 /* The field's own LABEL is the control: click "Syllabus" and the picker
    opens. It used to be a solid dark button reading "Choose file" stacked
    under a label that already said Syllabus -- two elements doing one job,
@@ -1381,6 +1444,36 @@ label.file-upload-btn::before{content:'';width:12px;height:12px;flex:none;
   background-color:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'/%3E%3C/svg%3E") center/contain no-repeat;}
 label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-color:currentColor;}
 .file-chosen-name{font-size:12.5px;color:var(--ink-soft);}
+/* One settings section. The caret is drawn from aria-expanded rather than
+   written by JS, so the arrow cannot drift out of step with the fold and
+   the state is announced to a screen reader for free. */
+.set-group{border-top:1px solid var(--line);}
+.set-group:last-of-type{border-bottom:1px solid var(--line);}
+.set-group-head{display:flex;align-items:center;gap:8px;width:100%;padding:12px 2px;
+  background:none;border:none;font-family:inherit;font-weight:700;font-size:13.5px;
+  color:var(--ink);text-align:left;cursor:pointer;border-radius:0;
+  transition:color 0.13s cubic-bezier(0.4,0,0.2,1);}
+.set-group-head:hover{background:none;color:var(--ink-hover);}
+.set-group-head::before{content:'\25B8';display:inline-block;font-size:11px;color:var(--ink-soft);
+  transition:transform 0.16s cubic-bezier(0.4,0,0.2,1);}
+.set-group-head[aria-expanded="true"]::before{transform:rotate(90deg);}
+.set-group-body{padding:0 2px 16px;}
+#setGroupDanger .set-group-head{color:var(--danger);}
+#setGroupDanger .set-group-head:hover{color:var(--danger);filter:brightness(1.15);}
+/* A reminder that is SET is on, so it wears the on colour. The trigger that
+   would add one is not a state and no longer does: it is the plain ink of
+   anything else you can press, so the row reads at a glance as "one
+   reminder on, and a way to add another" rather than as two greens. */
+.reminder-chip{display:inline-flex;align-items:center;gap:5px;background:var(--on-soft);
+  color:var(--on);border-radius:20px;padding:4px 6px 4px 12px;font-size:12px;
+  font-weight:600;white-space:nowrap;}
+.reminder-chip-remove{background:none;border:none;color:var(--danger);cursor:pointer;
+  padding:0 2px;font-size:12px;line-height:1;opacity:0.7;}
+.reminder-chip-remove:hover{opacity:1;}
+.reminder-add-trigger{display:inline-flex;align-items:center;color:var(--ink-soft);
+  font-weight:600;font-size:12px;padding:4px 10px;border:1px dashed var(--line);
+  border-radius:20px;cursor:pointer;}
+.reminder-add-trigger:hover{color:var(--ink);border-color:var(--ink-soft);}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
 .modal-box{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:22px 24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;}
 .modal-box h2{font-family:'Noto Serif KR',serif;font-size:16px;margin:0 0 14px;}
@@ -2857,6 +2950,18 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       </div>
     </div>
 
+    <!-- Settings used to be one flat scroll: fifteen unrelated blocks in a
+         row, so finding anything meant reading all of it and there was no
+         way to see at a glance what the app could even be told (real-user
+         request: "consolidate settings a bit better, so there's a better
+         overview"). Grouped and folded, the modal opens as a list of six
+         headings -- the overview IS the closed state, and everything is one
+         press deep rather than an unknown distance down a scroll.
+         Every block below is the SAME markup with the same ids, only moved:
+         nothing in the JS that fills these knows this happened. -->
+    <section class="set-group" id="setGroupProfile">
+      <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupProfileLabel"></span></button>
+      <div class="set-group-body hidden">
     <div class="log-form">
       <div class="field wide" id="settingsNameStaticWrap">
         <label id="lblSettingsDisplayName"></label>
@@ -2869,37 +2974,40 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       <button class="export-btn hidden" id="saveDisplayNameBtn"></button>
       <button class="hidden" id="cancelDisplayNameBtn"></button>
     </div>
-    <div class="hint hidden" id="settingsNameMsg"></div>
-
-    <div style="margin-top:14px;" id="settingsLeaderboardOptOutWrap">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-        <input type="checkbox" id="settingsHideLeaderboards" style="width:16px;height:16px;">
-        <span id="lblHideLeaderboards"></span>
-      </label>
-      <label class="hidden" id="settingsHideCircleTooWrap" style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;margin-top:8px;margin-left:24px;color:var(--ink-soft);">
-        <input type="checkbox" id="settingsHideCircleToo" style="width:14px;height:14px;">
-        <span id="lblHideCircleToo"></span>
-      </label>
-    </div>
-    <div class="hint hidden" id="settingsHideLeaderboardsMsg"></div>
-
-    <div class="wtc-title" style="margin-top:18px;" id="lblNotifPrefs"></div>
-    <div id="notifPrefsList"></div>
+    <div class="hint hidden" id="settingsNameMsg"></div>      </div>
+    </section>
+    <section class="set-group" id="setGroupAppearance">
+      <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupAppearanceLabel"></span></button>
+      <div class="set-group-body hidden">
     <div id="settingsStickyTopBarRow" style="margin-top:14px;">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
         <input type="checkbox" id="settingsStickyTopBarToggle" style="width:15px;height:15px;">
         <span id="settingsStickyTopBarLabel"></span>
       </label>
       <div class="hint" id="settingsStickyTopBarHint" style="margin-top:4px;"></div>
-    </div>
-    <div id="settingsShowTopikRow" style="margin-top:14px;">
+    </div>    <div id="settingsShowTopikRow" style="margin-top:14px;">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
         <input type="checkbox" id="settingsShowTopikToggle" style="width:15px;height:15px;">
         <span id="settingsShowTopikLabel"></span>
       </label>
       <div class="hint" id="settingsShowTopikHint" style="margin-top:4px;"></div>
+    </div>    <div style="margin-top:14px;">
+      <div class="note-group-header" id="manageTabsHeader"></div>
+      <div id="manageTabsList" class="hidden"></div>
+    </div>      </div>
+    </section>
+    <section class="set-group" id="setGroupNotify">
+      <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupNotifyLabel"></span></button>
+      <div class="set-group-body hidden">
+    <div id="settingsMessagingRow">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="settingsMessagingToggle" style="width:15px;height:15px;">
+        <span id="settingsMessagingLabel"></span>
+      </label>
+      <div class="hint" id="settingsMessagingHint" style="margin-top:4px;"></div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;" id="settingsRecapsHeaderRow">
+    <div class="wtc-title" style="margin-top:18px;" id="lblNotifPrefs"></div>
+    <div id="notifPrefsList"></div>    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;" id="settingsRecapsHeaderRow">
       <div class="wtc-title" style="margin-bottom:0;" id="lblRecapsHeader"></div>
       <span class="field" id="recapPersonFilterWrap" style="display:flex;flex-direction:row;align-items:center;">
         <button type="button" class="person-filter-btn" id="recapPersonFilterBtn" style="padding:5px 8px;font-size:12px;"></button>
@@ -2935,13 +3043,26 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
     </div>
     <div style="padding:5px 0 0;font-size:12px;" id="recapExtraOptionsWrap" class="hidden">
       <div id="recapExcludeKindsPicker" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+    </div>      </div>
+    </section>
+    <section class="set-group" id="setGroupPrivacy">
+      <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupPrivacyLabel"></span></button>
+      <div class="set-group-body hidden">
+    <div style="margin-top:14px;" id="settingsLeaderboardOptOutWrap">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="settingsHideLeaderboards" style="width:16px;height:16px;">
+        <span id="lblHideLeaderboards"></span>
+      </label>
+      <label class="hidden" id="settingsHideCircleTooWrap" style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;margin-top:8px;margin-left:24px;color:var(--ink-soft);">
+        <input type="checkbox" id="settingsHideCircleToo" style="width:14px;height:14px;">
+        <span id="lblHideCircleToo"></span>
+      </label>
     </div>
-
-    <div style="margin-top:14px;">
-      <div class="note-group-header" id="manageTabsHeader"></div>
-      <div id="manageTabsList" class="hidden"></div>
-    </div>
-
+    <div class="hint hidden" id="settingsHideLeaderboardsMsg"></div>      </div>
+    </section>
+    <section class="set-group" id="setGroupSecurity">
+      <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupSecurityLabel"></span></button>
+      <div class="set-group-body hidden">
     <div class="log-form" style="margin-top:16px;" id="settingsEmailChangeWrap">
       <div class="field wide">
         <label for="settingsNewEmail" id="lblSettingsNewEmail"></label>
@@ -2956,13 +3077,9 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       </div>
       <button class="export-btn" id="saveEmailBtn"></button>
     </div>
-    <div class="hint hidden" id="settingsEmailMsg"></div>
-
-    <div class="wtc-title" style="margin-top:18px;" id="lblSettingsPasswordSection"></div>
+    <div class="hint hidden" id="settingsEmailMsg"></div>    <div class="wtc-title" style="margin-top:18px;" id="lblSettingsPasswordSection"></div>
     <button class="export-btn" id="sendPasswordResetBtn"></button>
-    <div class="hint hidden" id="settingsPasswordMsg"></div>
-
-    <div class="wtc-title" style="margin-top:18px;" id="lblSettings2fa"></div>
+    <div class="hint hidden" id="settingsPasswordMsg"></div>    <div class="wtc-title" style="margin-top:18px;" id="lblSettings2fa"></div>
     <div style="margin:2px 0 8px;" id="settings2faStatusWrap">
       <span id="settings2faStatus" style="font-size:13px;font-weight:700;"></span>
     </div>
@@ -2995,8 +3112,11 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       <button class="export-btn" id="enable2faBtn"></button>
       <button class="export-btn" id="disable2faBtn"></button>
     </div>
-    <div class="hint hidden" id="settings2faMsg"></div>
-
+    <div class="hint hidden" id="settings2faMsg"></div>      </div>
+    </section>
+    <section class="set-group" id="setGroupDanger">
+      <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupDangerLabel"></span></button>
+      <div class="set-group-body hidden">
     <div class="log-form" style="margin-top:22px;" id="settingsDeleteAccountWrap">
       <div class="field wide">
         <label for="settingsDeleteEmailConfirm" id="lblSettingsDeleteEmailConfirm"></label>
@@ -3011,7 +3131,8 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       </div>
       <button class="export-btn" id="deleteAccountBtn" style="background:var(--seal);color:#fff;border-color:var(--seal);"></button>
     </div>
-    <div class="hint hidden" id="settingsDeleteMsg"></div>
+    <div class="hint hidden" id="settingsDeleteMsg"></div>      </div>
+    </section>
 
     <div id="moderatorSection" class="hidden">
       <div class="note-group-header" style="margin-top:22px;" id="resumePublicHeader"></div>
@@ -9021,6 +9142,8 @@ const I18N = {
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
     topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.',
+    setGroupProfileLabel:'Profile', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupPrivacyLabel:'Privacy', setGroupSecurityLabel:'Account and security', setGroupDangerLabel:'Delete account',
+    settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     calExportTitle:'Download calendar', calExportUseList:'Pick from list', calExportUseCalendar:'Pick on calendar', calExportPickHint:'Click events on the calendar to leave them out.', calExportCountTpl:'{in} of {total}', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
@@ -9142,6 +9265,8 @@ const I18N = {
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
     topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.',
+    setGroupProfileLabel:'프로필', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupPrivacyLabel:'공개 설정', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제',
+    settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     calExportTitle:'캘린더 내려받기', calExportUseList:'목록에서 선택', calExportUseCalendar:'캘린더에서 선택', calExportPickHint:'캘린더에서 일정을 클릭하면 제외됩니다.', calExportCountTpl:'{total}개 중 {in}개', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
@@ -9263,6 +9388,8 @@ const I18N = {
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
     topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.',
+    setGroupProfileLabel:'Hồ sơ', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupPrivacyLabel:'Quyền riêng tư', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản',
+    settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     calExportTitle:'Tải lịch về', calExportUseList:'Chọn từ danh sách', calExportUseCalendar:'Chọn trên lịch', calExportPickHint:'Nhấp vào sự kiện trên lịch để loại bỏ.', calExportCountTpl:'{in}/{total}', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
@@ -9396,6 +9523,10 @@ const STATIC_MAP = {
   hCalExport:'calExportTitle', lblCalExportInclude:'calExportInclude',
   calExportAllBtn:'calExportAll', calExportNoneBtn:'calExportNone', calExportGoBtn:'calExportGo',
   settingsShowTopikLabel:'settingsShowTopikLabel', settingsShowTopikHint:'settingsShowTopikHint',
+  settingsMessagingLabel:'settingsMessagingLabel', settingsMessagingHint:'settingsMessagingHint',
+  setGroupProfileLabel:'setGroupProfileLabel', setGroupAppearanceLabel:'setGroupAppearanceLabel',
+  setGroupNotifyLabel:'setGroupNotifyLabel', setGroupPrivacyLabel:'setGroupPrivacyLabel',
+  setGroupSecurityLabel:'setGroupSecurityLabel', setGroupDangerLabel:'setGroupDangerLabel',
   hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventEndTime:'eventEndTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', eventColorUseMyDefaultBtn:'eventColorUseMyDefaultBtn', lblPillVersion:'lblPillVersion', addEventBtn:'addDeadlineBtn',
   calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek', calViewDayBtn:'viewDay',
   lblCourseIsTa:'statusTeachingAssistant', lblCourseIsRa:'statusResearchAssistant',
@@ -10799,7 +10930,7 @@ function showSettingsMsg(id, text, isError){
   const el = document.getElementById(id);
   el.textContent = text;
   el.classList.remove('hidden');
-  el.style.color = isError ? 'var(--seal)' : 'var(--celadon-4)';
+  el.style.color = isError ? 'var(--danger)' : 'var(--on)';
 }
 // Display name shows as static text (not a permanently-open textbox) --
 // clicking Edit swaps in the input + Save/Cancel, matching how a one-off
@@ -10829,6 +10960,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   document.getElementById('settingsHideCircleToo').checked = !!hiddenFromCircleToo[currentUser.id];
   document.getElementById('settingsHideCircleTooWrap').classList.toggle('hidden', !hiddenFromLeaderboards[currentUser.id]);
   document.getElementById('settingsStickyTopBarToggle').checked = stickyTopBarEnabled();
+  document.getElementById('settingsMessagingToggle').checked = messagingEnabled();
   document.getElementById('settingsShowTopikToggle').checked = showTopik;
   renderRecapPrefsRows();
   renderNotifPrefs();
@@ -10849,6 +10981,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   const isAdmin = currentUser.email === ADMIN_EMAIL;
   document.getElementById('moderatorSection').classList.toggle('hidden', !isAdmin);
   if(isAdmin) loadModeratorUsers();
+  syncSettingsSections();
   document.getElementById('accountSettingsModal').classList.remove('hidden');
 });
 document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
@@ -10879,7 +11012,7 @@ document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
   // uses, so fall back to those before a raw JSON dump.
   const errDetail = error ? (error.message || error.error || JSON.stringify(error)) : '';
   msg.textContent = error ? `${t('resumeUploadFailed')} ${errDetail}`.trim() : t('resumeUploadSuccess');
-  msg.style.color = error ? 'var(--seal)' : 'var(--celadon-4)';
+  msg.style.color = error ? 'var(--danger)' : 'var(--on)';
   msg.classList.remove('hidden');
   if(!error){ document.getElementById('resumeUploadFile').value = ''; document.getElementById('resumeUploadFileName').textContent = ''; }
 });
@@ -12018,6 +12151,7 @@ function applyGuestUiRestrictions(){
   hide('friendsBtn');
   updateChatDockVisibility();
   hide('settingsLeaderboardOptOutWrap'); hide('settingsHideLeaderboardsMsg');
+  hide('settingsMessagingRow');
   hide('lblNotifPrefs'); hide('notifPrefsList');
   hide('settingsRecapsHeaderRow'); hide('settingsWeeklyRecapRow'); hide('settingsDailyRecapRow'); hide('recapExtraOptionsWrap');
   hide('settingsShowTopikRow');
@@ -12030,6 +12164,7 @@ function applyGuestUiRestrictions(){
   // wrapper ids -- hide by walking up to the enclosing card from each
   // heading).
   ['hLeaderboard', 'hBookLB', 'hJobLB', 'hCertLB'].forEach(id => document.getElementById(id)?.closest('.card')?.classList.add('hidden'));
+  syncSettingsSections();
 }
 
 // Supabase applies circle_messages' own SELECT policy per subscriber, so a
@@ -12837,7 +12972,7 @@ function updateCircleUnreadBadge(){
     badge.textContent = n > 9 ? '9+' : String(n);
   }
   const dot = document.getElementById('circleUnreadDot');
-  if(dot){ dot.classList.toggle('hidden', n === 0); dot.textContent = n > 9 ? '9+' : String(n); }
+  if(dot){ dot.classList.toggle('hidden', n === 0 || !messagingEnabled()); dot.textContent = n > 9 ? '9+' : String(n); }
   renderChatOnlineSummary();
 }
 // The dock is offered only to someone who has somebody to text: with an
@@ -12845,7 +12980,7 @@ function updateCircleUnreadBadge(){
 function updateChatDockVisibility(){
   const dock = document.getElementById('chatDock');
   if(!dock) return;
-  const usable = !!currentUser && !guestMode && visibleCircleMembers().length > 0;
+  const usable = !!currentUser && !guestMode && messagingEnabled() && visibleCircleMembers().length > 0;
   dock.classList.toggle('hidden', !usable);
   if(!usable) closeChatPanel();
 }
@@ -13105,7 +13240,7 @@ function renderLinkedCircle(){
         ${roster.map(r=>{
           const statusLabel = r.status === 'accepted' ? t('linkStatusAccepted') : t('linkStatusPending');
           const justAccepted = r.status === 'accepted' && r.invited_by === currentUser.id && !r.accept_notified;
-          const acceptedBadge = justAccepted ? `<span class="tag" style="background:var(--celadon-4);color:#fff;margin-left:6px;">${t('linkJustAccepted')}</span>` : '';
+          const acceptedBadge = justAccepted ? `<span class="tag" style="background:var(--on);color:#fff;margin-left:6px;">${t('linkJustAccepted')}</span>` : '';
           // Per-partner overrides only make sense once they've actually
           // accepted (an override for a still-pending invitee has nothing
           // to attach to yet, and they might decline).
@@ -13589,7 +13724,7 @@ async function refreshMfaStatus(){
   const enrolled = !error && data && data.totp && data.totp.length > 0;
   const statusEl = document.getElementById('settings2faStatus');
   statusEl.textContent = enrolled ? t('settings2faStatusEnabled') : t('settings2faStatusDisabled');
-  statusEl.style.color = enrolled ? 'var(--celadon-4)' : 'var(--seal)';
+  statusEl.style.color = enrolled ? 'var(--on)' : 'var(--danger)';
   document.getElementById('enable2faBtn').classList.toggle('hidden', enrolled);
   document.getElementById('disable2faBtn').classList.toggle('hidden', !enrolled);
   return enrolled;
@@ -13859,8 +13994,8 @@ function renderModeratorUserList(){
     const isSelf = u.id === currentUser.id;
     const isAdminRow = u.email === ADMIN_EMAIL;
     const nameColor = colorForUser(u.id);
-    const confirmedColor = u.email_confirmed ? 'var(--celadon-4)' : 'var(--seal)';
-    const mfaColor = u.mfa_enrolled ? 'var(--celadon-4)' : 'var(--seal)';
+    const confirmedColor = u.email_confirmed ? 'var(--on)' : 'var(--danger)';
+    const mfaColor = u.mfa_enrolled ? 'var(--on)' : 'var(--danger)';
     const row = document.createElement('div');
     row.className = 'item-row';
     row.innerHTML = `
@@ -14102,6 +14237,20 @@ function refreshRowSliders(force){
 // the bar is condensed or not, and there is nothing for the browser to correct.
 const STICKY_TOPBAR_KEY = 'trackerStickyTopBar';
 function stickyTopBarEnabled(){ return localStorage.getItem(STICKY_TOPBAR_KEY) !== '0'; }
+// Messaging is a whole surface rather than a notification, so turning it off
+// takes the dock away entirely -- the launcher, the panel, and the unread
+// count on the circle button, which is the part that would otherwise go on
+// asking to be read (real-user request: "put in settings that you can
+// disable messaging"). Same shape as the bar above: localStorage, per
+// device, absent means ON, because nobody should have to opt in to a
+// feature that was already there.
+const MESSAGING_KEY = 'trackerMessaging';
+function messagingEnabled(){ return localStorage.getItem(MESSAGING_KEY) !== '0'; }
+function applyMessagingPref(){
+  updateChatDockVisibility();
+  const dot = document.getElementById('circleUnreadDot');
+  if(dot && !messagingEnabled()) dot.classList.add('hidden');
+}
 
 let topBarStuck = false;
 let topBarFullH = 0;    // the bar at rest; what the spacer reserves, for good
@@ -14228,6 +14377,10 @@ initStickyTopBar();
 document.getElementById('settingsStickyTopBarToggle').addEventListener('change', (e)=>{
   localStorage.setItem(STICKY_TOPBAR_KEY, e.target.checked ? '1' : '0');
   applyStickyTopBarPref();
+});
+document.getElementById('settingsMessagingToggle').addEventListener('change', (e)=>{
+  localStorage.setItem(MESSAGING_KEY, e.target.checked ? '1' : '0');
+  applyMessagingPref();
 });
 
 /* ---------- TAB SWITCHING ---------- */
@@ -17474,6 +17627,31 @@ document.getElementById('manageTabsHeader').addEventListener('click', ()=>{
   renderManageTabsList();
 });
 
+/* ---------- SETTINGS SECTIONS ---------- */
+// Delegated, so a section added later is folded by writing markup and
+// nothing else. Every group starts CLOSED: the closed list is the overview,
+// and an accordion that opened one for you would be answering a question
+// nobody asked.
+document.getElementById('accountSettingsModal').addEventListener('click', (e)=>{
+  const head = e.target.closest('.set-group-head');
+  if(!head) return;
+  const open = head.getAttribute('aria-expanded') === 'true';
+  head.setAttribute('aria-expanded', open ? 'false' : 'true');
+  head.parentElement.querySelector('.set-group-body').classList.toggle('hidden', open);
+});
+// A section whose every row is hidden is an empty heading, which is worse
+// than no heading -- a guest has no notifications, no privacy row and no
+// account to delete. Asked of the markup rather than of a list of ids, so
+// anything hidden in future takes its section with it automatically.
+function syncSettingsSections(){
+  document.querySelectorAll('#accountSettingsModal .set-group').forEach(sec=>{
+    const body = sec.querySelector('.set-group-body');
+    if(!body) return;
+    const anyVisible = [...body.children].some(el=>!el.classList.contains('hidden'));
+    sec.classList.toggle('hidden', !anyVisible);
+  });
+}
+
 /* ---------- CALENDAR / TOPIK / DEADLINES ---------- */
 function formatCountdown(target){
   const diff = target - new Date();
@@ -17717,11 +17895,11 @@ function renderEventReminderChips(){
   const wrap = document.getElementById('eventReminderChips');
   if(!wrap) return;
   wrap.innerHTML = newEventReminders.map((r, idx)=>`
-    <span class="reminder-chip" style="display:inline-flex;align-items:center;gap:5px;background:var(--celadon-1);color:var(--celadon-4);border-radius:20px;padding:4px 6px 4px 12px;font-size:12px;font-weight:600;white-space:nowrap;">
+    <span class="reminder-chip">
       <span>${escapeHtml(formatReminderOffset(r))}</span>
-      <button type="button" class="reminder-chip-remove" data-idx="${idx}" title="${t('removeReminderTitle')}" style="background:none;border:none;color:var(--danger);cursor:pointer;padding:0 2px;font-size:12px;line-height:1;opacity:0.7;">✕</button>
+      <button type="button" class="reminder-chip-remove" data-idx="${idx}" title="${t('removeReminderTitle')}">✕</button>
     </span>`).join('')
-    + `<span class="reminder-add-trigger" id="eventReminderAddTrigger" style="display:inline-flex;align-items:center;color:var(--celadon-4);font-weight:600;font-size:12px;padding:4px 10px;border:1px dashed var(--celadon-3);border-radius:20px;">${t('addReminder')}</span>`;
+    + `<span class="reminder-add-trigger" id="eventReminderAddTrigger">${t('addReminder')}</span>`;
   wrap.querySelectorAll('.reminder-chip-remove').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       newEventReminders.splice(parseInt(btn.dataset.idx),1);
@@ -31607,7 +31785,7 @@ function renderExpBalances(){
   const balRows = memberIds.map(uid=>{
     const cents = balances[uid]||0;
     const amt = Math.abs(cents)/100;
-    const color = cents>0 ? 'var(--celadon-4)' : cents<0 ? 'var(--seal)' : 'var(--ink-soft)';
+    const color = cents>0 ? 'var(--on)' : cents<0 ? 'var(--danger)' : 'var(--ink-soft)';
     const sign = cents>0 ? '+' : cents<0 ? '-' : '';
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:13px;">
       <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${colorForUser(uid)};margin-right:6px;"></span>${escapeHtml(nameFor(uid))}</span>
