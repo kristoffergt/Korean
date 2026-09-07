@@ -201,60 +201,32 @@ body.theme-swapping *::before, body.theme-swapping *::after{
 @keyframes bell-wave{
   0%{transform:scale(0.7);opacity:0.55;} 100%{transform:scale(2.1);opacity:0;}}
 
-/* ONE drawing, not two. At rest it is the two BUSTS the button has always
-   worn -- heads and shoulders, the shape of the stock users mark (real-user
-   request: "make something similar to the original icon back"). Held over,
-   the same elements become TWO people standing, and the circle is the one
-   their joined arms make between them, not a ring of bodies (real-user
-   report: "I hate the men you did for the circle. Maybe just make it the two
-   men who hold hands creating a circle").
-   The morph is CSS on the geometry itself: cx/cy/r on a head, `d` on a body,
-   a leg and an arm. That only interpolates while both poses share a command
-   list, so a body is always M+C+C, a leg M+C and an arm M+Q -- which is why
-   the busts' shoulders are written as two cubics rather than as the arc the
-   stock icon uses. Change one of those and the browser stops interpolating
-   and cuts, which is the thing being fixed. Both poses are written here
-   rather than left on the attribute for one end, so there is nothing to
-   interpolate FROM that the stylesheet cannot see. */
-.friends-morph{transition:stroke-width .38s ease;}
-.fr-head, .fr-body, .fr-leg, .fr-arm{
-  transition:cx .38s ease, cy .38s ease, r .38s ease, d .38s ease, opacity .3s ease;}
-.fr-headL{cx:8.6;cy:7.4;r:3.6;}
-.fr-bodyL{d:path("M2.8 20.4C2.8 16.5 5.4 14.8 8.6 14.8C11.8 14.8 14.4 16.5 14.4 20.4");}
-.fr-headR{cx:17.7;cy:6.9;r:2.4;}
-.fr-bodyR{d:path("M17.7 14.5C19.4 14.5 20.5 15.6 21 17.1C21.3 18.1 21.4 19.2 21.4 20.4");}
-/* Neither bust has legs or arms, so those START inside it and at nothing --
-   they are what GROWS when the two of them stand up. */
-.fr-leg, .fr-arm{opacity:0;}
-.fr-legL{d:path("M8.6 14.8C8.6 16 8.6 17.2 8.6 18.4");}
-.fr-legR{d:path("M17.7 14.5C17.7 15.6 17.7 16.7 17.7 17.8");}
-.fr-armT{d:path("M8.6 13Q13.1 13 17.7 13");}
-.fr-armB{d:path("M8.6 13Q13.1 13 17.7 13");}
-body:not(.no-anim-header) #friendsBtn:hover .friends-morph{stroke-width:1.7;}
-body:not(.no-anim-header) #friendsBtn:hover .fr-headL{cx:7.4;cy:7.6;r:2.9;}
-body:not(.no-anim-header) #friendsBtn:hover .fr-bodyL{
-  d:path("M7.4 10.5C7.4 12.4 7.4 14.3 7.4 16.2C6.8 17.5 6.2 18.8 5.6 20.1");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-headR{cx:16.6;cy:7.6;r:2.9;}
-body:not(.no-anim-header) #friendsBtn:hover .fr-bodyR{
-  d:path("M16.6 10.5C16.6 12.4 16.6 14.3 16.6 16.2C17.2 17.5 17.8 18.8 18.4 20.1");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-legL{
-  d:path("M7.4 16.2C8 17.5 8.6 18.8 9.2 20.1");opacity:1;}
-body:not(.no-anim-header) #friendsBtn:hover .fr-legR{
-  d:path("M16.6 16.2C16 17.5 15.4 18.8 14.8 20.1");opacity:1;}
-/* The two arms are the same span curved opposite ways, so together they close
-   a circle between the pair -- which is the whole point of the mark. */
+/* The two people are the button's own stock users mark and they STAY that
+   mark. Held over, they simply step apart -- the one in front to the left, the
+   one behind out to the right -- and a circle grows between them where their
+   hands meet (real-user request: "the guy in the back comes to the right and
+   the guy in the front is on the left and then they join together in a
+   circle? so you dont have to shift the entire icon image").
+   So nothing is redrawn: each bust is a GROUP carrying one transform, which
+   is the cheapest possible morph and the only one that cannot change what the
+   drawing is. Two earlier passes interpolated the shapes themselves into
+   stick figures, which is exactly the "shift the entire icon image" this is
+   the answer to.
+   They shrink a little as they part, because two busts at full size have no
+   room between them to hold anything. */
+.fr-p{transform-box:fill-box;transform-origin:center;
+  transition:transform .38s cubic-bezier(0.34,1.2,0.64,1);}
+.fr-arm{transition:d .34s ease .1s, opacity .28s ease .1s;opacity:0;}
+.fr-armT{d:path("M12.4 14.6Q15.2 14.6 18 14.6");}
+.fr-armB{d:path("M12.4 14.6Q15.2 14.6 18 14.6");}
+body:not(.no-anim-header) #friendsBtn:hover .fr-p1{transform:translateX(-1.4px) scale(.86);}
+body:not(.no-anim-header) #friendsBtn:hover .fr-p2{transform:translateX(.8px) scale(.9);}
+/* The same span curved opposite ways, so the two arms close a circle between
+   the pair -- which is the whole point of the mark. */
 body:not(.no-anim-header) #friendsBtn:hover .fr-armT{
-  d:path("M7.4 11.6Q12 8.2 16.6 11.6");opacity:1;}
+  d:path("M12.4 14.6Q15.2 10.6 18 14.6");opacity:1;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-armB{
-  d:path("M7.4 11.6Q12 15 16.6 11.6");opacity:1;}
-/* The arms take a beat longer, so the two of them are seen to stand up and
-   only then reach for each other. */
-.fr-arm{transition-delay:.12s;}
-/* And it does NOT turn. Three people in a ring read as a ring seen from
-   above, so rotating them was the ring turning; TWO holding a circle between
-   them are seen from the front, and rotating that is two people falling over.
-   The group is kept because the rest of the sheet names it. */
-.fr-spin{transform-box:view-box;transform-origin:12px 12.4px;}
+  d:path("M12.4 14.6Q15.2 18.6 18 14.6");opacity:1;}
 
 /* The name is the one thing here that is a WORD, so it jiggles rather than
    turning -- and the jiggle carries its own scale, because the shared
@@ -474,9 +446,7 @@ body.no-anim-header .moon-tackle, body.no-anim-header .moon-star{animation:none;
 body.no-anim-header .sun-clouds, body.no-anim-header .moon-angler{opacity:0;}
 body.no-anim-title .tl-runner{display:none;}
 body.no-anim-title .tl-done path{stroke-dashoffset:0;}
-body.no-anim-header .fr-head, body.no-anim-header .fr-body,
-body.no-anim-header .fr-leg, body.no-anim-header .fr-arm,
-body.no-anim-header .friends-morph{transition:none;}
+body.no-anim-header .fr-p, body.no-anim-header .fr-arm{transition:none;}
 body.no-anim-ui .tap-word:hover, body.no-anim-ui .cal-seg:hover,
 body.no-anim-ui label.file-upload-btn:hover, body.no-anim-ui .linkbtn:hover,
 body.no-anim-ui .reminder-add-trigger:hover, body.no-anim-ui .tap-word:active,
@@ -797,8 +767,6 @@ header{display:flex;flex-direction:column;border-bottom:2px solid var(--ink);pad
    of a 375x812 phone, 23% of the screen given over to chrome for good. The
    tagline goes, the title and mark shrink, the paddings tighten; the tabs are
    the point of the exercise and keep their size. */
-#topBar .sub{max-height:22px;overflow:hidden;
-  transition:opacity 0.18s ease,max-height 0.18s ease,margin-top 0.18s ease,width 0.18s ease;}
 /* Condensed, it is ONE ROW: mark and title left, controls hard right. Safe to
    change height again now the bar is out of flow -- nothing below it moves,
    because there is nothing below it in the document at all. The spacer holds
@@ -824,7 +792,6 @@ header{display:flex;flex-direction:column;border-bottom:2px solid var(--ink);pad
   flex-wrap:nowrap;gap:0;}
 /* Zero WIDTH as well as height: collapsed flat it was still a flex item
    claiming the width of "Study · Reading · Jobs" on the row. */
-#topBar.stuck .sub{opacity:0;max-height:0;width:0;flex:0 0 0;margin:0;padding:0;}
 #topBar.stuck .who{flex-wrap:nowrap;gap:3px;}
 #topBar.stuck .who .icon-btn{padding:0 1px;}
 #topBar.stuck .who .icon-btn .ui-icon,
@@ -853,13 +820,16 @@ body.topbar-loose .topbar-inner{max-width:none;}
    is instant whatever the sizes do, and easing the sizes around it read as a
    half-glide beside a snap. Opacity and the shadow still ease, since neither
    is layout and neither is part of the swap. */
-#topBar, #topBar header, #topBar header *, #topBar .sub, #topBar h1{
+#topBar, #topBar header, #topBar header *, #topBar h1{
   transition-property:opacity,background-color,color,border-color,box-shadow,transform;}
 body.topbar-loose #topBarSpacer{height:0 !important;}
 /* So scrollIntoView and any anchor jump clear the bar instead of landing
    underneath it. */
 html{scroll-padding-top:var(--topbar-h,0px);}
-.header-row2{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+/* The row holds only the controls now that the strapline is gone, so it
+   pushes them to the right itself rather than relying on a sibling to
+   sit on the left of a space-between. */
+.header-row2{display:flex;justify-content:flex-end;align-items:center;gap:16px;flex-wrap:wrap;}
 /* The old clamp(20px, 4vw + 8px, 28px) was only actually fluid between
    300-500px of viewport width -- it hit its own 28px ceiling by 500px and
    sat flat all the way up, so a mobile-only override further down this
@@ -872,7 +842,6 @@ html{scroll-padding-top:var(--topbar-h,0px);}
    boundary left for it to jump at. */
 h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 7.5px,28px);margin:0 0 4px;letter-spacing:0.5px;white-space:nowrap;
   transition:font-size 0.18s ease,margin-bottom 0.18s ease;}
-.sub{font-size:13px;color:var(--ink-soft);letter-spacing:0.3px;margin-top:6px;}
 .who{display:flex;align-items:center;gap:clamp(4px,1.4vw,12px);flex-wrap:wrap;justify-content:flex-end;}
 .who .lang-switch{gap:clamp(3px,0.8vw,6px);padding:calc(clamp(4px,1vw,7px) - 4px) calc(clamp(5px,1.2vw,10px) - 4px) calc(clamp(4px,1vw,7px) - 4px) calc(clamp(4px,1vw,8px) - 4px);}
 .who .lang-switch-label{font-size:clamp(9px,1.6vw,12.5px);}
@@ -1666,7 +1635,6 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
      mobile so the title, tagline, language control, and account controls
      all fit comfortably without crowding or wrapping awkwardly. */
   header h1{margin:0 0 2px;}
-  header .sub{font-size:10.5px;}
   header{padding-bottom:10px;margin-bottom:14px;gap:8px;}
   .who{gap:6px;justify-content:flex-end;}
   .who .icon-btn{font-size:12px;padding:1px 3px;}
@@ -2056,7 +2024,6 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
   <header>
     <div class="brand-mark"><div class="brand-icon brand-icon-light"></div><div class="brand-icon brand-icon-dark"></div><h1 id="appTitleHome" style="cursor:pointer;">Productivity Tracker</h1></div>
     <div class="header-row2">
-    <div class="sub" id="headerSub"></div>
     <div class="who">
       <div class="lang-switch" id="langSwitchApp"></div>
       <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
@@ -2085,17 +2052,14 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
              to properly morph"). Every part keeps its command list across both
              poses -- which is what lets the browser interpolate `d` at all --
              and the two poses live in the stylesheet beside each other. -->
+        <!-- The stock two-person mark, in two groups. Held over, the groups
+             MOVE -- nothing about either drawing changes -- and the circle
+             between them is what grows. -->
         <svg class="friends-morph" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <g class="fr-spin">
-            <circle class="fr-head fr-headL" cx="8.6" cy="7.4" r="3.6"></circle>
-            <path class="fr-body fr-bodyL" d="M2.8 20.4C2.8 16.5 5.4 14.8 8.6 14.8C11.8 14.8 14.4 16.5 14.4 20.4"></path>
-            <circle class="fr-head fr-headR" cx="17.7" cy="6.9" r="2.4"></circle>
-            <path class="fr-body fr-bodyR" d="M17.7 14.5C19.4 14.5 20.5 15.6 21 17.1C21.3 18.1 21.4 19.2 21.4 20.4"></path>
-            <path class="fr-leg fr-legL" d="M8.6 14.8C8.6 16 8.6 17.2 8.6 18.4"></path>
-            <path class="fr-leg fr-legR" d="M17.7 14.5C17.7 15.6 17.7 16.7 17.7 17.8"></path>
-            <path class="fr-arm fr-armT" d="M8.6 13Q13.1 13 17.7 13"></path>
-            <path class="fr-arm fr-armB" d="M8.6 13Q13.1 13 17.7 13"></path>
-          </g>
+          <g class="fr-p fr-p2"><circle cx="17.7" cy="6.9" r="2.4"></circle><path d="M17.7 14.5C19.4 14.5 20.5 15.6 21 17.1C21.3 18.1 21.4 19.2 21.4 20.4"></path></g>
+          <path class="fr-arm fr-armT" d="M12.4 14.6Q15.2 14.6 18 14.6"></path>
+          <path class="fr-arm fr-armB" d="M12.4 14.6Q15.2 14.6 18 14.6"></path>
+          <g class="fr-p fr-p1"><circle cx="8.6" cy="7.4" r="3.6"></circle><path d="M2.8 20.4C2.8 16.5 5.4 14.8 8.6 14.8C11.8 14.8 14.4 16.5 14.4 20.4"></path></g>
         </svg>
         <span id="linkNotifyDot" class="hidden" style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--seal);"></span>
         <span id="circleOnlineDot" class="hidden online-dot" style="position:absolute;bottom:2px;right:2px;"></span>
@@ -9587,7 +9551,7 @@ const I18N = {
   en: {
     tagline:'Korean Study · Reading · Job Hunt Tracker',
     signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
-    headerSub:'Study · Reading · Jobs', signOut:'Sign out',
+    signOut:'Sign out',
     tabStudy:'Korean', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar', tabHome:'Home', tabOverview:'Overview', lblQuickNav:'Jump to',
     leaderboard:'Leaderboard', lbRank:'#', lbName:'Name', lbStreak:'Streak', lbWeek:'Week', lbTotal:'Total',
     logStudy:'Log a study session', date:'Date', activity:'Activity', hours:'Hours', addSession:'Add session',
@@ -9710,7 +9674,7 @@ const I18N = {
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
     signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
-    headerSub:'공부 · 독서 · 구직', signOut:'로그아웃',
+    signOut:'로그아웃',
     tabStudy:'한국어', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더', tabHome:'홈', tabOverview:'개요', lblQuickNav:'바로가기',
     leaderboard:'순위표', lbRank:'#', lbName:'이름', lbStreak:'연속', lbWeek:'이번 주', lbTotal:'총합',
     logStudy:'공부 시간 기록', date:'날짜', activity:'활동', hours:'시간', addSession:'기록 추가',
@@ -9833,7 +9797,7 @@ const I18N = {
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
     signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
-    headerSub:'Học tập · Đọc sách · Xin việc', signOut:'Đăng xuất',
+    signOut:'Đăng xuất',
     tabStudy:'Tiếng Hàn', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch', tabHome:'Trang chủ', tabOverview:'Tổng quan', lblQuickNav:'Đi đến',
     leaderboard:'Bảng xếp hạng', lbRank:'#', lbName:'Tên', lbStreak:'Chuỗi ngày', lbWeek:'Tuần này', lbTotal:'Tổng cộng',
     logStudy:'Ghi lại buổi học', date:'Ngày', activity:'Hoạt động', hours:'Số giờ', addSession:'Thêm buổi học',
@@ -9957,7 +9921,7 @@ const I18N = {
 };
 const STATIC_MAP = {
   authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password',
-  headerSub:'headerSub', signOutBtn:'signOut',
+  signOutBtn:'signOut',
   tabBtnStudyLabel:'tabStudy', tabBtnReadingLabel:'tabReading', tabBtnJobsLabel:'tabJobs', tabBtnCalendarLabel:'tabHome', tabBtnYonseiLabel:'tabYonsei',
   calendarSubOverviewLabel:'tabOverview', calendarSubCalendarLabel:'tabCalendar', calendarSubExpensesLabel:'tabExpenditure', lblQuickNav:'lblQuickNav',
   hExpVacations:'hExpVacations', expNewVacationBtn:'expNewVacationBtn', hExpOverview:'hExpOverview', expMembersBtn:'expMembersBtn',
@@ -18168,6 +18132,49 @@ const TAB_STRUCTURE = [
 // or their order (reorderMobileTabs() re-appends #tabNav's own <button>
 // children directly and would rip them out of any wrapper).
 let tabFlyoutHideTimer = null;
+// The sub-tab row currently stepped out of the fly-out's way, so it can be put
+// back wherever the fly-out closes from.
+let tabFlyoutPushedBar = null;
+// The row of sub-tabs sitting directly under the nav, if that is what the
+// visible panel opens with. Found by MEASUREMENT rather than by a class list:
+// every panel names its own sub-bar differently, and what matters here is not
+// what it is called but whether it is a short row immediately below the nav --
+// which is exactly the thing the fly-out would land on.
+function subBarUnderNav(){
+  const nav = document.getElementById('tabNav');
+  const panel = [...document.querySelectorAll('.tab-panel')]
+    .find(pn=> !pn.classList.contains('hidden'));
+  const first = panel && panel.firstElementChild;
+  if(!nav || !first) return null;
+  const navBottom = nav.getBoundingClientRect().bottom;
+  const r = first.getBoundingClientRect();
+  if(!r.height || r.height > 60) return null;
+  if(r.top < navBottom - 4 || r.top - navBottom > 40) return null;
+  return first;
+}
+// The row moves by TRANSFORM, so nothing else on the page moves with it: the
+// gap under it is already exactly deep enough (real-user request: "we dont
+// have to move anything else ... there is EXACTLY enough space for the sub
+// bars to move down"). Hovering the row itself keeps the fly-out open, or
+// stepping from one to the other would snap it shut and shift the row back
+// under the pointer.
+function pushSubBar(bar, toY){
+  if(!bar) return;
+  if(tabFlyoutPushedBar && tabFlyoutPushedBar !== bar) releaseSubBar();
+  bar.style.transition = 'transform 0.22s cubic-bezier(.3,.9,.4,1)';
+  bar.style.transform = 'translateY(' + toY + 'px)';
+  if(!bar.dataset.flyoutHover){
+    bar.dataset.flyoutHover = '1';
+    bar.addEventListener('mouseenter', ()=> clearTimeout(tabFlyoutHideTimer));
+    bar.addEventListener('mouseleave', scheduleTabFlyoutHide);
+  }
+  tabFlyoutPushedBar = bar;
+}
+function releaseSubBar(){
+  if(!tabFlyoutPushedBar) return;
+  tabFlyoutPushedBar.style.transform = '';
+  tabFlyoutPushedBar = null;
+}
 function showTabFlyout(btn, top){
   // There's no hover on a phone -- the closest a touch screen gets is a
   // "ghost hover" some browsers fire on first tap, which just leaves the
@@ -18202,6 +18209,15 @@ function showTabFlyout(btn, top){
       hideTabFlyout();
     });
   });
+  // Where the fly-out will BE once it is shown, computed rather than measured:
+  // it is still parked at translateY(-100%) at this point, so its own rect is
+  // a whole height above where it lands.
+  const bar = subBarUnderNav();
+  if(bar){
+    const flyH = flyout.getBoundingClientRect().height;
+    const flyBottom = navRect.top + Math.round(btnRect.bottom - navRect.top) + 4 + flyH;
+    pushSubBar(bar, Math.max(0, Math.round(flyBottom + 6 - bar.getBoundingClientRect().top)));
+  }
   // Two rAFs: the items were just innerHTML'd in at their resting
   // transform, so adding .visible on the very same frame can get
   // coalesced by the browser into one style recalc and skip the
@@ -18210,6 +18226,7 @@ function showTabFlyout(btn, top){
 }
 function hideTabFlyout(){
   document.getElementById('tabFlyout').classList.remove('visible');
+  releaseSubBar();
 }
 function scheduleTabFlyoutHide(){
   tabFlyoutHideTimer = setTimeout(hideTabFlyout, 150);

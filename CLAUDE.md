@@ -1627,6 +1627,57 @@ ring read as a ring seen from above, so rotating them was the ring turning;
 two holding a circle between them are seen from the front, and rotating that
 is two people falling over.
 
+## The busts MOVE, the strapline goes, and the sub bar steps aside (8 Sep, seventh pass)
+
+### The cheapest morph is the one that redraws nothing
+
+Asked twice, and the second time verbatim: "why cant you just animate these
+where the guy in the back comes to the right and the guy in the front is on
+the left and then they join together in a circle? so you dont have to shift the
+entire icon image."
+
+Two passes had interpolated the shapes themselves -- busts into stick figures
+with legs -- which is precisely the "shift the entire icon image" being
+objected to. **Each bust is a GROUP carrying one transform now.** Held over,
+the front one steps left and the one behind comes out right, both shrinking a
+little as they part, and a circle grows between them where their hands meet.
+Nothing is redrawn, so nothing can come out looking like a different mark.
+
+- **They shrink because two busts at full size have no room between them** to
+  hold anything: the front one spans over half the box on its own.
+- `transform-box: fill-box` with `transform-origin: center`, so each scales
+  about its own bounding box and stays in its own half.
+
+### "Study · Reading · Jobs" is gone
+
+Superfluous (real-user request). The element, its i18n key in all three tables,
+its STATIC_MAP entry and the four CSS rules that only ever styled it all went
+with it -- including the condense rule that collapsed it when the bar pinned,
+which now has nothing to collapse. `.header-row2` is `justify-content:flex-end`
+rather than `space-between`: with the strapline gone there is no left-hand item
+to push the controls right.
+
+### The fly-out no longer lands on the sub bar
+
+Hovering a top-level tab drops its sub-tabs in a row that covered the real
+sub-tab bar underneath. **The bar steps DOWN out of the way instead**, by
+transform, so nothing else on the page moves -- the gap under it is already
+exactly deep enough (real-user request: "we dont have to move anything else
+... there is EXACTLY enough space for the sub bars to move down").
+
+- **The bar is found by MEASUREMENT, not by a class.** Every panel names its
+  own sub-bar differently, and what matters is not what it is called but
+  whether it is a short row sitting immediately below the nav -- which is
+  exactly the thing the fly-out would land on. `subBarUnderNav` takes the
+  visible panel's first child and keeps it only if it is under 60px tall and
+  within 40px of the nav's bottom.
+- **How far is computed, not measured.** At that moment the fly-out is still
+  parked at `translateY(-100%)`, so its own rect is a whole height above where
+  it lands; the target is `nav.top + itsTop + 4 + itsHeight`.
+- **Hovering the pushed bar keeps the fly-out open.** Stepping from one to the
+  other would otherwise close it and shift the row back under the pointer,
+  which is the constant-shifting the request was about.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
