@@ -802,6 +802,76 @@ on the calendar, the PNG is produced, and afterwards the modal is closed, the
 set is empty, both body classes are gone and all 5 chips are back unfaded. The
 mode persists across a reload and falls back to the calendar with no key set.
 
+## The spacer that fixed the jump then LOCKED the scroll (7 Sep)
+
+The condensing-header spacer went in on 6 Sep and the report came back as the
+page refusing to scroll at slow speeds. Measured off the recording: the content
+advanced 4 to 8px a frame and was yanked back 58 every dozen frames, for a net
+of **two pixels across 161 frames**. Not a stutter, a treadmill.
+
+**The cause was the spacer's own unstick branch.** The class comes off first
+and the bar's height follows it through a 0.18s ease, so at that instant the
+bar is still condensed -- and zeroing the spacer there dropped "bar + spacer"
+from 298 to 89 in ONE frame. A 209px collapse, corrected by the browser moving
+the scroll, which put the bar back over its threshold and condensed it again.
+The same branch also read the full height off a bar that was still easing back,
+latching the CONDENSED height as the reference the whole compensation is
+computed from.
+
+**So the spacer is always the difference, with no branch on the class.** The
+sum is the full height at every instant in both directions, and a bar really at
+full height gives zero on its own. Three things make that hold:
+
+- **The condense is ATOMIC.** Every property that changes the bar's HEIGHT
+  lands in the same layout pass as the spacer, because a frame of disagreement
+  is a frame the browser will correct the scroll for. That is not just the
+  bar's own padding: the header's controls carry `transition: all` and BOTH
+  their padding and their icon sizes change on condense, so the override covers
+  the header's whole subtree. Scoped to `header` deliberately -- `#tabNav` is a
+  SIBLING of it, so the sliding tab pill keeps its own width transition.
+  Verified by enumerating computed `transition-property` over the bar and every
+  descendant: zero layout properties left, slider still `transform, width,
+  opacity`. Note the specificity trap: `#topBar .sub` (1-1-0) beats
+  `#topBar header *` (1-0-1), so `.sub` has to be named.
+- **The full height is refreshed on EVERY scroll while the bar is at rest**,
+  not only when the state changes. Taken once at reveal it read 358 against a
+  settled 298, so the first condense was computed against a stale number and
+  moved the page by the difference. Reading it live is only safe BECAUSE the
+  height is atomic: with no transition there is no halfway state.
+- **Nothing inside the bar may be the scroll anchor** (`overflow-anchor: none`).
+  The tabs live in it and move up by the whole condense, so the browser holding
+  THEM still means yanking the page by exactly that.
+
+**The lesson that cost two rounds: killing transitions to measure hides the
+bug.** The 6 Sep verification suppressed them to read settled values, so it
+tested the two end states and never the 180ms between them -- which is where
+the fault was, and where this pane cannot help either, since it freezes
+transitions. Where a fix depends on two things changing together, check the
+INVARIANT (their sum) rather than the endpoints, and walk the threshold in both
+directions: going back UP is what was broken, and only the down path had been
+tried.
+
+## The syllabus field was three rows in a row of two (7 Sep)
+
+Reported as the syllabus sitting on a line of its own with an oversized upload
+button. Measured: every `.field` in that form is **57 to 60px** and the
+syllabus one was **109** -- label, then the button, then the short-link row,
+stacked. `.log-form` aligns to `flex-end`, so the extra 50px stuck UP out of
+the row and read as its own line. It was never on a separate line; it was too
+tall for the one it was on.
+
+The button and the short link share one row now, which puts the field at 58 and
+the whole form on two lines again.
+
+**And the button was not dimensionally big, it was visually heavy**: 34px tall
+where the inputs are 40, but a solid black block at weight 600 in a row of
+quiet outlined fields. It is `height: 40px` and weight 500 now, so it matches
+what it sits beside. Used by four forms (the two on Jobs and the resume upload
+as well), all checked after.
+
+The file input's own JS finds its label as the PREVIOUS SIBLING, so that pair
+has to stay adjacent through any rewrap.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
