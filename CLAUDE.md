@@ -1442,6 +1442,97 @@ and `d` on a torso, its legs and its arms.
 - Verified in the browser at 6x: the idle mark reads as two people, the hover
   lands on three in a ring, and the rotation follows.
 
+## The title measures itself, and the moon gets the reference picture (8 Sep, fourth pass)
+
+Four corrections to the round above, all on the same person's word.
+
+### Nineteen little people were the wrong answer, twice
+
+First they were people doing activities, then people posed as the letters, then
+people posed as the letters DOING activities -- and the verdict on the third
+was "this looks hella stupid. Maybe come up with another smart idea that are
+not these small men. Do whatever you find the most clever."
+
+**So the title does the one thing the app is named for: it TRACKS.** Held over,
+the letters tick to the "on" green one at a time from the left, a meter under
+the words fills at exactly the same rate, and a check lands when it reaches the
+end. `LETTER_FIGURES`, `LETTER_PROPS` and `figSvg` are all gone -- about 60
+lines of hand-drawn glyphs replaced by two transitions and a stagger.
+
+- **The lesson worth keeping**: whatever the title does on hover, the NAME has
+  to stay the name. Drawings standing in for letters cost legibility however
+  carefully they are posed; colour and a rule underneath cost none of it. Three
+  rounds went into trying to buy the first one back.
+- **19 letters x 34ms = 0.65s**, which is the meter's own duration and the
+  check's delay. Those three numbers have to move together or the bar and the
+  letters disagree about when the title is finished.
+- **The meter and the check are both ABSOLUTE**, inside a `.tl-track` that
+  wraps only the words. The h1 also holds the logo, so a meter spanning the h1
+  would span that too -- and a check laid out inline would reflow the header
+  every time the pointer crossed the title.
+
+### The moon is the reference picture
+
+"That's not what I meant by an elongated moon. I mean like the one in this
+picture", with the stock illustration: a thin crescent, its bulge on the right,
+a figure on the bottom tip fishing into a ripple below.
+
+**Drawn rather than transformed** (the previous pass rotated and scaled the
+stock crescent, which needed a `vector-effect` that pins the stroke to SCREEN
+pixels and so stops being 2 units the moment the icon is drawn at any other
+size): an r8.6 circle at (12.4,12) with an r7.9 bite at (9.8,11.4) taken out of
+it. **The two horns are the intersections of those circles, solved rather than
+eyeballed** -- (10.76,3.56) and (7.22,18.87) -- and that bottom one is what he
+sits on.
+
+- **He flies in on a cloud, hops to the tip, fishes, jumps in, and the cloud
+  comes back for him.** The cloud and the guy are keyed at the same
+  percentages, his track being the cloud's plus (1.8,-2.6), which is where
+  somebody standing on it is; between jumping in and being collected he is at
+  opacity 0, and that window is what the keyframes use to move him off-screen
+  right without anything being seen to jump.
+- **The ripples are rings, and that needed a THINNER stroke than the group's.**
+  At rx1.5/ry0.45 a 1.2 stroke is wider than the ring it is drawing, so both
+  came out as solid blobs; they are rx2.1/3.6 at stroke 0.8 now, scaled about
+  the point the line enters, which is where a ring spreads from.
+- **Two stars twinkle** in the half of the box the crescent leaves empty.
+
+### The pills, again, and the bell's rings were off centre
+
+- **23px, not 19** (real-user report: "I still dont think you fully filled out
+  the pills"). Padding drops to 3px/6px so the pill is the same 37x31 it has
+  always been; the three responsive rules each lost 4px rather than 2.
+- **The bell's rings were positioned as a 16px box and DRAWN as 19** -- a 1.5px
+  border on each side that the -8px margin never accounted for, so they sat
+  down-right of the bell (real-user report, with a screenshot). They are
+  centred by the box model now (`inset:0;margin:auto`), which cannot be out
+  however the border or the padding change.
+- **The clouds are a shade PAST the backdrop colour** (72 rather than 84).
+  Filled to the exact colour behind them they occlude perfectly well and still
+  read as the sun being erased rather than as a cloud in front of it, which is
+  what "the clouds are not filled" was about.
+
+### The circle is TWO people, and the busts come back
+
+"I hate the men you did for the circle. Maybe just make it the two men who hold
+hands creating a circle. And make something similar to the original icon back."
+
+So at rest it is the two busts the button has always worn -- a big head with
+wide shoulders and a smaller one behind it, which is the stock users mark -- and
+held over, those same elements become two people standing, with the circle
+being the one their joined arms make between them. Three figures in a ring are
+gone.
+
+- **The command lists are what the poses have to share**, and they now are
+  M+C+C for a body, M+C for a leg and M+Q for an arm. That is why the busts'
+  shoulders are written as two cubics rather than as the arc the stock icon
+  uses: an arc cannot interpolate into a torso.
+- **The legs and the arms START at nothing**, inside the bust, and are what
+  grows when the two of them stand up -- a bust has neither.
+- **The size difference between the two heads is load-bearing.** At 3.4 and 2.6
+  they read as a face: two eyes over a wide mouth. At 3.6 and 2.4, offset
+  further right, they read as one person in front of another.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql

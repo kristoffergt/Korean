@@ -185,69 +185,67 @@ body{
 #notifBellBtn:hover svg{animation:ring-bell 1.1s ease-in-out infinite;transform-origin:50% 15%;}
 /* And the sound it is making: two rings leaving the bell, the second half a
    beat behind, so it reads as a pulse rather than one shape growing. */
-#notifBellBtn::before, #notifBellBtn::after{content:'';position:absolute;left:50%;top:50%;
-  width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;
-  border:1.5px solid currentColor;opacity:0;pointer-events:none;}
+#notifBellBtn::before, #notifBellBtn::after{content:'';position:absolute;
+  inset:0;margin:auto;width:19px;height:19px;box-sizing:border-box;
+  border-radius:50%;border:1.5px solid currentColor;opacity:0;pointer-events:none;}
 #notifBellBtn:hover::before{animation:bell-wave 1.1s ease-out infinite;}
 #notifBellBtn:hover::after{animation:bell-wave 1.1s ease-out 0.55s infinite;}
 @keyframes bell-wave{
   0%{transform:scale(0.7);opacity:0.55;} 100%{transform:scale(2.1);opacity:0;}}
 
-/* ONE drawing, not two. The idle mark and the ring are the SAME elements at
-   two sets of coordinates, so holding over the button MOVES the people: the
-   two standing figures shrink and walk into a ring while a third grows out of
-   the middle and takes their hands (real-user report: "the linked circle
-   looks stupid. I wanted them to properly morph, not just show a different
-   image animated"). Cross-fading two drawings was exactly that complaint, and
-   it could never read as a morph -- nothing on screen travels between poses.
-   The morph is CSS on the GEOMETRY itself: cx/cy/r on a head, `d` on a torso,
-   its legs and its arms. That only interpolates while both poses share a
-   command list, so a torso is always M+V, legs are always M+l+M+l and an arm
-   is always M+Q. Change one of those and the browser stops interpolating and
-   cuts instead, which is the thing being fixed. Both ends are written here as
-   CSS rather than left on the attribute, so there is nothing to interpolate
-   FROM that the stylesheet cannot see. */
+/* ONE drawing, not two. At rest it is the two BUSTS the button has always
+   worn -- heads and shoulders, the shape of the stock users mark (real-user
+   request: "make something similar to the original icon back"). Held over,
+   the same elements become TWO people standing, and the circle is the one
+   their joined arms make between them, not a ring of bodies (real-user
+   report: "I hate the men you did for the circle. Maybe just make it the two
+   men who hold hands creating a circle").
+   The morph is CSS on the geometry itself: cx/cy/r on a head, `d` on a body,
+   a leg and an arm. That only interpolates while both poses share a command
+   list, so a body is always M+C+C, a leg M+C and an arm M+Q -- which is why
+   the busts' shoulders are written as two cubics rather than as the arc the
+   stock icon uses. Change one of those and the browser stops interpolating
+   and cuts, which is the thing being fixed. Both poses are written here
+   rather than left on the attribute for one end, so there is nothing to
+   interpolate FROM that the stylesheet cannot see. */
 .friends-morph{transition:stroke-width .38s ease;}
-.fr-head, .fr-torso, .fr-legs, .fr-arm{
-  transition:cx .38s ease, cy .38s ease, r .38s ease, d .38s ease;}
-.fr-p1 .fr-head{cx:8.4;cy:6.4;r:2.7;}
-.fr-p1 .fr-torso{d:path("M8.4 9.1V15.2");}
-.fr-p1 .fr-legs{d:path("M8.4 15.2l-2.2 4M8.4 15.2l2.2 4");}
-.fr-p2 .fr-head{cx:16.4;cy:8;r:2.2;}
-.fr-p2 .fr-torso{d:path("M16.4 10.2V15.6");}
-.fr-p2 .fr-legs{d:path("M16.4 15.6l-1.8 3.6M16.4 15.6l1.8 3.6");}
-.fr-p3 .fr-head{cx:12;cy:11;r:0.6;}
-.fr-p3 .fr-torso{d:path("M12 11.6V13.4");}
-.fr-p3 .fr-legs{d:path("M12 13.4l-.6 1.1M12 13.4l.6 1.1");}
-.fr-armA{d:path("M8.4 10.6Q7 11.8 5.6 13");}
-.fr-armB{d:path("M8.4 10.6Q9.8 11.8 11.2 13");}
-.fr-armC{d:path("M16.4 11.4Q17.4 12.3 18.4 13.2");}
-body:not(.no-anim-header) #friendsBtn:hover .friends-morph{stroke-width:1.5;}
-body:not(.no-anim-header) #friendsBtn:hover .fr-p1 .fr-head{cx:12;cy:5.2;r:1.3;}
-body:not(.no-anim-header) #friendsBtn:hover .fr-p1 .fr-torso{d:path("M12 6.5V9.8");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-p1 .fr-legs{d:path("M12 9.8l-1.4 2.1M12 9.8l1.4 2.1");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-p2 .fr-head{cx:18.4;cy:15.8;r:1.3;}
-body:not(.no-anim-header) #friendsBtn:hover .fr-p2 .fr-torso{d:path("M18.4 17.1V20.4");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-p2 .fr-legs{d:path("M18.4 20.4l-1.4 2.1M18.4 20.4l1.4 2.1");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-p3 .fr-head{cx:5.6;cy:15.8;r:1.3;}
-body:not(.no-anim-header) #friendsBtn:hover .fr-p3 .fr-torso{d:path("M5.6 17.1V20.4");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-p3 .fr-legs{d:path("M5.6 20.4l-1.4 2.1M5.6 20.4l1.4 2.1");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-armA{d:path("M12 7.3Q7.4 11.6 5.6 17.9");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-armB{d:path("M12 7.3Q16.6 11.6 18.4 17.9");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-armC{d:path("M18.4 17.9Q12 20.3 5.6 17.9");}
-/* The third arrives a beat after the other two, so somebody is SEEN joining
-   rather than three appearing at once. Its geometry starts in the middle of
-   the group and travels out to the ring, so the fade is only what keeps it
-   from sitting there as a dot beforehand. */
-.fr-third{opacity:0;transition:opacity .25s ease .16s;}
-.fr-third .fr-head, .fr-third .fr-torso, .fr-third .fr-legs{transition-delay:.16s;}
-body:not(.no-anim-header) #friendsBtn:hover .fr-third{opacity:1;}
-/* Walking round, not spinning on the spot: slow enough to read as a ring of
-   people turning rather than a graphic being rotated. It starts only once the
-   morph has landed, or the ring turns while it is still forming. */
-.fr-spin{transform-box:view-box;transform-origin:12px 13px;}
+.fr-head, .fr-body, .fr-leg, .fr-arm{
+  transition:cx .38s ease, cy .38s ease, r .38s ease, d .38s ease, opacity .3s ease;}
+.fr-headL{cx:8.6;cy:7.4;r:3.6;}
+.fr-bodyL{d:path("M2.8 20.4C2.8 16.5 5.4 14.8 8.6 14.8C11.8 14.8 14.4 16.5 14.4 20.4");}
+.fr-headR{cx:17.7;cy:6.9;r:2.4;}
+.fr-bodyR{d:path("M17.7 14.5C19.4 14.5 20.5 15.6 21 17.1C21.3 18.1 21.4 19.2 21.4 20.4");}
+/* Neither bust has legs or arms, so those START inside it and at nothing --
+   they are what GROWS when the two of them stand up. */
+.fr-leg, .fr-arm{opacity:0;}
+.fr-legL{d:path("M8.6 14.8C8.6 16 8.6 17.2 8.6 18.4");}
+.fr-legR{d:path("M17.7 14.5C17.7 15.6 17.7 16.7 17.7 17.8");}
+.fr-armT{d:path("M8.6 13Q13.1 13 17.7 13");}
+.fr-armB{d:path("M8.6 13Q13.1 13 17.7 13");}
+body:not(.no-anim-header) #friendsBtn:hover .friends-morph{stroke-width:1.7;}
+body:not(.no-anim-header) #friendsBtn:hover .fr-headL{cx:6.3;cy:8.4;r:2.2;}
+body:not(.no-anim-header) #friendsBtn:hover .fr-bodyL{
+  d:path("M6.3 10.6C6.3 12.2 6.3 13.8 6.3 15.4C5.8 16.6 5.2 17.8 4.7 19");}
+body:not(.no-anim-header) #friendsBtn:hover .fr-headR{cx:17.7;cy:8.4;r:2.2;}
+body:not(.no-anim-header) #friendsBtn:hover .fr-bodyR{
+  d:path("M17.7 10.6C17.7 12.2 17.7 13.8 17.7 15.4C18.2 16.6 18.8 17.8 19.3 19");}
+body:not(.no-anim-header) #friendsBtn:hover .fr-legL{
+  d:path("M6.3 15.4C6.8 16.6 7.4 17.8 7.9 19");opacity:1;}
+body:not(.no-anim-header) #friendsBtn:hover .fr-legR{
+  d:path("M17.7 15.4C17.2 16.6 16.6 17.8 16.1 19");opacity:1;}
+/* The two arms are the same span curved opposite ways, so together they close
+   a circle between the pair -- which is the whole point of the mark. */
+body:not(.no-anim-header) #friendsBtn:hover .fr-armT{
+  d:path("M6.3 11.7Q12 7.9 17.7 11.7");opacity:1;}
+body:not(.no-anim-header) #friendsBtn:hover .fr-armB{
+  d:path("M6.3 11.7Q12 15.5 17.7 11.7");opacity:1;}
+/* The arms take a beat longer, so the two of them are seen to stand up and
+   only then reach for each other. */
+.fr-arm{transition-delay:.12s;}
+/* Turning together, slowly, and only once the morph has landed. */
+.fr-spin{transform-box:view-box;transform-origin:12px 12.4px;}
 @keyframes ring-walk{to{transform:rotate(360deg);}}
-#friendsBtn:hover .fr-spin{animation:ring-walk 6s linear infinite .4s;}
+#friendsBtn:hover .fr-spin{animation:ring-walk 9s linear infinite .5s;}
 
 /* The name is the one thing here that is a WORD, so it jiggles rather than
    turning -- and the jiggle carries its own scale, because the shared
@@ -286,7 +284,10 @@ body:not(.no-anim-header) #friendsBtn:hover .fr-third{opacity:1;}
    shows on hover, and .icon-btn:hover REPLACES the background with a
    translucent grey, so what is really behind the mark is 16% of that grey
    over the page's paper. Mixed rather than guessed, so it holds in both
-   themes and cannot read as a hole. */
+   themes -- and taken a shade PAST it (72 rather than 84), so the cloud has a
+   body of its own. At the exact backdrop colour it occludes perfectly well
+   and still reads as the sun being erased rather than as a cloud in front of
+   it, which is what "the clouds are not filled" was about. */
 .sun-cloud{transform-box:view-box;
   fill:color-mix(in srgb, var(--paper) 84%, rgb(127 127 127));}
 #darkToggleApp:hover .sun-cloud, #darkTogglePin:hover .sun-cloud,
@@ -305,35 +306,45 @@ body:not(.no-anim-header) #friendsBtn:hover .fr-third{opacity:1;}
    the moon behind it is a cloud-shaped hole. */
 .moon-cloud{fill:color-mix(in srgb, var(--paper) 84%, rgb(127 127 127));}
 @keyframes moon-cloud-run{
-  0%{transform:translate(-14px,2px);}
-  14%,20%{transform:translate(6.4px,6.4px);}
-  34%,76%{transform:translate(26px,3px);}
-  88%{transform:translate(6.4px,6.4px);}
-  100%{transform:translate(-14px,2px);}}
+  0%{transform:translate(-14px,7px);}
+  14%,20%{transform:translate(3.2px,10.4px);}
+  34%,76%{transform:translate(26px,6px);}
+  88%{transform:translate(3.2px,10.4px);}
+  100%{transform:translate(-14px,7px);}}
 @keyframes moon-guy-run{
-  0%{transform:translate(-12.2px,-0.6px);opacity:1;}
-  14%{transform:translate(8.2px,3.8px);}
-  20%,60%{transform:translate(10.4px,5.6px);}
-  66%{transform:translate(12px,4.2px);}
-  70%{transform:translate(13.4px,8.4px);opacity:1;}
-  71%{transform:translate(13.4px,8.4px);opacity:0;}
-  75%{transform:translate(27.8px,0.4px);opacity:0;}
-  76%{transform:translate(27.8px,0.4px);opacity:1;}
-  88%{transform:translate(8.2px,3.8px);opacity:1;}
-  100%{transform:translate(-12.2px,-0.6px);opacity:1;}}
+  0%{transform:translate(-12.2px,4.4px);opacity:1;}
+  14%{transform:translate(5px,7.8px);}
+  20%,60%{transform:translate(7.6px,15.4px);}
+  66%{transform:translate(6.4px,14.2px);}
+  70%{transform:translate(4.6px,18.4px);opacity:1;}
+  71%{transform:translate(4.6px,18.4px);opacity:0;}
+  75%{transform:translate(27.8px,3.4px);opacity:0;}
+  76%{transform:translate(27.8px,3.4px);opacity:1;}
+  88%{transform:translate(5px,7.8px);opacity:1;}
+  100%{transform:translate(-12.2px,4.4px);opacity:1;}}
 /* The rod only exists while he is fishing; before that he is holding on to a
    cloud and afterwards he is in the water. */
 @keyframes moon-tackle-show{
   0%,21%{opacity:0;} 25%,62%{opacity:1;} 66%,100%{opacity:0;}}
-/* The pond arrives with him and goes when he does, and it never stops moving
-   while it is there -- still water under a swinging line reads as a mistake. */
+/* The rings arrive with him and go when he does, spreading twice while the
+   line is in and once more as he goes in after it. Scaled about the point the
+   line enters, which is where a ring spreads FROM. */
+.moon-water{transform-origin:4.15px 20.5px;}
 @keyframes moon-water-run{
-  0%,20%{opacity:0;transform:translateX(0);}
-  25%{opacity:1;transform:translateX(.45px);}
-  40%{transform:translateX(-.45px);}
-  55%{transform:translateX(.4px);}
-  68%{opacity:1;transform:translateX(0);}
-  74%,100%{opacity:0;}}
+  0%,20%{opacity:0;transform:scale(.5);}
+  25%{opacity:1;transform:scale(.8);}
+  40%{transform:scale(1.05);}
+  42%{transform:scale(.75);}
+  57%{transform:scale(1.05);}
+  59%{transform:scale(.75);}
+  68%{opacity:1;transform:scale(1);}
+  74%,100%{opacity:0;transform:scale(1.25);}}
+/* Two stars, out of phase, in the half of the box the crescent leaves empty
+   (real-user request: "you can add a couple shimmering stars too"). */
+.moon-star{transform-box:fill-box;transform-origin:center;}
+@keyframes moon-twinkle{
+  0%,100%{opacity:.28;transform:scale(.78);}
+  50%{opacity:1;transform:scale(1.15);}}
 #darkToggleApp:hover .moon-cloud, #darkTogglePin:hover .moon-cloud,
 #darkToggleAuth:hover .moon-cloud{animation:moon-cloud-run 7s ease-in-out infinite;}
 #darkToggleApp:hover .moon-guy, #darkTogglePin:hover .moon-guy,
@@ -342,6 +353,10 @@ body:not(.no-anim-header) #friendsBtn:hover .fr-third{opacity:1;}
 #darkToggleAuth:hover .moon-tackle{animation:moon-tackle-show 7s linear infinite;}
 #darkToggleApp:hover .moon-water, #darkTogglePin:hover .moon-water,
 #darkToggleAuth:hover .moon-water{animation:moon-water-run 7s ease-in-out infinite;}
+#darkToggleApp:hover .moon-star, #darkTogglePin:hover .moon-star,
+#darkToggleAuth:hover .moon-star{
+  animation:moon-twinkle 2.6s ease-in-out infinite;
+  animation-delay:calc(var(--s,0) * -1.3s);}
 /* The rod stays put and the LINE swings under it, which is what a line in the
    air does; swinging the whole angler would be him waving the rod about. The
    origin is the rod TIP, taken from the line's own box rather than from a
@@ -366,28 +381,34 @@ body:not(.no-anim-header) #friendsBtn:hover .fr-third{opacity:1;}
    apart, not so much that the title shoves the rest of the header about. */
 .title-word{display:inline-block;white-space:nowrap;
   transition:letter-spacing 0.28s cubic-bezier(0.34,1.3,0.64,1);}
-/* Barely any now: a letter-shaped person is a letter's width, so the word no
-   longer has to open up to keep them apart -- which is the whole point of
-   posing them as the letters. */
-body:not(.no-anim-title) #appTitleHome:hover .title-word{letter-spacing:0.06em;}
-.title-letter{position:relative;display:inline-block;}
-.tl-char{display:inline-block;
-  transition:opacity 0.2s ease,transform 0.28s cubic-bezier(0.34,1.3,0.64,1);
-  transition-delay:calc(var(--i,0) * 28ms);}
-.tl-fig{position:absolute;left:50%;top:52%;width:0.8em;height:1.05em;
-  opacity:0;pointer-events:none;
-  transform:translate(-50%,-50%) scale(0.35) rotate(-25deg);
-  transition:opacity 0.2s ease,transform 0.32s cubic-bezier(0.34,1.5,0.64,1);
-  transition-delay:calc(var(--i,0) * 28ms);}
-.tl-fig svg{width:100%;height:100%;display:block;}
-/* The whole title turns together, not a word at a time: it is one name, so
-   holding over any part of it changes all of it, and the stagger runs across
-   the whole nineteen letters as a single sweep (real-user request: "the
-   animation should be the whole 'productivity tracker' not separately"). */
-body:not(.no-anim-title) #appTitleHome:hover .tl-char{
-  opacity:0;transform:translateY(-0.35em) scale(0.5) rotate(14deg);}
-body:not(.no-anim-title) #appTitleHome:hover .tl-fig{
-  opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0);}
+/* The title tracks itself. LETTER_COUNT * STEP is what the meter's own
+   duration has to match, or the bar and the letters disagree about when the
+   title is finished: nineteen letters at 34ms is 0.65s, which is the fill's
+   duration and the check's delay. */
+.tl-track{position:relative;display:inline-block;}
+.tl-char{transition:color 0.18s ease;
+  transition-delay:calc(var(--i,0) * 34ms);}
+body:not(.no-anim-title) #appTitleHome:hover .tl-char{color:var(--on);}
+/* Under the words, not around them: the meter is absolute, so nothing in the
+   header moves when it appears and the h1's own height never changes. */
+.tl-meter{position:absolute;left:0;right:0;bottom:-0.16em;height:2px;
+  border-radius:2px;background:var(--line);
+  opacity:0;transition:opacity 0.16s ease;pointer-events:none;}
+.tl-meter > i{display:block;height:100%;border-radius:2px;background:var(--on);
+  transform:scaleX(0);transform-origin:left center;
+  transition:transform 0.65s linear;}
+body:not(.no-anim-title) #appTitleHome:hover .tl-meter{opacity:1;}
+body:not(.no-anim-title) #appTitleHome:hover .tl-meter > i{transform:scaleX(1);}
+/* The check lands when the bar gets there, and is placed OUTSIDE the track's
+   own width so a title that grows a mark does not reflow the row. */
+.tl-done{position:absolute;left:100%;top:50%;width:0.62em;height:0.62em;
+  margin-left:0.2em;color:var(--on);pointer-events:none;
+  opacity:0;transform:translateY(-50%) scale(0.4);
+  transition:opacity 0.18s ease, transform 0.32s cubic-bezier(0.34,1.5,0.64,1);}
+.tl-done svg{width:100%;height:100%;display:block;}
+body:not(.no-anim-title) #appTitleHome:hover .tl-done{
+  opacity:1;transform:translateY(-50%) scale(1);
+  transition-delay:0.6s;}
 
 /* The animation switches. Each one is a body class that turns its own group
    off and nothing else (real-user request: "can turn animations off in
@@ -404,10 +425,10 @@ body.no-anim-header .theme-icon-in,
 body.no-anim-header .sun-core, body.no-anim-header .sun-cloud,
 body.no-anim-header .moon-line, body.no-anim-header .moon-cloud,
 body.no-anim-header .moon-guy, body.no-anim-header .moon-water,
-body.no-anim-header .moon-tackle{animation:none;}
+body.no-anim-header .moon-tackle, body.no-anim-header .moon-star{animation:none;}
 body.no-anim-header .sun-clouds, body.no-anim-header .moon-angler{opacity:0;}
-body.no-anim-header .fr-head, body.no-anim-header .fr-torso,
-body.no-anim-header .fr-legs, body.no-anim-header .fr-arm,
+body.no-anim-header .fr-head, body.no-anim-header .fr-body,
+body.no-anim-header .fr-leg, body.no-anim-header .fr-arm,
 body.no-anim-header .friends-morph{transition:none;}
 body.no-anim-ui .tap-word:hover, body.no-anim-ui .cal-seg:hover,
 body.no-anim-ui label.file-upload-btn:hover, body.no-anim-ui .linkbtn:hover,
@@ -424,14 +445,16 @@ body.no-anim-ui .gram-resource-del:active, body.no-anim-ui .reminder-chip-remove
 body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transform:none;}
 
 @media (prefers-reduced-motion: reduce){
-  .tl-char, .tl-fig{transition:none;}
-  #appTitleHome:hover .tl-char{opacity:1;transform:none;}
-  #appTitleHome:hover .tl-fig{opacity:0;}
+  /* The title still says it is finished, it just does not take 0.65s to get
+     there: every letter turns at once and the bar is already full. */
+  .tl-char, .tl-meter, .tl-meter > i, .tl-done{transition:none;}
+  #appTitleHome:hover .tl-char{transition-delay:0s;}
+  #appTitleHome:hover .tl-done{transition-delay:0s;}
   .lang-switch:hover .globe-mer, #accountSettingsBtn:hover .ui-icon,
   #notifBellBtn:hover svg, #notifBellBtn:hover::before, #notifBellBtn:hover::after,
   #friendsBtn:hover .fr-spin, #whoNameWrap:hover #whoName, .theme-icon-in,
   .sun-core, .sun-cloud, .moon-line, .moon-cloud, .moon-guy,
-  .moon-water, .moon-tackle,
+  .moon-water, .moon-tackle, .moon-star,
   .lang-menu{animation:none;}
 }
 /* The pill's own colour input, laid over it at opacity 0 -- the same trick
@@ -459,9 +482,9 @@ body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transfo
    pill in three dozen other places where 8px of padding would be tight. */
 .who .icon-btn > svg, .who .lang-switch > svg,
 .topbar-controls .icon-btn > svg, .topbar-controls .lang-switch > svg{
-  width:19px;height:19px;}
-.topbar-controls .icon-btn{padding:5px 8px;}
-.topbar-controls .lang-switch{padding:5px 8px 5px 6px;}
+  width:23px;height:23px;}
+.topbar-controls .icon-btn{padding:3px 6px;}
+.topbar-controls .lang-switch{padding:3px 6px 3px 4px;}
 #notifBellBtn{position:relative;}
 /* The header's controls had a hover FILL and nothing else -- no ease onto it
    and nothing at all under the finger, so a press read as a page that had not
@@ -751,7 +774,7 @@ header{display:flex;flex-direction:column;border-bottom:2px solid var(--ink);pad
    claiming the width of "Study · Reading · Jobs" on the row. */
 #topBar.stuck .sub{opacity:0;max-height:0;width:0;flex:0 0 0;margin:0;padding:0;}
 #topBar.stuck .who{flex-wrap:nowrap;gap:3px;}
-#topBar.stuck .who .icon-btn{padding:2px 3px;}
+#topBar.stuck .who .icon-btn{padding:0 1px;}
 #topBar.stuck .who .icon-btn .ui-icon,
 #topBar.stuck .who .icon-btn svg,
 #topBar.stuck .who .lang-switch-icon{width:12px;height:12px;}
@@ -799,7 +822,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
   transition:font-size 0.18s ease,margin-bottom 0.18s ease;}
 .sub{font-size:13px;color:var(--ink-soft);letter-spacing:0.3px;margin-top:6px;}
 .who{display:flex;align-items:center;gap:clamp(4px,1.4vw,12px);flex-wrap:wrap;justify-content:flex-end;}
-.who .lang-switch{gap:clamp(3px,0.8vw,6px);padding:calc(clamp(4px,1vw,7px) - 2px) calc(clamp(5px,1.2vw,10px) - 2px) calc(clamp(4px,1vw,7px) - 2px) calc(clamp(4px,1vw,8px) - 2px);}
+.who .lang-switch{gap:clamp(3px,0.8vw,6px);padding:calc(clamp(4px,1vw,7px) - 4px) calc(clamp(5px,1.2vw,10px) - 4px) calc(clamp(4px,1vw,7px) - 4px) calc(clamp(4px,1vw,8px) - 4px);}
 .who .lang-switch-label{font-size:clamp(9px,1.6vw,12.5px);}
 /* Was clamp(10px,1.6vw,14px), which resolves to TEN pixels at 375px -- so
    on a phone the globe was two thirds the size of every other icon in the
@@ -808,7 +831,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
    match .icon-btn's own icons, which also makes the pill 27px tall like
    the buttons beside it. */
 .who .lang-switch-icon{width:15px;height:15px;}
-.who .icon-btn{padding:calc(clamp(4px,1vw,7px) - 2px) calc(clamp(5px,1.3vw,10px) - 2px);font-size:clamp(11px,1.8vw,14px);}
+.who .icon-btn{padding:calc(clamp(4px,1vw,7px) - 4px) calc(clamp(5px,1.3vw,10px) - 4px);font-size:clamp(11px,1.8vw,14px);}
 .who .name{font-size:clamp(10px,1.8vw,13px);color:var(--ink-soft);background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:clamp(4px,1vw,7px) clamp(5px,1.3vw,10px);}
 .who button.textbtn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:6px 12px;font-size:12px;font-weight:500;}
 .who button.textbtn:hover{background:var(--paper-dim);color:var(--ink);}
@@ -1594,7 +1617,7 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
   header .sub{font-size:10.5px;}
   header{padding-bottom:10px;margin-bottom:14px;gap:8px;}
   .who{gap:6px;justify-content:flex-end;}
-  .who .icon-btn{font-size:12px;padding:3px 5px;}
+  .who .icon-btn{font-size:12px;padding:1px 3px;}
   /* Plain overflow-clipping, not font-size:0 + ::first-letter -- the
      pseudo-element version left the real full name in the DOM the same
      way, but WebKit doesn't reliably grow the PARENT's hit-testable box to
@@ -1620,7 +1643,7 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
      regardless of which comes later in the file (same class of bug as the
      tab fly-out's .tabs button vs .tab-flyout-item mixup). Matches
      .who .icon-btn's own 5px vertical padding right below. */
-  .who .lang-switch{gap:4px;padding:3px 5px 3px 4px;}
+  .who .lang-switch{gap:4px;padding:1px 3px 1px 2px;}
   /* Globe-only .who rule lives up in the 1024px block above (it already
      covers this narrower range too, no need to repeat it here). */
   .lang-switch-label{font-size:11px;}
@@ -2010,14 +2033,16 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
              to properly morph"). Every part keeps its command list across both
              poses -- which is what lets the browser interpolate `d` at all --
              and the two poses live in the stylesheet beside each other. -->
-        <svg class="friends-morph" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="friends-morph" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <g class="fr-spin">
-            <g class="fr-p fr-p1"><circle class="fr-head" cx="8.4" cy="6.4" r="2.7"></circle><path class="fr-torso" d="M8.4 9.1V15.2"></path><path class="fr-legs" d="M8.4 15.2l-2.2 4M8.4 15.2l2.2 4"></path></g>
-            <g class="fr-p fr-p2"><circle class="fr-head" cx="16.4" cy="8" r="2.2"></circle><path class="fr-torso" d="M16.4 10.2V15.6"></path><path class="fr-legs" d="M16.4 15.6l-1.8 3.6M16.4 15.6l1.8 3.6"></path></g>
-            <g class="fr-p fr-p3 fr-third"><circle class="fr-head" cx="12" cy="11" r="0.6"></circle><path class="fr-torso" d="M12 11.6V13.4"></path><path class="fr-legs" d="M12 13.4l-.6 1.1M12 13.4l.6 1.1"></path></g>
-            <path class="fr-arm fr-armA" d="M8.4 10.6Q7 11.8 5.6 13"></path>
-            <path class="fr-arm fr-armB" d="M8.4 10.6Q9.8 11.8 11.2 13"></path>
-            <path class="fr-arm fr-armC" d="M16.4 11.4Q17.4 12.3 18.4 13.2"></path>
+            <circle class="fr-head fr-headL" cx="8.6" cy="7.4" r="3.6"></circle>
+            <path class="fr-body fr-bodyL" d="M2.8 20.4C2.8 16.5 5.4 14.8 8.6 14.8C11.8 14.8 14.4 16.5 14.4 20.4"></path>
+            <circle class="fr-head fr-headR" cx="17.7" cy="6.9" r="2.4"></circle>
+            <path class="fr-body fr-bodyR" d="M17.7 14.5C19.4 14.5 20.5 15.6 21 17.1C21.3 18.1 21.4 19.2 21.4 20.4"></path>
+            <path class="fr-leg fr-legL" d="M8.6 14.8C8.6 16 8.6 17.2 8.6 18.4"></path>
+            <path class="fr-leg fr-legR" d="M17.7 14.5C17.7 15.6 17.7 16.7 17.7 17.8"></path>
+            <path class="fr-arm fr-armT" d="M8.6 13Q13.1 13 17.7 13"></path>
+            <path class="fr-arm fr-armB" d="M8.6 13Q13.1 13 17.7 13"></path>
           </g>
         </svg>
         <span id="linkNotifyDot" class="hidden" style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--seal);"></span>
@@ -9542,7 +9567,7 @@ const I18N = {
     topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
-    lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name jiggles when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and every letter turns into a little person standing in the shape of that letter, so the name still reads. The twelve in Productivity are at work and the seven in Tracker are keeping track of something.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over a word you can click, and the squeeze when you press it.',
+    lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name jiggles when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over a word you can click, and the squeeze when you press it.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     calExportTitle:'Download calendar', calExportUseList:'Pick from list', calExportUseCalendar:'Pick on calendar', calExportPickHint:'Click events on the calendar to leave them out.', calExportCountTpl:'{in} of {total}', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
@@ -9665,7 +9690,7 @@ const I18N = {
     topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
-    lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 흔들립니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 각 글자가 그 글자 모양으로 선 작은 사람으로 바뀌어 이름은 그대로 읽힙니다. Productivity의 열두 명은 일하고 있고, Tracker의 일곱 명은 무언가를 기록하고 있습니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누를 수 있는 단어 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.',
+    lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 흔들립니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누를 수 있는 단어 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     calExportTitle:'캘린더 내려받기', calExportUseList:'목록에서 선택', calExportUseCalendar:'캘린더에서 선택', calExportPickHint:'캘린더에서 일정을 클릭하면 제외됩니다.', calExportCountTpl:'{total}개 중 {in}개', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
@@ -9788,7 +9813,7 @@ const I18N = {
     topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
-    lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn rung nhẹ khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và từng chữ hóa thành một người nhỏ đứng theo hình chữ đó, nên tên vẫn đọc được. Mười hai người trong Productivity đang làm việc, còn bảy người trong Tracker đang theo dõi điều gì đó.', animUiLabel:'Chuyển động giao diện', animUiHint:'Chữ bấm được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.',
+    lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn rung nhẹ khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Chữ bấm được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     calExportTitle:'Tải lịch về', calExportUseList:'Chọn từ danh sách', calExportUseCalendar:'Chọn trên lịch', calExportPickHint:'Nhấp vào sự kiện trên lịch để loại bỏ.', calExportCountTpl:'{in}/{total}', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
@@ -10446,128 +10471,59 @@ const ICON = {
   chevL:   function(sz){ return svgIcon(ICON_PATHS.chevL, sz); },
   download:function(sz){ return svgIcon(ICON_PATHS.download, sz); }
 };
-/* ---------- THE TITLE'S LETTERS ---------- */
-// Hold over the title and every letter turns into a small person -- the
-// twelve of "Productivity" at work and the seven of "Tracker" tracking
-// something. Drawn in the app's own icon language -- a 24 box, stroke,
-// currentColor, no fill -- so they are the same colourless outline marks as
-// every other icon here and inherit the title's ink in both themes.
-// A figure is the LETTER'S OWN SKELETON plus ONE prop. At the size a letter
-// gives it (about 18px) anything more is a smudge, so the prop is one or two
-// strokes and nothing else.
-// Each letter is a PERSON POSED AS THAT LETTER, not a person standing where
-// a letter used to be (real-user request: "I want the people to be sort of
-// formed in the shapes of the letters (smartly), so you can still read it").
-// So the letter's own skeleton IS the body: a head circle sits where a head
-// naturally falls on that letterform, and the strokes that spell it are the
-// torso, the arms and the legs. The word stays readable because the shapes
-// are still the shapes; it reads as people because every one has a head and
-// most end in two legs.
-// Drawn on a 24 box with the baseline at 20 and the cap line at about 4, and
-// cropped by the viewBox to the ink so a tall thin glyph is not padded out
-// into a square.
-const LETTER_FIGURES = {
-  // stem is the body, the bowl is both arms reaching round
-  'P':'<circle cx="8.5" cy="4.6" r="2"/><path d="M8.5 6.6V16.6"/><path d="M8.5 16.6l-2.2 3.4M8.5 16.6l2.2 3.4"/><path d="M8.5 8.8c6.1 0 6.1 4.8 0 4.8"/>',
-  // the shoulder of an r is one arm thrown out
-  'r':'<circle cx="8.5" cy="10.6" r="1.8"/><path d="M8.5 12.4V17"/><path d="M8.5 17l-1.9 3M8.5 17l1.9 3"/><path d="M8.5 13.4c1.9-1.6 3.9-1.8 5.3-1.2"/>',
-  // curled up: arms and legs joined into the ring, head on top
-  'o':'<circle cx="12" cy="9.6" r="1.9"/><path d="M12 11.5c-3.8 0-5.6 2.5-5.1 5.1.5 2.6 3.5 4 6.3 3.2 3-.8 4.4-4 2.8-6.4-.9-1.3-2.4-1.9-4-1.9z"/>',
-  // stem on the right, both arms hugging the bowl
-  'd':'<circle cx="15.5" cy="4.6" r="2"/><path d="M15.5 6.6V20"/><path d="M15.5 11.4c-5.5-1-8.7 2.2-7.3 5.4 1 2.4 5 3.4 7.3 1.6"/>',
-  // bent into the u, the curve is the arms
-  'u':'<circle cx="8" cy="10.6" r="1.8"/><path d="M8 12.4v4.4c0 2.6 4 3.8 6 1.6"/><path d="M14.2 11v9"/>',
-  'c':'<circle cx="13.4" cy="10.4" r="1.8"/><path d="M15 12.6c-4.4-2-8 .8-7.4 3.8.6 2.8 4.4 4 7.2 2.2"/>',
-  // arms straight out is what a t is
-  't':'<circle cx="9.4" cy="4.4" r="2"/><path d="M9.4 6.4v11c0 2 1.6 3 3.4 2.4"/><path d="M5.6 10.6h7.6"/>',
-  // an i already IS a person: the dot is the head
-  'i':'<circle cx="9.5" cy="6.2" r="2"/><path d="M9.5 10.4V17"/><path d="M9.5 17l-1.9 3M9.5 17l1.9 3"/><path d="M9.5 12l-2.4 2.2M9.5 12l2.4 2.2"/>',
-  // legs apart, arms up
-  'v':'<circle cx="12" cy="8.8" r="2"/><path d="M12 10.8L8 20M12 10.8l4 9.2"/><path d="M12 12.6l-3.2-2M12 12.6l3.2-2"/>',
-  // the same, with one leg carried on into the descender
-  'y':'<circle cx="11.6" cy="8.8" r="2"/><path d="M11.6 10.8L8 18.4"/><path d="M11.6 10.8L15.4 20c-.6 2.6-2.6 3.2-4.2 2.4"/><path d="M11.6 12.4l-3-1.8M11.6 12.4l3-1.8"/>',
-  'T':'<circle cx="12" cy="4.4" r="2"/><path d="M6 8.4h12"/><path d="M12 8.4V17"/><path d="M12 17l-2.2 3M12 17l2.2 3"/>',
-  'a':'<circle cx="14.6" cy="10.6" r="1.8"/><path d="M14.6 12.4V20"/><path d="M14.6 13.6c-4.6-1.2-7.6 1.4-6.6 4 .8 2.2 4.4 3 6.6 1.2"/>',
-  // one arm up and one leg kicked out is the whole of a k
-  'k':'<circle cx="8.2" cy="4.4" r="2"/><path d="M8.2 6.4V20"/><path d="M8.2 14l5.6-4.6"/><path d="M9.8 12.6L14.4 20"/>',
-  'e':'<circle cx="12.2" cy="10.4" r="1.8"/><path d="M7.6 15.8h8.8c.4-3.2-3.4-5.2-6.2-3.6-3 1.6-3 6.2.4 7.4 1.8.6 3.8.2 5-1"/>',
-};
-// And each of them is DOING something (real-user request: "the people who
-// turn into letters should be productive in various ways ... and for the
-// tracker part, should be tracking various things"). One prop per POSITION
-// in the title rather than per letter, because r, c and t each appear in
-// both words and a letter's job is decided by the word it is in.
-// Two rules make this legible at title size, and both were needed:
-//   - the prop goes where that letterform leaves the box EMPTY, so it never
-//     crosses a stroke the reading depends on;
-//   - it is drawn THINNER than the glyph (1.2 against 1.7), so the letter
-//     still carries the word and the prop is the thing noticed second.
-// In title order: P r o d u c t i v i t y, then T r a c k e r.
-const LETTER_PROPS = [
-  // Productivity: a day's work
-  '<path d="M14.6 14.6h4.2v3.1h-4.2z"/><path d="M13.9 17.7h5.6"/>',            // laptop
-  '<path d="M13.9 12.1l3.1 3.1"/><path d="M15.2 16.6h3.6"/>',                  // a pen, and the line it just wrote
-  '<circle cx="17" cy="6.2" r="1.9"/><path d="M15.9 8.4h2.2M16.3 9.6h1.4"/>',  // a bulb going on
-  '<path d="M4.8 5.8c1.7-.9 3.2-.9 4.1.4c.9-1.3 2.4-1.3 4.1-.4"/>'
-    + '<path d="M4.8 5.8v3.1c1.7-.9 3.2-.9 4.1.4c.9-1.3 2.4-1.3 4.1-.4V5.8"/>',// an open book
-  '<path d="M14.8 3.8h4v5.4h-4z"/><path d="M15.8 5.6h2M15.8 7.4h2"/>',         // a list
-  '<path d="M5 4.4l3.6 3.6"/><path d="M7.2 9.4l2.8-2.8"/>',                    // a broom
-  '<path d="M13.6 11.6h4.4v3.4h-4.4z"/><path d="M14.9 11.6v-.9h1.8v.9"/>',     // a case, carried
-  '<path d="M12 14.2l3.4-2.6"/><path d="M14.5 10.4l1.8 2.4"/>',                // a hammer
-  '<path d="M15 11.2h3.6v3.2H15z"/><path d="M16.8 11.2v3.2"/>',                // a parcel
-  '<path d="M4.4 15h3.2v2.2a1.6 1.6 0 0 1-3.2 0z"/><path d="M6 12.6v1.4"/>',   // a mug
-  '<circle cx="16.6" cy="10.6" r="1.7"/>'
-    + '<path d="M16.6 8.5V7.5M16.6 12.7v1M14.1 10.6h-.9M19.1 10.6h.7"/>',      // a cog
-  '<path d="M16.4 6.4h2.8v2.1h-2.8z"/><path d="M14.7 10.5l2-1.8"/>',           // a paint roller
-  // Tracker: keeping an eye on things
-  '<circle cx="17" cy="11.6" r="2"/><path d="M18.5 13.1l1.2 1.2"/>',           // a magnifying glass
-  '<circle cx="15.6" cy="12.4" r="1.5"/><circle cx="18.4" cy="12.4" r="1.5"/>'
-    + '<path d="M15.6 10.5h2.8"/>',                                            // binoculars
-  '<path d="M8.6 4.6a2.1 2.1 0 0 1 4.2 0c0 1.7-2.1 4.2-2.1 4.2S8.6 6.3 8.6 4.6z"/>'
-    + '<circle cx="10.7" cy="4.8" r=".75"/>',                                  // a pin on a map
-  '<circle cx="7.2" cy="7" r="2.2"/><path d="M7.2 7V5.6M7.2 4.8V4M6.3 4h1.8"/>',// a stopwatch
-  '<path d="M14.4 8.8l1.6-2 1.5 1.3 1.9-2.6"/>',                               // a line going up
-  '<path d="M15.2 4h4.2v4.2h-4.2z"/><path d="M16.1 6.1l1.2 1.2 2-2.4"/>',      // something ticked off
-  '<path d="M14.6 11.2h4.6v5.2h-4.6z"/><path d="M14.6 12.9h4.6M16.2 14.4h1.4"/>' // a calendar
-];
-function figSvg(paths, prop){
-  // Cropped to the ink rather than the whole 24 box, so a letter is set at a
-  // letter's proportions instead of being padded out into a square.
-  return '<svg viewBox="4 2 16 21" fill="none" stroke="currentColor" stroke-width="1.7" '
-    + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths
-    // Thinner AND dimmer than the glyph. At full weight nineteen props sat in
-    // a second row of marks above the letters and the name stopped reading,
-    // which is the one thing this whole drawing exists to protect.
-    + (prop ? '<g stroke-width="1.05" opacity=".7">' + prop + '</g>' : '') + '</svg>';
-}
-// The h1's own click handler still works: it is on the h1 and these are all
-// children, so a press on a letter bubbles to it exactly as the bare text did.
+/* ---------- THE TITLE MEASURES ITSELF ---------- */
+// Held over, the title does the one thing the app is named for: it TRACKS.
+// The letters tick over to the "on" green one at a time from the left, a
+// meter under the words fills at exactly the same rate, and a check lands
+// when it reaches the end.
+// This replaces nineteen little people posed as the letters (real-user
+// report: "this looks hella stupid ... come up with another smart idea that
+// are not these small men"). The lesson worth keeping from that: whatever the
+// title does on hover, the NAME has to stay the name -- drawings standing in
+// for letters cost legibility however carefully they are posed, where colour
+// and a rule underneath cost none of it.
+// Nothing here is drawn per letter, so the whole thing is two transitions and
+// one stagger rather than nineteen SVGs.
 function buildTitleMorph(){
   const h1 = document.getElementById('appTitleHome');
-  if(!h1 || h1.querySelector('.title-word')) return;
+  if(!h1 || h1.querySelector('.tl-track')) return;
   const words = ['Productivity', 'Tracker'];
   h1.textContent = '';
+  // The words and the meter share one positioned box, so the meter spans the
+  // TITLE rather than the h1, which also holds the logo.
+  const track = document.createElement('span');
+  track.className = 'tl-track';
   let n = 0;
   words.forEach((word, wi)=>{
-    if(wi) h1.appendChild(document.createTextNode(' '));
+    if(wi) track.appendChild(document.createTextNode(' '));
     const w = document.createElement('span');
     w.className = 'title-word';
     [...word].forEach((ch)=>{
       const l = document.createElement('span');
-      l.className = 'title-letter';
+      l.className = 'tl-char';
       // Counted across the WHOLE title rather than from the start of each
-      // word, so the sweep crosses the space instead of starting again -- and
-      // the same index picks the prop, since what a letter is DOING depends
-      // on where it is in the title rather than on which letter it is.
-      const i = n++;
-      l.style.setProperty('--i', String(i));
-      const fig = LETTER_FIGURES[ch];
-      l.innerHTML = '<span class="tl-char">' + ch + '</span>'
-        + (fig ? '<span class="tl-fig">' + figSvg(fig, LETTER_PROPS[i]) + '</span>' : '');
+      // word, so the sweep crosses the space instead of starting again.
+      l.style.setProperty('--i', String(n++));
+      l.textContent = ch;
       w.appendChild(l);
     });
-    h1.appendChild(w);
+    track.appendChild(w);
   });
+  // The meter's fill and the check are aria-hidden: they say the same thing
+  // the hover already says and there is nothing here to read out.
+  const meter = document.createElement('span');
+  meter.className = 'tl-meter';
+  meter.setAttribute('aria-hidden', 'true');
+  meter.innerHTML = '<i></i>';
+  track.appendChild(meter);
+  const done = document.createElement('span');
+  done.className = 'tl-done';
+  done.setAttribute('aria-hidden', 'true');
+  done.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    + 'stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M4 12.5l5.5 5.5L20 6.5"></path></svg>';
+  track.appendChild(done);
+  h1.appendChild(track);
 }
 buildTitleMorph();
 /* ---------- DARK MODE ---------- */
@@ -10593,33 +10549,37 @@ function themeIconHtml(isDark){
       + '<path class="sun-cloud" style="--c:1" d="M5 18.6h4a1.3 1.3 0 0 0 0-2.6 2 2 0 0 0-3.6-.5A1.5 1.5 0 0 0 5 18.6z"></path>'
       + '</g></svg>';
   }
-  // Moon: TILTED and oblong, so its hollow is a bowl rather than a notch --
-  // which is what gives the little guy an edge to sit on and somewhere for
-  // the water to lie (real-user request). Same crescent the icon has always
-  // been, turned and stretched about its own centre; the stroke is told not
-  // to scale with it, or the 0.8/1.1 would draw one side thicker.
-  // Then: he flies in on a cloud, gets off, fishes, jumps in, and the cloud
-  // comes back for him. The whole beat is in the stylesheet beside the
-  // keyframes; the coordinates here are the poses it moves between.
+  // Moon: a THIN crescent opening to the left, the shape the reference
+  // picture has (real-user request, with it: "that's not what I meant by an
+  // elongated moon"). Drawn rather than transformed, so the stroke needs no
+  // compensating: an outer circle r8.6 at (12.4,12) with an r7.9 bite at
+  // (9.8,11.4) taken out of it. Its two horns are the intersections of those
+  // circles, SOLVED rather than eyeballed -- (10.76,3.56) at the top and
+  // (7.22,18.87) at the bottom, and that bottom tip is what he sits on.
+  // Then: he flies in on a cloud, hops down to the tip, fishes into ripples
+  // below it, jumps in, and the cloud comes back for him. Two stars twinkle
+  // in the empty half. The beat itself is in the stylesheet.
   return open
-    + '<g transform="translate(12 10.4) rotate(-40) scale(.8 1.1) translate(-12 -12)">'
-    + '<path stroke-width="2.15" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>'
-    + '</g>'
+    + '<path d="M10.76 3.56A8.6 8.6 0 1 1 7.22 18.87A7.9 7.9 0 0 0 10.76 3.56z"></path>'
     + '<g class="moon-angler" stroke-width="1.2">'
-    // The water lies in the bowl's floor, which is MEASURED off the crescent
-    // rather than guessed: sampling the inner arc puts the floor at (13.8,
-    // 10.7) and the left lip, where he sits, at (10.1, 9.8).
-    + '<g class="moon-water"><path d="M10.9 9.6q1.15-.55 2.3 0t2.3 0"></path><path d="M12.2 10.7q.95-.45 1.9 0"></path></g>'
+    + '<g class="moon-star" style="--s:0"><path d="M4.4 3.4v2.4M3.2 4.6h2.4"></path></g>'
+    + '<g class="moon-star" style="--s:1"><path d="M7.9 6.6v1.8M7 7.5h1.8"></path></g>'
+    // "You see small circles": rings spreading where the line goes in.
+    // Wide and THIN-stroked: at rx1.5/ry0.45 the 1.2 stroke was wider than the
+    // ring it was drawing and both came out as solid blobs.
+    + '<g class="moon-water" stroke-width=".8"><ellipse cx="4.15" cy="20.5" rx="2.1" ry=".75"></ellipse>'
+    + '<ellipse cx="4.15" cy="20.5" rx="3.6" ry="1.25"></ellipse></g>'
     + '<path class="moon-cloud" d="M0 2.8h3.4a1.15 1.15 0 0 0 0-2.3 1.8 1.8 0 0 0-3.2-.45A1.3 1.3 0 0 0 0 2.8z"></path>'
     // Drawn about its own head, so one translate per keyframe is the whole of
-    // where he is -- on the cloud, on the lip, or in the water.
+    // where he is -- on the cloud, on the tip, or in the water. He faces LEFT,
+    // which is the way the crescent opens and the way the rod has to point.
     + '<g class="moon-guy">'
     + '<circle cx="0" cy="0" r=".72"></circle>'
     + '<path d="M0 .72v1.9"></path>'
     + '<path d="M0 2.62l-.65 1.1M0 2.62l.65 1.1"></path>'
-    + '<path d="M0 1.22l1.1.36"></path>'
-    + '<g class="moon-tackle"><path d="M1 1.66l2.45-.8"></path>'
-    + '<path class="moon-line" d="M3.45 .86v2.9"></path></g>'
+    + '<path d="M0 1.22l-1.1.36"></path>'
+    + '<g class="moon-tackle"><path d="M-1 1.66l-2.45-.8"></path>'
+    + '<path class="moon-line" d="M-3.45 .86v4.2"></path></g>'
     + '</g>'
     + '</g></svg>';
 }
