@@ -153,11 +153,25 @@ body{
    an animation and a transition sharing one element's transform fight over it
    -- the animation wins for as long as it runs and the button visibly stops
    responding to the press. Two elements, no argument. */
-@keyframes spin-globe{to{transform:perspective(70px) rotateY(360deg);}}
-.lang-switch:hover .lang-switch-icon{animation:spin-globe 1.6s linear infinite;}
-/* Rotating a flat circle says nothing, so the globe turns about its own
-   vertical axis and goes edge-on halfway round, which is the only part of
-   this that reads as a sphere rather than a wheel. */
+/* cos(), in eight stops: a meridian's projected width IS the cosine of how
+   far round it has turned, so interpolating straight from 1 to -1 would run
+   it across the face at a constant rate and read as a squash. */
+@keyframes turn-meridian{
+  0%{transform:scaleX(1);}    12.5%{transform:scaleX(0.707);}
+  25%{transform:scaleX(0);}   37.5%{transform:scaleX(-0.707);}
+  50%{transform:scaleX(-1);}  62.5%{transform:scaleX(-0.707);}
+  75%{transform:scaleX(0);}   87.5%{transform:scaleX(0.707);}
+  100%{transform:scaleX(1);}}
+.globe-mer, .globe-lat{transform-box:view-box;transform-origin:12px 12px;}
+/* At rest it is the flat globe mark the row has always had: one meridian, no
+   latitudes. The sphere is what it TURNS INTO. */
+.globe-lat{opacity:0;transition:opacity 0.25s ease;}
+.globe-mer{transform:scaleX(0.42);}
+.globe-mer[style*="--m:1"], .globe-mer[style*="--m:2"]{opacity:0;transition:opacity 0.25s ease;}
+.lang-switch:hover .globe-lat{opacity:0.45;}
+.lang-switch:hover .globe-mer{opacity:1;
+  animation:turn-meridian 2.6s linear infinite;
+  animation-delay:calc(var(--m,0) * -0.8667s);}
 
 @keyframes turn-gear{to{transform:rotate(360deg);}}
 #accountSettingsBtn:hover .ui-icon{animation:turn-gear 2.4s linear infinite;}
@@ -181,12 +195,20 @@ body{
 
 /* Walking is a bob and a lean, not a slide: feet that stay put while the body
    rises and tips is what the eye reads as steps. */
-@keyframes walk-people{
-  0%,100%{transform:translateY(0) rotate(0);}
-  25%{transform:translateY(-1.6px) rotate(-5deg);}
-  50%{transform:translateY(0) rotate(0);}
-  75%{transform:translateY(-1.6px) rotate(5deg);}}
-#friendsBtn:hover svg{animation:walk-people 0.9s ease-in-out infinite;transform-origin:50% 90%;}
+.friends-ring{position:absolute;left:50%;top:50%;margin:-7.5px 0 0 -7.5px;
+  opacity:0;transition:opacity 0.22s ease;pointer-events:none;}
+.friends-idle{transition:opacity 0.22s ease;}
+#friendsBtn:hover .friends-idle{opacity:0;}
+#friendsBtn:hover .friends-ring{opacity:1;}
+/* The third person and the arms that reach them arrive a beat after the
+   other two, so it reads as somebody joining rather than three appearing. */
+.fr-third{opacity:0;transition:opacity 0.25s ease 0.16s;}
+#friendsBtn:hover .fr-third{opacity:1;}
+/* Walking round, not spinning on the spot: slow enough to read as a ring of
+   people turning rather than a graphic being rotated. */
+.fr-spin{transform-box:view-box;transform-origin:12px 13px;}
+@keyframes ring-walk{to{transform:rotate(360deg);}}
+#friendsBtn:hover .fr-spin{animation:ring-walk 6s linear infinite;}
 
 /* The name is the one thing here that is a WORD, so it jiggles rather than
    turning -- and the jiggle carries its own scale, because the shared
@@ -203,6 +225,35 @@ body{
    it plays on the ARRIVING sun or moon rather than on a button that never
    changed. Rotating in from behind reads as one mark turning into the other
    rather than two marks being swapped. */
+/* Both sets are drawn always and revealed on hover, so nothing has to be
+   rebuilt under the pointer. */
+.sun-clouds, .moon-angler{opacity:0;transition:opacity 0.22s ease;}
+#darkToggleApp:hover .sun-clouds, #darkTogglePin:hover .sun-clouds,
+#darkToggleAuth:hover .sun-clouds, #darkToggleApp:hover .moon-angler,
+#darkTogglePin:hover .moon-angler, #darkToggleAuth:hover .moon-angler{opacity:1;}
+.sun-core{transform-box:view-box;transform-origin:12px 12px;}
+@keyframes sun-turn{to{transform:rotate(360deg);}}
+#darkToggleApp:hover .sun-core, #darkTogglePin:hover .sun-core,
+#darkToggleAuth:hover .sun-core{animation:sun-turn 9s linear infinite;}
+/* The clouds cross the whole face and fade at both edges, so they arrive and
+   leave rather than popping on over the disc. */
+@keyframes cloud-drift{
+  0%{transform:translateX(-16px);opacity:0;}
+  18%{opacity:0.75;} 82%{opacity:0.75;}
+  100%{transform:translateX(20px);opacity:0;}}
+.sun-cloud{transform-box:view-box;}
+#darkToggleApp:hover .sun-cloud, #darkTogglePin:hover .sun-cloud,
+#darkToggleAuth:hover .sun-cloud{
+  animation:cloud-drift 4.2s linear infinite;
+  animation-delay:calc(var(--c,0) * -2.1s);}
+/* The rod stays put and the LINE swings under it, which is what a line in the
+   air does; swinging the whole angler would be him waving the rod about. */
+.moon-line{transform-box:view-box;transform-origin:13.8px 6.2px;}
+@keyframes cast-line{
+  0%,100%{transform:rotate(-7deg);} 50%{transform:rotate(7deg);}}
+#darkToggleApp:hover .moon-line, #darkTogglePin:hover .moon-line,
+#darkToggleAuth:hover .moon-line{animation:cast-line 2.2s ease-in-out infinite;}
+
 @keyframes theme-swap{
   from{transform:rotate(-150deg) scale(0.2);opacity:0;}
   to{transform:rotate(0) scale(1);opacity:1;}}
@@ -216,34 +267,44 @@ body{
    apart, not so much that the title shoves the rest of the header about. */
 .title-word{display:inline-block;white-space:nowrap;
   transition:letter-spacing 0.28s cubic-bezier(0.34,1.3,0.64,1);}
-body:not(.no-anim-title) .title-word:hover{letter-spacing:0.18em;}
+/* Barely any now: a letter-shaped person is a letter's width, so the word no
+   longer has to open up to keep them apart -- which is the whole point of
+   posing them as the letters. */
+body:not(.no-anim-title) #appTitleHome:hover .title-word{letter-spacing:0.06em;}
 .title-letter{position:relative;display:inline-block;}
 .tl-char{display:inline-block;
   transition:opacity 0.2s ease,transform 0.28s cubic-bezier(0.34,1.3,0.64,1);
   transition-delay:calc(var(--i,0) * 28ms);}
-.tl-fig{position:absolute;left:50%;top:52%;width:0.92em;height:0.92em;
+.tl-fig{position:absolute;left:50%;top:52%;width:0.8em;height:1.05em;
   opacity:0;pointer-events:none;
   transform:translate(-50%,-50%) scale(0.35) rotate(-25deg);
   transition:opacity 0.2s ease,transform 0.32s cubic-bezier(0.34,1.5,0.64,1);
   transition-delay:calc(var(--i,0) * 28ms);}
 .tl-fig svg{width:100%;height:100%;display:block;}
-body:not(.no-anim-title) .title-word:hover .tl-char{
+/* The whole title turns together, not a word at a time: it is one name, so
+   holding over any part of it changes all of it, and the stagger runs across
+   the whole nineteen letters as a single sweep (real-user request: "the
+   animation should be the whole 'productivity tracker' not separately"). */
+body:not(.no-anim-title) #appTitleHome:hover .tl-char{
   opacity:0;transform:translateY(-0.35em) scale(0.5) rotate(14deg);}
-body:not(.no-anim-title) .title-word:hover .tl-fig{
+body:not(.no-anim-title) #appTitleHome:hover .tl-fig{
   opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0);}
 
 /* The animation switches. Each one is a body class that turns its own group
    off and nothing else (real-user request: "can turn animations off in
    settings, split to different animation choices to turn off"), so somebody
    who likes the marks moving but not the title can have exactly that. */
-body.no-anim-header .lang-switch:hover .lang-switch-icon,
+body.no-anim-header .lang-switch:hover .globe-mer,
 body.no-anim-header #accountSettingsBtn:hover .ui-icon,
 body.no-anim-header #notifBellBtn:hover svg,
 body.no-anim-header #notifBellBtn:hover::before,
 body.no-anim-header #notifBellBtn:hover::after,
-body.no-anim-header #friendsBtn:hover svg,
+body.no-anim-header #friendsBtn:hover .fr-spin,
 body.no-anim-header #whoNameWrap:hover #whoName,
-body.no-anim-header .theme-icon-in{animation:none;}
+body.no-anim-header .theme-icon-in,
+body.no-anim-header .sun-core, body.no-anim-header .sun-cloud,
+body.no-anim-header .moon-line{animation:none;}
+body.no-anim-header .sun-clouds, body.no-anim-header .moon-angler{opacity:0;}
 body.no-anim-ui .tap-word:hover, body.no-anim-ui .cal-seg:hover,
 body.no-anim-ui label.file-upload-btn:hover, body.no-anim-ui .linkbtn:hover,
 body.no-anim-ui .reminder-add-trigger:hover, body.no-anim-ui .tap-word:active,
@@ -260,11 +321,12 @@ body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transfo
 
 @media (prefers-reduced-motion: reduce){
   .tl-char, .tl-fig{transition:none;}
-  .title-word:hover .tl-char{opacity:1;transform:none;}
-  .title-word:hover .tl-fig{opacity:0;}
-  .lang-switch:hover .lang-switch-icon, #accountSettingsBtn:hover .ui-icon,
+  #appTitleHome:hover .tl-char{opacity:1;transform:none;}
+  #appTitleHome:hover .tl-fig{opacity:0;}
+  .lang-switch:hover .globe-mer, #accountSettingsBtn:hover .ui-icon,
   #notifBellBtn:hover svg, #notifBellBtn:hover::before, #notifBellBtn:hover::after,
-  #friendsBtn:hover svg, #whoNameWrap:hover #whoName, .theme-icon-in,
+  #friendsBtn:hover .fr-spin, #whoNameWrap:hover #whoName, .theme-icon-in,
+  .sun-core, .sun-cloud, .moon-line,
   .lang-menu{animation:none;}
 }
 /* The pill's own colour input, laid over it at opacity 0 -- the same trick
@@ -694,11 +756,16 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
    .tabs' own stacking context. width is written per move rather than folded
    into the transform: scaleX on a rounded box stretches the corners into
    ellipses, and these are 6px pills. The overshoot in the curve is the
-   "over the top" part -- it carries past the target and settles back. */
+   "over the top" part -- it carries past the target and settles back.
+   1.3 rather than 1.56: the overshoot is a SHARE of the distance travelled,
+   so at 9.8% a jump across the whole row flew about 60px past the tab it was
+   landing on (real-user report: "it goes a bit too far out before bouncing
+   back in"). At 3.0% the same jump overshoots about 19px and a one-tab hop
+   about 5, which still reads as a bounce rather than a slide. */
 .tab-slider{position:absolute;top:0;left:0;z-index:0;height:100%;border-radius:6px;
   background:var(--ink);opacity:0;pointer-events:none;transform-origin:center center;
-  transition:transform 0.42s cubic-bezier(.34,1.56,.64,1),
-             width 0.42s cubic-bezier(.34,1.56,.64,1),
+  transition:transform 0.42s cubic-bezier(.34,1.3,.64,1),
+             width 0.42s cubic-bezier(.34,1.3,.64,1),
              opacity 0.2s ease;}
 .no-slide-anim .tab-slider{transition:none;}
 @keyframes tabPop{0%{transform:scale(1);}45%{transform:scale(1.13);}100%{transform:scale(1);}}
@@ -1819,7 +1886,25 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
         </div>
       </div>
       <button class="icon-btn" id="friendsBtn" title="Linked circle" style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <svg class="friends-idle" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <!-- The two on the button are busts: heads and shoulders, no bodies,
+             and nobody to hold on to. Held over, a THIRD arrives and all three
+             get a body and legs and take each other's hands, and the ring
+             turns (real-user request). It is a second drawing rather than
+             pieces bolted onto the first, because the idle mark is two people
+             SIDE ON at different sizes and the ring is three people evenly
+             spaced -- there is no pose that is both, so they cross-fade.
+             The third fades in a beat late, so you see somebody join. -->
+        <svg class="friends-ring" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <g class="fr-spin">
+            <g class="fr-p"><circle cx="12" cy="5.2" r="1.3"></circle><path d="M12 6.5v3.3"></path><path d="M12 9.8l-1.4 2.1M12 9.8l1.4 2.1"></path></g>
+            <g class="fr-p"><circle cx="5.6" cy="15.8" r="1.3"></circle><path d="M5.6 17.1v3.3"></path><path d="M5.6 20.4l-1.4 2.1M5.6 20.4l1.4 2.1"></path></g>
+            <g class="fr-p fr-third"><circle cx="18.4" cy="15.8" r="1.3"></circle><path d="M18.4 17.1v3.3"></path><path d="M18.4 20.4l-1.4 2.1M18.4 20.4l1.4 2.1"></path></g>
+            <path class="fr-arms" d="M12 7.3Q7.4 11.6 5.6 17.9"></path>
+            <path class="fr-arms fr-third" d="M12 7.3Q16.6 11.6 18.4 17.9"></path>
+            <path class="fr-arms fr-third" d="M5.6 17.9Q12 20.3 18.4 17.9"></path>
+          </g>
+        </svg>
         <span id="linkNotifyDot" class="hidden" style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--seal);"></span>
         <span id="circleOnlineDot" class="hidden online-dot" style="position:absolute;bottom:2px;right:2px;"></span>
         <span id="circleUnreadDot" class="hidden" style="position:absolute;bottom:2px;left:2px;min-width:13px;height:13px;line-height:13px;border-radius:7px;background:var(--seal);color:#fff;font-size:8.5px;font-weight:800;text-align:center;padding:0 2px;"></span>
@@ -3128,7 +3213,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
       <div>
         <div class="hint" id="settingsSignedInAs" style="margin-top:0;"></div>
-        <span id="whoEmail" style="font-size:13px;color:var(--ink);"></span>
+        <span id="whoEmail" style="font-size:13px;"></span>
         <div class="hint" style="margin-top:6px;" id="settingsSitePinRow"><span id="settingsSitePinLabel"></span>: <code id="settingsSitePinValue" style="font-weight:700;letter-spacing:1px;"></code></div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
@@ -3146,8 +3231,12 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
          press deep rather than an unknown distance down a scroll.
          Every block below is the SAME markup with the same ids, only moved:
          nothing in the JS that fills these knows this happened. -->
-    <section class="set-group" id="setGroupProfile">
-      <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupProfileLabel"></span></button>
+    <!-- Profile, Privacy and Account were three headings over what is one
+         subject: who you are here and who can see it (real-user request:
+         "I think Profile can fit Privacy and Account and security too").
+         Four headings read as an overview; six read as a list. -->
+    <section class="set-group" id="setGroupSecurity">
+      <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupSecurityLabel"></span></button>
       <div class="set-group-body hidden">
     <div class="log-form">
       <div class="field wide" id="settingsNameStaticWrap">
@@ -3161,7 +3250,66 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       <button class="export-btn hidden" id="saveDisplayNameBtn"></button>
       <button class="hidden" id="cancelDisplayNameBtn"></button>
     </div>
-    <div class="hint hidden" id="settingsNameMsg"></div>      </div>
+    <div class="hint hidden" id="settingsNameMsg"></div>    <div style="margin-top:14px;" id="settingsLeaderboardOptOutWrap">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="settingsHideLeaderboards" style="width:16px;height:16px;">
+        <span id="lblHideLeaderboards"></span>
+      </label>
+      <label class="hidden" id="settingsHideCircleTooWrap" style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;margin-top:8px;margin-left:24px;color:var(--ink-soft);">
+        <input type="checkbox" id="settingsHideCircleToo" style="width:14px;height:14px;">
+        <span id="lblHideCircleToo"></span>
+      </label>
+    </div>
+    <div class="hint hidden" id="settingsHideLeaderboardsMsg"></div>    <div class="log-form" style="margin-top:16px;" id="settingsEmailChangeWrap">
+      <div class="field wide">
+        <label for="settingsNewEmail" id="lblSettingsNewEmail"></label>
+        <input type="email" id="settingsNewEmail" autocomplete="off">
+      </div>
+      <div class="field wide">
+        <label for="settingsEmailConfirmPassword" id="lblSettingsEmailConfirmPassword"></label>
+        <div class="pw-field-wrap">
+          <input type="password" id="settingsEmailConfirmPassword" autocomplete="current-password">
+          <button type="button" class="pw-toggle-btn" data-target="settingsEmailConfirmPassword"></button>
+        </div>
+      </div>
+      <button class="export-btn" id="saveEmailBtn"></button>
+    </div>
+    <div class="hint hidden" id="settingsEmailMsg"></div>    <div class="wtc-title" style="margin-top:18px;" id="lblSettingsPasswordSection"></div>
+    <button class="export-btn" id="sendPasswordResetBtn"></button>
+    <div class="hint hidden" id="settingsPasswordMsg"></div>    <div class="wtc-title" style="margin-top:18px;" id="lblSettings2fa"></div>
+    <div style="margin:2px 0 8px;" id="settings2faStatusWrap">
+      <span id="settings2faStatus" style="font-size:13px;font-weight:700;"></span>
+    </div>
+    <div id="settings2faEnrollPanel" class="hidden" style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:8px;">
+      <div id="settings2faQrWrap" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;">
+        <img id="settings2faQrImg" style="width:150px;height:150px;border-radius:6px;background:#fff;padding:6px;">
+        <div style="flex:1;min-width:180px;">
+          <div class="hint" id="settings2faSecretLabel"></div>
+          <code id="settings2faSecretText" style="font-size:12px;word-break:break-all;"></code>
+        </div>
+      </div>
+      <div class="field wide" style="margin-top:10px;">
+        <label for="settings2faCodeInput" id="lblSettings2faCode"></label>
+        <input type="text" id="settings2faCodeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+        <button class="export-btn" id="confirm2faBtn"></button>
+        <button id="cancel2faEnrollBtn"></button>
+      </div>
+    </div>
+    <div id="settings2faBackupPanel" class="hidden" style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:8px;">
+      <div class="hint" id="settings2faBackupLabelText"></div>
+      <div id="settings2faBackupCodes" style="font-family:'Space Grotesk',monospace;font-size:15px;font-weight:700;letter-spacing:0.5px;margin:10px 0;display:flex;flex-direction:column;gap:4px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="export-btn" id="download2faBackupBtn"></button>
+        <button id="close2faBackupBtn"></button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="settings2faButtonsWrap">
+      <button class="export-btn" id="enable2faBtn"></button>
+      <button class="export-btn" id="disable2faBtn"></button>
+    </div>
+    <div class="hint hidden" id="settings2faMsg"></div>      </div>
     </section>
     <section class="set-group" id="setGroupAppearance">
       <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupAppearanceLabel"></span></button>
@@ -3249,75 +3397,6 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
     <div style="padding:5px 0 0;font-size:12px;" id="recapExtraOptionsWrap" class="hidden">
       <div id="recapExcludeKindsPicker" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
     </div>      </div>
-    </section>
-    <section class="set-group" id="setGroupPrivacy">
-      <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupPrivacyLabel"></span></button>
-      <div class="set-group-body hidden">
-    <div style="margin-top:14px;" id="settingsLeaderboardOptOutWrap">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-        <input type="checkbox" id="settingsHideLeaderboards" style="width:16px;height:16px;">
-        <span id="lblHideLeaderboards"></span>
-      </label>
-      <label class="hidden" id="settingsHideCircleTooWrap" style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;margin-top:8px;margin-left:24px;color:var(--ink-soft);">
-        <input type="checkbox" id="settingsHideCircleToo" style="width:14px;height:14px;">
-        <span id="lblHideCircleToo"></span>
-      </label>
-    </div>
-    <div class="hint hidden" id="settingsHideLeaderboardsMsg"></div>      </div>
-    </section>
-    <section class="set-group" id="setGroupSecurity">
-      <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupSecurityLabel"></span></button>
-      <div class="set-group-body hidden">
-    <div class="log-form" style="margin-top:16px;" id="settingsEmailChangeWrap">
-      <div class="field wide">
-        <label for="settingsNewEmail" id="lblSettingsNewEmail"></label>
-        <input type="email" id="settingsNewEmail" autocomplete="off">
-      </div>
-      <div class="field wide">
-        <label for="settingsEmailConfirmPassword" id="lblSettingsEmailConfirmPassword"></label>
-        <div class="pw-field-wrap">
-          <input type="password" id="settingsEmailConfirmPassword" autocomplete="current-password">
-          <button type="button" class="pw-toggle-btn" data-target="settingsEmailConfirmPassword"></button>
-        </div>
-      </div>
-      <button class="export-btn" id="saveEmailBtn"></button>
-    </div>
-    <div class="hint hidden" id="settingsEmailMsg"></div>    <div class="wtc-title" style="margin-top:18px;" id="lblSettingsPasswordSection"></div>
-    <button class="export-btn" id="sendPasswordResetBtn"></button>
-    <div class="hint hidden" id="settingsPasswordMsg"></div>    <div class="wtc-title" style="margin-top:18px;" id="lblSettings2fa"></div>
-    <div style="margin:2px 0 8px;" id="settings2faStatusWrap">
-      <span id="settings2faStatus" style="font-size:13px;font-weight:700;"></span>
-    </div>
-    <div id="settings2faEnrollPanel" class="hidden" style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:8px;">
-      <div id="settings2faQrWrap" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;">
-        <img id="settings2faQrImg" style="width:150px;height:150px;border-radius:6px;background:#fff;padding:6px;">
-        <div style="flex:1;min-width:180px;">
-          <div class="hint" id="settings2faSecretLabel"></div>
-          <code id="settings2faSecretText" style="font-size:12px;word-break:break-all;"></code>
-        </div>
-      </div>
-      <div class="field wide" style="margin-top:10px;">
-        <label for="settings2faCodeInput" id="lblSettings2faCode"></label>
-        <input type="text" id="settings2faCodeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
-        <button class="export-btn" id="confirm2faBtn"></button>
-        <button id="cancel2faEnrollBtn"></button>
-      </div>
-    </div>
-    <div id="settings2faBackupPanel" class="hidden" style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:8px;">
-      <div class="hint" id="settings2faBackupLabelText"></div>
-      <div id="settings2faBackupCodes" style="font-family:'Space Grotesk',monospace;font-size:15px;font-weight:700;letter-spacing:0.5px;margin:10px 0;display:flex;flex-direction:column;gap:4px;"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="export-btn" id="download2faBackupBtn"></button>
-        <button id="close2faBackupBtn"></button>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="settings2faButtonsWrap">
-      <button class="export-btn" id="enable2faBtn"></button>
-      <button class="export-btn" id="disable2faBtn"></button>
-    </div>
-    <div class="hint hidden" id="settings2faMsg"></div>      </div>
     </section>
     <section class="set-group" id="setGroupDanger">
       <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupDangerLabel"></span></button>
@@ -9346,10 +9425,9 @@ const I18N = {
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link ↗', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
     topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
-    settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.',
-    setGroupProfileLabel:'Profile', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupPrivacyLabel:'Privacy', setGroupSecurityLabel:'Account and security', setGroupDangerLabel:'Delete account',
+    settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
-    lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns, the gear turns, the bell rings, the people walk and your name jiggles when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over Productivity and every letter turns into someone working; hold over Tracker and every letter turns into someone tracking something.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over a word you can click, and the squeeze when you press it.',
+    lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name jiggles when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and every letter turns into a little person standing in the shape of that letter, so the name still reads.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over a word you can click, and the squeeze when you press it.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     calExportTitle:'Download calendar', calExportUseList:'Pick from list', calExportUseCalendar:'Pick on calendar', calExportPickHint:'Click events on the calendar to leave them out.', calExportCountTpl:'{in} of {total}', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
@@ -9470,10 +9548,9 @@ const I18N = {
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크 ↗', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
     topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
-    settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.',
-    setGroupProfileLabel:'프로필', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupPrivacyLabel:'공개 설정', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제',
+    settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
-    lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본과 톱니바퀴가 돌고, 종이 울리고, 사람이 걷고, 이름이 흔들립니다.', animTitleLabel:'제목 글자', animTitleHint:'Productivity 위에 올리면 각 글자가 일하는 사람으로, Tracker 위에 올리면 무언가를 관찰하는 사람으로 바뀝니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누를 수 있는 단어 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.',
+    lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 흔들립니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 각 글자가 그 글자 모양으로 선 작은 사람으로 바뀌어, 이름은 그대로 읽힙니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누를 수 있는 단어 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     calExportTitle:'캘린더 내려받기', calExportUseList:'목록에서 선택', calExportUseCalendar:'캘린더에서 선택', calExportPickHint:'캘린더에서 일정을 클릭하면 제외됩니다.', calExportCountTpl:'{total}개 중 {in}개', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
@@ -9594,10 +9671,9 @@ const I18N = {
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết ↗', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
     topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
-    settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.',
-    setGroupProfileLabel:'Hồ sơ', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupPrivacyLabel:'Quyền riêng tư', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản',
+    settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
-    lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay, bánh răng quay, chuông rung, người đi bộ và tên bạn rung nhẹ khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên Productivity để từng chữ hóa thành người đang làm việc; lên Tracker để từng chữ hóa thành người đang theo dõi.', animUiLabel:'Chuyển động giao diện', animUiHint:'Chữ bấm được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.',
+    lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn rung nhẹ khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và từng chữ hóa thành một người nhỏ đứng theo hình chữ đó, nên tên vẫn đọc được.', animUiLabel:'Chuyển động giao diện', animUiHint:'Chữ bấm được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     calExportTitle:'Tải lịch về', calExportUseList:'Chọn từ danh sách', calExportUseCalendar:'Chọn trên lịch', calExportPickHint:'Nhấp vào sự kiện trên lịch để loại bỏ.', calExportCountTpl:'{in}/{total}', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
@@ -9735,9 +9811,8 @@ const STATIC_MAP = {
   lblAnimations:'lblAnimations',
   animHeaderLabel:'animHeaderLabel', animHeaderHint:'animHeaderHint',
   animTitleLabel:'animTitleLabel', animTitleHint:'animTitleHint',
-  animUiLabel:'animUiLabel', animUiHint:'animUiHint',
-  setGroupProfileLabel:'setGroupProfileLabel', setGroupAppearanceLabel:'setGroupAppearanceLabel',
-  setGroupNotifyLabel:'setGroupNotifyLabel', setGroupPrivacyLabel:'setGroupPrivacyLabel',
+  animUiLabel:'animUiLabel', animUiHint:'animUiHint', setGroupAppearanceLabel:'setGroupAppearanceLabel',
+  setGroupNotifyLabel:'setGroupNotifyLabel',
   setGroupSecurityLabel:'setGroupSecurityLabel', setGroupDangerLabel:'setGroupDangerLabel',
   hAddDeadline:'addDeadline', lblEventTitle:'eventTitle', lblEventKind:'eventKind', lblEventDate:'eventDate', lblEventTime:'eventTime', lblEventEndTime:'eventEndTime', lblEventNotes:'eventNotes', lblEventColor:'eventColor', eventColorUseMyDefaultBtn:'eventColorUseMyDefaultBtn', lblPillVersion:'lblPillVersion', addEventBtn:'addDeadlineBtn',
   calViewMonthBtn:'viewMonth', calViewWeekBtn:'viewWeek', calViewDayBtn:'viewDay',
@@ -10265,32 +10340,47 @@ const ICON = {
 // A figure is a head, a body, legs and ONE prop. At the size a letter gives
 // it (about 18px) anything more is a smudge, so the prop is what has to
 // read, and the body is the same five strokes every time.
-const FIG_BODY = '<circle cx="9" cy="4.6" r="2.2"/><path d="M9 6.8v6"/><path d="M9 12.8 6.7 19M9 12.8 11.3 19"/>';
-const WORK_FIGURES = [
-  FIG_BODY + '<path d="M9 8.6h4.2"/><rect x="13" y="7.2" width="7.5" height="5.2" rx="1"/>',      // at a screen
-  FIG_BODY + '<path d="M9 8.8 13 11"/><path d="M12.2 12.4 16.6 8"/><path d="M13.6 14h6"/>',        // writing
-  FIG_BODY + '<path d="M9 8.6h3.4"/><path d="M12.4 7v6M12.4 7c1.8-1 3.6-1 5.4 0v6c-1.8-1-3.6-1-5.4 0"/>', // reading
-  FIG_BODY + '<path d="M9 8.6 12.6 5.4"/><rect x="12.6" y="2.6" width="8" height="6.4" rx="1"/><path d="M14.4 6.6h4.4"/>', // presenting
-  FIG_BODY + '<path d="M9 8.8h2"/><rect x="10.6" y="7.4" width="6.4" height="6" rx="0.8"/><path d="M13.8 7.4v6"/>', // carrying a box
-  FIG_BODY + '<path d="M9 8.6 13 6.4"/><path d="M14 20V4M19 20V4M14 8h5M14 12h5M14 16h5"/>',       // up a ladder
-  FIG_BODY + '<path d="M9 8.8 12.6 10"/><path d="M12.6 8.6h3.2l1 3.4h-5.2z"/><path d="M18.6 19c0-3 1-4.6 2.4-5.6"/>', // watering
-  FIG_BODY + '<path d="M9 8.6 15 13"/><path d="M14 12.4 18.6 19"/><path d="M16.4 17.4 21 20"/>',   // sweeping
-  FIG_BODY + '<path d="M9 8.4 12.6 5"/><path d="M11 3.6h4.4"/><path d="M13.2 3.6 12.6 5"/><path d="M12 13h7"/>', // hammering
-  FIG_BODY + '<path d="M9 8.6 13 9.6"/><path d="M13 9.6 15.4 8.4"/><rect x="15.8" y="3.4" width="5" height="8" rx="0.8"/>', // painting
-  FIG_BODY + '<path d="M6.4 3.6h5.2"/><path d="M9 6.8V3.6"/><path d="M5.4 2v3.2M12.6 2v3.2"/>',     // lifting
-  FIG_BODY + '<path d="M9 8.8h3"/><rect x="12.4" y="4.4" width="7.2" height="10" rx="1"/><path d="M14.2 7.6l1.2 1.2 2.2-2.4M14.2 11.4h3.6"/>', // a list, ticked
-];
-const TRACK_FIGURES = [
-  FIG_BODY + '<path d="M9 8.6 12.8 10.4"/><circle cx="16" cy="8.6" r="3.2"/><path d="M18.4 11 20.8 13.4"/>', // magnifier
-  FIG_BODY + '<path d="M9 8.4 12 6.6"/><circle cx="14.2" cy="5.6" r="2"/><circle cx="18.6" cy="5.6" r="2"/><path d="M16.2 5.6h0.4"/>', // binoculars
-  FIG_BODY + '<path d="M9 8.8h3"/><rect x="12.4" y="4.6" width="7" height="9.4" rx="1"/><path d="M14.2 9l1.3 1.3 2.4-2.6"/>', // clipboard
-  FIG_BODY + '<path d="M9 8.6 12.6 9.8"/><circle cx="16.6" cy="10" r="4"/><path d="M16.6 8v2l1.4 1"/><path d="M15.4 5.2h2.4"/>', // stopwatch
-  FIG_BODY + '<path d="M9 8.6h2.6"/><path d="M13 18c1.6-2.6 3.4-4 5.4-4.4" stroke-dasharray="2 2"/><path d="M19.4 6.6a2.4 2.4 0 1 0-4.8 0c0 1.8 2.4 4.4 2.4 4.4s2.4-2.6 2.4-4.4z"/>', // a trail to a pin
-  FIG_BODY + '<path d="M9 8.4 12.4 6"/><path d="M12.4 19V9"/><path d="M12.4 15.6 15.6 12l2 1.8 3.2-4.4"/>', // a rising line
-  FIG_BODY + '<path d="M9 8.4 12.4 6.2"/><path d="m12.4 7.8 8-4.2"/><path d="M14 12.6 16.6 6.8 19.2 8"/>', // telescope
-];
+// Each letter is a PERSON POSED AS THAT LETTER, not a person standing where
+// a letter used to be (real-user request: "I want the people to be sort of
+// formed in the shapes of the letters (smartly), so you can still read it").
+// So the letter's own skeleton IS the body: a head circle sits where a head
+// naturally falls on that letterform, and the strokes that spell it are the
+// torso, the arms and the legs. The word stays readable because the shapes
+// are still the shapes; it reads as people because every one has a head and
+// most end in two legs.
+// Drawn on a 24 box with the baseline at 20 and the cap line at about 4, and
+// cropped by the viewBox to the ink so a tall thin glyph is not padded out
+// into a square.
+const LETTER_FIGURES = {
+  // stem is the body, the bowl is both arms reaching round
+  'P':'<circle cx="8.5" cy="4.6" r="2"/><path d="M8.5 6.6V16.6"/><path d="M8.5 16.6l-2.2 3.4M8.5 16.6l2.2 3.4"/><path d="M8.5 8.8c6.1 0 6.1 4.8 0 4.8"/>',
+  // the shoulder of an r is one arm thrown out
+  'r':'<circle cx="8.5" cy="10.6" r="1.8"/><path d="M8.5 12.4V17"/><path d="M8.5 17l-1.9 3M8.5 17l1.9 3"/><path d="M8.5 13.4c1.9-1.6 3.9-1.8 5.3-1.2"/>',
+  // curled up: arms and legs joined into the ring, head on top
+  'o':'<circle cx="12" cy="9.6" r="1.9"/><path d="M12 11.5c-3.8 0-5.6 2.5-5.1 5.1.5 2.6 3.5 4 6.3 3.2 3-.8 4.4-4 2.8-6.4-.9-1.3-2.4-1.9-4-1.9z"/>',
+  // stem on the right, both arms hugging the bowl
+  'd':'<circle cx="15.5" cy="4.6" r="2"/><path d="M15.5 6.6V20"/><path d="M15.5 11.4c-5.5-1-8.7 2.2-7.3 5.4 1 2.4 5 3.4 7.3 1.6"/>',
+  // bent into the u, the curve is the arms
+  'u':'<circle cx="8" cy="10.6" r="1.8"/><path d="M8 12.4v4.4c0 2.6 4 3.8 6 1.6"/><path d="M14.2 11v9"/>',
+  'c':'<circle cx="13.4" cy="10.4" r="1.8"/><path d="M15 12.6c-4.4-2-8 .8-7.4 3.8.6 2.8 4.4 4 7.2 2.2"/>',
+  // arms straight out is what a t is
+  't':'<circle cx="9.4" cy="4.4" r="2"/><path d="M9.4 6.4v11c0 2 1.6 3 3.4 2.4"/><path d="M5.6 10.6h7.6"/>',
+  // an i already IS a person: the dot is the head
+  'i':'<circle cx="9.5" cy="6.2" r="2"/><path d="M9.5 10.4V17"/><path d="M9.5 17l-1.9 3M9.5 17l1.9 3"/><path d="M9.5 12l-2.4 2.2M9.5 12l2.4 2.2"/>',
+  // legs apart, arms up
+  'v':'<circle cx="12" cy="8.8" r="2"/><path d="M12 10.8L8 20M12 10.8l4 9.2"/><path d="M12 12.6l-3.2-2M12 12.6l3.2-2"/>',
+  // the same, with one leg carried on into the descender
+  'y':'<circle cx="11.6" cy="8.8" r="2"/><path d="M11.6 10.8L8 18.4"/><path d="M11.6 10.8L15.4 20c-.6 2.6-2.6 3.2-4.2 2.4"/><path d="M11.6 12.4l-3-1.8M11.6 12.4l3-1.8"/>',
+  'T':'<circle cx="12" cy="4.4" r="2"/><path d="M6 8.4h12"/><path d="M12 8.4V17"/><path d="M12 17l-2.2 3M12 17l2.2 3"/>',
+  'a':'<circle cx="14.6" cy="10.6" r="1.8"/><path d="M14.6 12.4V20"/><path d="M14.6 13.6c-4.6-1.2-7.6 1.4-6.6 4 .8 2.2 4.4 3 6.6 1.2"/>',
+  // one arm up and one leg kicked out is the whole of a k
+  'k':'<circle cx="8.2" cy="4.4" r="2"/><path d="M8.2 6.4V20"/><path d="M8.2 14l5.6-4.6"/><path d="M9.8 12.6L14.4 20"/>',
+  'e':'<circle cx="12.2" cy="10.4" r="1.8"/><path d="M7.6 15.8h8.8c.4-3.2-3.4-5.2-6.2-3.6-3 1.6-3 6.2.4 7.4 1.8.6 3.8.2 5-1"/>',
+};
 function figSvg(paths){
-  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" '
+  // Cropped to the ink rather than the whole 24 box, so a letter is set at a
+  // letter's proportions instead of being padded out into a square.
+  return '<svg viewBox="4 2 16 21" fill="none" stroke="currentColor" stroke-width="1.7" '
     + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
 }
 // The h1's own click handler still works: it is on the h1 and these are all
@@ -10298,20 +10388,22 @@ function figSvg(paths){
 function buildTitleMorph(){
   const h1 = document.getElementById('appTitleHome');
   if(!h1 || h1.querySelector('.title-word')) return;
-  const words = [['Productivity', WORK_FIGURES], ['Tracker', TRACK_FIGURES]];
+  const words = ['Productivity', 'Tracker'];
   h1.textContent = '';
-  words.forEach(([word, figs], wi)=>{
+  let n = 0;
+  words.forEach((word, wi)=>{
     if(wi) h1.appendChild(document.createTextNode(' '));
     const w = document.createElement('span');
     w.className = 'title-word';
-    [...word].forEach((ch, i)=>{
+    [...word].forEach((ch)=>{
       const l = document.createElement('span');
       l.className = 'title-letter';
-      // Staggered off the letter's own index, so the change reads left to
-      // right as one movement rather than every letter flipping at once.
-      l.style.setProperty('--i', String(i));
+      // Counted across the WHOLE title rather than from the start of each
+      // word, so the sweep crosses the space instead of starting again.
+      l.style.setProperty('--i', String(n++));
+      const fig = LETTER_FIGURES[ch];
       l.innerHTML = '<span class="tl-char">' + ch + '</span>'
-        + '<span class="tl-fig">' + figSvg(figs[i % figs.length]) + '</span>';
+        + (fig ? '<span class="tl-fig">' + figSvg(fig) + '</span>' : '');
       w.appendChild(l);
     });
     h1.appendChild(w);
@@ -10319,11 +10411,43 @@ function buildTitleMorph(){
 }
 buildTitleMorph();
 /* ---------- DARK MODE ---------- */
+// The sun and the moon are the only marks in the row that had no hover of
+// their own -- the rotate-in only plays when the theme is pressed, and a
+// control you are pointing at should answer before you press it.
+// Both extras live INSIDE the icon's own svg so they scale, clip and take
+// the ink with it, and both are drawn once and revealed by the hover rather
+// than built on the fly: the button's contents are already rewritten on
+// every theme change, and a second writer would race that one.
+function themeIconHtml(isDark){
+  const open = '<svg class="ui-icon theme-icon" width="15" height="15" viewBox="0 0 24 24" '
+    + 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+    + 'stroke-linejoin="round" aria-hidden="true">';
+  if(isDark){
+    // Sun: the rays turn, and two clouds cross the face. The DISC does not
+    // turn -- a circle rotating is a circle, so the rays are what carries it.
+    return open
+      + '<g class="sun-core"><circle cx="12" cy="12" r="4"></circle>'
+      + '<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></g>'
+      + '<g class="sun-clouds" stroke-width="1.6">'
+      + '<path class="sun-cloud" style="--c:0" d="M3 14h5.4a1.7 1.7 0 0 0 0-3.4 2.6 2.6 0 0 0-4.7-.7A2 2 0 0 0 3 14z"></path>'
+      + '<path class="sun-cloud" style="--c:1" d="M5 18.6h4a1.3 1.3 0 0 0 0-2.6 2 2 0 0 0-3.6-.5A1.5 1.5 0 0 0 5 18.6z"></path>'
+      + '</g></svg>';
+  }
+  // Moon: a little guy sits in the crescent and fishes, and the line swings.
+  return open
+    + '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>'
+    + '<g class="moon-angler" stroke-width="1.3">'
+    + '<circle cx="8.4" cy="7.6" r="1"></circle>'
+    + '<path d="M8.4 8.8v2.6M8.4 11.4l-1.3 1.7M8.4 11.4l1.3 1.5"></path>'
+    + '<path d="M9.1 9.8 13.8 6.2"></path>'
+    + '<g class="moon-line"><path d="M13.8 6.2v4.4"></path><path d="M13.8 10.6a1 1 0 0 0 1.2.6"></path></g>'
+    + '</g></svg>';
+}
 let themeIconAnimates = false;
 function applyDarkMode(isDark){
   document.body.classList.toggle('dark', isDark);
   localStorage.setItem('trackerDark', isDark ? '1' : '0');
-  const icon = isDark ? ICON.sun(15) : ICON.moon(15);
+  const icon = themeIconHtml(isDark);
   ['darkToggleAuth','darkToggleApp','darkTogglePin'].forEach(id=>{
     const btn = document.getElementById(id);
     if(!btn) return;
@@ -10354,7 +10478,21 @@ function buildLangSwitch(container){
   icon.setAttribute('viewBox', '0 0 24 24');
   icon.setAttribute('fill', 'none'); icon.setAttribute('stroke', 'currentColor');
   icon.setAttribute('stroke-width', '2'); icon.setAttribute('stroke-linecap', 'round'); icon.setAttribute('stroke-linejoin', 'round');
-  icon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>';
+  // A sphere, not a disc. A meridian on a turning globe does not travel
+  // across the face -- it NARROWS to nothing at the edge, crosses to the
+  // back and opens out again, which is exactly what scaleX from 1 through 0
+  // to -1 does. Three of them a third of a turn apart, over a silhouette
+  // and latitudes that never move, is what makes it read as a ball rotating
+  // rather than a wheel spinning (the flat rotateY it replaces went blank
+  // edge-on, which is a card flipping, not a globe).
+  icon.innerHTML =
+      '<circle cx="12" cy="12" r="10"></circle>'
+    + '<line x1="2" y1="12" x2="22" y2="12"></line>'
+    + '<ellipse class="globe-lat" cx="12" cy="12" rx="8.7" ry="4.6"></ellipse>'
+    + '<ellipse class="globe-lat" cx="12" cy="12" rx="5.6" ry="8.2"></ellipse>'
+    + '<ellipse class="globe-mer" style="--m:0" cx="12" cy="12" rx="10" ry="10"></ellipse>'
+    + '<ellipse class="globe-mer" style="--m:1" cx="12" cy="12" rx="10" ry="10"></ellipse>'
+    + '<ellipse class="globe-mer" style="--m:2" cx="12" cy="12" rx="10" ry="10"></ellipse>';
   container.appendChild(icon);
   // The words and the chevron are OURS, drawn under an invisible select that
   // covers the whole pill -- so a click anywhere on it opens the picker, and
@@ -11216,6 +11354,7 @@ async function onAuthed(user){
   const myColor = colorForUser(user.id);
   setMyColorInputs(myColor);
   document.getElementById('whoName').style.color = myColor;
+  document.getElementById('whoEmail').style.color = myColor;
   updateLinkNotifyDot();
   refreshNotifBell();
   subscribeNoteRealtimeInserts();
@@ -12468,6 +12607,7 @@ async function enterGuestMode(){
   const myColor = colorForUser('guest-local');
   setMyColorInputs(myColor);
   document.getElementById('whoName').style.color = myColor;
+  document.getElementById('whoEmail').style.color = myColor;
   // updateLinkNotifyDot()/refreshNotifBell()/the 5 subscribeXRealtime() calls
   // are all skipped -- no linked circle, no notifications, and no realtime
   // channel makes sense against a fake backend.
@@ -30216,6 +30356,7 @@ function colorForNote(note){
 async function applyMyColor(color){
   profileColors[currentUser.id] = color;
   document.getElementById('whoName').style.color = color;
+  document.getElementById('whoEmail').style.color = color;
   setMyColorInputs(color);
   await supabaseClient.from('profiles').update({ color }).eq('id', currentUser.id);
   renderLectureList();

@@ -1216,6 +1216,125 @@ once rather than per call site.
   value on `#18191B` is 3.3:1, under the floor. Measured after: **light 4.75
   on paper / 4.31 on card, dark 7.58 / 6.68.**
 
+## The globe is a sphere, the title is one name, and the ring holds hands (8 Sep)
+
+Four corrections to the round above, all on the same person's word, plus two
+things that were still missing.
+
+### A spinning circle is a wheel; a sphere needs meridians
+
+"When I said spinning globe, it should basically have turned into a sort of 3D
+globe that is spinning." The `rotateY` half-turn from the round above spins the
+whole mark, which is a disc turning edge-on and back -- correct as a rotation
+and nothing like a globe.
+
+**The sphere is drawn instead: an outline, an equator, two latitude ellipses
+and THREE meridians, and only the meridians move.** A meridian at angle theta
+projects to an ellipse whose width is `cos(theta)`, so the turn is one keyframe
+list of scaleX from 1 through 0 to -1 in eight stops, and three copies of it a
+third of a turn apart (`--m`, `animation-delay: --m * -0.8667s`). The outline
+and the latitudes never move, because on a real globe they do not: that is
+exactly what says "this is a sphere turning" rather than "this drawing is
+rotating".
+
+- **At REST it is the flat globe the header has always had** -- one meridian at
+  `scaleX(0.42)`, no latitudes. The sphere is what it turns INTO, so the row is
+  unchanged until somebody holds over it.
+- `transform-box:view-box` with `transform-origin` in USER units (12px 12px) is
+  what lets an SVG child be transformed about the drawing's own centre.
+
+### The title is one name, and the people ARE the letters
+
+Two corrections in one. **The trigger is the whole title** (`#appTitleHome:hover`,
+not `.title-word:hover`), with `--i` counted straight across all nineteen
+letters, so the sweep runs once left to right rather than a word at a time
+("the animation should be the whole 'productivity tracker' not separately").
+
+And the figures are no longer people doing an activity: **each one stands in
+the shape of the letter it replaces**, so the name still reads as a name
+("formed in the shapes of the letters (smartly), so you can still read it").
+`LETTER_FIGURES` is **14 unique glyphs** for the 19 letters -- P r o d u c t i
+v y T a k e -- each a head, a body and whatever strokes the letter needs, on a
+`4 2 16 21` viewBox.
+
+- **Legibility was CHECKED rather than assumed**, by rendering all nineteen at
+  74px and again at 22px on a throwaway page and reading them back. That is the
+  whole point of the change, so it is the one thing that had to be looked at.
+- **The word barely opens up now** (0.06em, was 0.18em). A letter-shaped person
+  is a letter's width, so the crowding the old figures needed room for is gone.
+
+### The sun turns under clouds and somebody fishes off the moon
+
+The theme toggle was the only mark in the row with no hover of its own. So:
+the sun's RAYS turn (9s) while the disc holds still -- a rotating circle is a
+circle -- with two clouds drifting across it half a beat apart; and on the
+moon a little angler fades in and his line swings out and back (`cast-line`,
+about `13.8px 6.2px`, which is the rod tip).
+
+- The angler and the clouds are `opacity: 0` at rest, so the resting icon is
+  still the plain sun and moon the row has always had.
+- `themeIconHtml(isDark)` builds both, so the swap and the hover cannot drift
+  apart.
+
+### Three people, and the arms decide whether it reads
+
+"The people should get a body/legs, a 3rd person should come out, and they
+should hold each other's hands in a circle." The first attempt did all of that
+and still read as a **network diagram**: big heads (r 1.9) at three triangle
+corners with the joining lines running head to head.
+
+Fixed by measurement, not by argument -- three candidate geometries rendered
+side by side at 200, 60, 30 and 15px and looked at:
+
+| | what it reads as |
+|---|---|
+| heads r1.9, arms head to head | three blobs on a triangle |
+| **heads r1.3, arms shoulder to shoulder, bowed outward** | **three people in a ring** |
+| figures radial, heads outward, tangential arms | a pinwheel |
+
+The middle one ships. The rule that came out of it: **an arm must leave the
+SHOULDER and clear the head**, and a head that is a fifth of the icon cannot be
+cleared by anything, so the head has to shrink before the arms can be right.
+The third person and the two arms that reach them still fade in a beat late
+(0.16s), so somebody visibly joins.
+
+### Four settings headings, not six, and the email wears your colour
+
+- **Profile, Privacy and Account and security are ONE section**, called
+  **"Account and Security"** and first ("I think Profile can fit Privacy and
+  Account and security too"). It holds the display name, the leaderboard
+  opt-out, the email change, the password reset and 2FA -- which is one
+  question ("who am I and who can get in") asked five ways. Four headings now:
+  Account and Security, Appearance and layout, Notifications and messaging,
+  Delete account. `syncSettingsSections()` still hides a heading whose whole
+  body is hidden, which is why a guest sees two.
+- **The email is `myColor`**, beside the name rather than in `--ink` ("the
+  email should be your default color"). Written at all three places the name's
+  colour is written -- sign-in, guest, and `applyMyColor` -- so the two can
+  never disagree. Measured: both `rgb(136,52,178)` on the guest colour.
+- **The two animation hints were rewritten**, in all three languages: the title
+  one still described the old per-word morph, which no longer exists.
+
+### The tab slider stopped flying past the tab
+
+`cubic-bezier(.34,1.56,.64,1)` overshoots by **9.8% of the distance
+travelled**, and that share is the problem: a one-tab hop overshoots 15px and
+a jump across the whole row overshoots about 60, so the slider visibly leaves
+the tab it is landing on (real-user report: "it goes a bit too far out before
+bouncing back in"). **1.3, which is 3.0%** -- about 19px on the long jump and 5
+on a short one. The overshoot is a property of the curve and can be computed
+rather than eyeballed, which is how these two numbers were picked; the
+preview pane freezes a transition at its start value, so it cannot be watched
+here anyway.
+
+### Found in passing, NOT fixed here
+
+`renderLeaderboardPage('articleLeaderboard', ..., 'articles', ...)` passes a
+`stateKey` that `lbState` has no entry for (it has study, reading, jobs, certs),
+so the articles leaderboard throws `Cannot read properties of undefined
+(reading 'expanded')` on every render and never draws. Pre-existing, and in the
+committed file, so it is its own commit rather than part of this one.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
