@@ -1037,6 +1037,95 @@ scroll corrections**, one document height throughout, and the bar's top exact on
 (pinTop 31) and without it (pinTop 0). The row is still one height and one row
 at 1280 and at 375, and nothing overflows.
 
+## The header comes alive, and the title turns into people (8 Sep)
+
+### Two more colours that were saying the wrong thing
+
+- **"Remind me" was green.** The bell toggle is one control in two states and
+  both wore the link green, so the crossed-out bell was the only thing telling
+  them apart (real-user report: "remind me is green here"). `.linkbtn.act-on`
+  is `--on`, `.linkbtn.act-off` is `--ink-soft`. Measured: on `rgb(79,117,99)`,
+  off `rgb(107,109,114)`.
+- **The underline ran the width of the button**, so on an icon+text linkbtn it
+  crossed the bell and the space after it. A decoration cannot be cancelled on
+  a descendant -- that is a spec rule, not an oversight -- so the only way to
+  stop it short is to move it off the button onto the words: `.lb-text`, and
+  `.linkbtn:has(.lb-text){text-decoration:none}`. A plain text linkbtn is
+  untouched.
+
+### A mark is a control too
+
+The delete glyphs got the grow, "smartly" as asked: **1.2 rather than 1.08**
+(at 11-15px a 1.08 is invisible), **from their own centre** (a mark sits at the
+end of a row, where a left-origin grow walks it out of its column), and they
+**land on `--danger` as they go** -- several sit at `--ink-soft` at rest so a
+dense list is not a wall of red, and the colour is what a control with no
+label has instead of a word to read. `.tap-mark` for anything new.
+
+### The language menu opens below
+
+macOS draws a native `<select>` menu centred ON the control, with the current
+option over the button, and no CSS can move it (real-user report: "the
+languages cover the button. The drop down should be below"). Nothing can be
+done about that except not to use one, so a POINTER gets our own menu at
+`top:calc(100% + 6px)` -- the same shape `.cal-seg-picker` already uses. **A
+TOUCH device keeps the native select**: its picker is a sheet at the bottom of
+the screen, never over the control. Asked as `pointer: coarse`, the same
+question the 16px form-control rule asks, not a width guess. Measured: pill
+bottom 143, menu top 145.
+
+### Six marks that move
+
+Globe spins, gear turns, bell rings with two waves leaving it, the circle
+walks, the name jiggles, and the theme icon rotates in as it is swapped.
+
+- **Every one animates the ICON, never the button.** The button already owns a
+  transform (the hover grow and press squeeze from 7 Sep), and an animation and
+  a transition sharing one element's transform fight over it -- the animation
+  wins for as long as it runs and the button visibly stops answering the press.
+  Two elements, no argument. The name is the exception and so its keyframes
+  carry the grow themselves, with the shared rule explicitly turned off there.
+- **The globe turns about its own vertical axis** (`perspective` + `rotateY`)
+  and goes edge-on halfway round. Rotating a flat circle says nothing; that
+  half-turn is the only part of it that reads as a sphere rather than a wheel.
+- **The bell swings from 50% 15%.** A bell hangs at the top, and pivoting about
+  the middle reads as a wobble rather than a ring.
+- **The theme swap plays on the ARRIVING icon**, one-shot, and only once
+  `themeIconAnimates` is true -- the same function restores the theme at
+  startup, and an app that spins its own icon on every load reads as a glitch
+  rather than as a response to a press.
+
+### Every letter of the title becomes a person
+
+Hold over "Productivity" and its twelve letters turn into twelve people at
+work; hold over "Tracker" and its seven turn into seven people tracking
+something. Drawn in the app's own icon language -- a 24 box, stroke, no fill --
+so they are the same colourless outline marks as every other icon and take the
+title's ink in both themes.
+
+- **A figure is a head, a body, legs and ONE prop.** At the size a letter gives
+  it (about 18px) anything more is a smudge, so the prop is what has to read
+  and the body is the same five strokes every time. `FIG_BODY` is shared.
+- **The letter keeps the width of its CHARACTER** and the figure is absolutely
+  positioned inside it, so a whole word can turn into people without the title
+  reflowing or the header changing height.
+- **The word opens up by 0.18em on hover**, because a person is wider than the
+  letter it replaces. Small on purpose. **They still overlap**: twelve figures
+  cannot fit in twelve letter-widths unless each is as narrow as a letter, and
+  at 9px a person is unreadable. The crowd is the trade, and it is the knob to
+  turn if it is wrong.
+- **Staggered off each letter's own index** (28ms), so the change reads left to
+  right as one movement rather than every letter flipping at once.
+
+### The animation switches are SPLIT
+
+Three, not one master (real-user request: "split to different animation choices
+to turn off"): Header icons, Title letters, Interface motion. Each is its own
+localStorage key, absent means ON, and each toggles one body class its own CSS
+block watches -- nothing else in the sheet has to know they exist. Verified
+that turning the title off leaves the header alone. `prefers-reduced-motion`
+still turns everything off regardless.
+
 ## Settings are six headings, and green means ON (8 Sep)
 
 Four asks off one screenshot, two of them explicitly systemic.

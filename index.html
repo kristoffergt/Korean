@@ -133,6 +133,140 @@ body{
 .lang-switch-label{font-weight:600;color:var(--ink);white-space:nowrap;}
 .lang-switch-caret{flex:none;color:var(--ink-soft);}
 .lang-switch-select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+/* Our own menu, hung UNDER the pill where a menu belongs. */
+.lang-menu{position:absolute;top:calc(100% + 6px);left:0;z-index:300;min-width:100%;
+  background:var(--paper);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.18);padding:4px;overflow:hidden;
+  animation:lang-menu-in 0.14s cubic-bezier(0.4,0,0.2,1);}
+@keyframes lang-menu-in{from{opacity:0;transform:translateY(-4px) scale(0.97);}to{opacity:1;transform:none;}}
+.lang-menu-item{display:block;width:100%;text-align:left;background:none;border:none;
+  padding:7px 12px;border-radius:5px;font-family:inherit;font-size:12.5px;font-weight:600;
+  color:var(--ink);cursor:pointer;white-space:nowrap;}
+.lang-menu-item:hover{background:var(--paper-dim);}
+.lang-menu-item.active{color:var(--on);}
+.lang-menu-item.active::before{content:'\2713';margin-right:6px;font-weight:800;}
+.lang-menu-item:not(.active)::before{content:'';display:inline-block;width:0;margin-right:14px;}
+
+/* ---- The header marks come alive under the pointer ----
+   Every one of these animates the ICON, never the button. The button already
+   owns a transform (the hover grow and the press squeeze added on 7 Sep), and
+   an animation and a transition sharing one element's transform fight over it
+   -- the animation wins for as long as it runs and the button visibly stops
+   responding to the press. Two elements, no argument. */
+@keyframes spin-globe{to{transform:perspective(70px) rotateY(360deg);}}
+.lang-switch:hover .lang-switch-icon{animation:spin-globe 1.6s linear infinite;}
+/* Rotating a flat circle says nothing, so the globe turns about its own
+   vertical axis and goes edge-on halfway round, which is the only part of
+   this that reads as a sphere rather than a wheel. */
+
+@keyframes turn-gear{to{transform:rotate(360deg);}}
+#accountSettingsBtn:hover .ui-icon{animation:turn-gear 2.4s linear infinite;}
+
+/* A bell is hung at the top, so it swings from the top -- pivoting about the
+   middle reads as a wobble rather than a ring. */
+@keyframes ring-bell{
+  0%,100%{transform:rotate(0);} 10%{transform:rotate(14deg);} 20%{transform:rotate(-11deg);}
+  30%{transform:rotate(9deg);}  40%{transform:rotate(-7deg);} 50%{transform:rotate(4deg);}
+  60%{transform:rotate(-2deg);} 70%{transform:rotate(0);}}
+#notifBellBtn:hover svg{animation:ring-bell 1.1s ease-in-out infinite;transform-origin:50% 15%;}
+/* And the sound it is making: two rings leaving the bell, the second half a
+   beat behind, so it reads as a pulse rather than one shape growing. */
+#notifBellBtn::before, #notifBellBtn::after{content:'';position:absolute;left:50%;top:50%;
+  width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;
+  border:1.5px solid currentColor;opacity:0;pointer-events:none;}
+#notifBellBtn:hover::before{animation:bell-wave 1.1s ease-out infinite;}
+#notifBellBtn:hover::after{animation:bell-wave 1.1s ease-out 0.55s infinite;}
+@keyframes bell-wave{
+  0%{transform:scale(0.7);opacity:0.55;} 100%{transform:scale(2.1);opacity:0;}}
+
+/* Walking is a bob and a lean, not a slide: feet that stay put while the body
+   rises and tips is what the eye reads as steps. */
+@keyframes walk-people{
+  0%,100%{transform:translateY(0) rotate(0);}
+  25%{transform:translateY(-1.6px) rotate(-5deg);}
+  50%{transform:translateY(0) rotate(0);}
+  75%{transform:translateY(-1.6px) rotate(5deg);}}
+#friendsBtn:hover svg{animation:walk-people 0.9s ease-in-out infinite;transform-origin:50% 90%;}
+
+/* The name is the one thing here that is a WORD, so it jiggles rather than
+   turning -- and the jiggle carries its own scale, because the shared
+   word-grow would otherwise be the second thing writing this transform. */
+@keyframes jiggle-name{
+  0%,100%{transform:scale(1.06) rotate(0);}
+  20%{transform:scale(1.06) rotate(-2.5deg);}
+  40%{transform:scale(1.06) rotate(2.5deg);}
+  60%{transform:scale(1.06) rotate(-1.5deg);}
+  80%{transform:scale(1.06) rotate(1.5deg);}}
+#whoNameWrap:hover #whoName{animation:jiggle-name 0.55s ease-in-out;}
+
+/* The theme swap is a one-shot on the icon that has just been written in, so
+   it plays on the ARRIVING sun or moon rather than on a button that never
+   changed. Rotating in from behind reads as one mark turning into the other
+   rather than two marks being swapped. */
+@keyframes theme-swap{
+  from{transform:rotate(-150deg) scale(0.2);opacity:0;}
+  to{transform:rotate(0) scale(1);opacity:1;}}
+.theme-icon-in{animation:theme-swap 0.42s cubic-bezier(0.34,1.4,0.64,1);}
+
+/* Each letter keeps the width of its CHARACTER, and the figure is absolutely
+   positioned inside it -- so a whole word can turn into people without the
+   title reflowing or the header changing height. */
+/* A person is wider than the letter it replaces, so the word opens up a
+   little to give the figures room. Small on purpose: enough to tell them
+   apart, not so much that the title shoves the rest of the header about. */
+.title-word{display:inline-block;white-space:nowrap;
+  transition:letter-spacing 0.28s cubic-bezier(0.34,1.3,0.64,1);}
+body:not(.no-anim-title) .title-word:hover{letter-spacing:0.18em;}
+.title-letter{position:relative;display:inline-block;}
+.tl-char{display:inline-block;
+  transition:opacity 0.2s ease,transform 0.28s cubic-bezier(0.34,1.3,0.64,1);
+  transition-delay:calc(var(--i,0) * 28ms);}
+.tl-fig{position:absolute;left:50%;top:52%;width:0.92em;height:0.92em;
+  opacity:0;pointer-events:none;
+  transform:translate(-50%,-50%) scale(0.35) rotate(-25deg);
+  transition:opacity 0.2s ease,transform 0.32s cubic-bezier(0.34,1.5,0.64,1);
+  transition-delay:calc(var(--i,0) * 28ms);}
+.tl-fig svg{width:100%;height:100%;display:block;}
+body:not(.no-anim-title) .title-word:hover .tl-char{
+  opacity:0;transform:translateY(-0.35em) scale(0.5) rotate(14deg);}
+body:not(.no-anim-title) .title-word:hover .tl-fig{
+  opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0);}
+
+/* The animation switches. Each one is a body class that turns its own group
+   off and nothing else (real-user request: "can turn animations off in
+   settings, split to different animation choices to turn off"), so somebody
+   who likes the marks moving but not the title can have exactly that. */
+body.no-anim-header .lang-switch:hover .lang-switch-icon,
+body.no-anim-header #accountSettingsBtn:hover .ui-icon,
+body.no-anim-header #notifBellBtn:hover svg,
+body.no-anim-header #notifBellBtn:hover::before,
+body.no-anim-header #notifBellBtn:hover::after,
+body.no-anim-header #friendsBtn:hover svg,
+body.no-anim-header #whoNameWrap:hover #whoName,
+body.no-anim-header .theme-icon-in{animation:none;}
+body.no-anim-ui .tap-word:hover, body.no-anim-ui .cal-seg:hover,
+body.no-anim-ui label.file-upload-btn:hover, body.no-anim-ui .linkbtn:hover,
+body.no-anim-ui .reminder-add-trigger:hover, body.no-anim-ui .tap-word:active,
+body.no-anim-ui .cal-seg:active, body.no-anim-ui label.file-upload-btn:active,
+body.no-anim-ui .linkbtn:active, body.no-anim-ui .reminder-add-trigger:active,
+body.no-anim-ui .tap-mark:hover, body.no-anim-ui .item-del:hover,
+body.no-anim-ui .note-del:hover, body.no-anim-ui .gram-note-del:hover,
+body.no-anim-ui .gram-resource-del:hover, body.no-anim-ui .reminder-chip-remove:hover,
+body.no-anim-ui .lecture-del:hover, body.no-anim-ui .e-chip .del:hover,
+body.no-anim-ui .tap-mark:active, body.no-anim-ui .item-del:active,
+body.no-anim-ui .note-del:active, body.no-anim-ui .gram-note-del:active,
+body.no-anim-ui .gram-resource-del:active, body.no-anim-ui .reminder-chip-remove:active,
+body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transform:none;}
+
+@media (prefers-reduced-motion: reduce){
+  .tl-char, .tl-fig{transition:none;}
+  .title-word:hover .tl-char{opacity:1;transform:none;}
+  .title-word:hover .tl-fig{opacity:0;}
+  .lang-switch:hover .lang-switch-icon, #accountSettingsBtn:hover .ui-icon,
+  #notifBellBtn:hover svg, #notifBellBtn:hover::before, #notifBellBtn:hover::after,
+  #friendsBtn:hover svg, #whoNameWrap:hover #whoName, .theme-icon-in,
+  .lang-menu{animation:none;}
+}
 /* The pill's own colour input, laid over it at opacity 0 -- the same trick
    .who .lang-switch-select uses for the language dropdown, and for the same
    reason: the tap has to land on a real native control.
@@ -149,6 +283,7 @@ body{
 .lang-switch button.active{background:var(--ink);color:var(--paper);}
 .lang-switch-label{font-size:12.5px;}
 .icon-btn{background:var(--paper-dim);border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:8px;font-size:14px;line-height:1;}
+#notifBellBtn{position:relative;}
 /* The header's controls had a hover FILL and nothing else -- no ease onto it
    and nothing at all under the finger, so a press read as a page that had not
    noticed (real-user report: "these buttons need animations"). Only duration
@@ -165,6 +300,9 @@ body{
    itself never fires and the wrapper is what has to be asked. */
 .icon-btn:hover, .lang-switch:hover, #whoNameWrap:hover #whoName{
   background:rgba(127,127,127,0.16);border-color:var(--ink-soft);}
+/* The jiggle's keyframes hold the grow themselves, so the shared rule must
+   not also be writing a scale here -- see the note on the keyframes. */
+#whoNameWrap:hover #whoName{transform:none;}
 /* The press is a SQUEEZE, not a colour: a fill that only deepens says the
    same thing the hover already said, where a control that gives under the
    pointer is felt rather than read. 60ms, because a press wants to land at
@@ -726,6 +864,16 @@ button:hover{background:var(--ink-hover);}
 .item-meta input[type=number]{width:70px;font-family:'Space Grotesk',monospace;font-size:12px;padding:5px 7px;border-radius:5px;border:1px solid var(--line);background:var(--paper);color:var(--ink);}
 .item-meta a{font-size:12px;color:var(--celadon-4);}
 .linkbtn{background:none;border:none;color:var(--celadon-4);font-size:12px;padding:0;text-decoration:underline;font-weight:600;cursor:pointer;}
+/* An underline drawn by the BUTTON runs the width of the button, so on one
+   carrying an icon it crossed the mark and the space after it (real-user
+   report: "the underline is going too far. It should not be in the space
+   between the bell and the text"). A decoration cannot be cancelled on a
+   descendant -- that is a spec rule, not an oversight -- so the only way to
+   stop it short is to move it off the button and onto the words. Any
+   icon+text linkbtn wraps its label in .lb-text and gets this for free;
+   a plain text one still underlines itself, unchanged. */
+.linkbtn:has(.lb-text){text-decoration:none;}
+.linkbtn .lb-text{text-decoration:underline;}
 .linkbtn:hover{background:none;color:var(--celadon-3);}
 .icon-pill-btn{display:inline-flex;align-items:center;gap:5px;background:var(--paper-dim);border:1px solid var(--line);color:var(--ink);font-size:12px;font-weight:600;padding:4px 11px;border-radius:999px;cursor:pointer;text-decoration:none;}
 .icon-pill-btn:hover{background:rgba(127,127,127,0.16);}
@@ -735,7 +883,7 @@ button:hover{background:var(--ink-hover);}
 .icon-pill-btn svg.spin{animation:iconPillSpin 0.9s linear infinite;}
 .item-meta .linkbtn{background:none;border:none;color:var(--celadon-4);font-size:12px;padding:0;text-decoration:underline;font-weight:600;}
 .item-del{background:none;border:none;color:var(--danger);cursor:pointer;font-size:15px;}
-.item-del:hover{background:none;color:var(--danger);filter:brightness(1.15);}
+.item-del:hover{background:none;}
 /* .act-remove / .act-edit carry the convention onto text buttons. They
    override .linkbtn's green, so they must come AFTER it in source order
    (same specificity). */
@@ -743,6 +891,15 @@ button:hover{background:var(--ink-hover);}
 .linkbtn.act-remove:hover{color:var(--danger);filter:brightness(1.15);}
 .linkbtn.act-edit{color:var(--edit);}
 .linkbtn.act-edit:hover{color:var(--edit);filter:brightness(1.15);}
+/* The same control in its two states. "Reminders on" is a state that IS on,
+   so it is green; "Remind me" is the invitation to turn it on, and an
+   invitation is not a state -- it was wearing the same green, so the crossed
+   -out bell was the only thing telling the two apart (real-user report:
+   "remind me is green here"). */
+.linkbtn.act-on{color:var(--on);}
+.linkbtn.act-on:hover{color:var(--on);filter:brightness(1.15);}
+.linkbtn.act-off{color:var(--ink-soft);}
+.linkbtn.act-off:hover{color:var(--ink);}
 /* The icon-only edit and delete buttons in the note and sentence lists sit
    inside containers that paint every button --ink-soft, so they were the
    one place the colour convention did not reach. Three classes each, which
@@ -818,6 +975,36 @@ label.file-upload-btn:hover, .linkbtn:hover, .reminder-add-trigger:hover{
   transform:scale(1.08);}
 .tap-word:active, .cal-seg:active, label.file-upload-btn:active,
 .linkbtn:active, .reminder-add-trigger:active{transform:scale(0.98);transition-duration:0.06s;}
+/* The other half of the vocabulary: a MARK is the control -- a bare glyph
+   with no box, which is what every delete and close ✕ in the app is.
+   Three things make it different from a word rather than the same rule
+   pointed at more selectors:
+     - it grows FURTHER (1.2), because at 11-15px a 1.08 is invisible;
+     - from its own CENTRE, since a mark sits at the end of a row where a
+       left-origin grow would walk it out of its column;
+     - and it lands on its full meaning as it goes. Several sit at
+       --ink-soft at rest so a dense list is not a wall of red; the grow
+       says "live" and the colour says "this one deletes", which is the
+       part worth having on a control with no label to read. */
+.tap-mark, .item-del, .note-del, .gram-note-del, .gram-resource-del,
+.reminder-chip-remove, .lecture-del, .e-chip .del{
+  transform-origin:center;
+  transition:transform 0.13s cubic-bezier(0.4,0,0.2,1),color 0.13s cubic-bezier(0.4,0,0.2,1),opacity 0.13s cubic-bezier(0.4,0,0.2,1);}
+.tap-mark:hover, .item-del:hover, .note-del:hover, .gram-note-del:hover,
+.gram-resource-del:hover, .reminder-chip-remove:hover, .lecture-del:hover,
+.e-chip .del:hover{transform:scale(1.2);color:var(--danger);}
+.tap-mark:active, .item-del:active, .note-del:active, .gram-note-del:active,
+.gram-resource-del:active, .reminder-chip-remove:active, .lecture-del:active,
+.e-chip .del:active{transform:scale(0.9);transition-duration:0.06s;}
+@media (prefers-reduced-motion: reduce){
+  .tap-mark, .item-del, .note-del, .gram-note-del, .gram-resource-del,
+  .reminder-chip-remove, .lecture-del, .e-chip .del{transition-duration:0s;}
+  .tap-mark:hover, .item-del:hover, .note-del:hover, .gram-note-del:hover,
+  .gram-resource-del:hover, .reminder-chip-remove:hover, .lecture-del:hover,
+  .e-chip .del:hover, .tap-mark:active, .item-del:active, .note-del:active,
+  .gram-note-del:active, .gram-resource-del:active, .reminder-chip-remove:active,
+  .lecture-del:active, .e-chip .del:active{transform:none;}
+}
 @media (prefers-reduced-motion: reduce){
   .tap-word, .cal-seg, label.file-upload-btn, .linkbtn, .reminder-add-trigger{transition-duration:0s;}
   .tap-word:hover, .cal-seg:hover, label.file-upload-btn:hover, .linkbtn:hover,
@@ -2985,7 +3172,25 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
         <span id="settingsStickyTopBarLabel"></span>
       </label>
       <div class="hint" id="settingsStickyTopBarHint" style="margin-top:4px;"></div>
-    </div>    <div id="settingsShowTopikRow" style="margin-top:14px;">
+    </div>    <div id="settingsAnimRow" style="margin-top:16px;">
+      <div class="wtc-title" id="lblAnimations"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" class="anim-toggle" data-anim="header" style="width:15px;height:15px;">
+        <span id="animHeaderLabel"></span>
+      </label>
+      <div class="hint" id="animHeaderHint" style="margin:2px 0 8px 24px;"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" class="anim-toggle" data-anim="title" style="width:15px;height:15px;">
+        <span id="animTitleLabel"></span>
+      </label>
+      <div class="hint" id="animTitleHint" style="margin:2px 0 8px 24px;"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" class="anim-toggle" data-anim="ui" style="width:15px;height:15px;">
+        <span id="animUiLabel"></span>
+      </label>
+      <div class="hint" id="animUiHint" style="margin:2px 0 0 24px;"></div>
+    </div>
+    <div id="settingsShowTopikRow" style="margin-top:14px;">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
         <input type="checkbox" id="settingsShowTopikToggle" style="width:15px;height:15px;">
         <span id="settingsShowTopikLabel"></span>
@@ -9144,6 +9349,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.',
     setGroupProfileLabel:'Profile', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupPrivacyLabel:'Privacy', setGroupSecurityLabel:'Account and security', setGroupDangerLabel:'Delete account',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
+    lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns, the gear turns, the bell rings, the people walk and your name jiggles when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over Productivity and every letter turns into someone working; hold over Tracker and every letter turns into someone tracking something.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over a word you can click, and the squeeze when you press it.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     calExportTitle:'Download calendar', calExportUseList:'Pick from list', calExportUseCalendar:'Pick on calendar', calExportPickHint:'Click events on the calendar to leave them out.', calExportCountTpl:'{in} of {total}', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
@@ -9267,6 +9473,7 @@ const I18N = {
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.',
     setGroupProfileLabel:'프로필', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupPrivacyLabel:'공개 설정', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
+    lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본과 톱니바퀴가 돌고, 종이 울리고, 사람이 걷고, 이름이 흔들립니다.', animTitleLabel:'제목 글자', animTitleHint:'Productivity 위에 올리면 각 글자가 일하는 사람으로, Tracker 위에 올리면 무언가를 관찰하는 사람으로 바뀝니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누를 수 있는 단어 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     calExportTitle:'캘린더 내려받기', calExportUseList:'목록에서 선택', calExportUseCalendar:'캘린더에서 선택', calExportPickHint:'캘린더에서 일정을 클릭하면 제외됩니다.', calExportCountTpl:'{total}개 중 {in}개', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
@@ -9390,6 +9597,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.',
     setGroupProfileLabel:'Hồ sơ', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupPrivacyLabel:'Quyền riêng tư', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
+    lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay, bánh răng quay, chuông rung, người đi bộ và tên bạn rung nhẹ khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên Productivity để từng chữ hóa thành người đang làm việc; lên Tracker để từng chữ hóa thành người đang theo dõi.', animUiLabel:'Chuyển động giao diện', animUiHint:'Chữ bấm được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     calExportTitle:'Tải lịch về', calExportUseList:'Chọn từ danh sách', calExportUseCalendar:'Chọn trên lịch', calExportPickHint:'Nhấp vào sự kiện trên lịch để loại bỏ.', calExportCountTpl:'{in}/{total}', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
@@ -9524,6 +9732,10 @@ const STATIC_MAP = {
   calExportAllBtn:'calExportAll', calExportNoneBtn:'calExportNone', calExportGoBtn:'calExportGo',
   settingsShowTopikLabel:'settingsShowTopikLabel', settingsShowTopikHint:'settingsShowTopikHint',
   settingsMessagingLabel:'settingsMessagingLabel', settingsMessagingHint:'settingsMessagingHint',
+  lblAnimations:'lblAnimations',
+  animHeaderLabel:'animHeaderLabel', animHeaderHint:'animHeaderHint',
+  animTitleLabel:'animTitleLabel', animTitleHint:'animTitleHint',
+  animUiLabel:'animUiLabel', animUiHint:'animUiHint',
   setGroupProfileLabel:'setGroupProfileLabel', setGroupAppearanceLabel:'setGroupAppearanceLabel',
   setGroupNotifyLabel:'setGroupNotifyLabel', setGroupPrivacyLabel:'setGroupPrivacyLabel',
   setGroupSecurityLabel:'setGroupSecurityLabel', setGroupDangerLabel:'setGroupDangerLabel',
@@ -10044,15 +10256,85 @@ const ICON = {
   chevL:   function(sz){ return svgIcon(ICON_PATHS.chevL, sz); },
   download:function(sz){ return svgIcon(ICON_PATHS.download, sz); }
 };
+/* ---------- THE TITLE'S LETTERS ---------- */
+// Hold over "Productivity" and each letter turns into a small person doing
+// some work; hold over "Tracker" and each turns into someone tracking
+// something. Drawn in the app's own icon language -- a 24 box, stroke 2,
+// currentColor, no fill -- so they are the same colourless outline marks as
+// every other icon here and inherit the title's ink in both themes.
+// A figure is a head, a body, legs and ONE prop. At the size a letter gives
+// it (about 18px) anything more is a smudge, so the prop is what has to
+// read, and the body is the same five strokes every time.
+const FIG_BODY = '<circle cx="9" cy="4.6" r="2.2"/><path d="M9 6.8v6"/><path d="M9 12.8 6.7 19M9 12.8 11.3 19"/>';
+const WORK_FIGURES = [
+  FIG_BODY + '<path d="M9 8.6h4.2"/><rect x="13" y="7.2" width="7.5" height="5.2" rx="1"/>',      // at a screen
+  FIG_BODY + '<path d="M9 8.8 13 11"/><path d="M12.2 12.4 16.6 8"/><path d="M13.6 14h6"/>',        // writing
+  FIG_BODY + '<path d="M9 8.6h3.4"/><path d="M12.4 7v6M12.4 7c1.8-1 3.6-1 5.4 0v6c-1.8-1-3.6-1-5.4 0"/>', // reading
+  FIG_BODY + '<path d="M9 8.6 12.6 5.4"/><rect x="12.6" y="2.6" width="8" height="6.4" rx="1"/><path d="M14.4 6.6h4.4"/>', // presenting
+  FIG_BODY + '<path d="M9 8.8h2"/><rect x="10.6" y="7.4" width="6.4" height="6" rx="0.8"/><path d="M13.8 7.4v6"/>', // carrying a box
+  FIG_BODY + '<path d="M9 8.6 13 6.4"/><path d="M14 20V4M19 20V4M14 8h5M14 12h5M14 16h5"/>',       // up a ladder
+  FIG_BODY + '<path d="M9 8.8 12.6 10"/><path d="M12.6 8.6h3.2l1 3.4h-5.2z"/><path d="M18.6 19c0-3 1-4.6 2.4-5.6"/>', // watering
+  FIG_BODY + '<path d="M9 8.6 15 13"/><path d="M14 12.4 18.6 19"/><path d="M16.4 17.4 21 20"/>',   // sweeping
+  FIG_BODY + '<path d="M9 8.4 12.6 5"/><path d="M11 3.6h4.4"/><path d="M13.2 3.6 12.6 5"/><path d="M12 13h7"/>', // hammering
+  FIG_BODY + '<path d="M9 8.6 13 9.6"/><path d="M13 9.6 15.4 8.4"/><rect x="15.8" y="3.4" width="5" height="8" rx="0.8"/>', // painting
+  FIG_BODY + '<path d="M6.4 3.6h5.2"/><path d="M9 6.8V3.6"/><path d="M5.4 2v3.2M12.6 2v3.2"/>',     // lifting
+  FIG_BODY + '<path d="M9 8.8h3"/><rect x="12.4" y="4.4" width="7.2" height="10" rx="1"/><path d="M14.2 7.6l1.2 1.2 2.2-2.4M14.2 11.4h3.6"/>', // a list, ticked
+];
+const TRACK_FIGURES = [
+  FIG_BODY + '<path d="M9 8.6 12.8 10.4"/><circle cx="16" cy="8.6" r="3.2"/><path d="M18.4 11 20.8 13.4"/>', // magnifier
+  FIG_BODY + '<path d="M9 8.4 12 6.6"/><circle cx="14.2" cy="5.6" r="2"/><circle cx="18.6" cy="5.6" r="2"/><path d="M16.2 5.6h0.4"/>', // binoculars
+  FIG_BODY + '<path d="M9 8.8h3"/><rect x="12.4" y="4.6" width="7" height="9.4" rx="1"/><path d="M14.2 9l1.3 1.3 2.4-2.6"/>', // clipboard
+  FIG_BODY + '<path d="M9 8.6 12.6 9.8"/><circle cx="16.6" cy="10" r="4"/><path d="M16.6 8v2l1.4 1"/><path d="M15.4 5.2h2.4"/>', // stopwatch
+  FIG_BODY + '<path d="M9 8.6h2.6"/><path d="M13 18c1.6-2.6 3.4-4 5.4-4.4" stroke-dasharray="2 2"/><path d="M19.4 6.6a2.4 2.4 0 1 0-4.8 0c0 1.8 2.4 4.4 2.4 4.4s2.4-2.6 2.4-4.4z"/>', // a trail to a pin
+  FIG_BODY + '<path d="M9 8.4 12.4 6"/><path d="M12.4 19V9"/><path d="M12.4 15.6 15.6 12l2 1.8 3.2-4.4"/>', // a rising line
+  FIG_BODY + '<path d="M9 8.4 12.4 6.2"/><path d="m12.4 7.8 8-4.2"/><path d="M14 12.6 16.6 6.8 19.2 8"/>', // telescope
+];
+function figSvg(paths){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" '
+    + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
+}
+// The h1's own click handler still works: it is on the h1 and these are all
+// children, so a press on a letter bubbles to it exactly as the bare text did.
+function buildTitleMorph(){
+  const h1 = document.getElementById('appTitleHome');
+  if(!h1 || h1.querySelector('.title-word')) return;
+  const words = [['Productivity', WORK_FIGURES], ['Tracker', TRACK_FIGURES]];
+  h1.textContent = '';
+  words.forEach(([word, figs], wi)=>{
+    if(wi) h1.appendChild(document.createTextNode(' '));
+    const w = document.createElement('span');
+    w.className = 'title-word';
+    [...word].forEach((ch, i)=>{
+      const l = document.createElement('span');
+      l.className = 'title-letter';
+      // Staggered off the letter's own index, so the change reads left to
+      // right as one movement rather than every letter flipping at once.
+      l.style.setProperty('--i', String(i));
+      l.innerHTML = '<span class="tl-char">' + ch + '</span>'
+        + '<span class="tl-fig">' + figSvg(figs[i % figs.length]) + '</span>';
+      w.appendChild(l);
+    });
+    h1.appendChild(w);
+  });
+}
+buildTitleMorph();
 /* ---------- DARK MODE ---------- */
+let themeIconAnimates = false;
 function applyDarkMode(isDark){
   document.body.classList.toggle('dark', isDark);
   localStorage.setItem('trackerDark', isDark ? '1' : '0');
   const icon = isDark ? ICON.sun(15) : ICON.moon(15);
-  document.getElementById('darkToggleAuth').innerHTML = icon;
-  document.getElementById('darkToggleApp').innerHTML = icon;
-  document.getElementById('darkTogglePin').innerHTML = icon;
+  ['darkToggleAuth','darkToggleApp','darkTogglePin'].forEach(id=>{
+    const btn = document.getElementById(id);
+    if(!btn) return;
+    btn.innerHTML = icon;
+    // Only when the theme actually CHANGES, not on the call that restores it
+    // at startup -- an app that spins its own icon on every load reads as a
+    // glitch rather than as a response to a press.
+    if(themeIconAnimates) btn.firstElementChild?.classList.add('theme-icon-in');
+  });
 }
+themeIconAnimates = true;
 document.getElementById('darkToggleAuth').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 document.getElementById('darkToggleApp').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 document.getElementById('darkTogglePin').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
@@ -10089,19 +10371,78 @@ function buildLangSwitch(container){
   caret.setAttribute('stroke-width', '2.5'); caret.setAttribute('stroke-linecap', 'round'); caret.setAttribute('stroke-linejoin', 'round');
   caret.innerHTML = '<polyline points="6 9 12 15 18 9"></polyline>';
   container.appendChild(caret);
-  const sel = document.createElement('select');
-  sel.className = 'lang-switch-select';
-  sel.setAttribute('aria-label', 'Language');
+  // A native <select> menu is drawn by the OS, and macOS centres it ON the
+  // control with the current option over the button -- so the list covered
+  // the pill it belongs to and no CSS could move it (real-user report: "the
+  // languages cover the button. The drop down should be below"). Nothing can
+  // be done about that except not to use one, so a POINTER gets our own menu
+  // hung under the pill, which is the same `top:100%` shape .cal-seg-picker
+  // already uses everywhere else in the app.
+  // A TOUCH device keeps the native select: its picker is a sheet at the
+  // bottom of the screen, never over the control, and it is the thing a
+  // phone user knows. So this is a real difference between the two, not a
+  // breakpoint guess -- asked as `pointer: coarse`, the same question the
+  // 16px form-control rule asks.
+  if(window.matchMedia && window.matchMedia('(pointer: coarse)').matches){
+    const sel = document.createElement('select');
+    sel.className = 'lang-switch-select';
+    sel.setAttribute('aria-label', 'Language');
+    langs.forEach(([code,label])=>{
+      const opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = label;
+      if(code === currentLang) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', (e)=> applyLanguage(e.target.value));
+    container.appendChild(sel);
+    return;
+  }
+  container.setAttribute('role', 'button');
+  container.setAttribute('tabindex', '0');
+  container.setAttribute('aria-haspopup', 'listbox');
+  container.setAttribute('aria-expanded', 'false');
+  const menu = document.createElement('div');
+  menu.className = 'lang-menu hidden';
+  menu.setAttribute('role', 'listbox');
   langs.forEach(([code,label])=>{
-    const opt = document.createElement('option');
-    opt.value = code;
+    const opt = document.createElement('button');
+    opt.type = 'button';
+    opt.className = 'lang-menu-item' + (code === currentLang ? ' active' : '');
+    opt.setAttribute('role', 'option');
+    opt.setAttribute('aria-selected', code === currentLang ? 'true' : 'false');
     opt.textContent = label;
-    if(code === currentLang) opt.selected = true;
-    sel.appendChild(opt);
+    opt.addEventListener('click', (e)=>{ e.stopPropagation(); closeLangMenu(); applyLanguage(code); });
+    menu.appendChild(opt);
   });
-  sel.addEventListener('change', (e)=> applyLanguage(e.target.value));
-  container.appendChild(sel);
+  container.appendChild(menu);
+  const toggle = (e)=>{
+    e.stopPropagation();
+    const open = !menu.classList.contains('hidden');
+    closeLangMenu();
+    if(!open){
+      menu.classList.remove('hidden');
+      container.setAttribute('aria-expanded', 'true');
+      langMenuOpen = { menu, container };
+    }
+  };
+  container.addEventListener('click', toggle);
+  container.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(e); }
+    else if(e.key === 'Escape') closeLangMenu();
+  });
 }
+// One open at a time, closed by anything else on the page -- the same
+// contract the inline segment picker keeps.
+let langMenuOpen = null;
+function closeLangMenu(){
+  if(!langMenuOpen) return;
+  langMenuOpen.menu.classList.add('hidden');
+  langMenuOpen.container.setAttribute('aria-expanded', 'false');
+  langMenuOpen = null;
+}
+document.addEventListener('click', closeLangMenu);
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeLangMenu(); });
 function rebuildActivitySelect(){
   ['activityInput', 'timerActivitySelect'].forEach(id=>{
     const sel = document.getElementById(id);
@@ -10961,6 +11302,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   document.getElementById('settingsHideCircleTooWrap').classList.toggle('hidden', !hiddenFromLeaderboards[currentUser.id]);
   document.getElementById('settingsStickyTopBarToggle').checked = stickyTopBarEnabled();
   document.getElementById('settingsMessagingToggle').checked = messagingEnabled();
+  document.querySelectorAll('.anim-toggle').forEach(cb=>{ cb.checked = animEnabled(cb.dataset.anim); });
   document.getElementById('settingsShowTopikToggle').checked = showTopik;
   renderRecapPrefsRows();
   renderNotifPrefs();
@@ -14245,6 +14587,16 @@ function stickyTopBarEnabled(){ return localStorage.getItem(STICKY_TOPBAR_KEY) !
 // device, absent means ON, because nobody should have to opt in to a
 // feature that was already there.
 const MESSAGING_KEY = 'trackerMessaging';
+// Three groups rather than one master switch, so somebody who likes the
+// header marks moving but not the title can have exactly that. Each is its
+// own key, absent means ON, and each turns off a body class that its own CSS
+// block watches -- nothing else in the sheet has to know these exist.
+const ANIM_GROUPS = ['header','title','ui'];
+const animKey = g => 'trackerAnim' + g.charAt(0).toUpperCase() + g.slice(1);
+function animEnabled(g){ return localStorage.getItem(animKey(g)) !== '0'; }
+function applyAnimPrefs(){
+  ANIM_GROUPS.forEach(g=> document.body.classList.toggle('no-anim-' + g, !animEnabled(g)));
+}
 function messagingEnabled(){ return localStorage.getItem(MESSAGING_KEY) !== '0'; }
 function applyMessagingPref(){
   updateChatDockVisibility();
@@ -14382,6 +14734,13 @@ document.getElementById('settingsMessagingToggle').addEventListener('change', (e
   localStorage.setItem(MESSAGING_KEY, e.target.checked ? '1' : '0');
   applyMessagingPref();
 });
+document.querySelectorAll('.anim-toggle').forEach(cb=>{
+  cb.addEventListener('change', ()=>{
+    localStorage.setItem(animKey(cb.dataset.anim), cb.checked ? '1' : '0');
+    applyAnimPrefs();
+  });
+});
+applyAnimPrefs();
 
 /* ---------- TAB SWITCHING ---------- */
 // Pulled out of the click handler so applyTabVisibility() can also call
@@ -18646,7 +19005,8 @@ function buildEventRowEl(ev){
   const subsForEvent = allSubsByEvent[ev.id] || {};
   const mySubForRow = subsForEvent[currentUser.id];
   const isOpen = expandedSubscribe.has(ev.id);
-  const bellLabel = (mySubForRow ? ICON.bellOn() : ICON.bellOff()) + ' ' + t(mySubForRow ? 'subscribed' : 'remindMe');
+  const bellLabel = (mySubForRow ? ICON.bellOn() : ICON.bellOff())
+    + ' <span class="lb-text">' + t(mySubForRow ? 'subscribed' : 'remindMe') + '</span>';
   const isMine = ev.user_id === currentUser.id;
   // Birthdays are shared regardless of who happened to add them (see
   // itemsOfKind()) -- naming the adder is misleading, not informative.
@@ -18669,7 +19029,7 @@ function buildEventRowEl(ev){
       <div class="deadline-title">${ownerTag}<span class="deadline-color" style="background:${ev.color||'#4F7563'}"></span>${ev.title}</div>
       <div class="deadline-notes">${[dateText, timeText, ev.notes, recurText ? '↻ ' + recurText : ''].filter(Boolean).join(' · ')}</div>
       <div style="display:flex;gap:12px;margin-top:6px;">
-        <button class="linkbtn sub-toggle" data-id="${ev.id}">${bellLabel}</button>
+        <button class="linkbtn sub-toggle ${mySubForRow?'act-on':'act-off'}" data-id="${ev.id}">${bellLabel}</button>
         <button class="linkbtn act-edit edit-toggle" data-id="${ev.id}">${t('editBtn')}</button>
       </div>
       <div class="notes-panel ${isEditOpen?'':'hidden'}" data-edit-for="${ev.id}">
