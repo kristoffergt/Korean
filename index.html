@@ -202,31 +202,49 @@ body.theme-swapping *::before, body.theme-swapping *::after{
   0%{transform:scale(0.7);opacity:0.55;} 100%{transform:scale(2.1);opacity:0;}}
 
 /* The two people are the button's own stock users mark and they STAY that
-   mark. Held over, they simply step apart -- the one in front to the left, the
-   one behind out to the right -- and a circle grows between them where their
-   hands meet (real-user request: "the guy in the back comes to the right and
-   the guy in the front is on the left and then they join together in a
-   circle? so you dont have to shift the entire icon image").
-   So nothing is redrawn: each bust is a GROUP carrying one transform, which
-   is the cheapest possible morph and the only one that cannot change what the
-   drawing is. Two earlier passes interpolated the shapes themselves into
-   stick figures, which is exactly the "shift the entire icon image" this is
-   the answer to.
-   They shrink a little as they part, because two busts at full size have no
-   room between them to hold anything. */
-.fr-p{transform-box:fill-box;transform-origin:center;
-  transition:transform .38s cubic-bezier(0.34,1.2,0.64,1);}
-.fr-arm{transition:d .34s ease .1s, opacity .28s ease .1s;opacity:0;}
-.fr-armT{d:path("M12.4 14.6Q15.2 14.6 18 14.6");}
-.fr-armB{d:path("M12.4 14.6Q15.2 14.6 18 14.6");}
-body:not(.no-anim-header) #friendsBtn:hover .fr-p1{transform:translateX(-1.4px) scale(.86);}
-body:not(.no-anim-header) #friendsBtn:hover .fr-p2{transform:translateX(.8px) scale(.9);}
-/* The same span curved opposite ways, so the two arms close a circle between
-   the pair -- which is the whole point of the mark. */
+   mark: every part keeps its own command list, so what moves is the geometry
+   itself and nothing is ever cross-faded for a different drawing (real-user
+   request: "so you dont have to shift the entire icon image").
+   Held over, the pair step apart -- the one in front to the left, the one
+   behind out to the right -- the one behind GROWS to the head the one in
+   front has, and his single shoulder unfurls into a pair, which is the other
+   arm the front one was standing in front of. Between them the two arms open
+   out of a point into a ring.
+   The heads are cx/cy/r and the shoulders are d, written straight onto the
+   parts rather than as one transform per bust, because the two figures start
+   at DIFFERENT sizes and have to finish at the same one -- a single transform
+   can only scale a head and its shoulders together.
+   The shoulders narrow as they part. At full width two busts leave about
+   three units between them, and a ring needs more than its own 2-unit stroke
+   before it has a hole in it at all; the HEADS keep the size the front one
+   already had, which is what "the same size as the guy at the front" means. */
+.fr-head, .fr-body{
+  transition:cx .42s cubic-bezier(0.34,1.2,0.64,1),
+             cy .42s cubic-bezier(0.34,1.2,0.64,1),
+             r .42s cubic-bezier(0.34,1.2,0.64,1),
+             d .42s cubic-bezier(0.34,1.2,0.64,1);}
+.fr-head1{cx:8.6px;cy:7.4px;r:3.6px;}
+.fr-head2{cx:17.7px;cy:6.9px;r:2.4px;}
+.fr-body1{d:path("M2.8 20.4C2.8 16.5 5.4 14.8 8.6 14.8C11.8 14.8 14.4 16.5 14.4 20.4");}
+.fr-body2{d:path("M17.7 14.5C19.4 14.5 20.5 15.6 21 17.1C21.3 18.1 21.4 19.2 21.4 20.4");}
+/* Collapsed onto the ring's own centre, so it OPENS from a point instead of
+   sliding in from somewhere nobody's hands are, and a beat behind the pair,
+   so they have stepped apart before it closes. */
+.fr-arm{d:path("M12.4 16.4C12.4 16.4 12.4 16.4 12.4 16.4");opacity:0;
+  transition:d .34s cubic-bezier(0.34,1.3,0.64,1) .13s, opacity .22s ease .13s;}
+body:not(.no-anim-header) #friendsBtn:hover .fr-head1{cx:5.16px;cy:8.14px;}
+body:not(.no-anim-header) #friendsBtn:hover .fr-head2{cx:18.84px;cy:8.14px;r:3.6px;}
+body:not(.no-anim-header) #friendsBtn:hover .fr-body1{
+  d:path("M1.1 19.46C1.1 16.73 2.92 15.54 5.16 15.54C7.4 15.54 9.22 16.73 9.22 19.46");}
+body:not(.no-anim-header) #friendsBtn:hover .fr-body2{
+  d:path("M14.78 19.46C14.78 16.73 16.6 15.54 18.84 15.54C21.08 15.54 22.9 16.73 22.9 19.46");}
+/* Two half circles about (12, 16.4), drawn as the cubic whose control points
+   sit 4r/3 out -- which passes through the apex exactly and leaves the ends
+   vertical, so the pair really do meet as a circle rather than as a lens. */
 body:not(.no-anim-header) #friendsBtn:hover .fr-armT{
-  d:path("M12.4 14.6Q15.2 10.6 18 14.6");opacity:1;}
+  d:path("M9.22 16.4C9.22 12.69 14.78 12.69 14.78 16.4");opacity:1;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-armB{
-  d:path("M12.4 14.6Q15.2 18.6 18 14.6");opacity:1;}
+  d:path("M9.22 16.4C9.22 20.11 14.78 20.11 14.78 16.4");opacity:1;}
 
 /* The name is the one thing here that is a WORD, so it jiggles rather than
    turning -- and the jiggle carries its own scale, because the shared
@@ -446,7 +464,8 @@ body.no-anim-header .moon-tackle, body.no-anim-header .moon-star{animation:none;
 body.no-anim-header .sun-clouds, body.no-anim-header .moon-angler{opacity:0;}
 body.no-anim-title .tl-runner{display:none;}
 body.no-anim-title .tl-done path{stroke-dashoffset:0;}
-body.no-anim-header .fr-p, body.no-anim-header .fr-arm{transition:none;}
+body.no-anim-header .fr-head, body.no-anim-header .fr-body,
+body.no-anim-header .fr-arm{transition:none;}
 body.no-anim-ui .tap-word:hover, body.no-anim-ui .cal-seg:hover,
 body.no-anim-ui label.file-upload-btn:hover, body.no-anim-ui .linkbtn:hover,
 body.no-anim-ui .reminder-add-trigger:hover, body.no-anim-ui .tap-word:active,
@@ -2052,14 +2071,17 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
              to properly morph"). Every part keeps its command list across both
              poses -- which is what lets the browser interpolate `d` at all --
              and the two poses live in the stylesheet beside each other. -->
-        <!-- The stock two-person mark, in two groups. Held over, the groups
-             MOVE -- nothing about either drawing changes -- and the circle
-             between them is what grows. -->
+        <!-- The stock two-person mark, one part per element so each can move on
+             its own. Drawn back to front: the one behind, the arms, then the
+             one in front over them. The attributes carry the resting pose the
+             stylesheet also states, so the mark is readable on its own. -->
         <svg class="friends-morph" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <g class="fr-p fr-p2"><circle cx="17.7" cy="6.9" r="2.4"></circle><path d="M17.7 14.5C19.4 14.5 20.5 15.6 21 17.1C21.3 18.1 21.4 19.2 21.4 20.4"></path></g>
-          <path class="fr-arm fr-armT" d="M12.4 14.6Q15.2 14.6 18 14.6"></path>
-          <path class="fr-arm fr-armB" d="M12.4 14.6Q15.2 14.6 18 14.6"></path>
-          <g class="fr-p fr-p1"><circle cx="8.6" cy="7.4" r="3.6"></circle><path d="M2.8 20.4C2.8 16.5 5.4 14.8 8.6 14.8C11.8 14.8 14.4 16.5 14.4 20.4"></path></g>
+          <circle class="fr-head fr-head2" cx="17.7" cy="6.9" r="2.4"></circle>
+          <path class="fr-body fr-body2" d="M17.7 14.5C19.4 14.5 20.5 15.6 21 17.1C21.3 18.1 21.4 19.2 21.4 20.4"></path>
+          <path class="fr-arm fr-armT" d="M12.4 16.4C12.4 16.4 12.4 16.4 12.4 16.4"></path>
+          <path class="fr-arm fr-armB" d="M12.4 16.4C12.4 16.4 12.4 16.4 12.4 16.4"></path>
+          <path class="fr-body fr-body1" d="M2.8 20.4C2.8 16.5 5.4 14.8 8.6 14.8C11.8 14.8 14.4 16.5 14.4 20.4"></path>
+          <circle class="fr-head fr-head1" cx="8.6" cy="7.4" r="3.6"></circle>
         </svg>
         <span id="linkNotifyDot" class="hidden" style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--seal);"></span>
         <span id="circleOnlineDot" class="hidden online-dot" style="position:absolute;bottom:2px;right:2px;"></span>

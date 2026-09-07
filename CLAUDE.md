@@ -1629,7 +1629,7 @@ is two people falling over.
 
 ## The busts MOVE, the strapline goes, and the sub bar steps aside (8 Sep, seventh pass)
 
-### The cheapest morph is the one that redraws nothing
+### The cheapest morph is the one that redraws nothing (superseded, see the eighth pass)
 
 Asked twice, and the second time verbatim: "why cant you just animate these
 where the guy in the back comes to the right and the guy in the front is on
@@ -1677,6 +1677,75 @@ exactly deep enough (real-user request: "we dont have to move anything else
 - **Hovering the pushed bar keeps the fly-out open.** Stepping from one to the
   other would otherwise close it and shift the row back under the pointer,
   which is the constant-shifting the request was about.
+
+## The pair end up the same person, and the ring is two half circles (8 Sep, eighth pass)
+
+Third pass on the circle icon, and the one that finally says what the mark is
+for. The seventh pass's "each bust is a GROUP carrying one transform" is
+SUPERSEDED: a single transform per bust can only ever scale a head and its
+shoulders together, and the two figures start at different sizes and have to
+finish at the same one.
+
+Asked for exactly (real-user request): "the guy in the back head's would grow a
+bit to be the same size as the guy at the front, move a bit more to the right
+(and guy in the front a bit more to the left) so you can see his other arm, and
+the arms (that are already there) lock together in a circle (now that they're
+on either side)."
+
+### Every part moves on its own, and none of it is redrawn
+
+Six elements now -- two heads, two pairs of shoulders, two arms -- each
+animating its OWN geometry: `cx`/`cy`/`r` on the circles and `d` on the paths.
+Still a real morph rather than a cross-fade, because every path keeps its
+command list across both poses, which is the only thing that lets `d`
+interpolate at all.
+
+- **The head behind grows 2.4 to 3.6, which is the head in front unchanged.**
+  That is what "the same size as the guy at the front" means, so the front head
+  is the one number in the whole pose that does not move.
+- **His single shoulder UNFURLS into a pair, and that is the other arm.** The
+  stock mark draws the figure behind as a half arc, `M` + `C` + `C`, because
+  the one in front hides his left side; the full arc the figure in front wears
+  is `M` + `C` + `C` as well. So one interpolates straight into the other: the
+  neck point slides down and left to become the far hand, the mid-arm point
+  rises to become the neck, and the near hand steps right. Nothing new is
+  drawn; the arm that was hidden is the arm that unrolls.
+
+### The shoulders narrow, the heads do not
+
+Both figures end up 0.70 of the stock shoulder width. That is forced
+arithmetic, not taste: at full width two busts leave about three units between
+them, and a 2-unit stroke needs more than three units of ring before the ring
+has any hole in it at all. Narrowing the shoulders buys 5.6 units of gap while
+leaving both heads at their full 3.6, so what shrinks is the half of each
+figure nobody is looking at.
+
+### A quadratic cannot draw a circle, and the first version proved it
+
+The arms were two quadratics bowed opposite ways. A quadratic's end tangent
+points at its control point, which sits on the midpoint, so the two curves meet
+at a hard corner and the enclosed shape is a pointed lens -- at this stroke
+weight it filled in completely and read as a small diamond.
+
+They are **cubics whose control points sit `4r/3` beyond each end**, which is
+the standard half-circle approximation: it passes through the apex exactly,
+leaves both ends vertical, and is under 0.03r off a true circle anywhere along
+it. So the two arms really do close as a circle.
+
+- **At rest each arm is COLLAPSED onto the ring's own centre** (`M12.4 16.4C12.4
+  16.4 12.4 16.4 12.4 16.4`) rather than lying flat somewhere else, so the ring
+  opens out of a point between them instead of sliding in from a place nobody's
+  hands are. It runs 0.13s behind the pair, so they have stepped apart before it
+  closes.
+
+### What the tuning actually costs, since it was measured rather than guessed
+
+Rendered side by side at 230px and at 23px through eight passes. Two dead ends
+worth not repeating: letting the ring OVERLAP the shoulders (so the figures can
+stay big) puts both shoulder arcs through the ring's interior and leaves a blob
+rather than a hole; and shrinking the figures far enough to clear a big ring
+takes the heads back down to about 2.4, which is the size the one behind
+started at -- so the grow that was asked for stops happening at all.
 
 ## Migration files present (see folder for full current list)
 
