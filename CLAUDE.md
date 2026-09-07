@@ -1327,13 +1327,21 @@ rather than eyeballed, which is how these two numbers were picked; the
 preview pane freezes a transition at its start value, so it cannot be watched
 here anyway.
 
-### Found in passing, NOT fixed here
+### Found in passing, in its own commit
 
-`renderLeaderboardPage('articleLeaderboard', ..., 'articles', ...)` passes a
-`stateKey` that `lbState` has no entry for (it has study, reading, jobs, certs),
-so the articles leaderboard throws `Cannot read properties of undefined
-(reading 'expanded')` on every render and never draws. Pre-existing, and in the
-committed file, so it is its own commit rather than part of this one.
+`renderLeaderboardPage('articleLeaderboard', ..., 'articles', ...)` passed a
+`stateKey` `lbState` had no entry for (it held study, reading, jobs, certs), so
+the articles leaderboard threw `Cannot read properties of undefined (reading
+'expanded')` on every render and never drew. Pre-existing and unrelated to the
+rest of this round, so it is a commit of its own. **The console buffer here is
+CUMULATIVE across navigations**, which cost a diagnosis: the same errors came
+back after the fix and after a reload, and the way to tell a live error from a
+stale one is a NEW TAB (or an `unhandledrejection` listener installed by hand),
+not another read of the log.
+
+The rule the bug is worth remembering for: **a lookup table keyed by a string
+passed in from five call sites needs the call sites checked against the table**,
+which is three lines of node and is now part of the verification pass.
 
 ## Migration files present (see folder for full current list)
 
