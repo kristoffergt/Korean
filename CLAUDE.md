@@ -893,6 +893,49 @@ dotted underline instead.
 - Removing the three button ids meant removing their `STATIC_MAP` entries too,
   or `applyLanguage` writes into nothing.
 
+## The condensing header is GONE, and that is the fix (7 Sep)
+
+Reported three times, the last as "it STILL locks me if I slow scroll. Because
+of the fixed bar... Bro", and the round before that made it worse. So the
+feature causing it is out rather than compensated for again.
+
+**A sticky element sits in NORMAL FLOW, so a bar that shrinks when it pins
+shortens the document under the reader's hand.** The browser corrects the
+scroll to hold the content still, that carries the bar back over its own
+threshold, and it un-shrinks. Measured off a recording: the page advanced 4 to
+8px a frame and was yanked back 58 every dozen frames, for a net of **two
+pixels across 161 frames**.
+
+Three rounds went into compensating for that height change with a spacer -- one
+that tracked the ease, then one that never zeroed, then atomic heights and
+`overflow-anchor` -- and not one held. The bar keeps ONE height now. It still
+pins and still wears its shadow; it simply never resizes, so there is nothing
+for the browser to correct. Verified by construction rather than by argument:
+stuck and unstuck give the same bar height, the same document height and the
+same document position for a visible card, and a walk across the threshold in
+both directions sees one value of each and zero scroll drift.
+
+**The honest reason it took three rounds is that none of the fixes were ever
+reproduced.** This preview pane will not deliver a real wheel gesture -- it
+refuses scroll actions outright while hidden, because it does not paint -- and
+`window.scrollTo` does not behave like a wheel, so every one of those fixes
+shipped on reasoning alone and each looked fine against the wrong test. Two
+rules out of it:
+
+- **Nothing that changes the sticky bar's height on scroll goes back in unless
+  it can be driven with a real wheel and watched.** Reasoning is not enough for
+  this class of bug; the failure only exists in the interaction.
+- **When a fix cannot be reproduced, prefer the construction that removes the
+  mechanism over the one that compensates for it.** Each spacer version was a
+  cleverer compensation, and cleverness is exactly what could not be checked.
+
+**Getting the one-line condensed header back means taking the bar OUT of flow**
+-- `position: fixed` with a constant-height spacer -- where its height cannot
+touch the document at all. That is a restructure (the bar sits inside `.wrap`,
+so a fixed one needs the max-width and body padding replicated, and the resting
+offset written per scroll), not a tweak, and it should not be attempted without
+a way to test a real scroll.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql

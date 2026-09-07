@@ -332,36 +332,28 @@ header{display:flex;flex-direction:column;border-bottom:2px solid var(--ink);pad
    the point of the exercise and keep their size. */
 #topBar .sub{max-height:22px;overflow:hidden;
   transition:opacity 0.18s ease,max-height 0.18s ease,margin-top 0.18s ease,width 0.18s ease;}
-#topBar.stuck{padding-bottom:10px;}
-/* One line: the mark and the title on the left, the controls hard right.
-   The header is a COLUMN at rest (brand row, then tagline + controls), and
-   stuck it becomes a row -- flex-direction cannot be transitioned, so the
-   change of layout snaps while the sizes still ease. */
-#topBar.stuck header{flex-direction:row;align-items:center;gap:6px;
-  padding-bottom:7px;margin-bottom:9px;}
-#topBar.stuck .brand-mark{flex:0 1 auto;min-width:0;gap:6px;}
-/* The floor is 11.5 rather than 12 because at 375 the title wanted 137px
-   against 136 of room -- one pixel, and an ellipsis for it. Half a point of
-   type buys six. Below about 340 it truncates and should: there is no size
-   the whole title fits at once the controls have what they need. */
-#topBar.stuck h1{font-size:clamp(11.5px,0.8vw + 9px,18px);margin-bottom:0;
-  /* Whatever room the controls leave. The controls are the useful half. */
-  min-width:0;overflow:hidden;text-overflow:ellipsis;}
-#topBar.stuck .brand-icon{width:20px;height:20px;}
-#topBar.stuck .header-row2{flex:1 1 auto;min-width:0;justify-content:flex-end;
-  flex-wrap:nowrap;gap:0;}
-/* Zero WIDTH as well as height: collapsed to nothing vertically it was still
-   a flex item claiming the width of "Study · Reading · Jobs" on the row. */
-#topBar.stuck .sub{opacity:0;max-height:0;width:0;flex:0 0 0;margin:0;padding:0;}
-/* Measured rather than picked: at 375 the title wants 137px and the controls
-   were leaving it 127, so it ellipsised. Six controls at 27px with 4px
-   between them is 183; a tighter gap, a pixel off each side and a 12px glyph
-   frees 23, which clears the title with room to spare. */
-#topBar.stuck .who{flex-wrap:nowrap;gap:3px;}
-#topBar.stuck .who .icon-btn{padding:4px 5px;}
-#topBar.stuck .who .icon-btn .ui-icon,
-#topBar.stuck .who .icon-btn svg,
-#topBar.stuck .who .lang-switch-icon{width:12px;height:12px;}
+/* THE BAR NO LONGER CHANGES SIZE WHEN IT STICKS, and that is the fix for a
+   scroll that locked at slow speeds three separate times.
+
+   A sticky element sits in NORMAL FLOW, so a bar that shrinks when it pins
+   shortens the document under the reader's hand; the browser then corrects
+   the scroll to keep the content still, which carries the bar back over its
+   own threshold, which un-shrinks it. Measured off a recording: the page
+   advanced 4 to 8px a frame and was yanked back 58 every dozen frames, for a
+   net of two pixels across 161 frames.
+
+   Three rounds went into compensating for that height change with a spacer
+   rather than removing it, and none of them held. The honest reason is that
+   none could be reproduced here: this preview pane will not deliver a real
+   wheel gesture, so every one of those fixes shipped on reasoning alone.
+   Nothing that changes the bar's height on scroll should go back in unless it
+   can be driven with a real wheel and watched.
+
+   The bar still pins, and still wears its shadow when it does. What it no
+   longer does is resize, so there is nothing for the browser to correct.
+   Getting the one-line condensed header back means taking the bar OUT of flow
+   (position:fixed with a constant-height spacer), where its height cannot
+   touch the document at all -- a restructure, not a tweak. */
 /* Says the bar is a layer over the page rather than part of it. Its own
    element, so it can sit BELOW the bar without a second background. */
 #topBar::after{content:'';position:absolute;left:0;right:0;top:100%;height:10px;
@@ -384,6 +376,8 @@ body.topbar-loose #topBar{position:static;}
    changes, nothing below the bar ever moves, and with nothing moving there is
    nothing for anchoring to correct. Written in the same frame as the class,
    so there is not even one frame of shift. */
+/* Always zero now that the bar keeps one height, and kept only because it is
+   what a future out-of-flow condense would reserve its room with. */
 #topBarSpacer{height:0;flex:none;pointer-events:none;}
 /* Nothing INSIDE the bar may be chosen as the scroll anchor. The tabs live in
    it and move up by the whole condense when it sticks, so the browser holding
@@ -14133,12 +14127,6 @@ function updateTopBarStuck(){
     rect.top <= (parseFloat(getComputedStyle(bar).top) || 0) + 1;
   // Written only on the transition: this runs on every scroll event, and a
   // class write per frame would invalidate style for the whole subtree.
-  // Every scroll, not only on the transition: the full height is read off the
-  // live box while the bar is at rest, and at reveal it measured 358 against a
-  // settled 298. Waiting for a state change meant the FIRST condense was
-  // computed against that stale number and the page moved by the difference.
-  // One rect read and a guarded style write per scroll.
-  syncTopBarSpacer();
   if(next !== topBarStuck){
     topBarStuck = next;
     bar.classList.toggle('stuck', next);
@@ -14152,9 +14140,6 @@ function initStickyTopBar(){
   const bar = document.getElementById('topBar');
   if(!bar) return;
   window.addEventListener('scroll', updateTopBarStuck, { passive: true });
-  // Re-measure only while the bar is at rest and settled, which is the one
-  // moment the reading is trustworthy. Cheap: it runs on a timer, not a scroll.
-  setInterval(()=>{ if(!topBarStuck && !document.hidden) measureTopBarFullH(); }, 2000);
   window.addEventListener('resize', ()=>{
     measureTopBarFullH(); updateTopBarStuck(); syncTopBarSpacer(); syncTopBarMetrics();
   });
