@@ -1630,6 +1630,23 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
 .set-info[aria-expanded="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper);}
 .set-hint{display:none;}
 .set-hint.open{display:block;}
+/* The lecture list is a column of headings in a card the width of the page,
+   so most of it is empty (real-user report: "so much empty space here. Could
+   just move the note writing section to the right of this when there is
+   space"). Side by side above 1100px, and the ordinary stack below it -- one
+   flex row, so with the editor closed the list simply takes the width back
+   rather than needing a rule of its own for that state. */
+@media (min-width: 1100px){
+  .notes-split{display:flex;align-items:flex-start;gap:18px;}
+  .notes-split > .card{flex:1 1 0;min-width:0;}
+  /* The editor is the half being WORKED in, so it takes the larger share. */
+  .notes-split > #editorCard{flex:1.35 1 0;}
+}
+/* Renaming in place: the field stands where the heading stood, so nothing
+   moves as it opens. */
+.lecture-title-input{font-family:'Noto Serif KR',serif;font-weight:700;font-size:16px;
+  padding:2px 6px;border:1px solid var(--line);border-radius:6px;
+  background:var(--paper);color:var(--ink);min-width:180px;max-width:100%;}
 .online-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none;
   background:var(--on);box-shadow:0 0 0 2px color-mix(in srgb, var(--on) 25%, transparent);}
 .exp-cat-row{display:block;width:100%;text-align:left;background:none;border:none;
@@ -2807,6 +2824,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       </div>
       <div class="hint" id="notesEmptyHint"></div>
     </div>
+    <div class="notes-split">
     <div class="card">
       <h2 id="hLectures"></h2>
       <div class="field" style="margin-bottom:12px;">
@@ -2824,6 +2842,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
       <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
       <div class="notes-panel hidden" id="versionHistoryPanel"></div>
+    </div>
     </div>
     </div>
     <div id="yonseiBoardsSection" class="hidden">
@@ -31453,23 +31472,69 @@ async function saveNoteMeta(noteId, groupKey, container){
   }
   renderLectureList();
 }
+// Clicking the name renames it IN PLACE (real-user request: "let me rename the
+// lecture by clicking on the name here"). It used to open the whole meta panel
+// underneath -- title, colour and course at once -- which is the right form for
+// editing a lecture and the wrong one for correcting its NAME, which is what a
+// click on the name itself is asking to do. That panel is still what the list's
+// own pencil opens, so nothing was lost.
 document.getElementById('editorLectureTitle').addEventListener('click', ()=>{
-  if(!selectedLectureId) return;
+  const span = document.getElementById('editorLectureTitle');
+  if(!selectedLectureId || span.dataset.editing) return;
   const note = (allNotes[selectedNotesCourse]||[]).find(n=>n.id===selectedLectureId);
   if(!note || note.user_id !== currentUser.id) return;
-  const panel = document.getElementById('editorTitleEditPanel');
-  if(!panel.classList.contains('hidden')){
-    panel.classList.add('hidden');
-    panel.innerHTML = '';
+  const was = note.lecture_title || '';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'lecture-title-input';
+  input.value = was;
+  span.dataset.editing = '1';
+  span.style.display = 'none';
+  span.parentElement.insertBefore(input, span);
+  input.focus();
+  input.select();
+  let done = false;
+  const finish = async (save)=>{
+    if(done) return;
+    done = true;
+    const next = input.value.trim();
+    input.remove();
+    span.style.display = '';
+    delete span.dataset.editing;
+    if(!save || !next || next === was) return;
+    span.textContent = next;
+    note.lecture_title = next;
+    await supabaseClient.from('course_notes').update({ lecture_title: next }).eq('id', note.id);
+    renderLectureList();
+  };
+  input.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.preventDefault(); finish(true); }
+    // stopPropagation, or the same press also closes the note: the editor's
+    // own Escape is on the document and this one is inside it.
+    else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); finish(false); }
+  });
+  input.addEventListener('blur', ()=> finish(true));
+});
+
+/* ---------- THE EDITOR'S OWN TWO KEYS ---------- */
+// Cmd+S / Ctrl+S saves and Escape closes (real-user requests). Both go through
+// the buttons rather than round them, so whatever those already do -- the
+// dirty check, the saved message, the version it writes -- happens exactly
+// once and in one place.
+document.addEventListener('keydown', (e)=>{
+  const card = document.getElementById('editorCard');
+  if(!card || card.classList.contains('hidden')) return;
+  if((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')){
+    e.preventDefault();
+    document.getElementById('saveNoteBtn').click();
     return;
   }
-  panel.innerHTML = buildNoteMetaFieldsHtml(note, selectedNotesCourse);
-  panel.classList.remove('hidden');
-  panel.querySelector('.ne-save-btn').addEventListener('click', ()=> saveNoteMeta(note.id, selectedNotesCourse, panel));
-  panel.querySelector('.ne-cancel-btn').addEventListener('click', ()=>{
-    panel.classList.add('hidden');
-    panel.innerHTML = '';
-  });
+  if(e.key === 'Escape'){
+    // A dialog over the editor owns Escape first; it has its own way out.
+    if(document.querySelector('.modal-overlay:not(.hidden)')) return;
+    e.preventDefault();
+    document.getElementById('closeNoteBtn').click();
+  }
 });
 
 let editorDirty = false;

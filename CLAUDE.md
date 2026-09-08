@@ -2116,6 +2116,47 @@ Measured through the collapse under Home: 241px wide at left 24, then 122 at
   by the transform-origins coming out at 26px on a 241px row; layout width is
   the one measurement a transform cannot touch.
 
+## The note is written beside the list, and named by clicking its name (8 Sep, seventeenth pass)
+
+### The editor moves to the right of the list when there is room
+
+"So much empty space here. Could just move the note writing section to the
+right of this when there is space." The lecture list is a narrow column of
+titles and the editor was stacked under it, so on a wide screen the whole page
+was one column of text with two thirds of the width empty beside it.
+
+`.notes-split` wraps the two cards and is a plain block until **1100px**, where
+it becomes a flex row: the list at `flex:1 1 0` and the editor at
+`flex:1.35 1 0`, so the side being typed into gets the larger share. Measured
+at 1400px the list is 578 and the editor 764, on one row; at 900px both are
+860 and stacked. `min-width:0` on the children, or a long lecture title stops
+the list shrinking and the editor never gets its share.
+
+### The lecture is renamed by clicking its name
+
+"Let me rename the lecture by clicking on the name here." Clicking
+`#editorLectureTitle` swapped in the whole `buildNoteMetaFieldsHtml` panel,
+which is every field the note has when the ask was for one of them.
+
+It replaces the heading with an `<input class="lecture-title-input">` in its
+place, in the heading's own face and weight so the line does not jump: Enter or
+blur saves, Escape restores. Only for a note the signed-in user owns, and only
+one at a time (`span.dataset.editing`).
+
+- **Escape while renaming must NOT close the note.** The input calls
+  `stopPropagation`, so the document-level Escape below never sees it.
+
+### Cmd+S saves and Escape closes
+
+One document `keydown` listener routing through the buttons that already exist
+(`#saveNoteBtn`, `#closeNoteBtn`) rather than a second copy of what they do, so
+the key and the button can never disagree. Gated on `#editorCard` being
+visible, and Escape stands down while any `.modal-overlay` is open, since the
+dialog on top owns that key.
+
+Verified: with the editor open, meta+S and ctrl+S both reach save and Escape
+reaches close; with it hidden, neither fires.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
