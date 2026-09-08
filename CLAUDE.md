@@ -2053,6 +2053,48 @@ centre of 12.5, 13.62.
   A rule that cannot fire is worse than no rule: it is a wrong answer waiting
   for somebody to trust it.
 
+## The admin block joins the list, and the green lands as the circle (8 Sep, fifteenth pass)
+
+### Two more folds, from the four that already existed
+
+"Make moderator collapsable too, and match the resume part to the rest in
+terms of formatting." The resume block had a hand-rolled disclosure of its own
+(`resumePublicOpen`, a `.note-group-header`, its own click listener and its own
+arrow drawn into `innerHTML`) and the moderator block had no disclosure at all,
+just a `.wtc-title`. Both are `.set-group` sections now, so the delegated
+handler that already folds the other four folds them too and the hand-rolled
+copy is gone.
+
+- **`#moderatorSection` is `display:contents`.** It is a GATE, not a box: left
+  as a box its two sections would be a list inside the list and their rules
+  would not line up with the four above. Its first section drops its top rule,
+  which would otherwise land exactly on the bottom rule of the section above
+  and draw as one 2px line.
+- **The heading's words come from the table now**, through STATIC_MAP, rather
+  than being written into `innerHTML` by the disclosure it no longer has.
+
+### The circle in the middle IS the online dot
+
+"You didnt add the green circle in the middle" ... "i mean, you did, but it
+should be the online circle." Two goes at this, and the corrections are the
+useful part:
+
+| tried | why it was wrong |
+|---|---|
+| the dot shrunk into the ring's 3.4px hole | reads as nothing at all at 23px |
+| the dot faded out and the RING went green | a green outline is not the online dot |
+| **the dot lands at the ring's own outer size** | what the pair are holding IS the light |
+
+7.8/24 of the mark, which is half a pixel wider than the ring's 7.25px outer
+diameter, so it covers the arms' stroke rather than leaving a hair of it
+showing. Measured settled: 7.47px at 18.50, 19.71 against a ring centre of
+18.50, 19.72, opacity 1. The arms still take the green underneath, which is
+what stops antialiasing at the disc's edge reading as dark.
+
+- **`width` and `height` had to join the dot's own transition list** for the
+  same reason `stroke` did on the arms: the bar's blanket `transition-property`
+  does not carry them, so it would have jumped to size.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
