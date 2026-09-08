@@ -1815,6 +1815,77 @@ Reading and Jobs push nothing.
 - The clearance is a named `FLYOUT_GAP` (8px) rather than a 6 buried in the
   arithmetic.
 
+## The morph was never running, and the shadow was what cut over (8 Sep, tenth pass)
+
+### `#topBar header *` had been cancelling every geometry transition
+
+"Also the circle icon is not a morphing animation where the head grows and
+moves aside. You simply just made a new image."
+
+Exactly right, and it was not the drawing: **nothing was interpolating.** The
+condense rule further down the stylesheet pins the property list for
+everything inside the bar --
+
+    #topBar, #topBar header, #topBar header *, #topBar h1{
+      transition-property:opacity,background-color,color,border-color,box-shadow,transform;}
+
+-- so that a `flex-direction` swap cannot be half-eased. It carries an ID, so
+it outranks a plain class, and it knows nothing about SVG geometry: `cx`, `cy`,
+`r` and `d` were struck off the icon's own list and every one of them SNAPPED.
+Two poses with no frames between them is a second drawing, which is precisely
+what was reported.
+
+**Measured rather than reasoned about**, and the measurement is the thing worth
+keeping: `getComputedStyle(el).transitionProperty` on the head read
+`opacity, background-color, color, border-color, box-shadow, transform` while
+`transitionDuration` read `0.42s, 0.42s, 0.42s, 0.42s` -- four durations
+against six properties, so the durations were mine and the properties were not.
+`el.getAnimations()` on a real hover returned an empty list for the heads and
+the bodies, and `["opacity"]` for the arms: the one property the blanket list
+happens to contain.
+
+- **A standalone probe circle transitioned `cx` and `r` perfectly**, which is
+  what ruled the browser out and pointed at the cascade.
+- The fix is an id the rule does not otherwise need: `#topBar .fr-head` is
+  (1,1,0) against the blanket's (1,0,1), so it wins on class count. Nothing
+  else moves. `getAnimations()` now answers `[cx, cy, r]` on the head behind,
+  `[d]` on its shoulders and `[d, opacity]` on the arms.
+- **`CSS.supports("transition-property","r")` is worthless here** -- that
+  property takes a `<custom-ident>`, so it answers true for any word at all.
+  Ask the element what it ended up with instead.
+
+### The clearance had to clear the SHADOW, not the box
+
+"It still cuts over." The box was clear by eight pixels and the shadow was not:
+`.tab-flyout-item` carries `0 4px 12px rgba(0,0,0,0.3)`, which is **sixteen
+pixels of grey past the border edge**, so a row eight below it sat inside all
+of it.
+
+`flyoutShadowReach()` reads that off the computed `box-shadow` -- offsetY plus
+blur plus spread -- rather than repeating it as a number here, so the two
+cannot drift when the shadow is retouched. Total clearance is that plus four of
+real air: the row now moves **31px** where it moved 19.
+
+- **Capped at the room there actually is**, measured against the first thing
+  below that PAINTS rather than against the box containing it: a section's own
+  top padding is room the row can move into without touching anything. Under
+  the calendar's sub bar that is 33px against the 30 wanted, which is what "there
+  is EXACTLY enough space for the sub bars to move down" was describing -- the
+  row ends up with its bottom edge on the card below it, and nothing else on
+  the page has moved.
+
+### The title had a whole line to itself
+
+"I dont know what the productivity tracker title is doing all the way up
+there." The header was a COLUMN because the row under the name used to hold the
+strapline as well as the controls; with the strapline gone (seventh pass) the
+controls kept a line of their own and the name kept another.
+
+It is one row now -- name at the left, controls at the right, wrapping only
+where a phone makes it -- which is what the condensed bar already was, so the
+condense no longer swaps direction at all. The h1's own 4px bottom margin went
+with it: on one row that only pushed the name off centre.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql

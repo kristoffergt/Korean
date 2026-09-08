@@ -217,8 +217,17 @@ body.theme-swapping *::before, body.theme-swapping *::after{
    The shoulders narrow as they part. At full width two busts leave about
    three units between them, and a ring needs more than its own 2-unit stroke
    before it has a hole in it at all; the HEADS keep the size the front one
-   already had, which is what "the same size as the guy at the front" means. */
-.fr-head, .fr-body{
+   already had, which is what "the same size as the guy at the front" means.
+
+   And the two transition rules carry an ID they do not otherwise need:
+   `#topBar header *` pins transition-property for everything in the bar (see
+   the condense rule further down) to the six things the condense must not
+   ease, and that list knows nothing about SVG geometry -- so it was silently
+   cancelling these and the pair SNAPPED between the two poses with nothing in
+   between, which is a second drawing rather than a morph (real-user report:
+   "not a morphing animation where the head grows and moves aside. You simply
+   just made a new image"). An id in the selector is what outranks it. */
+#topBar .fr-head, #topBar .fr-body{
   transition:cx .42s cubic-bezier(0.34,1.2,0.64,1),
              cy .42s cubic-bezier(0.34,1.2,0.64,1),
              r .42s cubic-bezier(0.34,1.2,0.64,1),
@@ -230,7 +239,8 @@ body.theme-swapping *::before, body.theme-swapping *::after{
 /* Collapsed onto the ring's own centre, so it OPENS from a point instead of
    sliding in from somewhere nobody's hands are, and a beat behind the pair,
    so they have stepped apart before it closes. */
-.fr-arm{d:path("M12.4 16.4C12.4 16.4 12.4 16.4 12.4 16.4");opacity:0;
+.fr-arm{d:path("M12.4 16.4C12.4 16.4 12.4 16.4 12.4 16.4");opacity:0;}
+#topBar .fr-arm{
   transition:d .34s cubic-bezier(0.34,1.3,0.64,1) .13s, opacity .22s ease .13s;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-head1{cx:5.16px;cy:8.14px;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-head2{cx:18.84px;cy:8.14px;r:3.6px;}
@@ -464,8 +474,8 @@ body.no-anim-header .moon-tackle, body.no-anim-header .moon-star{animation:none;
 body.no-anim-header .sun-clouds, body.no-anim-header .moon-angler{opacity:0;}
 body.no-anim-title .tl-runner{display:none;}
 body.no-anim-title .tl-done path{stroke-dashoffset:0;}
-body.no-anim-header .fr-head, body.no-anim-header .fr-body,
-body.no-anim-header .fr-arm{transition:none;}
+body.no-anim-header #topBar .fr-head, body.no-anim-header #topBar .fr-body,
+body.no-anim-header #topBar .fr-arm{transition:none;}
 body.no-anim-ui .tap-word:hover, body.no-anim-ui .cal-seg:hover,
 body.no-anim-ui label.file-upload-btn:hover, body.no-anim-ui .linkbtn:hover,
 body.no-anim-ui .reminder-add-trigger:hover, body.no-anim-ui .tap-word:active,
@@ -740,8 +750,19 @@ body.dark .brand-mark h1{color:#ffffff;}
    narrowed desktop window, "English" and the name pill spilling over).
    Moving .who down onto the tagline's own row instead gives it the whole
    row's width to work with, since "Study · Reading · Jobs" is short. */
-header{display:flex;flex-direction:column;border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:18px;gap:6px;
+/* One ROW: the name at the left, the controls at the right. It was a column
+   because the row under the title used to hold the strapline as well, and
+   when that went the controls were left with a whole line of their own and
+   the name with another (real-user report: "i dont know what the productivity
+   tracker title is doing all the way up there"). It wraps, so a narrow phone
+   still gets its two lines -- and the condensed bar no longer swaps direction
+   at all, since it was already a row. */
+header{display:flex;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:18px;gap:6px 16px;
   transition:padding-bottom 0.18s ease,margin-bottom 0.18s ease,gap 0.18s ease;}
+/* Takes whatever is left beside the name and keeps the controls at its far
+   end, so they sit against the right edge at any width. */
+.header-row2{flex:1 1 auto;min-width:0;}
 /* The header and the tab row ride along instead of scrolling away: on a long
    list the tabs are the control you keep reaching for and they were a screen
    or two up (real-user request). ONE wrapper, so the two move as a unit and
@@ -799,7 +820,10 @@ header{display:flex;flex-direction:column;border-bottom:2px solid var(--ink);pad
    already keeps below itself before the tabs, so the row is centred in its own
    bar rather than pushed against one edge of it. */
 #topBar.stuck{padding-top:12px;padding-bottom:10px;}
-#topBar.stuck header{flex-direction:row;align-items:center;gap:6px;
+/* nowrap because the base header wraps on a narrow screen, and the whole
+   point of the condensed bar is that it is ONE line -- both halves shrink
+   instead (see the flex/min-width pair below). */
+#topBar.stuck header{flex-direction:row;align-items:center;gap:6px;flex-wrap:nowrap;
   padding-bottom:7px;margin-bottom:9px;}
 #topBar.stuck .brand-mark{flex:0 1 auto;min-width:0;gap:6px;}
 /* The floor is 11.5 rather than 12 because at 375 the title wanted 137px
@@ -859,7 +883,7 @@ html{scroll-padding-top:var(--topbar-h,0px);}
    28px by the point .who's own compact-header breakpoint kicks in at
    1024px, unchanged 28px ceiling above that) so there's no breakpoint
    boundary left for it to jump at. */
-h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 7.5px,28px);margin:0 0 4px;letter-spacing:0.5px;white-space:nowrap;
+h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 7.5px,28px);margin:0;letter-spacing:0.5px;white-space:nowrap;
   transition:font-size 0.18s ease,margin-bottom 0.18s ease;}
 .who{display:flex;align-items:center;gap:clamp(4px,1.4vw,12px);flex-wrap:wrap;justify-content:flex-end;}
 .who .lang-switch{gap:clamp(3px,0.8vw,6px);padding:calc(clamp(4px,1vw,7px) - 4px) calc(clamp(5px,1.2vw,10px) - 4px) calc(clamp(4px,1vw,7px) - 4px) calc(clamp(4px,1vw,8px) - 4px);}
@@ -1653,7 +1677,6 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
   /* Everything above the header's black divider line gets smaller on
      mobile so the title, tagline, language control, and account controls
      all fit comfortably without crowding or wrapping awkwardly. */
-  header h1{margin:0 0 2px;}
   header{padding-bottom:10px;margin-bottom:14px;gap:8px;}
   .who{gap:6px;justify-content:flex-end;}
   .who .icon-btn{font-size:12px;padding:1px 3px;}
@@ -18172,8 +18195,39 @@ function tabFlyoutHeld(el){
   if(!tr || tr === 'none') return 0;
   try { return new DOMMatrixReadOnly(tr).m42; } catch(e){ return 0; }
 }
-// The clearance kept between the bottom of the fly-out and the top of the row.
-const FLYOUT_GAP = 8;
+// Real air kept beyond the fly-out's own shadow, which is what was still
+// landing on the row after its BOX had been cleared: a 0 4px 12px shadow is
+// sixteen pixels of grey past the border edge, so a row sitting eight below
+// it is inside all of it (real-user report: "it still cuts over").
+const FLYOUT_GAP = 4;
+// How far the fly-out's shadow reaches below its box, read off the CSS rather
+// than written here as a number, so the two cannot drift apart the moment the
+// shadow is retouched. offsetY + blur + spread.
+function flyoutShadowReach(flyout){
+  const item = flyout.querySelector('.tab-flyout-item');
+  if(!item) return 0;
+  const px = getComputedStyle(item).boxShadow.match(/-?[\d.]+px/g);
+  if(!px || px.length < 3) return 0;
+  const n = px.map(parseFloat);
+  return Math.max(0, n[1] + n[2] + (n[3] || 0));
+}
+// How far the row can travel before it lands on something. Measured against
+// the first thing below it that actually PAINTS, not against the box that
+// contains it: a section's own top padding is room the row can move into
+// without touching anything, and it is what "there is EXACTLY enough space
+// for the sub bars to move down" was describing.
+function subBarRoomBelow(bar){
+  const next = bar.nextElementSibling;
+  if(!next) return Infinity;
+  let el = next, guard = 0;
+  while(guard++ < 6){
+    const kid = [...el.children].find(k=> k.getBoundingClientRect().height > 0);
+    if(!kid) break;
+    el = kid;
+  }
+  return el.getBoundingClientRect().top
+       - (bar.getBoundingClientRect().bottom - tabFlyoutHeld(bar));
+}
 // The row of sub-tabs sitting directly under the nav, if that is what the
 // visible panel opens with. Found by MEASUREMENT rather than by a class list:
 // every panel names its own sub-bar differently, and what matters here is not
@@ -18295,9 +18349,12 @@ function showTabFlyout(btn, top){
   const bar = subBarUnderNav();
   const land = tabFlyoutLandingRect(flyout);
   const ink = bar && land ? subBarInkRect(bar) : null;
-  if(ink && land.right > ink.left && land.left < ink.right
-     && land.bottom + FLYOUT_GAP > ink.top){
-    pushSubBar(bar, Math.round(land.bottom + FLYOUT_GAP - ink.top));
+  const clear = ink ? land.bottom + flyoutShadowReach(flyout) + FLYOUT_GAP - ink.top : 0;
+  if(ink && clear > 0 && land.right > ink.left && land.left < ink.right){
+    // Never further than there is room for, so a panel with less space under
+    // its sub bar than this one gets as much of the way as it can rather than
+    // being driven into its own content.
+    pushSubBar(bar, Math.round(Math.min(clear, subBarRoomBelow(bar))));
   } else {
     releaseSubBar();
   }
