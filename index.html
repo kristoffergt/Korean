@@ -241,7 +241,8 @@ body.theme-swapping *::before, body.theme-swapping *::after{
    so they have stepped apart before it closes. */
 .fr-arm{d:path("M12.4 16.4C12.4 16.4 12.4 16.4 12.4 16.4");opacity:0;}
 #topBar .fr-arm{
-  transition:d .34s cubic-bezier(0.34,1.3,0.64,1) .13s, opacity .22s ease .13s;}
+  transition:d .34s cubic-bezier(0.34,1.3,0.64,1) .13s, opacity .22s ease .13s,
+             stroke .26s ease .13s;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-head1{cx:5.16px;cy:8.14px;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-head2{cx:18.84px;cy:8.14px;r:3.6px;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-body1{
@@ -255,6 +256,26 @@ body:not(.no-anim-header) #friendsBtn:hover .fr-armT{
   d:path("M9.22 16.4C9.22 12.69 14.78 12.69 14.78 16.4");opacity:1;}
 body:not(.no-anim-header) #friendsBtn:hover .fr-armB{
   d:path("M9.22 16.4C9.22 20.11 14.78 20.11 14.78 16.4");opacity:1;}
+/* ONLINE, held over: the green goes where the pair's hands are. It slides off
+   the corner into the ring they have just closed and fades out as it lands,
+   and the ring takes the same green on the same clock -- so what is lit is
+   the CIRCLE rather than a pip beside it (real-user request: "maybe move the
+   green (if online) to that circle in the middle there when hovering").
+   The dot fades rather than shrinking into the ring's hole, which is 3.4px
+   across at this size: rendered, a pip that small reads as nothing at all,
+   where 1.9px of green stroke reads at 23px and at every size above it.
+   Placed against the BUTTON's own centre rather than in pixels off its
+   corner, so no pill size is baked in: the icon is 23px and centred whatever
+   the pill does, which puts the ring's middle 4.22px below that centre
+   (4.4 viewBox units at 23/24). */
+#circleOnlineDot{position:absolute;left:calc(100% - 6px);top:calc(100% - 6px);
+  transform:translate(-50%,-50%);}
+#topBar #circleOnlineDot{transition:left .3s cubic-bezier(0.34,1.2,0.64,1) .1s,
+  top .3s cubic-bezier(0.34,1.2,0.64,1) .1s, opacity .26s ease .1s;}
+body:not(.no-anim-header) #friendsBtn:has(#circleOnlineDot:not(.hidden)):hover #circleOnlineDot{
+  left:50%;top:calc(50% + 4.22px);opacity:0;box-shadow:none;}
+body:not(.no-anim-header) #friendsBtn:has(#circleOnlineDot:not(.hidden)):hover .fr-arm{
+  stroke:var(--on);}
 
 /* The name is the one thing here that is a WORD, so it jiggles rather than
    turning -- and the jiggle carries its own scale, because the shared
@@ -475,7 +496,8 @@ body.no-anim-header .sun-clouds, body.no-anim-header .moon-angler{opacity:0;}
 body.no-anim-title .tl-runner{display:none;}
 body.no-anim-title .tl-done path{stroke-dashoffset:0;}
 body.no-anim-header #topBar .fr-head, body.no-anim-header #topBar .fr-body,
-body.no-anim-header #topBar .fr-arm{transition:none;}
+body.no-anim-header #topBar .fr-arm,
+body.no-anim-header #topBar #circleOnlineDot{transition:none;}
 body.no-anim-ui .tap-word:hover, body.no-anim-ui .cal-seg:hover,
 body.no-anim-ui label.file-upload-btn:hover, body.no-anim-ui .linkbtn:hover,
 body.no-anim-ui .reminder-add-trigger:hover, body.no-anim-ui .tap-word:active,
@@ -2147,7 +2169,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
           <circle class="fr-head fr-head1" cx="8.6" cy="7.4" r="3.6"></circle>
         </svg>
         <span id="linkNotifyDot" class="hidden" style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--seal);"></span>
-        <span id="circleOnlineDot" class="hidden online-dot" style="position:absolute;bottom:2px;right:2px;"></span>
+        <span id="circleOnlineDot" class="hidden online-dot"></span>
         <span id="circleUnreadDot" class="hidden" style="position:absolute;bottom:2px;left:2px;min-width:13px;height:13px;line-height:13px;border-radius:7px;background:var(--seal);color:#fff;font-size:8.5px;font-weight:800;text-align:center;padding:0 2px;"></span>
       </button>
       <a class="icon-btn hidden" id="notesLinkHeaderBtn" title="My notes" target="_blank" rel="noopener">

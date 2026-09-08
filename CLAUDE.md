@@ -1984,6 +1984,37 @@ lines of a picture that is meant to be a calendar.
   up already says it, and a second copy beside the dates would be saying it
   twice.
 
+## Online, the green moves into the ring (8 Sep, thirteenth pass)
+
+"Maybe move the green (if online) to that circle in the middle there when
+hovering." So it does: the dot slides off the button's corner into the ring
+the pair have just closed, fading out as it lands, and the ring takes the
+same green on the same clock.
+
+- **The dot FADES rather than shrinking into the hole**, and that was decided
+  by rendering it rather than by argument. The ring's hole is **3.4px across**
+  at 23px, so a pip that fits inside it reads as nothing at all; 1.9px of
+  green stroke reads at 23px and at every size above it. Four candidates were
+  drawn side by side at 23, 46 and 180px -- a pip in the hole, a disc covering
+  the ring, the ring's own stroke in green, and the last two together -- and
+  only the green stroke survives being small.
+- **It is placed against the BUTTON's own centre, not in pixels off its
+  corner.** The icon is 23px and centred whatever the pill does, so the ring's
+  middle is always 4.22px below that centre (4.4 viewBox units at 23/24) and no
+  pill size is baked in. Measured after: the dot lands at 18.5, 19.7 in button
+  coordinates, which is the ring's centre to the tenth of a pixel.
+- **`stroke` had to go in the arms' own transition list.** The bar's blanket
+  `transition-property` (see the tenth pass) knows nothing about it either, so
+  the colour would have snapped the way the geometry used to.
+- Online is read with `:has(#circleOnlineDot:not(.hidden))`, off the same
+  element the presence code already toggles, so there is no second copy of
+  "somebody is online" to disagree with the first.
+
+**And a cache trap worth knowing.** The rules were on disk and `document.
+styleSheets` did not have them: the preview pane had served the page from
+cache. Any check that reads back CSS should confirm the rule EXISTS before
+concluding it does not apply, and a `?v=` on the reload settles it.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
