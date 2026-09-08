@@ -2156,6 +2156,80 @@ dialog on top owns that key.
 
 Verified: with the editor open, meta+S and ctrl+S both reach save and Escape
 reaches close; with it hidden, neither fires.
+## The fly-out is swallowed from BELOW, and a tick box you can see (8 Sep, eighteenth pass)
+
+### translateY(-100%) is what sent it over the main tabs
+
+"The animation goes above the main tabs instead of below it, so it looks weird
+instead of the tab swallowing the pop-up sub tabs."
+
+Parked, the row carried `translateY(-100%) scale(0.22)` -- a whole row-height
+UP, which is past the tab and into the nav. So the thing supposedly collecting
+into the tab travelled ABOVE it and was swallowed from the wrong side.
+
+**There is no translate at all now.** The origin's y is already 0, which IS the
+tab's own bottom edge (the row is positioned flush under it), so a plain
+`scale(0.2)` about the tab's centre keeps the row pinned there and shrinks it
+into the tab from underneath -- the direction it came out of. The row fades
+with it, so the shrunken box does not sit there as a speck.
+
+**The sub bar still pushes down**, which was asked for separately and is
+unchanged: it was the pop-out's own travel that read as the sub tabs being
+swallowed, not the push (real-user reports, in order: "you made these get
+swallowed. Revert that", then "Not the sub tabs here. I was talking about the
+pop out sub tabs").
+
+### An unticked box was drawn in the colour behind it
+
+"The tick box is almost impossible to see. You have to outline them."
+
+`--line` is **12% ink in the light theme and 14% in the dark one** -- a
+hairline in almost exactly the surface colour, which is right for a divider and
+useless for a control. The box is `1.5px solid var(--ink-soft)` now, which is
+the token for a mark that has to be read without shouting and is defined per
+theme, so one value covers both; hover goes to full ink. Checked, nothing
+changes: the mask is the shape there and gives the border away anyway.
+
+### An action that has a symbol is drawn as the symbol
+
+"Change to only use our symbols for all of these type of things (edit, remind
+etc). we already do this in course notes. Should be site-wide."
+
+Six `Edit` word-buttons (books, articles, jobs, certificates, events,
+expenses) are `ICON.pencil()` now, and the reminder toggle is the bell alone --
+`bellOn` against `bellOff` IS the state, so the word beside it said the same
+thing twice. The word survives as the `title` and the accessible name, so a
+pointer and a screen reader both still get it.
+
+- **`.linkbtn.act-icon` carries no underline**, since an underline under a
+  drawing is a line under a drawing, and it takes 3px of padding: the mark is
+  14px and a 14px target is not one.
+- **The moderator row is deliberately left in words.** Five different word
+  actions sit in it (reset password, confirm e-mail, disable 2FA, delete user)
+  and a lone pencil among them reads as the odd one out rather than as the
+  same thing said shorter.
+
+### The rename was a control that could do nothing and still advertise itself
+
+"I cant edit the title by clicking on it." Driven with a real mouse click
+against the real markup, the handler works end to end -- input in place,
+focused, text selected -- so what is left is the two ways it can decline:
+
+- **It is somebody else's note.** Renaming belongs to whoever MADE it, which is
+  the rule the list's own pencil already follows (`isMine`). The title now only
+  wears the dotted underline, the pointer and the tooltip when it can really be
+  renamed, so it never offers what it will refuse. `setEditorLectureTitle` is
+  the one place that writes the title, so the words and the affordance cannot
+  drift.
+- **The lookup was keyed on `selectedNotesCourse`.** A note is filed under its
+  course id, or its header, or `__none__`, and the realtime handler re-files it
+  on every UPDATE -- so a note open while its course or header changes
+  underneath it is no longer in the group the editor was opened from, and the
+  lookup answers nothing. `openNoteRecord()` falls back to a scan of every
+  group and re-points `selectedNotesCourse` at where it really is.
+
+**And it is not on the deployed site until it is pushed.** The rename shipped
+in a commit, and this project's rule is that Kristoffer pushes.
 
 ## Migration files present (see folder for full current list)
 
