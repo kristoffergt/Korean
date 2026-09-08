@@ -2409,35 +2409,34 @@ instance, three things make the whole CLASS impossible:
 at `scale(1)` so it was honest either way, but a rect read through a running
 animation is a rect that depends on when it was read, and every number in that
 function is derived from it.
-## A tab you PRESSED parks its sub bar down (8 Sep, twenty-second pass)
+## Parking the sub bar down was tried and REVERTED (8 Sep, twenty-second pass)
 
-"You dont need to push them down after the tab is opened when it's pressed.
-Because the pop-out sub tabs will always be there. So you can simply have it as
-keeping it down state in that case (not on site open or something, but on
-pressing that tab). Otherwise the sub tabs jiggle up and down."
+Worth keeping as a dead end rather than deleting, because the reasoning for it
+was sound and it still lost.
 
-Exactly right, and the reasoning is the useful part: after a press made with
-the fly-out already up, the pointer is SITTING on that tab, so its fly-out is
-about to open again and again -- and a row that springs back between each one
-is a row that never settles. So the push becomes a parked position rather than
-something the hover keeps re-negotiating.
+The ask was "you dont need to push them down after the tab is opened when it's
+pressed ... you can simply have it as keeping it down state in that case ...
+otherwise the sub tabs jiggle up and down", so a press made with the fly-out
+already up left that panel's row parked where the fly-out had put it: armed by
+the press rather than the hover, cleared by any other switch, and nothing
+released it while you stayed on that tab.
 
-- **Armed by the press, not by the hover.** `switchTopLevelTab` sets
-  `subBarHoldArm` only when a fly-out is already open, and the first reading
-  after that records the distance as `subBarHoldPx`. Only that first reading
-  can set it, or a later hover of some other tab would arm a hold of its own.
-- **Per VISIT, never a setting.** Every switch clears it first, so a panel
-  reached any other way -- a cold load included -- sits exactly where it always
-  did. That is the "not on site open" half of the ask.
-- **Held, nothing releases.** Both places that used to put the row back (the
-  fly-out closing, and a push that decides it does not overlap) re-assert the
-  parked distance instead. Writing the same transform twice is not a movement,
-  so hovering the same tab again is silent.
+**On screen it read as the sub tabs simply sitting too low**, and the movement
+that was supposed to be a nuisance turned out to be the part that made the row
+look alive: "Now you moved the normal sub tabs too far down and removed the
+push", then "they should push. Just like before. Literally the only problem was
+the pop-out sub tabs that were overlaying the main tabs ever so slightly."
 
-Measured through the real path, in order: level, hover another tab 10px, leave
-back to level with no hold; hover its OWN tab and press it, hold 10 and the row
-at 10px; leave, still 10px; hover again, still 10px; leave, still 10px; switch
-to another tab, hold cleared and the old row back to level.
+So the jiggle was never the fault -- the fly-out sitting flush on the tab was,
+and that is `FLYOUT_TOP_GAP` in the pass below. The push is back exactly as it
+was: level at rest, 12px down while a fly-out is really over it, level again
+when it goes, whether or not the tab was pressed on the way.
+
+**The lesson is the one this file keeps re-learning**: a report about a
+side-effect ("it jiggles") is not a request to remove the mechanism. Find what
+made the mechanism run more often than it should, or in this case what made it
+visible at all.
+
 ## The fly-out stands off the tab, and the four pixels are found rather than taken (8 Sep, twenty-third pass)
 
 "The pop-out sub tabs cover a bit of the main tabs." Flush is what it was:

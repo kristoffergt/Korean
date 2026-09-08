@@ -15468,10 +15468,6 @@ function switchTopLevelTab(view){
   // with the panel that has just been hidden (real-user report: "if I go back
   // to Home or Korean, while having it hovered, it overlaps with the sub
   // tabs"). A frame later, so the row that just appeared has been laid out.
-  // A tab reached any other way starts level again; only a press made with the
-  // fly-out already up parks its row down.
-  subBarHoldPx = 0;
-  subBarHoldArm = !!tabFlyoutBtn;
   if(tabFlyoutBtn){
     releaseSubBar();
     // Retried for a few frames rather than run once: the panel was unhidden in
@@ -18693,24 +18689,16 @@ function playTabChomp(btn, cls){
 // and again if the top-level tab changes while it is still held open, since
 // by then it is hanging over a different panel's sub bar (see
 // switchTopLevelTab).
-// Once a tab has been opened BY PRESSING IT with its own fly-out up, that
-// panel's sub bar stays where the fly-out put it and does not come back up
-// (real-user request: "you dont need to push them down after the tab is opened
-// when it's pressed ... you can simply have it as keeping it down state in
-// that case ... otherwise the sub tabs jiggle up and down"). The pointer is
-// sitting on that tab, so its fly-out is about to open again and again, and a
-// row that springs back between each one is a row that never settles.
-// Per VISIT, not a setting: switching to any tab clears it, so a panel reached
-// any other way -- a cold load included -- sits where it always did.
-let subBarHoldPx = 0;
-let subBarHoldArm = false;
+// PARKING THE ROW DOWN WAS TRIED AND IS OUT. For one pass a tab opened by
+// pressing it with its own fly-out up left that panel's row parked where the
+// fly-out had put it, so it could not spring back between one hover and the
+// next. Reverted on the same person's word once it was on screen: "they should
+// push. Just like before. Literally the only problem was the pop-out sub tabs
+// that were overlaying the main tabs ever so slightly" -- which is what
+// FLYOUT_TOP_GAP fixes, and the row is better moving than sitting low.
 function applyTabFlyoutPush(){
   const flyout = document.getElementById('tabFlyout');
-  const held = subBarHoldPx ? (tabFlyoutPushedBar || subBarUnderNav()) : null;
-  if(!tabFlyoutBtn || !flyout){
-    if(held) pushSubBar(held, subBarHoldPx); else releaseSubBar();
-    return;
-  }
+  if(!tabFlyoutBtn || !flyout){ releaseSubBar(); return; }
   const bar = subBarUnderNav();
   const land = tabFlyoutLandingRect(flyout);
   const ink = bar && land ? subBarInkRect(bar) : null;
@@ -18719,17 +18707,10 @@ function applyTabFlyoutPush(){
     // Never further than there is room for, so a panel with less space under
     // its sub bar than this one gets as much of the way as it can rather than
     // being driven into its own content.
-    const y = Math.round(Math.min(clear, subBarRoomBelow(bar)));
-    if(subBarHoldArm){ subBarHoldPx = y; }
-    pushSubBar(bar, Math.max(y, subBarHoldPx));
-  } else if(held){
-    pushSubBar(held, subBarHoldPx);
+    pushSubBar(bar, Math.round(Math.min(clear, subBarRoomBelow(bar))));
   } else {
     releaseSubBar();
   }
-  // Only the first reading after the press can set the hold, or a later hover
-  // of some other tab would arm one of its own.
-  subBarHoldArm = false;
 }
 function showTabFlyout(btn, top){
   // There's no hover on a phone -- the closest a touch screen gets is a
@@ -18809,8 +18790,7 @@ function hideTabFlyout(){
   if(flyout.classList.contains('visible')) playTabChomp(tabFlyoutBtn, 'tab-gulp');
   tabFlyoutBtn = null;
   flyout.classList.remove('visible');
-  const held = subBarHoldPx ? (tabFlyoutPushedBar || subBarUnderNav()) : null;
-  if(held) pushSubBar(held, subBarHoldPx); else releaseSubBar();
+  releaseSubBar();
 }
 function scheduleTabFlyoutHide(){
   tabFlyoutHideTimer = setTimeout(hideTabFlyout, 150);
