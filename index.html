@@ -287,16 +287,19 @@ body:not(.no-anim-header) #friendsBtn:has(#circleOnlineDot:not(.hidden)):hover #
 body:not(.no-anim-header) #friendsBtn:has(#circleOnlineDot:not(.hidden)):hover .fr-arm{
   stroke:var(--on);}
 
-/* The name is the one thing here that is a WORD, so it jiggles rather than
-   turning -- and the jiggle carries its own scale, because the shared
-   word-grow would otherwise be the second thing writing this transform. */
-@keyframes jiggle-name{
-  0%,100%{transform:scale(1.06) rotate(0);}
-  20%{transform:scale(1.06) rotate(-2.5deg);}
-  40%{transform:scale(1.06) rotate(2.5deg);}
-  60%{transform:scale(1.06) rotate(-1.5deg);}
-  80%{transform:scale(1.06) rotate(1.5deg);}}
-#whoNameWrap:hover #whoName{animation:jiggle-name 0.55s ease-in-out;}
+/* The name is the one thing here that is a WORD, so it SHINES rather than
+   moving. It jiggled first, which scaled and rotated the whole pill (real-user
+   report: "I dont want the pill itself to move when hovering over name. Just
+   make the name shine a bit"), so there is no transform in here at all now and
+   the pill cannot budge.
+   The glow is `currentColor`, which is the reader's OWN colour -- it is
+   written inline per account -- so it lights up in whatever they picked
+   without this rule having to know what that is. */
+@keyframes shine-name{
+  0%{text-shadow:none;filter:none;}
+  45%{text-shadow:0 0 9px currentColor;filter:brightness(1.28);}
+  100%{text-shadow:none;filter:none;}}
+#whoNameWrap:hover #whoName{animation:shine-name 0.9s ease-in-out;}
 
 /* The theme swap is a one-shot on the icon that has just been written in, so
    it plays on the ARRIVING sun or moon rather than on a button that never
@@ -590,8 +593,8 @@ body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transfo
    itself never fires and the wrapper is what has to be asked. */
 .icon-btn:hover, .lang-switch:hover, #whoNameWrap:hover #whoName{
   background:rgba(127,127,127,0.16);border-color:var(--ink-soft);}
-/* The jiggle's keyframes hold the grow themselves, so the shared rule must
-   not also be writing a scale here -- see the note on the keyframes. */
+/* No grow on this one: the shared word-grow is a transform, and a name that
+   is meant to shine rather than move must not be scaled by anything. */
 #whoNameWrap:hover #whoName{transform:none;}
 /* The press is a SQUEEZE, not a colour: a fill that only deepens says the
    same thing the hover already said, where a control that gives under the
@@ -1020,6 +1023,36 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
 .tab-flyout .tab-flyout-item:hover{background:var(--paper);color:var(--ink);}
 .tabs button .tab-icon,.tabs button .tab-icon-yonsei{flex:none;}
 .tabs button span:last-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* The tab EATS the pop-out and spits it back out, so the TAB has to move
+   (real-user request: "I kind of want the main tabs to have an animation where
+   they move (grow and then shrink again) so it looks like they actually ate
+   the hover pop-out sub tabs. Same for when they spit them out").
+   Both are timed against the fly-out's own 0.22s travel rather than picked:
+   the SPIT squeezes first and releases as the row comes out of it, and the
+   GULP is delayed 60ms so its bulge peaks at 0.23s -- the moment the row
+   finishes collapsing back into the tab. Squashed on the y more than the x,
+   because what is going down is going down THROUGH it.
+   Safe on the button itself: .tabs button carries no transform of its own, so
+   nothing is being overwritten -- the trap this file records for the 2FA ring
+   and the tab label. And a transform lays nothing out, so four flex:1 tabs
+   beside it do not budge. */
+@keyframes tab-spit{
+  0%{transform:scale(1,1);}
+  22%{transform:scale(0.965,0.9);}
+  55%{transform:scale(1.035,1.06);}
+  100%{transform:scale(1,1);}}
+@keyframes tab-gulp{
+  0%{transform:scale(1,1);}
+  50%{transform:scale(1.045,1.11);}
+  76%{transform:scale(0.985,0.96);}
+  100%{transform:scale(1,1);}}
+.tabs button.tab-spit{animation:tab-spit 0.34s cubic-bezier(.34,1.2,.64,1);}
+.tabs button.tab-gulp{animation:tab-gulp 0.34s cubic-bezier(.34,1.2,.64,1) 0.06s;}
+body.no-anim-ui .tabs button.tab-spit,
+body.no-anim-ui .tabs button.tab-gulp{animation:none;}
+@media (prefers-reduced-motion: reduce){
+  .tabs button.tab-spit, .tabs button.tab-gulp{animation:none;}
+}
 .tabs button:hover{background:rgba(127,127,127,0.22);}
 .tabs button.active{background:var(--ink);color:var(--paper);}
 .tabs button.active:hover{background:var(--ink);box-shadow:inset 0 0 0 2px var(--on);}
@@ -1697,8 +1730,12 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
 @media (min-width: 1100px){
   .notes-split{display:flex;align-items:flex-start;gap:18px;}
   .notes-split > .card{flex:1 1 0;min-width:0;}
-  /* The editor is the half being WORKED in, so it takes the larger share. */
-  .notes-split > #editorCard{flex:1.35 1 0;}
+  /* The editor is the half being WORKED in, so it takes the larger share.
+     Both note editors, since the Notebook is the same screen with the same
+     empty half (real-user report: "you forgot to add the notes stuff in the
+     other notebook"). */
+  .notes-split > #editorCard,
+  .notes-split > #notebookEditorCard{flex:1.35 1 0;}
 }
 /* Renaming in place: the field stands where the heading stood, so nothing
    moves as it opens. */
@@ -2723,6 +2760,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
           <button id="addNotebookBtn"></button>
         </div>
       </div>
+      <div class="notes-split">
       <div class="card">
         <h2 id="hNotebookList"></h2>
         <div class="field" style="margin-bottom:12px;">
@@ -2741,6 +2779,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
         <div id="notebookQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
         <button class="linkbtn" id="notebookVersionHistoryToggle" style="margin-top:10px;"></button>
         <div class="notes-panel hidden" id="notebookVersionHistoryPanel"></div>
+      </div>
       </div>
     </div>
   </div>
@@ -9890,7 +9929,7 @@ const I18N = {
     topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
-    lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name jiggles when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over a word you can click, and the squeeze when you press it.',
+    lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name shines when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over a word you can click, and the squeeze when you press it.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     calExportTitle:'Download calendar', calExportUseList:'Pick from list', calExportUseCalendar:'Pick on calendar', calExportPickHint:'Click events on the calendar to leave them out.', calExportCountTpl:'{in} of {total}', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
@@ -10014,7 +10053,7 @@ const I18N = {
     topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
-    lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 흔들립니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누를 수 있는 단어 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.',
+    lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 반짝입니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누를 수 있는 단어 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     calExportTitle:'캘린더 내려받기', calExportUseList:'목록에서 선택', calExportUseCalendar:'캘린더에서 선택', calExportPickHint:'캘린더에서 일정을 클릭하면 제외됩니다.', calExportCountTpl:'{total}개 중 {in}개', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
@@ -10138,7 +10177,7 @@ const I18N = {
     topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
-    lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn rung nhẹ khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Chữ bấm được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.',
+    lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn sáng lên khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Chữ bấm được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     calExportTitle:'Tải lịch về', calExportUseList:'Chọn từ danh sách', calExportUseCalendar:'Chọn trên lịch', calExportPickHint:'Nhấp vào sự kiện trên lịch để loại bỏ.', calExportCountTpl:'{in}/{total}', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
@@ -18591,6 +18630,19 @@ function releaseSubBar(){
   tabFlyoutPushedBar.style.transform = '';
   tabFlyoutPushedBar = null;
 }
+// Which tab the row is currently out of, so the one that has to swallow it can
+// be found again when it goes -- and so a hover that moves straight to another
+// tab still makes the tab it CAME OUT OF do the swallowing.
+let tabFlyoutBtn = null;
+// remove-reflow-add, or a second hover of the same tab plays nothing at all:
+// the class is already on the element, so there is no change for the browser
+// to start an animation from.
+function playTabChomp(btn, cls){
+  if(!btn) return;
+  btn.classList.remove('tab-spit', 'tab-gulp');
+  void btn.offsetWidth;
+  btn.classList.add(cls);
+}
 function showTabFlyout(btn, top){
   // There's no hover on a phone -- the closest a touch screen gets is a
   // "ghost hover" some browsers fire on first tap, which just leaves the
@@ -18601,6 +18653,9 @@ function showTabFlyout(btn, top){
   const subs = (top.subs||[]).filter(s=> !isTabHidden(s.key));
   if(!subs.length) return;
   clearTimeout(tabFlyoutHideTimer);
+  if(tabFlyoutBtn && tabFlyoutBtn !== btn) playTabChomp(tabFlyoutBtn, 'tab-gulp');
+  if(tabFlyoutBtn !== btn) playTabChomp(btn, 'tab-spit');
+  tabFlyoutBtn = btn;
   const flyout = document.getElementById('tabFlyout');
   const nav = document.getElementById('tabNav');
   const navRect = nav.getBoundingClientRect();
@@ -18655,7 +18710,13 @@ function showTabFlyout(btn, top){
   requestAnimationFrame(()=> requestAnimationFrame(()=> flyout.classList.add('visible')));
 }
 function hideTabFlyout(){
-  document.getElementById('tabFlyout').classList.remove('visible');
+  const flyout = document.getElementById('tabFlyout');
+  // Only when there was something out to swallow -- hideTabFlyout is called
+  // defensively from several places, and a tab that chews on nothing is a tab
+  // twitching for no reason.
+  if(flyout.classList.contains('visible')) playTabChomp(tabFlyoutBtn, 'tab-gulp');
+  tabFlyoutBtn = null;
+  flyout.classList.remove('visible');
   releaseSubBar();
 }
 function scheduleTabFlyoutHide(){
@@ -31542,12 +31603,13 @@ async function saveNoteMeta(noteId, groupKey, container){
   }
   renderLectureList();
 }
-// The open note, found WITHOUT trusting selectedNotesCourse. A note is filed
-// under its course id, or its header, or __none__, and the realtime handler
-// re-files it on every UPDATE (dropFromGroups then push) -- so a note that is
-// open while its course or header changes underneath it is no longer in the
-// group the editor was opened from, and a lookup keyed on that group answers
-// nothing at all. Every group is a few rows; this is a scan of a handful.
+// The open note, found WITHOUT trusting the group it was opened from. A note
+// is filed under its course id, or its header, or __none__, and the realtime
+// handler re-files it on every UPDATE (dropFromGroups then push) -- so a note
+// that is open while its course or header changes underneath it is no longer
+// in the group the editor was opened from, and a lookup keyed on that group
+// answers nothing at all. Every group is a few rows; this is a scan of a
+// handful.
 function openNoteRecord(){
   if(!selectedLectureId) return null;
   const here = (allNotes[selectedNotesCourse]||[]).find(n=>n.id===selectedLectureId);
@@ -31558,84 +31620,114 @@ function openNoteRecord(){
   }
   return null;
 }
+function openNotebookNoteRecord(){
+  if(!selectedNotebookNoteId) return null;
+  const here = (allNotebookNotes[selectedNotebookGroup]||[]).find(n=>n.id===selectedNotebookNoteId);
+  if(here) return here;
+  for(const key in allNotebookNotes){
+    const n = (allNotebookNotes[key]||[]).find(x=>x.id===selectedNotebookNoteId);
+    if(n){ selectedNotebookGroup = key; return n; }
+  }
+  return null;
+}
 // Renaming belongs to whoever MADE the note, which is the rule the list's own
 // pencil already follows (isMine) -- so the title only advertises itself when
 // it can really be renamed. Underlined and captioned on somebody else's note it
 // is a control that does nothing, which is exactly what it reads as (real-user
 // report: "I cant edit the title by clicking on it"). Set from one place, so
 // the words and the affordance cannot disagree.
-function setEditorLectureTitle(note){
-  const span = document.getElementById('editorLectureTitle');
+function setNoteTitleSpan(spanId, note){
+  const span = document.getElementById(spanId);
+  if(!span) return;
   span.textContent = (note && note.lecture_title) || '';
   const mine = !!(note && currentUser && note.user_id === currentUser.id);
   span.style.cursor = mine ? 'pointer' : 'default';
   span.style.textDecoration = mine ? 'underline dotted' : 'none';
   if(mine) span.title = t('editBtn'); else span.removeAttribute('title');
 }
+function setEditorLectureTitle(note){ setNoteTitleSpan('editorLectureTitle', note); }
+function setNotebookEditorTitle(note){ setNoteTitleSpan('notebookEditorTitle', note); }
 // Clicking the name renames it IN PLACE (real-user request: "let me rename the
 // lecture by clicking on the name here"). It used to open the whole meta panel
 // underneath -- title, colour and course at once -- which is the right form for
 // editing a lecture and the wrong one for correcting its NAME, which is what a
 // click on the name itself is asking to do. That panel is still what the list's
 // own pencil opens, so nothing was lost.
-document.getElementById('editorLectureTitle').addEventListener('click', ()=>{
-  const span = document.getElementById('editorLectureTitle');
-  if(!selectedLectureId || span.dataset.editing) return;
-  const note = openNoteRecord();
-  if(!note || note.user_id !== currentUser.id) return;
-  const was = note.lecture_title || '';
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'lecture-title-input';
-  input.value = was;
-  span.dataset.editing = '1';
-  span.style.display = 'none';
-  span.parentElement.insertBefore(input, span);
-  input.focus();
-  input.select();
-  let done = false;
-  const finish = async (save)=>{
-    if(done) return;
-    done = true;
-    const next = input.value.trim();
-    input.remove();
-    span.style.display = '';
-    delete span.dataset.editing;
-    if(!save || !next || next === was) return;
-    note.lecture_title = next;
-    setEditorLectureTitle(note);
-    await supabaseClient.from('course_notes').update({ lecture_title: next }).eq('id', note.id);
-    renderLectureList();
-  };
-  input.addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter'){ e.preventDefault(); finish(true); }
-    // stopPropagation, or the same press also closes the note: the editor's
-    // own Escape is on the document and this one is inside it.
-    else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); finish(false); }
+// Both note editors go through this one function, so the Notebook and the
+// course notes cannot end up renaming differently (real-user report: "you
+// forgot to add the notes stuff in the other notebook").
+function wireInlineTitleRename(spanId, table, findNote, setTitle, afterSave){
+  const span = document.getElementById(spanId);
+  if(!span) return;
+  span.addEventListener('click', ()=>{
+    if(span.dataset.editing) return;
+    const note = findNote();
+    if(!note || note.user_id !== currentUser.id) return;
+    const was = note.lecture_title || '';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'lecture-title-input';
+    input.value = was;
+    span.dataset.editing = '1';
+    span.style.display = 'none';
+    span.parentElement.insertBefore(input, span);
+    input.focus();
+    input.select();
+    let done = false;
+    const finish = async (save)=>{
+      if(done) return;
+      done = true;
+      const next = input.value.trim();
+      input.remove();
+      span.style.display = '';
+      delete span.dataset.editing;
+      if(!save || !next || next === was) return;
+      note.lecture_title = next;
+      setTitle(note);
+      await supabaseClient.from(table).update({ lecture_title: next }).eq('id', note.id);
+      afterSave();
+    };
+    input.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ e.preventDefault(); finish(true); }
+      // stopPropagation, or the same press also closes the note: the editor's
+      // own Escape is on the document and this one is inside it.
+      else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); finish(false); }
+    });
+    input.addEventListener('blur', ()=> finish(true));
   });
-  input.addEventListener('blur', ()=> finish(true));
-});
+}
+wireInlineTitleRename('editorLectureTitle', 'course_notes', openNoteRecord,
+  setEditorLectureTitle, ()=> renderLectureList());
+wireInlineTitleRename('notebookEditorTitle', 'notebook_notes', openNotebookNoteRecord,
+  setNotebookEditorTitle, ()=> renderNotebookList());
 
 /* ---------- THE EDITOR'S OWN TWO KEYS ---------- */
 // Cmd+S / Ctrl+S saves and Escape closes (real-user requests). Both go through
 // the buttons rather than round them, so whatever those already do -- the
 // dirty check, the saved message, the version it writes -- happens exactly
 // once and in one place.
-document.addEventListener('keydown', (e)=>{
-  const card = document.getElementById('editorCard');
-  if(!card || card.classList.contains('hidden')) return;
-  if((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')){
-    e.preventDefault();
-    document.getElementById('saveNoteBtn').click();
-    return;
-  }
-  if(e.key === 'Escape'){
-    // A dialog over the editor owns Escape first; it has its own way out.
-    if(document.querySelector('.modal-overlay:not(.hidden)')) return;
-    e.preventDefault();
-    document.getElementById('closeNoteBtn').click();
-  }
-});
+function wireEditorKeys(cardId, saveBtnId, closeBtnId){
+  document.addEventListener('keydown', (e)=>{
+    const card = document.getElementById(cardId);
+    // offsetParent, not the hidden class: a note left open in one tab keeps its
+    // card unhidden while the whole PANEL around it is display:none, so both
+    // editors would answer the same keypress otherwise.
+    if(!card || card.classList.contains('hidden') || card.offsetParent === null) return;
+    if((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')){
+      e.preventDefault();
+      document.getElementById(saveBtnId).click();
+      return;
+    }
+    if(e.key === 'Escape'){
+      // A dialog over the editor owns Escape first; it has its own way out.
+      if(document.querySelector('.modal-overlay:not(.hidden)')) return;
+      e.preventDefault();
+      document.getElementById(closeBtnId).click();
+    }
+  });
+}
+wireEditorKeys('editorCard', 'saveNoteBtn', 'closeNoteBtn');
+wireEditorKeys('notebookEditorCard', 'saveNotebookBtn', 'closeNotebookBtn');
 
 let editorDirty = false;
 const QUILL_PALETTE = [

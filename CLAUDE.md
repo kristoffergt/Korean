@@ -2291,6 +2291,76 @@ Driven against the real editor rather than reasoned about: three pages show
 one paragraph each with prev disabled on the first and next on the last, "Show
 all pages" brings back all five blocks including both rules, and the toolbar
 button at the end of the document takes it to 4 of 4.
+## The tab chews, the name shines, and the Notebook catches up (8 Sep, twentieth pass)
+
+### A thing that swallows something has to move
+
+"I kind of want the main tabs to have an animation where they move (grow and
+then shrink again) so it looks like they actually ate the hover pop-out sub
+tabs. Same for when they spit them out."
+
+Two keyframes on the tab itself, and **both are timed against the fly-out's own
+0.22s travel rather than picked**: the SPIT squeezes first (22%) and releases as
+the row comes out of it, and the GULP is delayed 60ms so its bulge peaks at
+0.23s -- the moment the row finishes collapsing back in. Squashed on the y more
+than the x, because what is going down is going down THROUGH it.
+
+- **Safe on the button itself.** `.tabs button` carries no transform of its own,
+  so nothing is being overwritten -- the trap this file already records twice.
+  And a transform lays nothing out, so the four `flex:1` tabs beside it do not
+  budge.
+- **remove, reflow, add.** Hovering the same tab twice plays nothing at all
+  otherwise: the class is already on the element, so there is no change for the
+  browser to start an animation from.
+- **The tab that OWNS the row is remembered** (`tabFlyoutBtn`), because the
+  close does not know which tab it came out of. That also makes the good case
+  fall out for free: hovering straight from one tab to the next makes the first
+  swallow and the second spit, rather than the row silently teleporting.
+- **A close with nothing open chews on nothing.** `hideTabFlyout` is called
+  defensively from several places and a tab twitching for no reason is worse
+  than no animation.
+
+Verified through the real `showTabFlyout`/`hideTabFlyout`, not by adding the
+classes by hand: `tab-spit` running with ownership taken, `tab-gulp` running
+with ownership cleared, and moving between tabs giving the first `tab-gulp` and
+the second `tab-spit`.
+
+**`isMobileDevice()` answers TRUE in the preview pane**, and `showTabFlyout`
+returns on it before anything happens -- which is why hovering a tab there
+appears to do nothing at all. Stub it to drive this path.
+
+### The name SHINES, it does not move
+
+"I dont want the pill itself to move when hovering over name. Just make the
+name shine a bit." It jiggled, and the jiggle carried `scale(1.06)`, so the
+whole pill grew and rocked. There is now no transform in those keyframes at
+all: a `text-shadow` glow that swells and fades over 0.9s with a small
+brightness lift under it.
+
+**The glow is `currentColor`**, which is the reader's own colour -- written
+inline per account -- so it lights up in whatever they picked without the rule
+having to know what that is. The `transform:none` on hover stays, since the
+shared word-grow would otherwise be a second thing moving it.
+
+### The Notebook was a screen behind
+
+"You forgot to add the notes stuff in the other notebook." It was: the two
+column split, the inline rename and the two keys all went into the Yonsei
+course notes and stopped there.
+
+- **The split is the same `.notes-split`**, with both editor cards named in the
+  one rule that gives the editor the larger share.
+- **The rename is now ONE function** (`wireInlineTitleRename`), called twice
+  with the table and the lookup that differ. The Notebook's title used to open
+  the whole meta panel, exactly as the course notes' did before it was changed;
+  that panel is still what the list's own pencil opens.
+- **The keys are one function too** (`wireEditorKeys`), and it tests
+  `offsetParent === null` rather than the hidden class: a note left open in one
+  tab keeps its own card unhidden while the whole PANEL around it is
+  `display:none`, so both editors would otherwise answer the same Cmd+S.
+- Pages were already wired into both editors; measured here, the Notebook's
+  toolbar carries the insert and its own bar reads Page 1 / 2 with only the
+  first page's blocks visible.
 
 ## Migration files present (see folder for full current list)
 
