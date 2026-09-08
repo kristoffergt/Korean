@@ -932,15 +932,27 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
    since it has to be clamped per button; only the vertical slide is a
    fixed CSS transition. */
 .tab-flyout{position:absolute;top:0;left:0;z-index:1;display:flex;gap:6px;transform:translateY(-100%);pointer-events:none;transition:transform 0.22s cubic-bezier(.3,.9,.4,1);}
-.tab-flyout.visible{transform:translateY(4px);pointer-events:auto;}
+/* Flush under the tab it belongs to. It used to sit 4px lower, and those
+   four pixels are a quarter of the whole budget: the fly-out hangs into the
+   nav's own 22px bottom margin, the row under it can move 12 before it
+   reaches the card below, and a 28px fly-out plus its air has to fit inside
+   the two. Flush, that comes to a 10px push with 4px of real air and two to
+   spare against the cap. */
+.tab-flyout.visible{transform:translateY(0);pointer-events:auto;}
 /* Scoped to .tab-flyout .tab-flyout-item (not just .tab-flyout-item) on
    purpose -- these buttons live inside .tabs in the DOM (so the flyout can
    be positioned relative to it), which means the plain ".tabs button" rule
    above also matches them as a descendant and, being more specific (class
    + type vs just one class), was silently overriding this rule's padding/
    flex/font-size/color -- that's what was squashing every item to the
-   same width and washing out the color. */
-.tab-flyout .tab-flyout-item{position:static;flex:none;min-width:0;opacity:0;transition:opacity 0.18s ease;font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;padding:6px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper-dim);color:var(--ink-soft);white-space:nowrap;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+   same width and washing out the color.
+   And there is NO shadow on these. It was 0 4px 12px rgba(0,0,0,0.3), which
+   reaches sixteen pixels past the border edge -- and the row underneath has
+   six pixels of budget in total for the fly-out's offset, its shadow and its
+   air put together, so a shadow of any real weight is grey laid over the row
+   whatever the row does about it. The 1px border and the dimmer fill are what
+   separate it, which is what the sub-tab pills below it already use. */
+.tab-flyout .tab-flyout-item{position:static;flex:none;min-width:0;opacity:0;transition:opacity 0.18s ease;font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;padding:6px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper-dim);color:var(--ink-soft);white-space:nowrap;cursor:pointer;}
 .tab-flyout.visible .tab-flyout-item{opacity:1;}
 .tab-flyout .tab-flyout-item:hover{background:var(--paper);color:var(--ink);}
 .tabs button .tab-icon,.tabs button .tab-icon-yonsei{flex:none;}
@@ -18211,16 +18223,26 @@ function flyoutShadowReach(flyout){
   const n = px.map(parseFloat);
   return Math.max(0, n[1] + n[2] + (n[3] || 0));
 }
-// How far the row can travel before it lands on something. Measured against
-// the first thing below it that actually PAINTS, not against the box that
-// contains it: a section's own top padding is room the row can move into
-// without touching anything, and it is what "there is EXACTLY enough space
-// for the sub bars to move down" was describing.
+// How far the row can travel before it lands ON something. It stops at the
+// first element below that DRAWS A BOX -- a background or a border -- rather
+// than at the first one with any height at all: a bare wrapper is room the
+// row can move through, and a card is not. Walking past the card to its own
+// heading is what reported 33px of room where there were 12, and drove the
+// row nineteen pixels into it (real-user report: "we push down the subtabs
+// over the 'jump to' for example or other boxes below them in the other
+// tabs").
+function paintsABox(el){
+  const cs = getComputedStyle(el);
+  const bg = cs.backgroundColor;
+  if(bg && bg !== 'transparent' && !/^rgba\(0, 0, 0, 0\)$/.test(bg)) return true;
+  if(cs.backgroundImage && cs.backgroundImage !== 'none') return true;
+  return parseFloat(cs.borderTopWidth) > 0 && cs.borderTopStyle !== 'none';
+}
 function subBarRoomBelow(bar){
   const next = bar.nextElementSibling;
   if(!next) return Infinity;
   let el = next, guard = 0;
-  while(guard++ < 6){
+  while(guard++ < 8 && !paintsABox(el)){
     const kid = [...el.children].find(k=> k.getBoundingClientRect().height > 0);
     if(!kid) break;
     el = kid;
@@ -18277,13 +18299,14 @@ function subBarInkRect(bar){
 // parked above the nav, sliding in, or already sitting there -- which
 // reconstructing it from the nav's own rect was not: that was out by the
 // nav's border, and being short is what left the row still half covered.
-// The 4px is the .visible state's own translate.
 function tabFlyoutLandingRect(flyout){
   const p = flyout.offsetParent;
   if(!p) return null;
   const pr = p.getBoundingClientRect();
   const left = pr.left + p.clientLeft + flyout.offsetLeft;
-  const top = pr.top + p.clientTop + flyout.offsetTop + 4;
+  // No offset to add: .visible lands the fly-out on translateY(0), so where
+  // it is laid out IS where it lands. That was a 4 repeated from the CSS.
+  const top = pr.top + p.clientTop + flyout.offsetTop;
   return { left, right: left + flyout.offsetWidth, top, bottom: top + flyout.offsetHeight };
 }
 // The row moves by TRANSFORM, so nothing else on the page moves with it: the

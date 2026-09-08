@@ -1854,7 +1854,7 @@ happens to contain.
   property takes a `<custom-ident>`, so it answers true for any word at all.
   Ask the element what it ended up with instead.
 
-### The clearance had to clear the SHADOW, not the box
+### The clearance had to clear the SHADOW, not the box (half right, see the eleventh pass)
 
 "It still cuts over." The box was clear by eight pixels and the shadow was not:
 `.tab-flyout-item` carries `0 4px 12px rgba(0,0,0,0.3)`, which is **sixteen
@@ -1885,6 +1885,52 @@ It is one row now -- name at the left, controls at the right, wrapping only
 where a phone makes it -- which is what the condensed bar already was, so the
 condense no longer swaps direction at all. The h1's own 4px bottom margin went
 with it: on one row that only pushed the name off centre.
+
+## "Cuts over" was the row landing on the card, and the budget is six pixels (8 Sep, eleventh pass)
+
+"When i say still cut over, i mean we push down the subtabs over the 'jump to'
+for example or other boxes below them in the other tabs."
+
+So it was never the fly-out over the row. It was the row over the CARD, and the
+cap that was supposed to stop that was measuring the wrong thing.
+
+### A bare wrapper is room; a card is not
+
+`subBarRoomBelow` walked down to the first element with any HEIGHT, which took
+it straight through `#calendarOverviewSection` and the `.card` inside it to the
+card's own `<h2>`. So it reported **33px of room where there were 12**, and the
+row was moved 31 -- nineteen pixels into the card, which is exactly what was
+being seen. The walk stops at the first element that DRAWS A BOX now (a
+background, a background image, or a top border), because that is what
+"landing on something" means: padding is room, a card is not.
+
+### And the whole budget is six pixels, which no shadow fits in
+
+Worth writing down as arithmetic, because it is what settles every number here
+and there is no room left to tune by feel. With `m` the nav's own 22px bottom
+margin, `h` the 28px fly-out, `o` its offset below the nav, `s` its shadow's
+reach and `g` the air wanted under it, the row has to move `o + h + s + g - m`
+and can only move `R`:
+
+    o + s + g  <=  R - h + m  =  12 - 28 + 22  =  **6**
+
+The offset, the shadow and the air share six pixels. The shadow alone was
+`0 4px 12px`, which reaches **sixteen** past the border edge -- so it could
+never be cleared however far the row moved, and shortening it to `0 2px 5px`
+(seven) still could not. **There is no shadow on the fly-out now**; its 1px
+border and dimmer fill are what separate it, which is what the sub-tab pills
+under it already rely on.
+
+- **And it sits flush under its tab**, `translateY(0)` rather than 4px lower.
+  Those four pixels are two thirds of the budget, and flush reads as belonging
+  to the tab it hangs from. It also removed a number: the landing rect was
+  adding a 4 copied out of the CSS, and `offsetTop` alone is now the answer.
+
+Measured across every tab, with the cap in place: Home pushes **11 against 12
+of room**, Study 11 against 16, and Yonsei, Reading and Jobs push nothing at
+all because their fly-outs hang beside the pills rather than over them. Air
+under the fly-out is 5px everywhere it moves, and the row clears the card by
+1px on Home and 5 on Study. Nothing overlaps in either direction.
 
 ## Migration files present (see folder for full current list)
 
