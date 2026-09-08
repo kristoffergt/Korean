@@ -976,14 +976,23 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
    sub-tab bar). Left position (not X-centering) is set inline per hover,
    since it has to be clamped per button; only the vertical slide is a
    fixed CSS transition. */
-.tab-flyout{position:absolute;top:0;left:0;z-index:1;display:flex;gap:6px;transform:translateY(-100%);pointer-events:none;transition:transform 0.22s cubic-bezier(.3,.9,.4,1);}
+/* Away, it is SWALLOWED by the tab rather than sliding up as a block: it
+   collapses toward the tab's own centre and up behind it, which is where it
+   came from (real-user report: "these pop out boxes glide up and disappear
+   when moving your mouse. But they should animate to collect under the main
+   tab (it swallows them)"). `transform-origin` is written per hover, since
+   which tab it is collecting into changes every time and the row is clamped
+   against the nav's edges, so the tab's centre is not the fly-out's. */
+.tab-flyout{position:absolute;top:0;left:0;z-index:1;display:flex;gap:6px;
+  transform:translateY(-100%) scale(0.22);transform-origin:50% 0;
+  pointer-events:none;transition:transform 0.22s cubic-bezier(.3,.9,.4,1);}
 /* Flush under the tab it belongs to. It used to sit 4px lower, and those
    four pixels are a quarter of the whole budget: the fly-out hangs into the
    nav's own 22px bottom margin, the row under it can move 12 before it
    reaches the card below, and a 28px fly-out plus its air has to fit inside
    the two. Flush, that comes to a 10px push with 4px of real air and two to
    spare against the cap. */
-.tab-flyout.visible{transform:translateY(0);pointer-events:auto;}
+.tab-flyout.visible{transform:translateY(0) scale(1);pointer-events:auto;}
 /* Scoped to .tab-flyout .tab-flyout-item (not just .tab-flyout-item) on
    purpose -- these buttons live inside .tabs in the DOM (so the flyout can
    be positioned relative to it), which means the plain ".tabs button" rule
@@ -18516,7 +18525,10 @@ function showTabFlyout(btn, top){
   // Centered under the button, then clamped so a wide row (e.g. Korean's
   // 4 sub-tabs) never runs past either edge of the nav bar itself -- a
   // tab near either end previously let it spill off-screen and get clipped.
-  const flyoutWidth = flyout.getBoundingClientRect().width;
+  // offsetWidth, not the rect: parked, the fly-out carries the shrink it
+  // collapses into, and a rect measured through that clamps a row a fifth
+  // of its real width -- which put every fly-out well left of its own tab.
+  const flyoutWidth = flyout.offsetWidth;
   const centeredLeft = (btnRect.left + btnRect.width/2 - navRect.left) - flyoutWidth/2;
   const margin = 4;
   const clampedLeft = Math.max(margin, Math.min(centeredLeft, navRect.width - flyoutWidth - margin));
@@ -18534,6 +18546,11 @@ function showTabFlyout(btn, top){
   // over empty page beside the pills, so it moves nothing.
   const bar = subBarUnderNav();
   const land = tabFlyoutLandingRect(flyout);
+  // Where it collects back INTO: the middle of the tab it belongs to, in the
+  // fly-out's own coordinates. Its landing left rather than its rect, which
+  // already carries the shrink it is being measured for.
+  if(land) flyout.style.transformOrigin =
+    Math.round(btnRect.left + btnRect.width / 2 - land.left) + 'px 0';
   const ink = bar && land ? subBarInkRect(bar) : null;
   const clear = ink ? land.bottom + flyoutShadowReach(flyout) + FLYOUT_GAP - ink.top : 0;
   if(ink && clear > 0 && land.right > ink.left && land.left < ink.right){

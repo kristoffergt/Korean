@@ -2095,6 +2095,27 @@ what stops antialiasing at the disc's edge reading as dark.
   same reason `stroke` did on the arms: the bar's blanket `transition-property`
   does not carry them, so it would have jumped to size.
 
+## The fly-out is swallowed by its tab (8 Sep, sixteenth pass)
+
+"Right now these pop out boxes glide up and disappear when moving your mouse.
+But they should animate to collect under the main tab (it swallows them)."
+
+It parked at `translateY(-100%)`, which slides the whole row straight up behind
+the nav wherever it happens to be. It carries a `scale(0.22)` in that state
+now, about a `transform-origin` written per hover -- **the middle of the tab it
+belongs to, in the fly-out's own coordinates**, which is not its own middle: the
+row is clamped against the nav's edges, so a fly-out under one of the end tabs
+sits well off to one side of it.
+
+Measured through the collapse under Home: 241px wide at left 24, then 122 at
+82, and it lands 71 wide centred on **143 against the tab's own 142**.
+
+- **`offsetWidth`, not the rect, for the clamp.** The shrink is on the parked
+  state, so a rect measured through it reports a fifth of the real width and
+  the clamp then centred every fly-out a hundred pixels left of its tab. Caught
+  by the transform-origins coming out at 26px on a 241px row; layout width is
+  the one measurement a transform cannot touch.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
