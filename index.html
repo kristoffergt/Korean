@@ -18154,9 +18154,26 @@ const TAB_STRUCTURE = [
 // or their order (reorderMobileTabs() re-appends #tabNav's own <button>
 // children directly and would rip them out of any wrapper).
 let tabFlyoutHideTimer = null;
-// The sub-tab row currently stepped out of the fly-out's way, so it can be put
-// back wherever the fly-out closes from.
+// The sub-tab row currently stepped out of the fly-out's way, and HOW FAR it
+// is being held down. The distance has to be remembered rather than measured
+// back off the element: getBoundingClientRect() reports the box after the
+// transform, so asking a second fly-out how much further the row had to move
+// answered "none at all" and let it snap straight back up under the new one
+// (real-user report: "when moving from one to another, it goes back up, so it
+// still covers it").
 let tabFlyoutPushedBar = null;
+// How far down the row is at this instant, INTERPOLATED value and all. The
+// target distance cannot be reasoned back off the row's rect -- the row is
+// mid-glide whenever one fly-out follows another, so its box is somewhere
+// between the two -- and the value last asked for is not where it currently
+// is either. The used transform is the one thing that is always true.
+function tabFlyoutHeld(el){
+  const tr = getComputedStyle(el).transform;
+  if(!tr || tr === 'none') return 0;
+  try { return new DOMMatrixReadOnly(tr).m42; } catch(e){ return 0; }
+}
+// The clearance kept between the bottom of the fly-out and the top of the row.
+const FLYOUT_GAP = 8;
 // The row of sub-tabs sitting directly under the nav, if that is what the
 // visible panel opens with. Found by MEASUREMENT rather than by a class list:
 // every panel names its own sub-bar differently, and what matters here is not
@@ -18170,9 +18187,50 @@ function subBarUnderNav(){
   if(!nav || !first) return null;
   const navBottom = nav.getBoundingClientRect().bottom;
   const r = first.getBoundingClientRect();
+  const top = r.top - tabFlyoutHeld(first);
   if(!r.height || r.height > 60) return null;
-  if(r.top < navBottom - 4 || r.top - navBottom > 40) return null;
+  if(top < navBottom - 4 || top - navBottom > 40) return null;
   return first;
+}
+// What the row actually DRAWS, which is not the box it occupies: a sub-tab row
+// is a full-width container with a few pills at its left end, so its own rect
+// claims the whole width and reports an overlap with a fly-out hanging under a
+// tab at the far right, which plainly does not touch it (real-user request:
+// "the right tabs usually don't need to do it, because they don't touch
+// anything"). Read back to where the row really sits, so a row already held
+// down measures the same as one that is not. Only the vertical is read back:
+// the push is a translateY, so nothing it does can move the pills sideways.
+function subBarInkRect(bar){
+  const held = tabFlyoutHeld(bar);
+  const parts = bar.querySelectorAll('button, a');
+  const items = parts.length ? [...parts] : [...bar.children];
+  let left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
+  items.forEach(el=>{
+    const r = el.getBoundingClientRect();
+    if(!r.width || !r.height) return;
+    left = Math.min(left, r.left); right = Math.max(right, r.right);
+    top = Math.min(top, r.top); bottom = Math.max(bottom, r.bottom);
+  });
+  if(right === -Infinity){
+    const r = bar.getBoundingClientRect();
+    left = r.left; right = r.right; top = r.top; bottom = r.bottom;
+  }
+  return { left, right, top: top - held, bottom: bottom - held };
+}
+// Where the fly-out will BE once it is shown. offsetTop/offsetLeft are
+// measured from the offset parent's PADDING edge and are untouched by a
+// transform, so this is the landing box whether the fly-out is currently
+// parked above the nav, sliding in, or already sitting there -- which
+// reconstructing it from the nav's own rect was not: that was out by the
+// nav's border, and being short is what left the row still half covered.
+// The 4px is the .visible state's own translate.
+function tabFlyoutLandingRect(flyout){
+  const p = flyout.offsetParent;
+  if(!p) return null;
+  const pr = p.getBoundingClientRect();
+  const left = pr.left + p.clientLeft + flyout.offsetLeft;
+  const top = pr.top + p.clientTop + flyout.offsetTop + 4;
+  return { left, right: left + flyout.offsetWidth, top, bottom: top + flyout.offsetHeight };
 }
 // The row moves by TRANSFORM, so nothing else on the page moves with it: the
 // gap under it is already exactly deep enough (real-user request: "we dont
@@ -18231,14 +18289,17 @@ function showTabFlyout(btn, top){
       hideTabFlyout();
     });
   });
-  // Where the fly-out will BE once it is shown, computed rather than measured:
-  // it is still parked at translateY(-100%) at this point, so its own rect is
-  // a whole height above where it lands.
+  // Only a row the fly-out really lands ON is moved, and only by the distance
+  // that clears it. A fly-out under one of the tabs at the right end hangs
+  // over empty page beside the pills, so it moves nothing.
   const bar = subBarUnderNav();
-  if(bar){
-    const flyH = flyout.getBoundingClientRect().height;
-    const flyBottom = navRect.top + Math.round(btnRect.bottom - navRect.top) + 4 + flyH;
-    pushSubBar(bar, Math.max(0, Math.round(flyBottom + 6 - bar.getBoundingClientRect().top)));
+  const land = tabFlyoutLandingRect(flyout);
+  const ink = bar && land ? subBarInkRect(bar) : null;
+  if(ink && land.right > ink.left && land.left < ink.right
+     && land.bottom + FLYOUT_GAP > ink.top){
+    pushSubBar(bar, Math.round(land.bottom + FLYOUT_GAP - ink.top));
+  } else {
+    releaseSubBar();
   }
   // Two rAFs: the items were just innerHTML'd in at their resting
   // transform, so adding .visible on the very same frame can get
@@ -20263,6 +20324,33 @@ function timeToMinutes(t){
   const parts = t.split(':');
   return (parseInt(parts[0])||0)*60 + (parseInt(parts[1])||0);
 }
+// The hours a grid has to draw, from the events it is about to draw. Padded
+// by one either side so the first and last bar are not flush against the
+// edge, and never shorter than MIN_GRID_HOURS -- a single one-hour event
+// would otherwise leave a three-row grid, which reads as a broken calendar
+// rather than as a quiet day.
+const MIN_GRID_HOURS = 8;
+function calGridHourRange(eventsByDate){
+  let lo = 24, hi = 0, any = false;
+  Object.values(eventsByDate).forEach(list=> list.forEach(ev=>{
+    any = true;
+    const st = timeToMinutes(ev.event_time || '00:00');
+    let en = ev.event_end_time ? timeToMinutes(ev.event_end_time) : st + 60;
+    if(en <= st) en = st + 60;
+    lo = Math.min(lo, Math.floor(st/60));
+    hi = Math.max(hi, Math.ceil(en/60));
+  }));
+  if(!any) return { from: 8, to: 8 + MIN_GRID_HOURS };
+  let from = Math.max(0, lo - 1);
+  let to = Math.min(24, hi + 1);
+  if(to - from < MIN_GRID_HOURS){
+    // Grow downward first and only then upward, so a short morning keeps its
+    // events near the top of the picture rather than floating in the middle.
+    to = Math.min(24, from + MIN_GRID_HOURS);
+    from = Math.max(0, to - MIN_GRID_HOURS);
+  }
+  return { from, to };
+}
 function getWeekStart(d){
   const date = new Date(d);
   date.setDate(date.getDate() - date.getDay());
@@ -20298,16 +20386,6 @@ function renderCalGrid(dates){
 
   const body = document.getElementById('weekBody');
   body.innerHTML = '';
-  const labelCol = document.createElement('div');
-  labelCol.className = 'week-label-col';
-  for(let h=0;h<24;h++){
-    const lbl = document.createElement('div');
-    lbl.className = 'week-hour-label';
-    lbl.style.height = HOUR_PX+'px';
-    lbl.textContent = h===0 ? '12 AM' : h<12 ? h+' AM' : h===12 ? '12 PM' : (h-12)+' PM';
-    labelCol.appendChild(lbl);
-  }
-  body.appendChild(labelCol);
 
   const eventsByDate = {};
   calendarVisibleUserIds().forEach(uid=>{
@@ -20323,11 +20401,34 @@ function renderCalGrid(dates){
       });
     });
   });
+
+  // The grid is only as tall as the day actually IS. Drawn from midnight to
+  // midnight a column is mostly empty rows on any real week, and the one
+  // morning with anything in it then has to be scrolled to (real-user
+  // request: "dont need to include a bunch of times of day where there is
+  // nothing"). The range comes from the events being DRAWN, so the export --
+  // which redraws with its excluded events left out -- crops itself for free.
+  // An untimed event is pinned at the top of the grid, so one of those really
+  // does pull the range back to midnight: that is where it is being shown.
+  const { from: gridFrom, to: gridTo } = calGridHourRange(eventsByDate);
+  const gridHours = gridTo - gridFrom;
+
+  const labelCol = document.createElement('div');
+  labelCol.className = 'week-label-col';
+  for(let h=gridFrom;h<gridTo;h++){
+    const lbl = document.createElement('div');
+    lbl.className = 'week-hour-label';
+    lbl.style.height = HOUR_PX+'px';
+    lbl.textContent = h===0 ? '12 AM' : h<12 ? h+' AM' : h===12 ? '12 PM' : (h-12)+' PM';
+    labelCol.appendChild(lbl);
+  }
+  body.appendChild(labelCol);
+
   dates.forEach(d=>{
     const dateKey = todayStr(d);
     const col = document.createElement('div');
     col.className = 'week-day-col';
-    col.style.height = (24*HOUR_PX)+'px';
+    col.style.height = (gridHours*HOUR_PX)+'px';
     const dayEvents = (eventsByDate[dateKey]||[]).map(ev=>{
       const startMin = timeToMinutes(ev.event_time || '00:00');
       let endMin;
@@ -20361,7 +20462,7 @@ function renderCalGrid(dates){
     dayEvents.forEach(({ev, startMin, endMin, col: colIdx, totalCols})=>{
       const overlapping = totalCols > 1;
       const minHeight = mobilePad ? 40 : 18;
-      const top = (startMin/60)*HOUR_PX;
+      const top = (startMin/60 - gridFrom)*HOUR_PX;
       const height = Math.max(((endMin-startMin)/60)*HOUR_PX, minHeight);
       const bg = ev.color || '#4F7563';
       const recurPrefix = ev.recur_freq ? '↻ ' : '';
@@ -20463,7 +20564,7 @@ function renderCalGrid(dates){
         });
       });
       const targetHour = minStart === Infinity ? 9 : Math.max(0, Math.floor(minStart/60) - 1);
-      scrollWrap.scrollTop = targetHour * HOUR_PX;
+      scrollWrap.scrollTop = Math.max(0, (targetHour - gridFrom) * HOUR_PX);
     }
     calGridScrolledForKey = rangeKey;
   }
@@ -20749,30 +20850,6 @@ function loadHtml2Canvas(){
   });
 }
 
-// A day column is 24 hours tall and a day is not, so the picture is cropped
-// to the hours that have something in them. Cropped by LAYOUT rather than on
-// the canvas afterwards: shifting the body under a clipped wrapper is
-// exactly what its own scrollbar does, so the capture needs no arithmetic to
-// undo and the hour labels move with the columns for free.
-function calExportHourRange(){
-  const { start, end } = calExportRange();
-  let lo = 24, hi = 0, any = false;
-  calendarVisibleUserIds().forEach(uid=>{
-    (allEvents[uid]||[]).forEach(ev=>{
-      if(calExportOut(ev)) return;
-      if(!expandOccurrences(ev, start, end).length) return;
-      any = true;
-      const st = timeToMinutes(ev.event_time || '00:00');
-      let en = ev.event_end_time ? timeToMinutes(ev.event_end_time) : st + 60;
-      if(en <= st) en = st + 60;
-      lo = Math.min(lo, Math.floor(st/60));
-      hi = Math.max(hi, Math.ceil(en/60));
-    });
-  });
-  if(!any) return { from: 8, to: 20 };
-  return { from: Math.max(0, lo - 1), to: Math.min(24, Math.max(hi + 1, lo + 3)) };
-}
-
 async function captureCalendar(){
   const h2c = await loadHtml2Canvas();
   const card = document.getElementById('monthGrid').closest('.card');
@@ -20781,11 +20858,14 @@ async function captureCalendar(){
   const saved = { h: scroll.style.height, mh: scroll.style.maxHeight,
                   ov: scroll.style.overflow, mt: body.style.marginTop };
   if(calViewMode !== 'month'){
-    const { from, to } = calExportHourRange();
+    // The grid already draws only the hours that have something in them, and
+    // it is redrawn with the export's own exclusions applied before this
+    // runs -- so the picture needs no crop of its own. All that is left is
+    // to stop the wrapper being a scroller, or the capture would keep the
+    // viewport's height and cut the bottom off.
     scroll.style.maxHeight = 'none';
-    scroll.style.height = ((to - from) * HOUR_PX) + 'px';
-    scroll.style.overflow = 'hidden';
-    body.style.marginTop = (-from * HOUR_PX) + 'px';
+    scroll.style.height = 'auto';
+    scroll.style.overflow = 'visible';
   }
   try {
     return await h2c(card, {

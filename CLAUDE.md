@@ -1747,6 +1747,74 @@ rather than a hole; and shrinking the figures far enough to clear a big ring
 takes the heads back down to about 2.4, which is the size the one behind
 started at -- so the grow that was asked for stops happening at all.
 
+## The grid is as tall as the day is, and the fly-out only moves what it lands on (8 Sep, ninth pass)
+
+### A day column drawn midnight to midnight is mostly empty rows
+
+Real-user request: "dont need to include a bunch of times of day where there is
+nothing." A week of classes runs 9 to half past 5, and the grid was drawing all
+twenty-four hours around it, so most of the picture was ruled paper and the one
+morning with anything in it had to be scrolled to.
+
+`calGridHourRange()` takes the range off the events being DRAWN -- the
+`eventsByDate` the same render pass just built -- so it is one hour either side
+of what is actually there. The user's own week goes from **nineteen hour rows
+to eleven**.
+
+- **The EXPORT crops itself for free now**, and its own `calExportHourRange`
+  plus the `marginTop` shift under a clipped wrapper are gone. The export
+  redraws the grid with its excluded events left out before capturing, so by
+  the time the picture is taken the grid already holds only the hours those
+  events occupy. Two pieces of arithmetic for one question is how they drift.
+- **An untimed event legitimately pulls the range back to midnight**, because
+  that is where an untimed bar is pinned. It is not a bug to fix; it is where
+  the thing is being shown.
+- **Never shorter than eight rows.** A single one-hour event would otherwise
+  leave a three-row grid, which reads as a broken calendar rather than as a
+  quiet day. It grows downward first, so a short morning keeps its events near
+  the top of the picture rather than floating in the middle of it.
+- Checked against the shipped source over seven shapes: the reported week comes
+  out 8 to 19, one short event 13 to 21, a late-only day 16 to 24, an early-only
+  day 0 to 8. Then driven through the real `renderWeekGrid`: eleven labels from
+  8 AM to 6 PM, a 484px column, and three bars at exactly 44, 176 and 308.
+
+### The row snapped back up because its own rect had already moved
+
+The seventh pass's push measured how far the sub-tab row still had to go as
+`flyoutBottom - bar.getBoundingClientRect().top`. That rect is the box AFTER
+the transform, so the second fly-out asked a row that was already held down and
+got an answer of nothing -- which clamped to zero and let it spring back
+underneath the new fly-out (real-user report: "when moving from one to another,
+it goes back up, so it still covers it").
+
+**The offset is read off the USED transform** (`getComputedStyle(...).transform`
+through a `DOMMatrixReadOnly`), not off the value last asked for. Those are
+different numbers: the row is mid-glide whenever one fly-out follows another,
+so neither its rect nor the target it is travelling towards says where it is.
+Measured: Home and Study now both answer **19px, every time, settled or in
+flight**, where Study used to answer 38.
+
+### And it only moves a row the fly-out really lands ON
+
+"We only need to push it down if it is actually overlapping something. So the
+right tabs usually don't need to do it, because they don't touch anything."
+
+The row is a full-width container with three pills at its left end, so its own
+rect claims the whole width and reported an overlap with a fly-out hanging
+under a tab at the far right. **The test is against what the row DRAWS** -- the
+union of its own buttons -- so it is 20 to 290 rather than 20 to 1260, and a
+fly-out at 542 to 738 misses it. Measured live: Home and Study push, Yonsei,
+Reading and Jobs push nothing.
+
+- **The landing box comes from `offsetTop`/`offsetLeft`, not from the nav's
+  rect.** Those are measured from the offset parent's padding edge and are
+  untouched by a transform, so they answer the same whether the fly-out is
+  parked above the nav, sliding in, or already sitting there. Reconstructing it
+  from `navRect.top` was out by the nav's own border, and being short by a
+  couple of pixels is exactly what left the row still half covered.
+- The clearance is a named `FLYOUT_GAP` (8px) rather than a 6 buried in the
+  arithmetic.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
