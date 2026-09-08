@@ -2015,6 +2015,44 @@ styleSheets` did not have them: the preview pane had served the page from
 cache. Any check that reads back CSS should confirm the rule EXISTS before
 concluding it does not apply, and a `?v=` on the reload settles it.
 
+## The condensed row drops the WORDS, not the marks (8 Sep, fourteenth pass)
+
+"The english should just be the globe and the green circle should be smaller
+when these symbols shrink. However, these symbols DO NOT NEED TO SHRINK THIS
+MUCH."
+
+Measured at 1280 in the pinned bar, which is where this happens: the language
+pill was **103px of a 204px row** while every mark beside it had been squeezed
+to **12px** in a 16x14 pill. The wrong half was giving way -- the label is the
+one thing on that row nobody needs, and it was the only thing keeping its size.
+
+- **The label and the caret go whenever the bar is condensed**, at any width.
+  Under 1024px they already did; the condensed bar is one line by definition,
+  so it has the same reason at every width. Dropping them buys 78px, which is
+  what pays for the marks going back up to **17px** in a 25x21 pill. The row
+  comes out at **166px against 204** with everything in it half again as big.
+  The invisible select still covers the pill, so tapping the globe opens the
+  OS's own picker with the full names.
+- Checked at 375 as well, where the condensed row is tightest: brand 162 plus
+  controls 166 against 335 of header, and no horizontal overflow.
+
+### One number, so what is sized against the marks follows them
+
+`--who-icon` on `.who` (23px, 17 when condensed) is what the marks read, and
+the online dot is derived from it: 8/23 of it wide, its halo 2/23, its resting
+inset 4/23 -- so a row that shrinks takes the dot with it instead of leaving an
+8px dot on a 14px button. And the ring the dot flies into on hover is
+`4.4/24 * --who-icon` below the button's centre, which is the same viewBox
+offset the last pass measured, expressed so it holds at any mark size.
+Verified in the condensed bar: the dot lands at 12.5, 13.61 against a ring
+centre of 12.5, 13.62.
+
+- **A dead rule went with it.** `.who .lang-switch-icon{width:15px}` had been
+  outranked by `.who .lang-switch > svg` (a type selector beats it) for long
+  enough that the globe was 23px while the rule and its comment both said 15.
+  A rule that cannot fire is worse than no rule: it is a wrong answer waiting
+  for somebody to trust it.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql
