@@ -994,7 +994,15 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
    which IS the tab's bottom edge, so a plain scale keeps the row pinned there
    and shrinks it into the tab from underneath -- which is the direction it
    came out of. */
+/* max-width and WRAP, or a row wider than the nav simply runs off the right of
+   the screen (real-user report: "the sub tabs are still flying out of the
+   screen sometimes"). The clamp below cannot save it: with a row wider than
+   the bar, `navWidth - flyoutWidth - margin` falls under the left margin, the
+   Math.max wins, and the row is laid against the left edge with its tail off
+   the far side. Capped, it takes a second line instead -- and the push
+   arithmetic follows for free, since that measures the box's real bottom. */
 .tab-flyout{position:absolute;top:0;left:0;z-index:1;display:flex;gap:6px;
+  max-width:calc(100% - 8px);flex-wrap:wrap;
   transform:scale(0.2);transform-origin:50% 0;opacity:0;
   pointer-events:none;
   transition:transform 0.22s cubic-bezier(.3,.9,.4,1),opacity 0.16s ease;}
@@ -15455,6 +15463,24 @@ function switchTopLevelTab(view){
   // A panel that just became visible carries sub-tab rows that measured 0
   // while it was hidden, so they place themselves now.
   refreshRowSliders(false);
+  // A fly-out held open ACROSS a tab change is now hanging over a different
+  // panel's sub bar -- one that has never been pushed, since the push went
+  // with the panel that has just been hidden (real-user report: "if I go back
+  // to Home or Korean, while having it hovered, it overlaps with the sub
+  // tabs"). A frame later, so the row that just appeared has been laid out.
+  if(tabFlyoutBtn){
+    releaseSubBar();
+    // Retried for a few frames rather than run once: the panel was unhidden in
+    // this same tick, so its sub bar can still measure nothing at all on the
+    // next one, and subBarUnderNav answers null for a row with no height.
+    let tries = 10;
+    const again = ()=>{
+      if(!tabFlyoutBtn) return;
+      if(subBarUnderNav() || --tries <= 0){ applyTabFlyoutPush(); return; }
+      requestAnimationFrame(again);
+    };
+    requestAnimationFrame(again);
+  }
 }
 document.getElementById('tabNav').addEventListener('click', (e)=>{
   const btn = e.target.closest('button');
@@ -18643,6 +18669,29 @@ function playTabChomp(btn, cls){
   void btn.offsetWidth;
   btn.classList.add(cls);
 }
+// Only a row the fly-out really lands ON is moved, and only by the distance
+// that clears it. A fly-out under one of the tabs at the right end hangs over
+// empty page beside the pills, so it moves nothing.
+// Its own function because it has to run TWICE: once when the fly-out opens,
+// and again if the top-level tab changes while it is still held open, since
+// by then it is hanging over a different panel's sub bar (see
+// switchTopLevelTab).
+function applyTabFlyoutPush(){
+  const flyout = document.getElementById('tabFlyout');
+  if(!tabFlyoutBtn || !flyout){ releaseSubBar(); return; }
+  const bar = subBarUnderNav();
+  const land = tabFlyoutLandingRect(flyout);
+  const ink = bar && land ? subBarInkRect(bar) : null;
+  const clear = ink ? land.bottom + flyoutShadowReach(flyout) + FLYOUT_GAP - ink.top : 0;
+  if(ink && clear > 0 && land.right > ink.left && land.left < ink.right){
+    // Never further than there is room for, so a panel with less space under
+    // its sub bar than this one gets as much of the way as it can rather than
+    // being driven into its own content.
+    pushSubBar(bar, Math.round(Math.min(clear, subBarRoomBelow(bar))));
+  } else {
+    releaseSubBar();
+  }
+}
 function showTabFlyout(btn, top){
   // There's no hover on a phone -- the closest a touch screen gets is a
   // "ghost hover" some browsers fire on first tap, which just leaves the
@@ -18653,13 +18702,17 @@ function showTabFlyout(btn, top){
   const subs = (top.subs||[]).filter(s=> !isTabHidden(s.key));
   if(!subs.length) return;
   clearTimeout(tabFlyoutHideTimer);
+  const flyout = document.getElementById('tabFlyout');
+  const nav = document.getElementById('tabNav');
+  // Measured BEFORE the chomp is played. The keyframes start at scale(1) so
+  // this is honest either way, but a rect read through a running animation is
+  // a rect that depends on when it was read, and every number below is derived
+  // from these two.
+  const navRect = nav.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
   if(tabFlyoutBtn && tabFlyoutBtn !== btn) playTabChomp(tabFlyoutBtn, 'tab-gulp');
   if(tabFlyoutBtn !== btn) playTabChomp(btn, 'tab-spit');
   tabFlyoutBtn = btn;
-  const flyout = document.getElementById('tabFlyout');
-  const nav = document.getElementById('tabNav');
-  const navRect = nav.getBoundingClientRect();
-  const btnRect = btn.getBoundingClientRect();
   flyout.innerHTML = subs.map(s=>
     `<button type="button" class="tab-flyout-item" data-view="${s.view}">${escapeHtml(t(s.labelKey))}</button>`
   ).join('');
@@ -18673,7 +18726,16 @@ function showTabFlyout(btn, top){
   const flyoutWidth = flyout.offsetWidth;
   const centeredLeft = (btnRect.left + btnRect.width/2 - navRect.left) - flyoutWidth/2;
   const margin = 4;
-  const clampedLeft = Math.max(margin, Math.min(centeredLeft, navRect.width - flyoutWidth - margin));
+  let clampedLeft = Math.max(margin, Math.min(centeredLeft, navRect.width - flyoutWidth - margin));
+  // And again against the WINDOW, which is not the same box: the nav is one
+  // element on a page that can be padded, centred or scrolled sideways, and
+  // the only thing that actually has to hold is that the row is on the screen
+  // (real-user report: "the sub tabs are still flying out of the screen").
+  // Written in the fly-out's own coordinates, which are offset from the
+  // viewport by the nav's left edge.
+  const vpMin = margin - navRect.left;
+  const vpMax = window.innerWidth - margin - flyoutWidth - navRect.left;
+  clampedLeft = Math.min(Math.max(clampedLeft, vpMin), Math.max(vpMin, vpMax));
   flyout.style.left = Math.round(clampedLeft) + 'px';
   flyout.querySelectorAll('.tab-flyout-item').forEach((item,i)=>{
     item.addEventListener('click', (e)=>{
@@ -18683,26 +18745,17 @@ function showTabFlyout(btn, top){
       hideTabFlyout();
     });
   });
-  // Only a row the fly-out really lands ON is moved, and only by the distance
-  // that clears it. A fly-out under one of the tabs at the right end hangs
-  // over empty page beside the pills, so it moves nothing.
-  const bar = subBarUnderNav();
   const land = tabFlyoutLandingRect(flyout);
   // Where it collects back INTO: the middle of the tab it belongs to, in the
   // fly-out's own coordinates. Its landing left rather than its rect, which
   // already carries the shrink it is being measured for.
+  // Clamped into the row's own box: a clamped fly-out can sit entirely to one
+  // side of the tab it belongs to, and scaling about a point outside itself
+  // throws the shrinking row that way rather than collapsing it in place.
   if(land) flyout.style.transformOrigin =
-    Math.round(btnRect.left + btnRect.width / 2 - land.left) + 'px 0';
-  const ink = bar && land ? subBarInkRect(bar) : null;
-  const clear = ink ? land.bottom + flyoutShadowReach(flyout) + FLYOUT_GAP - ink.top : 0;
-  if(ink && clear > 0 && land.right > ink.left && land.left < ink.right){
-    // Never further than there is room for, so a panel with less space under
-    // its sub bar than this one gets as much of the way as it can rather than
-    // being driven into its own content.
-    pushSubBar(bar, Math.round(Math.min(clear, subBarRoomBelow(bar))));
-  } else {
-    releaseSubBar();
-  }
+    Math.round(Math.max(0, Math.min(btnRect.left + btnRect.width / 2 - land.left,
+                                    land.right - land.left))) + 'px 0';
+  applyTabFlyoutPush();
   // Two rAFs: the items were just innerHTML'd in at their resting
   // transform, so adding .visible on the very same frame can get
   // coalesced by the browser into one style recalc and skip the

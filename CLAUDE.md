@@ -2361,6 +2361,54 @@ course notes and stopped there.
 - Pages were already wired into both editors; measured here, the Notebook's
   toolbar carries the insert and its own bar reads Page 1 / 2 with only the
   first page's blocks visible.
+## The fly-out cannot leave the screen, and it follows a tab change (8 Sep, twenty-first pass)
+
+"The sub tabs are still flying out of the screen sometimes?? Doesn't happen
+under homes or jobs, but happens under the rest." And: "if I go back to Home or
+Korean, while having it hovered, it overlaps with the sub tabs."
+
+**The second one reproduces exactly and has one cause.** A fly-out held open
+while the top-level tab CHANGES is now hanging over a different panel's sub
+bar -- and nothing pushes that one, because the push went with the panel that
+was just hidden. `mouseenter` does not fire again (the pointer never left), so
+`showTabFlyout` never runs and the new row is never measured. The push is its
+own function now (`applyTabFlyoutPush`) and `switchTopLevelTab` runs it again.
+
+- **Retried for a few frames**, not run once: the panel was unhidden in that
+  same tick, so its sub bar can still measure nothing on the next one, and
+  `subBarUnderNav` answers null for a row with no height.
+- Measured through the real path: sitting on Korean, hovering Home's tab pushes
+  Korean's bar 10px; switching to Home with the row still open leaves **Home's**
+  bar pushed 10px instead.
+
+**The first one does NOT reproduce**, and that is worth writing down rather
+than claiming a fix. Driven through the real `showTabFlyout` at nav widths of
+1240, 600, 340 and 260, every fly-out lands inside both the nav and the window
+and every collapse origin is inside its own box. So instead of guessing at the
+instance, three things make the whole CLASS impossible:
+
+- **The row can no longer be wider than the bar.** `max-width:calc(100% - 8px)`
+  with `flex-wrap:wrap`. The clamp could not save it on its own: with a row
+  wider than the nav, `navWidth - flyoutWidth - margin` falls under the left
+  margin, the `Math.max` wins, and the row is laid against the left edge with
+  its tail off the far side. Capped, it takes a second line -- and the push
+  arithmetic follows for free, since that measures the box's real bottom.
+  Measured: at nav 600 and 340 the row is two lines, at 260 it is three, and at
+  none of them does anything overflow.
+- **It is clamped against the WINDOW as well as the nav**, which is not the
+  same box: the nav is one element on a page that can be padded, centred or
+  scrolled sideways, and the only thing that really has to hold is that the row
+  is on the screen.
+- **The collapse origin is clamped INTO the row.** A clamped fly-out can sit
+  entirely to one side of the tab it belongs to, and scaling about a point
+  outside itself throws the shrinking row that way rather than collapsing it in
+  place -- which is the one mechanism in here that could genuinely fling
+  something sideways.
+
+**And the tab's rect is read BEFORE the chomp is played.** The keyframes start
+at `scale(1)` so it was honest either way, but a rect read through a running
+animation is a rect that depends on when it was read, and every number in that
+function is derived from it.
 
 ## Migration files present (see folder for full current list)
 
