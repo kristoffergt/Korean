@@ -1932,6 +1932,58 @@ all because their fly-outs hang beside the pills rather than over them. Air
 under the fly-out is 5px everywhere it moves, and the row clears the card by
 1px on Home and 5 on Study. Nothing overlaps in either direction.
 
+## The download dialog can be moved, and the picture is only the calendar (8 Sep, twelfth pass)
+
+### It is dragged by its heading
+
+"Let me move this box around." In pick mode the dialog is parked over the very
+calendar it is asking you to click, and whether that is in the way depends
+entirely on which week is on screen -- so where it sits has to be the reader's
+call rather than a dock's.
+
+The heading is the handle, which is the one strip of the box with nothing to
+press on it and what every window in every OS uses. Three things make it hold
+up:
+
+- **It is an OFFSET applied as a transform, not a position.** Whatever the
+  layout decides is home still decides it -- centred as an ordinary dialog,
+  docked at the foot of the screen in pick mode -- and the two swap while it
+  is open without either knowing this exists.
+- **The clamp measures the box with the drag taken OFF.** Reading its rect
+  through the transform folds the drag into its own limits, and the box then
+  walks off the screen one drag at a time. Verified: dragged hard at the
+  top-left it stops at 8,9 and at the bottom-right at 1272 of 1280 and 813 of
+  820.
+- **Every open starts home.** Moving it is about seeing past it this time, and
+  it is also what makes switching presentations safe: the mode switch reopens,
+  and an offset that was inside the window centred can be outside it docked.
+
+`pointercancel` as well as `pointerup`, or a touch the browser reclaims as a
+scroll leaves the drag running until the next finger lands.
+
+### The picture is the calendar, and nothing else
+
+Three things left out (real-user request, with the crops): **the bell, the
+pencil and the repeat mark** on every chip, which are the editor's own controls
+and a downloaded week is not something anybody presses; and **the heading and
+the Month/Week/Day row**, which were a title and a set of buttons taking two
+lines of a picture that is meant to be a calendar.
+
+- **`display` rather than the `visibility` the older rule uses**, and that is
+  not only about the space: **html2canvas paints a `visibility: hidden` box
+  anyway**, which is why the toggle kept turning up in the download while the
+  rule above it said otherwise. The controls that sit AROUND the grid keep
+  `visibility`, because taking their space would move the very boxes the
+  capture is about to measure.
+- **One `!important`, and it is earned**: `#calDownloadBtn` carries its own
+  inline `display`, which nothing in a stylesheet can outrank, and it has to
+  go rather than be hidden or the row it shares with the toggle keeps its
+  height and the picture opens on an empty band.
+- **Which view it is rides on the date line now** -- "Week · Sep 13 - Sep 19,
+  2026" -- and only in the picture. On screen the Month/Week/Day row two lines
+  up already says it, and a second copy beside the dates would be saying it
+  twice.
+
 ## Migration files present (see folder for full current list)
 
 All `*_migration.sql` (and other `.sql`) files now live in the `sql

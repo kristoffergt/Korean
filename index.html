@@ -1536,10 +1536,25 @@ body.dark .cm-msg.mine{background:var(--celadon-2);}
 .cal-export-when{flex:none;color:var(--ink-soft);font-size:11.5px;font-family:'Space Grotesk',monospace;}
 .cal-export-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cal-export-empty{padding:14px 8px;color:var(--ink-soft);font-size:12.5px;text-align:center;}
-/* What the picture is OF: the grid and the month label, not the controls
-   around them. Hidden rather than un-rendered so nothing reflows and the
-   capture measures the same boxes the reader is looking at. */
+/* Left OUT of the picture entirely, space and all (real-user request). The
+   bell, the pencil and the repeat mark are the editor's own controls, and a
+   downloaded week is not something anybody presses; the heading and the
+   Month/Week/Day row were a title and a set of buttons taking two lines of a
+   picture that is meant to be the calendar. Which view it is now rides on the
+   date line instead, where it belongs.
+   `display` rather than the `visibility` the row below uses: html2canvas
+   paints a visibility:hidden box anyway, which is why the toggle was still
+   turning up in the download while the rule below said otherwise. */
+body.cal-exporting #hMonthView,
 body.cal-exporting #calViewToggle,
+body.cal-exporting .chip-bell,
+body.cal-exporting .chip-edit,
+body.cal-exporting .chip-recur{display:none;}
+/* The one !important in here, and it is earned: this button carries its own
+   inline display, which nothing in a stylesheet can outrank. It has to go
+   rather than merely be hidden, or the row it shares with the toggle keeps
+   its height and the picture opens on an empty band. */
+body.cal-exporting #calDownloadBtn{display:none !important;}
 /* Picking on the calendar: the SAME dialog, docked out of the way and no
    longer blocking the thing it is asking about. The overlay stops taking
    clicks so the calendar underneath stays live, and the box takes them back.
@@ -1549,6 +1564,17 @@ body.cal-exporting #calViewToggle,
 #calExportModal.pickmode .modal-box{pointer-events:auto;max-width:560px;
   box-shadow:0 10px 34px rgba(0,0,0,0.30);}
 #calExportModal.pickmode #calExportList{display:none;}
+/* The dialog can be MOVED. It is parked over the very calendar it is asking
+   you to click, and whether that is in the way depends on which week is on
+   screen -- so where it sits has to be the reader's call rather than a dock's
+   (real-user request: "let me move this box around"). The heading is the
+   handle: it is the one strip of the box with nothing to press on it, which
+   is what every window in every OS uses. */
+#calExportModal .modal-box > h2{cursor:move;touch-action:none;}
+#calExportModal .modal-box > h2 button{cursor:pointer;}
+/* A drag that crosses the calendar underneath must not start selecting the
+   week's worth of text it passes over. */
+body.modal-dragging, body.modal-dragging *{user-select:none;}
 /* PNG and PDF are two buttons in a dialog with room to spare, so they must not
    take the Month/Week/Day row's phone clamp: that is font-size:clamp(7px,2vw,12px)
    for a row of five sharing 375px, and it resolved to 7.5px here, which
@@ -1563,7 +1589,9 @@ body.cal-picking .cal-chip.cal-ex-off,
 body.cal-picking .week-event-bar.cal-ex-off{opacity:0.28;}
 body.cal-picking .cal-chip,
 body.cal-picking .week-event-bar{cursor:pointer;}
-body.cal-exporting #calDownloadBtn,
+/* And these are only HIDDEN, not un-rendered: they sit around the grid rather
+   than above it, so taking their space away would move the very boxes the
+   capture is about to measure. */
 body.cal-exporting #monthPrevBtn,
 body.cal-exporting #monthNextBtn,
 body.cal-exporting #calJumpDateBtn,
@@ -19974,6 +20002,17 @@ function renderCalHeaderLabel(){
   const wrap = document.getElementById('monthLabel');
   if(!wrap) return;
   wrap.innerHTML = '';
+  // In the PICTURE only. On screen the Month/Week/Day row two lines up
+  // already says which view this is, and a second copy beside the dates
+  // would be saying it twice; in the download that row is not there, so the
+  // dates are the only place left to say it (real-user request: "put week or
+  // month or day or whatever the download is for next to the dates").
+  if(document.body.classList.contains('cal-exporting')){
+    const tag = document.createElement('span');
+    tag.textContent = t(calViewMode === 'month' ? 'viewMonth'
+                      : calViewMode === 'week' ? 'viewWeek' : 'viewDay') + ' · ';
+    wrap.appendChild(tag);
+  }
   const appendSeg = (text, key, baseDateStr)=>{
     const span = document.createElement('span');
     span.textContent = text;
@@ -20155,7 +20194,7 @@ function renderMonthGrid(){
       const ownerSuffix = ev.user_id !== currentUser.id ? ` (${t('ownedBy')} ${nameFor(ev.user_id)})` : '';
       const tip = ev.event_time ? `${recurPrefix}${ev.title} · ${formatTime12h(ev.event_time)}${ownerSuffix}` : `${recurPrefix}${ev.title}${ownerSuffix}`;
       const bellIcon = mySubscriptions[ev.id] ? ICON.bellOn(11) : ICON.bellOff(11);
-      chips += `<div class="event-chip cal-chip" data-ev="${ev.id}" data-date="${dateKey}" style="background:${bg};color:${textColorFor(bg)}" title="${tip}"><span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">${ICON.pencil(11)}</span>${recurPrefix}${ev.title}<span class="chip-initial">${initialsForEvent(ev)}</span></div>`;
+      chips += `<div class="event-chip cal-chip" data-ev="${ev.id}" data-date="${dateKey}" style="background:${bg};color:${textColorFor(bg)}" title="${tip}"><span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">${ICON.pencil(11)}</span>${recurPrefix ? '<span class="chip-recur">' + recurPrefix + '</span>' : ''}${ev.title}<span class="chip-initial">${initialsForEvent(ev)}</span></div>`;
     });
     const extra = events.length - maxShow;
     if(extra > 0){ chips += `<div class="more-count">+${extra}</div>`; }
@@ -20612,7 +20651,7 @@ function renderCalGrid(dates){
         }
       }
       const editIconHtml = overlapping ? '' : `<span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">${ICON.pencil(11)}</span>`;
-      bar.innerHTML = `<span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span>${editIconHtml}${recurPrefix}${bodyHtml}<span class="week-bar-initial">${initialsForEvent(ev)}</span>`;
+      bar.innerHTML = `<span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span>${editIconHtml}${recurPrefix ? '<span class="chip-recur">' + recurPrefix + '</span>' : ''}${bodyHtml}<span class="week-bar-initial">${initialsForEvent(ev)}</span>`;
       bar.title = ev.title + (ev.event_time ? ' · ' + formatTime12h(ev.event_time) : '');
       bar.addEventListener('click', (e)=>{
         if(e.target.closest('.chip-bell') || e.target.closest('.chip-edit')) return;
@@ -20890,6 +20929,7 @@ function setCalExportAll(on){
 }
 function closeCalExport(){
   document.getElementById('calExportModal').classList.add('hidden');
+  calExportResetDrag();
   calExportPicking = false;
   calExportExclude = new Set();
   paintCalExportPicking();
@@ -20915,8 +20955,89 @@ function openCalExportModal(keepExclusions){
   msg.classList.add('hidden'); msg.textContent = '';
   document.getElementById('calExportGoBtn').disabled = false;
   modal.classList.remove('hidden');
+  // Every open starts where the layout puts it. Moving it is about seeing
+  // past it THIS time, and a dialog that comes back somewhere the reader
+  // dragged it in a session they have since finished reads as misplaced.
+  // This is also what makes switching presentations safe: the mode switch
+  // reopens, and the two have different homes -- centred against docked at
+  // the foot of the screen -- so an offset that was inside the window in one
+  // can be outside it in the other.
+  calExportResetDrag();
   paintCalExportPicking();
 }
+
+/* ---------- moving the dialog ---------- */
+// Held as an OFFSET rather than a position, applied as a transform, so
+// whatever the layout decides is "home" still decides it: centred as an
+// ordinary dialog, and docked at the foot of the screen in pick mode. The two
+// swap while it is open, and neither has to know this exists.
+const calExportDrag = { x: 0, y: 0 };
+const calExportBox = ()=> document.querySelector('#calExportModal .modal-box');
+// Its rect with the drag taken OFF, which is what an offset has to be
+// measured against. Reading it through the transform would fold the drag into
+// its own limits and let the box walk off the screen one drag at a time.
+function calExportHomeRect(box){
+  const had = box.style.transform;
+  if(had) box.style.transform = '';
+  const r = box.getBoundingClientRect();
+  if(had) box.style.transform = had;
+  return r;
+}
+// Re-clamped every time it is applied and again on a resize, so a window made
+// smaller since cannot stand the dialog off the edge of the screen.
+function calExportClampDrag(){
+  const box = calExportBox();
+  if(!box) return;
+  const r = calExportHomeRect(box), m = 8;
+  const minX = m - r.left, maxX = window.innerWidth - m - r.right;
+  const minY = m - r.top, maxY = window.innerHeight - m - r.bottom;
+  // A box wider or taller than the window has no valid range at all; it stays
+  // where the layout put it rather than being pinned to one edge.
+  calExportDrag.x = maxX < minX ? 0 : Math.min(Math.max(calExportDrag.x, minX), maxX);
+  calExportDrag.y = maxY < minY ? 0 : Math.min(Math.max(calExportDrag.y, minY), maxY);
+  box.style.transform = (calExportDrag.x || calExportDrag.y)
+    ? 'translate(' + Math.round(calExportDrag.x) + 'px,' + Math.round(calExportDrag.y) + 'px)'
+    : '';
+}
+function calExportResetDrag(){
+  calExportDrag.x = 0; calExportDrag.y = 0;
+  const box = calExportBox();
+  if(box) box.style.transform = '';
+}
+(function wireCalExportDrag(){
+  const modal = document.getElementById('calExportModal');
+  const head = modal && modal.querySelector('.modal-box > h2');
+  if(!head) return;
+  let from = null;
+  head.addEventListener('pointerdown', (e)=>{
+    // The ✕ lives on this row and is a control, not a handle.
+    if(e.button !== 0 || e.target.closest('button')) return;
+    from = { px: e.clientX, py: e.clientY, x: calExportDrag.x, y: calExportDrag.y };
+    head.setPointerCapture(e.pointerId);
+    document.body.classList.add('modal-dragging');
+    e.preventDefault();
+  });
+  head.addEventListener('pointermove', (e)=>{
+    if(!from) return;
+    calExportDrag.x = from.x + (e.clientX - from.px);
+    calExportDrag.y = from.y + (e.clientY - from.py);
+    calExportClampDrag();
+  });
+  // pointercancel as well as pointerup: a touch the browser decides is a
+  // scroll after all sends only the cancel, and without it the drag would
+  // still be running the next time a finger landed anywhere.
+  const stop = (e)=>{
+    if(!from) return;
+    from = null;
+    document.body.classList.remove('modal-dragging');
+    if(head.hasPointerCapture(e.pointerId)) head.releasePointerCapture(e.pointerId);
+  };
+  head.addEventListener('pointerup', stop);
+  head.addEventListener('pointercancel', stop);
+  window.addEventListener('resize', ()=>{
+    if(!modal.classList.contains('hidden')) calExportClampDrag();
+  });
+})();
 
 /* ---------- capture ---------- */
 function loadHtml2Canvas(){
