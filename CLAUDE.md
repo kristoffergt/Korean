@@ -2409,6 +2409,35 @@ instance, three things make the whole CLASS impossible:
 at `scale(1)` so it was honest either way, but a rect read through a running
 animation is a rect that depends on when it was read, and every number in that
 function is derived from it.
+## A tab you PRESSED parks its sub bar down (8 Sep, twenty-second pass)
+
+"You dont need to push them down after the tab is opened when it's pressed.
+Because the pop-out sub tabs will always be there. So you can simply have it as
+keeping it down state in that case (not on site open or something, but on
+pressing that tab). Otherwise the sub tabs jiggle up and down."
+
+Exactly right, and the reasoning is the useful part: after a press made with
+the fly-out already up, the pointer is SITTING on that tab, so its fly-out is
+about to open again and again -- and a row that springs back between each one
+is a row that never settles. So the push becomes a parked position rather than
+something the hover keeps re-negotiating.
+
+- **Armed by the press, not by the hover.** `switchTopLevelTab` sets
+  `subBarHoldArm` only when a fly-out is already open, and the first reading
+  after that records the distance as `subBarHoldPx`. Only that first reading
+  can set it, or a later hover of some other tab would arm a hold of its own.
+- **Per VISIT, never a setting.** Every switch clears it first, so a panel
+  reached any other way -- a cold load included -- sits exactly where it always
+  did. That is the "not on site open" half of the ask.
+- **Held, nothing releases.** Both places that used to put the row back (the
+  fly-out closing, and a push that decides it does not overlap) re-assert the
+  parked distance instead. Writing the same transform twice is not a movement,
+  so hovering the same tab again is silent.
+
+Measured through the real path, in order: level, hover another tab 10px, leave
+back to level with no hold; hover its OWN tab and press it, hold 10 and the row
+at 10px; leave, still 10px; hover again, still 10px; leave, still 10px; switch
+to another tab, hold cleared and the old row back to level.
 
 ## Migration files present (see folder for full current list)
 
