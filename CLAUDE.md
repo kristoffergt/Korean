@@ -2438,6 +2438,39 @@ Measured through the real path, in order: level, hover another tab 10px, leave
 back to level with no hold; hover its OWN tab and press it, hold 10 and the row
 at 10px; leave, still 10px; hover again, still 10px; leave, still 10px; switch
 to another tab, hold cleared and the old row back to level.
+## The fly-out stands off the tab, and the four pixels are found rather than taken (8 Sep, twenty-third pass)
+
+"The pop-out sub tabs cover a bit of the main tabs." Flush is what it was:
+`top = btnRect.bottom`, so the row's own top border drew ON the tab's bottom
+one and the two read as a single object. `FLYOUT_TOP_GAP = 4`.
+
+**It also has to clear the chomp**, which is the reason 4 rather than 1: at the
+gulp's peak the tab is scaled 1.11 on the y, and on a 34px tab that is 1.9px
+past its own bottom edge -- so any gap under 2 is eaten by the animation every
+time it plays.
+
+### The four pixels come out of the fly-out, not out of the row below
+
+This column has a fixed budget and Kristoffer measured it himself when the push
+was built ("there is EXACTLY enough space for the sub bars to move down"), so a
+gap added at the top is a gap taken from somewhere else. Written out, with H
+the fly-out's height and G the new gap:
+
+    clear      = G + H - 18        what the row must move to be clear
+    push       = min(clear, 12)    12 being the room the panel leaves
+    air below  = 12 - push
+    air above  = push - clear + 4
+
+At H = 28 and G = 4 that is a push of 12 with **2px** above the row and none
+below -- the fly-out ends up nearer the row than the 4px `FLYOUT_GAP` asks
+for, which is the gap two earlier passes were spent getting right. So the
+pixels are taken from the fly-out instead: **the items go to `padding:5px`**,
+H = 26, and the whole column comes out at **4.5 / 4 / 0** -- measured, in that
+order, tab to fly-out, fly-out to row, row to card.
+
+The zero at the bottom is not a squeeze: it is the row sitting in exactly the
+gap the panel gives it, which is what that gap is for. Every other arrangement
+of these numbers spends it somewhere less useful.
 
 ## Migration files present (see folder for full current list)
 

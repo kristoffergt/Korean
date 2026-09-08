@@ -1026,7 +1026,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
    air put together, so a shadow of any real weight is grey laid over the row
    whatever the row does about it. The 1px border and the dimmer fill are what
    separate it, which is what the sub-tab pills below it already use. */
-.tab-flyout .tab-flyout-item{position:static;flex:none;min-width:0;opacity:0;transition:opacity 0.18s ease;font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;padding:6px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper-dim);color:var(--ink-soft);white-space:nowrap;cursor:pointer;}
+.tab-flyout .tab-flyout-item{position:static;flex:none;min-width:0;opacity:0;transition:opacity 0.18s ease;font-family:'Inter',sans-serif;font-weight:600;font-size:11.5px;padding:5px 11px;border:1px solid var(--line);border-radius:6px;background:var(--paper-dim);color:var(--ink-soft);white-space:nowrap;cursor:pointer;}
 .tab-flyout.visible .tab-flyout-item{opacity:1;}
 .tab-flyout .tab-flyout-item:hover{background:var(--paper);color:var(--ink);}
 .tabs button .tab-icon,.tabs button .tab-icon-yonsei{flex:none;}
@@ -18542,6 +18542,17 @@ function tabFlyoutHeld(el){
 // sixteen pixels of grey past the border edge, so a row sitting eight below
 // it is inside all of it (real-user report: "it still cuts over").
 const FLYOUT_GAP = 4;
+// And the same again ABOVE it. Flush against the tab, the row's own top border
+// draws on the tab's bottom one, so the two read as one object and the pills
+// look like they are sitting ON the tab (real-user report: "the pop-out sub
+// tabs cover a bit of the main tabs"). It also has to clear the chomp: at the
+// gulp's peak the tab is scaled 1.11 on the y, which on a 34px tab is 1.9px
+// past its own bottom edge -- so anything under 2 would be eaten by the
+// animation every time it plays.
+// It costs the row under it exactly this much more push, which the cap in
+// applyTabFlyoutPush already bounds, and the parked state added on the pass
+// before this one is what gives that row somewhere to sit.
+const FLYOUT_TOP_GAP = 4;
 // How far the fly-out's shadow reaches below its box, read off the CSS rather
 // than written here as a number, so the two cannot drift apart the moment the
 // shadow is retouched. offsetY + blur + spread.
@@ -18744,7 +18755,7 @@ function showTabFlyout(btn, top){
   flyout.innerHTML = subs.map(s=>
     `<button type="button" class="tab-flyout-item" data-view="${s.view}">${escapeHtml(t(s.labelKey))}</button>`
   ).join('');
-  flyout.style.top = Math.round(btnRect.bottom - navRect.top) + 'px';
+  flyout.style.top = Math.round(btnRect.bottom - navRect.top + FLYOUT_TOP_GAP) + 'px';
   // Centered under the button, then clamped so a wide row (e.g. Korean's
   // 4 sub-tabs) never runs past either edge of the nav bar itself -- a
   // tab near either end previously let it spill off-screen and get clipped.
