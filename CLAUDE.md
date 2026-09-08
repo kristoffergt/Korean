@@ -2230,6 +2230,67 @@ focused, text selected -- so what is left is the two ways it can decline:
 
 **And it is not on the deployed site until it is pushed.** The rename shipped
 in a commit, and this project's rule is that Kristoffer pushes.
+## A note can be split into pages (8 Sep, nineteenth pass)
+
+"Add an ability within notes to 'separate into pages,' so you dont have to get
+a continuous running note page."
+
+**A page break is an `<hr class="note-page-break"> INSIDE the note's own
+HTML**, and that one decision is what makes the rest cheap: saving, the version
+history, the realtime delta, the export and the schema all go on seeing exactly
+one document. A note with no break in it is byte-for-byte what it always was,
+there is no migration, and there is no second table holding pages that could
+drift from the note they belong to.
+
+- **It is registered as a Quill BLOCK EMBED**, not left as a bare tag. The
+  editor's content is loaded by writing `root.innerHTML` directly, which
+  bypasses Quill's parser -- so an unregistered `<hr>` renders and is then
+  dropped the first time anything is typed near it and Quill reconciles the
+  DOM against its own model. With `blotName`/`tagName`/`className` declared it
+  round trips: measured, typing into the paragraph before a break leaves the
+  document as `{insert:"AlXXpha\n"}, {insert:{notePageBreak:true}},
+  {insert:"Beta\n"}` and the `<hr class="note-page-break">` still in the HTML.
+
+### One page at a time is HIDING the others
+
+Which is the second decision that keeps this small. Nothing is split out of the
+document and nothing has to be joined back, so there is no way for a page to be
+lost on save: the pages are the runs of top-level blocks between the breaks,
+and every block that is not on the page being read takes a `display:none`
+class.
+
+- **Re-applied after every text change**, so an edit that makes Quill rebuild a
+  block heals the hidden ones on the next keystroke rather than leaving half a
+  page on screen.
+- **The page follows the CARET while typing**, so inserting a break lands you
+  on the page you have just made and deleting one cannot leave you looking at a
+  page that is no longer there.
+- **The rule itself is hidden too while paging.** It is there to say where one
+  page ends when they are all in a row; a dashed line hanging under the only
+  page on screen says nothing.
+- **The break is filed with the page it ENDS**, so hiding a page takes its own
+  bottom rule with it rather than leaving a stray line under the page above.
+
+### The two controls, and why they are where they are
+
+- **Insert is in the TOOLBAR**, beside the other things you put into a
+  document. It cannot live in the page bar: that bar only exists once there are
+  two pages, and this is the control that makes the first one.
+- **The bar says nothing at all on a note with one page.** "Page 1 / 1" over
+  every note in the app is a control that has nothing to control.
+- **Showing them all again is one press**, remembered per browser -- it is a
+  way of reading rather than a fact about the note. Default is one page at a
+  time, since that is the whole point of asking for pages.
+- Both note editors have it (Yonsei course notes and the Notebook), off one
+  pager keyed per editor, so the two cannot end up behaving differently.
+
+**And printing is where a page break earns its name**: `break-after: page`
+under `@media print`.
+
+Driven against the real editor rather than reasoned about: three pages show
+one paragraph each with prev disabled on the first and next on the last, "Show
+all pages" brings back all five blocks including both rules, and the toolbar
+button at the end of the document takes it to 4 of 4.
 
 ## Migration files present (see folder for full current list)
 

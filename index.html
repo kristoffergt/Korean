@@ -1659,6 +1659,35 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
 .set-info[aria-expanded="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper);}
 .set-hint{display:none;}
 .set-hint.open{display:block;}
+/* ---------- A NOTE SPLIT INTO PAGES ---------- */
+/* A note used to be one running document however long it got (real-user
+   request: "add an ability within notes to 'separate into pages,' so you dont
+   have to get a continuous running note page"). A page break is an <hr> IN the
+   document, so nothing about how a note is stored, saved, versioned, exported
+   or broadcast changes: the content is still one string of HTML, and a note
+   with no breaks in it is byte-for-byte what it always was. */
+.note-page-break{border:none;border-top:2px dashed var(--line);
+  margin:22px 0;height:0;}
+/* Showing ONE page is hiding the others, which is why the break can stay in
+   the document: nothing is split out of it and nothing has to be joined back.
+   The class is re-applied after every text change, so an edit that makes Quill
+   rebuild a block heals it on the next keystroke. */
+.note-page-off{display:none !important;}
+/* Printing is where a page break earns its name. */
+@media print{ .note-page-break{break-after:page;page-break-after:always;border:none;margin:0;} }
+.note-pagebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin:0 0 8px;font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-soft);}
+.note-pagebar .np-count{font-weight:700;color:var(--ink);min-width:5.5em;}
+.note-pagebar button{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
+  padding:3px 9px;border:1px solid var(--line);border-radius:6px;
+  background:var(--paper);color:var(--ink-soft);cursor:pointer;line-height:1.4;}
+.note-pagebar button:hover:not(:disabled){color:var(--ink);border-color:var(--ink-soft);}
+.note-pagebar button:disabled{opacity:0.4;cursor:default;}
+.note-pagebar button.on{background:var(--ink);border-color:var(--ink);color:var(--paper);}
+/* The toolbar's own insert button, beside Quill's. Quill styles .ql-toolbar
+   button at 28x24 with a 3px pad, so it takes those rather than inventing a
+   size that would sit half a pixel off the row. */
+.ql-toolbar button.np-insert{width:28px;height:24px;padding:3px 5px;}
 /* The lecture list is a column of headings in a card the width of the page,
    so most of it is empty (real-user report: "so much empty space here. Could
    just move the note writing section to the right of this when there is
@@ -2708,6 +2737,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
         <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" title="Click to edit"></span><span><button class="export-btn" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
         <div class="notes-panel hidden" id="notebookTitleEditPanel"></div>
         <div class="hint" id="notebookLastSavedInfo"></div>
+        <div class="note-pagebar" id="notebookPageBar" style="display:none;"></div>
         <div id="notebookQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
         <button class="linkbtn" id="notebookVersionHistoryToggle" style="margin-top:10px;"></button>
         <div class="notes-panel hidden" id="notebookVersionHistoryPanel"></div>
@@ -2868,6 +2898,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       <h2><span id="editorLectureTitle"></span><span><button class="export-btn" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
       <div class="notes-panel hidden" id="editorTitleEditPanel"></div>
       <div class="hint" id="lastSavedInfo"></div>
+      <div class="note-pagebar" id="notePageBar" style="display:none;"></div>
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
       <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
       <div class="notes-panel hidden" id="versionHistoryPanel"></div>
@@ -9866,6 +9897,7 @@ const I18N = {
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
     lblRecurInterval:'Every', lblRecurEndType:'Ends', recurNever:'Never', recurUntilDate:'Until date', lblRecurEndDate:'End date',
     recurBadge:'Every {n} {unit}', recurUntil:'until {date}', recurEveryWeekday:'Every {day}', recurEveryOtherWeekday:'Every other {day}', daySun:'Sunday', daySat:'Saturday',
+    notePageBreakBtn:'Page break', notePageOf:'Page {n} / {total}', notePageOne:'One page at a time', notePageAll:'Show all pages', notePagePrev:'Previous page', notePageNext:'Next page',
     remindMe:'Remind me', subscribed:'Reminders on', applyToLabel:'Apply to', applyAll:'All future occurrences', applyOnce:'Just this occurrence',
     unitMinutes:'minutes before', unitHours:'hours before', unitDays:'days before', addReminder:'+ Add reminder', saveReminders:'Save', unsubscribe:'Turn off reminders',
     reminderNote:'Reminder delivery requires an email service to be connected. Ask Claude to set this up.', birthdayReminderNote:'Birthday reminders fire right at the set time (8:00 AM by default). Change the time via Edit above.',
@@ -9989,6 +10021,7 @@ const I18N = {
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
     lblRecurInterval:'주기', lblRecurEndType:'종료', recurNever:'계속 반복', recurUntilDate:'날짜까지', lblRecurEndDate:'종료일',
     recurBadge:'{n}{unit}마다', recurUntil:'{date}까지', recurEveryWeekday:'매주 {day}', recurEveryOtherWeekday:'격주 {day}', daySun:'일요일', daySat:'토요일',
+    notePageBreakBtn:'페이지 나누기', notePageOf:'{total}쪽 중 {n}쪽', notePageOne:'한 번에 한 쪽씩', notePageAll:'모든 쪽 보기', notePagePrev:'이전 쪽', notePageNext:'다음 쪽',
     remindMe:'알림 받기', subscribed:'알림 켜짐', applyToLabel:'적용 대상', applyAll:'앞으로 모든 일정', applyOnce:'이번 일정만',
     unitMinutes:'분 전', unitHours:'시간 전', unitDays:'일 전', addReminder:'+ 알림 추가', saveReminders:'저장', unsubscribe:'알림 끄기',
     reminderNote:'알림 발송을 위해서는 이메일 서비스 연동이 필요합니다. Claude에게 설정을 요청하세요.', birthdayReminderNote:'생일 알림은 설정된 시각(기본 오전 8시)에 바로 전송됩니다. 시각을 바꾸려면 위의 수정을 이용하세요.',
@@ -10112,6 +10145,7 @@ const I18N = {
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
     lblRecurInterval:'Mỗi', lblRecurEndType:'Kết thúc', recurNever:'Không bao giờ', recurUntilDate:'Đến ngày', lblRecurEndDate:'Ngày kết thúc',
     recurBadge:'Mỗi {n} {unit}', recurUntil:'đến {date}', recurEveryWeekday:'Mỗi {day}', recurEveryOtherWeekday:'Cách tuần vào {day}', daySun:'Chủ Nhật', daySat:'Thứ Bảy',
+    notePageBreakBtn:'Ngắt trang', notePageOf:'Trang {n} / {total}', notePageOne:'Từng trang một', notePageAll:'Xem tất cả các trang', notePagePrev:'Trang trước', notePageNext:'Trang sau',
     remindMe:'Nhắc tôi', subscribed:'Đã bật nhắc nhở', applyToLabel:'Áp dụng cho', applyAll:'Tất cả các lần tới', applyOnce:'Chỉ lần này',
     unitMinutes:'phút trước', unitHours:'giờ trước', unitDays:'ngày trước', addReminder:'+ Thêm nhắc nhở', saveReminders:'Lưu', unsubscribe:'Tắt nhắc nhở',
     reminderNote:'Việc gửi nhắc nhở cần kết nối dịch vụ email. Hãy nhờ Claude thiết lập.', birthdayReminderNote:'Nhắc sinh nhật được gửi đúng vào thời gian đã đặt (mặc định 8:00 sáng). Đổi giờ qua mục Sửa ở trên.',
@@ -10746,7 +10780,11 @@ const ICON_PATHS = {
   eye:    '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>',
   chevR:  '<polyline points="9 18 15 12 9 6"></polyline>',
   chevL:  '<polyline points="15 18 9 12 15 6"></polyline>',
-  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>'
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>',
+  /* Two solid edges with a broken line between them: the bottom of one page,
+     the top of the next. Drawn rather than a scissors, which at 18px is a
+     smudge. */
+  pageBreak: '<path d="M5 4h14"></path><path d="M5 20h14"></path><path d="M3 12h3"></path><path d="M9.5 12h5"></path><path d="M18 12h3"></path>'
 };
 const ICON = {
   pencil:  function(sz){ return svgIcon(ICON_PATHS.pencil, sz); },
@@ -10762,7 +10800,8 @@ const ICON = {
   eye:     function(sz){ return svgIcon(ICON_PATHS.eye, sz); },
   chevR:   function(sz){ return svgIcon(ICON_PATHS.chevR, sz); },
   chevL:   function(sz){ return svgIcon(ICON_PATHS.chevL, sz); },
-  download:function(sz){ return svgIcon(ICON_PATHS.download, sz); }
+  download:function(sz){ return svgIcon(ICON_PATHS.download, sz); },
+  pageBreak:function(sz){ return svgIcon(ICON_PATHS.pageBreak, sz); }
 };
 /* ---------- THE TITLE MEASURES ITSELF ---------- */
 // Held over, the title does the one thing the app is named for: it TRACKS.
@@ -31666,6 +31705,157 @@ function keepPageStillOnPaste(quill){
   }, true);
 }
 if(window.Quill && window.ImageResize) Quill.register('modules/imageResize', ImageResize.default);
+/* ---------- A NOTE SPLIT INTO PAGES ---------- */
+// A page break is an <hr class="note-page-break"> inside the note's own HTML,
+// registered as a Quill BLOCK EMBED so it survives the round trip through the
+// editor's model instead of being dropped as an unknown tag the first time
+// anything is typed near it. Everything else -- saving, versions, the realtime
+// delta, the export -- goes on seeing one document, which is the whole reason
+// to do it this way: a note with no break in it is byte-for-byte what it
+// always was, and one with breaks needs no migration and no second table.
+if(window.Quill){
+  const NoteBlockEmbed = Quill.import('blots/block/embed');
+  class NotePageBreakBlot extends NoteBlockEmbed {}
+  NotePageBreakBlot.blotName = 'notePageBreak';
+  NotePageBreakBlot.tagName = 'hr';
+  NotePageBreakBlot.className = 'note-page-break';
+  Quill.register(NotePageBreakBlot, true);
+}
+// One page at a time is the POINT of the feature, so it is on by default the
+// moment a note has a break in it; showing the lot again is one press and is
+// remembered per browser, since it is a way of reading rather than a fact
+// about the note.
+const NOTE_PAGED_KEY = 'ptNotePagedMode';
+function notePagedPref(){
+  try{ return localStorage.getItem(NOTE_PAGED_KEY) !== '0'; }catch(e){ return true; }
+}
+function setNotePagedPref(on){
+  try{ localStorage.setItem(NOTE_PAGED_KEY, on ? '1' : '0'); }catch(e){}
+}
+const notePagers = {};
+// The pages are the runs of top-level blocks BETWEEN the breaks. The break
+// itself is filed with the page it ends, so hiding a page hides its own
+// bottom rule rather than leaving a stray line under the page above.
+function notePageGroups(quill){
+  const groups = [[]];
+  Array.from(quill.root.children).forEach(el=>{
+    groups[groups.length - 1].push(el);
+    if(el.classList && el.classList.contains('note-page-break')) groups.push([]);
+  });
+  return groups;
+}
+function notePageOfNode(groups, node){
+  for(let i = 0; i < groups.length; i++){
+    for(const el of groups[i]){ if(el === node || (el.contains && el.contains(node))) return i; }
+  }
+  return -1;
+}
+function setupNotePager(key, quill, barId){
+  const bar = document.getElementById(barId);
+  if(!bar || notePagers[key]) return;
+  notePagers[key] = { quill: quill, bar: bar, page: 0 };
+  // Re-applied after every text change, so an edit that makes Quill rebuild a
+  // block heals the hidden ones on the next keystroke rather than leaving a
+  // page half shown.
+  quill.on('text-change', ()=> renderNotePager(key, true));
+  renderNotePager(key);
+}
+function resetNotePager(key){
+  const p = notePagers[key];
+  if(!p) return;
+  p.page = 0;
+  renderNotePager(key);
+}
+function buildNotePagerBar(key){
+  const p = notePagers[key];
+  if(p.bar.dataset.built === '1') return;
+  p.bar.dataset.built = '1';
+  p.bar.innerHTML = '';
+  const prev = document.createElement('button');
+  prev.type = 'button'; prev.className = 'np-prev';
+  prev.innerHTML = ICON.chevL(13);
+  prev.addEventListener('click', ()=>{ p.page--; renderNotePager(key); });
+  const count = document.createElement('span');
+  count.className = 'np-count';
+  const next = document.createElement('button');
+  next.type = 'button'; next.className = 'np-next';
+  next.innerHTML = ICON.chevR(13);
+  next.addEventListener('click', ()=>{ p.page++; renderNotePager(key); });
+  const mode = document.createElement('button');
+  mode.type = 'button'; mode.className = 'np-mode';
+  mode.addEventListener('click', ()=>{
+    setNotePagedPref(!notePagedPref());
+    Object.keys(notePagers).forEach(k=> renderNotePager(k));
+  });
+  p.bar.append(prev, count, next, mode);
+}
+function renderNotePager(key, follow){
+  const p = notePagers[key];
+  if(!p) return;
+  const groups = notePageGroups(p.quill);
+  const total = groups.length;
+  // The page follows the CARET while typing, so inserting a break lands you on
+  // the page you just created and deleting one cannot leave you looking at a
+  // page that is no longer there.
+  if(follow && p.quill.hasFocus()){
+    const sel = document.getSelection();
+    const node = sel && sel.anchorNode;
+    const at = node ? notePageOfNode(groups, node.nodeType === 1 ? node : node.parentElement) : -1;
+    if(at >= 0) p.page = at;
+  }
+  p.page = Math.max(0, Math.min(p.page, total - 1));
+  const paged = notePagedPref() && total > 1;
+  groups.forEach((els, i)=>{
+    els.forEach(el=>{
+      if(!el.classList) return;
+      // Showing one page at a time, the RULE goes too: it is there to say where
+      // one page ends when they are all in a row, and a dashed line hanging
+      // under the only page on screen says nothing.
+      const isBreak = el.classList.contains('note-page-break');
+      el.classList.toggle('note-page-off', paged && (i !== p.page || isBreak));
+    });
+  });
+  // With one page there are no pages, so the bar says nothing at all rather
+  // than reading "Page 1 / 1" over every note in the app.
+  if(total <= 1){ p.bar.style.display = 'none'; return; }
+  buildNotePagerBar(key);
+  p.bar.style.display = '';
+  p.bar.querySelector('.np-count').textContent =
+    t('notePageOf').replace('{n}', p.page + 1).replace('{total}', total);
+  const prev = p.bar.querySelector('.np-prev'), next = p.bar.querySelector('.np-next');
+  prev.disabled = !paged || p.page === 0;
+  next.disabled = !paged || p.page === total - 1;
+  prev.title = t('notePagePrev'); prev.setAttribute('aria-label', t('notePagePrev'));
+  next.title = t('notePageNext'); next.setAttribute('aria-label', t('notePageNext'));
+  const mode = p.bar.querySelector('.np-mode');
+  mode.textContent = notePagedPref() ? t('notePageAll') : t('notePageOne');
+  mode.classList.toggle('on', notePagedPref());
+}
+// The insert lives in the TOOLBAR, beside the other things you put into a
+// document, and not in the page bar -- the bar only exists once there are two
+// pages, so a control that makes the first one cannot live in it.
+function buildNotePageBreakControl(quill, key){
+  const toolbar = quill.getModule('toolbar').container;
+  if(!toolbar || toolbar.querySelector('.np-insert')) return;
+  const group = document.createElement('span');
+  group.className = 'ql-formats';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'np-insert';
+  btn.title = t('notePageBreakBtn');
+  btn.setAttribute('aria-label', t('notePageBreakBtn'));
+  btn.innerHTML = ICON.pageBreak(18);
+  btn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    const range = quill.getSelection(true);
+    const at = range ? range.index : quill.getLength();
+    quill.insertEmbed(at, 'notePageBreak', true, 'user');
+    quill.setSelection(at + 1, 0, 'user');
+    renderNotePager(key, true);
+  });
+  group.appendChild(btn);
+  toolbar.appendChild(group);
+}
 
 /* ---------- LIVE PRESENCE + LIVE NOTE INSERTS (Notebook + Yonsei course notes) ----------
    Two Realtime mechanisms, both scoped for free by existing RLS:
@@ -31802,6 +31992,7 @@ function subscribeNoteRealtimeInserts(){
       // with it would still reset the cursor mid-flow.
       if(payload.eventType === 'UPDATE' && row.updated_by !== currentUser.id && selectedNotebookNoteId === row.id && !notebookEditorDirty && notebookQuillEditor){
         notebookQuillEditor.root.innerHTML = row.content || '';
+        renderNotePager('notebook');
         document.getElementById('notebookEditorTitle').textContent = row.lecture_title;
         updateNotebookLastSavedInfo(row);
       }
@@ -31830,6 +32021,7 @@ function subscribeNoteRealtimeInserts(){
       allNotes[groupKey].push(row);
       if(payload.eventType === 'UPDATE' && row.updated_by !== currentUser.id && selectedLectureId === row.id && !editorDirty && quillEditor){
         quillEditor.root.innerHTML = row.content || '';
+        renderNotePager('course');
         setEditorLectureTitle(row);
         updateLastSavedInfo(row);
       }
@@ -31889,6 +32081,8 @@ function ensureQuillInitialized(){
     }
   });
   buildCustomColorControls();
+  buildNotePageBreakControl(quillEditor, 'course');
+  setupNotePager('course', quillEditor, 'notePageBar');
 }
 function buildCustomColorControls(){
   const toolbar = quillEditor.getModule('toolbar').container;
@@ -32078,6 +32272,7 @@ function openLecture(noteId, groupKey){
   currentNoteColor = colorForUser(currentUser.id);
   ensureQuillInitialized();
   quillEditor.root.innerHTML = note.content || '';
+  resetNotePager('course');
   if(quillEditor._updateColorTriggers) quillEditor._updateColorTriggers();
   editorDirty = false;
   updateLastSavedInfo(note);
@@ -32363,6 +32558,8 @@ function ensureNotebookQuillInitialized(){
     }
   });
   buildQuillColorPicker(notebookQuillEditor, ()=>currentNotebookColor, ()=>{ notebookEditorDirty = true; });
+  buildNotePageBreakControl(notebookQuillEditor, 'notebook');
+  setupNotePager('notebook', notebookQuillEditor, 'notebookPageBar');
 }
 window.addEventListener('beforeunload', (e)=>{
   if(notebookEditorDirty){
@@ -32421,6 +32618,7 @@ function openNotebookNote(noteId, groupKey){
   currentNotebookColor = colorForUser(currentUser.id);
   ensureNotebookQuillInitialized();
   notebookQuillEditor.root.innerHTML = note.content || '';
+  resetNotePager('notebook');
   if(notebookQuillEditor._updateColorTriggers) notebookQuillEditor._updateColorTriggers();
   notebookEditorDirty = false;
   updateNotebookLastSavedInfo(note);
