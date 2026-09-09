@@ -3592,7 +3592,20 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
           </div>
         </div>
         <div class="card">
-          <h2 id="hExpCategoryBreakdown"></h2>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            <h2 id="hExpCategoryBreakdown" style="margin:0;"></h2>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <label for="expCatSortSelect" id="lblExpCatSort" style="font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.5px;"></label>
+              <select id="expCatSortSelect" style="font-family:'Inter',sans-serif;font-size:12.5px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:auto;">
+                <option value="date" id="optExpCatSortDate"></option>
+                <option value="amount" id="optExpCatSortAmount"></option>
+                <option value="name" id="optExpCatSortName"></option>
+                <option value="category" id="optExpCatSortCategory"></option>
+                <option value="paidBy" id="optExpCatSortPaidBy"></option>
+              </select>
+              <button type="button" class="linkbtn act-icon act-off" id="expCatDirBtn"></button>
+            </div>
+          </div>
           <div id="expCategoryBreakdown"></div>
         </div>
         <div class="card">
@@ -10381,6 +10394,7 @@ const STATIC_MAP = {
   hExpCategoryBreakdown:'hExpCategoryBreakdown', hExpBalances:'hExpBalances',
   lblNewVacationName:'lblNewVacationName', lblNewVacationStart:'lblNewVacationStart', lblNewVacationEnd:'lblNewVacationEnd', lblNewVacationCurrency:'lblNewVacationCurrency',
   hExpAllExpenses:'hExpAllExpenses', lblExpListSort:'expSortLabel', optExpSortDate:'expSortDate', optExpSortAmount:'expSortAmount', optExpSortName:'expSortName', optExpSortCategory:'expSortCategory', optExpSortPaidBy:'expSortPaidBy',
+  lblExpCatSort:'expSortLabel', optExpCatSortDate:'expSortDate', optExpCatSortAmount:'expSortAmount', optExpCatSortName:'expSortName', optExpCatSortCategory:'expSortCategory', optExpCatSortPaidBy:'expSortPaidBy',
   lblExpFormDate:'lblExpFormDate', lblExpFormAmount:'lblExpFormAmount', lblExpFormCategory:'lblExpFormCategory', lblExpFormDescription:'lblExpFormDescription', lblExpFormPaidBy:'lblExpFormPaidBy', saveExpenseBtn:'saveExpenseBtn', expDeleteBtn:'expDeleteBtn',
   hInviteFromCircle:'hInviteFromCircle', hPendingVacationInvites:'hPendingVacationInvites', lblExpCustomCategoryName:'lblExpCustomCategoryName', hInviteBySearch:'hInviteBySearch',
   optNewVacationCurrencyCustom:'optNewVacationCurrencyCustom', lblNewVacationCustomCurrency:'lblNewVacationCustomCurrency',
@@ -33348,7 +33362,8 @@ function expRerenderCounts(){
 // beside the mute sets and is just as un-persisted.
 let expOpenCategories = new Set();
 function expToggleCategoryOpen(key){
-  if(expOpenCategories.has(key)) expOpenCategories.delete(key); else expOpenCategories.add(key);
+  if(expOpenCategories.has(key)){ expOpenCategories.delete(key); delete expCatPage[key]; }
+  else { expOpenCategories.add(key); expCatPage[key] = 1; }
   renderExpCategoryBreakdown();
 }
 function expToggleCategoryMuted(key){
@@ -33425,6 +33440,10 @@ function renderExpCategoryBreakdown(){
   // cannot mean two things -- so the mute moved onto the same -/+ mark the day
   // cells and the expense rows already carry, which makes the whole tab read
   // one way: press a thing to open it, press its - to leave it out.
+  // Sorted ONCE for the whole card rather than per category, which would be a
+  // full sort of every expense on the trip for each row on screen.
+  const sortedAll = expSortedExpenses();
+  const catTotalPages = {};
   wrap.innerHTML = rows.map(([key,amt])=>{
     const info = expCategoryInfo(key);
     const muted = expMutedCategories.has(key);
@@ -33440,13 +33459,14 @@ function renderExpCategoryBreakdown(){
     // Only the rows in THIS category, and only the ones a parked day or row
     // has not already taken out -- the same set the figure beside the name
     // was computed from, or opening a category would contradict it.
-    const inner = open
-      ? `<div class="exp-cat-expand">${
-          expSortedExpenses()
-            .filter(e=> e.category === key && !expMutedDates.has(e.date) && !expMutedIds.has(e.id))
-            .map(e=> expExpenseRowHtml(e, true)).join('')
-        }</div>`
-      : '';
+    let inner = '';
+    if(open){
+      const catRows = sortedAll.filter(e=> e.category === key && !expMutedDates.has(e.date) && !expMutedIds.has(e.id));
+      const pg = expPageSlice(catRows, expCatPage[key]);
+      expCatPage[key] = pg.page;
+      catTotalPages[key] = pg.totalPages;
+      inner = `<div class="exp-cat-expand" data-cat="${escapeHtml(key)}">${pg.rows.map(e=> expExpenseRowHtml(e, true)).join('')}</div>`;
+    }
     return `<div class="exp-cat-block${muted?' muted':''}">
       <div class="exp-cat-head">
         <button type="button" class="exp-cat-row" data-cat="${escapeHtml(key)}" aria-expanded="${open?'true':'false'}">
@@ -33469,6 +33489,15 @@ function renderExpCategoryBreakdown(){
     btn.addEventListener('click', ()=> expToggleCategoryMuted(btn.dataset.cat));
   });
   expWireExpenseRows(wrap);
+  // The bar is appended after the fact rather than written into the template,
+  // because renderPaginationBar builds real elements with their own handlers.
+  wrap.querySelectorAll('.exp-cat-expand').forEach(box=>{
+    const key = box.dataset.cat;
+    expAppendPager(box, expCatPage[key], catTotalPages[key], (p)=>{
+      expCatPage[key] = p;
+      renderExpCategoryBreakdown();
+    });
+  });
   const resetBtn = wrap.querySelector('.exp-cat-reset');
   if(resetBtn) resetBtn.addEventListener('click', ()=>{
     expMutedCategories.clear();
@@ -33617,8 +33646,63 @@ function expWireExpenseRows(root){
 // (real-user request: "somewhere smart there should be a list (which you should
 // be able to choose the display order of (name/date/amount etc.)) where you can
 // see all expenses in one place")
+// ONE ordering for every expense list in this tab, with the control repeated
+// in both card headers rather than one setting per card (real-user request:
+// "these should also be able to be ordered", pointing at a category folded
+// open). Two selects showing different values for the same-looking thing is
+// the more confusing outcome; this way "how expenses are ordered" is one fact.
 let expListSort = 'date';
 let expListDir = 'desc';
+// Every list here pages at the app's own PAGE_SIZE with the app's own bar
+// (real-user request: "if there is a long list it should be using the page
+// system we have on the rest of our site", and "this goes too far down
+// otherwise" about a category folded open).
+// NO "Show more" fold in front of it, unlike the leaderboards: that fold
+// exists for a list sitting beside other content it would otherwise bury, and
+// these lists are what their own card is FOR. The job board takes the same
+// shape for the same reason.
+let expListPage = 1;
+let expDayPage = 1, expDayPageFor = null;
+const expCatPage = {};
+function expPageSlice(rows, page){
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const p = Math.min(Math.max(1, page || 1), totalPages);
+  const start = (p - 1) * PAGE_SIZE;
+  return { rows: rows.slice(start, start + PAGE_SIZE), page: p, totalPages };
+}
+function expAppendPager(host, page, totalPages, onPick){
+  if(!host || totalPages <= 1) return;
+  const nav = document.createElement('div');
+  nav.className = 'list-controls';
+  renderPaginationBar(nav, page, totalPages, onPick);
+  host.appendChild(nav);
+}
+// Both headers say the same thing, so both are written from the same pair of
+// values every render -- a control that can disagree with the list under it is
+// worse than no control.
+function expPaintSortControls(){
+  const dirLabel = t(expListDir === 'asc' ? 'expSortAsc' : 'expSortDesc');
+  [['expListSortSelect','expListDirBtn'], ['expCatSortSelect','expCatDirBtn']].forEach(([selId,btnId])=>{
+    const sel = document.getElementById(selId);
+    if(sel) sel.value = expListSort;
+    const btn = document.getElementById(btnId);
+    if(!btn) return;
+    btn.innerHTML = expListDir === 'asc' ? ICON.arrowUp(14) : ICON.arrowDown(14);
+    btn.title = dirLabel;
+    btn.setAttribute('aria-label', dirLabel);
+  });
+}
+// Re-ordering is re-reading from the top, so every list goes back to page 1.
+function expSetSort(field, dir){
+  if(field) expListSort = field;
+  if(dir) expListDir = dir;
+  expListPage = 1;
+  expDayPage = 1;
+  Object.keys(expCatPage).forEach(k=> expCatPage[k] = 1);
+  renderExpCategoryBreakdown();
+  renderExpDayAgenda();
+  renderExpAllList();
+}
 // Every comparison falls back to the DATE and then to created_at, so two rows
 // that tie on the chosen field keep a stable, meaningful order instead of
 // whatever the fetch happened to return.
@@ -33642,43 +33726,46 @@ function expSortedExpenses(){
 function renderExpAllList(){
   const wrap = document.getElementById('expAllList');
   if(!wrap) return;
-  document.getElementById('expListSortSelect').value = expListSort;
-  const dirBtn = document.getElementById('expListDirBtn');
-  const dirLabel = t(expListDir === 'asc' ? 'expSortAsc' : 'expSortDesc');
-  dirBtn.innerHTML = expListDir === 'asc' ? ICON.arrowUp(14) : ICON.arrowDown(14);
-  dirBtn.title = dirLabel;
-  dirBtn.setAttribute('aria-label', dirLabel);
-  const rows = expSortedExpenses();
+  expPaintSortControls();
+  const all = expSortedExpenses();
+  const pg = expPageSlice(all, expListPage);
+  expListPage = pg.page;
   // Excluded rows are LISTED, struck through, the same call the day list and
   // the month grid make: this is the place you come to see everything, so
   // hiding what a filter has parked would make it the one view that lies.
-  wrap.innerHTML = rows.length
-    ? rows.map(e=> expExpenseRowHtml(e, true)).join('')
+  wrap.innerHTML = pg.rows.length
+    ? pg.rows.map(e=> expExpenseRowHtml(e, true)).join('')
     : `<p class="hint">${escapeHtml(t('expNoExpensesYet'))}</p>`;
   expWireExpenseRows(wrap);
+  expAppendPager(wrap, pg.page, pg.totalPages, (p)=>{ expListPage = p; renderExpAllList(); });
 }
-document.getElementById('expListSortSelect').addEventListener('change', (e)=>{
-  expListSort = e.target.value;
-  renderExpAllList();
-});
-document.getElementById('expListDirBtn').addEventListener('click', ()=>{
-  expListDir = expListDir === 'asc' ? 'desc' : 'asc';
-  renderExpAllList();
-});
+document.getElementById('expListSortSelect').addEventListener('change', (e)=> expSetSort(e.target.value, null));
+document.getElementById('expCatSortSelect').addEventListener('change', (e)=> expSetSort(e.target.value, null));
+document.getElementById('expListDirBtn').addEventListener('click', ()=> expSetSort(null, expListDir === 'asc' ? 'desc' : 'asc'));
+document.getElementById('expCatDirBtn').addEventListener('click', ()=> expSetSort(null, expListDir === 'asc' ? 'desc' : 'asc'));
 function renderExpDayAgenda(){
   const panel = document.getElementById('expDayAgendaPanel');
   if(!panel) return;
   if(!expSelectedDate){ panel.classList.add('hidden'); panel.innerHTML=''; return; }
   panel.classList.remove('hidden');
+  // A different day is read from its own first page. Tracked by the date
+  // rather than reset from every caller, since four separate paths move it.
+  if(expDayPageFor !== expSelectedDate){ expDayPage = 1; expDayPageFor = expSelectedDate; }
+  // Kept in the order they were ADDED, not in the card-wide sort: within one
+  // day a date sort says nothing, and the order you logged them in is the one
+  // fact a single day has to offer.
   const dayExpenses = expExpenses.filter(e=>e.date===expSelectedDate)
     .sort((a,b)=> (a.created_at||'').localeCompare(b.created_at||''));
-  const rows = dayExpenses.map(e=> expExpenseRowHtml(e, false)).join('')
+  const dayPg = expPageSlice(dayExpenses, expDayPage);
+  expDayPage = dayPg.page;
+  const rows = dayPg.rows.map(e=> expExpenseRowHtml(e, false)).join('')
     || `<p class="hint">${escapeHtml(t('expNoExpensesThisDay'))}</p>`;
   // The add button sits ABOVE the list, not below it -- fixed in place as
   // you log several purchases for the same day in a row, rather than
   // drifting further down the page after every single add.
   panel.innerHTML = `<h3 style="font-family:'Noto Serif KR',serif;font-size:14px;margin:0 0 10px;">${escapeHtml(expSelectedDate)}</h3><button class="export-btn" id="expAddForDayBtn" style="margin-bottom:10px;">+ ${escapeHtml(t('expAddExpense'))}</button>${rows}`;
   expWireExpenseRows(panel);
+  expAppendPager(panel, dayPg.page, dayPg.totalPages, (p)=>{ expDayPage = p; renderExpDayAgenda(); });
   document.getElementById('expAddForDayBtn').addEventListener('click', ()=> openExpenseModal(null, expSelectedDate));
 }
 

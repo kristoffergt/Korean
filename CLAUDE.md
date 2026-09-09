@@ -2798,3 +2798,53 @@ change from a minus to a plus."
   faded row with a `+` beside it.
 - `expCategoryNotCounted` was the only string either place used, so the key
   came out of all three tables rather than being left to rot.
+
+## Every expense list pages, and one setting orders them all (9 Sep, thirtieth pass)
+
+"Just like everywhere else, if there is a long list it should be using the page
+system we have on the rest of our site", then "this goes too far down
+otherwise. And these should also be able to be ordered" -- with a screenshot of
+Food & Drink folded open, running off the bottom of the screen.
+
+All three expense lists page at the app's own `PAGE_SIZE` through the app's own
+`renderPaginationBar`: the all-expenses card, a category folded open (its own
+page per category), and the day list.
+
+- **No "Show more" fold in front of the bar**, unlike the leaderboards and the
+  book/job/cert lists. That fold exists for a list sitting BESIDE other content
+  it would otherwise bury; these lists are what their own card is for, and
+  collapsing "All expenses" to three would contradict the card. The Job Board
+  already takes this shape for the same reason.
+- **A category's page is forgotten when it closes** and starts at 1 when it
+  opens, so a category reopened is read from its top.
+- **The day list is tracked by the DATE it was rendered for**, not reset from
+  every caller: four separate paths move `expSelectedDate`, and one of them is
+  a save.
+- **The bar is appended after `innerHTML`, not written into the template**,
+  because `renderPaginationBar` builds real elements carrying their own
+  handlers.
+- **`expSortedExpenses()` is called ONCE per breakdown render**, not per
+  category: inside the map it was a full sort of every expense on the trip for
+  each row on screen.
+
+### One ordering, two controls
+
+The by-category card gained the same Sort select and direction mark the
+all-expenses card has, and **they drive the same pair of values**. Two selects
+showing different values for the same-looking thing is the more confusing
+outcome, so "how expenses are ordered" is one fact and `expPaintSortControls()`
+writes both headers from it every render -- a control that can disagree with
+the list under it is worse than no control.
+
+**Re-ordering is re-reading from the top**, so it puts every list back on page
+1, including each open category.
+
+**The day list is the one exception and keeps its own order**: within a single
+day a date sort says nothing, and the order you logged them in is the one fact
+that day has to offer.
+
+Driven with 41 expenses (27 in one category, 12 on one day): the all list pages
+5 ways, the day list 2, Food & Drink 3 with 7 on the last page; changing the
+sort from the by-category card re-orders both lists, resets every page to 1 and
+moves the other card's select with it; flipping the direction from the all
+card updates the category card's mark; and closing a category forgets its page.
