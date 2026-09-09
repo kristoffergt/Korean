@@ -2983,3 +2983,28 @@ on top of the parking marks would be a second thing to keep track of.
 - With a filter on and nothing matching, the empty line says so ("Nothing
   matches what you asked to see") rather than the tab's "no expenses logged
   yet", which would be a different and false claim.
+
+## Un-picking the last level gives the standard order back, and the empty line names its own question (9 Sep, thirty-fifth pass)
+
+"If I unclick amount, it should just do the standard order that was already
+there", and "this should be smarter. If no excluded, say 'No excluded
+entries.' or something".
+
+- **Un-picking the last chosen field hands the list the DEFAULT ordering**
+  rather than flipping it, which is what the pass before did to avoid leaving
+  the list with no order at all. Date-newest-first is that order, so Date is
+  ticked afterwards and the menu goes on saying what the list is really in --
+  the tick is not lost, it moves to the thing now doing the ordering.
+  `expDefaultSort()` is written once and read by the comparator, both owners'
+  initial state and the un-pick, so the three cannot drift into three ideas of
+  "standard".
+- **The empty line names which question came up empty.** "Nothing matches what
+  you asked to see" was true of all three modes and said nothing about any of
+  them. Three modes, three different facts: **nothing is excluded**,
+  **everything is excluded**, and **nothing is logged at all** -- and the last
+  is a different claim from the first two, so it wins whenever the trip really
+  is empty.
+
+Checked over five states: nothing parked with Excluded only, everything parked
+with Counted only, an empty trip in every mode, and the two combinations that
+still have rows to show.
