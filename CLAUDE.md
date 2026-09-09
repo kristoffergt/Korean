@@ -3077,3 +3077,17 @@ than throwing or parking something that is not there.
 rather than only days and rows -- two buttons carrying the same words had to do
 the same thing. The by-category card keeps its own scoped "Count all
 categories", which sits with the rows it resets and says exactly what it does.
+
+## "3 excluded" (9 Sep, thirty-eighth pass)
+
+"Think it's too much yap." Seven words to two.
+
+"3 expenses are left out of these totals" spelled out things the reader can
+already see: the mark beside it is the same `-` that parked them, and the
+figure it qualifies is directly underneath. **`{n} excluded`.**
+
+It also drops the singular/plural PAIR the sentence needed -- "excluded" does
+not inflect, so one key is honest at n = 1 in all three languages, where "1
+expense IS left out" against "3 expenses ARE" was two.
+
+Read back in all three: "1 excluded", "3개 제외됨", "3 bị loại".
