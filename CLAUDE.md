@@ -3008,3 +3008,29 @@ entries.' or something".
 Checked over five states: nothing parked with Excluded only, everything parked
 with Counted only, an empty trip in every mode, and the two combinations that
 still have rows to show.
+
+## How the all-expenses list is read survives a refresh (9 Sep, thirty-sixth pass)
+
+"It doesnt save what i have picked", then "if i refresh the site".
+
+The ordering, the multiple-sort switch and the Show filter go to localStorage
+(`expListPrefs`) and come back on load.
+
+**This does not contradict the rule that the parking marks are NOT persisted.**
+That rule is there because a filter which quietly outlives a reload is how a
+total lies to you weeks later -- and none of these three can lie: an ordering
+cannot change a figure, and Show is a labelled control sitting right there
+saying which of the three it is on.
+
+**The per-category sorts are still not saved**, for the reason they are already
+forgotten when a category closes: they belong to a category you have opened,
+and there are none open on a fresh load.
+
+**Read back field by field rather than trusted.** This is a string somebody
+else could have written, and a bad field name would silently sort by nothing
+while a bad direction would sort backwards. Driven through eleven shapes --
+unparseable, null, a bare number, `sort` not an array, a bad field, a bad
+direction, a duplicated field, one good level beside one bad, nulls inside the
+array, a bad `show`, a non-boolean `multi` -- none of which throws, and every
+one of which lands on the default for whatever did not survive rather than
+taking the list down.

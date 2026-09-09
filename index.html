@@ -33766,6 +33766,7 @@ function expPaintSortControls(){
     expListSort = next;
     expListMulti = multi;
     expListPage = 1;
+    expSaveListPrefs();
     renderExpAllList();
   });
 }
@@ -33944,9 +33945,49 @@ function renderExpAllList(){
   expAppendPager(wrap, pg.page, pg.totalPages, (p)=>{ expListPage = p; renderExpAllList(); });
 }
 
+// How the all-expenses list is READ survives a refresh (real-user report: "it
+// doesnt save what i have picked ... if i refresh the site"). Unlike the
+// parking marks, which are deliberately not persisted because a filter that
+// quietly outlives a reload is how a total lies to you weeks later, none of
+// these three can lie: the ordering cannot change a figure, and Show is a
+// labelled control sitting right there saying which of the three it is on.
+// The per-category sorts are NOT saved, for the reason they are already
+// forgotten when a category closes: they belong to a category you have opened,
+// and there are none open on a fresh load.
+const EXP_LIST_PREFS_KEY = 'expListPrefs';
+function expSaveListPrefs(){
+  try {
+    localStorage.setItem(EXP_LIST_PREFS_KEY, JSON.stringify({
+      sort: expListSort, multi: expListMulti, show: expListShow
+    }));
+  } catch(e){}
+}
+// Validated field by field rather than trusted: this is a string somebody else
+// could have written, and a bad field name would silently sort by nothing
+// while a bad direction would sort backwards. Anything that does not survive
+// the check falls back to the default rather than taking the whole thing down.
+function expLoadListPrefs(){
+  let raw;
+  try { raw = JSON.parse(localStorage.getItem(EXP_LIST_PREFS_KEY) || 'null'); } catch(e){ return; }
+  if(!raw || typeof raw !== 'object') return;
+  if(Array.isArray(raw.sort)){
+    const clean = raw.sort
+      .filter(l=> l && typeof l === 'object'
+        && EXP_SORT_FIELDS.includes(l.field) && (l.dir === 'asc' || l.dir === 'desc'))
+      // A field twice over is a level that could never break a tie the first
+      // one did not, which the control itself never produces.
+      .filter((l,i,a)=> a.findIndex(x=> x.field === l.field) === i)
+      .map(l=> ({ field:l.field, dir:l.dir }));
+    if(clean.length) expListSort = clean;
+  }
+  expListMulti = raw.multi === true;
+  if(['all','counted','excluded'].includes(raw.show)) expListShow = raw.show;
+}
+expLoadListPrefs();
 document.getElementById('expListShowSelect').addEventListener('change', (e)=>{
   expListShow = e.target.value;
   expListPage = 1;
+  expSaveListPrefs();
   renderExpAllList();
 });
 function renderExpDayAgenda(){
