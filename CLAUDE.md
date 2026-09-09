@@ -2487,3 +2487,83 @@ the current session.
 Keep this file updated as new durable conventions, standing instructions, or
 architectural decisions come up — this is the persistent memory future
 agents/sessions should read first before making changes to the app.
+
+## A hidden sibling is not a floor, and it was throwing the sub bar off the top (9 Sep, twenty-fourth pass)
+
+"The subtabs still fly out of the screen due to the pop-out sub tabs when you
+have the Korean tab selected (only that one for some reason)."
+
+Reproduced exactly, and the number names the fault outright. `subBarRoomBelow`
+walks to the first element under the row that draws a box and answers with the
+distance to it. The element directly under a sub bar is that panel's FIRST
+sub-view, and every sub-view but the first is `display:none` -- which reports a
+0,0 rect. So the room came out as **-184px**, `Math.min(clear, room)` took the
+smaller of 12 and -184, and the push wrote `translateY(-184px)`: the row went
+up behind the header and off the screen.
+
+- **It was never about that tab.** Every panel is laid out sub bar, then first
+  sub-view, so what really decides it is WHICH sub-view is open -- on the first
+  one the sibling is visible and the room is real, on any other it is nothing.
+  He was on Notebook, which is why it read as being about Korean.
+- **Two guards, because they answer different questions.** A zero-height
+  sibling is SKIPPED, since a hidden element is not a floor at all; and the
+  answer is floored at 0, because this number is how far the row may be pushed
+  DOWN and the one thing it must never express is moving it up into the tabs it
+  hangs from.
+- Measured on the reported state: room -184 before, **16 after**, push +13,
+  which is the row stepping aside exactly as it does on the first sub-view.
+
+### The ✕ was a 51-pixel button, and that was the "huge gap"
+
+"Also noticed the huge gap here" (screenshot: an expense row reading
+`Groceries · Paid by Kristoffer · pencil ........ ✕`).
+
+The base rule is `button{padding:10px 20px}` and `.item-del` resets background,
+border, colour and font-size and **not padding**. So every bare ✕ in the app
+was a **51x35 button with the glyph twenty pixels in from its own left edge**,
+and the row's 8px gap was really 28. `padding:0;line-height:1` -- 51x35 to
+**11x15**, glyph-to-glyph gap 28 to 8. `.note-del` and `.gram-resource-del` had
+the same omission and are fixed with it.
+
+### An icon-only linkbtn is a MARK, not a word
+
+"And the fact that the pen does not expand like the X does."
+
+This file already records the two motion vocabularies: a WORD grows 1.08 from
+its left edge, a MARK grows 1.2 from its own centre because at eleven to
+fifteen pixels 1.08 is invisible. The pencil is a mark drawn as a `.linkbtn`,
+so it was taking the word's rule -- an 8% grow on a fourteen-pixel drawing,
+which is nothing. `.linkbtn.act-icon` is in the mark vocabulary now (later in
+source order AND more specific than `.linkbtn:hover`, which is what lets it
+win), and **the grey hover box went with it**: one row carrying two different
+hover affordances side by side is exactly the inconsistency being reported.
+
+**And `.item-meta .linkbtn` was quietly undoing `.linkbtn.act-icon`.** Same
+specificity, later in the file, so inside a meta row an icon button had its
+padding put back to 0 and its underline turned back on. `:not(.act-icon)`.
+
+### The ↗ is a mark too, so the underline stops at the word
+
+"The diagonal arrow should not be underlined (Link and Syllabus and other
+places where we have links like that). Only the word."
+
+The glyph was part of the STRING (`linkOpen:'Link ↗'`), so it sat inside the
+link's own decorated run. **A text-decoration cannot be turned off on a
+descendant of the element drawing it** -- but it does not propagate into an
+atomic inline-level box, so `display:inline-block` is what actually lifts it.
+`extLinkLabel(key)` appends `<span class="ext-arrow">`, the twelve strings lost
+their trailing " ↗", and the span carries the word space as a margin.
+
+- **`resumeViewLink` had to leave `STATIC_MAP`**, whose loop writes
+  `textContent` and so cannot carry a mark that is its own element.
+- The arrow is `aria-hidden`: the link's own words are the name.
+
+### Every edit is the pen
+
+"Asked you change all edit buttons to the edit pen icon we use. You haven't."
+
+Three were left as words -- the course list's, the grammar row's, and the
+moderator panel's "Edit name". All three are `act-icon` pencils now with the
+word surviving as the title and the accessible name. `vertical-align:middle`
+went onto `.linkbtn.act-icon` for the grammar one, which sits on a text line
+beside two word buttons rather than in a flex row.
