@@ -12482,6 +12482,7 @@ const MODAL_CLOSE_BTN = {
   calQuickViewModal: 'quickViewCloseBtn',
   deleteChoiceModal: 'deleteChoiceCancelBtn',
   interviewDateModal: 'interviewDateCancelBtn',
+  expenseModal: 'closeExpenseModalX',
   accountSettingsModal: 'closeAccountSettingsX',
   friendsModal: 'closeFriendsX',
   brandLightbox: 'brandLightboxClose',
@@ -33484,7 +33485,12 @@ document.getElementById('expFormAmount').addEventListener('input', (e)=>{
   const cleaned = e.target.value.replace(/[^0-9.kKmM]/g, '');
   if(cleaned !== e.target.value) e.target.value = cleaned;
 });
+// A held Enter repeats, and this writes a row -- so the save is one at a
+// time. The guard sits after the validation rather than at the top, since a
+// form that fails validation has started nothing to be in the middle of.
+let expSaving = false;
 async function saveExpenseSubmit(){
+  if(expSaving) return;
   const vac = activeVacation();
   if(!vac) return;
   const date = document.getElementById('expFormDate').value;
@@ -33497,21 +33503,24 @@ async function saveExpenseSubmit(){
   if(amountRaw.trim() && (amount === null || amount <= 0)){ alert(t('expAmountInvalid')); return; }
   if(!date || !amount || amount<=0 || !paidBy){ alert(t('expFormInvalid')); return; }
   if((date < vac.date_start || date > vac.date_end) && !confirm(t('expDateOutsideRangeConfirm'))) return;
-  if(expEditingId){
-    const patch = { date, amount, category, description: description||null, paid_by: paidBy, updated_at: new Date().toISOString() };
-    const { error } = await supabaseClient.from('expenses').update(patch).eq('id', expEditingId);
-    if(error){ alert(error.message); return; }
-    const idx = expExpenses.findIndex(e=>e.id===expEditingId);
-    if(idx>=0) Object.assign(expExpenses[idx], patch);
-  } else {
-    const row = { vacation_id: vac.id, date, amount, category, description: description||null, paid_by: paidBy, created_by: currentUser.id };
-    const { data, error } = await supabaseClient.from('expenses').insert(row).select();
-    if(error){ alert(error.message); return; }
-    if(data && data[0]) expExpenses.push(data[0]);
-  }
-  document.getElementById('expenseModal').classList.add('hidden');
-  expSelectedDate = date;
-  renderExpenditure();
+  expSaving = true;
+  try {
+    if(expEditingId){
+      const patch = { date, amount, category, description: description||null, paid_by: paidBy, updated_at: new Date().toISOString() };
+      const { error } = await supabaseClient.from('expenses').update(patch).eq('id', expEditingId);
+      if(error){ alert(error.message); return; }
+      const idx = expExpenses.findIndex(e=>e.id===expEditingId);
+      if(idx>=0) Object.assign(expExpenses[idx], patch);
+    } else {
+      const row = { vacation_id: vac.id, date, amount, category, description: description||null, paid_by: paidBy, created_by: currentUser.id };
+      const { data, error } = await supabaseClient.from('expenses').insert(row).select();
+      if(error){ alert(error.message); return; }
+      if(data && data[0]) expExpenses.push(data[0]);
+    }
+    document.getElementById('expenseModal').classList.add('hidden');
+    expSelectedDate = date;
+    renderExpenditure();
+  } finally { expSaving = false; }
 }
 async function deleteExpense(id){
   if(!confirm(t('expDeleteConfirm'))) return;
@@ -33524,6 +33533,22 @@ document.getElementById('saveExpenseBtn').addEventListener('click', saveExpenseS
 document.getElementById('expDeleteBtn').addEventListener('click', ()=> deleteExpense(expEditingId));
 document.getElementById('closeExpenseModalX').addEventListener('click', ()=> document.getElementById('expenseModal').classList.add('hidden'));
 document.getElementById('expenseModal').addEventListener('click', (e)=>{ if(e.target===e.currentTarget) e.currentTarget.classList.add('hidden'); });
+// Enter saves, from any field on the form (real-user request: "let me press
+// enter to save"). The modal is a div rather than a <form>, so nothing gave
+// the key a meaning at all -- and typing an amount and hitting Enter is what
+// anybody does. Skipped in the three places it ALREADY means something:
+//   - on a button, where the browser fires that button's own click, and for
+//     Delete that is emphatically not Save;
+//   - while the category list is open, where it belongs to the option focused;
+//   - mid-composition, since an IME's Enter commits the Korean or Vietnamese
+//     being typed into the description and is not a submit.
+document.getElementById('expenseModal').addEventListener('keydown', (e)=>{
+  if(e.key !== 'Enter' || e.isComposing) return;
+  if(e.target.closest('button')) return;
+  if(!document.getElementById('expFormCategoryList').classList.contains('hidden')) return;
+  e.preventDefault();
+  saveExpenseSubmit();
+});
 
 // Equal split among current accepted members, integer cents to avoid float
 // drift, remainder distributed one cent at a time so shares sum exactly,

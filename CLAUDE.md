@@ -2567,3 +2567,38 @@ moderator panel's "Edit name". All three are `act-icon` pencils now with the
 word surviving as the title and the accessible name. `vertical-align:middle`
 went onto `.linkbtn.act-icon` for the grammar one, which sits on a text line
 beside two word buttons rather than in a flex row.
+
+## Enter saves the expense (9 Sep, twenty-fifth pass)
+
+"Let me press enter to save."
+
+The expense modal is a `div`, not a `<form>`, so **Enter had no meaning at all**
+in it -- and typing an amount and hitting Enter is what anybody does. A keydown
+listener on the modal, skipped in the three places the key already means
+something:
+
+- **on a button**, where the browser fires that button's own click, and for
+  Delete that is emphatically not Save;
+- **while the category list is open**, where Enter belongs to whichever option
+  is focused;
+- **mid-composition** (`e.isComposing`), since an IME's Enter commits the
+  Korean or Vietnamese being typed into the description rather than submitting.
+
+**A held Enter repeats, and this writes a row**, so `saveExpenseSubmit` is now
+one at a time -- the flag is set AFTER the validation, since a form that failed
+validation has started nothing to be in the middle of, and cleared in a
+`finally` so an alerted error does not leave it stuck.
+
+Escape closes it too: `expenseModal` was simply missing from `MODAL_CLOSE_BTN`.
+
+Checked by dispatching the real event from each element: fires from the amount,
+description, date and paid-by fields (4 of 4, `preventDefault` on each), and
+does NOT fire on the Delete button, on the Save button, with the category list
+open, mid-composition, or on any other key (5 of 5).
+
+**This pane cannot press a key.** `computer type` inserts the characters (the
+field really does fill in) but `computer key` delivers nothing at all -- a
+document-level CAPTURE listener counted zero keydowns for both `Return` and a
+typed `\n`. So a key path has to be driven by dispatching a `KeyboardEvent` at
+the element, which exercises the listener and its bubbling path honestly and is
+the only thing available here.
