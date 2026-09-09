@@ -2848,3 +2848,20 @@ Driven with 41 expenses (27 in one category, 12 on one day): the all list pages
 sort from the by-category card re-orders both lists, resets every page to 1 and
 moves the other card's select with it; flipping the direction from the all
 card updates the category card's mark; and closing a category forgets its page.
+
+## Pressing the same day again closes the list under the grid (9 Sep, thirty-first pass)
+
+"If you click the same day again, dont show that bottom row."
+
+The cell's click set `expSelectedDate = dateKey` outright, so once a day was
+picked the list under the grid could never be put away -- only moved to another
+day. It toggles now, which is the same gesture the trip pills got two passes
+ago: the press that selects is also the press that lets go.
+
+Nothing else needed changing -- `renderExpDayAgenda` already hides and empties
+the panel for a null date, and the stat tile already falls back to today, which
+is exactly what it showed before anything had been picked.
+
+Checked over seven presses: picking, un-picking and re-picking a day, moving to
+another day, an EMPTY day (which is the state the report was made from), and
+that the day's own `-` mark still parks the day without touching the selection.

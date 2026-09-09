@@ -33592,8 +33592,12 @@ function renderExpMonthGrid(){
     // stopPropagation, or excluding a day would also select it -- two answers
     // to one press, and the cell's own click is the more visible of them.
     if(muteEl) muteEl.addEventListener('click', (ev)=>{ ev.stopPropagation(); expToggleDateMuted(dateKey); });
+    // Pressing the day you are already on closes the list under the grid
+    // (real-user request: "if you click the same day again, dont show that
+    // bottom row"). Same gesture as the trip pills: a press that selects is
+    // also the press that lets go, so there is always a way back off it.
     cell.addEventListener('click', ()=>{
-      expSelectedDate = dateKey;
+      expSelectedDate = (expSelectedDate === dateKey) ? null : dateKey;
       renderExpMonthGrid();
       renderExpDayAgenda();
       renderExpStats();
