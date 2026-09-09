@@ -2865,3 +2865,58 @@ is exactly what it showed before anything had been picked.
 Checked over seven presses: picking, un-picking and re-picking a day, moving to
 another day, an EMPTY day (which is the state the report was made from), and
 that the day's own `-` mark still parks the day without touching the selection.
+
+## Each category orders itself, and an ordering is a STACK (9 Sep, thirty-second pass)
+
+"The sort should be specific to each category, not be something you have there
+at the top level", then "should allow for a multiple sort. Could do category
+while also doing date and/or while also doing amount."
+
+### The control belongs to the list it orders
+
+The card-level Sort in "By category" is gone. A folded-open category carries
+its own control at its own head and its own levels, kept in `expCatSort[key]`
+and **forgotten when the category closes**. Wanting Food & Drink by amount says
+nothing about how you read Transport, which is exactly why one control over
+both was wrong.
+
+**Category is not offered INSIDE a category**: every row in there has the same
+one, so it would be a level that can never break a tie. The all-expenses list
+keeps all five fields.
+
+### An ordering is a list of levels
+
+`[{field, dir}, ...]`, applied in turn, each with its own direction. One level
+is the ordinary case and is what both start on.
+
+- **The final tiebreak is FIXED at newest-first**, not the last level's own
+  direction. Otherwise adding a level would quietly reshuffle the ties
+  underneath it, which is the opposite of what adding one is for.
+- **Picking a field another level already holds SWAPS the two** rather than
+  creating a duplicate or silently dropping one: the number of levels stays
+  where the reader put it, and what happens reads the obvious way. Each level
+  keeps its own direction through the swap.
+- **`+` is offered only while a field is left**, since two levels on one field
+  is a second question that can never be asked.
+- **The `✕` is `act-off`, not `act-remove`.** It throws away a way of READING
+  the list, not a record. Red belongs to the marks that delete something, and
+  three of them in a control row would shout at nobody.
+- One builder and one wiring function serve both owners; the category's is
+  built with `t()` rather than STATIC_MAP, since there is one per open category
+  and STATIC_MAP is keyed by a single element id.
+- The breakdown groups the open categories' rows in ONE pass and then sorts
+  each category's own array, rather than sorting the whole trip per row.
+
+### And a language change now redraws the Expenses tab
+
+`renderAll()` never included `renderExpenditure()`, so the whole tab -- which is
+almost entirely generated markup with barely anything in STATIC_MAP -- stayed
+in the old language until something else happened to re-render it. A per-open-
+category control cannot be in STATIC_MAP at all, so this had to be fixed rather
+than lived with. Checked: switching to Korean redraws both stacks (정렬 /
+그다음 / 날짜) and the open category survives the switch.
+
+Driven over eleven steps: one level to three and back, the swap, removing the
+middle level, category-asc-then-amount-desc giving Dinner/Brunch/Lunch then
+Taxi/Metro/Bus, two categories open with different orderings that do not touch
+each other or the all-expenses list, and a closed category forgetting its own.
