@@ -2920,3 +2920,13 @@ Driven over eleven steps: one level to three and back, the swap, removing the
 middle level, category-asc-then-amount-desc giving Dinner/Brunch/Lunch then
 Taxi/Metro/Bus, two categories open with different orderings that do not touch
 each other or the all-expenses list, and a closed category forgetting its own.
+
+## The category's sort stack sits on the right (9 Sep, thirty-third pass)
+
+"Keep the sort on the right side."
+
+`justify-content: flex-end` on `.exp-sort-row`. It ends where the category
+row's own figures end, so the two line up rather than the controls starting a
+second column under the name -- and it is where the all-expenses card keeps
+its own. flex-end also right-aligns each wrapped line once the stack grows past
+one row, which is the case a text-align would not have covered.
