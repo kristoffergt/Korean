@@ -2658,3 +2658,65 @@ selected day alone, and a day with no expenses carries no mark.
 smear into one line across the numerals at small sizes, so three stat tiles
 looked struck through and were not -- `getComputedStyle().textDecorationLine`
 said `none` for all of them and `line-through` for the one that really was.
+
+## A trip can be edited, let go of, and deleted (9 Sep, twenty-seventh pass)
+
+"I am unable to edit or delete these", then "and when there is only 1, I can't
+unselect it", then "when you close things on click, it currently closes it on
+release click. So when you try to highlight something and go beyond the tab it
+closes it".
+
+### The backdrop only closes a dialog the gesture BEGAN on
+
+**A click fires on the nearest common ancestor of where the pointer went DOWN
+and where it came back UP.** So selecting text inside a dialog and releasing
+past its edge lands a click on the BACKDROP, and the dialog went away taking
+the selection with it. Thirteen overlays had the same
+`if(e.target === e.currentTarget)` and now share `closeOnBackdrop(overlay,
+close)`: `pointerdown` records whether the gesture started on the backdrop, and
+the click still has to land there too.
+
+Driven through all four cases: a real backdrop press-and-release still closes;
+pressing inside the card and releasing past its edge does not; pressing the
+backdrop and releasing INSIDE does not either; and a genuine backdrop click
+straight after a drag-out still closes, so the flag is not left stuck.
+
+### Edit and delete were never blocked by the database
+
+The table has had `vacations_update` and `vacations_delete` on
+`is_vacation_owner` since the feature was built -- only the UI was missing, so
+**no migration was needed**. A pencil rides in each pill, and the form is the
+create form doing both jobs, the shape the expense modal already has.
+
+- **Only on a trip you OWN.** Both policies are owner-only, so a pencil on
+  somebody else's trip would be a promise the database refuses to keep.
+- **The pencil is a SIBLING of the pill** -- a button cannot contain a button
+  -- so the two sit in one bordered inline-flex wrapper and read as one object
+  rather than as a mark floating between two pills. A pill with no pencil drops
+  the room for one (`:not(:has(...))`).
+- **`hNewVacation` and `createVacationBtn` left STATIC_MAP**, whose loop would
+  put "New vacation" and "Create vacation" back over an edit at the next
+  language change. Same reason `expModalTitle` is not in it.
+- **A currency the picker does not list comes back as the free-text one**
+  rather than silently reverting to USD: "Other" has always accepted a plain
+  code, so an edit has to be able to show one.
+- **Deleting says what goes with it, and names the trip.** `expenses` and
+  `vacation_members` are both `on delete cascade` from the vacation, so the
+  whole trip's log goes at that moment, for everyone on it.
+- Narrowing the dates leaves an expense outside the new range exactly where it
+  was. It still happened, and the month grid already draws an out-of-range day
+  faded rather than hiding it.
+- Enter saves here too, on the same exceptions as the expense form, and the
+  same one-at-a-time guard.
+
+### Pressing the trip you are on lets go of it
+
+With two trips you can always leave one by picking the other; with one there
+was no way off it at all, because `switchActiveVacation` returned early on the
+id it already held. It toggles now.
+
+**And that needed a third sentence in the empty state.** "Create a vacation
+above to start logging expenses" is plainly wrong advice when you have two and
+simply have not picked one -- so the card tells apart could-not-check, there
+are none, and **there are some but none is picked**. The switcher stays on
+screen either way, so it is not a dead end.
