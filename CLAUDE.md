@@ -2720,3 +2720,61 @@ above to start logging expenses" is plainly wrong advice when you have two and
 simply have not picked one -- so the card tells apart could-not-check, there
 are none, and **there are some but none is picked**. The switcher stays on
 screen either way, so it is not a dead end.
+
+## A category opens, and every expense is in one place (9 Sep, twenty-eighth pass)
+
+"Allow expansion of these to see all the expenses within each category. Also
+somewhere smart there should be a list (which you should be able to choose the
+display order of (name/date/amount etc.)) where you can see all expenses in
+one place."
+
+### One expense row, drawn in three places
+
+`expExpenseRowHtml(e, showDate)` + `expWireExpenseRows(root)`. The day list, a
+category folded open and the all-expenses list are the same row, so the three
+cannot drift into describing an expense differently. `showDate` is the only
+thing that varies: under a day heading the date is already said, and in the
+other two it is the thing you are looking for.
+
+### Pressing a category row opens it, and the mark is what parks it
+
+The row's press USED to be the mute, and one row cannot mean two things. The
+mute moved onto the same `-`/`+` mark the day cells and the expense rows
+already carry, which makes the whole tab read one way: **press a thing to open
+it, press its `-` to leave it out.**
+
+- **The mark is a SIBLING of the row**, not inside it -- a button cannot
+  contain a button -- so the two share a flex line and the bar under the name
+  ends a mark's width short of the card. Equally on every row, so the
+  comparison between them stays honest.
+- **A category opens onto exactly the rows its own figure was computed from**:
+  its expenses less anything a parked DAY or a parked row has already taken
+  out. Otherwise opening a category would contradict the number beside its
+  name.
+- The fold state sits beside the mute sets and is just as un-persisted: it is a
+  view being tidied for now.
+
+### All expenses, in whatever order you want to read them
+
+A card of its own between the month and the balances -- the calendar answers
+"when", this answers "everything". Sortable by date, amount, name, category or
+who paid, either direction, off one select and one arrow.
+
+- **Every comparison falls back to the DATE and then to `created_at`**, so rows
+  that tie on the chosen field keep a stable, meaningful order rather than
+  whatever the fetch returned. Sorting by who paid gives each person's own
+  expenses in date order, which is the useful reading of that sort.
+- **Excluded rows are LISTED, struck through.** This is the place you come to
+  see everything, so hiding what a filter has parked would make it the one view
+  that lies.
+- The order is module state, not localStorage -- `expAvgMode` is held the same
+  way, and a sort is a way of reading rather than a setting.
+- It is deliberately uncapped and unscrolled: an inner scroller inside a page
+  that already scrolls is worse than a long list, and this list is the point.
+
+Driven against five expenses over four days: all five sorts come out right in
+both directions (including the paid-by tie-break), the select and the arrow
+both drive it, opening Food & Drink shows its two rows and nothing else,
+parking a row from inside a category drops it from that category's list and
+takes ₩9,000 off the total while the all-expenses list still shows it struck
+through, and the mark parks a category without opening it.
