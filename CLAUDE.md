@@ -3091,3 +3091,44 @@ not inflect, so one key is honest at n = 1 in all three languages, where "1
 expense IS left out" against "3 expenses ARE" was two.
 
 Read back in all three: "1 excluded", "3개 제외됨", "3 bị loại".
+
+## The notice is ON the total, and a delete pill is BRIGHT RED (9 Sep, thirty-ninth pass)
+
+"'2 expenses left out' (red text in the total)" and "'Count everything' (green
+at the bottom left like everywhere else)."
+
+The amber banner is gone. The two halves of it went where each belongs:
+
+- **The fact is on the figure it is about** -- a red line inside the Total tile,
+  under its own label, so the number and what it is short by are read in one
+  glance rather than as a strip above the card.
+- **The way back is a plain green `linkbtn` at the foot of the card**, which is
+  where every other "count these again" in this tab already sits, and it is
+  "Count everything" now -- the "again" went from the key, so the grid's copy
+  got shorter with it.
+
+**And the singular came back.** "2 expenses left out" inflects where "2
+excluded" did not, so English needs its own two keys again; Korean and
+Vietnamese hold the same string in both.
+
+### A delete drawn as a solid pill
+
+"All delete buttons on the site in these pills looks stupid as fuck in terms of
+contrast", then "should be bright red".
+
+They were the default button fill -- near-BLACK in the light theme and
+near-WHITE in the dark one -- with `color: var(--danger)` on top. The theme's
+two reds are a brick (#B33B34) and a salmon (#E8827A), so either way the word
+sat in the same colour family as the pill under it and read as disabled.
+
+`.btn-danger` is a solid `--danger-solid` (#DC2626) with white on it, and that
+token is deliberately OUTSIDE the light/dark pair: red on a button is not a
+theme decision. Three buttons carry it -- the expense delete, the vacation
+delete, and the account delete, which had been doing this by hand with an
+inline `--seal` fill and now shares the one definition.
+
+**Still neutral, and left alone**: the four deletes drawn as `.export-btn` (the
+calendar's delete, delete-this-only / delete-all, delete all writing samples).
+They are a different control -- a small outlined button -- rather than the pill
+that was reported, and turning a two-button choice dialog into two red slabs is
+a bigger call than this was.
