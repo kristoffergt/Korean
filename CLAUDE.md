@@ -3132,3 +3132,68 @@ calendar's delete, delete-this-only / delete-all, delete all writing samples).
 They are a different control -- a small outlined button -- rather than the pill
 that was reported, and turning a two-button choice dialog into two red slabs is
 a bigger call than this was.
+
+## Every "Sort by" on the site is the expenses control now (9 Sep, fortieth pass)
+
+"We need to update this sort by in jobs applications and certifications too. We
+have a better system now. Update all THIS TYPE of sorts across the site to that
+new system we have in expenses."
+
+Four one-field `<select>`s replaced by the menu with the multiple-sort switch:
+**job applications, certifications, the job board, and the moderator user
+list.** The control stopped being the expenses' own -- `exp-sort-*` became
+`sort-*` in the CSS, `expSortMultiple/Then/Asc/Desc` became `sortMultiple`
+and friends, and the field labels became ONE family (`sortField<Name>`) that
+every list draws from by naming its fields. Eight keys nothing read any more
+came out of all three tables.
+
+### What each list gained, and what it kept
+
+| | fields | default |
+|---|---|---|
+| applications | date, status, company, role | date, newest |
+| certifications | date, status, name, issuer | date, newest |
+| job board | posted, deadline, title, company | posted, newest |
+| moderator | date, name, 2FA, confirmed | date, oldest |
+
+**Every old behaviour is preserved by the value function rather than by the
+sort.** Status still sorts in PIPELINE order (`JOB_STATUS_SORT_ORDER`), not
+alphabetically. A certification with no completion date is still dated by when
+it was added. A job-board listing with NO deadline still sorts last whichever
+way that level points -- a `￿` sentinel does it, where an empty string
+would put it first ascending. The two moderator booleans read as 1/0, so "2FA"
+descending puts the accounts that have it first, which is what its single
+option used to mean.
+
+**A field's default direction is per field now**: words go A to Z, a pipeline
+goes in pipeline order, and anything countable goes biggest or newest first.
+Always-descending was fine when only expenses had this and is wrong the moment
+"Company" is an option.
+
+**Every list remembers its ordering** in one `listSortPrefs` store keyed by
+list, validated field by field on the way back in.
+
+### Two traps, one of them expensive
+
+- **A `const` used during script EVALUATION must be declared above the line
+  that uses it, and a try/catch will hide it.** These lists build their own
+  sort state as the script runs (`let jobSort = loadListSort(...)` at the top
+  of the jobs block), and the store's key was declared with the control near
+  the end of the file -- so it was in its temporal dead zone, the read threw
+  ReferenceError, the `catch` returned `{}`, and every list silently started on
+  its default. It looks exactly like "it does not save". The store now sits
+  above every caller.
+- **`python3 -m http.server --directory "$PWD"` is not safe here.** This
+  environment flips the working directory between Bash calls, so the server can
+  end up serving a different tree -- and then the page silently lags the file
+  being edited while every change "does nothing". It cost a wrong diagnosis
+  above. Pass the absolute path, and when behaviour contradicts the source,
+  `curl` the served file and grep it before believing either.
+
+### Left alone
+
+**The grammar list's sort** is not this type: its options are `default`,
+`freq-desc`, `freq-asc` and `favorite` -- two of them a field and a direction
+fused into one option, and two of them not fields at all. And the Yonsei
+boards' newest/oldest is a direction with no field to choose. Converting either
+would be redesigning the control rather than replacing it.
