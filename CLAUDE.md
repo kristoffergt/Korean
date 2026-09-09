@@ -2930,3 +2930,56 @@ row's own figures end, so the two line up rather than the controls starting a
 second column under the name -- and it is where the all-expenses card keeps
 its own. flex-end also right-aligns each wrapped line once the stack grows past
 one row, which is the case a text-align would not have covered.
+
+## The sort is one menu with a switch, and the list can show what it is leaving out (9 Sep, thirty-fourth pass)
+
+"I dont like this + sign for the sort. There can be a way to turn on multiple
+sort. If it is on, when you press something else (like date when amount is
+already chosen), then it should just have both chosen in that menu. If multiple
+sort is not turned on, then you can only sort for one thing and it changes it
+if you click something else", then "there should also be a selector in all
+expenses where you can choose to show either included expenses, excluded
+expenses, or both".
+
+### One menu, and a switch that decides what a press in it MEANS
+
+No `+`, no `✕`. A button carrying the whole ordering in words and arrows
+("Category ↑ then Amount ↓"), and a menu with **Multiple sort** at its head:
+
+- **Off**, the menu is a pick-one: pressing a field replaces the ordering and
+  closes the menu.
+- **On**, it is a pick-several that remembers the ORDER they were pressed in --
+  which is the order the levels are applied in, so the control teaches itself.
+  A rank number appears beside each chosen field once there is an order to
+  read.
+- **No press in the menu is ever dead.** Pressing the field already picked
+  flips its direction rather than doing nothing, and with multi on, pressing
+  the LAST remaining one flips it too rather than leaving the list with no
+  order at all.
+- **Turning the switch off keeps the first level** rather than throwing the
+  ordering away: the switch changes what a press means, and doing two things
+  at once is how a switch becomes a surprise.
+- Each chosen field has its own direction arrow IN the menu, so a level's
+  direction is changed where the level is.
+
+**Close the menu BEFORE calling commit.** commit is what re-renders, so setting
+the flag after it drew the menu open again with nothing left to clear it -- a
+pick-one that visibly did not close. Caught by driving it rather than reading
+it.
+
+The menu is anchored to the RIGHT edge of its button, since this control sits
+at the right of its card and a menu hanging off the left would run off the
+page. Which menu is open lives in `expSortMenuOpen` rather than as a class,
+because every press re-renders the block the menu is inside.
+
+### Show all, counted, or excluded
+
+A `Show` select in the all-expenses header. Only that list: the day list and a
+folded-open category are already about one day and one category, where a filter
+on top of the parking marks would be a second thing to keep track of.
+
+- Excluded rows still render struck through in every mode -- the filter chooses
+  WHICH rows, not how they read.
+- With a filter on and nothing matching, the empty line says so ("Nothing
+  matches what you asked to see") rather than the tab's "no expenses logged
+  yet", which would be a different and false claim.
