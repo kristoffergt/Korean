@@ -2778,3 +2778,23 @@ both drive it, opening Food & Drink shows its two rows and nothing else,
 parking a row from inside a category drops it from that category's list and
 takes ₩9,000 off the total while the all-expenses list still shows it struck
 through, and the mark parks a category without opening it.
+
+## The way back sits under the list, and the mark says the rest (9 Sep, twenty-ninth pass)
+
+"Both in the calendar and in the by category, this one should show up at the
+bottom" (the "Count all…" resets), and "we dont need 'Not counted.' simply just
+change from a minus to a plus."
+
+- **Both resets moved under the thing they undo.** Over the list, each one
+  pushed the whole block down a line the moment anything was parked, so the
+  rows you were reading moved under the cursor that parked them. The calendar's
+  went under the grid rather than under the whole card: it belongs to the grid,
+  and the day list opens below it.
+- **"not counted" is gone from both places.** The mark has flipped from `-` to
+  `+` and the row has gone pale, which says it twice already.
+- **What replaces it on a category row is the PERCENTAGE, which goes.** A
+  parked category is not 0% of anything -- it is out of the sum the percentages
+  are shares of -- so it shows its own money and nothing else. `₩5,400` on a
+  faded row with a `+` beside it.
+- `expCategoryNotCounted` was the only string either place used, so the key
+  came out of all three tables rather than being left to rot.
