@@ -3034,3 +3034,46 @@ direction, a duplicated field, one good level beside one bad, nulls inside the
 array, a bad `show`, a non-boolean `multi` -- none of which throws, and every
 one of which lands on the default for whatever did not survive rather than
 taking the list down.
+
+## The exclusions are saved, and a filtered total says so (9 Sep, thirty-seventh pass)
+
+"Save them. But have an obvious way that it shows, if you come back after a
+refresh, that there are items excluded."
+
+This reverses the call this file has carried since the category filter was
+built -- **and the objection it was based on is answered rather than dropped**.
+The reason not to persist was that a total which is quietly filtered is a total
+that lies to you weeks later. So the filter now says so, above the figure,
+every time the tab is drawn:
+
+> **— 3 expenses are left out of these totals.        Count everything again**
+
+- **Counted in EXPENSES, not in marks.** That is the number the totals are
+  actually short by; a parked category is one press and can be twenty rows.
+- **English inflects and the other two do not**, so the singular is its own key
+  rather than an "(s)" -- the rule at the top of this file, met again.
+- **In the edit amber**, above the stat row, inside the card it qualifies. Loud
+  enough to be read before the figure under it, quiet enough not to read as an
+  error: it is a true statement about the totals, not something going wrong.
+
+### Kept PER VACATION
+
+Two of the three grains -- a date and an expense id -- belong to one trip and
+mean nothing on another. `localStorage.expMuted` is `{vacationId: {cats, dates,
+ids}}`, loaded when the trip resolves and when it changes, and a trip with
+nothing parked leaves NO row rather than an empty one, so the store cannot grow
+a key per trip ever opened. Deleting a trip drops its row.
+
+Checked: parking on one trip, switching, parking something else, and switching
+back gives each its own back; a seeded store survives a reload; and nine
+garbage shapes (unparseable, null, an array, a bare number, a row that is not
+an object, `cats` not an array, numbers where ids belong, a mix of good and bad
+entries, a row for a trip that is not open) all load as nothing parked rather
+than throwing or parking something that is not there.
+
+### And both "count everything again" buttons now mean it
+
+`expAnyMuted()` counts categories too, and the grid's reset clears all three
+rather than only days and rows -- two buttons carrying the same words had to do
+the same thing. The by-category card keeps its own scoped "Count all
+categories", which sits with the rows it resets and says exactly what it does.
