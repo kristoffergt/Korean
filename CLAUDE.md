@@ -3197,3 +3197,77 @@ list, validated field by field on the way back in.
 fused into one option, and two of them not fields at all. And the Yonsei
 boards' newest/oldest is a direction with no field to choose. Converting either
 would be redesigning the control rather than replacing it.
+
+## The name goes on two lines, and the ROOM is what a class card is for (9 Sep, forty-first pass)
+
+### The header cost two rows because the title took one on its own
+
+"On app, shrink this text and put it on two lines, so it's the same height as
+the pills and stuff."
+
+The app's name set across the full width was what pushed the six controls onto
+a second line: at 393 the brand was 140px and the control row needs 211 of the
+353 available, so the row broke. Two smaller lines beside them instead, and the
+header is **44px against 79**, as tall as the brand icon rather than as tall as
+two stacked rows.
+
+- **The size is SOLVED, not picked**, because the whole point is that the two
+  halves share one row at every phone width. Measured, "Productivity" is
+  6.32px per px of font size plus 3.5, and what is left for it is the page less
+  its 20px padding either side, the 32px icon, the 8px gap beside it, the
+  header's own 8px gap and the 211px the controls come to. So 309px of the
+  viewport is spoken for and the rest divides by 6.32:
+  `clamp(11px, calc((100vw - 309px) / 6.32), 15px)`. It lands at 13.3px on a
+  393 phone (6.5px of slack) and on the 11px floor at 375, where it still fits
+  with 3px to spare.
+- **The break is on the WORD, not on the box.** A wrap that depends on the
+  width available is one that comes apart at some width.
+- **And the word boxes were already there.** The h1's markup is thrown away:
+  `buildTitleMorph` rebuilds it as a `.tl-track` of per-character spans grouped
+  into a `.title-word` per word, so putting spans in the HTML did nothing at
+  all and the break is one `display:block` on a box that already exists. Worth
+  knowing before touching that title again: **read the DOM, not the source.**
+- **Its own breakpoint (440px), not the 640 one**, because 440 is where the
+  crowding is: the one-line header stops fitting at about 403, and two lines on
+  a 600px window would be two lines with half a row of space beside them.
+- **The condensed bar is one line by construction**, so the two words go back
+  to being one there. Checked: at 393 it is 12.1px on one line with the whole
+  name visible, and the desktop is untouched at 28px.
+
+### The class number was the biggest thing on the card and the least useful
+
+"The wrong thing is made big here. The class rooms (i.e. 702 and 106) are
+supposed to be big. ISC6236 is the least important."
+
+The day-view card is rebuilt to the order asked for, which is the order you
+need it in while you are walking to the class:
+
+| | |
+|---|---|
+| the class's name | 13px, bold (was 10px, inherited) |
+| **the room** | **22px, bold** (was 9px, fourth line) |
+| the type (PIC1, ITFM1) | 11px |
+| the professor | 11px (was 9px) |
+| the course code | 10px, dimmed (was 18px, second line) |
+
+**That order is also what survives the clip, which is the whole reason to
+state it as a priority.** A bar is `overflow:hidden`, so whatever sits last is
+what gets cut, and the code is exactly what a short bar can afford to lose. A
+one-hour class comes out as its name and its room and nothing else, which is
+the pair worth keeping.
+
+- **Both height guards are arithmetic on the bar's own box.** The card needs
+  its 4px of padding, the 14px the mobile layout reserves above the title for
+  the bell and the pencil, the title's 15.6px line, 4px over the room and the
+  room's own line: 16.1px at 14px of type, 25.3px at 22px. So **54 and 64 on a
+  phone, 40 and 50 on a desktop**, where nothing is reserved at the top.
+- **The room SHRINKS to 14px rather than being clipped**, and that is not a
+  detail: half a numeral reads as a DIFFERENT room, where small type reads as
+  small type. Under even that the card falls back to the week view's compact
+  form, which is what a 30-minute class already got.
+- Checked at every height a day view really produces on a phone (HOUR_PX is 60
+  there): at 180 and 120 every line is whole; at 60 the name and the room are
+  whole and the type is where the cut lands; at 40 it is the compact form.
+- The week view is untouched: `dayCard` is gated on `isDayView`, so a bar
+  sharing its column with an overlapping class is a narrow bar again and gets
+  exactly what it got before.

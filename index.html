@@ -2174,6 +2174,43 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
   .lb-row, .lb-row-simple{font-size:11.5px;}
   .lb-head, .lb-head-simple{font-size:8.5px;}
 }
+
+/* PHONES: the name goes on TWO lines beside the controls rather than one line
+   above them. Set across the full width it was what pushed the control row
+   onto a second line of its own, so the header cost two rows where one would
+   do (real-user request: "shrink this text and put it on two lines, so it's
+   the same height as the pills and stuff"). The header is 44px now against
+   79 at 393, and the row is as tall as the brand icon rather than as tall as
+   two stacked rows.
+   Its own breakpoint rather than the 640px one above, because 440 is where
+   the crowding actually is: measured, the one-line header stops fitting at
+   about 403px, and a two-line title on a 600px window would be two lines
+   with half a row of empty space beside them.
+   The size is SOLVED rather than picked, since the whole point is that the
+   two halves share one row at every phone width. "Productivity" measures
+   6.32px per px of font size plus 3.5, and what is left for it is the page
+   less its 20px padding either side, the 32px brand icon, the 8px gap beside
+   it, the header's own 8px gap and the 211px the six controls come to -- so
+   309px of the viewport is spoken for and the rest divides by 6.32. It lands
+   at 13.3px on a 393 phone and 11 (the floor, which is the condensed bar's
+   own) at 375, where it still fits with 3px to spare.
+   Broken on the WORD, not by narrowing the box: a wrap that depends on the
+   width available is one that comes apart at some width. buildTitleMorph
+   already wraps each word in a .title-word to letter-space them, so the
+   break is one display change on a box that is there anyway. */
+@media (max-width: 440px){
+  #appTitleHome{white-space:normal;line-height:1.15;letter-spacing:0.3px;
+    font-size:clamp(11px, calc((100vw - 309px) / 6.32), 15px);}
+  #appTitleHome .title-word{display:block;}
+  /* Scoped to the bar rather than to every .brand-mark, so the four
+     auth cards keep the spacing they were drawn with. */
+  #topBar .brand-mark{gap:8px;}
+  /* The condensed bar is ONE line by construction, so the two words go back
+     to being one there; it keeps its own smaller size from #topBar.stuck h1,
+     which outranks the rule above. */
+  #topBar.stuck #appTitleHome{white-space:nowrap;}
+  #topBar.stuck #appTitleHome .title-word{display:inline-block;}
+}
 .writing-task-box{white-space:pre-wrap;background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.6;margin-top:10px;}
 .writing-char-count{font-weight:600;}
 .writing-char-count.over-target{color:var(--danger, #c0392b);}
@@ -21260,50 +21297,58 @@ function renderCalGrid(dates){
       if(overlapping){ bar.style.fontSize = titleSize; bar.style.lineHeight = '1.1'; }
       const displayTitle = mobileShorten ? shortenTitleForMobile(ev.title) : ev.title;
       const titleTopMargin = mobilePad ? '14px' : '0';
-      let bodyHtml = `<div style="font-size:${titleSize};margin-top:${titleTopMargin};">${displayTitle}</div>`;
+      // A day column is a whole screen wide, so a course there is drawn as a
+      // CARD rather than as the week view's compact bar: the name a size up
+      // and the room set big under it.
+      //
+      // Both numbers are arithmetic on the bar's own box rather than picked.
+      // The card needs its 4px of padding, the 14px the mobile layout
+      // reserves above the title for the bell and the pencil, the title's own
+      // 15.6px line, 4px over the room and the room's line -- 16.1px at 14px
+      // of type, 25.3px at 22px. So 54 and 64 on a phone, 40 and 50 on a
+      // desktop, where nothing is reserved at the top.
+      //
+      // A bar too short even for the small room falls back to the week view's
+      // compact form, and a bar that shares its column with an overlapping
+      // class is a narrow bar again and gets the same. That is the whole
+      // reason the room shrinks rather than simply being clipped: half a
+      // numeral reads as a DIFFERENT room, where small type reads as small
+      // type.
+      const dayCard = isDayView && !overlapping && height >= (mobilePad ? 54 : 40);
+      if(dayCard) titleSize = '13px';
+      const roomSize = height >= (mobilePad ? 64 : 50) ? '22px' : '14px';
+      let bodyHtml = `<div style="font-size:${titleSize};font-weight:${dayCard ? 700 : 'inherit'};margin-top:${titleTopMargin};">${displayTitle}</div>`;
       if(ev.kind === 'course' && ev.course_id){
         const course = findCourseById(ev.course_id);
         if(course){
           const line2 = course.professor ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:${detailMargin};">${course.professor}</div>` : '';
           const line3Text = [course.code, course.concentration].filter(Boolean).join(' · ');
           const line3 = line3Text ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:${detailMargin};">${line3Text}</div>` : '';
-          // In the day view the class number gets its own line at 18px --
-          // twice the 9px it shares with everything else in the week view
-          // (real-user request). It is split OUT of line 3 rather than
-          // scaled with it: the concentration is context, and blowing that
-          // up too would just make the bar shouty.
-          //
-          // It also has to move up under the TITLE. A bar is
-          // overflow:hidden, so whatever sits last is what gets cut, and an
-          // 18px line left in fourth place was simply clipped in half --
-          // bigger AND less readable than before. Ordered this way the two
-          // things worth enlarging for are the two that always survive, and
-          // what gets trimmed on a short bar is the concentration, which is
-          // the least of it.
-          //
-          // Two guards, because the room to do this is exactly what the
-          // exceptions lack: a bar sharing its column with an overlapping
-          // class is narrow again, and a 30-minute class has no vertical
-          // room for a title plus an 18px line (44px, or 58 where the
-          // mobile layout reserves 14px above the title).
-          const bigCodeFits = height >= (mobilePad ? 58 : 44);
-          const bigCode = isDayView && !overlapping && !!course.code && bigCodeFits;
-          const codeLine = bigCode
-            ? `<div style="font-size:18px;font-weight:700;line-height:1.15;margin-top:4px;">${escapeHtml(course.code)}</div>`
-            : '';
-          const concLine = bigCode && course.concentration
-            ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:4px;">${escapeHtml(course.concentration)}</div>`
-            : '';
           // The room gets its own line at full weight rather than joining
           // line 3's muted code/concentration -- standing in the hallway,
           // which room to walk into is the one fact this bar is FOR.
           const roomLine = course.classroom ? `<div style="font-size:${detailSize};font-weight:600;margin-top:${detailMargin};">${course.classroom}</div>` : '';
-          // Order in the enlarged form is what survives the clip, so it is
-          // the priority order: class number, then the ROOM (the roomLine
-          // comment above already argues that is what the bar is for),
-          // then the professor and the concentration, which are the two
-          // worth losing on a bar too short to hold everything.
-          bodyHtml += bigCode ? (codeLine + roomLine + line2 + concLine) : (line2 + roomLine + line3);
+          // The card reads top down in the order you need it while you are
+          // walking to the class: what it is, WHICH ROOM, what kind of class,
+          // who teaches it, and last the course code, which is the one line
+          // nobody navigates by (real-user request: "the class rooms are
+          // supposed to be big. ISC6236 is the least important").
+          //
+          // That order is also what survives the clip, which is the whole
+          // reason to set it as a priority: a bar is overflow:hidden, so
+          // whatever sits last is what gets cut, and the code is exactly
+          // what a short bar can afford to lose. The room is second, so a
+          // one-hour class comes out as its name and its room and nothing
+          // else, which is the pair worth keeping.
+          const bigRoom = dayCard && course.classroom
+            ? `<div style="font-size:${roomSize};font-weight:700;line-height:1.15;margin-top:4px;">${escapeHtml(course.classroom)}</div>` : '';
+          const typeLine = dayCard && course.concentration
+            ? `<div style="font-size:11px;font-weight:600;margin-top:5px;">${escapeHtml(course.concentration)}</div>` : '';
+          const profLine = dayCard && course.professor
+            ? `<div style="font-size:11px;font-weight:400;opacity:0.9;margin-top:5px;">${escapeHtml(course.professor)}</div>` : '';
+          const codeLine = dayCard && course.code
+            ? `<div style="font-size:10px;font-weight:400;opacity:0.75;margin-top:5px;">${escapeHtml(course.code)}</div>` : '';
+          bodyHtml += dayCard ? (bigRoom + typeLine + profLine + codeLine) : (line2 + roomLine + line3);
         }
       }
       const editIconHtml = overlapping ? '' : `<span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">${ICON.pencil(11)}</span>`;
