@@ -2602,3 +2602,59 @@ document-level CAPTURE listener counted zero keydowns for both `Return` and a
 typed `\n`. So a key path has to be driven by dispatching a `KeyboardEvent` at
 the element, which exercises the listener and its bubbling path honestly and is
 the only thing available here.
+
+## A day, and one expense on its own, can be left out of the totals (9 Sep, twenty-sixth pass)
+
+"Put a - in the top right hand corner of every day that has expenses in the
+expenses tab, so you can exclude those", then "and should also enable you to
+exclude specific things that have been added as expenses in a day".
+
+The categories have been parkable since the filter was built; this is the same
+idea at the two grains under it. **Three filters, one predicate**: `expIsCounted`
+answers for category, date and expense id together, and every figure on the
+screen reads through it, so the Total tile, the average, the breakdown's
+percentages and the month's day totals cannot disagree about what is being
+counted. `expRerenderCounts()` redraws all four from every toggle -- which also
+fixes the category toggle, which used to leave the day list stale.
+
+- **Not persisted and not synced**, the same call the categories made: a filter
+  that quietly survives a reload is how a total lies to you weeks later. A
+  parked DATE is also cleared when the vacation changes, since a date belongs
+  to the trip it was parked on.
+- **Balances are deliberately untouched by all three.** Deciding not to READ a
+  day does not change who paid for it.
+- **The breakdown's own totals are built from what the DAY and ROW filters
+  leave**, and the category filter is applied after that -- a parked category
+  still has to show what parking it is costing, where a parked day should
+  simply not be in the picture.
+- **What is excluded stays on screen, struck through.** The day keeps its
+  number and its total, the expense keeps its name and its amount. The number
+  that was taken out of the total is exactly the thing worth still being able
+  to read, which is why the day's own exclusion is left OUT of the sum that
+  cell prints.
+- **The mark is only on a day that has something to exclude.** A control in the
+  corner of an empty day would be one that does nothing.
+- **It stops propagation**, or excluding a day would also select it: two
+  answers to one press, and the cell's own click is the louder of them.
+- **`ICON.minus` and `ICON.plus`** rather than glyphs, and the corner button is
+  a plain `.linkbtn.act-icon.act-off` with nothing added but a corner to sit in
+  -- so it inherits the mark vocabulary, its 1.2 grow and its reduced-motion
+  guards for free. Positioned at 3px rather than 2 so that grow still lands
+  inside the cell, which clips its overflow.
+- **"Count everything again"** appears above the grid only while something is
+  parked -- the way back for a day or a row left out in a month you have since
+  scrolled past. The categories keep their own reset, which sits with the rows
+  it resets.
+
+Driven against a stubbed vacation (four expenses over three days, ₩180,400):
+excluding the ₩150,000 day gives **₩30,400 over 2 days**, so the average moves
+with the day count rather than only the total; adding the ₩22,000 row gives
+₩8,400; putting the day back gives ₩158,400; the reset returns all five figures
+to base. The breakdown re-totals to 100% at every step, the labels flip between
+"Don't count this day" and "Count this day", clicking the mark leaves the
+selected day alone, and a day with no expenses carries no mark.
+
+**₩ reads as a strikethrough in a scaled screenshot.** Its two horizontal bars
+smear into one line across the numerals at small sizes, so three stat tiles
+looked struck through and were not -- `getComputedStyle().textDecorationLine`
+said `none` for all of them and `line-through` for the one that really was.
