@@ -448,13 +448,19 @@ body:not(.no-anim-header) #friendsBtn:has(#circleOnlineDot:not(.hidden)):hover .
 .tl-track{position:relative;display:inline-block;}
 .tl-char{transition:color 0.18s ease;
   transition-delay:calc(var(--i,0) * 34ms);}
-body:not(.no-anim-title) #appTitleHome:hover .tl-char{color:var(--on);}
+/* The colour is the reader's OWN, the one they picked for their name
+   (real-user request: "can that color always be the person's chosen default
+   color"). --my-color is set on the root by setMyColorVar whenever the
+   account's colour is known or changes; before that, and on the sign-in
+   screen, it is the green it always was. The meter, the runner and the check
+   take the same, so the title does not finish in a second colour. */
+body:not(.no-anim-title) #appTitleHome:hover .tl-char{color:var(--my-color, var(--on));}
 /* Under the words, not around them: the meter is absolute, so nothing in the
    header moves when it appears and the h1's own height never changes. */
 .tl-meter{position:absolute;left:0;right:0;bottom:-0.16em;height:2px;
   border-radius:2px;background:var(--line);
   opacity:0;transition:opacity 0.16s ease;pointer-events:none;}
-.tl-meter > i{display:block;height:100%;border-radius:2px;background:var(--on);
+.tl-meter > i{display:block;height:100%;border-radius:2px;background:var(--my-color, var(--on));
   transform:scaleX(0);transform-origin:left center;
   transition:transform 0.65s linear;}
 body:not(.no-anim-title) #appTitleHome:hover .tl-meter{opacity:1;}
@@ -468,7 +474,7 @@ body:not(.no-anim-title) #appTitleHome:hover .tl-meter > i{transform:scaleX(1);}
 .tl-runner{position:absolute;left:0;top:-0.12em;width:0.3em;height:0.3em;
   margin-left:-0.15em;opacity:0;pointer-events:none;}
 .tl-runner > i{display:block;width:100%;height:100%;border-radius:50%;
-  background:var(--on);}
+  background:var(--my-color, var(--on));}
 @keyframes tl-run{
   0%{left:0;opacity:1;} 92%{opacity:1;} 100%{left:100%;opacity:0;}}
 /* The hop is on the INNER element: the run owns `left` and the bounce owns
@@ -484,7 +490,7 @@ body:not(.no-anim-title) #appTitleHome:hover .tl-runner > i{
    mark does not reflow the row, and sized against the cap height rather than
    at the token size, which read as a footnote beside a 22px title. */
 .tl-done{position:absolute;left:100%;top:50%;width:0.92em;height:0.92em;
-  margin-left:0.16em;color:var(--on);pointer-events:none;
+  margin-left:0.16em;color:var(--my-color, var(--on));pointer-events:none;
   opacity:0;transform:translateY(-50%);}
 .tl-done svg{width:100%;height:100%;display:block;}
 .tl-done path{stroke-dasharray:24;stroke-dashoffset:24;}
@@ -1103,6 +1109,12 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 .card h2{font-family:'Noto Serif KR',serif;font-size:15px;margin:0 0 14px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:10px;}
 .export-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:5px 10px;font-size:11px;font-weight:600;border-radius:6px;}
 .export-btn:hover{background:var(--paper);color:var(--ink);}
+/* An outlined button that DELETES says so in red, the ink every other delete
+   in the app uses (real-user request: "all delete options on the site should
+   be [red text]"). The border only turns on hover, so one of these beside a
+   neutral button reads as a red word rather than a red box. */
+.export-btn.act-danger{color:var(--danger);}
+.export-btn.act-danger:hover{color:var(--danger);border-color:var(--danger);}
 .list-controls{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap;}
 .page-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 10px;font-size:12px;font-weight:600;border-radius:5px;min-width:32px;}
 .page-btn.active{background:var(--ink);color:var(--paper);}
@@ -1332,8 +1344,14 @@ button:hover{background:var(--ink-hover);}
    The word is what carries it, so the fill has to be the loud part. */
 .btn-danger{background:var(--danger-solid);color:#fff;border-color:var(--danger-solid);}
 .btn-danger:hover{background:var(--danger-solid);filter:brightness(1.1);}
-.linkbtn.act-remove{color:var(--danger);}
-.linkbtn.act-remove:hover{color:var(--danger);filter:brightness(1.15);}
+/* .item-meta .linkbtn:not(.act-icon) above is 0,3,0 -- a :not() counts its
+   argument -- which BEATS .linkbtn.act-remove's 0,2,0 wherever the two meet,
+   so every text delete in a meta row came out celadon: the moderator's
+   "Delete account", a syllabus's "Remove", "Remove from trip" (real-user
+   report: "'delete account' in the moderator panel should be red text").
+   Matching that selector's weight puts the class's own colour back. */
+.linkbtn.act-remove, .item-meta .linkbtn.act-remove{color:var(--danger);}
+.linkbtn.act-remove:hover, .item-meta .linkbtn.act-remove:hover{color:var(--danger);filter:brightness(1.15);}
 .linkbtn.act-edit{color:var(--edit);}
 .linkbtn.act-edit:hover{color:var(--edit);filter:brightness(1.15);}
 /* The same control in its two states. "Reminders on" is a state that IS on,
@@ -1345,6 +1363,18 @@ button:hover{background:var(--ink-hover);}
 .linkbtn.act-on:hover{color:var(--on);filter:brightness(1.15);}
 .linkbtn.act-off{color:var(--ink-soft);}
 .linkbtn.act-off:hover{color:var(--ink);}
+/* ---------- MODERATOR: STUDY HOURS ---------- */
+.mod-study{margin-top:22px;padding-top:16px;border-top:1px solid var(--line);}
+.mod-study-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:12px;}
+.mod-study-grid .field input{width:100%;}
+.mod-study-grid .field label{display:flex;align-items:center;gap:6px;}
+.mod-study-dot{width:9px;height:9px;border-radius:50%;flex:none;}
+.mod-study-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.mod-study-days{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;}
+.mod-study-day{font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;padding:3px 9px;
+  border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink-soft);cursor:pointer;}
+.mod-study-day:hover{color:var(--ink);border-color:var(--ink-soft);background:var(--paper);}
+.mod-study-day.on{background:var(--ink);border-color:var(--ink);color:var(--paper);}
 /* The icon-only edit and delete buttons in the note and sentence lists sit
    inside containers that paint every button --ink-soft, so they were the
    one place the colour convention did not reach. Three classes each, which
@@ -1427,10 +1457,11 @@ label.file-upload-btn:hover, .linkbtn:hover, .reminder-add-trigger:hover{
      - it grows FURTHER (1.2), because at 11-15px a 1.08 is invisible;
      - from its own CENTRE, since a mark sits at the end of a row where a
        left-origin grow would walk it out of its column;
-     - and it lands on its full meaning as it goes. Several sit at
-       --ink-soft at rest so a dense list is not a wall of red; the grow
-       says "live" and the colour says "this one deletes", which is the
-       part worth having on a control with no label to read. */
+     - and it lands on its full meaning as it goes. Every one of them rests
+       in --danger now (real-user request: "all delete options on the site
+       should be [red]"), so the grow says "live" and the colour already said
+       "this one deletes", which is the part worth having on a control with
+       no label to read. */
 .tap-mark, .item-del, .note-del, .gram-note-del, .gram-resource-del,
 .reminder-chip-remove, .lecture-del, .e-chip .del{
   transform-origin:center;
@@ -1782,10 +1813,21 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
 .note-pagebar button:hover:not(:disabled){color:var(--ink);border-color:var(--ink-soft);}
 .note-pagebar button:disabled{opacity:0.4;cursor:default;}
 .note-pagebar button.on{background:var(--ink);border-color:var(--ink);color:var(--paper);}
+/* Deleting the page sits at the far end of the bar, away from the arrows a
+   thumb is going back and forth on, and in the delete red: it is the one
+   control here that throws something away. */
+.note-pagebar button.np-del{margin-left:auto;color:var(--danger);}
+.note-pagebar button.np-del:hover{color:var(--danger);border-color:var(--danger);}
 /* The toolbar's own insert button, beside Quill's. Quill styles .ql-toolbar
    button at 28x24 with a 3px pad, so it takes those rather than inventing a
    size that would sit half a pixel off the row. */
-.ql-toolbar button.np-insert{width:28px;height:24px;padding:3px 5px;}
+/* Its mark is currentColor, and a toolbar button's colour is the BASE
+   button's, which is --paper: paper strokes on the paper-dim toolbar,
+   invisible in both themes (real-user report: "you can not see the page
+   creator for notes, because it blends into the background for both light and
+   dark mode"). Quill's own marks are --ink-soft (.ql-snow .ql-stroke), so this
+   takes the same, and Quill's own hover and focus blue still win over it. */
+.ql-toolbar button.np-insert{width:28px;height:24px;padding:3px 5px;color:var(--ink-soft);}
 /* The lecture list is a column of headings in a card the width of the page,
    so most of it is empty (real-user report: "so much empty space here. Could
    just move the note writing section to the right of this when there is
@@ -2271,7 +2313,13 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
 .gram-resource-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12.5px;gap:8px;}
 .gram-resource-row a{color:var(--celadon-4);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .gram-resource-row a:hover{text-decoration:underline;}
-.gram-resource-del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:11px;flex-shrink:0;padding:0;line-height:1;}
+/* Red at rest like every other delete (real-user request: "all delete
+   options on the site should be [red]"); it sat in --ink-soft and only turned
+   red under the pointer. :hover carries its own background:none for the same
+   reason .item-del:hover does: button:hover (0,1,1) outweighs this rule
+   (0,1,0) and would paint a dark pill under the pointer. */
+.gram-resource-del{background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px;flex-shrink:0;padding:0;line-height:1;}
+.gram-resource-del:hover{background:none;}
 .gram-topik-pill{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:9px;font-size:9.5px;font-weight:700;letter-spacing:0.3px;color:#fff;background:var(--c-topik);vertical-align:middle;}
 .gram-unit-tag{font-size:10.5px;color:var(--ink-soft);font-weight:400;margin-left:8px;}
 .gram-body{margin-top:10px;font-size:13.5px;line-height:1.55;display:none;}
@@ -2861,7 +2909,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
         </div>
       </div>
       <div class="card" id="writingSamplesCard">
-        <h2><span id="hWritingSamples"></span><span><button class="export-btn" id="deleteAllWritingBtn"></button></span></h2>
+        <h2><span id="hWritingSamples"></span><span><button class="export-btn act-danger" id="deleteAllWritingBtn"></button></span></h2>
         <div class="field" style="margin-bottom:12px;">
           <label for="writingPersonFilter" id="lblWritingPersonFilter"></label>
           <button type="button" class="person-filter-btn" id="writingPersonFilterBtn"></button>
@@ -3850,7 +3898,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
     </h2>
     <div class="log-form" id="calModalFields"></div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="export-btn" id="calModalDeleteBtn"></button>
+      <button class="export-btn act-danger" id="calModalDeleteBtn"></button>
       <button id="calModalCloseBtn"></button>
     </div>
   </div>
@@ -3866,8 +3914,8 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
   <div class="modal-box">
     <p id="deleteChoiceText"></p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-      <button class="export-btn" id="deleteThisOnlyBtn"></button>
-      <button class="export-btn" id="deleteAllBtn"></button>
+      <button class="export-btn act-danger" id="deleteThisOnlyBtn"></button>
+      <button class="export-btn act-danger" id="deleteAllBtn"></button>
       <button id="deleteChoiceCancelBtn"></button>
     </div>
   </div>
@@ -4135,6 +4183,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       </div>
       <div id="moderatorUserList" style="margin-top:8px;"></div>
       <div class="list-controls" id="moderatorUserListControls"></div>
+      <div class="mod-study" id="modStudyEditor"></div>
       </div>
     </section>
     </div>
@@ -10135,7 +10184,7 @@ const I18N = {
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
     lblRecurInterval:'Every', lblRecurEndType:'Ends', recurNever:'Never', recurUntilDate:'Until date', lblRecurEndDate:'End date',
     recurBadge:'Every {n} {unit}', recurUntil:'until {date}', recurEveryWeekday:'Every {day}', recurEveryOtherWeekday:'Every other {day}', daySun:'Sunday', daySat:'Saturday',
-    notePageBreakBtn:'Page break', notePageOf:'Page {n} / {total}', notePageOne:'One page at a time', notePageAll:'Show all pages', notePagePrev:'Previous page', notePageNext:'Next page',
+    notePageBreakBtn:'Page break', notePageOf:'Page {n} / {total}', notePageOne:'One page at a time', notePageAll:'Show all pages', notePagePrev:'Previous page', notePageNext:'Next page', notePageDelete:'Delete page', notePageDeleteConfirm:'Delete this page and everything on it?',
     remindMe:'Remind me', subscribed:'Reminders on', applyToLabel:'Apply to', applyAll:'All future occurrences', applyOnce:'Just this occurrence',
     unitMinutes:'minutes before', unitHours:'hours before', unitDays:'days before', addReminder:'+ Add reminder', saveReminders:'Save', unsubscribe:'Turn off reminders',
     reminderNote:'Reminder delivery requires an email service to be connected. Ask Claude to set this up.', birthdayReminderNote:'Birthday reminders fire right at the set time (8:00 AM by default). Change the time via Edit above.',
@@ -10180,6 +10229,7 @@ const I18N = {
     dailyRecapPrefix:'Daily recap', weeklyRecapPrefix:'Weekly recap', recapEveryWord:'every', recapTimeNight:'night', recapTimeDawn:'dawn', recapTimeMorning:'morning', recapTimeNoon:'noon', recapTimeAfternoon:'afternoon', recapTimeEvening:'evening', recapAtWord:'at', recapRelativeOnDay:'on the day', recapRelativeDayBefore:'day before', recapRelativeDayPassed:'day passed', recapWeekComing:'coming', recapWeekPassed:'passed', recapWeekBoth:'both', recapExcludeNone:'Both', recapExcludeDailyOnly:'Weekly only', recapExcludeWeeklyOnly:'Daily only', recapExcludeBoth:'Excluded', notifDailyRecapTitleTpl:'Your day: {count} thing', notifDailyRecapTitleTplMany:'Your day: {count} things', notifWeeklyRecapTitleTpl:'Your week: {count} thing', notifWeeklyRecapTitleTplMany:'Your week: {count} things',
     modSearchPlaceholder:'Search name or email…',     modConfirmed:'Confirmed', modUnconfirmed:'Unconfirmed', modMfaOn:'2FA on', modMfaOff:'2FA off', modYou:'YOU', modAdmin:'Admin', modNewPasswordPrompt:'New password for this account:', modNewNamePrompt:'New display name for this account:',
     modConfirmDeleteUser:'Permanently delete this account and all of its data? This cannot be undone.', modActionFailed:'Action failed.', modActionDone:'Done.',
+    modStudyHead:'Study hours', modStudyHint:'Hours per activity for one day. Changes count on the leaderboards straight away.', modStudyUser:'Account', modStudyChooseUser:'Choose an account', modStudyDate:'Date', modStudySave:'Save day', modStudyDeleteDay:'Delete day', modStudyConfirmDelete:'Delete every hour {name} logged on {date}?', modStudyInvalid:'Hours have to be numbers of 0 or more.', modStudyDays:'Logged days', modStudyNoDays:'Nothing logged yet.', modStudyEmptyDay:'Nothing logged on this day.', modStudyMoreDays:'and {n} earlier',
     modConfirmResetPw:"Reset this user's password?", modConfirmConfirmEmail:"Manually confirm this user's email?", modConfirmDisableMfa:'Disable two-factor authentication for this user?',
     mfaPromptTitle:'Enter your authentication code', mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.', mfaUseBackupBtn:'Use a backup code instead', mfaUseTotpBtn:'Use your authenticator app instead', mfaBackupCodePlaceholder:'Enter a backup code', mfaBackupWrongCode:'Invalid or already-used backup code.', download2faBackupBtn:'Download codes',
     lblPinGate:'Enter the site PIN to continue', pinGateSubmitBtn:'Continue', pinGateWrongMsg:'Incorrect PIN.', settingsSitePinLabel:'Site sign-up/sign-in PIN', showPasswordBtn:'Show password', hidePasswordBtn:'Hide password',
@@ -10257,7 +10307,7 @@ const I18N = {
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
     lblRecurInterval:'주기', lblRecurEndType:'종료', recurNever:'계속 반복', recurUntilDate:'날짜까지', lblRecurEndDate:'종료일',
     recurBadge:'{n}{unit}마다', recurUntil:'{date}까지', recurEveryWeekday:'매주 {day}', recurEveryOtherWeekday:'격주 {day}', daySun:'일요일', daySat:'토요일',
-    notePageBreakBtn:'페이지 나누기', notePageOf:'{total}쪽 중 {n}쪽', notePageOne:'한 번에 한 쪽씩', notePageAll:'모든 쪽 보기', notePagePrev:'이전 쪽', notePageNext:'다음 쪽',
+    notePageBreakBtn:'페이지 나누기', notePageOf:'{total}쪽 중 {n}쪽', notePageOne:'한 번에 한 쪽씩', notePageAll:'모든 쪽 보기', notePagePrev:'이전 쪽', notePageNext:'다음 쪽', notePageDelete:'쪽 삭제', notePageDeleteConfirm:'이 쪽과 그 안의 내용을 모두 삭제하시겠습니까?',
     remindMe:'알림 받기', subscribed:'알림 켜짐', applyToLabel:'적용 대상', applyAll:'앞으로 모든 일정', applyOnce:'이번 일정만',
     unitMinutes:'분 전', unitHours:'시간 전', unitDays:'일 전', addReminder:'+ 알림 추가', saveReminders:'저장', unsubscribe:'알림 끄기',
     reminderNote:'알림 발송을 위해서는 이메일 서비스 연동이 필요합니다. Claude에게 설정을 요청하세요.', birthdayReminderNote:'생일 알림은 설정된 시각(기본 오전 8시)에 바로 전송됩니다. 시각을 바꾸려면 위의 수정을 이용하세요.',
@@ -10302,6 +10352,7 @@ const I18N = {
     dailyRecapPrefix:'일간 요약', weeklyRecapPrefix:'주간 요약', recapEveryWord:'매일', recapTimeNight:'밤', recapTimeDawn:'새벽', recapTimeMorning:'아침', recapTimeNoon:'정오', recapTimeAfternoon:'오후', recapTimeEvening:'저녁', recapAtWord:'', recapRelativeOnDay:'당일', recapRelativeDayBefore:'전날', recapRelativeDayPassed:'지난 날', recapWeekComing:'다가오는', recapWeekPassed:'지난', recapWeekBoth:'둘 다', recapExcludeNone:'둘 다', recapExcludeDailyOnly:'주간만', recapExcludeWeeklyOnly:'일간만', recapExcludeBoth:'제외', notifDailyRecapTitleTpl:'오늘 일정: {count}건', notifDailyRecapTitleTplMany:'오늘 일정: {count}건', notifWeeklyRecapTitleTpl:'이번 주 일정: {count}건', notifWeeklyRecapTitleTplMany:'이번 주 일정: {count}건',
     modSearchPlaceholder:'이름 또는 이메일 검색…',     modConfirmed:'확인됨', modUnconfirmed:'미확인', modMfaOn:'2FA 켜짐', modMfaOff:'2FA 꺼짐', modYou:'나', modAdmin:'관리자', modNewPasswordPrompt:'이 계정의 새 비밀번호:', modNewNamePrompt:'이 계정의 새 표시 이름:',
     modConfirmDeleteUser:'이 계정과 모든 데이터를 영구적으로 삭제하시겠습니까? 되돌릴 수 없습니다.', modActionFailed:'작업에 실패했습니다.', modActionDone:'완료되었습니다.',
+    modStudyHead:'공부 시간', modStudyHint:'하루 동안의 활동별 시간입니다. 변경 사항은 순위표에 바로 반영됩니다.', modStudyUser:'계정', modStudyChooseUser:'계정 선택', modStudyDate:'날짜', modStudySave:'저장', modStudyDeleteDay:'이 날 삭제', modStudyConfirmDelete:'{name}님이 {date}에 기록한 시간을 모두 삭제하시겠습니까?', modStudyInvalid:'시간은 0 이상의 숫자로 입력하세요.', modStudyDays:'기록된 날', modStudyNoDays:'아직 기록이 없습니다.', modStudyEmptyDay:'이 날에는 기록이 없습니다.', modStudyMoreDays:'그 외 {n}일',
     modConfirmResetPw:'이 사용자의 비밀번호를 재설정하시겠습니까?', modConfirmConfirmEmail:'이 사용자의 이메일을 수동으로 확인 처리하시겠습니까?', modConfirmDisableMfa:'이 사용자의 2단계 인증을 비활성화하시겠습니까?',
     mfaPromptTitle:'인증 코드를 입력하세요', mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.', mfaUseBackupBtn:'백업 코드 사용하기', mfaUseTotpBtn:'인증 앱 사용하기', mfaBackupCodePlaceholder:'백업 코드를 입력하세요', mfaBackupWrongCode:'백업 코드가 올바르지 않거나 이미 사용되었습니다.', download2faBackupBtn:'코드 다운로드',
     lblPinGate:'계속하려면 사이트 PIN을 입력하세요', pinGateSubmitBtn:'계속', pinGateWrongMsg:'PIN이 올바르지 않습니다.', settingsSitePinLabel:'사이트 가입/로그인 PIN', showPasswordBtn:'비밀번호 표시', hidePasswordBtn:'비밀번호 숨기기',
@@ -10379,7 +10430,7 @@ const I18N = {
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
     lblRecurInterval:'Mỗi', lblRecurEndType:'Kết thúc', recurNever:'Không bao giờ', recurUntilDate:'Đến ngày', lblRecurEndDate:'Ngày kết thúc',
     recurBadge:'Mỗi {n} {unit}', recurUntil:'đến {date}', recurEveryWeekday:'Mỗi {day}', recurEveryOtherWeekday:'Cách tuần vào {day}', daySun:'Chủ Nhật', daySat:'Thứ Bảy',
-    notePageBreakBtn:'Ngắt trang', notePageOf:'Trang {n} / {total}', notePageOne:'Từng trang một', notePageAll:'Xem tất cả các trang', notePagePrev:'Trang trước', notePageNext:'Trang sau',
+    notePageBreakBtn:'Ngắt trang', notePageOf:'Trang {n} / {total}', notePageOne:'Từng trang một', notePageAll:'Xem tất cả các trang', notePagePrev:'Trang trước', notePageNext:'Trang sau', notePageDelete:'Xóa trang', notePageDeleteConfirm:'Xóa trang này và toàn bộ nội dung trên đó?',
     remindMe:'Nhắc tôi', subscribed:'Đã bật nhắc nhở', applyToLabel:'Áp dụng cho', applyAll:'Tất cả các lần tới', applyOnce:'Chỉ lần này',
     unitMinutes:'phút trước', unitHours:'giờ trước', unitDays:'ngày trước', addReminder:'+ Thêm nhắc nhở', saveReminders:'Lưu', unsubscribe:'Tắt nhắc nhở',
     reminderNote:'Việc gửi nhắc nhở cần kết nối dịch vụ email. Hãy nhờ Claude thiết lập.', birthdayReminderNote:'Nhắc sinh nhật được gửi đúng vào thời gian đã đặt (mặc định 8:00 sáng). Đổi giờ qua mục Sửa ở trên.',
@@ -10424,6 +10475,7 @@ const I18N = {
     dailyRecapPrefix:'Tóm tắt hằng ngày', weeklyRecapPrefix:'Tóm tắt hằng tuần', recapEveryWord:'mỗi', recapTimeNight:'đêm', recapTimeDawn:'tinh mơ', recapTimeMorning:'sáng', recapTimeNoon:'trưa', recapTimeAfternoon:'chiều', recapTimeEvening:'tối', recapAtWord:'lúc', recapRelativeOnDay:'trong ngày', recapRelativeDayBefore:'ngày hôm trước', recapRelativeDayPassed:'ngày đã qua', recapWeekComing:'sắp tới', recapWeekPassed:'đã qua', recapWeekBoth:'cả hai', recapExcludeNone:'Cả hai', recapExcludeDailyOnly:'Chỉ hằng tuần', recapExcludeWeeklyOnly:'Chỉ hằng ngày', recapExcludeBoth:'Đã ẩn', notifDailyRecapTitleTpl:'Hôm nay: {count} việc', notifDailyRecapTitleTplMany:'Hôm nay: {count} việc', notifWeeklyRecapTitleTpl:'Tuần này: {count} việc', notifWeeklyRecapTitleTplMany:'Tuần này: {count} việc',
     modSearchPlaceholder:'Tìm theo tên hoặc email…',     modConfirmed:'Đã xác nhận', modUnconfirmed:'Chưa xác nhận', modMfaOn:'2FA bật', modMfaOff:'2FA tắt', modYou:'Bạn', modAdmin:'Quản trị', modNewPasswordPrompt:'Mật khẩu mới cho tài khoản này:', modNewNamePrompt:'Tên hiển thị mới cho tài khoản này:',
     modConfirmDeleteUser:'Xóa vĩnh viễn tài khoản này và toàn bộ dữ liệu? Không thể hoàn tác.', modActionFailed:'Thao tác thất bại.', modActionDone:'Hoàn tất.',
+    modStudyHead:'Giờ học', modStudyHint:'Số giờ theo từng hoạt động trong một ngày. Thay đổi được tính ngay trên bảng xếp hạng.', modStudyUser:'Tài khoản', modStudyChooseUser:'Chọn tài khoản', modStudyDate:'Ngày', modStudySave:'Lưu ngày', modStudyDeleteDay:'Xóa ngày', modStudyConfirmDelete:'Xóa toàn bộ số giờ {name} đã ghi vào ngày {date}?', modStudyInvalid:'Số giờ phải là số từ 0 trở lên.', modStudyDays:'Những ngày đã ghi', modStudyNoDays:'Chưa ghi gì.', modStudyEmptyDay:'Chưa ghi gì vào ngày này.', modStudyMoreDays:'và {n} ngày trước đó',
     modConfirmResetPw:'Đặt lại mật khẩu của người dùng này?', modConfirmConfirmEmail:'Xác nhận thủ công email của người dùng này?', modConfirmDisableMfa:'Tắt xác thực hai yếu tố cho người dùng này?',
     mfaPromptTitle:'Nhập mã xác thực', mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.', mfaUseBackupBtn:'Dùng mã dự phòng thay thế', mfaUseTotpBtn:'Dùng ứng dụng xác thực thay thế', mfaBackupCodePlaceholder:'Nhập mã dự phòng', mfaBackupWrongCode:'Mã dự phòng không đúng hoặc đã được sử dụng.', download2faBackupBtn:'Tải mã xuống',
     lblPinGate:'Nhập mã PIN của trang web để tiếp tục', pinGateSubmitBtn:'Tiếp tục', pinGateWrongMsg:'Mã PIN không đúng.', settingsSitePinLabel:'Mã PIN đăng ký/đăng nhập trang web', showPasswordBtn:'Hiện mật khẩu', hidePasswordBtn:'Ẩn mật khẩu',
@@ -11621,6 +11673,10 @@ function applyLanguage(lang){
   document.getElementById('moderatorSearch').placeholder = t('modSearchPlaceholder');
   document.getElementById('notifBellSearch').placeholder = t('notifSearchPlaceholder');
   rebuildModeratorSortSelect();
+  // Both are built from t() when they render, so a language switch with the
+  // settings open would otherwise leave the whole moderator panel in the old
+  // language until something else re-rendered it.
+  if(moderatorUsersCache.length){ renderModeratorUserList(); renderModStudyEditor(); }
   document.getElementById('writingImageUrl').placeholder = t('writingImageUrlPlaceholder');
   document.getElementById('writingQ53ImageUrl').placeholder = t('writingImageUrlPlaceholder');
   document.getElementById('writingEssaySearch').placeholder = t('writingSearchPlaceholder');
@@ -12162,6 +12218,7 @@ async function onAuthed(user){
   document.getElementById('whoEmail').textContent = user.email;
   const myColor = colorForUser(user.id);
   setMyColorInputs(myColor);
+  setMyColorVar(myColor);
   document.getElementById('whoName').style.color = myColor;
   document.getElementById('whoEmail').style.color = myColor;
   updateLinkNotifyDot();
@@ -13440,6 +13497,7 @@ async function enterGuestMode(){
   document.getElementById('whoEmail').textContent = '';
   const myColor = colorForUser('guest-local');
   setMyColorInputs(myColor);
+  setMyColorVar(myColor);
   document.getElementById('whoName').style.color = myColor;
   document.getElementById('whoEmail').style.color = myColor;
   // updateLinkNotifyDot()/refreshNotifBell()/the 5 subscribeXRealtime() calls
@@ -15165,6 +15223,7 @@ async function loadModeratorUsers(){
   if(error){ list.innerHTML = `<div class="empty">${t('modActionFailed')}</div>`; return; }
   moderatorUsersCache = data || [];
   renderModeratorUserList();
+  renderModStudyEditor();
 }
 
 /* ---------- SHARED PAGINATION BAR ----------
@@ -15326,6 +15385,7 @@ function renderModeratorUserList(){
         <button class="linkbtn act-edit act-icon mod-edit-name" data-id="${u.id}" data-name="${escapeHtml(u.display_name||'')}" title="${t('modEditName')}" aria-label="${t('modEditName')}">${ICON.pencil(14)}</button>
         ${u.email_confirmed ? '' : `<button class="linkbtn mod-confirm-email" data-id="${u.id}">${t('modConfirmEmail')}</button>`}
         ${u.mfa_enrolled ? `<button class="linkbtn mod-disable-mfa" data-id="${u.id}">${t('modDisableMfa')}</button>` : ''}
+        <button class="linkbtn mod-study-open" data-id="${u.id}">${t('modStudyHead')}</button>
         <button class="linkbtn act-remove mod-delete-user" data-id="${u.id}">${t('modDeleteUser')}</button>
       </div>`}`;
     list.appendChild(row);
@@ -15367,6 +15427,9 @@ function renderModeratorUserList(){
       if(error) alert(t('modActionFailed')); else loadModeratorUsers();
     });
   });
+  list.querySelectorAll('.mod-study-open').forEach(btn=>{
+    btn.addEventListener('click', ()=> openModStudyFor(btn.dataset.id));
+  });
   list.querySelectorAll('.mod-delete-user').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       if(!confirm(t('modConfirmDeleteUser'))) return;
@@ -15374,6 +15437,166 @@ function renderModeratorUserList(){
       if(error) alert(t('modActionFailed')); else loadModeratorUsers();
     });
   });
+}
+/* ---- Moderator: study hours ----
+   The admin can correct anyone's self-logged hours, which is what every study
+   leaderboard counts (real-user request: "should let moderators edit the self
+   tracked leaderboard stuff like Korean study times"). RLS keeps study_entries
+   own-write and the admin is not in every circle, so the read and both writes
+   are admin_* RPCs (sql migrations/admin_study_entries_migration.sql), which
+   refuse anybody else server-side whatever this panel shows. */
+const MOD_STUDY_DAY_CHIPS = 21;
+let modStudy = { uid: null, date: todayStr(), days: null, msg: '', msgError: false };
+function modStudyName(uid){
+  const u = moderatorUsersCache.find(x=> x.id === uid);
+  return (u && (u.display_name || u.email)) || nameFor(uid);
+}
+function modStudyTotal(acts){
+  return Object.values(acts || {}).reduce((s, h)=> s + (Number(h) || 0), 0);
+}
+function setModStudyMsg(text, isError){
+  modStudy.msg = text || '';
+  modStudy.msgError = !!isError;
+  const el = document.getElementById('modStudyMsg');
+  if(!el) return;
+  el.textContent = modStudy.msg;
+  el.style.color = isError ? 'var(--danger)' : 'var(--on)';
+  el.classList.toggle('hidden', !modStudy.msg);
+}
+async function loadModStudyDays(uid){
+  modStudy.days = null;
+  renderModStudyEditor();
+  const { data, error } = await supabaseClient.rpc('admin_list_study_entries', { target_user_id: uid });
+  // A slow answer for an account that is no longer the one picked is dropped.
+  if(modStudy.uid !== uid) return;
+  modStudy.days = {};
+  if(error){
+    modStudy.msg = t('modActionFailed'); modStudy.msgError = true;
+  } else {
+    (data || []).forEach(r=>{ modStudy.days[r.entry_date] = r.activities || {}; });
+  }
+  renderModStudyEditor();
+}
+function openModStudyFor(uid){
+  modStudy.uid = uid;
+  modStudy.date = todayStr();
+  modStudy.msg = '';
+  loadModStudyDays(uid);
+  const host = document.getElementById('modStudyEditor');
+  if(host) host.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+function renderModStudyEditor(){
+  const host = document.getElementById('modStudyEditor');
+  if(!host) return;
+  const label = u => u.display_name || u.email || '';
+  const users = [...moderatorUsersCache].sort((a,b)=> label(a).toLowerCase().localeCompare(label(b).toLowerCase()));
+  const opts = [`<option value="">${escapeHtml(t('modStudyChooseUser'))}</option>`]
+    .concat(users.map(u=> `<option value="${u.id}"${u.id === modStudy.uid ? ' selected' : ''}>${escapeHtml(label(u))}</option>`))
+    .join('');
+  let body = '';
+  if(modStudy.uid && modStudy.days === null){
+    body = '<div class="empty">–</div>';
+  } else if(modStudy.uid){
+    const day = modStudy.days[modStudy.date];
+    const fields = ACTIVITIES.map(a=>{
+      const v = day ? Number(day[a.key]) : 0;
+      return `<div class="field"><label for="modStudyAct_${a.key}"><span class="mod-study-dot" style="background:${a.color};"></span>${escapeHtml(actLabel(a.key))}</label>` +
+        `<input type="number" min="0" step="any" inputmode="decimal" id="modStudyAct_${a.key}" data-act="${a.key}" value="${v > 0 ? fmt(v) : ''}" placeholder="0"></div>`;
+    }).join('');
+    const dates = Object.keys(modStudy.days).sort((a,b)=> b.localeCompare(a));
+    const chips = dates.slice(0, MOD_STUDY_DAY_CHIPS).map(d=>{
+      const total = Number(fmt(modStudyTotal(modStudy.days[d])));
+      return `<button type="button" class="mod-study-day${d === modStudy.date ? ' on' : ''}" data-date="${d}">${d} · ${total} ${pluralUnit(total,'hr','hrs')}</button>`;
+    }).join('');
+    const more = dates.length > MOD_STUDY_DAY_CHIPS
+      ? `<span class="hint" style="margin:0;">${escapeHtml(t('modStudyMoreDays').replace('{n}', ()=> String(dates.length - MOD_STUDY_DAY_CHIPS)))}</span>` : '';
+    body =
+      (day ? '' : `<p class="hint" style="margin-top:10px;">${escapeHtml(t('modStudyEmptyDay'))}</p>`) +
+      `<div class="mod-study-grid">${fields}</div>` +
+      `<div class="mod-study-actions">` +
+        `<button type="button" class="export-btn" id="modStudySaveBtn">${escapeHtml(t('modStudySave'))}</button>` +
+        (day ? `<button type="button" class="export-btn act-danger" id="modStudyDeleteBtn">${escapeHtml(t('modStudyDeleteDay'))}</button>` : '') +
+      `</div>` +
+      `<div class="hint${modStudy.msg ? '' : ' hidden'}" id="modStudyMsg" style="color:${modStudy.msgError ? 'var(--danger)' : 'var(--on)'};">${escapeHtml(modStudy.msg)}</div>` +
+      `<div class="wtc-title" style="margin:18px 0 0;">${escapeHtml(t('modStudyDays'))}</div>` +
+      `<div class="mod-study-days">${dates.length ? chips + more : `<span class="hint" style="margin:0;">${escapeHtml(t('modStudyNoDays'))}</span>`}</div>`;
+  }
+  host.innerHTML =
+    `<div class="wtc-title">${escapeHtml(t('modStudyHead'))}</div>` +
+    `<p class="hint" style="margin:0 0 10px;">${escapeHtml(t('modStudyHint'))}</p>` +
+    `<div class="log-form">` +
+      `<div class="field"><label for="modStudyUser">${escapeHtml(t('modStudyUser'))}</label><select id="modStudyUser">${opts}</select></div>` +
+      (modStudy.uid ? `<div class="field"><label for="modStudyDate">${escapeHtml(t('modStudyDate'))}</label><input type="date" id="modStudyDate" value="${modStudy.date}"></div>` : '') +
+    `</div>` + body;
+  host.querySelector('#modStudyUser').addEventListener('change', (e)=>{
+    modStudy.uid = e.target.value || null;
+    modStudy.msg = '';
+    if(modStudy.uid) loadModStudyDays(modStudy.uid);
+    else { modStudy.days = null; renderModStudyEditor(); }
+  });
+  const dateEl = host.querySelector('#modStudyDate');
+  if(dateEl) dateEl.addEventListener('change', (e)=>{
+    if(!e.target.value) return;
+    modStudy.date = e.target.value;
+    modStudy.msg = '';
+    renderModStudyEditor();
+  });
+  host.querySelectorAll('.mod-study-day').forEach(b=> b.addEventListener('click', ()=>{
+    modStudy.date = b.dataset.date;
+    modStudy.msg = '';
+    renderModStudyEditor();
+  }));
+  const saveBtn = host.querySelector('#modStudySaveBtn');
+  if(saveBtn) saveBtn.addEventListener('click', ()=> saveModStudyDay(saveBtn));
+  const delBtn = host.querySelector('#modStudyDeleteBtn');
+  if(delBtn) delBtn.addEventListener('click', deleteModStudyDay);
+}
+// The leaderboards read allEntries, which only the full load fills (it merges
+// the rows RLS lets this account see with study_daily_totals for everybody
+// else), and realtime will not bring an edit back by itself: it is filtered by
+// the SAME RLS, so the admin hears about a change to an account outside the
+// circle from nobody. Hence scheduleSharedDataRefresh after each write.
+async function saveModStudyDay(btn){
+  const host = document.getElementById('modStudyEditor');
+  const uid = modStudy.uid, date = modStudy.date;
+  if(!host || !uid || !date || !modStudy.days) return;
+  const acts = {};
+  let bad = false;
+  host.querySelectorAll('input[data-act]').forEach(inp=>{
+    const raw = inp.value.trim();
+    if(raw === '') return;
+    const n = Number(raw);
+    if(!isFinite(n) || n < 0){ bad = true; return; }
+    // Two places is what the logger's own sums carry, and it keeps a float's
+    // 0.30000000000000004 out of the row.
+    if(n > 0) acts[inp.dataset.act] = Math.round(n * 100) / 100;
+  });
+  // Said in place rather than re-rendered: a re-render would put back the
+  // stored hours over what was just typed.
+  if(bad){ setModStudyMsg(t('modStudyInvalid'), true); return; }
+  btn.disabled = true;
+  const { error } = await supabaseClient.rpc('admin_set_study_entry', { target_user_id: uid, target_date: date, new_activities: acts });
+  btn.disabled = false;
+  if(error){ setModStudyMsg(t('modActionFailed'), true); return; }
+  if(modStudy.uid !== uid || !modStudy.days) return;
+  if(Object.keys(acts).length) modStudy.days[date] = acts;
+  else delete modStudy.days[date];
+  modStudy.msg = t('modActionDone'); modStudy.msgError = false;
+  renderModStudyEditor();
+  scheduleSharedDataRefresh();
+}
+async function deleteModStudyDay(){
+  const uid = modStudy.uid, date = modStudy.date;
+  if(!uid || !date) return;
+  const ask = t('modStudyConfirmDelete').replace('{name}', ()=> modStudyName(uid)).replace('{date}', ()=> date);
+  if(!confirm(ask)) return;
+  const { error } = await supabaseClient.rpc('admin_delete_study_entry', { target_user_id: uid, target_date: date });
+  if(error){ setModStudyMsg(t('modActionFailed'), true); return; }
+  if(modStudy.uid !== uid || !modStudy.days) return;
+  delete modStudy.days[date];
+  modStudy.msg = t('modActionDone'); modStudy.msgError = false;
+  renderModStudyEditor();
+  scheduleSharedDataRefresh();
 }
 document.getElementById('moderatorSearch').addEventListener('input', (e)=>{
   moderatorSearchTerm = e.target.value;
@@ -15469,6 +15692,9 @@ function moveRowSlider(row, opts){
   slider.style.height = Math.round(box.height) + 'px';
   slider.style.transform = 'translateX(' + x + 'px)' + (jump ? '' : ' scaleX(1.07) scaleY(0.88)');
   if(jump){
+    // A stretch still pending from the last move would land after this and
+    // put the pill back over the spot the tab was in before the jump.
+    clearTimeout(st.stretchTimer);
     // Force the no-transition write to land before the class comes off, or
     // the browser coalesces the two and animates from the old position.
     void slider.offsetWidth;
@@ -15532,6 +15758,23 @@ function refreshRowSliders(force){
     if(force || !st.parked) moveRowSlider(row, { instant: true });
   });
 }
+// A resize moves the tabs out from under the pill -- they reflow, wrap and
+// step their type down -- and the only re-measure was the one the tab reorder
+// makes 150ms after the resize ENDS, so the pill sat on the old spot for the
+// whole drag and then jumped (real-user report: "the highlight on the tab
+// doesn't follow the resizing until resizing has concluded"). Once a frame,
+// and INSTANT: a pill easing after a target that is still moving is exactly
+// the lag that was reported. Deliberately not a ResizeObserver on the rows: a
+// row sized by its own content resizes when a tab is chosen, and that would
+// cut the pill's travel short on every click.
+let rowSliderResizeFrame = 0;
+window.addEventListener('resize', ()=>{
+  if(rowSliderResizeFrame) return;
+  rowSliderResizeFrame = requestAnimationFrame(()=>{
+    rowSliderResizeFrame = 0;
+    refreshRowSliders(true);
+  });
+});
 /* ---------- PINNED TOP BAR ---------- */
 // The bar is OUT OF FLOW (position:fixed). That is the whole design, and it is
 // what makes the condense safe: a sticky bar sits in normal flow, so shrinking
@@ -31609,8 +31852,16 @@ function colorForNote(note){
 // Two inputs write the same setting -- the one over the header pill and the
 // one in Account settings -- so the handler is shared and each keeps the
 // other in step rather than the two drifting apart.
+// The title's hover is painted in the reader's own colour (real-user
+// request), so everywhere the name is painted in it, the title's variable is
+// set as well. On the root, because the title is outside every panel.
+function setMyColorVar(color){
+  if(color) document.documentElement.style.setProperty('--my-color', color);
+  else document.documentElement.style.removeProperty('--my-color');
+}
 async function applyMyColor(color){
   profileColors[currentUser.id] = color;
+  setMyColorVar(color);
   document.getElementById('whoName').style.color = color;
   document.getElementById('whoEmail').style.color = color;
   setMyColorInputs(color);
@@ -32235,7 +32486,10 @@ function buildNotePagerBar(key){
     setNotePagedPref(!notePagedPref());
     Object.keys(notePagers).forEach(k=> renderNotePager(k));
   });
-  p.bar.append(prev, count, next, mode);
+  const del = document.createElement('button');
+  del.type = 'button'; del.className = 'np-del';
+  del.addEventListener('click', ()=> deleteNotePage(key));
+  p.bar.append(prev, count, next, mode, del);
 }
 function renderNotePager(key, follow){
   const p = notePagers[key];
@@ -32278,6 +32532,37 @@ function renderNotePager(key, follow){
   const mode = p.bar.querySelector('.np-mode');
   mode.textContent = notePagedPref() ? t('notePageAll') : t('notePageOne');
   mode.classList.toggle('on', notePagedPref());
+  // Only one page at a time says which page "this" one is. With every page
+  // in a row there is no current page to point at, so there is no button.
+  const del = p.bar.querySelector('.np-del');
+  del.textContent = t('notePageDelete');
+  del.style.display = paged ? '' : 'none';
+}
+// Deleting a page takes its blocks AND one of the breaks beside it, or it
+// would come straight back as an empty page: the break it ends with (a break
+// is filed with the page it closes), or, for the last page, which ends with
+// nothing, the break above it. Through Quill as one 'user' change rather than
+// through the DOM, so it saves, broadcasts and undoes like any other edit.
+function deleteNotePage(key){
+  const p = notePagers[key];
+  if(!p || !window.Quill) return;
+  const groups = notePageGroups(p.quill);
+  const total = groups.length;
+  if(total <= 1) return;
+  const i = Math.max(0, Math.min(p.page, total - 1));
+  if(!confirm(t('notePageDeleteConfirm'))) return;
+  const isLast = i === total - 1;
+  const els = isLast ? [groups[i - 1][groups[i - 1].length - 1]].concat(groups[i]) : groups[i];
+  const first = els.length ? Quill.find(els[0]) : null;
+  const last = els.length ? Quill.find(els[els.length - 1]) : null;
+  if(!first || !last) return;
+  const start = p.quill.getIndex(first);
+  const end = isLast ? p.quill.getLength() : p.quill.getIndex(last) + last.length();
+  p.quill.deleteText(start, end - start, 'user');
+  // The page after slides into this one's place; off the end, it is the one
+  // before that is left to show.
+  p.page = isLast ? i - 1 : i;
+  renderNotePager(key);
 }
 // The insert lives in the TOOLBAR, beside the other things you put into a
 // document, and not in the page bar -- the bar only exists once there are two

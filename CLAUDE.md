@@ -3271,3 +3271,132 @@ the pair worth keeping.
 - The week view is untouched: `dayCard` is gated on `isDayView`, so a bar
   sharing its column with an overlapping class is a narrow bar again and gets
   exactly what it got before.
+
+## A page can be deleted, moderators can correct study hours, and every delete is red (11 Sep, forty-second pass)
+
+Six off one message, plus a seventh added half way through it.
+
+### Deleting a note's page
+
+`deleteNotePage`, reached by a red "Delete page" at the far end of the page
+bar, in both note editors (course notes and the notebook share the pager). It
+is only offered one page at a time: with every page in a row there is no
+"this" page to point at. It asks first.
+
+- **A page goes with ONE of the breaks beside it**, or it comes straight back
+  as an empty page: the break it ends with (a break is filed with the page it
+  closes), or, for the last page, which ends with nothing, the break above it.
+- **Through Quill as one 'user' `deleteText`, not the DOM**, so it saves,
+  broadcasts and undoes like any other edit. The range comes from
+  `Quill.find(el)` + `getIndex`; the last page deletes to `getLength()`.
+- The page after slides into its place; off the end, the one before is shown.
+  Down to one page the bar hides itself, as it always has.
+- Checked on a scratch Quill in the browser: first, middle and last of three,
+  the last of two, and an empty last page, each leaving exactly the pages and
+  breaks it should. **Pasting `<hr class="note-page-break">` through the
+  clipboard puts an empty paragraph before each break**, which shows up in
+  `getText()` -- that is the paste, not the delete.
+
+### The page-break button was paper on paper
+
+`svgIcon` strokes `currentColor`, and a Quill toolbar button's colour is the
+BASE `button` rule's `--paper`: Quill colours its own `.ql-stroke`, never the
+button. So the mark was paper-coloured on the paper-dim toolbar in both
+themes. It is `--ink-soft` now, the same as Quill's marks, and Quill's hover
+and focus blue still win because their selector is heavier.
+
+### The tab pill follows a resize
+
+The only re-measure on resize lived inside the 150ms debounce that reorders
+the tabs, so the pill sat on the old spot for the whole drag and jumped at the
+end. A rAF-throttled resize listener now runs `refreshRowSliders(true)` once a
+frame, INSTANT -- an eased pill chasing a target that is still moving is the
+lag that was reported -- and an instant placement clears any pending stretch
+timer, which would otherwise land after it and put the pill back.
+
+- **Not a ResizeObserver on the rows**: a row sized by its own content
+  resizes when a tab is chosen, and that would cut the travel short on every
+  click.
+- Verified with the debounced reorder STUBBED OUT: tab shifted 70px, one
+  resize event, one frame, pill at 70, reorder never having run.
+
+### Moderators correct study hours
+
+`sql migrations/admin_study_entries_migration.sql`: `admin_list_study_entries`,
+`admin_set_study_entry`, `admin_delete_study_entry`, SECURITY DEFINER behind
+`current_is_admin()`, REVOKEd from anon. RLS keeps study_entries own-write and
+the admin is not in every circle, so the read has to be an RPC as well as the
+writes.
+
+- **The write validates**: known activity keys, numbers only, 0 to 1000. A
+  zero is dropped and a day left with nothing is DELETED rather than stored as
+  `{}`, which is what `deleteMyDay` does. **No cap on a day's total**: the
+  app's own logger has none, and live rows already hold more than 24 hours on
+  one activity, so a cap would stop the admin saving a day unchanged.
+- **Tested against the live schema in one batch that raises at the end**, so
+  all of it rolls back: set, list, upsert, zero-to-delete, delete, and refusals
+  for an unknown key, a negative, a string and a non-admin caller; then checked
+  that no function and no row was left. Worth reusing: a DO block that
+  `RAISE EXCEPTION 'RESULT %'`s its findings hands them back in the error while
+  guaranteeing nothing commits. **No explicit BEGIN/ROLLBACK round it** -- an
+  aborted explicit transaction can be left open on a pooled connection; the
+  implicit one rolls itself back.
+- The editor sits under the moderator's account list: account, date, one field
+  per activity in its own colour, Save day / Delete day, and that account's
+  logged days as chips. Each account row has a "Study hours" link that opens
+  it for that account.
+- **Every write reloads the dataset** (`scheduleSharedDataRefresh`). Realtime
+  cannot be relied on: it is filtered by the same RLS, so the admin hears about
+  an edit to an account outside the circle from nobody.
+- **A bad entry is reported in place, not re-rendered**, which would put the
+  stored hours back over what was just typed.
+- **Assumption, stated**: "the self tracked leaderboard stuff like Korean
+  study times" was read as the study-hours log the study leaderboards count.
+  Books, articles, jobs and certifications are lists of records, not times,
+  and were left alone.
+- Driven in the browser with the RPCs stubbed: load, a refused negative (no
+  call sent, typed value kept), a save sending `{listening: 2, reading: 1.33}`
+  with the empty and zero fields dropped, and a delete behind its confirm.
+
+### Every delete is red
+
+- **`.item-meta .linkbtn:not(.act-icon)` is 0,3,0** -- a `:not()` counts its
+  argument -- and beats `.linkbtn.act-remove`'s 0,2,0 wherever the two meet.
+  So every text delete in a meta row came out celadon: the moderator's
+  "Delete account", a syllabus's "Remove", "Remove from trip".
+  `.item-meta .linkbtn.act-remove` matches its weight and comes later.
+- **`.export-btn.act-danger`**, red text and a red border on hover, on the four
+  outlined deletes that were grey: Delete all (writing samples), the calendar
+  modal's Delete, and the delete-choice modal's two.
+- **`.gram-resource-del` rested in `--ink-soft`** and only turned red under the
+  pointer. Red at rest now, with `:hover{background:none}` for the reason
+  `.item-del:hover` has one: `button:hover` (0,1,1) outweighs a bare class and
+  would paint a dark pill under the pointer.
+- The filled `.btn-danger` buttons were already red and are unchanged.
+- **The first pass at the grammar ✕ added a rule ABOVE an existing one** I had
+  not found, because my grep filtered out lines that begin with `.`. Found by
+  walking `document.styleSheets` for every rule the element matches, which is
+  the reliable way to ask what is actually colouring something.
+
+### The title hover wears the reader's own colour
+
+`--my-color` on the root, set by `setMyColorVar` wherever the name is painted
+in that colour: sign-in, guest, and the colour picker. The letters, the meter,
+the runner and the check read `var(--my-color, var(--on))`, so before sign-in
+it is the green it always was. Checked by setting a colour, reading all four
+computed colours, and clearing it again.
+
+### Checking this app in the preview pane, for next time
+
+- **`preview_start` by name picked up the OTHER project's launch.json**
+  (Welcome Korea's `korea-explorer-dev`) with this folder as the working
+  directory, and `file://` URLs are refused. What works: a background
+  `python3 -m http.server 8791 --bind 127.0.0.1 --directory <absolute path>`,
+  then `preview_start({url: "http://localhost:8791"})`.
+- **`#appScreen` is `display:none` before sign-in**, so anything measured in
+  it reads 0x0. Un-hide it for the measurement instead of signing in.
+- **Top-level `let`/`const` are reachable from the page** (`moderatorUsersCache`,
+  `notePagers`, `modStudy`), and top-level functions can be swapped for a test
+  (`scheduleSharedDataRefresh = ...`, `reorderMobileTabs = ...`), which is how
+  the editor ran with nothing sent and the slider ran with the debounce out of
+  the way.
