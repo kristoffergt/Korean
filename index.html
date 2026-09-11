@@ -2087,12 +2087,36 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
    The panel is a two-column grid only while a split is open. The sections
    never move in the DOM (a moved embed reloads, a moved editor loses its
    place); they are placed on the grid by class instead. */
-.tab-panel.split-on{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:18px;align-items:start;}
+.tab-panel.split-on{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);align-items:start;}
 .tab-panel.split-on > *{grid-column:1 / -1;}
 .tab-panel.split-on > .cal-view-toggle{grid-row:1;}
 .tab-panel.split-on > .split-left{grid-column:1;grid-row:2;min-width:0;}
-.tab-panel.split-on > .split-right{grid-column:2;grid-row:2;min-width:0;}
-.tab-panel.split-anim{transition:grid-template-columns 0.38s cubic-bezier(.2,.8,.2,1), column-gap 0.38s cubic-bezier(.2,.8,.2,1);}
+.tab-panel.split-on > .split-right{grid-column:3;grid-row:2;min-width:0;}
+/* The gutter is a TRACK, not a column-gap: the divider lives in it, and a
+   track animates along with the other two where a gap is a second property to
+   keep in step. */
+.tab-panel.split-on > .split-divider{grid-column:2;grid-row:2;align-self:stretch;}
+.tab-panel.split-anim{transition:grid-template-columns 0.38s cubic-bezier(.2,.8,.2,1);}
+/* Each half scrolls on its own, like two windows (real-user request). The
+   halves are exactly as tall as the screen below the tabs (--split-pane-h,
+   measured by splitFitPanes), so the page itself has nothing left to scroll,
+   and each half's bar stays pinned at the top of it with its X in reach. */
+.tab-panel.split-on > .split-pane{height:var(--split-pane-h, 70vh);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;}
+.split-pane > .split-pane-bar{position:sticky;top:0;z-index:4;background:var(--paper);padding-bottom:6px;margin-bottom:2px;}
+/* The divider. The whole strip is the grab area; the line and the handle are
+   what say so. The handle rides the MIDDLE of the screen (sticky top and
+   bottom both pinned there) so it is in reach however long the halves run,
+   and the padding keeps it clear of the two bars' X at the top. */
+.split-divider{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 0 12px;box-sizing:border-box;cursor:col-resize;touch-action:none;outline:none;}
+.split-divider::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;border-radius:1px;background:var(--line);transition:background 0.15s ease;}
+.split-divider:hover::before, .split-divider:focus-visible::before, body.split-resizing .split-divider::before{background:var(--celadon-4);}
+.split-handle{position:sticky;top:calc(50vh - 36px);bottom:calc(50vh - 36px);display:flex;flex-direction:column;align-items:center;gap:6px;}
+.split-swap{width:26px;height:26px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.14);}
+.split-swap:hover{color:var(--ink);background:var(--paper-dim);}
+.split-grip{width:10px;height:32px;box-sizing:border-box;border-radius:5px;border:1px solid var(--line);background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+.split-grip i{display:block;width:3px;height:3px;border-radius:50%;background:var(--ink-soft);}
+.split-divider:hover .split-grip, body.split-resizing .split-grip{border-color:var(--celadon-4);}
+.split-divider:focus-visible .split-grip{box-shadow:0 0 0 2px var(--celadon-4);}
 .split-pane-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px;margin:0 0 8px;padding:0 0 0 4px;}
 .split-pane-name{font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .split-pane-close{flex:0 0 auto;width:28px;height:28px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
@@ -2107,8 +2131,12 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
 .cal-view-toggle.split-on > button.split-active:hover{background:var(--ink);color:var(--paper);}
 .cal-view-toggle > button.split-drop-target{box-shadow:0 0 0 2px var(--celadon-4);}
 .cal-view-toggle > button.split-drag-src{opacity:0.45;}
+.tab-flyout .tab-flyout-item.split-drop-target{box-shadow:0 0 0 2px var(--celadon-4);}
+.tab-flyout .tab-flyout-item.split-drag-src{opacity:0.45;}
 body.split-dragging, body.split-dragging *{cursor:grabbing !important;user-select:none !important;-webkit-user-select:none !important;}
 body.split-dragging .tabs, body.split-dragging iframe{pointer-events:none;}
+body.split-resizing, body.split-resizing *{cursor:col-resize !important;user-select:none !important;-webkit-user-select:none !important;}
+body.split-resizing iframe{pointer-events:none;}
 /* Beside the pointer, not under it: centred on it, the ghost covered the very
    tab being dropped onto, ring and all. */
 .split-drag-ghost{position:fixed;left:0;top:0;z-index:1100;pointer-events:none;padding:6px 14px;border-radius:6px;background:var(--ink);color:var(--paper);font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 10px 26px rgba(0,0,0,0.28);transform:translate(14px,14px) rotate(-2deg) scale(1.04);}
@@ -10268,7 +10296,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
     lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name shines when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over a word you can click, and the squeeze when you press it.',
-    addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color', eventColorUseTheirBtn:"Use {name}'s color", splitTooNarrow:"Split view needs a wider window: at least {n} px, twice the app's width. Widen the window to open two tabs side by side.", splitClosedNarrow:'The window got too narrow for two tabs, so it went back to one.', splitClosePane:'Close {name}', splitDropHere:'Let go to open side by side',
+    addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color', eventColorUseTheirBtn:"Use {name}'s color", splitTooNarrow:"Split view needs a wider window: at least {n} px, twice the app's width. Widen the window to open two tabs side by side.", splitClosedNarrow:'The window got too narrow for two tabs, so it went back to one.', splitClosePane:'Close {name}', splitDropHere:'Let go to open side by side', splitResizeLabel:'Resize the two halves', splitResizeHint:'Drag to resize. Double-click to make them even again.', splitSwap:'Swap sides',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     calExportTitle:'Download calendar', calExportUseList:'Pick from list', calExportUseCalendar:'Pick on calendar', calExportPickHint:'Click events on the calendar to leave them out.', calExportCountTpl:'{in} of {total}', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
@@ -10391,7 +10419,7 @@ const I18N = {
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
     lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 반짝입니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누를 수 있는 단어 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.',
-    addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용', eventColorUseTheirBtn:'{name}의 색상 사용', splitTooNarrow:'화면 분할에는 더 넓은 창이 필요합니다. 앱 너비의 두 배인 {n}px 이상이어야 합니다. 두 탭을 나란히 열려면 창을 넓혀 주세요.', splitClosedNarrow:'창이 두 탭을 담기에는 좁아져서 한 탭으로 돌아갔습니다.', splitClosePane:'{name} 닫기', splitDropHere:'놓으면 나란히 열립니다',
+    addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용', eventColorUseTheirBtn:'{name}의 색상 사용', splitTooNarrow:'화면 분할에는 더 넓은 창이 필요합니다. 앱 너비의 두 배인 {n}px 이상이어야 합니다. 두 탭을 나란히 열려면 창을 넓혀 주세요.', splitClosedNarrow:'창이 두 탭을 담기에는 좁아져서 한 탭으로 돌아갔습니다.', splitClosePane:'{name} 닫기', splitDropHere:'놓으면 나란히 열립니다', splitResizeLabel:'두 화면 크기 조절', splitResizeHint:'끌어서 크기를 조절합니다. 두 번 클릭하면 다시 반반이 됩니다.', splitSwap:'좌우 바꾸기',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     calExportTitle:'캘린더 내려받기', calExportUseList:'목록에서 선택', calExportUseCalendar:'캘린더에서 선택', calExportPickHint:'캘린더에서 일정을 클릭하면 제외됩니다.', calExportCountTpl:'{total}개 중 {in}개', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
@@ -10514,7 +10542,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
     lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn sáng lên khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Chữ bấm được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.',
-    addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi', eventColorUseTheirBtn:'Dùng màu của {name}', splitTooNarrow:'Chia đôi màn hình cần cửa sổ rộng hơn: ít nhất {n} px, gấp đôi độ rộng của ứng dụng. Hãy mở rộng cửa sổ để mở hai thẻ cạnh nhau.', splitClosedNarrow:'Cửa sổ quá hẹp cho hai thẻ nên đã trở lại một thẻ.', splitClosePane:'Đóng {name}', splitDropHere:'Thả ra để mở cạnh nhau',
+    addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi', eventColorUseTheirBtn:'Dùng màu của {name}', splitTooNarrow:'Chia đôi màn hình cần cửa sổ rộng hơn: ít nhất {n} px, gấp đôi độ rộng của ứng dụng. Hãy mở rộng cửa sổ để mở hai thẻ cạnh nhau.', splitClosedNarrow:'Cửa sổ quá hẹp cho hai thẻ nên đã trở lại một thẻ.', splitClosePane:'Đóng {name}', splitDropHere:'Thả ra để mở cạnh nhau', splitResizeLabel:'Đổi kích thước hai bên', splitResizeHint:'Kéo để đổi kích thước. Nhấp đúp để chia đều lại.', splitSwap:'Đổi bên',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     calExportTitle:'Tải lịch về', calExportUseList:'Chọn từ danh sách', calExportUseCalendar:'Chọn trên lịch', calExportPickHint:'Nhấp vào sự kiện trên lịch để loại bỏ.', calExportCountTpl:'{in}/{total}', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
@@ -16111,7 +16139,7 @@ applyAnimPrefs();
 function switchTopLevelTab(view){
   // Another main tab ends a split (real-user spec: "choosing a third sub tab
   // or a different main tab closes both tabs").
-  if(splitView && splitView.group !== view) endSplitView(null, { instant: true });
+  if(splitView && splitView.group !== view) endSplitView(null, { instant: true, noRestore: true });
   activeTab = view;
   document.querySelectorAll('#tabNav button').forEach(b=>b.classList.remove('active'));
   const btn = document.getElementById('tabNav').querySelector(`button[data-tab="${view}"]`);
@@ -19406,6 +19434,9 @@ function applyTabFlyoutPush(){
   }
 }
 function showTabFlyout(btn, top){
+  // Held open, and no other tab's fly-out in its place, while one of its
+  // items is being dragged out to split with.
+  if(splitFlyoutHold) return;
   // There's no hover on a phone -- the closest a touch screen gets is a
   // "ghost hover" some browsers fire on first tap, which just leaves the
   // fly-out stuck open with nothing to dismiss it. Tapping a tab still
@@ -19473,9 +19504,13 @@ function showTabFlyout(btn, top){
   // transform, so adding .visible on the very same frame can get
   // coalesced by the browser into one style recalc and skip the
   // transition entirely -- forcing a frame gap guarantees it animates.
-  requestAnimationFrame(()=> requestAnimationFrame(()=> flyout.classList.add('visible')));
+  // Only if it is still this tab's by then: hidden in between (a drag let go,
+  // a click straight onto the tab), adding it anyway leaves a fly-out on
+  // screen that no tab owns and nothing will ever put away.
+  requestAnimationFrame(()=> requestAnimationFrame(()=>{ if(tabFlyoutBtn === btn) flyout.classList.add('visible'); }));
 }
 function hideTabFlyout(){
+  if(splitFlyoutHold) return;
   const flyout = document.getElementById('tabFlyout');
   // Only when there was something out to swallow -- hideTabFlyout is called
   // defensively from several places, and a tab that chews on nothing is a tab
@@ -19486,6 +19521,7 @@ function hideTabFlyout(){
   releaseSubBar();
 }
 function scheduleTabFlyoutHide(){
+  if(splitFlyoutHold) return;
   tabFlyoutHideTimer = setTimeout(hideTabFlyout, 150);
 }
 TAB_STRUCTURE.forEach(top=>{
@@ -19644,8 +19680,10 @@ document.getElementById('manageTabsHeader').addEventListener('click', ()=>{
 // request). Drag a sub tab out of its row onto another sub tab, or onto the
 // page beside the one that is open, and both open. Each half has a bar with an
 // X that closes it; choosing a third sub tab or another main tab closes both.
-// - Only from the STATIC sub-tab rows. The fly-out that pops out of a main tab
-//   on hover is a quick way to jump somewhere, not something to drag.
+// - From the sub-tab rows AND from the fly-out that pops out of a main tab on
+//   hover (real-user request, reversing the first version's "static ones
+//   only"). A fly-out of a tab that is not on screen brings that tab up on
+//   the drop.
 // - Only with a mouse or a pen: on a touch screen the same gesture is a
 //   scroll, and a phone is never wide enough anyway.
 // - The window has to be at least twice the app's own width. 640px is where
@@ -19658,13 +19696,24 @@ document.getElementById('manageTabsHeader').addEventListener('click', ()=>{
 // `var`, not `let`: the switch functions ask about this, and some of them can
 // run before this part of the script has been reached. A `let` read then is a
 // ReferenceError; a `var` is simply undefined, which reads as "no split".
-var splitView = null;      // { group, left, right, origin }
+var splitView = null;      // { group, left, right, origin, ratio }
 var splitBypass = false;   // set while the split itself drives a switch function
 var splitAnimToken = 0;
+var splitFlyoutHold = false; // the hover fly-out stays out while one of its items is dragged
 const SPLIT_MIN_WIDTH = 640 * 2;
-const SPLIT_GAP = 18;
+const SPLIT_GAP = 22;
 const SPLIT_ANIM_MS = 380;
 const SPLIT_DRAG_THRESHOLD = 6;
+// How far the divider goes ("to a certain extent"): neither half narrower
+// than 35% of the two, nor narrower than 440px, whichever floor is higher.
+const SPLIT_RATIO_MIN = 0.35;
+const SPLIT_PANE_MIN_PX = 440;
+// The fr scale the two halves share. One large sum rather than fractions of
+// 1: fr values that add up to LESS than 1 leave part of the width unused, and
+// a column animating from "all of it" to "its share" has to keep the sum.
+const SPLIT_FR = 10000;
+const SPLIT_PANE_MIN_H = 320;
+const SPLIT_SWAP_ICON = '<polyline points="8 3 4 7 8 11"></polyline><line x1="4" y1="7" x2="20" y2="7"></line><polyline points="16 13 20 17 16 21"></polyline><line x1="20" y1="17" x2="4" y2="17"></line>';
 const SPLIT_GROUPS = {
   calendar: { panel:'panelCalendar', row:'calendarSubToggle', sections:{ overview:'calendarOverviewSection', calendar:'calendarCalendarSection', expenditure:'calendarExpensesSection' } },
   study:    { panel:'panelStudy', row:'studySubToggle', sections:{ log:'studyLogSection', grammar:'studyGrammarSection', writing:'studyWritingSection', notebook:'studyNotebookSection' } },
@@ -19755,6 +19804,17 @@ function renderSplitBars(){
     x.setAttribute('aria-label', label);
     x.title = label;
   });
+  const panel = document.getElementById(SPLIT_GROUPS[sv.group].panel);
+  const divider = panel && panel.querySelector(':scope > .split-divider');
+  if(divider){
+    divider.setAttribute('aria-label', t('splitResizeLabel'));
+    divider.title = t('splitResizeHint');
+    const swap = divider.querySelector('.split-swap');
+    swap.setAttribute('aria-label', t('splitSwap'));
+    swap.title = t('splitSwap');
+  }
+  // A relabel can re-wrap the tabs above, which moves where the halves start.
+  splitFitPanes();
 }
 // Puts the panel into the arrangement splitView describes: both halves shown
 // and placed, a bar on each, both tabs lit. Nothing here animates.
@@ -19779,7 +19839,12 @@ function applySplitLayout(){
     const open = s.view === sv.left || s.view === sv.right;
     b.classList.toggle('split-active', open && !b.classList.contains('active'));
   });
-  document.getElementById(g.panel).classList.add('split-on');
+  const panel = document.getElementById(g.panel);
+  let divider = panel.querySelector(':scope > .split-divider');
+  if(!divider){ divider = buildSplitDivider(); panel.appendChild(divider); }
+  divider.setAttribute('aria-valuenow', String(Math.round(sv.ratio * 100)));
+  panel.style.gridTemplateColumns = splitColumns(sv.ratio);
+  panel.classList.add('split-on');
   document.getElementById(g.row).classList.add('split-on');
   renderSplitBars();
 }
@@ -19801,11 +19866,22 @@ function endSplitView(keep, opts){
   splitAnimToken++;
   const g = SPLIT_GROUPS[sv.group];
   const keepView = keep || ((sv.origin === sv.left || sv.origin === sv.right) ? sv.origin : sv.left);
+  // What the reader is looking at in the half that stays, put back on the page
+  // once that half is the page again. Not when another tab or sub tab is
+  // taking over the screen: that is not the place they are going back to.
+  // closeSplitPane hands in the one it took before its own animation.
+  const keepSec = splitSection(sv.group, keepView);
+  const keepAnchor = opts.noSwitch || opts.noRestore ? null
+    : 'anchor' in opts ? opts.anchor
+    : keepSec && keepSec.scrollTop > 0 ? splitCaptureAnchor(keepSec, keepSec) : null;
   splitView = null;
   const panel = document.getElementById(g.panel);
   panel.classList.remove('split-on', 'split-anim');
   panel.style.gridTemplateColumns = '';
-  panel.style.columnGap = '';
+  panel.style.removeProperty('--split-pane-h');
+  const divider = panel.querySelector(':scope > .split-divider');
+  if(divider) divider.remove();
+  document.body.classList.remove('split-resizing');
   Object.keys(g.sections).forEach(view=>{
     const sec = splitSection(sv.group, view);
     if(!sec) return;
@@ -19819,28 +19895,27 @@ function endSplitView(keep, opts){
   row.classList.remove('split-on');
   row.querySelectorAll(':scope > button').forEach(b=> b.classList.remove('split-active', 'split-drop-target', 'split-drag-src'));
   if(!opts.noSwitch) splitRunSwitch(sv.group, keepView);
+  if(keepAnchor) splitRestoreAnchor(keepAnchor, null);
   splitSettled();
 }
 // The grid's columns glide from `from` to `to`, and the travelling pills of
 // rows inside the halves (month/week/day and the like) follow every frame.
-function animateSplitColumns(panel, from, to, gapFrom, gapTo, done){
+function animateSplitColumns(panel, from, to, done){
   const token = ++splitAnimToken;
   const finish = ()=>{
     if(token !== splitAnimToken) return;
     splitAnimToken++;
     panel.classList.remove('split-anim');
-    panel.style.gridTemplateColumns = '';
-    panel.style.columnGap = '';
+    // Left on the split's own share, not cleared: the share is the divider's.
+    panel.style.gridTemplateColumns = splitView ? splitColumns(splitView.ratio) : '';
     done();
   };
   if(splitReducedMotion()){ finish(); return; }
   panel.classList.remove('split-anim');
   panel.style.gridTemplateColumns = from;
-  panel.style.columnGap = gapFrom;
   void panel.offsetWidth;
   panel.classList.add('split-anim');
   panel.style.gridTemplateColumns = to;
-  panel.style.columnGap = gapTo;
   const t0 = performance.now();
   const follow = ()=>{
     if(token !== splitAnimToken) return;
@@ -19869,12 +19944,27 @@ function openSplitView(group, left, right, entering){
   const origin = prev ? prev.origin : splitActiveView(group);
   splitView = null;
   const other = entering === left ? right : left;
+  // What the reader was looking at in the half that stays, while it is still
+  // the whole page. Only when they had scrolled into it: a section still
+  // starting below the top of the screen opens at its own top.
+  const stayed = !prev && onScreen.has(other) ? splitSection(group, other) : null;
+  const stayAnchor = stayed && stayed.getBoundingClientRect().top < splitViewTop() ? splitCaptureAnchor(stayed, null) : null;
   // Each half gets its own switch's side effects if it was not on screen
   // already; the entering one goes last, so it is the one left active.
   if(!onScreen.has(other)) splitRunSwitch(group, other);
   splitRunSwitch(group, entering);
-  splitView = { group, left, right, origin };
+  // A re-arrangement keeps the widths the halves had: the same pair the other
+  // way round flips the share, anything else keeps it.
+  const ratio = !prev ? 0.5 : (prev.left === right && prev.right === left ? 1 - prev.ratio : prev.ratio);
+  splitView = { group, left, right, origin, ratio };
   applySplitLayout();
+  if(!prev){
+    // The page has nothing to scroll once the halves fill the screen, so it
+    // goes back to the top; the place the reader had goes INTO the half.
+    splitScrollPage(0);
+    splitFitPanes();
+    splitRestoreAnchor(stayAnchor, stayed);
+  }
   const panel = document.getElementById(g.panel);
   const fresh = [left, right].filter(v=> !onScreen.has(v));
   // A swap of the two open halves brings nothing new in, so both glide.
@@ -19885,9 +19975,12 @@ function openSplitView(group, left, right, entering){
   if(!prev && fresh.length === 1){
     const grow = splitSection(group, fresh[0]);
     grow.style.overflow = 'hidden';
-    const from = fresh[0] === left ? 'minmax(0,0fr) minmax(0,1fr)' : 'minmax(0,1fr) minmax(0,0fr)';
-    animateSplitColumns(panel, from, 'minmax(0,1fr) minmax(0,1fr)', '0px', SPLIT_GAP + 'px', ()=>{
+    const divider = panel.querySelector(':scope > .split-divider');
+    if(divider && divider.animate) divider.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: 140, easing: 'ease', fill: 'backwards' });
+    animateSplitColumns(panel, splitColumnsOnly(fresh[0] === left ? 'right' : 'left'), splitColumns(splitView.ratio), ()=>{
       grow.style.overflow = '';
+      // Again now the widths are final: the half re-wrapped on the way in.
+      splitRestoreAnchor(stayAnchor, stayed);
       splitSettled();
     });
   } else {
@@ -19900,12 +19993,231 @@ function closeSplitPane(view){
   if(!sv) return;
   const keep = view === sv.left ? sv.right : sv.left;
   const going = splitSection(sv.group, view);
-  if(!going || splitReducedMotion()){ endSplitView(keep); return; }
+  // Taken now, while the half that stays is the width the reader is looking
+  // at. On the way out it grows to the full width and re-wraps, and an anchor
+  // measured after that is measured on a page they never saw.
+  const keepSec = splitSection(sv.group, keep);
+  const anchor = keepSec && keepSec.scrollTop > 0 ? splitCaptureAnchor(keepSec, keepSec) : null;
+  if(!going || splitReducedMotion()){ endSplitView(keep, { anchor }); return; }
   going.style.overflow = 'hidden';
   if(going.animate) going.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease', fill: 'forwards' });
-  const to = view === sv.left ? 'minmax(0,0fr) minmax(0,1fr)' : 'minmax(0,1fr) minmax(0,0fr)';
-  animateSplitColumns(document.getElementById(SPLIT_GROUPS[sv.group].panel),
-    'minmax(0,1fr) minmax(0,1fr)', to, SPLIT_GAP + 'px', '0px', ()=> endSplitView(keep));
+  const panel = document.getElementById(SPLIT_GROUPS[sv.group].panel);
+  const divider = panel.querySelector(':scope > .split-divider');
+  if(divider && divider.animate) divider.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease', fill: 'forwards' });
+  animateSplitColumns(panel, splitColumns(sv.ratio), splitColumnsOnly(view === sv.left ? 'right' : 'left'), ()=> endSplitView(keep, { anchor }));
+}
+// ---- each half scrolls on its own ----
+// Each half is exactly as tall as the screen below where it starts, so the
+// two scroll on their own and the page has nothing to scroll (real-user
+// request: "the scrolling happens independently on either side"). Measured
+// from where the halves sit on the PAGE, which does not depend on how far it
+// is scrolled, then shaved by whatever the page would still overflow by (its
+// own bottom padding, anything under the panel).
+function splitFitPanes(){
+  const sv = splitView;
+  if(!sv) return;
+  const panel = document.getElementById(SPLIT_GROUPS[sv.group].panel);
+  const pane = splitSection(sv.group, sv.left);
+  if(!panel || !pane || panel.classList.contains('hidden')) return;
+  const docTop = pane.getBoundingClientRect().top + window.scrollY;
+  let h = Math.max(SPLIT_PANE_MIN_H, Math.floor(window.innerHeight - docTop - 12));
+  panel.style.setProperty('--split-pane-h', h + 'px');
+  const over = document.documentElement.scrollHeight - window.innerHeight;
+  if(over > 0 && h > SPLIT_PANE_MIN_H){
+    h = Math.max(SPLIT_PANE_MIN_H, h - over);
+    panel.style.setProperty('--split-pane-h', h + 'px');
+  }
+}
+function splitScrollPage(y){
+  try { window.scrollTo({ top: y, left: 0, behavior: 'instant' }); }
+  catch(e){ window.scrollTo(0, y); }
+}
+// The top of what the reader can see of the page: the pinned bar's bottom
+// edge, or 0 when the bar is not pinned and has scrolled away.
+function splitViewTop(){
+  const bar = document.getElementById('topBar');
+  return bar ? Math.max(0, bar.getBoundingClientRect().bottom) : 0;
+}
+// Inside a half, what can be seen starts under its pinned bar.
+function splitPaneContentTop(pane){
+  const bar = pane.querySelector(':scope > .split-pane-bar');
+  return pane.getBoundingClientRect().top + (bar ? bar.offsetHeight : 0);
+}
+// What the reader is looking at in `section`: the first card starting in the
+// upper half of the visible area, or failing that the one its top edge is in,
+// and how far below that edge its own top is (negative when it starts above).
+// `scroller` is the half's own box, or null for the page. Put back after the
+// layout changes, it keeps the same content in front of them rather than the
+// top of the section.
+function splitCaptureAnchor(section, scroller){
+  if(!section) return null;
+  const viewTop = scroller ? splitPaneContentTop(scroller) : splitViewTop();
+  const viewBottom = scroller ? scroller.getBoundingClientRect().bottom : window.innerHeight;
+  const seen = [...section.querySelectorAll('.card')].filter(c=>{
+    const r = c.getBoundingClientRect();
+    return r.height > 0 && r.bottom > viewTop + 1;
+  });
+  // A card that STARTS in the upper half of what can be seen is what the
+  // reader is looking at, more than the tail of the one above it. That tail
+  // re-wraps to another height when the width changes, and anchoring on its
+  // top moves everything under it by the difference.
+  const reach = viewTop + Math.max(0, viewBottom - viewTop) / 2;
+  const el = seen.find(c=>{ const top = c.getBoundingClientRect().top; return top >= viewTop - 1 && top < reach; }) || seen[0];
+  return el ? { el, offset: el.getBoundingClientRect().top - viewTop } : null;
+}
+function splitRestoreAnchor(anchor, scroller){
+  if(!anchor || !anchor.el.isConnected) return;
+  const r = anchor.el.getBoundingClientRect();
+  if(r.height === 0) return;
+  if(scroller){ scroller.scrollTop += (r.top - splitPaneContentTop(scroller)) - anchor.offset; return; }
+  // More than once: the top bar compacts when it sticks (164px at the top of
+  // the page, 99px pinned, at 1,440 wide), so the scroll that puts the place
+  // back moves the very edge it was measured against. Measured once, a card
+  // put back 40px under the bar landed 105px under it. updateTopBarStuck is
+  // what the scroll event would run a frame later, run now so the next pass
+  // sees the bar as it will be.
+  for(let pass = 0; pass < 3; pass++){
+    const want = Math.max(0, Math.round(window.scrollY + (anchor.el.getBoundingClientRect().top - splitViewTop()) - anchor.offset));
+    if(Math.abs(want - window.scrollY) < 1) break;
+    splitScrollPage(want);
+    updateTopBarStuck();
+  }
+}
+// ---- sizing the halves, and swapping them ----
+// The divider's position is the LEFT half's share of the width the two split
+// between them (the gutter's 22px taken off first), kept on splitView.ratio for
+// as long as the split lasts.
+function splitColumns(ratio){
+  const l = Math.round(Math.min(1, Math.max(0, ratio)) * SPLIT_FR);
+  return `minmax(0,${l}fr) ${SPLIT_GAP}px minmax(0,${SPLIT_FR - l}fr)`;
+}
+// Only one half showing, the gutter closed: where the open animation starts
+// and where the X's closing one ends.
+function splitColumnsOnly(side){
+  return side === 'left' ? `minmax(0,${SPLIT_FR}fr) 0px minmax(0,0fr)` : `minmax(0,0fr) 0px minmax(0,${SPLIT_FR}fr)`;
+}
+function splitRatioLimits(panel){
+  const available = panel.getBoundingClientRect().width - SPLIT_GAP;
+  const lo = available > 0 ? Math.min(0.5, Math.max(SPLIT_RATIO_MIN, SPLIT_PANE_MIN_PX / available)) : 0.5;
+  return [lo, 1 - lo];
+}
+function setSplitRatio(ratio, opts){
+  const sv = splitView;
+  if(!sv) return;
+  const panel = document.getElementById(SPLIT_GROUPS[sv.group].panel);
+  const [lo, hi] = splitRatioLimits(panel);
+  const next = Math.min(hi, Math.max(lo, ratio));
+  const from = panel.style.gridTemplateColumns || splitColumns(sv.ratio);
+  sv.ratio = next;
+  const divider = panel.querySelector(':scope > .split-divider');
+  if(divider) divider.setAttribute('aria-valuenow', String(Math.round(next * 100)));
+  if(opts && opts.animate){
+    animateSplitColumns(panel, from, splitColumns(next), splitSettled);
+  } else {
+    panel.classList.remove('split-anim');
+    panel.style.gridTemplateColumns = splitColumns(next);
+  }
+}
+// The thing in the middle (real-user request: "a thing in the middle to move
+// it like on windows"). Drag anywhere on it; double-click evens the halves
+// again; arrow keys nudge it (Shift for bigger steps), Home and End take it to
+// either limit and Enter to the middle, since a separator a keyboard cannot
+// move is one half the people using it cannot.
+function buildSplitDivider(){
+  const d = document.createElement('div');
+  d.className = 'split-divider';
+  d.setAttribute('role', 'separator');
+  d.setAttribute('aria-orientation', 'vertical');
+  d.setAttribute('aria-valuemin', String(Math.round(SPLIT_RATIO_MIN * 100)));
+  d.setAttribute('aria-valuemax', String(Math.round((1 - SPLIT_RATIO_MIN) * 100)));
+  d.tabIndex = 0;
+  d.innerHTML = `<div class="split-handle"><button type="button" class="split-swap">${svgIcon(SPLIT_SWAP_ICON, 13)}</button><span class="split-grip" aria-hidden="true"><i></i><i></i><i></i></span></div>`;
+  d.querySelector('.split-swap').addEventListener('click', (e)=>{ e.stopPropagation(); swapSplitSides(); });
+  let rs = null;
+  const stop = ()=>{
+    if(!rs) return;
+    const was = rs;
+    rs = null;
+    if(was.frame) cancelAnimationFrame(was.frame);
+    document.body.classList.remove('split-resizing');
+    try { if(d.hasPointerCapture(was.id)) d.releasePointerCapture(was.id); } catch(err){}
+    // Every width in both halves has just changed, which is what a window
+    // resize tells the rest of the app.
+    if(was.moved) splitSettled();
+  };
+  d.addEventListener('pointerdown', (e)=>{
+    if(e.button !== 0 || e.target.closest('.split-swap') || !splitView) return;
+    e.preventDefault();
+    rs = { id: e.pointerId, x: e.clientX, moved: false, frame: 0 };
+    try { d.setPointerCapture(e.pointerId); } catch(err){}
+    document.body.classList.add('split-resizing');
+  });
+  d.addEventListener('pointermove', (e)=>{
+    if(!rs || e.pointerId !== rs.id) return;
+    rs.x = e.clientX;
+    rs.moved = true;
+    // One re-layout a frame, however many moves arrive in it: both halves
+    // reflow on every change of width.
+    if(rs.frame) return;
+    rs.frame = requestAnimationFrame(()=>{
+      if(!rs) return;
+      rs.frame = 0;
+      const pr = d.parentElement.getBoundingClientRect();
+      setSplitRatio((rs.x - pr.left - SPLIT_GAP / 2) / (pr.width - SPLIT_GAP));
+      refreshRowSliders(true);
+    });
+  });
+  d.addEventListener('pointerup', stop);
+  d.addEventListener('pointercancel', stop);
+  d.addEventListener('lostpointercapture', stop);
+  d.addEventListener('dblclick', (e)=>{
+    if(e.target.closest('.split-swap')) return;
+    setSplitRatio(0.5, { animate: true });
+  });
+  d.addEventListener('keydown', (e)=>{
+    const sv = splitView;
+    if(!sv || e.target !== d) return;
+    const step = e.shiftKey ? 0.05 : 0.02;
+    const next = e.key === 'ArrowLeft' ? sv.ratio - step
+      : e.key === 'ArrowRight' ? sv.ratio + step
+      : e.key === 'Home' ? 0
+      : e.key === 'End' ? 1
+      : e.key === 'Enter' ? 0.5 : null;
+    if(next === null) return;
+    e.preventDefault();
+    setSplitRatio(next);
+    splitSettled();
+  });
+  return d;
+}
+// The two halves trade sides, each keeping its own width (real-user request:
+// "swap the two sides with the click of a button"). They SLIDE past each
+// other: every piece is measured before and after and the difference is
+// animated away, and since no width changes, nothing reflows on the way.
+function swapSplitSides(){
+  const sv = splitView;
+  if(!sv) return;
+  const panel = document.getElementById(SPLIT_GROUPS[sv.group].panel);
+  const moving = [splitSection(sv.group, sv.left), splitSection(sv.group, sv.right), panel.querySelector(':scope > .split-divider')].filter(Boolean);
+  // Whatever is still animating (the halves coming in, a column still
+  // travelling) is finished first, so the "before" is where things really are.
+  moving.forEach(el=>{ if(el.getAnimations) el.getAnimations().forEach(a=> a.finish()); el.style.overflow = ''; });
+  splitAnimToken++;
+  panel.classList.remove('split-anim');
+  const before = moving.map(el=> el.getBoundingClientRect().left);
+  const oldLeft = sv.left;
+  sv.left = sv.right;
+  sv.right = oldLeft;
+  sv.ratio = 1 - sv.ratio;
+  applySplitLayout();
+  refreshRowSliders(true);
+  if(splitReducedMotion()) return;
+  moving.forEach((el, i)=>{
+    const dx = before[i] - el.getBoundingClientRect().left;
+    if(Math.abs(dx) >= 1 && el.animate){
+      el.animate([{ transform: `translateX(${dx}px)` }, { transform: 'none' }], { duration: 360, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    }
+  });
 }
 // A window made too narrow while a split is open goes back to one tab, and
 // says so, rather than squeezing two desktop layouts into phone widths.
@@ -19914,7 +20226,15 @@ window.addEventListener('resize', ()=>{
   if(!splitView || splitResizeFrame) return;
   splitResizeFrame = requestAnimationFrame(()=>{
     splitResizeFrame = 0;
-    if(!splitView || window.innerWidth >= SPLIT_MIN_WIDTH) return;
+    if(!splitView) return;
+    if(window.innerWidth >= SPLIT_MIN_WIDTH){
+      // Still wide enough. The share holds, but the 440px floor is in pixels,
+      // so a narrower window can push the divider back towards the middle.
+      const panel = document.getElementById(SPLIT_GROUPS[splitView.group].panel);
+      if(!panel.classList.contains('split-anim')) setSplitRatio(splitView.ratio);
+      splitFitPanes();
+      return;
+    }
     const row = document.getElementById(SPLIT_GROUPS[splitView.group].row);
     endSplitView(null, { instant: true });
     splitNotice(t('splitClosedNarrow'), row);
@@ -19944,6 +20264,7 @@ function splitDragStart(){
     splitNotice(splitTooNarrowText(), d.btn);
     return;
   }
+  if(d.fromFlyout) splitFlyoutHold = true;
   const sel = window.getSelection && window.getSelection();
   if(sel && sel.removeAllRanges) sel.removeAllRanges();
   document.body.classList.add('split-dragging');
@@ -19963,27 +20284,35 @@ function splitDragStart(){
 // and one open half dropped on the other side swaps them.
 function splitDropTarget(x, y){
   const d = splitDrag;
-  const g = SPLIT_GROUPS[d.group];
   const subs = (splitTab(d.group).subs||[]).filter(s=>{ const b = document.getElementById(s.btnId); return b && !b.classList.contains('hidden'); });
   const idx = v=> subs.findIndex(s=> s.view === v);
-  const sv = splitView && splitView.group === d.group ? splitView : null;
+  // A split can only be open in the tab on screen, and only that one is
+  // re-arranged; the fly-out of ANOTHER tab opens a fresh one over there.
+  const sv = activeTab === d.group && splitView && splitView.group === d.group ? splitView : null;
   const isOpen = v=> !!sv && (v === sv.left || v === sv.right);
   const hit = document.elementFromPoint(x, y);
   const overBtn = hit && hit.closest ? hit.closest('button') : null;
-  if(overBtn && overBtn.parentElement === d.row && overBtn !== d.btn){
-    const other = subs.find(s=> s.btnId === overBtn.id);
-    if(!other) return null;
-    if(isOpen(other.view) && isOpen(d.view)) return { left: sv.right, right: sv.left, side: d.view === sv.left ? 'right' : 'left', over: overBtn };
-    if(isOpen(other.view)) return other.view === sv.left
+  const overView = overBtn && overBtn !== d.btn ? splitViewOfButton(overBtn, d.group) : null;
+  if(overView && overView !== d.view){
+    if(isOpen(overView) && isOpen(d.view)) return { left: sv.right, right: sv.left, side: d.view === sv.left ? 'right' : 'left', over: overBtn };
+    if(isOpen(overView)) return overView === sv.left
       ? { left: d.view, right: sv.right, side: 'left', over: overBtn }
       : { left: sv.left, right: d.view, side: 'right', over: overBtn };
-    const dFirst = idx(d.view) < idx(other.view);
-    return { left: dFirst ? d.view : other.view, right: dFirst ? other.view : d.view, side: dFirst ? 'left' : 'right', over: overBtn };
+    const dFirst = idx(d.view) < idx(overView);
+    return { left: dFirst ? d.view : overView, right: dFirst ? overView : d.view, side: dFirst ? 'left' : 'right', over: overBtn };
   }
-  const pr = document.getElementById(g.panel).getBoundingClientRect();
-  const rr = d.row.getBoundingClientRect();
+  // The page: whichever tab is on screen, below its own sub row.
+  const page = SPLIT_GROUPS[activeTab];
+  if(!page) return null;
+  const panelEl = document.getElementById(page.panel);
+  const pr = panelEl.getBoundingClientRect();
+  const rr = document.getElementById(page.row).getBoundingClientRect();
   if(x < pr.left || x > pr.right || y <= rr.bottom) return null;
-  const side = x < pr.left + pr.width / 2 ? 'left' : 'right';
+  // With a split open, the line between the halves is wherever the divider
+  // has been dragged to, not the middle.
+  const dv = sv && panelEl.querySelector(':scope > .split-divider');
+  const dvr = dv && dv.getBoundingClientRect();
+  const side = x < (dvr ? dvr.left + dvr.width / 2 : pr.left + pr.width / 2) ? 'left' : 'right';
   if(sv){
     if(isOpen(d.view)){
       if(side === (d.view === sv.left ? 'left' : 'right')) return null;
@@ -20000,22 +20329,28 @@ function splitDropTarget(x, y){
 function splitPaintPreview(target){
   const d = splitDrag;
   const pv = d.preview;
-  d.row.querySelectorAll(':scope > button.split-drop-target').forEach(b=>{ if(!target || b !== target.over) b.classList.remove('split-drop-target'); });
+  document.querySelectorAll('.split-drop-target').forEach(b=>{ if(!target || b !== target.over) b.classList.remove('split-drop-target'); });
   if(!target){ pv.classList.remove('show'); return; }
   if(target.over) target.over.classList.add('split-drop-target');
-  const g = SPLIT_GROUPS[d.group];
-  const pr = document.getElementById(g.panel).getBoundingClientRect();
-  const rr = d.row.getBoundingClientRect();
+  const page = SPLIT_GROUPS[activeTab] || SPLIT_GROUPS[d.group];
+  const pr = document.getElementById(page.panel).getBoundingClientRect();
+  const rr = document.getElementById(page.row).getBoundingClientRect();
   const top = Math.max(rr.bottom + 8, 8);
   const bottom = Math.min(pr.bottom, window.innerHeight - 12);
+  // Open already: the half being replaced is as wide as it is now, wherever
+  // the divider has been left.
+  const sv = activeTab === d.group && splitView && splitView.group === d.group ? splitView : null;
+  const pane = sv && splitSection(d.group, target.side === 'left' ? sv.left : sv.right);
+  const paneBox = pane && pane.getBoundingClientRect();
   const half = (pr.width - SPLIT_GAP) / 2;
-  const left = target.side === 'left' ? pr.left : pr.left + half + SPLIT_GAP;
+  const left = paneBox ? paneBox.left : target.side === 'left' ? pr.left : pr.left + half + SPLIT_GAP;
+  const width = paneBox ? paneBox.width : half;
   const firstShow = !pv.classList.contains('show');
   // The first placement must not glide in from wherever it was last.
   if(firstShow) pv.style.transition = 'none';
   pv.style.left = Math.round(left) + 'px';
   pv.style.top = Math.round(top) + 'px';
-  pv.style.width = Math.round(half) + 'px';
+  pv.style.width = Math.round(width) + 'px';
   pv.style.height = Math.round(Math.max(60, bottom - top)) + 'px';
   const sub = splitSub(d.group, d.view);
   pv.innerHTML = `<div><div>${escapeHtml(sub ? t(sub.labelKey) : '')}</div><div class="split-snap-hint">${escapeHtml(t('splitDropHere'))}</div></div>`;
@@ -20025,9 +20360,10 @@ function splitPaintPreview(target){
 function splitDragCleanup(d){
   document.body.classList.remove('split-dragging');
   d.btn.classList.remove('split-drag-src');
-  d.row.querySelectorAll(':scope > button.split-drop-target').forEach(b=> b.classList.remove('split-drop-target'));
+  document.querySelectorAll('.split-drop-target').forEach(b=> b.classList.remove('split-drop-target'));
   if(d.ghost){ d.ghost.remove(); d.ghost = null; }
   if(d.preview){ d.preview.remove(); d.preview = null; }
+  if(d.fromFlyout){ splitFlyoutHold = false; hideTabFlyout(); }
 }
 function splitSwallowNextClick(){
   const stop = (ev)=>{ ev.stopPropagation(); ev.preventDefault(); };
@@ -20041,6 +20377,32 @@ Object.entries(SPLIT_GROUPS).forEach(([group, g])=>{
   // Dragging a label's text would otherwise start the browser's own drag.
   row.addEventListener('dragstart', (e)=> e.preventDefault());
 });
+// The group the hover fly-out is showing right now, if it is out: its main
+// tab's own key (the nav buttons carry it as data-tab).
+function splitFlyoutGroup(){
+  return tabFlyoutBtn ? tabFlyoutBtn.dataset.tab : null;
+}
+// The sub tab a button stands for, if it is one of `group`'s: a button in its
+// static row, or an item in the fly-out while the fly-out is showing `group`.
+function splitViewOfButton(btn, group){
+  const tab = splitTab(group);
+  if(!tab) return null;
+  if(btn.classList.contains('tab-flyout-item')) return splitFlyoutGroup() === group ? btn.dataset.view : null;
+  if(btn.parentElement !== document.getElementById(SPLIT_GROUPS[group].row)) return null;
+  const s = (tab.subs||[]).find(s=> s.btnId === btn.id);
+  return s ? s.view : null;
+}
+// The fly-out's items drag exactly like the row's. They are rebuilt on every
+// hover, so this listens on the fly-out itself.
+document.getElementById('tabFlyout').addEventListener('pointerdown', (e)=>{
+  if(e.button !== 0 || e.pointerType === 'touch') return;
+  const item = e.target.closest('.tab-flyout-item');
+  const group = splitFlyoutGroup();
+  if(!item || !group || !SPLIT_GROUPS[group] || !splitSub(group, item.dataset.view)) return;
+  splitDrag = { group, row: item.parentElement, btn: item, view: item.dataset.view, fromFlyout: true, x0: e.clientX, y0: e.clientY,
+    started: false, blocked: false, cancelled: false, target: null, ghost: null, preview: null };
+});
+document.getElementById('tabFlyout').addEventListener('dragstart', (e)=> e.preventDefault());
 window.addEventListener('pointermove', (e)=>{
   const d = splitDrag;
   if(!d) return;
@@ -20061,7 +20423,11 @@ window.addEventListener('pointerup', ()=>{
   if(!d.started) return;
   splitSwallowNextClick();
   splitDragCleanup(d);
-  if(!d.blocked && !d.cancelled && d.target) openSplitView(d.group, d.target.left, d.target.right, d.view);
+  if(!d.blocked && !d.cancelled && d.target){
+    // Out of the fly-out of a tab that is not on screen: that tab comes up first.
+    if(activeTab !== d.group) switchTopLevelTab(d.group);
+    openSplitView(d.group, d.target.left, d.target.right, d.view);
+  }
 });
 window.addEventListener('pointercancel', ()=>{
   const d = splitDrag;

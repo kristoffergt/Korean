@@ -3503,9 +3503,10 @@ that closes it; the other half takes the width back. Choosing a third sub tab,
 or another main tab, closes both.
 
 - **Only from the static sub-tab rows** (the five `SPLIT_GROUPS` rows), never
-  the hover fly-out on the main nav ("not the pop-out ones"). **Only with a
-  mouse or a pen**: on touch the same gesture is a scroll, and a phone is never
-  wide enough anyway.
+  the hover fly-out on the main nav ("not the pop-out ones"). Reversed in the
+  forty-sixth pass, below: the fly-out splits too. **Only with a mouse or a
+  pen**: on touch the same gesture is a scroll, and a phone is never wide
+  enough anyway.
 - **"At least 2x app size on the width" is read as 2 x 640 = 1,280px**, 640
   being where this app turns into its phone layout, so each half gets at least
   the width the desktop layout was drawn for. That was an assumption, and it is
@@ -3661,3 +3662,152 @@ free port works), and while the pane is HIDDEN the page reports `innerWidth` 0,
 so everything lays out zero wide. `resize_window` with a custom size gives it a
 real viewport. The first screenshot after that was a stale blank frame; the
 next one was true.
+
+## The halves resize, swap and scroll on their own, and the fly-out splits too (12 Sep, forty-sixth pass)
+
+Four requests on top of the split view from the forty-fourth pass, all
+real-user: "resize the split views to a certain extent ... with a thing in the
+middle to move it like on windows", "swap the two sides they're on with the
+click of a button", "make it so the scrolling happens independently on either
+one side of the split screen", and "allow for doing split view by using the
+pop-out sub tabs too".
+
+### A divider you drag
+
+- **The gutter is a grid TRACK now, not a gap**: `minmax(0,Afr) 22px
+  minmax(0,Bfr)`, with `.split-divider` in the middle column. A column-gap
+  cannot hold an element, and the divider has to be something you can press.
+  It is also why the halves are 689 + 689 at 1,440 wide where the forty-fourth
+  pass measured 691 + 691.
+- **The share is scaled by `SPLIT_FR` (10,000).** Fr values that add up to less
+  than 1 leave the rest of the track EMPTY rather than sharing it out, so 0.62fr
+  and 0.38fr would leave the halves narrower than the panel. As 6,200fr and
+  3,800fr they fill it. The open and close animations run on the same numbers.
+- **It stops at 35% and 65%, and no half is ever narrower than 440px**
+  (`SPLIT_RATIO_MIN`, `SPLIT_PANE_MIN_PX`), whichever is stricter. At 1,440 wide
+  the percentage decides; at 1,300 the 440px floor does (35% would be 433px). A
+  window resized while split re-clamps the share, and one resized under 1,280
+  closes the split as before.
+- **Double-click evens it.** On the keyboard it is a `role="separator"` with
+  `aria-valuenow`: the arrow keys move it 2% (5% with Shift), Home and End go
+  to the two limits, Enter evens it.
+- **The handle stays in the middle of the SCREEN**, not of the divider: it is
+  sticky at `50vh`, since a divider as tall as a long section would otherwise
+  put its grip wherever the middle of that section happened to be.
+- A drag is pointer-captured and moves the columns at most once a frame.
+  `body.split-resizing` holds the resize cursor over everything, stops text
+  being selected, and takes pointer events off iframes, which would otherwise
+  swallow the move the moment the pointer crossed an embed.
+
+### Swapping
+
+A round button on the handle swaps the halves, and **each half keeps its
+width**: the share becomes `1 - ratio`, so Calendar at 65% on the left becomes
+Calendar at 65% on the right, still 896px. The two slide past each other (a
+FLIP translate, 360ms), and each keeps its own scroll position.
+
+### Each half scrolls on its own
+
+- **Each half is exactly as tall as the screen below where it starts**
+  (`--split-pane-h`, set by `splitFitPanes()`), with its own scrollbar, so the
+  page has nothing left to scroll. Measured from where the halves sit on the
+  PAGE, which does not depend on how far it is scrolled, then shaved by whatever
+  the page would still overflow by; never under 320px (`SPLIT_PANE_MIN_H`).
+  `overscroll-behavior: contain`, so reaching the end of one half does not
+  scroll the page.
+- **Each half's bar (its name and X) is sticky** at the top of its own box.
+- **Opening a split takes the page back to its top**, and what the reader was
+  looking at in the half that stays goes INTO that half, the same distance
+  under its bar. **Closing one puts the kept half's place back on the page.**
+  Both go through one anchor, `splitCaptureAnchor` / `splitRestoreAnchor`. A
+  sub tab or main tab taking over the screen skips it, since that is not a
+  place anybody is going back to.
+
+Three things about that anchor, each of which put the reader somewhere else:
+
+- **It is taken BEFORE the close animation.** The kept half grows to the full
+  width on the way out and its content re-wraps, so an anchor measured after
+  that is measured on a page the reader never saw. `closeSplitPane` takes it
+  and hands it to `endSplitView`.
+- **It is the first card STARTING in the upper half of the view**, and only
+  failing that the card whose tail is at the top. The tail of the tall calendar
+  card re-wraps to another height with the width, and anchoring on its top
+  moves everything under it by the difference.
+- **The top bar compacts when it sticks: 164px at the top of the page, 99px
+  pinned, at 1,440 wide.** A restore always starts at the top of the page (an
+  open split has nothing to scroll), so the scroll that puts the place back is
+  the scroll that pins the bar, and it moves the very edge it was measured
+  against: a card put back 40px under the bar landed 105px under it. The
+  restore now runs up to three passes and calls `updateTopBarStuck()` between
+  them, which is what the scroll event would run a frame later.
+
+### The fly-out splits too
+
+This reverses the forty-fourth pass's "only from the static sub-tab rows", on
+the same person's word. The items in the main nav's hover fly-out drag exactly
+like the row's:
+
+- **The fly-out is held open for the length of the drag** (`splitFlyoutHold`).
+  `showTabFlyout`, `hideTabFlyout` and `scheduleTabFlyoutHide` all do nothing
+  while it is set, so leaving the fly-out to drop on the page does not take the
+  thing being dragged away, and no other tab's fly-out can open in its place.
+- **Out of another tab's fly-out, the drop switches to that tab first** and
+  opens the split there, beside whichever of its sub tabs was open. The snap
+  preview is drawn over the page on screen, since that is where the pointer is.
+- **Onto another item of the same fly-out** pairs the two, as onto another tab
+  in the row. Escape cancels and puts the fly-out away.
+
+**One fly-out bug that was already there**: `showTabFlyout` turns the fly-out
+visible two frames later, so its transition runs, and a hide inside those two
+frames was undone by it, leaving a fly-out on screen that no tab owned and
+nothing would ever put away. It turns visible only if it is still that tab's.
+
+### Checked how
+
+In the browser at 1,440, 1,300 and 1,100 wide, with the faked signed-in pair
+from the forty-fourth pass:
+
+- a split settling at 689 + 689 with the divider between them, and the columns
+  genuinely interpolating (727 / 652 at 190ms of the transition);
+- both halves 636px tall and the page overflowing by 0; the left half scrolled
+  300px with the right half and the page not moving, its bar still at the top;
+- the divider dragged to 60% (827 / 551) and on past the end, stopping at 65%
+  (896 / 482); double-click back to 689 / 689; the keys giving 52%, 65%, 35%
+  and 50%;
+- the swap: Expenses left and Calendar right at 35%, each half exactly the
+  width it was, and the scrolled half still scrolled;
+- at 1,300 wide the share re-clamped to 35.5% with the narrow half exactly
+  440px; at 1,100 the split closing with its notice;
+- Grammar dragged out of Korean's fly-out while on Home: the fly-out held
+  open, a ring on Writing when over it, the preview over Home's left half, and
+  on release Korean on screen with Grammar | Log. Then, on Korean, Notebook
+  dropped onto Writing in the fly-out, giving Writing | Notebook, and Escape
+  mid-drag putting everything away;
+- the anchor, with a card planted on purpose: "Add to calendar" 40px under the
+  half's bar comes back 40px under the pinned top bar (it was 105); the
+  calendar scrolled 500 picks "Add to calendar" at 38 and returns it at 38;
+  reopening from a page scrolled 650 puts "Your deadlines" 218px under the
+  half's bar, as it was under the top bar; and a half scrolled only 40 returns
+  the calendar card at -38;
+- a fly-out shown and hidden in the same frame still hidden, and ownerless, two
+  frames later; an ordinary show still turning visible.
+
+Worth keeping from the testing:
+
+- **The fly-out takes no pointer events for two frames after it is shown**, so
+  a test that shows it and drags onto an item in the same tick drops onto
+  whatever is underneath, and reads as a broken drop. Let a frame go by (a
+  screenshot does it).
+- **Test an anchor with a card placed on purpose.** The first check used
+  whichever card happened to be at the top, the 514px calendar card, and a
+  67px miss on it read as noise; a card set 40px under the bar showed a
+  constant 65px, which is what pointed at the top bar.
+- **A screenshot taken straight after an instant scroll can show the fixed top
+  bar painted where the page was**, half way down a blank screen. The numbers
+  were right and the next frame was too.
+- **index.html has 46 em dashes that predate these passes**, so a patch guard
+  that fails on any em dash fails on the file, not on the patch. Compare
+  counts.
+- The spawned session's fix (`187c8dd`, the forty-fifth pass above) was
+  committed to main in this same directory while this pass was in progress,
+  and this commit sits on top of it.
