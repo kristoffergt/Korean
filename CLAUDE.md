@@ -3811,3 +3811,108 @@ Worth keeping from the testing:
 - The spawned session's fix (`187c8dd`, the forty-fifth pass above) was
   committed to main in this same directory while this pass was in progress,
   and this commit sits on top of it.
+
+## The language menu opens in front and closes again, and a colour can be kept for later (12 Sep, forty-seventh pass)
+
+### The language menu
+
+Two reports about one control: "the menu goes behind the tabs for a second
+instead of in front of it" and "if I click it again, it does not close".
+
+- **Behind the tabs: the press squeeze.** `.lang-switch:active` scales the pill
+  to 0.94 and eases it back over 0.15s. While it has a transform the pill is a
+  stacking context of its own, so the menu's z-index 300 is counted INSIDE the
+  pill and the pill as a whole sits under `.tabs` (z-index 60). The menu opens
+  on the release, exactly while the pill is easing back, so it opened behind
+  the tabs every time. `.lang-switch.lang-open{z-index:300}` gives the pill's
+  own layer the menu's height for as long as the menu is up.
+- **Never closing: listeners that piled up.** `buildLangSwitch` empties and
+  refills the SAME container on every language change and on every window
+  resize (the resize handler rebuilds all three switches), and it ADDED its
+  click and keydown listeners to that container each time. One click then ran
+  every toggle: the oldest closed the real menu and opened its own detached
+  copy, the newest found its menu shut and opened it again. The handlers are
+  properties now (`onclick`/`onkeydown`), cleared at the top of every rebuild
+  together with the role/tabindex/aria attributes, so a rebuild into the touch
+  branch (the native select) leaves nothing behind either.
+- `langMenuOpen` is a `var` now: buildLangSwitch reads it, and a `let` read
+  before its line has run is a ReferenceError (the reasoning `splitView` uses).
+
+**Anything rebuilt into the same element must set its handlers as properties or
+remove the old ones.** `innerHTML = ''` clears the children, never the
+listeners on the element itself.
+
+### Favourite colours
+
+Real-user request: "You should be able to set some favorites for your default
+color... when I click my name, I should be able to save it, so I can change my
+color, and still have that one later."
+
+- **Clicking your name opens a popover** (`#whoColorPop`) instead of the OS
+  colour picker directly: the colour you have now (swatch and hex) with a
+  star to save it, your favourites as swatches (press one to wear it; the one
+  you are wearing is ringed), and "Pick a new color". That last row IS the
+  native `<input type="color">`, same id `#whoColorPicker` and same `change`
+  handler, moved from lying invisibly over the name into the popover. The OS
+  picker is now one press further away, which is the price of having
+  somewhere to keep colours.
+- **The star toggles.** A saved colour reads "Saved" with a filled star, and
+  pressing it again un-saves it. Each swatch also has an x under a pointer; on
+  touch there is no hover to show it on, so the star is the way there: wear
+  the colour, then un-star it.
+- Newest first, **twelve at most**, the oldest dropping off. Hex only,
+  lowercased and de-duplicated (`cleanFavColors`).
+- **Stored on the account in `profiles.favorite_colors`**
+  (`sql migrations/favorite_colors_migration.sql`, `text[]` default `'{}'`,
+  written with the same own-row update `profiles.color` uses). Whether the
+  column exists is read off the `select('*')` row (the key is there or it is
+  not), so the app works before the migration has run: the list lives on the
+  device in `ptFavColors:<uid>`, and the first load that finds the column
+  merges the device's list into the account's and pushes it, ONCE. After that
+  (`ptFavColorsSynced:<uid>`) the account's list is the truth, or a colour
+  removed on one device would come back from another device's old copy. A
+  guest keeps them on the device.
+- **The name pill is hovered and pressed directly** (`#whoName:hover` and
+  `:active`, were `#whoNameWrap:hover #whoName`). It had to be asked through
+  the wrapper while the input lay over it; asking the wrapper now would light
+  the pill whenever the pointer is over the popover.
+- **Closed** by a press anywhere else (in the CAPTURE phase, so a control that
+  stops its own click, like the language pill, still closes it), by Escape, by
+  the name again, and by opening the language menu, which works both ways.
+  `#whoNameWrap.pop-open` carries z-index 300 for the same reason `.lang-open`
+  does.
+
+### Checked how
+
+In the browser at 1,440 and 390 wide with the faked signed-in pair, and
+`supabaseClient.from('profiles')` stubbed to record what would be written:
+
+- the language pill rebuilt three times (as three resizes would), then opened,
+  shut and opened again; `elementFromPoint` over the part of the menu that
+  hangs across the tab row hitting the menu at rest and with the pill scaled to
+  0.94, and hitting the TABS with the pill scaled and `.lang-open` taken off,
+  which is the reported fault reproduced; at 390 wide (the touch emulation) the
+  pill rebuilt as the native select with no role and no onclick left over;
+- the favourites: the empty state; Save storing `["#4f7563"]`; a new colour
+  picked (#B5485D, star off, the favourite not ringed); the favourite worn (the
+  name back to #4F7563, star on, ringed); the x removing it; two saved, newest
+  first; not one `favorite_colors` write without the column, and one `color`
+  write per change;
+- the popover hit-testing as itself over the tab row, pressed or not; closing
+  on an outside press, on the name, on Escape and on the language menu; Enter
+  on the name toggling it;
+- the column path: a device list of two merged under an account list of one and
+  pushed once, the synced flag then set, and the next load taking the
+  account's list alone; fourteen saved kept to twelve; "#ABCDEF", "nope",
+  "#abcdef" and "#4F7563" cleaned to two;
+- at 390 wide the popover inside the screen (138 to 366).
+
+Worth keeping from the testing:
+
+- **Two screenshots showed the popover missing while it was open and on top**
+  (computed opacity 1, nothing clipping it, `elementFromPoint` hitting it).
+  Another stale frame from the preview pane: after a resize and a second's
+  wait it painted. Measure before believing a screenshot that something is
+  not there.
+- `sql migrations/favorite_colors_migration.sql` is NEW this pass. Until it
+  has been applied, favourites are kept per device as described above.

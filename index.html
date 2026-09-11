@@ -159,6 +159,14 @@ body.theme-swapping *::before, body.theme-swapping *::after{
 .lang-menu-item.active{color:var(--on);}
 .lang-menu-item.active::before{content:'\2713';margin-right:6px;font-weight:800;}
 .lang-menu-item:not(.active)::before{content:'';display:inline-block;width:0;margin-right:14px;}
+/* Open, the pill carries the menu's own z-index. The press squeeze is a
+   transform, and while the pill has one (the press itself and the 0.15s it
+   takes to ease back) it is a stacking context of its own: the menu's 300 is
+   then counted INSIDE the pill, and the pill as a whole sits under the tab row
+   (.tabs is z-index 60), so the menu dipped behind the tabs every time it
+   opened (real-user report). With a z-index of its own the pill's layer is
+   above the tabs whether it is being pressed or not. */
+.lang-switch.lang-open{z-index:300;}
 
 /* ---- The header marks come alive under the pointer ----
    Every one of these animates the ICON, never the button. The button already
@@ -304,7 +312,7 @@ body:not(.no-anim-header) #friendsBtn:has(#circleOnlineDot:not(.hidden)):hover .
   0%{text-shadow:none;filter:none;}
   45%{text-shadow:0 0 9px currentColor;filter:brightness(1.28);}
   100%{text-shadow:none;filter:none;}}
-#whoNameWrap:hover #whoName{animation:shine-name 0.9s ease-in-out;}
+#whoName:hover{animation:shine-name 0.9s ease-in-out;}
 
 /* The theme swap is a one-shot on the icon that has just been written in, so
    it plays on the ARRIVING sun or moon rather than on a button that never
@@ -530,7 +538,7 @@ body.no-anim-header #accountSettingsBtn:hover .ui-icon,
 body.no-anim-header #notifBellBtn:hover svg,
 body.no-anim-header #notifBellBtn:hover::before,
 body.no-anim-header #notifBellBtn:hover::after,
-body.no-anim-header #whoNameWrap:hover #whoName,
+body.no-anim-header #whoName:hover,
 body.no-anim-header .theme-icon-in,
 body.no-anim-header .sun-core, body.no-anim-header .sun-cloud,
 body.no-anim-header .sun-ray,
@@ -570,10 +578,10 @@ body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transfo
   #appTitleHome:hover .tl-done path{animation:none;}
   .lang-switch:hover .globe-mer, #accountSettingsBtn:hover .ui-icon,
   #notifBellBtn:hover svg, #notifBellBtn:hover::before, #notifBellBtn:hover::after,
-  #whoNameWrap:hover #whoName, .theme-icon-in,
+  #whoName:hover, .theme-icon-in,
   .sun-core, .sun-cloud, .sun-ray, .moon-line, .moon-cloud, .moon-guy,
   .moon-water, .moon-tackle, .moon-star,
-  .lang-menu{animation:none;}
+  .lang-menu, .color-pop{animation:none;}
 }
 /* The pill's own colour input, laid over it at opacity 0 -- the same trick
    .who .lang-switch-select uses for the language dropdown, and for the same
@@ -584,8 +592,51 @@ body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transfo
    can't click the profile now, it doesn't work on the app"). A synthetic
    click into a hidden subtree is not a user gesture iOS will act on. */
 #whoNameWrap{position:relative;display:inline-flex;align-items:center;}
-#whoColorPicker{position:absolute;inset:0;width:100%;height:100%;opacity:0;
-  padding:0;border:none;background:none;cursor:pointer;-webkit-appearance:none;appearance:none;}
+/* Open, the wrap carries the popover's z-index, for the reason the language
+   pill's .lang-open gives: nothing in the header may be counted from a layer
+   that sits under the tab row. */
+#whoNameWrap.pop-open{z-index:300;}
+/* The name's own popover (real-user request: keep the colour you have for
+   later, and still be able to change it). Hung from the pill's RIGHT edge,
+   since the name is the last thing in the row. */
+.color-pop{position:absolute;top:calc(100% + 8px);right:0;z-index:300;display:block;
+  width:236px;box-sizing:border-box;padding:10px;text-align:left;cursor:default;
+  background:var(--paper);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.18);
+  animation:lang-menu-in 0.14s cubic-bezier(0.4,0,0.2,1);}
+.color-pop-head{display:flex;align-items:center;gap:8px;}
+.color-pop-swatch{flex:none;width:22px;height:22px;border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.14);}
+.color-pop-hex{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:var(--ink);
+  font-variant-numeric:tabular-nums;letter-spacing:0.03em;}
+.color-pop-save{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;
+  background:var(--paper-dim);color:var(--ink);border:1px solid var(--line);border-radius:7px;
+  font-family:inherit;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;}
+.color-pop-save:hover{border-color:var(--ink-soft);}
+.color-pop-save.saved{color:var(--on);border-color:var(--on);}
+.color-pop-label{display:block;margin:11px 0 7px;font-size:10.5px;font-weight:700;
+  letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-soft);}
+.color-pop-favs{display:flex;flex-wrap:wrap;gap:8px;}
+.color-pop-empty{font-size:12px;line-height:1.4;color:var(--ink-soft);}
+.color-fav-wrap{position:relative;display:inline-flex;}
+.color-fav{width:26px;height:26px;padding:0;border-radius:50%;border:2px solid var(--paper);
+  box-shadow:0 0 0 1px var(--line);cursor:pointer;}
+.color-fav.current{box-shadow:0 0 0 2px var(--ink);}
+/* The x to drop a favourite shows under a pointer. On touch there is no
+   hover to show it on, and the star does the same job: pick the colour, then
+   un-star it. */
+.color-fav-x{position:absolute;top:-5px;right:-5px;width:16px;height:16px;padding:0;
+  display:none;align-items:center;justify-content:center;border-radius:50%;
+  background:var(--paper);color:var(--ink);border:1px solid var(--line);cursor:pointer;}
+@media (hover:hover){.color-fav-wrap:hover .color-fav-x{display:inline-flex;}}
+.color-fav-wrap:focus-within .color-fav-x{display:inline-flex;}
+.color-pop-pick{display:flex;align-items:center;gap:8px;margin-top:11px;padding-top:10px;
+  border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;}
+#whoColorPicker{flex:none;width:28px;height:28px;padding:0;border:1px solid var(--line);
+  border-radius:7px;background:none;cursor:pointer;-webkit-appearance:none;appearance:none;}
+#whoColorPicker::-webkit-color-swatch-wrapper{padding:3px;}
+#whoColorPicker::-webkit-color-swatch{border:none;border-radius:4px;}
+#whoColorPicker::-moz-color-swatch{border:none;border-radius:4px;}
 .lang-switch button{background:transparent;color:var(--ink-soft);border:none;padding:5px 10px;font-size:11.5px;font-weight:600;border-radius:5px;}
 .lang-switch button:hover{background:rgba(127,127,127,0.1);}
 .lang-switch button.active{background:var(--ink);color:var(--paper);}
@@ -620,19 +671,20 @@ body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transfo
 .icon-btn, .lang-switch, .who .name, #whoName{
   transition-property:background-color,border-color,color,box-shadow,transform;
   transition-duration:0.15s;transition-timing-function:cubic-bezier(0.4,0,0.2,1);}
-/* The name pill is hovered and pressed through the colour input laid over
-   it, which is its SIBLING rather than its child -- so :hover on the pill
-   itself never fires and the wrapper is what has to be asked. */
-.icon-btn:hover, .lang-switch:hover, #whoNameWrap:hover #whoName{
+/* The name pill is hovered and pressed DIRECTLY. It was asked through its
+   wrapper while the colour input lay over it; that input lives in the popover
+   the pill opens now, and asking the wrapper would light the pill whenever the
+   pointer is over that popover. */
+.icon-btn:hover, .lang-switch:hover, #whoName:hover{
   background:rgba(127,127,127,0.16);border-color:var(--ink-soft);}
 /* No grow on this one: the shared word-grow is a transform, and a name that
    is meant to shine rather than move must not be scaled by anything. */
-#whoNameWrap:hover #whoName{transform:none;}
+#whoName:hover{transform:none;}
 /* The press is a SQUEEZE, not a colour: a fill that only deepens says the
    same thing the hover already said, where a control that gives under the
    pointer is felt rather than read. 60ms, because a press wants to land at
    once and only the release is worth easing. */
-.icon-btn:active, .lang-switch:active, #whoNameWrap:active #whoName{
+.icon-btn:active, .lang-switch:active, #whoName:active{
   transform:scale(0.94);transition-duration:0.06s;}
 .auth-wrap{max-width:360px;margin:60px auto 0;}
 .auth-topbar{display:flex;justify-content:flex-end;max-width:360px;margin:0 auto;}
@@ -1700,7 +1752,7 @@ body.no-anim-ui .linkbtn.act-icon:active{transform:none;}
   /* The hover fill still lands, because it is what says the control is live;
      what goes is the movement. */
   .icon-btn, .lang-switch, .who .name, #whoName{transition-duration:0s;}
-  .icon-btn:active, .lang-switch:active, #whoNameWrap:active #whoName{transform:none;}
+  .icon-btn:active, .lang-switch:active, #whoName:active{transform:none;}
 }
 .cm-threads{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 8px;}
 .cm-thread{display:inline-flex;align-items:center;gap:5px;background:var(--paper);
@@ -2745,8 +2797,23 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       </a>
       <button class="icon-btn" id="accountSettingsBtn" title="Account settings"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
       <span id="whoNameWrap">
-        <span class="name" id="whoName" style="font-weight:700;cursor:pointer;" title="Click to change your color"></span>
-        <input type="color" id="whoColorPicker" aria-label="Your color">
+        <span class="name" id="whoName" role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" style="font-weight:700;cursor:pointer;" title="Click to change your color"></span>
+        <!-- The name's colour popover: the colour now with a star to keep it,
+             the colours kept, and the native picker for a new one. Spans, not
+             divs, because it sits inside a span. -->
+        <span class="color-pop hidden" id="whoColorPop" role="dialog">
+          <span class="color-pop-head">
+            <span class="color-pop-swatch" id="whoColorPopSwatch"></span>
+            <span class="color-pop-hex" id="whoColorPopHex"></span>
+            <button type="button" class="color-pop-save" id="whoColorSaveBtn"></button>
+          </span>
+          <span class="color-pop-label" id="whoColorFavsLabel"></span>
+          <span class="color-pop-favs" id="whoColorFavs"></span>
+          <label class="color-pop-pick">
+            <input type="color" id="whoColorPicker" aria-label="Your color">
+            <span id="whoColorPickLabel"></span>
+          </label>
+        </span>
       </span>
     </div>
     </div>
@@ -10296,7 +10363,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
     lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name shines when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over a word you can click, and the squeeze when you press it.',
-    addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color', eventColorUseTheirBtn:"Use {name}'s color", splitTooNarrow:"Split view needs a wider window: at least {n} px, twice the app's width. Widen the window to open two tabs side by side.", splitClosedNarrow:'The window got too narrow for two tabs, so it went back to one.', splitClosePane:'Close {name}', splitDropHere:'Let go to open side by side', splitResizeLabel:'Resize the two halves', splitResizeHint:'Drag to resize. Double-click to make them even again.', splitSwap:'Swap sides',
+    addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color', eventColorUseTheirBtn:"Use {name}'s color", splitTooNarrow:"Split view needs a wider window: at least {n} px, twice the app's width. Widen the window to open two tabs side by side.", splitClosedNarrow:'The window got too narrow for two tabs, so it went back to one.', splitClosePane:'Close {name}', splitDropHere:'Let go to open side by side', splitResizeLabel:'Resize the two halves', splitResizeHint:'Drag to resize. Double-click to make them even again.', splitSwap:'Swap sides', colorPopTitle:'Your color', colorFavSave:'Save', colorFavSaveHint:'Save this color to your favorites', colorFavSaved:'Saved', colorFavUnsave:'Remove from favorites', colorFavs:'Favorites', colorFavsEmpty:'None yet. Save a color to keep it for later.', colorPickNew:'Pick a new color', colorFavRemove:'Remove',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     calExportTitle:'Download calendar', calExportUseList:'Pick from list', calExportUseCalendar:'Pick on calendar', calExportPickHint:'Click events on the calendar to leave them out.', calExportCountTpl:'{in} of {total}', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
@@ -10419,7 +10486,7 @@ const I18N = {
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
     lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 반짝입니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누를 수 있는 단어 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.',
-    addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용', eventColorUseTheirBtn:'{name}의 색상 사용', splitTooNarrow:'화면 분할에는 더 넓은 창이 필요합니다. 앱 너비의 두 배인 {n}px 이상이어야 합니다. 두 탭을 나란히 열려면 창을 넓혀 주세요.', splitClosedNarrow:'창이 두 탭을 담기에는 좁아져서 한 탭으로 돌아갔습니다.', splitClosePane:'{name} 닫기', splitDropHere:'놓으면 나란히 열립니다', splitResizeLabel:'두 화면 크기 조절', splitResizeHint:'끌어서 크기를 조절합니다. 두 번 클릭하면 다시 반반이 됩니다.', splitSwap:'좌우 바꾸기',
+    addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용', eventColorUseTheirBtn:'{name}의 색상 사용', splitTooNarrow:'화면 분할에는 더 넓은 창이 필요합니다. 앱 너비의 두 배인 {n}px 이상이어야 합니다. 두 탭을 나란히 열려면 창을 넓혀 주세요.', splitClosedNarrow:'창이 두 탭을 담기에는 좁아져서 한 탭으로 돌아갔습니다.', splitClosePane:'{name} 닫기', splitDropHere:'놓으면 나란히 열립니다', splitResizeLabel:'두 화면 크기 조절', splitResizeHint:'끌어서 크기를 조절합니다. 두 번 클릭하면 다시 반반이 됩니다.', splitSwap:'좌우 바꾸기', colorPopTitle:'내 색상', colorFavSave:'저장', colorFavSaveHint:'이 색상을 즐겨찾기에 저장', colorFavSaved:'저장됨', colorFavUnsave:'즐겨찾기에서 삭제', colorFavs:'즐겨찾는 색상', colorFavsEmpty:'아직 없습니다. 색상을 저장해 두면 나중에 다시 쓸 수 있어요.', colorPickNew:'새 색상 고르기', colorFavRemove:'삭제',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     calExportTitle:'캘린더 내려받기', calExportUseList:'목록에서 선택', calExportUseCalendar:'캘린더에서 선택', calExportPickHint:'캘린더에서 일정을 클릭하면 제외됩니다.', calExportCountTpl:'{total}개 중 {in}개', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
@@ -10542,7 +10609,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
     lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn sáng lên khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Chữ bấm được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.',
-    addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi', eventColorUseTheirBtn:'Dùng màu của {name}', splitTooNarrow:'Chia đôi màn hình cần cửa sổ rộng hơn: ít nhất {n} px, gấp đôi độ rộng của ứng dụng. Hãy mở rộng cửa sổ để mở hai thẻ cạnh nhau.', splitClosedNarrow:'Cửa sổ quá hẹp cho hai thẻ nên đã trở lại một thẻ.', splitClosePane:'Đóng {name}', splitDropHere:'Thả ra để mở cạnh nhau', splitResizeLabel:'Đổi kích thước hai bên', splitResizeHint:'Kéo để đổi kích thước. Nhấp đúp để chia đều lại.', splitSwap:'Đổi bên',
+    addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi', eventColorUseTheirBtn:'Dùng màu của {name}', splitTooNarrow:'Chia đôi màn hình cần cửa sổ rộng hơn: ít nhất {n} px, gấp đôi độ rộng của ứng dụng. Hãy mở rộng cửa sổ để mở hai thẻ cạnh nhau.', splitClosedNarrow:'Cửa sổ quá hẹp cho hai thẻ nên đã trở lại một thẻ.', splitClosePane:'Đóng {name}', splitDropHere:'Thả ra để mở cạnh nhau', splitResizeLabel:'Đổi kích thước hai bên', splitResizeHint:'Kéo để đổi kích thước. Nhấp đúp để chia đều lại.', splitSwap:'Đổi bên', colorPopTitle:'Màu của tôi', colorFavSave:'Lưu', colorFavSaveHint:'Lưu màu này vào mục yêu thích', colorFavSaved:'Đã lưu', colorFavUnsave:'Xóa khỏi mục yêu thích', colorFavs:'Màu yêu thích', colorFavsEmpty:'Chưa có. Hãy lưu một màu để dùng lại sau.', colorPickNew:'Chọn màu mới', colorFavRemove:'Xóa',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     calExportTitle:'Tải lịch về', calExportUseList:'Chọn từ danh sách', calExportUseCalendar:'Chọn trên lịch', calExportPickHint:'Nhấp vào sự kiện trên lịch để loại bỏ.', calExportCountTpl:'{in}/{total}', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
@@ -11458,6 +11525,17 @@ document.getElementById('darkToggleApp').addEventListener('click', ()=> applyDar
 document.getElementById('darkTogglePin').addEventListener('click', ()=> applyDarkMode(!document.body.classList.contains('dark')));
 /* ---------- LANGUAGE APPLICATION ---------- */
 function buildLangSwitch(container){
+  // Rebuilt into the SAME element on every language change and every window
+  // resize, so its handlers are PROPERTIES (onclick/onkeydown), which a
+  // rebuild replaces. They used to be added listeners, one more per rebuild,
+  // and one click then ran all of them: the oldest shut the real menu and
+  // opened its own detached copy, the newest found its menu shut and opened it
+  // again, so clicking the pill a second time never closed it (real-user
+  // report).
+  if(langMenuOpen && langMenuOpen.container === container) closeLangMenu();
+  container.onclick = null;
+  container.onkeydown = null;
+  ['role', 'tabindex', 'aria-haspopup', 'aria-expanded'].forEach(a=> container.removeAttribute(a));
   container.innerHTML = '';
   const langs = [['en','English'],['ko','한국어'],['vi','Tiếng Việt']];
   // Always a single icon + dropdown pill, at every width -- the old
@@ -11553,23 +11631,28 @@ function buildLangSwitch(container){
     const open = !menu.classList.contains('hidden');
     closeLangMenu();
     if(!open){
+      closeColorPop();
       menu.classList.remove('hidden');
+      container.classList.add('lang-open');
       container.setAttribute('aria-expanded', 'true');
       langMenuOpen = { menu, container };
     }
   };
-  container.addEventListener('click', toggle);
-  container.addEventListener('keydown', (e)=>{
+  container.onclick = toggle;
+  container.onkeydown = (e)=>{
     if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(e); }
     else if(e.key === 'Escape') closeLangMenu();
-  });
+  };
 }
 // One open at a time, closed by anything else on the page -- the same
-// contract the inline segment picker keeps.
-let langMenuOpen = null;
+// contract the inline segment picker keeps. A var, not a let: buildLangSwitch
+// reads it, and a let read before this line has run is a ReferenceError where
+// a var is simply undefined.
+var langMenuOpen = null;
 function closeLangMenu(){
   if(!langMenuOpen) return;
   langMenuOpen.menu.classList.add('hidden');
+  langMenuOpen.container.classList.remove('lang-open');
   langMenuOpen.container.setAttribute('aria-expanded', 'false');
   langMenuOpen = null;
 }
@@ -16294,6 +16377,7 @@ async function loadAllData(){
   dailyGoals = {};
   hiddenFromLeaderboards = {};
   (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; showTopik = !!p.show_topik; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTimeOfDay = (p.daily_recap_time_of_day || '08:00:00').slice(0,5); weeklyRecapTimeOfDay = (p.weekly_recap_time_of_day || '18:00:00').slice(0,5); dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; weeklyRecapRelative = p.weekly_recap_relative || 'coming'; dailyRecapExcludedKinds = p.daily_recap_excluded_kinds || []; weeklyRecapExcludedKinds = p.weekly_recap_excluded_kinds || []; recapIncludedUids = p.recap_included_uids || null; } });
+  loadFavoriteColors((profileRows||[]).find(p=> p.id === currentUser.id) || null);
   const { data: entryRows } = await supabaseClient.from('study_entries').select('*');
   allEntries = {};
   (entryRows||[]).forEach(row=>{
@@ -32856,6 +32940,7 @@ async function applyMyColor(color){
   document.getElementById('whoName').style.color = color;
   document.getElementById('whoEmail').style.color = color;
   setMyColorInputs(color);
+  renderColorPop();
   await supabaseClient.from('profiles').update({ color }).eq('id', currentUser.id);
   renderLectureList();
 }
@@ -32869,6 +32954,151 @@ function setMyColorInputs(color){
   const el = document.getElementById(id);
   if(el) el.addEventListener('change', (e)=> applyMyColor(e.target.value));
 });
+/* ---------- FAVORITE COLORS ---------- */
+// Colours kept for later from the popover the name pill opens (real-user
+// request: "if I really like this one and wanna save it for later ... so I can
+// change my color, and still have that one later"). Most recent first,
+// FAV_COLORS_MAX at most, the oldest dropping off the end.
+// They follow the ACCOUNT through profiles.favorite_colors once that column
+// exists (sql migrations/favorite_colors_migration.sql). Until then, and for a
+// guest, they live on the device, keyed by the account, and the first load
+// that finds the column carries them up. Only the FIRST: after that the
+// account's list is the truth, or a colour removed on one device would be put
+// straight back by another device's old copy.
+var myFavoriteColors = [];
+var favColorsColumn = false;
+const FAV_COLORS_MAX = 12;
+function favColorsUid(){ return currentUser ? currentUser.id : 'guest-local'; }
+function favColorsKey(){ return 'ptFavColors:' + favColorsUid(); }
+function favColorsSyncedKey(){ return 'ptFavColorsSynced:' + favColorsUid(); }
+function cleanFavColors(list){
+  const out = [];
+  (Array.isArray(list) ? list : []).forEach(c=>{
+    const hex = typeof c === 'string' ? c.trim().toLowerCase() : '';
+    if(/^#[0-9a-f]{6}$/.test(hex) && !out.includes(hex)) out.push(hex);
+  });
+  return out.slice(0, FAV_COLORS_MAX);
+}
+function readLocalFavColors(){
+  try { return cleanFavColors(JSON.parse(localStorage.getItem(favColorsKey()) || '[]')); }
+  catch(e){ return []; }
+}
+function writeLocalFavColors(list){
+  try { localStorage.setItem(favColorsKey(), JSON.stringify(list)); } catch(e){}
+}
+async function pushFavoriteColors(list){
+  if(!favColorsColumn || favColorsUid() === 'guest-local') return false;
+  const { error } = await supabaseClient.from('profiles').update({ favorite_colors: list }).eq('id', currentUser.id);
+  if(error){ console.warn('Favorite colors kept on this device only:', error.message); return false; }
+  return true;
+}
+// With the signed-in account's own profile row, or null.
+function loadFavoriteColors(row){
+  const local = readLocalFavColors();
+  favColorsColumn = !!row && favColorsUid() !== 'guest-local'
+    && Object.prototype.hasOwnProperty.call(row, 'favorite_colors');
+  if(!favColorsColumn){ myFavoriteColors = local; renderColorPop(); return; }
+  const remote = cleanFavColors(row.favorite_colors);
+  let synced = false;
+  try { synced = localStorage.getItem(favColorsSyncedKey()) === '1'; } catch(e){}
+  const markSynced = ()=>{ try { localStorage.setItem(favColorsSyncedKey(), '1'); } catch(e){} };
+  if(synced){
+    myFavoriteColors = remote;
+  } else {
+    myFavoriteColors = cleanFavColors(remote.concat(local));
+    if(myFavoriteColors.length === remote.length) markSynced();
+    else pushFavoriteColors(myFavoriteColors).then(ok=>{ if(ok) markSynced(); });
+  }
+  writeLocalFavColors(myFavoriteColors);
+  renderColorPop();
+}
+function setFavoriteColors(list){
+  myFavoriteColors = cleanFavColors(list);
+  writeLocalFavColors(myFavoriteColors);
+  pushFavoriteColors(myFavoriteColors);
+  renderColorPop();
+}
+function currentMyColor(){ return String(colorForUser(favColorsUid()) || '').toLowerCase(); }
+function favStarSvg(filled){
+  return `<svg width="13" height="13" viewBox="0 0 24 24" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2.5 15 8.6 21.7 9.6 16.8 14.3 18 21 12 17.8 6 21 7.2 14.3 2.3 9.6 9 8.6"></polygon></svg>`;
+}
+function renderColorPop(){
+  const pop = document.getElementById('whoColorPop');
+  if(!pop || pop.classList.contains('hidden')) return;
+  const cur = currentMyColor();
+  const saved = myFavoriteColors.includes(cur);
+  pop.setAttribute('aria-label', t('colorPopTitle'));
+  document.getElementById('whoColorPopSwatch').style.background = cur;
+  document.getElementById('whoColorPopHex').textContent = cur.toUpperCase();
+  const save = document.getElementById('whoColorSaveBtn');
+  save.classList.toggle('saved', saved);
+  save.setAttribute('aria-pressed', saved ? 'true' : 'false');
+  save.title = saved ? t('colorFavUnsave') : t('colorFavSaveHint');
+  save.innerHTML = favStarSvg(saved) + '<span>' + escapeHtml(saved ? t('colorFavSaved') : t('colorFavSave')) + '</span>';
+  document.getElementById('whoColorFavsLabel').textContent = t('colorFavs');
+  const favs = document.getElementById('whoColorFavs');
+  favs.innerHTML = '';
+  if(!myFavoriteColors.length){
+    const empty = document.createElement('span');
+    empty.className = 'color-pop-empty';
+    empty.textContent = t('colorFavsEmpty');
+    favs.appendChild(empty);
+  }
+  myFavoriteColors.forEach(hex=>{
+    const wrap = document.createElement('span');
+    wrap.className = 'color-fav-wrap';
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'color-fav' + (hex === cur ? ' current' : '');
+    b.style.background = hex;
+    b.title = hex.toUpperCase();
+    b.setAttribute('aria-label', hex.toUpperCase());
+    b.addEventListener('click', ()=> applyMyColor(hex));
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'color-fav-x';
+    x.title = t('colorFavRemove');
+    x.setAttribute('aria-label', t('colorFavRemove') + ' ' + hex.toUpperCase());
+    x.innerHTML = '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>';
+    x.addEventListener('click', ()=> setFavoriteColors(myFavoriteColors.filter(c=> c !== hex)));
+    wrap.append(b, x);
+    favs.appendChild(wrap);
+  });
+  document.getElementById('whoColorPickLabel').textContent = t('colorPickNew');
+}
+function openColorPop(){
+  closeLangMenu();
+  document.getElementById('whoColorPop').classList.remove('hidden');
+  document.getElementById('whoNameWrap').classList.add('pop-open');
+  document.getElementById('whoName').setAttribute('aria-expanded', 'true');
+  renderColorPop();
+}
+function closeColorPop(){
+  const pop = document.getElementById('whoColorPop');
+  if(!pop || pop.classList.contains('hidden')) return;
+  pop.classList.add('hidden');
+  document.getElementById('whoNameWrap').classList.remove('pop-open');
+  document.getElementById('whoName').setAttribute('aria-expanded', 'false');
+}
+function toggleColorPop(){
+  if(document.getElementById('whoColorPop').classList.contains('hidden')) openColorPop();
+  else closeColorPop();
+}
+document.getElementById('whoName').addEventListener('click', toggleColorPop);
+document.getElementById('whoName').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleColorPop(); }
+});
+document.getElementById('whoColorSaveBtn').addEventListener('click', ()=>{
+  const cur = currentMyColor();
+  if(myFavoriteColors.includes(cur)) setFavoriteColors(myFavoriteColors.filter(c=> c !== cur));
+  else setFavoriteColors([cur].concat(myFavoriteColors));
+});
+// In the CAPTURE phase, so a press anywhere outside puts it away even where
+// another control stops its own click from bubbling (the language pill does).
+document.addEventListener('click', (e)=>{
+  if(!(e.target && e.target.closest && e.target.closest('#whoNameWrap'))) closeColorPop();
+}, true);
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeColorPop(); });
 document.getElementById('saveDailyGoalBtn').addEventListener('click', async ()=>{
   const msgEl = document.getElementById('dailyGoalMsg');
   msgEl.classList.add('hidden');
