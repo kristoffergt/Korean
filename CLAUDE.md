@@ -3491,3 +3491,141 @@ number; auto at 500 and then 1,000 with a hard break kept, an idempotent second
 pass, auto breaks surviving an innerHTML round trip; a move with auto on that
 kept the untouched auto boundary; delete; and the bar's one-page and
 several-page states.
+
+## Two sub tabs side by side, a colour for whoever an event is for, and the calendar keeps its view (11 Sep, forty-fourth pass)
+
+### Split view
+
+Drag a sub tab out of its row and drop it on another sub tab, or on the page
+beside the one that is open, and the two open side by side, like snapping two
+windows (real-user request). Each half has a slim bar with its name and an X
+that closes it; the other half takes the width back. Choosing a third sub tab,
+or another main tab, closes both.
+
+- **Only from the static sub-tab rows** (the five `SPLIT_GROUPS` rows), never
+  the hover fly-out on the main nav ("not the pop-out ones"). **Only with a
+  mouse or a pen**: on touch the same gesture is a scroll, and a phone is never
+  wide enough anyway.
+- **"At least 2x app size on the width" is read as 2 x 640 = 1,280px**, 640
+  being where this app turns into its phone layout, so each half gets at least
+  the width the desktop layout was drawn for. That was an assumption, and it is
+  one constant (`SPLIT_MIN_WIDTH`). Narrower, the drag does not start and a
+  notice under the tab says why; a window shrunk below it while split goes back
+  to one tab and says so.
+- **Where it lands.** Onto another sub tab: those two, in the row's own order.
+  Onto the page below the row: the half under the pointer, beside whatever is
+  open (nothing if the dragged tab IS the one open: there is no partner). With a
+  split already open, a third tab replaces the half it is dropped on, and one
+  open half dropped on the other side swaps them. A translucent snap preview
+  glides to the half it will take, the Windows way, and the tab it would pair
+  with gets a ring. **The ghost sits beside the pointer, not on it**: centred on
+  it, it covered the very tab being dropped onto, ring and all (the first
+  screenshot of a drag showed exactly that). Escape cancels.
+- **Nothing moves in the DOM.** The panel becomes a two-column grid
+  (`.tab-panel.split-on`) and the two sections are placed on it by class
+  (`.split-left`/`.split-right` on row 2, the sub row across row 1). A moved
+  section would reload any embed in it and lose an editor's place.
+- **Every sub tab still goes through its own switch function.** Each
+  `switch*SubTab` starts with `splitSwitchGuard(group, view)`: one of the two
+  open halves chosen again is a no-op, a third ends the split and switches as
+  normal. The split drives the switch functions itself under `splitBypass`, so
+  each half gets exactly the side effects a click gives it (a render, a fetch),
+  and the entering half goes last so it is the row's `.active`; the other
+  half's tab gets `.split-active`, painted the same, and the travelling pill
+  steps aside while both are lit. `switchTopLevelTab` ends a split for another
+  main tab and `applyTabVisibility` ends one whose half was just hidden; either
+  way the tab that was open before the split is the one kept.
+- **`var splitView`, not `let`.** The switch functions consult it and some can
+  run before that part of the script is reached; a `let` read then is a
+  ReferenceError, a `var` is undefined, which reads as no split.
+- **The animation is `grid-template-columns` itself**, 1fr 0fr to 1fr 1fr and
+  back (the gap with it), which current browsers interpolate. The entering half
+  fades and slides in from its side; a closing half fades while its column
+  folds. It settles on a TIMER, not `transitionend`: a browser that cannot
+  interpolate tracks never fires one. Pills inside the halves (month/week/day)
+  are re-measured every frame, and once settled a `resize` is dispatched,
+  because a split changes every width in two sections exactly the way a window
+  resize does.
+- **A drag swallows the click its release would fire**, and a press that never
+  travels 6px stays an ordinary click.
+
+### "Use Roxy's color"
+
+With only Roxy ticked under For, the add-event form still offered "Use my
+color" and nothing else (real-user report). `renderEventColorLinks()` draws one
+link per person the event is FOR, "Use my color" for the adder and "Use Roxy's
+color" beside it, by the rule `addEvent()` itself follows: nobody ticked, or no
+For field at all (a birthday, a non-core account), means the event is yours.
+Redrawn on every tick, by `rebuildForUserSelect()` and the kind toggle, and on
+a language change.
+
+### Roxy's Notes shortcut is desktop only
+
+The icon runs a macOS Shortcut that lives on her Mac, so on her phone (the
+installed app included) it could only fail (real-user request). Hidden unless
+`(hover: hover) and (pointer: fine)` (`isDesktopPointer()`), asked the way the
+language picker asks rather than as a width, and re-checked when that answer
+changes.
+
+### Convert every amount
+
+"Show in" only ever added a small ≈ line under each figure. A "Convert every
+amount" tick beside it (shown once a currency other than the trip's own is
+picked) makes the chosen currency REPLACE the trip's in every figure: the stat
+tiles, the categories, the month cells, every row, the balances and the
+settlements, all through `expShowMoney`/`expShowMoneyCompact`. **Display only.**
+The rows keep the amount as typed, in the trip's own currency, so going back to
+Original shows the input to the cent however often the view is switched, and
+the expense form still takes that currency, its label now naming it ("Amount
+(KRW)"). Until a rate has arrived the figures stay as typed rather than being
+guessed. Per device, like the currency itself (`expDisplayFull`).
+
+**Month-cell amounts under 1,000 are whole units now** ("$11", not "$11.00",
+which is six characters and does not fit a cell). That also changes a trip kept
+in USD or EUR, which had the same problem before any conversion.
+
+### The calendar remembers month/week/day
+
+Per device (real-user request: day view on the phone last time should be day
+view next time). `ptCalViewMode` in localStorage, read where `calViewMode` is
+declared and written by `setActiveCalViewBtn()`, which every change of view
+already goes through, the notification and deep-link jumps included.
+`renderCalendarTab()` already draws whichever mode it finds.
+
+### Checked how
+
+In the browser at 1,440 and 1,100 wide with a faked signed-in pair:
+
+- a split settling at 691 + 691 with both bars and labels, the pill hidden and
+  both tabs dark; the X folding one half back to 1,400 with every class gone;
+- a drag driven by synthetic pointer events: onto the Calendar tab (preview on
+  the right half, ring on the target, source dimmed), onto the page's right
+  half and then its left (the pair flips), Escape cancelling, and the click the
+  release fires swallowed;
+- a third sub tab and another main tab each ending it with the right tab kept,
+  and Korean's Log + Grammar splitting with Notebook ending it;
+- the too-narrow notice on a drag at 1,100, and a split opened at 1,440 closing
+  itself, with its notice, when the window went to 1,100;
+- the colour links in all three languages, Roxy's link setting her colour, and
+  a birthday leaving only "Use my color";
+- ₩19,500 showing as $14.04 with Convert every amount on, month cells $11 / $3 /
+  $1.7k with the exact figure on hover, the stored rows still 15,000 and 4,500,
+  and Original putting ₩19,500 back; the form label "Amount (KRW)";
+- day view surviving a reload, heading included;
+- the Notes icon shown on the desktop pointer and hidden in the phone emulation
+  after a reload (pointer coarse, no hover).
+
+Three things worth keeping from the testing:
+
+- **`profiles` maps an id to a NAME string** (`nameFor` returns it as is), and
+  colours live in `profileColors`. A fake profile OBJECT prints "[object
+  Object]" through every `nameFor`, which looked like a bug in the new code
+  and was not.
+- **Synthetic PointerEvents dispatched on `document.body` reach window
+  listeners, and `elementFromPoint` still reads the real layout**, so a drag
+  can be driven entirely from the console.
+- **The old `/tmp/claude-501/verify.mjs` was gone.** It was rebuilt in the
+  session scratchpad (syntax, ids, STATIC_MAP, and now every `t('key')` against
+  all three tables). That last check found one pre-existing gap:
+  `t('lblNewNotebookTitle')` exists in no table, so that label prints its raw
+  key. Flagged as a task of its own rather than fixed here.

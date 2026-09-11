@@ -2083,6 +2083,44 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
    context of their own and their buttons need to sit above the pill. */
 .cal-view-toggle{position:relative;}
 .cal-view-toggle button{position:relative;z-index:2;}
+/* ---------- SPLIT VIEW: two sub tabs side by side ----------
+   The panel is a two-column grid only while a split is open. The sections
+   never move in the DOM (a moved embed reloads, a moved editor loses its
+   place); they are placed on the grid by class instead. */
+.tab-panel.split-on{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:18px;align-items:start;}
+.tab-panel.split-on > *{grid-column:1 / -1;}
+.tab-panel.split-on > .cal-view-toggle{grid-row:1;}
+.tab-panel.split-on > .split-left{grid-column:1;grid-row:2;min-width:0;}
+.tab-panel.split-on > .split-right{grid-column:2;grid-row:2;min-width:0;}
+.tab-panel.split-anim{transition:grid-template-columns 0.38s cubic-bezier(.2,.8,.2,1), column-gap 0.38s cubic-bezier(.2,.8,.2,1);}
+.split-pane-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px;margin:0 0 8px;padding:0 0 0 4px;}
+.split-pane-name{font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.split-pane-close{flex:0 0 auto;width:28px;height:28px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
+.split-pane-close:hover{background:rgba(127,127,127,0.18);color:var(--ink);}
+/* Both halves' tabs read as chosen, so the one travelling pill, which can only
+   sit under one of them, steps aside while the split is open. Written after
+   the .has-slider rules on purpose: same specificity, so order decides. */
+.cal-view-toggle.split-on > .tab-slider{opacity:0 !important;}
+.cal-view-toggle.split-on > button.active,
+.cal-view-toggle.split-on > button.split-active,
+.cal-view-toggle.split-on > button.active:hover,
+.cal-view-toggle.split-on > button.split-active:hover{background:var(--ink);color:var(--paper);}
+.cal-view-toggle > button.split-drop-target{box-shadow:0 0 0 2px var(--celadon-4);}
+.cal-view-toggle > button.split-drag-src{opacity:0.45;}
+body.split-dragging, body.split-dragging *{cursor:grabbing !important;user-select:none !important;-webkit-user-select:none !important;}
+body.split-dragging .tabs, body.split-dragging iframe{pointer-events:none;}
+/* Beside the pointer, not under it: centred on it, the ghost covered the very
+   tab being dropped onto, ring and all. */
+.split-drag-ghost{position:fixed;left:0;top:0;z-index:1100;pointer-events:none;padding:6px 14px;border-radius:6px;background:var(--ink);color:var(--paper);font-size:12px;font-weight:600;white-space:nowrap;box-shadow:0 10px 26px rgba(0,0,0,0.28);transform:translate(14px,14px) rotate(-2deg) scale(1.04);}
+.split-snap-preview{position:fixed;left:0;top:0;width:0;height:0;z-index:1050;pointer-events:none;box-sizing:border-box;border-radius:12px;border:2px solid var(--celadon-4);background:rgba(79,117,99,0.14);background:color-mix(in srgb, var(--celadon-4) 16%, transparent);opacity:0;display:flex;align-items:flex-start;justify-content:center;padding-top:22px;font-size:12.5px;font-weight:700;color:var(--ink);text-align:center;
+  transition:left 0.18s cubic-bezier(.2,.8,.2,1), top 0.18s cubic-bezier(.2,.8,.2,1), width 0.18s cubic-bezier(.2,.8,.2,1), height 0.18s cubic-bezier(.2,.8,.2,1), opacity 0.15s ease;}
+.split-snap-preview.show{opacity:1;}
+.split-snap-hint{font-weight:500;font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+.split-notice{position:fixed;z-index:1200;max-width:320px;padding:10px 14px;border-radius:10px;background:var(--ink);color:var(--paper);font-size:12.5px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,0.25);opacity:0;transform:translateY(-4px);transition:opacity 0.2s ease, transform 0.2s ease;pointer-events:none;}
+.split-notice.show{opacity:1;transform:none;}
+@media (prefers-reduced-motion: reduce){
+  .tab-panel.split-anim, .split-snap-preview, .split-notice{transition:none;}
+}
 
 .week-grid-wrap{margin-top:4px;}
 .week-header-row{display:flex;}
@@ -3652,7 +3690,9 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
           <label for="eventColor" id="lblEventColor"></label>
           <div style="display:flex;align-items:center;gap:8px;">
             <input type="color" id="eventColor" value="#4F7563">
-            <button type="button" class="linkbtn" id="eventColorUseMyDefaultBtn"></button>
+            <span id="eventColorUseLinks" style="display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap;">
+              <button type="button" class="linkbtn" id="eventColorUseMyDefaultBtn"></button>
+            </span>
           </div>
         </div>
         <div class="field" id="eventPrivateField">
@@ -3775,6 +3815,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
                 <option value="__custom__" id="optExpDisplayCurrencyCustom"></option>
               </select>
               <input type="text" id="expDisplayCurrencyCustom" class="hidden" maxlength="10" style="font-family:'Space Grotesk',monospace;font-size:12.5px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:60px;">
+              <label id="expDisplayFullWrap" class="hidden" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);cursor:pointer;"><input type="checkbox" id="expDisplayFullToggle" style="width:14px;height:14px;margin:0;"><span id="lblExpDisplayFull"></span></label>
               <button class="export-btn" id="expMembersBtn"></button>
             </div>
           </div>
@@ -10227,7 +10268,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
     lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name shines when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over a word you can click, and the squeeze when you press it.',
-    addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color',
+    addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color', eventColorUseTheirBtn:"Use {name}'s color", splitTooNarrow:"Split view needs a wider window: at least {n} px, twice the app's width. Widen the window to open two tabs side by side.", splitClosedNarrow:'The window got too narrow for two tabs, so it went back to one.', splitClosePane:'Close {name}', splitDropHere:'Let go to open side by side',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     calExportTitle:'Download calendar', calExportUseList:'Pick from list', calExportUseCalendar:'Pick on calendar', calExportPickHint:'Click events on the calendar to leave them out.', calExportCountTpl:'{in} of {total}', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
@@ -10313,7 +10354,7 @@ const I18N = {
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
     tabYonsei:'Yonsei', tabBoards:'Board', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', lblYonseiBoardsSince:'Period', lblYonseiBoardsSort:'Sort', yonseiPeriodAll:'All time', yonseiPeriodWeek:'Last week', yonseiPeriodMonth:'Last month', yonseiPeriod6Months:'Last 6 months', yonseiPeriodYear:'Last year', yonseiPeriod2Years:'Last 2 years', yonseiPeriod3Years:'Last 3 years', yonseiPeriod4Years:'Last 4 years', yonseiPeriod5Years:'Last 5 years', yonseiSortNewest:'Newest first', yonseiSortOldest:'Oldest first', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobsSubJobBoard:'Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardAiUpdateBtn:'AI Job Fetch', jobBoardAiFetching:'Fetching', jobBoardUpdating:'Updating...', jobBoardIndBankingFinance:'Banking/Finance', jobBoardIndConsumerFashion:'Consumer/Fashion', jobBoardIndForeignFirms:'Foreign firms', jobBoardIndIntlOrg:'International Organization', jobBoardIndNGO:'NGO', jobBoardIndOthers:'Others', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Public', jobBoardIndResearchInstitute:'Research Institute', jobBoardIndTechnology:'Technology', jobBoardIndTopChaebol:'Top Chaebol', jobBoardIndTrade:'Trade', jobBoardNewBadge:'NEW', cdcLoginWarnTitle:'Logged in to CDC?', cdcLoginWarnBody:'The Yonsei CDC site needs its own separate login. Make sure you\'re signed in there before opening this posting, or the page may not load right.', cdcLoginWarnContinueBtn:'Continue', cdcLoginWarnLoginBtn:'Log in', cdcLoginWarnCancelBtn:'Cancel',
-    tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet. Create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', expLoadFailedHint:'Couldn\'t load your vacations. Check your connection and try again.', expRetryLoadBtn:'Retry', expAmountInvalid:'Enter a number, optionally ending in k or m (e.g. 4k, 1.5m).', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', hExpAllExpenses:'All expenses', sortLabel:'Sort', sortFieldStatus:'Status', sortFieldCompany:'Company', sortFieldRole:'Role', sortFieldIssuer:'Issuer', sortFieldDeadline:'Deadline', sortFieldTitle:'Title', sortFieldPosted:'Posted', sortFieldMfa:'2FA', sortFieldConfirmed:'Confirmed', sortFieldDate:'Date', sortFieldAmount:'Amount', sortFieldName:'Name', sortFieldCategory:'Category', sortFieldPaidBy:'Paid by', sortAsc:'Sorting up. Press to sort down.', sortDesc:'Sorting down. Press to sort up.', sortThen:'then', sortMultiple:'Multiple sort', expExcludedOne:'1 expense left out', expExcludedMany:'{n} expenses left out', expShowLabel:'Show', expShowAll:'All', expShowCounted:'Counted only', expShowExcluded:'Excluded only', expNoExcluded:'Nothing is excluded right now.', expNoCounted:'Everything here is excluded right now.', expNoExpensesYet:'No expenses logged yet.', expCountCategory:'Count this category', expDontCountCategory:"Don't count this category", expCountAllCategories:'Count all categories', expDontCountDay:"Don't count this day", expCountDay:'Count this day', expDontCountExpense:"Don't count this expense", expCountExpense:'Count this expense', expCountEverything:'Count everything', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default; a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', hEditVacation:'Edit vacation', expPickVacationHint:'Pick a vacation above.', expVacationDeleteConfirm:'Delete "{name}"? Every expense logged on it goes with it, for everyone on the trip.', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expCircleEmpty:'You\'re not linked with anyone yet. Add people to your Linked circle from Account settings.', expCircleAllOnTrip:'Everyone in your Linked circle is already on this trip.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip', lblExpCustomCategoryName:'Custom name (optional)', optNewVacationCurrencyCustom:'Other…', lblNewVacationCustomCurrency:'Currency code', lblExpDisplayCurrency:'Show in', optExpDisplayCurrencyOriginal:'Original', hInviteBySearch:'Or invite by name', vacationInviteSearchPlaceholder:'Search by name...', recapLoadingHint:'Loading…'
+    tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet. Create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', expLoadFailedHint:'Couldn\'t load your vacations. Check your connection and try again.', expRetryLoadBtn:'Retry', expAmountInvalid:'Enter a number, optionally ending in k or m (e.g. 4k, 1.5m).', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', hExpAllExpenses:'All expenses', sortLabel:'Sort', sortFieldStatus:'Status', sortFieldCompany:'Company', sortFieldRole:'Role', sortFieldIssuer:'Issuer', sortFieldDeadline:'Deadline', sortFieldTitle:'Title', sortFieldPosted:'Posted', sortFieldMfa:'2FA', sortFieldConfirmed:'Confirmed', sortFieldDate:'Date', sortFieldAmount:'Amount', sortFieldName:'Name', sortFieldCategory:'Category', sortFieldPaidBy:'Paid by', sortAsc:'Sorting up. Press to sort down.', sortDesc:'Sorting down. Press to sort up.', sortThen:'then', sortMultiple:'Multiple sort', expExcludedOne:'1 expense left out', expExcludedMany:'{n} expenses left out', expShowLabel:'Show', expShowAll:'All', expShowCounted:'Counted only', expShowExcluded:'Excluded only', expNoExcluded:'Nothing is excluded right now.', expNoCounted:'Everything here is excluded right now.', expNoExpensesYet:'No expenses logged yet.', expCountCategory:'Count this category', expDontCountCategory:"Don't count this category", expCountAllCategories:'Count all categories', expDontCountDay:"Don't count this day", expCountDay:'Count this day', expDontCountExpense:"Don't count this expense", expCountExpense:'Count this expense', expCountEverything:'Count everything', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default; a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', hEditVacation:'Edit vacation', expPickVacationHint:'Pick a vacation above.', expVacationDeleteConfirm:'Delete "{name}"? Every expense logged on it goes with it, for everyone on the trip.', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expCircleEmpty:'You\'re not linked with anyone yet. Add people to your Linked circle from Account settings.', expCircleAllOnTrip:'Everyone in your Linked circle is already on this trip.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip', lblExpCustomCategoryName:'Custom name (optional)', optNewVacationCurrencyCustom:'Other…', lblNewVacationCustomCurrency:'Currency code', lblExpDisplayCurrency:'Show in', optExpDisplayCurrencyOriginal:'Original', lblExpDisplayFull:'Convert every amount', expDisplayFullHint:'Shows every amount in the chosen currency. What was typed in is kept as it is, so switching back gives the exact amounts again.', hInviteBySearch:'Or invite by name', vacationInviteSearchPlaceholder:'Search by name...', recapLoadingHint:'Loading…'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
@@ -10350,7 +10391,7 @@ const I18N = {
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
     lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 반짝입니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누를 수 있는 단어 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.',
-    addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용',
+    addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용', eventColorUseTheirBtn:'{name}의 색상 사용', splitTooNarrow:'화면 분할에는 더 넓은 창이 필요합니다. 앱 너비의 두 배인 {n}px 이상이어야 합니다. 두 탭을 나란히 열려면 창을 넓혀 주세요.', splitClosedNarrow:'창이 두 탭을 담기에는 좁아져서 한 탭으로 돌아갔습니다.', splitClosePane:'{name} 닫기', splitDropHere:'놓으면 나란히 열립니다',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     calExportTitle:'캘린더 내려받기', calExportUseList:'목록에서 선택', calExportUseCalendar:'캘린더에서 선택', calExportPickHint:'캘린더에서 일정을 클릭하면 제외됩니다.', calExportCountTpl:'{total}개 중 {in}개', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
@@ -10436,7 +10477,7 @@ const I18N = {
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
     tabYonsei:'연세', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', lblYonseiBoardsSince:'기간', lblYonseiBoardsSort:'정렬', yonseiPeriodAll:'전체 기간', yonseiPeriodWeek:'지난 1주', yonseiPeriodMonth:'지난 1개월', yonseiPeriod6Months:'지난 6개월', yonseiPeriodYear:'지난 1년', yonseiPeriod2Years:'지난 2년', yonseiPeriod3Years:'지난 3년', yonseiPeriod4Years:'지난 4년', yonseiPeriod5Years:'지난 5년', yonseiSortNewest:'최신순', yonseiSortOldest:'오래된순', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobsSubJobBoard:'게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardAiUpdateBtn:'AI 확인', jobBoardAiFetching:'가져오는 중', jobBoardUpdating:'업데이트 중...', jobBoardIndBankingFinance:'금융', jobBoardIndConsumerFashion:'소비재/패션', jobBoardIndForeignFirms:'외국계 기업', jobBoardIndIntlOrg:'국제기구', jobBoardIndNGO:'NGO', jobBoardIndOthers:'기타', jobBoardIndPRMarketing:'PR/마케팅', jobBoardIndPublic:'공공기관', jobBoardIndResearchInstitute:'연구소', jobBoardIndTechnology:'기술/IT', jobBoardIndTopChaebol:'대기업(재벌)', jobBoardIndTrade:'무역', jobBoardNewBadge:'신규', cdcLoginWarnTitle:'CDC 사이트에 로그인하셨나요?', cdcLoginWarnBody:'연세 CDC 사이트는 별도의 로그인이 필요합니다. 이 공고를 열기 전에 CDC 사이트에 로그인되어 있는지 확인하세요. 그렇지 않으면 페이지가 제대로 열리지 않을 수 있습니다.', cdcLoginWarnContinueBtn:'계속', cdcLoginWarnLoginBtn:'로그인', cdcLoginWarnCancelBtn:'취소',
-    tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', expLoadFailedHint:'여행 정보를 불러오지 못했습니다. 연결 상태를 확인하고 다시 시도하세요.', expRetryLoadBtn:'다시 시도', expAmountInvalid:'숫자를 입력하세요. 끝에 k 또는 m을 붙일 수 있습니다 (예: 4k, 1.5m).', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', hExpAllExpenses:'전체 지출', sortLabel:'정렬', sortFieldStatus:'상태', sortFieldCompany:'회사', sortFieldRole:'직무', sortFieldIssuer:'발급기관', sortFieldDeadline:'마감일', sortFieldTitle:'제목', sortFieldPosted:'등록일', sortFieldMfa:'2단계 인증', sortFieldConfirmed:'인증 여부', sortFieldDate:'날짜', sortFieldAmount:'금액', sortFieldName:'이름', sortFieldCategory:'카테고리', sortFieldPaidBy:'결제자', sortAsc:'오름차순입니다. 누르면 내림차순으로 바뀝니다.', sortDesc:'내림차순입니다. 누르면 오름차순으로 바뀝니다.', sortThen:'그다음', sortMultiple:'다중 정렬', expExcludedOne:'{n}개 항목 제외됨', expExcludedMany:'{n}개 항목 제외됨', expShowLabel:'표시', expShowAll:'전체', expShowCounted:'포함된 것만', expShowExcluded:'제외된 것만', expNoExcluded:'지금은 제외된 항목이 없습니다.', expNoCounted:'지금은 모든 항목이 제외되어 있습니다.', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCountCategory:'이 카테고리 포함', expDontCountCategory:'이 카테고리 제외', expCountAllCategories:'모든 카테고리 포함', expDontCountDay:'이 날 제외', expCountDay:'이 날 포함', expDontCountExpense:'이 지출 제외', expCountExpense:'이 지출 포함', expCountEverything:'모두 포함', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', hEditVacation:'여행 수정', expPickVacationHint:'위에서 여행을 선택하세요.', expVacationDeleteConfirm:'"{name}" 여행을 삭제할까요? 이 여행에 기록된 모든 지출이 참여자 전원에게서 함께 삭제됩니다.', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expCircleEmpty:'아직 아무와도 연결되어 있지 않습니다. 계정 설정의 연결된 그룹에서 사람을 추가하세요.', expCircleAllOnTrip:'연결된 그룹의 모든 사람이 이미 이 여행에 참여하고 있습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거', lblExpCustomCategoryName:'맞춤 이름 (선택 사항)', optNewVacationCurrencyCustom:'기타…', lblNewVacationCustomCurrency:'통화 코드', lblExpDisplayCurrency:'표시 통화', optExpDisplayCurrencyOriginal:'원래 통화', hInviteBySearch:'또는 이름으로 초대', vacationInviteSearchPlaceholder:'이름으로 검색...', recapLoadingHint:'불러오는 중...'
+    tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', expLoadFailedHint:'여행 정보를 불러오지 못했습니다. 연결 상태를 확인하고 다시 시도하세요.', expRetryLoadBtn:'다시 시도', expAmountInvalid:'숫자를 입력하세요. 끝에 k 또는 m을 붙일 수 있습니다 (예: 4k, 1.5m).', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', hExpAllExpenses:'전체 지출', sortLabel:'정렬', sortFieldStatus:'상태', sortFieldCompany:'회사', sortFieldRole:'직무', sortFieldIssuer:'발급기관', sortFieldDeadline:'마감일', sortFieldTitle:'제목', sortFieldPosted:'등록일', sortFieldMfa:'2단계 인증', sortFieldConfirmed:'인증 여부', sortFieldDate:'날짜', sortFieldAmount:'금액', sortFieldName:'이름', sortFieldCategory:'카테고리', sortFieldPaidBy:'결제자', sortAsc:'오름차순입니다. 누르면 내림차순으로 바뀝니다.', sortDesc:'내림차순입니다. 누르면 오름차순으로 바뀝니다.', sortThen:'그다음', sortMultiple:'다중 정렬', expExcludedOne:'{n}개 항목 제외됨', expExcludedMany:'{n}개 항목 제외됨', expShowLabel:'표시', expShowAll:'전체', expShowCounted:'포함된 것만', expShowExcluded:'제외된 것만', expNoExcluded:'지금은 제외된 항목이 없습니다.', expNoCounted:'지금은 모든 항목이 제외되어 있습니다.', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCountCategory:'이 카테고리 포함', expDontCountCategory:'이 카테고리 제외', expCountAllCategories:'모든 카테고리 포함', expDontCountDay:'이 날 제외', expCountDay:'이 날 포함', expDontCountExpense:'이 지출 제외', expCountExpense:'이 지출 포함', expCountEverything:'모두 포함', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', hEditVacation:'여행 수정', expPickVacationHint:'위에서 여행을 선택하세요.', expVacationDeleteConfirm:'"{name}" 여행을 삭제할까요? 이 여행에 기록된 모든 지출이 참여자 전원에게서 함께 삭제됩니다.', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expCircleEmpty:'아직 아무와도 연결되어 있지 않습니다. 계정 설정의 연결된 그룹에서 사람을 추가하세요.', expCircleAllOnTrip:'연결된 그룹의 모든 사람이 이미 이 여행에 참여하고 있습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거', lblExpCustomCategoryName:'맞춤 이름 (선택 사항)', optNewVacationCurrencyCustom:'기타…', lblNewVacationCustomCurrency:'통화 코드', lblExpDisplayCurrency:'표시 통화', optExpDisplayCurrencyOriginal:'원래 통화', lblExpDisplayFull:'모든 금액 변환', expDisplayFullHint:'모든 금액을 선택한 통화로 보여줍니다. 입력한 금액은 그대로 남아 있어 다시 바꾸면 정확한 금액이 돌아옵니다.', hInviteBySearch:'또는 이름으로 초대', vacationInviteSearchPlaceholder:'이름으로 검색...', recapLoadingHint:'불러오는 중...'
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
@@ -10473,7 +10514,7 @@ const I18N = {
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
     lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn sáng lên khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Chữ bấm được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.',
-    addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi',
+    addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi', eventColorUseTheirBtn:'Dùng màu của {name}', splitTooNarrow:'Chia đôi màn hình cần cửa sổ rộng hơn: ít nhất {n} px, gấp đôi độ rộng của ứng dụng. Hãy mở rộng cửa sổ để mở hai thẻ cạnh nhau.', splitClosedNarrow:'Cửa sổ quá hẹp cho hai thẻ nên đã trở lại một thẻ.', splitClosePane:'Đóng {name}', splitDropHere:'Thả ra để mở cạnh nhau',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     calExportTitle:'Tải lịch về', calExportUseList:'Chọn từ danh sách', calExportUseCalendar:'Chọn trên lịch', calExportPickHint:'Nhấp vào sự kiện trên lịch để loại bỏ.', calExportCountTpl:'{in}/{total}', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
@@ -10560,7 +10601,7 @@ const I18N = {
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
     tabYonsei:'Yonsei', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', lblYonseiBoardsSince:'Khoảng thời gian', lblYonseiBoardsSort:'Sắp xếp', yonseiPeriodAll:'Mọi lúc', yonseiPeriodWeek:'Tuần trước', yonseiPeriodMonth:'Tháng trước', yonseiPeriod6Months:'6 tháng qua', yonseiPeriodYear:'Năm trước', yonseiPeriod2Years:'2 năm qua', yonseiPeriod3Years:'3 năm qua', yonseiPeriod4Years:'4 năm qua', yonseiPeriod5Years:'5 năm qua', yonseiSortNewest:'Mới nhất', yonseiSortOldest:'Cũ nhất', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobsSubJobBoard:'Bảng', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardAiUpdateBtn:'Kiểm tra AI', jobBoardAiFetching:'Đang lấy dữ liệu', jobBoardUpdating:'Đang cập nhật...', jobBoardIndBankingFinance:'Ngân hàng/Tài chính', jobBoardIndConsumerFashion:'Hàng tiêu dùng/Thời trang', jobBoardIndForeignFirms:'Doanh nghiệp nước ngoài', jobBoardIndIntlOrg:'Tổ chức quốc tế', jobBoardIndNGO:'Tổ chức phi chính phủ (NGO)', jobBoardIndOthers:'Khác', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Khu vực công', jobBoardIndResearchInstitute:'Viện nghiên cứu', jobBoardIndTechnology:'Công nghệ', jobBoardIndTopChaebol:'Tập đoàn lớn (Chaebol)', jobBoardIndTrade:'Thương mại', jobBoardNewBadge:'MỚI', cdcLoginWarnTitle:'Đã đăng nhập vào CDC chưa?', cdcLoginWarnBody:'Trang CDC của Yonsei cần đăng nhập riêng. Hãy chắc chắn bạn đã đăng nhập ở đó trước khi mở tin này, nếu không trang có thể không tải đúng.', cdcLoginWarnContinueBtn:'Tiếp tục', cdcLoginWarnLoginBtn:'Đăng nhập', cdcLoginWarnCancelBtn:'Hủy',
-    tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào. Tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', expLoadFailedHint:'Không thể tải chuyến đi của bạn. Kiểm tra kết nối và thử lại.', expRetryLoadBtn:'Thử lại', expAmountInvalid:'Nhập một số, có thể kết thúc bằng k hoặc m (vd: 4k, 1.5m).', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', hExpAllExpenses:'Tất cả khoản chi', sortLabel:'Sắp xếp', sortFieldStatus:'Trạng thái', sortFieldCompany:'Công ty', sortFieldRole:'Vị trí', sortFieldIssuer:'Đơn vị cấp', sortFieldDeadline:'Hạn nộp', sortFieldTitle:'Tiêu đề', sortFieldPosted:'Ngày đăng', sortFieldMfa:'Xác thực 2 bước', sortFieldConfirmed:'Đã xác nhận', sortFieldDate:'Ngày', sortFieldAmount:'Số tiền', sortFieldName:'Tên', sortFieldCategory:'Danh mục', sortFieldPaidBy:'Người trả', sortAsc:'Đang sắp tăng dần. Nhấn để sắp giảm dần.', sortDesc:'Đang sắp giảm dần. Nhấn để sắp tăng dần.', sortThen:'rồi', sortMultiple:'Sắp xếp nhiều tiêu chí', expExcludedOne:'{n} khoản chi bị loại', expExcludedMany:'{n} khoản chi bị loại', expShowLabel:'Hiển thị', expShowAll:'Tất cả', expShowCounted:'Chỉ mục được tính', expShowExcluded:'Chỉ mục bị loại', expNoExcluded:'Hiện không có mục nào bị loại.', expNoCounted:'Hiện tất cả các mục đều bị loại.', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCountCategory:'Tính danh mục này', expDontCountCategory:'Không tính danh mục này', expCountAllCategories:'Tính tất cả danh mục', expDontCountDay:'Không tính ngày này', expCountDay:'Tính ngày này', expDontCountExpense:'Không tính khoản chi này', expCountExpense:'Tính khoản chi này', expCountEverything:'Tính tất cả', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên. Một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', hEditVacation:'Sửa chuyến đi', expPickVacationHint:'Chọn một chuyến đi ở trên.', expVacationDeleteConfirm:'Xóa "{name}"? Mọi khoản chi đã ghi cho chuyến đi này sẽ bị xóa theo, với tất cả mọi người trong chuyến.', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expCircleEmpty:'Bạn chưa liên kết với ai. Hãy thêm người vào Nhóm liên kết trong Cài đặt tài khoản.', expCircleAllOnTrip:'Mọi người trong Nhóm liên kết của bạn đã tham gia chuyến đi này.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi', lblExpCustomCategoryName:'Tên tùy chỉnh (không bắt buộc)', optNewVacationCurrencyCustom:'Khác…', lblNewVacationCustomCurrency:'Mã tiền tệ', lblExpDisplayCurrency:'Hiển thị bằng', optExpDisplayCurrencyOriginal:'Ban đầu', hInviteBySearch:'Hoặc mời theo tên', vacationInviteSearchPlaceholder:'Tìm theo tên...', recapLoadingHint:'Đang tải...'
+    tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào. Tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', expLoadFailedHint:'Không thể tải chuyến đi của bạn. Kiểm tra kết nối và thử lại.', expRetryLoadBtn:'Thử lại', expAmountInvalid:'Nhập một số, có thể kết thúc bằng k hoặc m (vd: 4k, 1.5m).', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', hExpAllExpenses:'Tất cả khoản chi', sortLabel:'Sắp xếp', sortFieldStatus:'Trạng thái', sortFieldCompany:'Công ty', sortFieldRole:'Vị trí', sortFieldIssuer:'Đơn vị cấp', sortFieldDeadline:'Hạn nộp', sortFieldTitle:'Tiêu đề', sortFieldPosted:'Ngày đăng', sortFieldMfa:'Xác thực 2 bước', sortFieldConfirmed:'Đã xác nhận', sortFieldDate:'Ngày', sortFieldAmount:'Số tiền', sortFieldName:'Tên', sortFieldCategory:'Danh mục', sortFieldPaidBy:'Người trả', sortAsc:'Đang sắp tăng dần. Nhấn để sắp giảm dần.', sortDesc:'Đang sắp giảm dần. Nhấn để sắp tăng dần.', sortThen:'rồi', sortMultiple:'Sắp xếp nhiều tiêu chí', expExcludedOne:'{n} khoản chi bị loại', expExcludedMany:'{n} khoản chi bị loại', expShowLabel:'Hiển thị', expShowAll:'Tất cả', expShowCounted:'Chỉ mục được tính', expShowExcluded:'Chỉ mục bị loại', expNoExcluded:'Hiện không có mục nào bị loại.', expNoCounted:'Hiện tất cả các mục đều bị loại.', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCountCategory:'Tính danh mục này', expDontCountCategory:'Không tính danh mục này', expCountAllCategories:'Tính tất cả danh mục', expDontCountDay:'Không tính ngày này', expCountDay:'Tính ngày này', expDontCountExpense:'Không tính khoản chi này', expCountExpense:'Tính khoản chi này', expCountEverything:'Tính tất cả', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên. Một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', hEditVacation:'Sửa chuyến đi', expPickVacationHint:'Chọn một chuyến đi ở trên.', expVacationDeleteConfirm:'Xóa "{name}"? Mọi khoản chi đã ghi cho chuyến đi này sẽ bị xóa theo, với tất cả mọi người trong chuyến.', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expCircleEmpty:'Bạn chưa liên kết với ai. Hãy thêm người vào Nhóm liên kết trong Cài đặt tài khoản.', expCircleAllOnTrip:'Mọi người trong Nhóm liên kết của bạn đã tham gia chuyến đi này.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi', lblExpCustomCategoryName:'Tên tùy chỉnh (không bắt buộc)', optNewVacationCurrencyCustom:'Khác…', lblNewVacationCustomCurrency:'Mã tiền tệ', lblExpDisplayCurrency:'Hiển thị bằng', optExpDisplayCurrencyOriginal:'Ban đầu', lblExpDisplayFull:'Đổi mọi số tiền', expDisplayFullHint:'Hiển thị mọi số tiền bằng loại tiền đã chọn. Số tiền đã nhập vẫn giữ nguyên, nên khi đổi lại sẽ thấy đúng số đã nhập.', hInviteBySearch:'Hoặc mời theo tên', vacationInviteSearchPlaceholder:'Tìm theo tên...', recapLoadingHint:'Đang tải...'
   }
 };
 const STATIC_MAP = {
@@ -10577,7 +10618,7 @@ const STATIC_MAP = {
   lblExpFormDate:'lblExpFormDate', lblExpFormAmount:'lblExpFormAmount', lblExpFormCategory:'lblExpFormCategory', lblExpFormDescription:'lblExpFormDescription', lblExpFormPaidBy:'lblExpFormPaidBy', saveExpenseBtn:'saveExpenseBtn', expDeleteBtn:'expDeleteBtn',
   hInviteFromCircle:'hInviteFromCircle', hPendingVacationInvites:'hPendingVacationInvites', lblExpCustomCategoryName:'lblExpCustomCategoryName', hInviteBySearch:'hInviteBySearch',
   optNewVacationCurrencyCustom:'optNewVacationCurrencyCustom', lblNewVacationCustomCurrency:'lblNewVacationCustomCurrency',
-  lblExpDisplayCurrency:'lblExpDisplayCurrency', optExpDisplayCurrencyCustom:'optNewVacationCurrencyCustom', optExpDisplayCurrencyOriginal:'optExpDisplayCurrencyOriginal',
+  lblExpDisplayCurrency:'lblExpDisplayCurrency', optExpDisplayCurrencyCustom:'optNewVacationCurrencyCustom', optExpDisplayCurrencyOriginal:'optExpDisplayCurrencyOriginal', lblExpDisplayFull:'lblExpDisplayFull',
   yonseiSubCoursesBtn:'tabCourses', yonseiSubNotesBtn:'tabNotes', yonseiSubBoardsBtn:'tabBoards', hYonseiBoards:'hYonseiBoards',
   hLeaderboard:'leaderboard', lbHeadRank:'lbRank', lbHeadName:'lbName', lbHeadStreak:'lbStreak', lbHeadWeek:'lbWeek', lbHeadTotal:'lbTotal',
   hLogStudy:'logStudy', lblDate:'date', lblActivity:'activity', lblHours:'hours', addBtn:'addSession', studyHint:'studyHint',
@@ -11665,6 +11706,7 @@ function rebuildForUserSelect(){
   if(!amICore()){
     if(field) field.classList.add('hidden');
     if(privField) privField.classList.add('hidden');
+    renderEventColorLinks();
     return;
   }
   if(field) field.classList.remove('hidden');
@@ -11682,6 +11724,7 @@ function rebuildForUserSelect(){
     label.appendChild(document.createTextNode(' ' + nameFor(uid)));
     group.appendChild(label);
   });
+  renderEventColorLinks();
 }
 // Birthdays are always a single, unowned "date to remember" row (see
 // updateKindFieldVisibility()/addEvent() -- eventForUsersGroup is force-
@@ -11822,6 +11865,8 @@ function applyLanguage(lang){
   // until something else happened to re-render it -- and its sort controls are
   // now built per open category, which STATIC_MAP cannot reach at all.
   renderExpenditure();
+  renderEventColorLinks();
+  renderSplitBars();
 }
 /* ---------- AUTH ---------- */
 function setAuthMode(mode){
@@ -12441,6 +12486,39 @@ document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
 document.getElementById('eventColorUseMyDefaultBtn').addEventListener('click', ()=>{
   document.getElementById('eventColor').value = colorForUser(currentUser.id);
 });
+// One "use their colour" link per person the event is FOR, beside "Use my
+// color" (real-user report: with only Roxy ticked under For, the form still
+// offered only the adder's own colour). The same rule addEvent() follows:
+// nobody ticked, or no For field offered at all, means the event is yours.
+function eventForUidsForColor(){
+  if(!currentUser) return [];
+  const field = document.getElementById('eventForUserField');
+  if(!field || field.classList.contains('hidden')) return [currentUser.id];
+  const picked = Array.from(document.querySelectorAll('#eventForUsersGroup input:checked')).map(i=>i.value);
+  return picked.length ? picked : [currentUser.id];
+}
+function renderEventColorLinks(){
+  const wrap = document.getElementById('eventColorUseLinks');
+  const mine = document.getElementById('eventColorUseMyDefaultBtn');
+  if(!wrap || !mine || !currentUser) return;
+  const uids = eventForUidsForColor();
+  mine.classList.toggle('hidden', !uids.includes(currentUser.id));
+  wrap.querySelectorAll('.event-color-use-other').forEach(b=> b.remove());
+  uids.filter(uid=> uid !== currentUser.id).forEach(uid=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'linkbtn event-color-use-other';
+    b.dataset.uid = uid;
+    b.textContent = t('eventColorUseTheirBtn').replace('{name}', nameFor(uid));
+    wrap.appendChild(b);
+  });
+}
+document.getElementById('eventColorUseLinks').addEventListener('click', (e)=>{
+  const b = e.target.closest('.event-color-use-other');
+  if(!b) return;
+  document.getElementById('eventColor').value = colorForUser(b.dataset.uid);
+});
+document.getElementById('eventForUsersGroup').addEventListener('change', renderEventColorLinks);
 
 // ---------------------------------------------------------------------------
 // Resume content sync -- the public resume page (resume/index.html) renders
@@ -16031,6 +16109,9 @@ applyAnimPrefs();
 // Pulled out of the click handler so applyTabVisibility() can also call
 // this programmatically (redirecting away from a tab that just got hidden).
 function switchTopLevelTab(view){
+  // Another main tab ends a split (real-user spec: "choosing a third sub tab
+  // or a different main tab closes both tabs").
+  if(splitView && splitView.group !== view) endSplitView(null, { instant: true });
   activeTab = view;
   document.querySelectorAll('#tabNav button').forEach(b=>b.classList.remove('active'));
   const btn = document.getElementById('tabNav').querySelector(`button[data-tab="${view}"]`);
@@ -16080,6 +16161,7 @@ document.getElementById('tabNav').addEventListener('click', (e)=>{
 // call this explicitly alongside switchTopLevelTab('calendar'), same as
 // they already pair switchTopLevelTab('yonsei') with switchYonseiSubTab.
 function switchCalendarSubTab(view){
+  if(splitSwitchGuard('calendar', view)) return;
   const btns = { overview: 'calendarSubOverviewBtn', calendar: 'calendarSubCalendarBtn', expenditure: 'calendarSubExpensesBtn' };
   const sections = { overview: 'calendarOverviewSection', calendar: 'calendarCalendarSection', expenditure: 'calendarExpensesSection' };
   Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
@@ -16856,6 +16938,7 @@ function renderFeed(){
 }
 /* ---------- READING ---------- */
 function switchReadingSubTab(view){
+  if(splitSwitchGuard('reading', view)) return;
   const btns = { books: 'readingSubBooksBtn', articles: 'readingSubArticlesBtn' };
   const sections = { books: 'readingBooksSection', articles: 'readingArticlesSection' };
   Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
@@ -18161,6 +18244,7 @@ function renderCertLeaderboardList(){
   });
 }
 function switchJobsSubTab(view){
+  if(splitSwitchGuard('jobs', view)) return;
   const btns = { applications: 'jobsSubApplicationsBtn', certifications: 'jobsSubCertificationsBtn', jobboard: 'jobsSubJobBoardBtn' };
   const sections = { applications: 'jobsApplicationsSection', certifications: 'jobsCertificationsSection', jobboard: 'jobsJobBoardSection' };
   Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
@@ -18664,6 +18748,7 @@ document.getElementById('jobBoardAiUpdateBtn').addEventListener('click', trigger
 // fetchYonseiBoards() itself, since that function is also used to fetch
 // deeper pages on demand -- see ensureYonseiLoadedForPage()).
 function switchYonseiSubTab(view){
+  if(splitSwitchGuard('yonsei', view)) return;
   const btns = { courses: 'yonseiSubCoursesBtn', notes: 'yonseiSubNotesBtn', boards: 'yonseiSubBoardsBtn' };
   const sections = { courses: 'yonseiCoursesSection', notes: 'yonseiNotesSection', boards: 'yonseiBoardsSection' };
   Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
@@ -19425,6 +19510,7 @@ async function saveHiddenTabs(next){
 // the first still-visible sub in that same group) -- mirrors exactly what
 // the old Yonsei-Boards-only version did, just generalized to all of them.
 function applyTabVisibility(){
+  splitViewDropHidden();
   TAB_STRUCTURE.forEach(t=>{
     const btn = document.getElementById(t.btnId);
     if(btn) btn.classList.toggle('hidden', isTabHidden(t.key));
@@ -19479,8 +19565,21 @@ function getNotesLinkShortcutName(){
 function renderNotesLinkHeaderBtn(){
   const btn = document.getElementById('notesLinkHeaderBtn');
   if(!btn) return;
-  btn.classList.toggle('hidden', !isNotesLinkAccount());
+  // Desktop only. The Shortcut it runs lives on Roxy's Mac, so on her phone
+  // (the installed app included) the icon was a button that could only fail
+  // (real-user request: "remove Roxy note shortcut from her app, keep on
+  // desktop as it's only useful there"). Asked as hover plus a fine pointer,
+  // the same kind of question the language picker asks, not as a width: a
+  // narrow desktop window is still a desktop.
+  btn.classList.toggle('hidden', !isNotesLinkAccount() || !isDesktopPointer());
   btn.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(getNotesLinkShortcutName());
+}
+function isDesktopPointer(){
+  return !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+}
+if(window.matchMedia){
+  const desktopPointerQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+  if(desktopPointerQuery.addEventListener) desktopPointerQuery.addEventListener('change', renderNotesLinkHeaderBtn);
 }
 document.getElementById('notesLinkHeaderBtn').addEventListener('contextmenu', (e)=>{
   e.preventDefault();
@@ -19538,6 +19637,444 @@ function renderManageTabsList(){
 document.getElementById('manageTabsHeader').addEventListener('click', ()=>{
   manageTabsOpen = !manageTabsOpen;
   renderManageTabsList();
+});
+
+/* ---------- SPLIT VIEW ---------- */
+// Two of one tab's sub tabs side by side, like snapping two windows (real-user
+// request). Drag a sub tab out of its row onto another sub tab, or onto the
+// page beside the one that is open, and both open. Each half has a bar with an
+// X that closes it; choosing a third sub tab or another main tab closes both.
+// - Only from the STATIC sub-tab rows. The fly-out that pops out of a main tab
+//   on hover is a quick way to jump somewhere, not something to drag.
+// - Only with a mouse or a pen: on a touch screen the same gesture is a
+//   scroll, and a phone is never wide enough anyway.
+// - The window has to be at least twice the app's own width. 640px is where
+//   this app turns into its phone layout, so each half gets at least the
+//   width the desktop layout was drawn for. Narrower, a drag says why rather
+//   than doing nothing.
+// - Nothing moves in the DOM. The panel becomes a two-column grid and the two
+//   sections are placed on it by class; a section that moved would reload any
+//   embed in it and lose an editor's place.
+// `var`, not `let`: the switch functions ask about this, and some of them can
+// run before this part of the script has been reached. A `let` read then is a
+// ReferenceError; a `var` is simply undefined, which reads as "no split".
+var splitView = null;      // { group, left, right, origin }
+var splitBypass = false;   // set while the split itself drives a switch function
+var splitAnimToken = 0;
+const SPLIT_MIN_WIDTH = 640 * 2;
+const SPLIT_GAP = 18;
+const SPLIT_ANIM_MS = 380;
+const SPLIT_DRAG_THRESHOLD = 6;
+const SPLIT_GROUPS = {
+  calendar: { panel:'panelCalendar', row:'calendarSubToggle', sections:{ overview:'calendarOverviewSection', calendar:'calendarCalendarSection', expenditure:'calendarExpensesSection' } },
+  study:    { panel:'panelStudy', row:'studySubToggle', sections:{ log:'studyLogSection', grammar:'studyGrammarSection', writing:'studyWritingSection', notebook:'studyNotebookSection' } },
+  yonsei:   { panel:'panelYonsei', row:'yonseiSubToggle', sections:{ courses:'yonseiCoursesSection', notes:'yonseiNotesSection', boards:'yonseiBoardsSection' } },
+  reading:  { panel:'panelReading', row:'readingSubToggle', sections:{ books:'readingBooksSection', articles:'readingArticlesSection' } },
+  jobs:     { panel:'panelJobs', row:'jobsSubToggle', sections:{ applications:'jobsApplicationsSection', certifications:'jobsCertificationsSection', jobboard:'jobsJobBoardSection' } },
+};
+function splitTab(group){ return TAB_STRUCTURE.find(tab=> tab.key === group); }
+function splitSub(group, view){ const tab = splitTab(group); return tab ? (tab.subs||[]).find(s=> s.view === view) : null; }
+function splitSection(group, view){ const g = SPLIT_GROUPS[group]; return g ? document.getElementById(g.sections[view]) : null; }
+function splitActiveView(group){
+  const tab = splitTab(group);
+  const s = tab && (tab.subs||[]).find(s=> document.getElementById(s.btnId)?.classList.contains('active'));
+  return s ? s.view : null;
+}
+function splitReducedMotion(){
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+// Runs a group's own switch function without the split stepping in, so every
+// side effect a sub tab's switch has (a render, a fetch) happens exactly as it
+// does on a click.
+function splitRunSwitch(group, view){
+  splitBypass = true;
+  try { splitTab(group).switchFn()(view); } finally { splitBypass = false; }
+}
+// Called first thing by every switch*SubTab. True means "already on screen,
+// leave it": one of the two open halves was chosen again. A third sub tab
+// takes the split down and then switches as normal.
+function splitSwitchGuard(group, view){
+  if(splitBypass || !splitView || splitView.group !== group) return false;
+  if(view === splitView.left || view === splitView.right) return true;
+  endSplitView(null, { instant: true, noSwitch: true });
+  return false;
+}
+// A sub tab that has just been hidden in Manage visible tabs cannot stay open
+// as half of a split.
+function splitViewDropHidden(){
+  const sv = splitView;
+  if(!sv) return;
+  const leftHidden = isTabHidden(sv.group + '.' + sv.left);
+  const rightHidden = isTabHidden(sv.group + '.' + sv.right);
+  if(isTabHidden(sv.group) || leftHidden || rightHidden){
+    endSplitView(leftHidden && !rightHidden ? sv.right : rightHidden && !leftHidden ? sv.left : null, { instant: true });
+  }
+}
+function splitNotice(text, anchor){
+  let el = document.getElementById('splitNotice');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'splitNotice';
+    el.className = 'split-notice';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.textContent = 'ⓘ ' + text;
+  const w = Math.min(320, window.innerWidth - 24);
+  el.style.maxWidth = w + 'px';
+  const r = anchor ? anchor.getBoundingClientRect() : null;
+  const left = r ? Math.min(Math.max(12, r.left), window.innerWidth - w - 12) : (window.innerWidth - w) / 2;
+  el.style.left = Math.round(left) + 'px';
+  el.style.top = Math.round(r ? Math.max(r.bottom + 10, 12) : 80) + 'px';
+  clearTimeout(el._hideTimer);
+  requestAnimationFrame(()=> el.classList.add('show'));
+  el._hideTimer = setTimeout(()=> el.classList.remove('show'), 4500);
+}
+function splitTooNarrowText(){
+  return t('splitTooNarrow').replace('{n}', SPLIT_MIN_WIDTH.toLocaleString(appLocale()));
+}
+function buildSplitBar(view){
+  const bar = document.createElement('div');
+  bar.className = 'split-pane-bar';
+  bar.innerHTML = `<span class="split-pane-name"></span><button type="button" class="split-pane-close">${ICON.close(12)}</button>`;
+  bar.querySelector('.split-pane-close').addEventListener('click', ()=> closeSplitPane(view));
+  return bar;
+}
+function renderSplitBars(){
+  const sv = splitView;
+  if(!sv) return;
+  [sv.left, sv.right].forEach(view=>{
+    const sec = splitSection(sv.group, view);
+    const bar = sec && sec.querySelector(':scope > .split-pane-bar');
+    const sub = splitSub(sv.group, view);
+    if(!bar || !sub) return;
+    const name = t(sub.labelKey);
+    bar.querySelector('.split-pane-name').textContent = name;
+    const x = bar.querySelector('.split-pane-close');
+    const label = t('splitClosePane').replace('{name}', name);
+    x.setAttribute('aria-label', label);
+    x.title = label;
+  });
+}
+// Puts the panel into the arrangement splitView describes: both halves shown
+// and placed, a bar on each, both tabs lit. Nothing here animates.
+function applySplitLayout(){
+  const sv = splitView;
+  const g = SPLIT_GROUPS[sv.group];
+  Object.keys(g.sections).forEach(view=>{
+    const sec = splitSection(sv.group, view);
+    if(!sec) return;
+    const side = view === sv.left ? 'left' : view === sv.right ? 'right' : null;
+    sec.classList.toggle('split-pane', !!side);
+    sec.classList.toggle('split-left', side === 'left');
+    sec.classList.toggle('split-right', side === 'right');
+    sec.classList.toggle('hidden', !side);
+    const bar = sec.querySelector(':scope > .split-pane-bar');
+    if(side && !bar) sec.insertBefore(buildSplitBar(view), sec.firstChild);
+    if(!side && bar) bar.remove();
+  });
+  (splitTab(sv.group).subs||[]).forEach(s=>{
+    const b = document.getElementById(s.btnId);
+    if(!b) return;
+    const open = s.view === sv.left || s.view === sv.right;
+    b.classList.toggle('split-active', open && !b.classList.contains('active'));
+  });
+  document.getElementById(g.panel).classList.add('split-on');
+  document.getElementById(g.row).classList.add('split-on');
+  renderSplitBars();
+}
+// A split changes how wide everything in two sections is, which is what a
+// window resize tells the rest of the app, so it is told the same way: the
+// grids, the note pagers and the sliding pills all measure themselves again.
+function splitSettled(){
+  refreshRowSliders(true);
+  window.dispatchEvent(new Event('resize'));
+}
+// Takes the split down and leaves `keep` as the one sub tab on screen, through
+// its own switch function so it ends up exactly as a click would leave it.
+// With no `keep`: the one that was open before the split, else the left half.
+// noSwitch is for when a switch function is already about to run.
+function endSplitView(keep, opts){
+  const sv = splitView;
+  if(!sv) return;
+  opts = opts || {};
+  splitAnimToken++;
+  const g = SPLIT_GROUPS[sv.group];
+  const keepView = keep || ((sv.origin === sv.left || sv.origin === sv.right) ? sv.origin : sv.left);
+  splitView = null;
+  const panel = document.getElementById(g.panel);
+  panel.classList.remove('split-on', 'split-anim');
+  panel.style.gridTemplateColumns = '';
+  panel.style.columnGap = '';
+  Object.keys(g.sections).forEach(view=>{
+    const sec = splitSection(sv.group, view);
+    if(!sec) return;
+    sec.classList.remove('split-pane', 'split-left', 'split-right');
+    sec.style.overflow = '';
+    if(sec.getAnimations) sec.getAnimations().forEach(a=> a.cancel());
+    const bar = sec.querySelector(':scope > .split-pane-bar');
+    if(bar) bar.remove();
+  });
+  const row = document.getElementById(g.row);
+  row.classList.remove('split-on');
+  row.querySelectorAll(':scope > button').forEach(b=> b.classList.remove('split-active', 'split-drop-target', 'split-drag-src'));
+  if(!opts.noSwitch) splitRunSwitch(sv.group, keepView);
+  splitSettled();
+}
+// The grid's columns glide from `from` to `to`, and the travelling pills of
+// rows inside the halves (month/week/day and the like) follow every frame.
+function animateSplitColumns(panel, from, to, gapFrom, gapTo, done){
+  const token = ++splitAnimToken;
+  const finish = ()=>{
+    if(token !== splitAnimToken) return;
+    splitAnimToken++;
+    panel.classList.remove('split-anim');
+    panel.style.gridTemplateColumns = '';
+    panel.style.columnGap = '';
+    done();
+  };
+  if(splitReducedMotion()){ finish(); return; }
+  panel.classList.remove('split-anim');
+  panel.style.gridTemplateColumns = from;
+  panel.style.columnGap = gapFrom;
+  void panel.offsetWidth;
+  panel.classList.add('split-anim');
+  panel.style.gridTemplateColumns = to;
+  panel.style.columnGap = gapTo;
+  const t0 = performance.now();
+  const follow = ()=>{
+    if(token !== splitAnimToken) return;
+    refreshRowSliders(true);
+    if(performance.now() - t0 < SPLIT_ANIM_MS + 60) requestAnimationFrame(follow);
+  };
+  requestAnimationFrame(follow);
+  // A timer, not transitionend: a browser that cannot interpolate grid tracks
+  // never fires one, and the split has to settle either way.
+  setTimeout(finish, SPLIT_ANIM_MS + 40);
+}
+function splitFadeIn(el, side){
+  if(!el || !el.animate || splitReducedMotion()) return;
+  const dx = side === 'left' ? -18 : 18;
+  el.animate([{ opacity: 0, transform: `translateX(${dx}px)` }, { opacity: 1, transform: 'none' }],
+    { duration: 300, delay: 110, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' });
+}
+// Opens `left` and `right` side by side. `entering` is the tab that was
+// dragged; it is the one that slides in, and it ends up the row's active tab.
+function openSplitView(group, left, right, entering){
+  const g = SPLIT_GROUPS[group];
+  if(!g || !left || !right || left === right) return;
+  if(window.innerWidth < SPLIT_MIN_WIDTH){ splitNotice(splitTooNarrowText(), document.getElementById(g.row)); return; }
+  const prev = splitView && splitView.group === group ? splitView : null;
+  const onScreen = new Set(Object.keys(g.sections).filter(v=>{ const s = splitSection(group, v); return s && !s.classList.contains('hidden'); }));
+  const origin = prev ? prev.origin : splitActiveView(group);
+  splitView = null;
+  const other = entering === left ? right : left;
+  // Each half gets its own switch's side effects if it was not on screen
+  // already; the entering one goes last, so it is the one left active.
+  if(!onScreen.has(other)) splitRunSwitch(group, other);
+  splitRunSwitch(group, entering);
+  splitView = { group, left, right, origin };
+  applySplitLayout();
+  const panel = document.getElementById(g.panel);
+  const fresh = [left, right].filter(v=> !onScreen.has(v));
+  // A swap of the two open halves brings nothing new in, so both glide.
+  (fresh.length ? fresh : [left, right]).forEach(v=> splitFadeIn(splitSection(group, v), v === left ? 'left' : 'right'));
+  // The columns only travel when one half was already filling the width:
+  // re-arranging an open split, or opening two that were both hidden, keeps
+  // the columns where they are and brings the new content in.
+  if(!prev && fresh.length === 1){
+    const grow = splitSection(group, fresh[0]);
+    grow.style.overflow = 'hidden';
+    const from = fresh[0] === left ? 'minmax(0,0fr) minmax(0,1fr)' : 'minmax(0,1fr) minmax(0,0fr)';
+    animateSplitColumns(panel, from, 'minmax(0,1fr) minmax(0,1fr)', '0px', SPLIT_GAP + 'px', ()=>{
+      grow.style.overflow = '';
+      splitSettled();
+    });
+  } else {
+    splitSettled();
+  }
+}
+// The X on a half: that half folds away and the other takes the width back.
+function closeSplitPane(view){
+  const sv = splitView;
+  if(!sv) return;
+  const keep = view === sv.left ? sv.right : sv.left;
+  const going = splitSection(sv.group, view);
+  if(!going || splitReducedMotion()){ endSplitView(keep); return; }
+  going.style.overflow = 'hidden';
+  if(going.animate) going.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease', fill: 'forwards' });
+  const to = view === sv.left ? 'minmax(0,0fr) minmax(0,1fr)' : 'minmax(0,1fr) minmax(0,0fr)';
+  animateSplitColumns(document.getElementById(SPLIT_GROUPS[sv.group].panel),
+    'minmax(0,1fr) minmax(0,1fr)', to, SPLIT_GAP + 'px', '0px', ()=> endSplitView(keep));
+}
+// A window made too narrow while a split is open goes back to one tab, and
+// says so, rather than squeezing two desktop layouts into phone widths.
+let splitResizeFrame = 0;
+window.addEventListener('resize', ()=>{
+  if(!splitView || splitResizeFrame) return;
+  splitResizeFrame = requestAnimationFrame(()=>{
+    splitResizeFrame = 0;
+    if(!splitView || window.innerWidth >= SPLIT_MIN_WIDTH) return;
+    const row = document.getElementById(SPLIT_GROUPS[splitView.group].row);
+    endSplitView(null, { instant: true });
+    splitNotice(t('splitClosedNarrow'), row);
+  });
+});
+
+// ---- the drag ----
+// Nothing happens on press: a click has to stay a click. Only once the
+// pointer has travelled SPLIT_DRAG_THRESHOLD does it become a drag, and the
+// click that the release would then fire is swallowed.
+let splitDrag = null;
+function splitDragDown(e, group, row){
+  if(e.button !== 0 || e.pointerType === 'touch') return;
+  const btn = e.target.closest('button');
+  if(!btn || btn.parentElement !== row || btn.classList.contains('hidden')) return;
+  const tab = splitTab(group);
+  const sub = tab && (tab.subs||[]).find(s=> s.btnId === btn.id);
+  if(!sub) return;
+  splitDrag = { group, row, btn, view: sub.view, x0: e.clientX, y0: e.clientY,
+    started: false, blocked: false, cancelled: false, target: null, ghost: null, preview: null };
+}
+function splitDragStart(){
+  const d = splitDrag;
+  d.started = true;
+  if(window.innerWidth < SPLIT_MIN_WIDTH){
+    d.blocked = true;
+    splitNotice(splitTooNarrowText(), d.btn);
+    return;
+  }
+  const sel = window.getSelection && window.getSelection();
+  if(sel && sel.removeAllRanges) sel.removeAllRanges();
+  document.body.classList.add('split-dragging');
+  d.btn.classList.add('split-drag-src');
+  d.ghost = document.createElement('div');
+  d.ghost.className = 'split-drag-ghost';
+  d.ghost.textContent = d.btn.textContent.trim();
+  document.body.appendChild(d.ghost);
+  d.preview = document.createElement('div');
+  d.preview.className = 'split-snap-preview';
+  document.body.appendChild(d.preview);
+}
+// Where the dragged tab would land if let go here: { left, right, side, over }
+// or null. Onto another sub tab: those two, in the row's own order. Onto the
+// page below the row: the half the pointer is over, beside whatever is open.
+// With a split already open, a third tab replaces the half it is dropped on,
+// and one open half dropped on the other side swaps them.
+function splitDropTarget(x, y){
+  const d = splitDrag;
+  const g = SPLIT_GROUPS[d.group];
+  const subs = (splitTab(d.group).subs||[]).filter(s=>{ const b = document.getElementById(s.btnId); return b && !b.classList.contains('hidden'); });
+  const idx = v=> subs.findIndex(s=> s.view === v);
+  const sv = splitView && splitView.group === d.group ? splitView : null;
+  const isOpen = v=> !!sv && (v === sv.left || v === sv.right);
+  const hit = document.elementFromPoint(x, y);
+  const overBtn = hit && hit.closest ? hit.closest('button') : null;
+  if(overBtn && overBtn.parentElement === d.row && overBtn !== d.btn){
+    const other = subs.find(s=> s.btnId === overBtn.id);
+    if(!other) return null;
+    if(isOpen(other.view) && isOpen(d.view)) return { left: sv.right, right: sv.left, side: d.view === sv.left ? 'right' : 'left', over: overBtn };
+    if(isOpen(other.view)) return other.view === sv.left
+      ? { left: d.view, right: sv.right, side: 'left', over: overBtn }
+      : { left: sv.left, right: d.view, side: 'right', over: overBtn };
+    const dFirst = idx(d.view) < idx(other.view);
+    return { left: dFirst ? d.view : other.view, right: dFirst ? other.view : d.view, side: dFirst ? 'left' : 'right', over: overBtn };
+  }
+  const pr = document.getElementById(g.panel).getBoundingClientRect();
+  const rr = d.row.getBoundingClientRect();
+  if(x < pr.left || x > pr.right || y <= rr.bottom) return null;
+  const side = x < pr.left + pr.width / 2 ? 'left' : 'right';
+  if(sv){
+    if(isOpen(d.view)){
+      if(side === (d.view === sv.left ? 'left' : 'right')) return null;
+      return { left: sv.right, right: sv.left, side };
+    }
+    return side === 'left' ? { left: d.view, right: sv.right, side } : { left: sv.left, right: d.view, side };
+  }
+  const active = splitActiveView(d.group);
+  if(!active || active === d.view) return null;
+  return side === 'left' ? { left: d.view, right: active, side } : { left: active, right: d.view, side };
+}
+// The snap preview: the half the dragged tab will take, drawn over the page
+// the way a window shows where it will snap before it is let go.
+function splitPaintPreview(target){
+  const d = splitDrag;
+  const pv = d.preview;
+  d.row.querySelectorAll(':scope > button.split-drop-target').forEach(b=>{ if(!target || b !== target.over) b.classList.remove('split-drop-target'); });
+  if(!target){ pv.classList.remove('show'); return; }
+  if(target.over) target.over.classList.add('split-drop-target');
+  const g = SPLIT_GROUPS[d.group];
+  const pr = document.getElementById(g.panel).getBoundingClientRect();
+  const rr = d.row.getBoundingClientRect();
+  const top = Math.max(rr.bottom + 8, 8);
+  const bottom = Math.min(pr.bottom, window.innerHeight - 12);
+  const half = (pr.width - SPLIT_GAP) / 2;
+  const left = target.side === 'left' ? pr.left : pr.left + half + SPLIT_GAP;
+  const firstShow = !pv.classList.contains('show');
+  // The first placement must not glide in from wherever it was last.
+  if(firstShow) pv.style.transition = 'none';
+  pv.style.left = Math.round(left) + 'px';
+  pv.style.top = Math.round(top) + 'px';
+  pv.style.width = Math.round(half) + 'px';
+  pv.style.height = Math.round(Math.max(60, bottom - top)) + 'px';
+  const sub = splitSub(d.group, d.view);
+  pv.innerHTML = `<div><div>${escapeHtml(sub ? t(sub.labelKey) : '')}</div><div class="split-snap-hint">${escapeHtml(t('splitDropHere'))}</div></div>`;
+  if(firstShow){ void pv.offsetWidth; pv.style.transition = ''; }
+  pv.classList.add('show');
+}
+function splitDragCleanup(d){
+  document.body.classList.remove('split-dragging');
+  d.btn.classList.remove('split-drag-src');
+  d.row.querySelectorAll(':scope > button.split-drop-target').forEach(b=> b.classList.remove('split-drop-target'));
+  if(d.ghost){ d.ghost.remove(); d.ghost = null; }
+  if(d.preview){ d.preview.remove(); d.preview = null; }
+}
+function splitSwallowNextClick(){
+  const stop = (ev)=>{ ev.stopPropagation(); ev.preventDefault(); };
+  window.addEventListener('click', stop, { capture: true, once: true });
+  setTimeout(()=> window.removeEventListener('click', stop, { capture: true }), 0);
+}
+Object.entries(SPLIT_GROUPS).forEach(([group, g])=>{
+  const row = document.getElementById(g.row);
+  if(!row) return;
+  row.addEventListener('pointerdown', (e)=> splitDragDown(e, group, row));
+  // Dragging a label's text would otherwise start the browser's own drag.
+  row.addEventListener('dragstart', (e)=> e.preventDefault());
+});
+window.addEventListener('pointermove', (e)=>{
+  const d = splitDrag;
+  if(!d) return;
+  if(!d.started){
+    if(Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < SPLIT_DRAG_THRESHOLD) return;
+    splitDragStart();
+  }
+  if(d.blocked || d.cancelled) return;
+  d.ghost.style.left = e.clientX + 'px';
+  d.ghost.style.top = e.clientY + 'px';
+  d.target = splitDropTarget(e.clientX, e.clientY);
+  splitPaintPreview(d.target);
+});
+window.addEventListener('pointerup', ()=>{
+  const d = splitDrag;
+  if(!d) return;
+  splitDrag = null;
+  if(!d.started) return;
+  splitSwallowNextClick();
+  splitDragCleanup(d);
+  if(!d.blocked && !d.cancelled && d.target) openSplitView(d.group, d.target.left, d.target.right, d.view);
+});
+window.addEventListener('pointercancel', ()=>{
+  const d = splitDrag;
+  splitDrag = null;
+  if(d && d.started) splitDragCleanup(d);
+});
+window.addEventListener('keydown', (e)=>{
+  const d = splitDrag;
+  if(e.key !== 'Escape' || !d || !d.started || d.cancelled || d.blocked) return;
+  d.cancelled = true;
+  d.target = null;
+  splitDragCleanup(d);
+  e.preventDefault();
 });
 
 /* ---------- THE EXPLANATIONS WAIT TO BE ASKED ---------- */
@@ -20185,6 +20722,7 @@ function updateKindFieldVisibility(){
   } else {
     rebuildForUserSelect();
   }
+  renderEventColorLinks();
   // The reminder-recipients picker only makes sense for birthdays (see
   // rebuildReminderForGroup()) -- every other kind already lets you pick who
   // the EVENT itself is for, which creates one row + reminder per person.
@@ -21437,7 +21975,18 @@ function shortenTitleForMobile(title){
   if(clusters.length === 0) return title;
   return clusters.join(' ');
 }
-let calViewMode = 'month';
+// Which of month/week/day was open last, per DEVICE (real-user request: "if I
+// opened day view last time on my phone, the next time it should also be day
+// view"). localStorage rather than the profile, like the sticky bar: the phone
+// and the desktop are rightly allowed different answers. Written by
+// setActiveCalViewBtn(), which every change of view already goes through.
+const CAL_VIEW_MODE_KEY = 'ptCalViewMode';
+let calViewMode = (()=>{
+  try {
+    const saved = localStorage.getItem(CAL_VIEW_MODE_KEY);
+    return saved === 'week' || saved === 'day' ? saved : 'month';
+  } catch(e){ return 'month'; }
+})();
 let selectedAgendaDate = null; // dateKey ('YYYY-MM-DD') of the month-view cell currently expanded into the agenda panel beneath the grid, or null if none is
 // Which people's events show in the month/week/day grids, backed by the
 // same multi-select personFilters system used by every other tab (see
@@ -22284,6 +22833,7 @@ function setActiveCalViewBtn(){
   document.getElementById('calViewMonthBtn').classList.toggle('active', calViewMode==='month');
   document.getElementById('calViewWeekBtn').classList.toggle('active', calViewMode==='week');
   document.getElementById('calViewDayBtn').classList.toggle('active', calViewMode==='day');
+  try { localStorage.setItem(CAL_VIEW_MODE_KEY, calViewMode); } catch(e){}
 }
 function rebuildCalPersonFilter(){ rebuildPersonFilter('calPersonFilter', '__circle__'); }
 function calPersonFilterOnChange(){
@@ -30067,6 +30617,7 @@ async function deleteGrammarResource(patternId, idx){
   }
 }
 function switchStudySubTab(view){
+  if(splitSwitchGuard('study', view)) return;
   const btns = { log: 'studySubLogBtn', grammar: 'studySubGrammarBtn', writing: 'studySubWritingBtn', notebook: 'studySubNotebookBtn' };
   const sections = { log: 'studyLogSection', grammar: 'studyGrammarSection', writing: 'studyWritingSection', notebook: 'studyNotebookSection' };
   Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
@@ -33795,6 +34346,13 @@ function expTodayStr(){ return new Date().toISOString().slice(0,10); }
 // mirror is the documented fallback if jsdelivr is having a bad day.
 let expRatesCache = {}; // upper-case base currency -> {date, rates: {UPPER:number}|null}
 let expDisplayCurrency = localStorage.getItem('expDisplayCurrency') || '';
+// "Convert every amount": the chosen currency REPLACES the vacation's own in
+// every figure, instead of riding along as a small ≈ line (real-user request:
+// "make it possible to FULLY change"). Display only. The rows keep the amount
+// exactly as it was typed, in the vacation's currency, so going back to
+// Original shows the input to the cent however often the view is switched,
+// and the expense form still takes that currency (its label says which).
+let expDisplayFull = localStorage.getItem('expDisplayFull') === '1';
 try {
   Object.assign(expRatesCache, JSON.parse(localStorage.getItem('expRatesCache') || '{}'));
 } catch(e){ /* corrupt/old cache, ignore and start fresh */ }
@@ -33832,14 +34390,32 @@ function expConvert(amount, fromCurrency, toCurrency){
 }
 // Block form (stacked under a stat tile's big number) vs. inline form
 // (appended after an amount in a sentence, e.g. a balance/settlement row).
+// The currency every figure is printed in right now: the chosen one when the
+// whole view is converted AND its rate has arrived, else none (the vacation's
+// own). Until the rate lands the figures stay as typed rather than guessed at,
+// and the render that follows the fetch converts them.
+function expFullTarget(fromCurrency){
+  if(!expDisplayFull || !expDisplayCurrency || expDisplayCurrency === fromCurrency) return null;
+  return expConvert(1, fromCurrency, expDisplayCurrency) == null ? null : expDisplayCurrency;
+}
+function expShowMoney(amount, fromCurrency){
+  const to = expFullTarget(fromCurrency);
+  return to ? expFormatMoney(expConvert(amount, fromCurrency, to), to) : expFormatMoney(amount, fromCurrency);
+}
+function expShowMoneyCompact(amount, fromCurrency){
+  const to = expFullTarget(fromCurrency);
+  return to ? expFormatMoneyCompact(expConvert(amount, fromCurrency, to), to) : expFormatMoneyCompact(amount, fromCurrency);
+}
 function expConvertedBlock(amount, fromCurrency){
   if(!expDisplayCurrency || expDisplayCurrency === fromCurrency) return '';
+  if(expFullTarget(fromCurrency)) return ''; // the figure above it already is the conversion
   const converted = expConvert(amount, fromCurrency, expDisplayCurrency);
   if(converted == null) return '';
   return `<div style="font-size:10px;font-weight:400;color:var(--ink-soft);margin-top:1px;">≈ ${escapeHtml(expFormatMoney(converted, expDisplayCurrency))}</div>`;
 }
 function expConvertedInline(amount, fromCurrency){
   if(!expDisplayCurrency || expDisplayCurrency === fromCurrency) return '';
+  if(expFullTarget(fromCurrency)) return '';
   const converted = expConvert(amount, fromCurrency, expDisplayCurrency);
   if(converted == null) return '';
   return ` <span style="color:var(--ink-soft);font-weight:400;">(≈ ${escapeHtml(expFormatMoney(converted, expDisplayCurrency))})</span>`;
@@ -33851,6 +34427,13 @@ function renderExpDisplayCurrencyPicker(){
   const customField = document.getElementById('expDisplayCurrencyCustom');
   customField.classList.toggle('hidden', sel.value !== '__custom__');
   if(sel.value === '__custom__') customField.value = expDisplayCurrency;
+  // Converting "every amount" only means something once there is a currency
+  // to convert TO that is not the trip's own.
+  const vac = activeVacation();
+  const fullWrap = document.getElementById('expDisplayFullWrap');
+  fullWrap.classList.toggle('hidden', !expDisplayCurrency || !!(vac && expDisplayCurrency === vac.currency));
+  fullWrap.title = t('expDisplayFullHint');
+  document.getElementById('expDisplayFullToggle').checked = expDisplayFull;
 }
 function setExpDisplayCurrency(code){
   expDisplayCurrency = code;
@@ -33868,6 +34451,11 @@ document.getElementById('expDisplayCurrencySelect').addEventListener('change', (
 });
 document.getElementById('expDisplayCurrencyCustom').addEventListener('change', (e)=>{
   setExpDisplayCurrency(e.target.value.trim().toUpperCase());
+});
+document.getElementById('expDisplayFullToggle').addEventListener('change', (e)=>{
+  expDisplayFull = e.target.checked;
+  localStorage.setItem('expDisplayFull', expDisplayFull ? '1' : '0');
+  renderExpenditure();
 });
 
 let expVacations = [];
@@ -33974,7 +34562,16 @@ function expFormatMoneyCompact(amount, currency){
   // 9.5px already needs more than that -- it ellipsised to "₩8,...", which
   // is the same fault one order of magnitude down. Under a thousand there
   // are at most four characters, which fits.
-  if(abs < 1000) return expFormatMoney(Math.round(amount), cur);
+  // Whole units, no cents: at this size "$11.00" is six characters and does
+  // not fit, and a trip shown in a stronger currency ("Convert every amount",
+  // KRW shown in USD) puts nearly every day down here.
+  if(abs < 1000){
+    try {
+      return new Intl.NumberFormat(expLocale(), { style:'currency', currency:cur, minimumFractionDigits:0, maximumFractionDigits:0 }).format(Math.round(amount));
+    } catch(e){
+      return expFormatMoney(Math.round(amount), cur);
+    }
+  }
   const symbol = expFormatMoney(0, cur).replace(/[\d.,\s]/g, '');
   // A decimal only under ten, which caps the whole string at five
   // characters (₩1.3M, ₩117k). Allowing it up to 100 let "₩12.5k" through,
@@ -34238,12 +34835,12 @@ function renderExpStats(){
   const daysWithData = new Set(counted.map(e=>e.date)).size;
   const avgDay = daysWithData > 0 ? total/daysWithData : 0;
   const avgValue = expAvgMode==='week' ? avgDay*7 : avgDay;
-  document.getElementById('expStatTotal').innerHTML = expFormatMoney(total) + expConvertedBlock(total, vac.currency);
-  document.getElementById('expStatAvg').innerHTML = expFormatMoney(avgValue) + expConvertedBlock(avgValue, vac.currency);
+  document.getElementById('expStatTotal').innerHTML = expShowMoney(total, vac.currency) + expConvertedBlock(total, vac.currency);
+  document.getElementById('expStatAvg').innerHTML = expShowMoney(avgValue, vac.currency) + expConvertedBlock(avgValue, vac.currency);
   document.getElementById('expAvgToggle').textContent = expAvgMode==='week' ? t('expAvgPerWeek') : t('expAvgPerDay');
   const selDateStr = expSelectedDate || expTodayStr();
   const selTotal = counted.filter(e=>e.date===selDateStr).reduce((s,e)=>s+Number(e.amount),0);
-  document.getElementById('expStatSelectedDay').innerHTML = expFormatMoney(selTotal) + expConvertedBlock(selTotal, vac.currency);
+  document.getElementById('expStatSelectedDay').innerHTML = expShowMoney(selTotal, vac.currency) + expConvertedBlock(selTotal, vac.currency);
   document.getElementById('expStatMembers').textContent = String(acceptedMemberIds().length);
   renderExpExcludedNotice();
 }
@@ -34337,7 +34934,7 @@ function renderExpCategoryBreakdown(){
     // need 'Not counted.' simply just change from a minus to a plus"). The
     // percentage is what goes instead -- a parked category is not 0% of
     // anything, it is out of the sum the percentages are shares of.
-    const trailing = `${expFormatMoney(amt)}${expConvertedInline(amt, vac.currency)}${muted ? '' : ` · ${pct}%`}`;
+    const trailing = `${expShowMoney(amt, vac.currency)}${expConvertedInline(amt, vac.currency)}${muted ? '' : ` · ${pct}%`}`;
     const muteLabel = t(muted ? 'expCountCategory' : 'expDontCountCategory');
     // Only the rows in THIS category, and only the ones a parked day or row
     // has not already taken out -- the same set the figure beside the name
@@ -34466,7 +35063,7 @@ function renderExpMonthGrid(){
       return `<span class="event-chip" style="background:${info.color}22;color:${info.color};${dim}">${escapeHtml(e.description || expCategoryLabel(e.category))}</span>`;
     }).join('');
     const more = dayExpenses.length>maxShow ? `<div class="more-count">+${dayExpenses.length-maxShow}</div>` : '';
-    const totalHtml = dayTotal>0 ? `<div class="month-day-total" title="${escapeHtml(expFormatMoney(dayTotal))}">${escapeHtml(expFormatMoneyCompact(dayTotal))}</div>` : '';
+    const totalHtml = dayTotal>0 ? `<div class="month-day-total" title="${escapeHtml(expShowMoney(dayTotal, vac && vac.currency))}">${escapeHtml(expShowMoneyCompact(dayTotal, vac && vac.currency))}</div>` : '';
     // Only on a day that HAS something to exclude: a mark in the corner of an
     // empty day would be a control that does nothing.
     const muteLabel = t(dayMuted ? 'expCountDay' : 'expDontCountDay');
@@ -34517,7 +35114,7 @@ function expExpenseRowHtml(e, showDate){
   return `<div class="item-row${rowMuted?' exp-muted':''}">
       <div class="item-top">
         <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${info.color};margin-right:6px;"></span><span class="item-title">${escapeHtml(e.description || expCategoryLabel(e.category))}</span></div>
-        <span style="font-family:'Space Grotesk',monospace;font-weight:700;">${expFormatMoney(amt)}${vac ? expConvertedInline(amt, vac.currency) : ''}</span>
+        <span style="font-family:'Space Grotesk',monospace;font-weight:700;">${expShowMoney(amt, vac && vac.currency)}${vac ? expConvertedInline(amt, vac.currency) : ''}</span>
       </div>
       <div class="item-meta">
         ${showDate ? `<span style="font-family:'Space Grotesk',monospace;font-size:11.5px;color:var(--ink-soft);">${escapeHtml(e.date)}</span>` : ''}
@@ -34915,6 +35512,10 @@ function openExpenseModal(existing, defaultDate){
   document.getElementById('expModalTitle').textContent = existing ? t('expEditExpense') : t('expAddExpense');
   document.getElementById('expFormDate').value = existing ? existing.date : (defaultDate || expSelectedDate || expTodayStr());
   document.getElementById('expFormAmount').value = existing ? existing.amount : '';
+  // Always typed in the trip's own currency, whatever the overview is being
+  // shown in, so the label names it.
+  const vacForAmount = activeVacation();
+  document.getElementById('lblExpFormAmount').textContent = t('lblExpFormAmount') + (vacForAmount && vacForAmount.currency ? ` (${vacForAmount.currency})` : '');
   // A category is either one of the 9 fixed keys, or -- when it isn't -- it
   // IS a custom "Other" name from a previous save, so the picker shows
   // Other and the custom field is pre-filled with the real stored value.
@@ -35073,11 +35674,11 @@ function renderExpBalances(){
     const sign = cents>0 ? '+' : cents<0 ? '-' : '';
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:13px;">
       <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${colorForUser(uid)};margin-right:6px;"></span>${escapeHtml(nameFor(uid))}</span>
-      <span style="font-family:'Space Grotesk',monospace;color:${color};font-weight:700;">${sign}${expFormatMoney(amt)}${expConvertedInline(amt, vac.currency)}</span>
+      <span style="font-family:'Space Grotesk',monospace;color:${color};font-weight:700;">${sign}${expShowMoney(amt, vac.currency)}${expConvertedInline(amt, vac.currency)}</span>
     </div>`;
   }).join('');
   const settleRows = settlements.map(s=>
-    `<div style="font-size:12.5px;color:var(--ink-soft);padding:2px 0;">${escapeHtml(nameFor(s.from))} → ${escapeHtml(nameFor(s.to))}: <strong style="color:var(--ink);">${expFormatMoney(s.amountCents/100)}</strong>${expConvertedInline(s.amountCents/100, vac.currency)}</div>`
+    `<div style="font-size:12.5px;color:var(--ink-soft);padding:2px 0;">${escapeHtml(nameFor(s.from))} → ${escapeHtml(nameFor(s.to))}: <strong style="color:var(--ink);">${expShowMoney(s.amountCents/100, vac.currency)}</strong>${expConvertedInline(s.amountCents/100, vac.currency)}</div>`
   ).join('') || `<p class="hint">${escapeHtml(t('expAllSettled'))}</p>`;
   wrap.innerHTML = `<div style="margin-bottom:10px;">${balRows}</div><div style="border-top:1px solid var(--line);padding-top:8px;">${settleRows}</div><p class="hint" style="margin-top:8px;">ⓘ ${escapeHtml(t('expBalancesNote'))}</p>`;
 }
