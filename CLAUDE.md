@@ -3914,5 +3914,9 @@ Worth keeping from the testing:
   Another stale frame from the preview pane: after a resize and a second's
   wait it painted. Measure before believing a screenshot that something is
   not there.
-- `sql migrations/favorite_colors_migration.sql` is NEW this pass. Until it
-  has been applied, favourites are kept per device as described above.
+- `sql migrations/favorite_colors_migration.sql` is new this pass and was
+  **applied to the live database on 12 Sep** (project `kbqwitmxpmkueryjsyip`,
+  "Korean", via apply_migration as `favorite_colors`). `authenticated` already
+  holds a table-wide UPDATE grant on profiles, and the own-row update policies
+  cover a new column on the same row, so no grant was needed. A device that
+  saved favourites before this carries them up on its next load.
