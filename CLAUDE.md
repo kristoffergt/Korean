@@ -3628,4 +3628,36 @@ Three things worth keeping from the testing:
   session scratchpad (syntax, ids, STATIC_MAP, and now every `t('key')` against
   all three tables). That last check found one pre-existing gap:
   `t('lblNewNotebookTitle')` exists in no table, so that label prints its raw
-  key. Flagged as a task of its own rather than fixed here.
+  key. Flagged as a task of its own rather than fixed here. (Fixed in the
+  forty-fifth pass, below.)
+
+## The Notebook's title label printed its own key (11 Sep, forty-fifth pass)
+
+`buildNotebookMetaFieldsHtml`, the panel that opens from a notebook note's pen
+and from clicking its name above the editor, labelled the title field
+`t('lblNewNotebookTitle')`. That is a DOM ID, not an i18n key: `STATIC_MAP`
+maps the ID `lblNewNotebookTitle` to the key `lblNewLecture`. No table has the
+ID as a key, so `t()` handed it back and the label read "lblNewNotebookTitle"
+in all three languages.
+
+It is `t('lblNewLecture')` now ("Note title", "노트 제목", "Tiêu đề ghi chú"),
+the key the static add form and the course-notes twin `buildNoteMetaFieldsHtml`
+already use. Reused rather than given an entry of its own, because it is the
+same field (`lecture_title`) saying the same words, and a second key is three
+more strings to keep in step.
+
+**A `STATIC_MAP` key is an element ID. What goes into `t()` is the value on
+the right of it.**
+
+Checked: the `t()` sweep (every literal key against all three tables) now
+finds nothing missing anywhere in the file. In the browser the panel was
+generated under each language and rendered in place in the Notebook editor
+card: its title label matches the add form's in English, Korean and
+Vietnamese, and the colour label and both buttons are translated too.
+
+Two more things about the preview pane, on top of "Checking this app in the
+preview pane": port 8791 can already be held by another session's server (any
+free port works), and while the pane is HIDDEN the page reports `innerWidth` 0,
+so everything lays out zero wide. `resize_window` with a custom size gives it a
+real viewport. The first screenshot after that was a stale blank frame; the
+next one was true.
