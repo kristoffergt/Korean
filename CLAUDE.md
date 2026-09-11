@@ -3400,3 +3400,94 @@ computed colours, and clearing it again.
   (`scheduleSharedDataRefresh = ...`, `reorderMobileTabs = ...`), which is how
   the editor ran with nothing sent and the slider ran with the debounce out of
   the way.
+
+## New pages go at the end, pages move and page themselves, and the phone title runs both lines (11 Sep, forty-third pass)
+
+### "New page" adds a blank page at the END
+
+It cut the note at the caret, and `getSelection(true)` on an editor without
+focus answers index 0 -- so the "new" page came out as a new page 1
+(real-user report). `addNotePageAtEnd` puts a hard break before the last
+line's newline and the caret on the new empty last line. **A blank last line is
+doubled first**, or the break would carry off the only line the page above
+had and leave it with nowhere to type. The button is `buildNotePageAddControl`,
+drawn as a sheet with a plus (`ICON.pageAdd`), labelled `notePageAddBtn`.
+
+### Auto pages
+
+A tick and a slider in the page bar, per browser like one-page-at-a-time
+(`ptNoteAutoPages`, `ptNoteAutoPageLen`: 500 to 10,000 in steps of 250,
+default 3,000), off until asked for.
+
+- **Counted in CHARACTERS, not screen height**: a break is saved into the
+  note, and height depends on the width of whichever device is typing. An
+  image or a video counts as 400, so a page of screenshots still fills up.
+- **Two kinds of break.** `true` is one somebody made; `'auto'` is one auto
+  pages made, saved as `<hr class="note-page-break" data-auto="1">` through the
+  blot's own `create`/`value`, so it survives `root.innerHTML`, saving and the
+  live delta. A re-page takes every auto break out and puts them back greedily
+  at line boundaries; a hard break stays put and restarts the count. **A line
+  is never split** -- a paragraph longer than the limit is a long page.
+- **`Delta.diff`, not `setContents`.** The note is read as units (lines, each
+  with its own newline so its list or heading format travels with it, and
+  breaks), rearranged, rebuilt, diffed against what is there and applied with
+  `updateContents(change, 'user')` -- a small edit that saves, broadcasts and
+  undoes like typing.
+- **Only on FOCUSED typing**, 700ms after it stops, and never under an IME
+  composition (Korean). Opening a note writes `root.innerHTML`, which Quill
+  ALSO reports as a 'user' change; `hasFocus()` is what stops a note being
+  rewritten just by being opened. Ticking it, or letting go of the slider,
+  re-pages the note in front of you once.
+- **`notePageRewriting`** is set around every rewrite the pager makes (auto,
+  move, new page, delete). Both editors' default-colour listeners check it, or
+  moved lines read as freshly typed and get painted in the viewer's colour.
+
+### Moving a page
+
+"Move page ← [n] →" in the bar, one page at a time only (it needs a "this
+page"). The field shows where the page is; typing another number and pressing
+Enter, or leaving the field, moves it there. **A boundary keeps its auto mark
+only between two pages that were already neighbours in that order**; every
+boundary a move makes is hard, or auto pages would pour the moved page
+straight back into its new neighbours on the next keystroke.
+
+### The bar with one page
+
+It vanished below two pages. Auto pages has to be reachable BEFORE a note has
+pages, since making them is what it does, so with one page the bar is that
+switch alone (and nothing where the editor is read-only).
+
+### The phone title runs both lines
+
+On a phone the title is two lines (the 440px block), but the ball ran along
+the top of the whole track -- over "Productivity" only -- and the check sat past
+the end of the longer word. Each `.title-word` now carries its own
+`.tl-wrunner`, timed to its own letters (`--w-delay`, `--w-dur` off the same
+34ms step as the letters): along the TOP of "Productivity", then along the
+BOTTOM of "Tracker", bouncing down and away from the letters (`tl-hop-down`).
+
+- **The check lives INSIDE the last word** now: the same right-hand edge on one
+  line, the gap beside "Tracker" on two. The two-line words are
+  `width:max-content`, or a block word is as wide as the title and anything at
+  its right edge lands past "Productivity".
+- **The track-wide runner and bar are hidden on two lines** -- the bar sat
+  exactly where the second run goes. Scoped `#topBar:not(.stuck)`, since the
+  condensed bar is one line.
+- **The per-word runners only animate under `prefers-reduced-motion:
+  no-preference` and `:not(.no-anim-title)`**, and are invisible at rest, so
+  turning motion off needs no display overrides fighting the 440px block's
+  specificity.
+- Verified with numbers, not only pictures: every `#appTitleHome:hover` rule
+  cloned onto a class, and `document.getAnimations()` paused at set times --
+  the ball above "Productivity" at 200ms, under "Tracker" from 420ms, the check
+  beside "Tracker" at the end. **A paused-animation screenshot can come back
+  as the previous frame**; wait before shooting, and trust the measured rects.
+
+### Checked how
+
+A scratch Quill in the browser: a new page on a normal note, a blank-ending
+one and an empty one; last page to first, one step with the arrow, and a typed
+number; auto at 500 and then 1,000 with a hard break kept, an idempotent second
+pass, auto breaks surviving an innerHTML round trip; a move with auto on that
+kept the untouched auto boundary; delete; and the bar's one-page and
+several-page states.

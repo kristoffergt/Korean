@@ -439,7 +439,7 @@ body:not(.no-anim-header) #friendsBtn:has(#circleOnlineDot:not(.hidden)):hover .
 /* A person is wider than the letter it replaces, so the word opens up a
    little to give the figures room. Small on purpose: enough to tell them
    apart, not so much that the title shoves the rest of the header about. */
-.title-word{display:inline-block;white-space:nowrap;
+.title-word{display:inline-block;white-space:nowrap;position:relative;
   transition:letter-spacing 0.28s cubic-bezier(0.34,1.3,0.64,1);}
 /* The title tracks itself. LETTER_COUNT * STEP is what the meter's own
    duration has to match, or the bar and the letters disagree about when the
@@ -499,6 +499,27 @@ body:not(.no-anim-title) #appTitleHome:hover .tl-done{
   opacity:1;transition:opacity 0.1s ease 0.62s;}
 body:not(.no-anim-title) #appTitleHome:hover .tl-done path{
   animation:tl-draw 0.3s ease-out 0.64s forwards;}
+/* The same run, one per WORD, for the two-line title a phone gets (see the
+   440px block): each is timed to its own word's letters, so the second sets
+   off where the sweep leaves the first word. Hidden everywhere else, and only
+   animated where motion is welcome -- so, like the title-wide one, it never
+   appears at all for somebody who has turned the title's motion off. */
+.tl-wrunner{display:none;position:absolute;left:0;top:-0.12em;width:0.3em;height:0.3em;
+  margin-left:-0.15em;opacity:0;pointer-events:none;}
+.tl-wrunner > i{display:block;width:100%;height:100%;border-radius:50%;
+  background:var(--my-color, var(--on));}
+@keyframes tl-hop-down{
+  0%,100%{transform:translateY(0);} 50%{transform:translateY(0.5em);}}
+@media (prefers-reduced-motion: no-preference){
+  body:not(.no-anim-title) #appTitleHome:hover .tl-wrunner{
+    animation:tl-run var(--w-dur, 0.65s) linear var(--w-delay, 0s) forwards;}
+  body:not(.no-anim-title) #appTitleHome:hover .tl-wrunner > i{
+    animation:tl-hop 0.11s ease-in-out infinite;}
+  /* Along the BOTTOM of the second word it bounces down, away from the
+     letters, the way it bounces up and away from them along the top. */
+  body:not(.no-anim-title) #appTitleHome:hover .title-word + .title-word .tl-wrunner > i{
+    animation-name:tl-hop-down;}
+}
 
 /* The animation switches. Each one is a body class that turns its own group
    off and nothing else (real-user request: "can turn animations off in
@@ -1818,6 +1839,23 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
    control here that throws something away. */
 .note-pagebar button.np-del{margin-left:auto;color:var(--danger);}
 .note-pagebar button.np-del:hover{color:var(--danger);border-color:var(--danger);}
+/* Moving the page on screen: one step either way, or straight to a number
+   typed over the one it is at now. */
+.note-pagebar .np-move, .note-pagebar .np-auto{display:inline-flex;align-items:center;gap:4px;}
+.note-pagebar .np-move-label{font-weight:600;}
+.note-pagebar button.np-move-back, .note-pagebar button.np-move-fwd{padding:3px 6px;}
+.note-pagebar input.np-move-to{width:3.2em;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
+  padding:3px 2px;border:1px solid var(--line);border-radius:6px;background:var(--paper);
+  color:var(--ink);text-align:center;-moz-appearance:textfield;}
+.note-pagebar input.np-move-to::-webkit-inner-spin-button,
+.note-pagebar input.np-move-to::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+/* Auto pages: the tick, and the length it pages at beside it once it is on. */
+.note-pagebar .np-auto-toggle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;}
+.note-pagebar input.np-auto-len{width:104px;margin:0;accent-color:var(--ink);}
+.note-pagebar .np-auto-val{white-space:nowrap;font-variant-numeric:tabular-nums;}
+/* 16px under a coarse pointer, like every other field here, or iOS zooms the
+   page when the number is tapped. */
+@media (pointer: coarse){ .note-pagebar input.np-move-to{font-size:16px;} }
 /* The toolbar's own insert button, beside Quill's. Quill styles .ql-toolbar
    button at 28x24 with a 3px pad, so it takes those rather than inventing a
    size that would sit half a pixel off the row. */
@@ -2243,7 +2281,18 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
 @media (max-width: 440px){
   #appTitleHome{white-space:normal;line-height:1.15;letter-spacing:0.3px;
     font-size:clamp(11px, calc((100vw - 309px) / 6.32), 15px);}
-  #appTitleHome .title-word{display:block;}
+  /* max-content, or a block word is as wide as the whole title and anything
+     placed at its right edge -- the check -- lands past the longer word
+     instead of beside "Tracker". */
+  #appTitleHome .title-word{display:block;width:max-content;}
+  /* Two lines, two runs (real-user request): the ball goes along the TOP of
+     "Productivity", then along the BOTTOM of "Tracker", and the check lands in
+     the space beside "Tracker". The title-wide runner and bar belong to the
+     one-line title; the bar sat exactly where the second run now goes. */
+  #topBar:not(.stuck) #appTitleHome .tl-track > .tl-runner,
+  #topBar:not(.stuck) #appTitleHome .tl-track > .tl-meter{display:none;}
+  #topBar:not(.stuck) #appTitleHome .tl-wrunner{display:block;}
+  #topBar:not(.stuck) #appTitleHome .title-word + .title-word .tl-wrunner{top:auto;bottom:-0.12em;}
   /* Scoped to the bar rather than to every .brand-mark, so the four
      auth cards keep the spacing they were drawn with. */
   #topBar .brand-mark{gap:8px;}
@@ -2251,7 +2300,7 @@ body.cal-exporting #weekMoreBelow{visibility:hidden;}
      to being one there; it keeps its own smaller size from #topBar.stuck h1,
      which outranks the rule above. */
   #topBar.stuck #appTitleHome{white-space:nowrap;}
-  #topBar.stuck #appTitleHome .title-word{display:inline-block;}
+  #topBar.stuck #appTitleHome .title-word{display:inline-block;width:auto;}
 }
 .writing-task-box{white-space:pre-wrap;background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.6;margin-top:10px;}
 .writing-char-count{font-weight:600;}
@@ -10184,7 +10233,7 @@ const I18N = {
     lblRecurFreq:'Repeat', repeatDay:'Day(s)', repeatWeek:'Week(s)', repeatMonth:'Month(s)', noRepeat:'No repeat',
     lblRecurInterval:'Every', lblRecurEndType:'Ends', recurNever:'Never', recurUntilDate:'Until date', lblRecurEndDate:'End date',
     recurBadge:'Every {n} {unit}', recurUntil:'until {date}', recurEveryWeekday:'Every {day}', recurEveryOtherWeekday:'Every other {day}', daySun:'Sunday', daySat:'Saturday',
-    notePageBreakBtn:'Page break', notePageOf:'Page {n} / {total}', notePageOne:'One page at a time', notePageAll:'Show all pages', notePagePrev:'Previous page', notePageNext:'Next page', notePageDelete:'Delete page', notePageDeleteConfirm:'Delete this page and everything on it?',
+    notePageAddBtn:'New page', notePageOf:'Page {n} / {total}', notePageOne:'One page at a time', notePageAll:'Show all pages', notePagePrev:'Previous page', notePageNext:'Next page', notePageDelete:'Delete page', notePageDeleteConfirm:'Delete this page and everything on it?', notePageMove:'Move page', notePageMoveBack:'Move this page one earlier', notePageMoveFwd:'Move this page one later', notePageMoveTo:'Page to move this page to', notePageAuto:'Auto pages', notePageAutoHint:'Starts a new page by itself once a page runs past this length', notePageAutoLen:'every {n} characters', notePageAutoLenLabel:'Page length',
     remindMe:'Remind me', subscribed:'Reminders on', applyToLabel:'Apply to', applyAll:'All future occurrences', applyOnce:'Just this occurrence',
     unitMinutes:'minutes before', unitHours:'hours before', unitDays:'days before', addReminder:'+ Add reminder', saveReminders:'Save', unsubscribe:'Turn off reminders',
     reminderNote:'Reminder delivery requires an email service to be connected. Ask Claude to set this up.', birthdayReminderNote:'Birthday reminders fire right at the set time (8:00 AM by default). Change the time via Edit above.',
@@ -10307,7 +10356,7 @@ const I18N = {
     lblRecurFreq:'반복', repeatDay:'일', repeatWeek:'주', repeatMonth:'개월', noRepeat:'반복 안 함',
     lblRecurInterval:'주기', lblRecurEndType:'종료', recurNever:'계속 반복', recurUntilDate:'날짜까지', lblRecurEndDate:'종료일',
     recurBadge:'{n}{unit}마다', recurUntil:'{date}까지', recurEveryWeekday:'매주 {day}', recurEveryOtherWeekday:'격주 {day}', daySun:'일요일', daySat:'토요일',
-    notePageBreakBtn:'페이지 나누기', notePageOf:'{total}쪽 중 {n}쪽', notePageOne:'한 번에 한 쪽씩', notePageAll:'모든 쪽 보기', notePagePrev:'이전 쪽', notePageNext:'다음 쪽', notePageDelete:'쪽 삭제', notePageDeleteConfirm:'이 쪽과 그 안의 내용을 모두 삭제하시겠습니까?',
+    notePageAddBtn:'새 쪽', notePageOf:'{total}쪽 중 {n}쪽', notePageOne:'한 번에 한 쪽씩', notePageAll:'모든 쪽 보기', notePagePrev:'이전 쪽', notePageNext:'다음 쪽', notePageDelete:'쪽 삭제', notePageDeleteConfirm:'이 쪽과 그 안의 내용을 모두 삭제하시겠습니까?', notePageMove:'쪽 이동', notePageMoveBack:'이 쪽을 한 쪽 앞으로', notePageMoveFwd:'이 쪽을 한 쪽 뒤로', notePageMoveTo:'이 쪽을 옮길 위치', notePageAuto:'자동 쪽 나누기', notePageAutoHint:'쪽이 이 길이를 넘으면 새 쪽을 자동으로 시작합니다', notePageAutoLen:'{n}자마다', notePageAutoLenLabel:'쪽 길이',
     remindMe:'알림 받기', subscribed:'알림 켜짐', applyToLabel:'적용 대상', applyAll:'앞으로 모든 일정', applyOnce:'이번 일정만',
     unitMinutes:'분 전', unitHours:'시간 전', unitDays:'일 전', addReminder:'+ 알림 추가', saveReminders:'저장', unsubscribe:'알림 끄기',
     reminderNote:'알림 발송을 위해서는 이메일 서비스 연동이 필요합니다. Claude에게 설정을 요청하세요.', birthdayReminderNote:'생일 알림은 설정된 시각(기본 오전 8시)에 바로 전송됩니다. 시각을 바꾸려면 위의 수정을 이용하세요.',
@@ -10430,7 +10479,7 @@ const I18N = {
     lblRecurFreq:'Lặp lại', repeatDay:'Ngày', repeatWeek:'Tuần', repeatMonth:'Tháng', noRepeat:'Không lặp lại',
     lblRecurInterval:'Mỗi', lblRecurEndType:'Kết thúc', recurNever:'Không bao giờ', recurUntilDate:'Đến ngày', lblRecurEndDate:'Ngày kết thúc',
     recurBadge:'Mỗi {n} {unit}', recurUntil:'đến {date}', recurEveryWeekday:'Mỗi {day}', recurEveryOtherWeekday:'Cách tuần vào {day}', daySun:'Chủ Nhật', daySat:'Thứ Bảy',
-    notePageBreakBtn:'Ngắt trang', notePageOf:'Trang {n} / {total}', notePageOne:'Từng trang một', notePageAll:'Xem tất cả các trang', notePagePrev:'Trang trước', notePageNext:'Trang sau', notePageDelete:'Xóa trang', notePageDeleteConfirm:'Xóa trang này và toàn bộ nội dung trên đó?',
+    notePageAddBtn:'Trang mới', notePageOf:'Trang {n} / {total}', notePageOne:'Từng trang một', notePageAll:'Xem tất cả các trang', notePagePrev:'Trang trước', notePageNext:'Trang sau', notePageDelete:'Xóa trang', notePageDeleteConfirm:'Xóa trang này và toàn bộ nội dung trên đó?', notePageMove:'Di chuyển trang', notePageMoveBack:'Chuyển trang này lên trước một trang', notePageMoveFwd:'Chuyển trang này ra sau một trang', notePageMoveTo:'Vị trí muốn chuyển trang này tới', notePageAuto:'Tự động chia trang', notePageAutoHint:'Tự bắt đầu trang mới khi một trang dài hơn mức này', notePageAutoLen:'mỗi {n} ký tự', notePageAutoLenLabel:'Độ dài trang',
     remindMe:'Nhắc tôi', subscribed:'Đã bật nhắc nhở', applyToLabel:'Áp dụng cho', applyAll:'Tất cả các lần tới', applyOnce:'Chỉ lần này',
     unitMinutes:'phút trước', unitHours:'giờ trước', unitDays:'ngày trước', addReminder:'+ Thêm nhắc nhở', saveReminders:'Lưu', unsubscribe:'Tắt nhắc nhở',
     reminderNote:'Việc gửi nhắc nhở cần kết nối dịch vụ email. Hãy nhờ Claude thiết lập.', birthdayReminderNote:'Nhắc sinh nhật được gửi đúng vào thời gian đã đặt (mặc định 8:00 sáng). Đổi giờ qua mục Sửa ở trên.',
@@ -11074,10 +11123,12 @@ const ICON_PATHS = {
   chevL:  '<polyline points="15 18 9 12 15 6"></polyline>',
   chevD:  '<polyline points="6 9 12 15 18 9"></polyline>',
   download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>',
-  /* Two solid edges with a broken line between them: the bottom of one page,
-     the top of the next. Drawn rather than a scissors, which at 18px is a
-     smudge. */
-  pageBreak: '<path d="M5 4h14"></path><path d="M5 20h14"></path><path d="M3 12h3"></path><path d="M9.5 12h5"></path><path d="M18 12h3"></path>'
+  arrowL: '<line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline>',
+  arrowR: '<line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>',
+  /* A sheet with a plus on it: the button ADDS a page, at the end, rather than
+     cutting the note where the caret is, so it is drawn as a new page and not
+     as a break. */
+  pageAdd: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><polyline points="14 3 14 8 19 8"></polyline><line x1="12" y1="17" x2="12" y2="11"></line><line x1="9" y1="14" x2="15" y2="14"></line>'
 };
 const ICON = {
   pencil:  function(sz){ return svgIcon(ICON_PATHS.pencil, sz); },
@@ -11100,7 +11151,9 @@ const ICON = {
   chevL:   function(sz){ return svgIcon(ICON_PATHS.chevL, sz); },
   chevD:   function(sz){ return svgIcon(ICON_PATHS.chevD, sz); },
   download:function(sz){ return svgIcon(ICON_PATHS.download, sz); },
-  pageBreak:function(sz){ return svgIcon(ICON_PATHS.pageBreak, sz); }
+  arrowL:  function(sz){ return svgIcon(ICON_PATHS.arrowL, sz); },
+  arrowR:  function(sz){ return svgIcon(ICON_PATHS.arrowR, sz); },
+  pageAdd: function(sz){ return svgIcon(ICON_PATHS.pageAdd, sz); }
 };
 // ---- Every list's remembered ordering ----
 // UP HERE, not beside the control it belongs to, because the lists initialise
@@ -11164,11 +11217,16 @@ function buildTitleMorph(){
   // TITLE rather than the h1, which also holds the logo.
   const track = document.createElement('span');
   track.className = 'tl-track';
+  // The per-letter step .tl-char's transition-delay counts in; the words'
+  // own runners are timed off it too.
+  const STEP = 34;
   let n = 0;
+  let lastWord = null;
   words.forEach((word, wi)=>{
     if(wi) track.appendChild(document.createTextNode(' '));
     const w = document.createElement('span');
     w.className = 'title-word';
+    const first = n;
     [...word].forEach((ch)=>{
       const l = document.createElement('span');
       l.className = 'tl-char';
@@ -11178,7 +11236,19 @@ function buildTitleMorph(){
       l.textContent = ch;
       w.appendChild(l);
     });
+    // Each word also carries a runner of its own, for the two-line title a
+    // phone gets: it sets off when the sweep reaches the word and takes as
+    // long as the sweep takes to cross it. CSS shows these or the title-wide
+    // one, never both.
+    w.style.setProperty('--w-delay', (first * STEP) + 'ms');
+    w.style.setProperty('--w-dur', ((n - first) * STEP) + 'ms');
+    const wr = document.createElement('span');
+    wr.className = 'tl-wrunner';
+    wr.setAttribute('aria-hidden', 'true');
+    wr.innerHTML = '<i></i>';
+    w.appendChild(wr);
     track.appendChild(w);
+    lastWord = w;
   });
   // The meter's fill and the check are aria-hidden: they say the same thing
   // the hover already says and there is nothing here to read out.
@@ -11198,7 +11268,10 @@ function buildTitleMorph(){
   done.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
     + 'stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'
     + '<path d="M4 12.5l5.5 5.5L20 6.5"></path></svg>';
-  track.appendChild(done);
+  // In the LAST WORD rather than the track: on one line that is the same
+  // right-hand edge, and on a phone's two lines it is the space beside
+  // "Tracker" rather than past the end of the longer word above it.
+  lastWord.appendChild(done);
   h1.appendChild(track);
 }
 buildTitleMorph();
@@ -11677,6 +11750,7 @@ function applyLanguage(lang){
   // settings open would otherwise leave the whole moderator panel in the old
   // language until something else re-rendered it.
   if(moderatorUsersCache.length){ renderModeratorUserList(); renderModStudyEditor(); }
+  relabelNotePagers();
   document.getElementById('writingImageUrl').placeholder = t('writingImageUrlPlaceholder');
   document.getElementById('writingQ53ImageUrl').placeholder = t('writingImageUrlPlaceholder');
   document.getElementById('writingEssaySearch').placeholder = t('writingSearchPlaceholder');
@@ -30807,7 +30881,7 @@ function buildQuillColorPicker(editor, getActiveColor, markDirty){
   // foreground color.
   let applyingDefaultColor = false;
   editor.on('text-change', (delta, oldDelta, source)=>{
-    if(source !== 'user' || applyingDefaultColor) return;
+    if(source !== 'user' || applyingDefaultColor || notePageRewriting) return;
     const defaultColor = getActiveColor();
     if(!defaultColor) return;
     const ops = delta.ops || [];
@@ -32414,7 +32488,17 @@ if(window.Quill && window.ImageResize) Quill.register('modules/imageResize', Ima
 // always was, and one with breaks needs no migration and no second table.
 if(window.Quill){
   const NoteBlockEmbed = Quill.import('blots/block/embed');
-  class NotePageBreakBlot extends NoteBlockEmbed {}
+  // A break's value says who made it: true for a page somebody asked for,
+  // 'auto' for one auto-paging made (saved as data-auto="1"). Only the second
+  // kind is ever moved or taken out again when the length changes.
+  class NotePageBreakBlot extends NoteBlockEmbed {
+    static create(value){
+      const node = super.create(value);
+      if(value === 'auto') node.setAttribute('data-auto', '1');
+      return node;
+    }
+    static value(node){ return node.getAttribute('data-auto') === '1' ? 'auto' : true; }
+  }
   NotePageBreakBlot.blotName = 'notePageBreak';
   NotePageBreakBlot.tagName = 'hr';
   NotePageBreakBlot.className = 'note-page-break';
@@ -32431,7 +32515,44 @@ function notePagedPref(){
 function setNotePagedPref(on){
   try{ localStorage.setItem(NOTE_PAGED_KEY, on ? '1' : '0'); }catch(e){}
 }
+// Auto pages is the same kind of preference: a way of writing, per browser,
+// and off until it is asked for. The length is counted in CHARACTERS, not in
+// how tall the page is on screen: height depends on the width of whichever
+// device is typing, and a break is saved INTO the note, so a page split by
+// height on a phone would be a different page on a laptop.
+const NOTE_AUTO_KEY = 'ptNoteAutoPages';
+const NOTE_AUTO_LEN_KEY = 'ptNoteAutoPageLen';
+const NOTE_AUTO_MIN = 500, NOTE_AUTO_MAX = 10000, NOTE_AUTO_STEP = 250, NOTE_AUTO_DEFAULT = 3000;
+// An image or a video has no characters and still fills a page, so one counts
+// as about a paragraph -- a page of screenshots can still run out of room.
+const NOTE_AUTO_EMBED_CHARS = 400;
+// Long enough that nothing moves under a word that is still being typed.
+const NOTE_REFLOW_DELAY = 700;
+function noteAutoPagesPref(){
+  try{ return localStorage.getItem(NOTE_AUTO_KEY) === '1'; }catch(e){ return false; }
+}
+function setNoteAutoPagesPref(on){
+  try{ localStorage.setItem(NOTE_AUTO_KEY, on ? '1' : '0'); }catch(e){}
+}
+function noteAutoLenPref(){
+  let n = NOTE_AUTO_DEFAULT;
+  try{ n = Number(localStorage.getItem(NOTE_AUTO_LEN_KEY)) || NOTE_AUTO_DEFAULT; }catch(e){}
+  n = Math.round(n / NOTE_AUTO_STEP) * NOTE_AUTO_STEP;
+  return Math.min(NOTE_AUTO_MAX, Math.max(NOTE_AUTO_MIN, n));
+}
+function setNoteAutoLenPref(n){
+  try{ localStorage.setItem(NOTE_AUTO_LEN_KEY, String(n)); }catch(e){}
+}
+function noteAutoLenLabel(n){
+  return t('notePageAutoLen').replace('{n}', ()=> Number(n).toLocaleString(appLocale()));
+}
 const notePagers = {};
+// Set while the pager itself rewrites a note (auto pages, a move, a new page,
+// a delete). Those edits go through Quill as 'user' so they save, broadcast
+// and undo like any other -- but the editors' default-colour listeners would
+// then read the moved lines as freshly TYPED and paint them in the colour of
+// whoever is looking at the note, so they check this and stand aside.
+let notePageRewriting = false;
 // The pages are the runs of top-level blocks BETWEEN the breaks. The break
 // itself is filed with the page it ends, so hiding a page hides its own
 // bottom rule rather than leaving a stray line under the page above.
@@ -32452,11 +32573,19 @@ function notePageOfNode(groups, node){
 function setupNotePager(key, quill, barId){
   const bar = document.getElementById(barId);
   if(!bar || notePagers[key]) return;
-  notePagers[key] = { quill: quill, bar: bar, page: 0 };
+  notePagers[key] = { quill: quill, bar: bar, page: 0, reflowTimer: null };
   // Re-applied after every text change, so an edit that makes Quill rebuild a
   // block heals the hidden ones on the next keystroke rather than leaving a
   // page half shown.
-  quill.on('text-change', ()=> renderNotePager(key, true));
+  quill.on('text-change', (delta, oldDelta, source)=>{
+    renderNotePager(key, true);
+    // Only your own typing re-pages a note. Opening one writes root.innerHTML,
+    // which Quill ALSO reports as a 'user' change, and a note must never be
+    // rewritten just by being opened -- so the editor has to have the focus
+    // too. A colleague's edits arrive 'silent', already paged by whoever
+    // made them.
+    if(source === 'user' && !notePageRewriting && quill.hasFocus()) scheduleNoteReflow(key);
+  });
   renderNotePager(key);
 }
 function resetNotePager(key){
@@ -32470,35 +32599,81 @@ function buildNotePagerBar(key){
   if(p.bar.dataset.built === '1') return;
   p.bar.dataset.built = '1';
   p.bar.innerHTML = '';
-  const prev = document.createElement('button');
-  prev.type = 'button'; prev.className = 'np-prev';
-  prev.innerHTML = ICON.chevL(13);
-  prev.addEventListener('click', ()=>{ p.page--; renderNotePager(key); });
+  const button = (cls, html, onClick)=>{
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = cls;
+    if(html) b.innerHTML = html;
+    b.addEventListener('click', onClick);
+    return b;
+  };
+  const prev = button('np-prev', ICON.chevL(13), ()=>{ p.page--; renderNotePager(key); });
   const count = document.createElement('span');
   count.className = 'np-count';
-  const next = document.createElement('button');
-  next.type = 'button'; next.className = 'np-next';
-  next.innerHTML = ICON.chevR(13);
-  next.addEventListener('click', ()=>{ p.page++; renderNotePager(key); });
-  const mode = document.createElement('button');
-  mode.type = 'button'; mode.className = 'np-mode';
-  mode.addEventListener('click', ()=>{
+  const next = button('np-next', ICON.chevR(13), ()=>{ p.page++; renderNotePager(key); });
+  const mode = button('np-mode', '', ()=>{
     setNotePagedPref(!notePagedPref());
     Object.keys(notePagers).forEach(k=> renderNotePager(k));
   });
-  const del = document.createElement('button');
-  del.type = 'button'; del.className = 'np-del';
-  del.addEventListener('click', ()=> deleteNotePage(key));
-  p.bar.append(prev, count, next, mode, del);
+  // Moving the page on screen (real-user request): one step either way, or
+  // straight to a number. The field shows where the page IS, so typing over
+  // it is how you say where it goes; Enter, or leaving the field, moves it.
+  const move = document.createElement('span');
+  move.className = 'np-move';
+  const moveLabel = document.createElement('span');
+  moveLabel.className = 'np-move-label';
+  const back = button('np-move-back', ICON.arrowL(13), ()=> moveNotePage(key, p.page - 1));
+  const to = document.createElement('input');
+  to.type = 'number'; to.className = 'np-move-to'; to.min = '1'; to.step = '1';
+  to.inputMode = 'numeric';
+  to.addEventListener('change', ()=>{
+    const n = parseInt(to.value, 10);
+    if(Number.isFinite(n)) moveNotePage(key, n - 1); else renderNotePager(key);
+  });
+  to.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); to.blur(); } });
+  const fwd = button('np-move-fwd', ICON.arrowR(13), ()=> moveNotePage(key, p.page + 1));
+  move.append(moveLabel, back, to, fwd);
+  // Auto pages (real-user request): a tick, and the length it pages at.
+  const auto = document.createElement('span');
+  auto.className = 'np-auto';
+  const autoLabel = document.createElement('label');
+  autoLabel.className = 'np-auto-toggle';
+  const autoBox = document.createElement('input');
+  autoBox.type = 'checkbox';
+  const autoText = document.createElement('span');
+  autoLabel.append(autoBox, autoText);
+  autoBox.addEventListener('change', ()=>{
+    setNoteAutoPagesPref(autoBox.checked);
+    Object.keys(notePagers).forEach(k=> renderNotePager(k));
+    // Ticking it pages the note in front of you NOW, rather than leaving the
+    // tick looking broken until the next keystroke. Only this one: the other
+    // editor's note is paged the next time it is written in.
+    if(autoBox.checked) reflowNotePages(key);
+  });
+  const len = document.createElement('input');
+  len.type = 'range'; len.className = 'np-auto-len';
+  len.min = String(NOTE_AUTO_MIN); len.max = String(NOTE_AUTO_MAX); len.step = String(NOTE_AUTO_STEP);
+  const lenOut = document.createElement('span');
+  lenOut.className = 'np-auto-val';
+  len.addEventListener('input', ()=>{ lenOut.textContent = noteAutoLenLabel(len.value); });
+  // Committed on release: re-paging a note on every step of a drag is a
+  // rewrite of it per step, where one on letting go gives the same answer.
+  len.addEventListener('change', ()=>{
+    setNoteAutoLenPref(Number(len.value));
+    Object.keys(notePagers).forEach(k=> renderNotePager(k));
+    reflowNotePages(key);
+  });
+  auto.append(autoLabel, len, lenOut);
+  const del = button('np-del', '', ()=> deleteNotePage(key));
+  p.bar.append(prev, count, next, mode, move, auto, del);
 }
 function renderNotePager(key, follow){
   const p = notePagers[key];
   if(!p) return;
   const groups = notePageGroups(p.quill);
   const total = groups.length;
-  // The page follows the CARET while typing, so inserting a break lands you on
-  // the page you just created and deleting one cannot leave you looking at a
-  // page that is no longer there.
+  // The page follows the CARET while typing, so a page that auto-paging
+  // starts under you is the page you land on, and deleting one cannot leave
+  // you looking at a page that is no longer there.
   if(follow && p.quill.hasFocus()){
     const sel = document.getSelection();
     const node = sel && sel.anchorNode;
@@ -32517,26 +32692,182 @@ function renderNotePager(key, follow){
       el.classList.toggle('note-page-off', paged && (i !== p.page || isBreak));
     });
   });
-  // With one page there are no pages, so the bar says nothing at all rather
-  // than reading "Page 1 / 1" over every note in the app.
-  if(total <= 1){ p.bar.style.display = 'none'; return; }
+  const editable = p.quill.isEnabled();
+  // With one page there is nothing to page through, so the bar shrinks to the
+  // auto-pages switch -- which has to be there BEFORE a note has pages,
+  // since making them is what it does -- and is gone where the note cannot be
+  // written in at all.
+  if(total <= 1 && !editable){ p.bar.style.display = 'none'; return; }
   buildNotePagerBar(key);
   p.bar.style.display = '';
-  p.bar.querySelector('.np-count').textContent =
+  const q = (sel)=> p.bar.querySelector(sel);
+  ['.np-prev', '.np-count', '.np-next', '.np-mode'].forEach(s=>{ q(s).style.display = total > 1 ? '' : 'none'; });
+  q('.np-count').textContent =
     t('notePageOf').replace('{n}', p.page + 1).replace('{total}', total);
-  const prev = p.bar.querySelector('.np-prev'), next = p.bar.querySelector('.np-next');
+  const prev = q('.np-prev'), next = q('.np-next');
   prev.disabled = !paged || p.page === 0;
   next.disabled = !paged || p.page === total - 1;
   prev.title = t('notePagePrev'); prev.setAttribute('aria-label', t('notePagePrev'));
   next.title = t('notePageNext'); next.setAttribute('aria-label', t('notePageNext'));
-  const mode = p.bar.querySelector('.np-mode');
+  const mode = q('.np-mode');
   mode.textContent = notePagedPref() ? t('notePageAll') : t('notePageOne');
   mode.classList.toggle('on', notePagedPref());
-  // Only one page at a time says which page "this" one is. With every page
-  // in a row there is no current page to point at, so there is no button.
-  const del = p.bar.querySelector('.np-del');
+  // Moving and deleting act on "this page", which only one page at a time
+  // has; with every page in a row there is no current page to point at.
+  const own = paged && editable;
+  q('.np-move').style.display = own ? '' : 'none';
+  q('.np-move-label').textContent = t('notePageMove');
+  const back = q('.np-move-back'), fwd = q('.np-move-fwd'), to = q('.np-move-to');
+  back.disabled = p.page === 0;
+  fwd.disabled = p.page === total - 1;
+  back.title = t('notePageMoveBack'); back.setAttribute('aria-label', t('notePageMoveBack'));
+  fwd.title = t('notePageMoveFwd'); fwd.setAttribute('aria-label', t('notePageMoveFwd'));
+  to.max = String(total);
+  to.title = t('notePageMoveTo'); to.setAttribute('aria-label', t('notePageMoveTo'));
+  // Never under somebody typing a number into it, or the old number comes
+  // back under their finger.
+  if(document.activeElement !== to) to.value = String(p.page + 1);
+  const on = noteAutoPagesPref();
+  q('.np-auto').style.display = editable ? '' : 'none';
+  q('.np-auto-toggle').title = t('notePageAutoHint');
+  q('.np-auto-toggle input').checked = on;
+  q('.np-auto-toggle span').textContent = t('notePageAuto');
+  const len = q('.np-auto-len'), lenOut = q('.np-auto-val');
+  len.style.display = on ? '' : 'none';
+  lenOut.style.display = on ? '' : 'none';
+  len.setAttribute('aria-label', t('notePageAutoLenLabel'));
+  if(document.activeElement !== len) len.value = String(noteAutoLenPref());
+  lenOut.textContent = noteAutoLenLabel(len.value);
+  const del = q('.np-del');
   del.textContent = t('notePageDelete');
-  del.style.display = paged ? '' : 'none';
+  del.style.display = own ? '' : 'none';
+}
+// A note, read as the things pages are made of: whole LINES, each ending in
+// its own newline so its list or heading formatting travels with it, and the
+// BREAKS between them. Auto pages and moving a page both rearrange this list
+// and turn it back into a document, and Delta.diff then hands Quill only what
+// actually changed -- so the caret, undo and the live delta a colleague
+// receives all see a small edit, not a whole note replaced.
+function noteUnits(delta){
+  const units = [];
+  let ops = [], chars = 0;
+  const endLine = ()=>{ units.push({ ops: ops, chars: chars }); ops = []; chars = 0; };
+  delta.ops.forEach(op=>{
+    const ins = op.insert;
+    if(ins && typeof ins === 'object'){
+      if(Object.prototype.hasOwnProperty.call(ins, 'notePageBreak')){
+        if(ops.length) endLine();
+        units.push({ brk: ins.notePageBreak === 'auto' ? 'auto' : true });
+      } else {
+        ops.push(op);
+        chars += NOTE_AUTO_EMBED_CHARS;
+      }
+      return;
+    }
+    if(typeof ins !== 'string') return;
+    ins.split('\n').forEach((part, i, all)=>{
+      if(part){
+        ops.push(op.attributes ? { insert: part, attributes: op.attributes } : { insert: part });
+        chars += part.length;
+      }
+      if(i < all.length - 1){
+        ops.push(op.attributes ? { insert: '\n', attributes: op.attributes } : { insert: '\n' });
+        endLine();
+      }
+    });
+  });
+  if(ops.length) endLine();
+  return units;
+}
+// The same list as PAGES, each remembering the break that closed it and the
+// page that came after it -- which is what a move needs to know about which
+// boundaries it touched.
+function noteUnitPages(units){
+  const pages = [{ lines: [], brkAfter: null, next: null }];
+  units.forEach(u=>{
+    if(!u.brk){ pages[pages.length - 1].lines.push(u); return; }
+    const pg = pages[pages.length - 1];
+    const nx = { lines: [], brkAfter: null, next: null };
+    pg.brkAfter = u.brk;
+    pg.next = nx;
+    pages.push(nx);
+  });
+  return pages;
+}
+function applyNoteUnits(p, units){
+  const Delta = Quill.import('delta');
+  const before = p.quill.getContents();
+  const after = new Delta();
+  units.forEach(u=>{
+    if(u.brk){ after.insert({ notePageBreak: u.brk }); return; }
+    u.ops.forEach(op=>{ after.insert(op.insert, op.attributes); });
+  });
+  // A note always ends on a line of its own; a break as the very last thing
+  // would leave the last page with nowhere to put the caret.
+  if(!units.length || units[units.length - 1].brk) after.insert('\n');
+  const change = before.diff(after);
+  if(!change.ops.length) return false;
+  notePageRewriting = true;
+  try{ p.quill.updateContents(change, 'user'); }
+  finally{ notePageRewriting = false; }
+  return true;
+}
+// Auto pages: every break auto-paging made is taken out and put back where
+// the length now says, and every break somebody made stays exactly where it
+// is and starts the count again. A line is never split -- a single paragraph
+// longer than the limit is a long page -- because a break in the middle of a
+// sentence is worse than a page that runs over.
+function reflowNotePages(key){
+  const p = notePagers[key];
+  if(!p || !window.Quill || !noteAutoPagesPref() || !p.quill.isEnabled()) return false;
+  const limit = noteAutoLenPref();
+  const out = [];
+  let used = 0;
+  noteUnits(p.quill.getContents()).forEach(u=>{
+    if(u.brk === 'auto') return;
+    if(u.brk){ out.push(u); used = 0; return; }
+    if(used > 0 && used + u.chars > limit){ out.push({ brk: 'auto' }); used = 0; }
+    out.push(u);
+    used += u.chars;
+  });
+  return applyNoteUnits(p, out);
+}
+function scheduleNoteReflow(key){
+  const p = notePagers[key];
+  if(!p || !noteAutoPagesPref()) return;
+  clearTimeout(p.reflowTimer);
+  p.reflowTimer = setTimeout(()=>{
+    // Never in the middle of an IME composition: Korean is typed through one,
+    // and rewriting the note under a half-built syllable breaks the syllable.
+    if(p.quill.selection && p.quill.selection.composing){ scheduleNoteReflow(key); return; }
+    reflowNotePages(key);
+  }, NOTE_REFLOW_DELAY);
+}
+function moveNotePage(key, to){
+  const p = notePagers[key];
+  if(!p || !window.Quill || !p.quill.isEnabled()) return;
+  const pages = noteUnitPages(noteUnits(p.quill.getContents()));
+  if(pages.length <= 1) return;
+  const from = Math.max(0, Math.min(p.page, pages.length - 1));
+  to = Math.max(0, Math.min(Math.round(to), pages.length - 1));
+  if(!Number.isFinite(to) || to === from){ renderNotePager(key); return; }
+  const order = pages.slice();
+  order.splice(to, 0, order.splice(from, 1)[0]);
+  const units = [];
+  order.forEach((pg, i)=>{
+    // An empty page still gets a line, or it is a page with nowhere to type.
+    (pg.lines.length ? pg.lines : [{ ops: [{ insert: '\n' }], chars: 0 }]).forEach(l=> units.push(l));
+    if(i === order.length - 1) return;
+    // A boundary keeps its auto mark only between two pages that were already
+    // neighbours in that order. Every boundary the move MADE is a hard one,
+    // or auto pages would pour the moved page straight back into its new
+    // neighbours on the next keystroke.
+    const kept = pg.next === order[i + 1] && pg.brkAfter === 'auto';
+    units.push({ brk: kept ? 'auto' : true });
+  });
+  applyNoteUnits(p, units);
+  p.page = to;
+  renderNotePager(key);
 }
 // Deleting a page takes its blocks AND one of the breaks beside it, or it
 // would come straight back as an empty page: the break it ends with (a break
@@ -32558,16 +32889,48 @@ function deleteNotePage(key){
   if(!first || !last) return;
   const start = p.quill.getIndex(first);
   const end = isLast ? p.quill.getLength() : p.quill.getIndex(last) + last.length();
-  p.quill.deleteText(start, end - start, 'user');
+  notePageRewriting = true;
+  try{ p.quill.deleteText(start, end - start, 'user'); }
+  finally{ notePageRewriting = false; }
   // The page after slides into this one's place; off the end, it is the one
   // before that is left to show.
   p.page = isLast ? i - 1 : i;
   renderNotePager(key);
 }
-// The insert lives in the TOOLBAR, beside the other things you put into a
-// document, and not in the page bar -- the bar only exists once there are two
-// pages, so a control that makes the first one cannot live in it.
-function buildNotePageBreakControl(quill, key){
+// A new page is a blank page at the END (real-user report: it cut the note at
+// the caret, and with the editor unfocused the caret sits at the very start,
+// so the "new" page came out as a new page 1). The break is a hard one, so
+// auto pages never folds it away again.
+function addNotePageAtEnd(key){
+  const p = notePagers[key];
+  if(!p || !p.quill.isEnabled()) return;
+  const q = p.quill;
+  notePageRewriting = true;
+  try{
+    // The page it follows keeps its last line: a blank last line is doubled
+    // first, or the new break would carry off the only line that page had and
+    // leave it with nowhere to type.
+    const [last] = q.getLine(q.getLength() - 1);
+    if(!last || last.length() <= 1) q.insertText(q.getLength() - 1, '\n', 'user');
+    q.insertEmbed(q.getLength() - 1, 'notePageBreak', true, 'user');
+  }finally{ notePageRewriting = false; }
+  p.page = notePageGroups(q).length - 1;
+  q.setSelection(q.getLength() - 1, 0, 'user');
+  renderNotePager(key);
+}
+// A language change re-labels everything the pager wrote with t(), the
+// toolbar button included -- its label is otherwise set once, when it is made.
+function relabelNotePagers(){
+  Object.keys(notePagers).forEach(k=>{
+    renderNotePager(k);
+    const tb = notePagers[k].quill.getModule('toolbar');
+    const btn = tb && tb.container && tb.container.querySelector('.np-insert');
+    if(btn){ btn.title = t('notePageAddBtn'); btn.setAttribute('aria-label', t('notePageAddBtn')); }
+  });
+}
+// The new-page button lives in the TOOLBAR, beside the other things you put
+// into a document; the bar under it is for moving between pages.
+function buildNotePageAddControl(quill, key){
   const toolbar = quill.getModule('toolbar').container;
   if(!toolbar || toolbar.querySelector('.np-insert')) return;
   const group = document.createElement('span');
@@ -32575,16 +32938,12 @@ function buildNotePageBreakControl(quill, key){
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'np-insert';
-  btn.title = t('notePageBreakBtn');
-  btn.setAttribute('aria-label', t('notePageBreakBtn'));
-  btn.innerHTML = ICON.pageBreak(18);
+  btn.title = t('notePageAddBtn');
+  btn.setAttribute('aria-label', t('notePageAddBtn'));
+  btn.innerHTML = ICON.pageAdd(18);
   btn.addEventListener('click', (e)=>{
     e.preventDefault();
-    const range = quill.getSelection(true);
-    const at = range ? range.index : quill.getLength();
-    quill.insertEmbed(at, 'notePageBreak', true, 'user');
-    quill.setSelection(at + 1, 0, 'user');
-    renderNotePager(key, true);
+    addNotePageAtEnd(key);
   });
   group.appendChild(btn);
   toolbar.appendChild(group);
@@ -32814,7 +33173,7 @@ function ensureQuillInitialized(){
     }
   });
   buildCustomColorControls();
-  buildNotePageBreakControl(quillEditor, 'course');
+  buildNotePageAddControl(quillEditor, 'course');
   setupNotePager('course', quillEditor, 'notePageBar');
 }
 function buildCustomColorControls(){
@@ -32870,7 +33229,7 @@ function buildCustomColorControls(){
   // typed/pasted text that doesn't already carry an explicit color.
   let applyingDefaultColorCC = false;
   quillEditor.on('text-change', (delta, oldDelta, source)=>{
-    if(source !== 'user' || applyingDefaultColorCC) return;
+    if(source !== 'user' || applyingDefaultColorCC || notePageRewriting) return;
     const defaultColor = currentNoteColor;
     if(!defaultColor) return;
     const ops = delta.ops || [];
@@ -33291,7 +33650,7 @@ function ensureNotebookQuillInitialized(){
     }
   });
   buildQuillColorPicker(notebookQuillEditor, ()=>currentNotebookColor, ()=>{ notebookEditorDirty = true; });
-  buildNotePageBreakControl(notebookQuillEditor, 'notebook');
+  buildNotePageAddControl(notebookQuillEditor, 'notebook');
   setupNotePager('notebook', notebookQuillEditor, 'notebookPageBar');
 }
 window.addEventListener('beforeunload', (e)=>{
