@@ -5230,3 +5230,63 @@ rather than a second animation that could drift from it.
   (`margin-right: 1.08em`, the check's 0.92em plus its margin) and the font's
   floor came down from 28px to 22px. Measured at 345, 375 and 1024: nothing
   clipped at either end, no page overflow, and the desktop's 42px is unchanged.
+
+## The throw's speed, third time, and the packet carries the row's own first line (12 Sep, sixty-first pass)
+
+"The way the A flies through the air now is WAYYY too slow." Then: "whatever it
+throws out can just be the first sentence of what it adds. For example for the
+Coupang thing in job applications that would just be Coupang and Kristoffer
+(this makes the animation most smooth)", with a screenshot of the row's own
+header: a bold **Coupang** and a tinted **Kristoffer** chip.
+
+### 400 to 900, and the bracket is not what it looked like
+
+Three rounds on this number, and the reason it kept moving is worth writing
+down rather than treating as taste:
+
+| | verdict |
+|---|---|
+| 540 px/s, uneven | "way too fast" |
+| 734 px/s, uneven | "SOOOO FUCKING FAST" (and then it crawled) |
+| **400 px/s, even** | **"WAYYY too slow"** |
+| 900 px/s, even | -- |
+
+**Both of the rejected fast ones were UNEVEN**, eased as one block over a
+1074px leg, so their PEAK was nearer 1500 and that is what was being rejected.
+Once the pace was flat, 400 read as slow for a different reason entirely: a
+path 1600px long takes four seconds at that pace however smooth it is, and by
+then the complaint was the DURATION. So 900, even, has a lower peak than
+either rejected version and takes about two seconds end to end.
+
+Measured at 60ms: **900 flat for 17 samples** west, 877/740/592/315 into the
+wall, 372/611/755/886/900 away from it, 900 flat home, then 867/624/304/69
+onto the button. Max is 900 -- it still never exceeds the run's own pace.
+
+- **The brake and settle distances are DERIVED from the speed now** (0.135s
+  and 0.118s of travel), because written as flat pixel counts they were tuned
+  at 400 and the impact halved in length the moment the speed moved. A knob
+  that quietly changes two other things is a knob nobody can use.
+- The flight is 2.0s on a desktop and 0.85s on a phone, and the letter still
+  kisses the west edge at 3px.
+
+**Press to row is 6.4s**, back from 8.8 and close to the 6.3 that was already
+accepted.
+
+### The packet carries the LIST'S own first line, in the list's own classes
+
+It was carrying two of the collected field values in two classes of its own.
+It is the row's headline plus the name chip now -- `.item-title` and `.e-who`,
+**the classes the rows themselves use**, with the person's own colour -- so
+the packet and the row it turns into are the same object rather than two
+drawings of it. For an application that is "Coupang" and "Kristoffer"; for a
+study session, "Listening" and "Kristoffer".
+
+The date-skip rule stays: a date or a quantity is not what a row is CALLED, so
+the headline is the first field that is neither.
+
+### Checked
+
+Real timers, end to end: the row rendered once at 6392ms (a background echo at
+800ms did not show it early and ran with it), nothing left behind, the label
+back as one text node, `acBusy` and `acRevealing` false, the queue empty, no
+animation left on any field and all three inks restored.

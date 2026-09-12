@@ -2805,11 +2805,12 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
   border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,0.18);
   display:flex;align-items:center;gap:8px;padding:0 11px;overflow:hidden;
   font-family:'Inter',sans-serif;white-space:nowrap;}
-/* What was typed, riding in the box: the same field values the pills carried
-   IN, so what lands in the list is recognisably the row it is about to be. */
-.ac-pack-t{font-size:12.5px;font-weight:600;color:var(--ink);
-  overflow:hidden;text-overflow:ellipsis;}
-.ac-pack-s{font-size:11px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;}
+/* The row's own first line, riding in the box, in the LIST'S OWN classes --
+   so what arrives and what appears are the same object rather than two
+   drawings of it. .e-who carries a trailing margin for the rows it usually
+   sits in, which this box's own gap already provides. */
+.ac-pack .item-title{overflow:hidden;text-overflow:ellipsis;}
+.ac-pack .e-who{margin-right:0;flex:none;}
 /* One field, one pill, carrying what was actually typed into it. */
 .ac-bit{position:absolute;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
   line-height:1.5;padding:1px 7px;border-radius:9px;max-width:140px;white-space:nowrap;
@@ -16458,13 +16459,23 @@ const AC_T = { peek: 340, look: 820, duck: 190, out: 300, grab: 240, bit: 380, s
 // So: px per second, the duration worked out from the path's own length, and
 // every segment given time in proportion to how far it actually goes.
 //
-// 400 is bracketed by what has already been rejected: 540px/s was "way too
-// fast", 734 was very much so, and 318 was accepted.
-const AC_A_SPEED = 400;
+// 900, and the way the bracket moved is the useful part. 540px/s was called
+// "way too fast" and 734 very much so -- but both of those were UNEVEN, eased
+// as one block over a 1074px leg, so their peak was nearer 1500 and that is
+// what was being rejected. Even, 400px/s came back as "WAYYY too slow": a
+// path 1600px long takes four seconds at that pace however smooth it is, and
+// what was wrong by then was the duration rather than the speed. So an even
+// 900 has a lower PEAK than either rejected version and takes about two
+// seconds end to end.
+const AC_A_SPEED = 900;
 // How far it slows down for the wall, and how far it settles into the button.
-// Both are DISTANCES rather than fractions of the duration, so the impact is
-// the same event on a phone as on a desktop.
-const AC_A_BRAKE = 66, AC_A_SETTLE = 58;
+// DERIVED FROM THE SPEED, as the distance covered in about a seventh and an
+// eighth of a second: written as flat pixel counts they were tuned at 400px/s
+// and the impact halved in length the moment the speed moved, which is a knob
+// that quietly changes two other things. Still distances rather than fractions
+// of the duration, so both are the same event on a phone as on a desktop.
+const AC_A_BRAKE = Math.round(AC_A_SPEED * 0.135);
+const AC_A_SETTLE = Math.round(AC_A_SPEED * 0.118);
 // And how much longer than their length those legs get (see acFlightHome), with
 // the curve for each written to open at exactly that stretch: 0.3/0.2 = 1.5 and
 // 0.34/0.2 = 1.7, so both begin at the pace the letter arrived at. The brake
@@ -17272,6 +17283,14 @@ function addCourier(btn){
     pack.style.top = tr.top + 'px';
     pack.style.width = pw + 'px';
     pack.style.height = ph + 'px';
+    // WHAT IT CARRIES IS THE ROW'S OWN FIRST LINE (real-user request: "whatever
+    // it throws out can just be the first sentence of what it adds... for the
+    // Coupang thing in job applications that would just be Coupang and
+    // Kristoffer -- this makes the animation most smooth"). So it is the
+    // headline and the name chip, in the LIST'S OWN classes rather than in two
+    // of the courier's, which is what makes the packet and the row it turns
+    // into the same object.
+    //
     // A DATE or a QUANTITY is not what a row is CALLED, so the headline is the
     // first field that is neither -- the company on an application, the title
     // on a book, the activity on a study session -- rather than whichever
@@ -17280,10 +17299,12 @@ function addCourier(btn){
     const named = ty => { ty = (ty || '').toLowerCase();
       return ty !== 'date' && ty !== 'time' && ty !== 'datetime-local' && ty !== 'month' && ty !== 'number'; };
     const head = bits.find(x => named(x.el && x.el.type)) || bits[0];
-    const sub = bits.find(x => x !== head);
+    const who = currentUser ? nameFor(currentUser.id) : '';
+    const whoCol = currentUser ? colorForUser(currentUser.id) : '';
     if(head){
-      pack.innerHTML = '<span class="ac-pack-t">' + escapeHtml(head.text) + '</span>'
-        + (sub ? '<span class="ac-pack-s">' + escapeHtml(sub.text) + '</span>' : '');
+      pack.innerHTML = '<span class="item-title">' + escapeHtml(head.text) + '</span>'
+        + (who ? '<span class="e-who" style="background:' + whoCol + '26;color:' + whoCol + ';">'
+          + escapeHtml(who) + '</span>' : '');
     }
     layer.appendChild(pack);
     // Aligned on the GLYPH, not on the button: the letter has just landed back
