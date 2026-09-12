@@ -5290,3 +5290,75 @@ Real timers, end to end: the row rendered once at 6392ms (a background echo at
 800ms did not show it early and ran with it), nothing left behind, the label
 back as one text node, `acBusy` and `acRevealing` false, the queue empty, no
 animation left on any field and all three inks restored.
+
+## Deleting a row takes its files with it (12 Sep, sixty-second pass)
+
+"Gotta delete those short links and syllabi too for whatever deleted
+applications", with a screenshot of the confirm that promised the opposite:
+"Any CV or cover letter uploaded with it stays in storage and keeps its short
+link."
+
+**Nothing in this app had ever called `storage.remove()`.** Not once, in any
+path. So every CV, cover letter and syllabus ever uploaded was still sitting
+in its bucket, and `removeCourseSyllabus` -- the one place that tidied up at
+all -- freed the short link and left the file.
+
+`deleteStoredFile(bucket, url)` now frees the link and removes the object, and
+four paths call it: deleting an application (both files), deleting a course,
+removing a syllabus on its own, and **replacing** one, which orphans the old
+file just as surely as deleting it does.
+
+- **The delete is asked AFTER the row has gone from the local lists**, and it
+  only removes a file once `referencedFileUrls()` says nothing is left pointing
+  at it. That means the order never has to be reasoned about, and it is cheap
+  insurance against a future path that copies a file URL onto a second row.
+  None does today -- `addMyselfToJob` deliberately leaves the CV behind, since
+  your own application wants your own CV.
+  - The replace path is the one case that needs a hand: the local row is
+    rewritten further down, so its reference is dropped explicitly first or the
+    old file still reads as referenced by the row that is about to stop
+    pointing at it.
+- **`referencedFileUrls()` is factored out of `backfillShortLinks`**, which
+  was already building that set for the orphan-link sweep. One answer, two
+  callers.
+- **A public storage URL is percent-encoded and `storage.remove()` is not.**
+  `getPublicUrl` returns `.../public/<bucket>/<path>` with the path escaped, so
+  every one of these files -- named `<uid>/<timestamp>_<original name>` and so
+  usually carrying spaces -- needs decoding on the way back. Checked against
+  the real names read out of `storage.objects`: 9 of 9 cases, including a
+  filename with parentheses, a query string, a fragment, the wrong bucket, a
+  non-storage URL, empty and null.
+- **The failure is logged, not surfaced.** By the time it runs the row is gone
+  and the link is freed, so a file left behind is wasted space rather than
+  anything the reader can act on.
+- The confirms said the opposite of what now happens, in all three languages,
+  and the course one now mentions the syllabus.
+
+**The buckets already allowed it**, which was checked rather than assumed
+before any of this was written: `job app files delete own` and `syllabi owner
+delete` are both live on `storage.objects`. So no migration. Worth knowing
+that `job-application-files` has no SELECT policy at all -- it is read through
+public URLs -- so `storage.list()` on it returns nothing, and a client-side
+sweep of that bucket is not possible.
+
+### The backlog, measured and NOT swept
+
+There is one, and it is what this leak looks like: **12 syllabus files, 10 of
+them orphaned**, every orphan a 115 kB copy of the same PDF as the live one,
+uploaded seconds apart (`1788228434173`, `...438005`, `...439488`, three more
+in the same second, `...440488`, `...453305`, `...453455`) -- one course being
+re-saved repeatedly, each save uploading a fresh copy and orphaning the last.
+1.15 MB. The job bucket has 4 files and 0 orphans, and `file_links` has 6 rows
+and **0 orphans**, because `pruneOrphanShortLinks` has been doing its half of
+this on every load for weeks. It was only ever the files.
+
+**Deliberately not cleared from here, and not swept automatically either.**
+Deleting the `storage.objects` ROW over SQL leaves the blob in the backing
+store -- invisible and still billed -- so this has to go through the Storage
+API, which needs the owner's own session. And an automatic load-time file
+sweep is the one shape to avoid: it would have to trust that every table
+pointing into a bucket really loaded, and a course shared with somebody else
+and later un-shared is a row that can point at a file in my folder while being
+invisible to me. Getting that wrong deletes documents. The durable fix is the
+delete path; the ten duplicates want either the Supabase dashboard or a
+one-off action somebody presses.
