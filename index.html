@@ -452,7 +452,16 @@ body:not(.no-anim-header) #friendsBtn:has(#circleOnlineDot:not(.hidden)):hover .
 /* The title tracks itself. LETTER_COUNT * STEP is what the meter's own
    duration has to match, or the bar and the letters disagree about when the
    title is finished: nineteen letters at 34ms is 0.65s, which is the fill's
-   duration and the check's delay. */
+   duration and the check's delay.
+
+   EVERY RULE BELOW IS ARMED BY `.tl-title:hover` OR BY `.tl-title.tl-play`,
+   which is what lets the logo's own lightbox run the SAME animation when it
+   opens rather than a second copy of it that could drift (real-user request:
+   "add the animation we have for the title in top left hand corner here as
+   well when you open this"). One `:is()` per rule rather than a doubled
+   selector list, and the class replaces the old `#appTitleHome` -- so the
+   specificity drops from an id to two classes, which the reduced-motion block
+   further down matches so it still wins on source order. */
 .tl-track{position:relative;display:inline-block;}
 .tl-char{transition:color 0.18s ease;
   transition-delay:calc(var(--i,0) * 34ms);}
@@ -462,7 +471,7 @@ body:not(.no-anim-header) #friendsBtn:has(#circleOnlineDot:not(.hidden)):hover .
    account's colour is known or changes; before that, and on the sign-in
    screen, it is the green it always was. The meter, the runner and the check
    take the same, so the title does not finish in a second colour. */
-body:not(.no-anim-title) #appTitleHome:hover .tl-char{color:var(--my-color, var(--on));}
+body:not(.no-anim-title) :is(.tl-title:hover, .tl-title.tl-play) .tl-char{color:var(--my-color, var(--on));}
 /* Under the words, not around them: the meter is absolute, so nothing in the
    header moves when it appears and the h1's own height never changes. */
 .tl-meter{position:absolute;left:0;right:0;bottom:-0.16em;height:2px;
@@ -471,8 +480,8 @@ body:not(.no-anim-title) #appTitleHome:hover .tl-char{color:var(--my-color, var(
 .tl-meter > i{display:block;height:100%;border-radius:2px;background:var(--my-color, var(--on));
   transform:scaleX(0);transform-origin:left center;
   transition:transform 0.65s linear;}
-body:not(.no-anim-title) #appTitleHome:hover .tl-meter{opacity:1;}
-body:not(.no-anim-title) #appTitleHome:hover .tl-meter > i{transform:scaleX(1);}
+body:not(.no-anim-title) :is(.tl-title:hover, .tl-title.tl-play) .tl-meter{opacity:1;}
+body:not(.no-anim-title) :is(.tl-title:hover, .tl-title.tl-play) .tl-meter > i{transform:scaleX(1);}
 /* Something RUNS the length of the title while the letters tick over, hopping
    as it goes, and the check is what it draws when it gets to the end
    (real-user request). It travels on `left`, because the distance it has to
@@ -489,9 +498,9 @@ body:not(.no-anim-title) #appTitleHome:hover .tl-meter > i{transform:scaleX(1);}
    `transform`, and one element cannot animate one property from two places. */
 @keyframes tl-hop{
   0%,100%{transform:translateY(0);} 50%{transform:translateY(-0.5em);}}
-body:not(.no-anim-title) #appTitleHome:hover .tl-runner{
+body:not(.no-anim-title) :is(.tl-title:hover, .tl-title.tl-play) .tl-runner{
   animation:tl-run 0.66s linear forwards;}
-body:not(.no-anim-title) #appTitleHome:hover .tl-runner > i{
+body:not(.no-anim-title) :is(.tl-title:hover, .tl-title.tl-play) .tl-runner > i{
   animation:tl-hop 0.11s ease-in-out infinite;}
 /* The check is DRAWN, not faded in -- the runner arrives and the stroke
    follows it. Placed OUTSIDE the track's own width so a title that grows a
@@ -503,9 +512,9 @@ body:not(.no-anim-title) #appTitleHome:hover .tl-runner > i{
 .tl-done svg{width:100%;height:100%;display:block;}
 .tl-done path{stroke-dasharray:24;stroke-dashoffset:24;}
 @keyframes tl-draw{to{stroke-dashoffset:0;}}
-body:not(.no-anim-title) #appTitleHome:hover .tl-done{
+body:not(.no-anim-title) :is(.tl-title:hover, .tl-title.tl-play) .tl-done{
   opacity:1;transition:opacity 0.1s ease 0.62s;}
-body:not(.no-anim-title) #appTitleHome:hover .tl-done path{
+body:not(.no-anim-title) :is(.tl-title:hover, .tl-title.tl-play) .tl-done path{
   animation:tl-draw 0.3s ease-out 0.64s forwards;}
 /* The same run, one per WORD, for the two-line title a phone gets (see the
    440px block): each is timed to its own word's letters, so the second sets
@@ -519,13 +528,13 @@ body:not(.no-anim-title) #appTitleHome:hover .tl-done path{
 @keyframes tl-hop-down{
   0%,100%{transform:translateY(0);} 50%{transform:translateY(0.5em);}}
 @media (prefers-reduced-motion: no-preference){
-  body:not(.no-anim-title) #appTitleHome:hover .tl-wrunner{
+  body:not(.no-anim-title) :is(.tl-title:hover, .tl-title.tl-play) .tl-wrunner{
     animation:tl-run var(--w-dur, 0.65s) linear var(--w-delay, 0s) forwards;}
-  body:not(.no-anim-title) #appTitleHome:hover .tl-wrunner > i{
+  body:not(.no-anim-title) :is(.tl-title:hover, .tl-title.tl-play) .tl-wrunner > i{
     animation:tl-hop 0.11s ease-in-out infinite;}
   /* Along the BOTTOM of the second word it bounces down, away from the
      letters, the way it bounces up and away from them along the top. */
-  body:not(.no-anim-title) #appTitleHome:hover .title-word + .title-word .tl-wrunner > i{
+  body:not(.no-anim-title) :is(.tl-title:hover, .tl-title.tl-play) .title-word + .title-word .tl-wrunner > i{
     animation-name:tl-hop-down;}
 }
 
@@ -579,13 +588,14 @@ body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transfo
   /* The title still says it is finished, it just does not take 0.65s to get
      there: every letter turns at once and the bar is already full. */
   .tl-char, .tl-meter, .tl-meter > i, .tl-done{transition:none;}
-  #appTitleHome:hover .tl-char{transition-delay:0s;}
-  #appTitleHome:hover .tl-done{transition-delay:0s;}
+  :is(.tl-title:hover, .tl-title.tl-play) .tl-char{transition-delay:0s;}
+  :is(.tl-title:hover, .tl-title.tl-play) .tl-done{transition-delay:0s;}
   /* Nothing runs and nothing draws: the check is simply there. */
-  #appTitleHome:hover .tl-runner, #appTitleHome:hover .tl-runner > i{animation:none;}
+  :is(.tl-title:hover, .tl-title.tl-play) .tl-runner,
+  :is(.tl-title:hover, .tl-title.tl-play) .tl-runner > i{animation:none;}
   .tl-runner{display:none;}
   .tl-done path{stroke-dashoffset:0;}
-  #appTitleHome:hover .tl-done path{animation:none;}
+  :is(.tl-title:hover, .tl-title.tl-play) .tl-done path{animation:none;}
   .lang-switch:hover .globe-mer, #accountSettingsBtn:hover .ui-icon,
   #notifBellBtn:hover svg, #notifBellBtn:hover::before, #notifBellBtn:hover::after,
   #whoName:hover, .theme-icon-in,
@@ -709,7 +719,18 @@ body.dark .guest-banner:hover{background:#452a27;}
   background-size:cover;background-position:center;cursor:pointer;
   transition:width 0.18s ease,height 0.18s ease;}
 .brand-lightbox-content{display:flex;flex-direction:column;align-items:center;gap:18px;}
-.brand-lightbox-title{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(28px,5vw,42px);color:#fff;text-align:center;}
+/* The floor came down from 28px because the title has grown a CHECK: the mark
+   is drawn outside the words' own width, so the group is wider than the name
+   and at 345px the check was landing 5px past the window's edge. */
+.brand-lightbox-title{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(22px,6.6vw,42px);color:#fff;text-align:center;}
+/* And the check's room is RESERVED, so what is centred is the title plus its
+   mark rather than the title alone -- otherwise centring the words pushes the
+   mark off the end. 1.08em is the check's own 0.92em plus its margin. */
+.brand-lightbox-title .tl-track{margin-right:1.08em;}
+/* The meter's TRACK is --line, which is a faint dark hairline in the light
+   theme and so invisible on this scrim. Everything else here already takes the
+   reader's own colour, which is picked to read on either ground. */
+.brand-lightbox-title .tl-meter{background:rgba(255,255,255,0.26);}
 .brand-lightbox-img{width:min(60vw,320px);height:min(60vw,320px);border-radius:22%;background-size:cover;background-position:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
 #brandLightbox{background:rgba(0,0,0,0.8);}
 #brandLightbox .brand-lightbox-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--paper);color:var(--ink);border:1px solid var(--line);padding:0;cursor:pointer;}
@@ -11599,9 +11620,14 @@ function loadListSort(name, fields, fallback){
 // and a rule underneath cost none of it.
 // Nothing here is drawn per letter, so the whole thing is two transitions and
 // one stagger rather than nineteen SVGs.
-function buildTitleMorph(){
-  const h1 = document.getElementById('appTitleHome');
-  if(!h1 || h1.querySelector('.tl-track')) return;
+// Takes the element, so the header's h1 and the logo lightbox's own title are
+// the SAME animation rather than two that could drift. `.tl-title` is what
+// arms it -- on hover anywhere, and on `.tl-play` for the lightbox.
+function buildTitleMorph(host){
+  const h1 = host || document.getElementById('appTitleHome');
+  if(!h1) return;
+  h1.classList.add('tl-title');
+  if(h1.querySelector('.tl-track')) return;
   const words = ['Productivity', 'Tracker'];
   h1.textContent = '';
   // The words and the meter share one positioned box, so the meter spans the
@@ -11666,6 +11692,7 @@ function buildTitleMorph(){
   h1.appendChild(track);
 }
 buildTitleMorph();
+buildTitleMorph(document.getElementById('brandLightboxTitle'));
 /* ---------- DARK MODE ---------- */
 // The sun and the moon are the only marks in the row that had no hover of
 // their own -- the rotate-in only plays when the theme is pressed, and a
@@ -12241,7 +12268,10 @@ function applyLanguage(lang){
   updateKindFieldVisibility();
   renderTopikCountdown();
   document.getElementById('brandLightboxClose').title = t('closeNoteBtn');
-  document.getElementById('brandLightboxTitle').textContent = 'Productivity Tracker';
+  // NOT textContent: that would wipe the per-letter spans the animation is
+  // made of. The name is the app's own and is the same in all three
+  // languages, so the builder owns it; this only has to make sure it is built.
+  buildTitleMorph(document.getElementById('brandLightboxTitle'));
   renderYonseiNotifyBtn();
   rebuildYonseiCategoryFilter();
   if(calViewMode === 'month') renderMonthGrid();
@@ -14273,22 +14303,42 @@ closeOnBackdrop(document.getElementById('friendsModal'), ()=>{
 // modal-overlay dialogs. Reads the clicked icon's own computed
 // background-image rather than re-deriving which base64 asset to show, so
 // this doesn't need to know or care which theme is active.
+// THE TITLE RUNS ITS OWN ANIMATION WHEN THIS OPENS (real-user request), which
+// is the header's animation rather than a copy: `.tl-play` is a second thing
+// that can arm the same rules, so there is nothing to keep in step.
+function openBrandLightbox(icon){
+  const box = document.getElementById('brandLightbox');
+  const title = document.getElementById('brandLightboxTitle');
+  document.getElementById('brandLightboxImg').style.backgroundImage = getComputedStyle(icon).backgroundImage;
+  box.classList.remove('hidden');
+  // Off first, so reopening plays it again rather than showing it already
+  // finished -- and then on TWO frames later. A transition needs its start
+  // state to have been painted at least once, and the element was display:none
+  // until the line above: armed in the same tick, every letter would simply
+  // already be green.
+  title.classList.remove('tl-play');
+  requestAnimationFrame(()=> requestAnimationFrame(()=>{
+    if(!box.classList.contains('hidden')) title.classList.add('tl-play');
+  }));
+}
+function closeBrandLightbox(){
+  document.getElementById('brandLightbox').classList.add('hidden');
+  // Dropped on the way out rather than on the way in, so it is the OPEN that
+  // starts it: left on, a reopen would show the finished state with nothing
+  // to watch.
+  document.getElementById('brandLightboxTitle').classList.remove('tl-play');
+}
 document.addEventListener('click', (e)=>{
   const icon = e.target.closest('.brand-icon');
   if(!icon) return;
-  document.getElementById('brandLightboxImg').style.backgroundImage = getComputedStyle(icon).backgroundImage;
-  document.getElementById('brandLightbox').classList.remove('hidden');
+  openBrandLightbox(icon);
 });
 document.getElementById('appTitleHome').addEventListener('click', ()=>{
   switchTopLevelTab('calendar');
   switchCalendarSubTab('overview');
 });
-document.getElementById('brandLightboxClose').addEventListener('click', ()=>{
-  document.getElementById('brandLightbox').classList.add('hidden');
-});
-closeOnBackdrop(document.getElementById('brandLightbox'), ()=>{
-  document.getElementById('brandLightbox').classList.add('hidden');
-});
+document.getElementById('brandLightboxClose').addEventListener('click', closeBrandLightbox);
+closeOnBackdrop(document.getElementById('brandLightbox'), closeBrandLightbox);
 document.getElementById('closeAccountSettingsBtn').addEventListener('click', ()=>{
   document.getElementById('accountSettingsModal').classList.add('hidden');
 });

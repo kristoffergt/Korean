@@ -5183,3 +5183,50 @@ things asked for together: the path is the window's width plus the way back
 (~1550px on a desktop) and the pace is 400 px/s, so the throw alone is 4.3s.
 Getting back to 6s means ~670 px/s, which is the speed that was just rejected.
 Worth saying rather than quietly splitting the difference.
+
+## The logo's lightbox runs the title's own animation (12 Sep, sixtieth pass)
+
+"Add the animation we have for the title in top left hand corner here as well
+when you open this" -- the logo lightbox, which was a plain `<div>` with
+`textContent = 'Productivity Tracker'`.
+
+**It is the SAME animation, not a copy.** Every rule it is made of was keyed on
+`#appTitleHome:hover`, so there was no way to run it anywhere else; they are
+keyed on `.tl-title` now with TWO ways to arm it -- `:hover`, and a `.tl-play`
+class. One `:is(.tl-title:hover, .tl-title.tl-play)` per rule rather than a
+doubled selector list, and the same second arm added to the reduced-motion
+overrides so they still hold it back. That is the shape this file already
+records from the avatar's own nod: a second thing that can arm one animation
+rather than a second animation that could drift from it.
+
+- **`buildTitleMorph(host)` takes the element** and the two titles are built
+  from one call each, so the 19 letter spans, the meter, the runner, the check
+  and the two per-word runners cannot differ between them.
+- **Arming is TWO FRAMES after the box is un-hidden.** A transition needs its
+  start state to have been painted at least once, and the element was
+  `display:none` until that moment -- armed in the same tick, every letter is
+  simply already green with nothing to watch.
+- **`.tl-play` comes off on the way OUT, not the way in**, so each open plays
+  it from the start. Verified: close resets the letters to white and drops the
+  class, and a reopen goes scaleX(0) to a running sweep again.
+- **The existing switch still governs it**, because the guard is on the
+  selector: with `no-anim-title` set the lightbox opens with a plain white
+  title, no rule and no check. It is the same animation, so it is the same
+  switch.
+- **The i18n refresh no longer writes `textContent` there** -- that wiped the
+  per-letter spans the animation is made of. The name is the app's own in all
+  three languages, so the builder owns it and the refresh only has to make
+  sure it is built.
+
+### Two things about the title on a dark scrim
+
+- **The meter's TRACK is `--line`**, which is a faint dark hairline in the
+  light theme and so invisible on this 80%-black overlay. Overridden to white
+  at 26%; everything else here already takes the reader's own colour, which is
+  picked to read on either ground.
+- **The check is drawn OUTSIDE the words' own width**, so the group is wider
+  than the name and centring the words pushed the mark off the end -- measured
+  at 345px, it landed 5px past the window. Its room is reserved
+  (`margin-right: 1.08em`, the check's 0.92em plus its margin) and the font's
+  floor came down from 28px to 22px. Measured at 345, 375 and 1024: nothing
+  clipped at either end, no page overflow, and the desktop's 42px is unchanged.
