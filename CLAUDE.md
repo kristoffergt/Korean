@@ -4374,3 +4374,125 @@ hangs off `outEnd` rather than `AC_T.out`.
 - And re-running him by hand needs the button's label put back to one text node
   and `acBusy` cleared, because the cleanup that does both lives in a timer the
   harness stubs out.
+
+## The A is lit by what is behind it, he jumps on what is in his way, and the peek is a pose (12 Sep, fifty-third pass)
+
+Three reports, and the first two passes at the letter were both wrong for the
+same reason: I measured the one theme that cannot show the fault.
+
+### "The A is switching colors again"
+
+It was, and the arithmetic says exactly why. In the LIGHT theme the Add button
+is a near-black pill (`rgb(30,31,34)`) with near-white text, and the page is
+near-white with near-black ink -- so the button's own glyph is near-WHITE and
+the carried letter, drawn in the page's ink, is near-BLACK. The handover at the
+grab flipped one to the other. **The pass before this checked it in the dark
+theme, where the page ink and the button's ink happen to be the same
+near-white, so there was nothing to see.** Same class of mistake this file
+records for the colour wheel's seam: a fault reported on one surface has to be
+reproduced on that surface, and checking the case that cannot show it is
+checking nothing.
+
+**There is no single ink that is right in both places, so the letter is drawn
+TWICE and neither copy ever changes colour**: the page-ink copy underneath, and
+a button-ink copy CLIPPED TO THE PILL over the top of it (`inset()` at the
+button's own rect, with `round` at its own border radius). Over the button you
+see the button's ink, off it you see the page's, and on the way out the letter
+SPLITS at the pill's edge -- which is what a letter crossing from a dark pill
+onto a light page actually looks like.
+
+- **Both handovers with the button's own glyph happen while the letter is
+  wholly inside the pill**, so the copy showing there is the button-ink one,
+  identical to the glyph it replaces. Measured at every step: at 1129 and 1131
+  the letter's rect is inside the button's, at 1250 to 2600 it is clear of it,
+  and at 4169 it is inside again.
+- Two copies mean every letter animation has to drive both, hence `animateA`.
+  One `a.animate` left behind would tear the two apart.
+
+### He jumps on what is in his way
+
+"He is running through text like 'copy prompt', if there is any text in the
+way, he should jump on it a bit, so it slightly squishes it before he runs off."
+
+`acSteps` reads the page for it rather than being told: anything with text in
+it, ahead of him, standing at his own level (its top above his feet and its
+bottom not more than 34px above them), leaf-most, and far enough apart that one
+hop cannot run into the next. So it works from every Add button in the app
+without a single thing being named.
+
+- **The hop is keyframed against the run's OWN EASING, not against distance.**
+  `acEase` is the run's cubic-bezier evaluated as a timing function and
+  `acRunOffsetAt` inverts it by bisection, so the landing lands on the thing
+  rather than beside it. Without that the leap is timed by how far he has to
+  go, and the run's easing is slow at the start and fast at the end.
+- **Each of the four moments has a MINIMUM of its own**, and that is what makes
+  it read: whatever he jumps on is usually the pill standing right beside the
+  button he came out of, so the geometry alone put the whole leap inside the
+  first THIRTY MILLISECONDS of the run. A leap, a stretch along the top and a
+  drop off the end each take time to read whatever distance they cover.
+- **The hop rides on a WRAPPER.** The figure's own element carries the run and
+  the svg inside it carries the turn, so a third animation on either of those
+  transforms would simply replace one of them. Same for the letter, which is in
+  his hand and hops with him.
+- **The thing he lands on squashes about its own BOTTOM edge**, 5% wider and
+  16% shorter, then rebounds. Measured on Copy prompt: 75.3x14.5 to 79.1x12.2
+  at the peak and back to 75.3x14.5, with its own `transform-origin` put back
+  in the cleanup.
+- **A springy timing function over the whole squash reads its own offsets
+  through that curve**, which crushed the squash into the first twenty
+  milliseconds and left the REBOUND where the squash should have been (measured
+  before the fix). It is linear overall with the curve on each keyframe.
+
+### "His peeking looks stupid"
+
+It was: the whole head translated 31px out from a body that stayed put, so what
+appeared beside the pill was a head with no neck, no shoulder and nothing under
+it. **Leaning the whole figure out instead cannot work, and that is arithmetic
+rather than taste: his case is drawn nine units further right than his head, so
+any lean about his feet brings the CASE out first** (it only loses that race
+past about 36 degrees of tilt, which is a figure falling over).
+
+So the peek is **its own pose**, drawn rather than derived: the same head and
+cap as the figure's, with its back quarter still behind the pill, shoulders
+wider than the head with a neck's worth of daylight between the two, and the
+body running on down to be cut off by the pill's own bottom edge. It emerges,
+cranes back over the pill to read the form, and **ducks in BEFORE he jumps
+out**, so there are never two of him at the edge at once.
+
+- **HE IS THE SAME INK AS THE BUTTON HE COMES OUT FROM**, and that was the
+  other half of why it read as a lump: a near-black figure abutting a
+  near-black pill has no silhouette at all. Exactly the fault this file records
+  for the little train, which is drawn in the colour of the line it rides and
+  had to be outlined in white to be seen on it. Every drawing is now laid down
+  TWICE, the first copy stroked wide in the page's own ground (`.ac-halo`):
+  invisible against the page, and a rim that separates him from anything dark
+  he is over or against. He also stands 2px clear of the pill's edge.
+  - **The rule has to name the SHAPES, not the group** (`.ac-halo *`): a
+    presentation attribute on a child beats a value inherited from its parent,
+    so `stroke="currentColor"` on each path would win over a stroke set on the
+    `<g>`.
+  - **Everything is in the svg twice now**, so `guy.querySelector('.ac-lid')`
+    found the HALO's lid and opened the rim without the case. Both open.
+- **The hand is drawn ON the pill in the PAPER colour** (`.ac-grip`), not
+  beside it in ink: fingertips curled round a corner are on the near face of
+  what they are gripping, and three pale marks on a near-black pill read at
+  this size where three dark ones beside it are three more pixels of ink. It
+  shares the peeker's animations and its PIVOT, named in its own box, or the
+  hand swings away from the head it belongs to.
+- The whole thing inverts for free in the dark theme, where the pill is
+  near-white: measured, the rim and the fingers come out `rgb(24,25,27)`, which
+  is that theme's own paper.
+
+### Checked
+
+Stepped frame by frame in the LIGHT theme, which is the one that shows the
+letter: the peek at 430, the crane at 600, the duck at 780, standing at 1000,
+the grab at 1130, the leap at 2500, the squash at 2650, the letter home at
+4169. Then run once with REAL timers end to end: no layer left behind, the
+label back to "Add application" with one child node, `acBusy` false, and the
+Copy prompt button's own `transform-origin` and rect back to what they were.
+
+**And the test server can serve a stale copy of index.html.** Half an hour went
+into "acSteps returns nothing" when the file on disk was right and the browser
+was running the copy from two patches earlier -- `acSteps.toString()` is what
+named it. Reload with a `?v=<n>` that has not been used before.

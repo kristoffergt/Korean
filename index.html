@@ -2707,7 +2707,33 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
 .ac-guy{position:absolute;color:var(--ink);}
 .ac-guy svg{display:block;overflow:visible;}
 .ac-a{position:absolute;text-align:center;white-space:pre;}
-.ac-guy .ac-knock{stroke:var(--paper);}
+/* The carried letter is drawn TWICE, and neither copy ever changes colour:
+   the page-ink one underneath, and the button-ink one clipped to the button's
+   own pill over the top of it. So the letter is lit by whatever is behind it
+   and splits at the pill's edge on the way out, instead of flipping from one
+   ink to the other -- which it has to, since the Add button is a near-black
+   pill with near-white text sitting on a near-white page. */
+.ac-pill{position:absolute;inset:0;}
+.ac-hop{position:absolute;inset:0;}
+/* What peeks round the edge is its own drawing (.ac-peek) with its own hand on
+   the pill (.ac-grip). Leaning the WHOLE FIGURE out cannot do this and that is
+   arithmetic rather than taste: his case is drawn nine units further right than
+   his head, so any lean brings the case out first. */
+.ac-peek{position:absolute;color:var(--ink);}
+.ac-grip{position:absolute;color:var(--paper);}
+.ac-peek svg, .ac-grip svg{display:block;overflow:visible;}
+.ac-layer .ac-knock{stroke:var(--paper);}
+/* HE IS THE SAME INK AS THE BUTTON HE COMES OUT FROM. A near-black figure
+   against a near-black pill has no silhouette at all, which is what made the
+   peek read as a lump on the side of it rather than as somebody behind it --
+   the same fault this app already fixed on the little train, which is drawn in
+   the colour of the line it is riding and had to be outlined in white to be
+   seen on it. So each drawing is laid down TWICE, the first copy stroked wide
+   in the page's own ground: invisible against the page, and a rim that
+   separates him wherever he is over something dark. The rule has to name the
+   SHAPES rather than the group, because a presentation attribute on a child
+   beats a value inherited from its parent. */
+.ac-layer .ac-halo *{stroke:var(--paper);fill:var(--paper);stroke-width:3.6;}
 .ac-drop{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--ink-soft);}
 /* One field, one pill, carrying what was actually typed into it. */
 .ac-bit{position:absolute;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
@@ -16261,7 +16287,7 @@ function applyAnimPrefs(){
 // It only ever runs on a SAVE. Every add handler calls it from inside its own
 // `if(!error && data)` branch, and the form is not emptied until he has taken
 // the information off it (see acClear).
-const AC_T = { peek: 300, look: 380, out: 300, grab: 240, bit: 380, step: 60, tip: 320, turn: 130, run: 520, gone: 200, back: 500 };
+const AC_T = { peek: 300, look: 380, duck: 150, out: 300, grab: 240, bit: 380, step: 60, tip: 320, turn: 130, run: 520, gone: 200, back: 500 };
 const AC_W = 30, AC_H = 46;      // the figure's own box, in px and in its own units
 const AC_FOOT = 43;              // where his feet are in it, so they land on the button's own line
 const AC_HAND = { x: 5.4, y: 8 };  // the hand he holds the letter up in
@@ -16291,9 +16317,7 @@ function acFigure(){
   // ground (.ac-knock), which is the trick the app's checkbox tick and the
   // train's windscreen already use -- a stroked stick figure had no substance
   // to it (real-user report). Facing LEFT, at the form he is emptying.
-  return '<svg width="' + AC_W + '" height="' + AC_H + '" viewBox="0 0 ' + AC_W + ' ' + AC_H + '"'
-    + ' fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"'
-    + ' stroke-linejoin="round" aria-hidden="true">'
+  const body = ''
     // The legs go down first, so the body sits over them.
     + '<g class="ac-leg-b"><path d="M14.4 25.6L12 34.2l-.2 7.4"></path>'
     + '<path d="M11.8 41.6h-3.1" stroke-width="2.8"></path></g>'
@@ -16321,7 +16345,87 @@ function acFigure(){
     + '<path d="M21 20.4v-1.5h3.6v1.5" stroke-width="1.6"></path>'
     + '<rect x="19" y="20.9" width="9.8" height="7.5" rx="1.5" fill="currentColor" stroke="none"></rect>'
     + '<path class="ac-knock" d="M19.7 24.3h8.4" stroke-width="1"></path>'
-    + '</g></svg>';
+    + '</g>';
+  return '<svg width="' + AC_W + '" height="' + AC_H + '" viewBox="0 0 ' + AC_W + ' ' + AC_H + '"'
+    + ' fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"'
+    + ' stroke-linejoin="round" aria-hidden="true">'
+    + '<g class="ac-halo">' + body + '</g>' + body + '</svg>';
+}
+// Peeking round a corner, which is a POSE rather than the figure moved. The
+// head with its back quarter still behind the edge, shoulders wider than it
+// with a neck's worth of daylight between the two, and the body running on
+// down to be cut off by the pill's own bottom edge -- a silhouette that stops
+// in mid-air half way down the button reads as a floating bust. The hand it
+// holds on with is drawn separately (acGrip), on the pill itself.
+function acPeeker(){
+  const body = ''
+    // Shoulders WIDER than the head with a neck's worth of daylight between
+    // them, which is the whole of what separates a head on a body from a
+    // circle on a box. Same head as the figure's own, cap and all.
+    + '<path fill="currentColor" stroke="none" d="M4.6 17a5.6 5.6 0 0 1 11.2 0l.3 19H4.6z"></path>'
+    + '<circle cx="11.2" cy="9.4" r="4.25" fill="currentColor" stroke="none"></circle>'
+    + '<path fill="currentColor" stroke="none" d="M6.95 9.1a4.25 4.25 0 0 1 8.5 0z"></path>'
+    + '<path fill="currentColor" stroke="none" d="M7.2 8.6H3.6a.85.85 0 0 0 0 1.7H7.2z"></path>'
+    + '<path class="ac-knock" d="M7.1 9.25h8.2" stroke-width="1"></path>';
+  return '<svg width="26" height="36" viewBox="0 0 26 36"'
+    + ' fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"'
+    + ' stroke-linejoin="round" aria-hidden="true">'
+    + '<g class="ac-halo">' + body + '</g>' + body + '</svg>';
+}
+// And the hand he holds on with, which is drawn ON the pill in the PAPER
+// colour rather than beside it in ink: fingertips curled round a corner are on
+// the near face of whatever they are gripping, and three pale marks on a
+// near-black pill read at the size this is drawn where three dark ones next to
+// it would be three more pixels of ink.
+function acGrip(){
+  return '<svg width="10" height="14" viewBox="0 0 10 14" fill="none" stroke="currentColor"'
+    + ' stroke-width="1.9" stroke-linecap="round" aria-hidden="true">'
+    + '<path d="M2.9 4.1h4.3"></path><path d="M2.1 7.1h5.1"></path><path d="M2.7 10.1h4.5"></path>'
+    + '</svg>';
+}
+// The run's own easing, and its inverse. A hop has to be timed against where
+// he IS rather than against distance travelled, or he lands beside the thing
+// he is jumping on rather than on top of it.
+const AC_RUN_EASE = 'cubic-bezier(.35,0,.85,.6)';
+function acEase(o){
+  const bx = t => 3 * (1 - t) * (1 - t) * t * 0.35 + 3 * (1 - t) * t * t * 0.85 + t * t * t;
+  const by = t => 3 * (1 - t) * t * t * 0.6 + t * t * t;
+  let lo = 0, hi = 1;
+  for(let i = 0; i < 22; i++){ const m = (lo + hi) / 2; if(bx(m) < o) lo = m; else hi = m; }
+  return by((lo + hi) / 2);
+}
+function acRunOffsetAt(x, fromX, dist){
+  const p = Math.max(0, Math.min(1, (x - fromX) / dist));
+  let lo = 0, hi = 1;
+  for(let i = 0; i < 22; i++){ const m = (lo + hi) / 2; if(acEase(m) < p) lo = m; else hi = m; }
+  return (lo + hi) / 2;
+}
+// What is in his way on the run out: anything with text in it standing at his
+// own level, ahead of him, leaf-most and far enough apart that one hop cannot
+// run into the next. Read off the page rather than listed, so it works from
+// every Add button in the app without anything being named.
+function acSteps(btn, fromX, footY){
+  const sel = 'button,a,label,span,small,strong,h1,h2,h3,h4,h5,p,li,td,th,input,select,textarea';
+  const found = [];
+  document.querySelectorAll(sel).forEach(el => {
+    if(el === btn || el.contains(btn) || btn.contains(el) || el.closest('.ac-layer')) return;
+    const tag = el.tagName;
+    const txt = (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') ? (el.value || '') : (el.textContent || '');
+    if(!txt.trim()) return;
+    const q = el.getBoundingClientRect();
+    if(!q.width || !q.height) return;
+    if(q.right < fromX + 12 || q.left > window.innerWidth - 6) return; // ahead of him, on screen
+    if(q.top > footY - 5 || q.bottom < footY - 34) return;             // standing on his own ground
+    found.push({ el: el, r: q });
+  });
+  const leaves = found.filter(c => !found.some(o => o !== c && c.el.contains(o.el)));
+  leaves.sort((x, y) => x.r.left - y.r.left);
+  const picked = [];
+  leaves.forEach(c => {
+    const last = picked[picked.length - 1];
+    if(!last || c.r.left > last.r.right + AC_W * 1.4) picked.push(c);
+  });
+  return picked.slice(0, 3);
 }
 // What he carries: one pill per field that was actually filled in, in the
 // order they are on screen. A select says what it SAYS rather than the value
@@ -16397,30 +16501,85 @@ function addCourier(btn){
   guy.className = 'ac-guy';
   guy.style.left = '0px';
   guy.style.top = '40px';
-  guy.innerHTML = acFigure();
+  // The hop rides on a wrapper of its own: the figure's own element carries
+  // the run and the svg inside it carries the turn, and a third animation on
+  // either of those transforms would simply replace one of them.
+  const lift = document.createElement('div');
+  lift.innerHTML = acFigure();
+  guy.appendChild(lift);
   gate.appendChild(guy);
-  // The letter, and nothing behind it. It is the PAGE's ink and never changes
-  // colour on the way (real-user report: "the A switched color. It should
-  // not") -- which only works because it does not exist until he takes it: the
-  // button keeps its own letter, in its own ink, right up to the frame he
-  // lifts it off, and gets it back at the frame this one lands. A single flat
-  // colour cannot read on the button AND on the page, since the Add button's
-  // ink is exactly the colour of the page behind it, so the two handovers
-  // happen instead -- each at a moment the letter is moving fastest.
-  const a = document.createElement('div');
-  a.className = 'ac-a';
-  a.textContent = first;
-  a.style.left = gr.left + 'px';
-  a.style.top = gr.top + 'px';
-  a.style.width = gr.width + 'px';
-  a.style.height = gr.height + 'px';
-  a.style.lineHeight = gr.height + 'px';
-  a.style.fontFamily = cs.fontFamily;
-  a.style.fontSize = cs.fontSize;
-  a.style.fontWeight = cs.fontWeight;
-  a.style.color = pageInk;
-  a.style.visibility = 'hidden';
-  layer.append(gate, a);
+  // The peek has its own gate, flush with the button's own right edge rather
+  // than the figure's, so the hand on the corner is on the pill.
+  const peekGate = document.createElement('div');
+  peekGate.className = 'ac-gate';
+  peekGate.style.left = (r.right + 2) + 'px';   // clear of the pill, see .ac-halo
+  peekGate.style.top = (r.top - 7) + 'px';
+  peekGate.style.width = Math.max(60, window.innerWidth - r.right) + 'px';
+  peekGate.style.height = (r.height + 7) + 'px';
+  const peek = document.createElement('div');
+  peek.className = 'ac-peek';
+  peek.style.left = '-8px';
+  peek.style.top = '9px';
+  peek.style.transformOrigin = '2px 32px';
+  peek.innerHTML = acPeeker();
+  peekGate.appendChild(peek);
+  const grip = document.createElement('div');
+  grip.className = 'ac-grip';
+  grip.style.left = (r.right - 8) + 'px';
+  grip.style.top = (r.top + r.height / 2 - 7) + 'px';
+  // The same PIVOT as the peeker, in its own box: the peeker turns about
+  // (right - 6, top + 34) of the button, so this has to name that point too
+  // or the hand swings away from the head it belongs to.
+  grip.style.transformOrigin = '2px ' + (41 - r.height / 2) + 'px';
+  grip.innerHTML = acGrip();
+  // THE LETTER IS DRAWN TWICE AND NEITHER COPY EVER CHANGES COLOUR. A single
+  // flat ink cannot be right in both places: the Add button is a near-black
+  // pill with near-white text, and the page behind it is near-white with
+  // near-black ink (and the reverse in the other theme), so a letter that is
+  // legible on the button is invisible the moment it leaves it. Cross-fading
+  // between the two inks was tried and rejected ("the A switched color"), and
+  // so was carrying a chip of the button's fill with it ("takes the
+  // BACKGROUND of the A").
+  //
+  // So: the page-ink copy underneath, and the button-ink copy CLIPPED TO THE
+  // PILL over the top of it. Over the button you see the button's own ink, off
+  // it you see the page's, and on the way out the letter splits at the pill's
+  // edge -- which is what a letter crossing from a dark pill onto a light page
+  // really looks like. At both ends of the run it sits wholly inside the pill,
+  // so swapping with the button's own glyph there cannot show either.
+  function letterCopy(ink){
+    const el = document.createElement('div');
+    el.className = 'ac-a';
+    el.textContent = first;
+    el.style.left = gr.left + 'px';
+    el.style.top = gr.top + 'px';
+    el.style.width = gr.width + 'px';
+    el.style.height = gr.height + 'px';
+    el.style.lineHeight = gr.height + 'px';
+    el.style.fontFamily = cs.fontFamily;
+    el.style.fontSize = cs.fontSize;
+    el.style.fontWeight = cs.fontWeight;
+    el.style.color = ink;
+    el.style.visibility = 'hidden';
+    return el;
+  }
+  const aPage = letterCopy(pageInk), aBtn = letterCopy(cs.color);
+  const hopPage = document.createElement('div');
+  hopPage.className = 'ac-hop';
+  hopPage.appendChild(aPage);
+  const pillClip = document.createElement('div');
+  pillClip.className = 'ac-pill';
+  pillClip.style.clipPath = 'inset(' + Math.max(0, r.top) + 'px '
+    + Math.max(0, window.innerWidth - r.right) + 'px '
+    + Math.max(0, window.innerHeight - r.bottom) + 'px '
+    + Math.max(0, r.left) + 'px round ' + (cs.borderRadius || '0px') + ')';
+  const hopBtn = document.createElement('div');
+  hopBtn.className = 'ac-hop';
+  hopBtn.appendChild(aBtn);
+  pillClip.appendChild(hopBtn);
+  const letters = [aPage, aBtn];
+  const animateA = (frames, opts) => letters.forEach(el => el.animate(frames, opts));
+  layer.append(peekGate, grip, gate, hopPage, pillClip);
   document.body.appendChild(layer);
 
   const bits = acBits(btn.closest('.log-form') || btn.closest('.card'));
@@ -16434,8 +16593,9 @@ function addCourier(btn){
   // WITH A DELAY FILLS FORWARDS ONLY: fill:'both' holds its first keyframe
   // from time zero and would override whatever is meant to be showing until
   // its turn.
-  const peekEnd = AC_T.peek + AC_T.look;   // he has looked, and jumps out from here
-  const outEnd = peekEnd + AC_T.out;       // standing beside the button, ready to reach
+  const peekEnd = AC_T.peek + AC_T.look;   // he has looked
+  const duckEnd = peekEnd + AC_T.duck;     // pulled his head back in, and jumps from here
+  const outEnd = duckEnd + AC_T.out;       // standing beside the button, ready to reach
   const bitsEnd = outEnd + AC_T.grab + (bits.length ? (bits.length - 1) * AC_T.step + AC_T.bit : 0);
   const tipAt = bitsEnd + 60;
   const turnAt = tipAt + AC_T.tip;
@@ -16446,48 +16606,54 @@ function addCourier(btn){
   // He waits behind the button until he has looked, so his resting pose is
   // written on the element rather than filled backwards from the jump.
   guy.style.transform = 'translate(' + (-(AC_W + 8)) + 'px, 0)';
-  const head = guy.querySelector('.ac-head');
-  if(head && head.animate){
-    // Out past the edge, far enough that most of the head clears it and none
-    // of the body does. The cap's peak points left, which is where the form is.
-    head.animate([
-      { transform: 'translate(0,0) rotate(0deg)' },
-      { transform: 'translate(31px,3px) rotate(-6deg)' }
+  const animatePeek = (frames, opts) => [peek, grip].forEach(el => el.animate(frames, opts));
+  if(peek.animate){
+    // He leans out round the corner: the head clears the edge, a shoulder and
+    // the hand on it do not, and the back of the head stays behind the pill
+    // the whole time, which is the difference between peeking round something
+    // and hovering beside it.
+    animatePeek([
+      { transform: 'translate(-15px,3px) rotate(6deg)' },
+      { transform: 'translate(0,0) rotate(3deg)' }
     ], { duration: AC_T.peek, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'both' });
-    // A look along the form, and back.
-    head.animate([
-      { transform: 'translate(31px,3px) rotate(-6deg)' },
-      { transform: 'translate(32px,4px) rotate(-14deg)', offset: 0.35 },
-      { transform: 'translate(31px,2px) rotate(6deg)', offset: 0.75 },
-      { transform: 'translate(31px,3px) rotate(-4deg)' }
+    // Then he cranes back over the pill to read the form, which is behind him,
+    // nudging out as he tilts so the tilt does not pull his head back in.
+    animatePeek([
+      { transform: 'translate(0,0) rotate(3deg)' },
+      { transform: 'translate(4px,-1px) rotate(-9deg)', offset: 0.4 },
+      { transform: 'translate(1px,1px) rotate(5deg)', offset: 0.78 },
+      { transform: 'translate(2px,0) rotate(-3deg)' }
     ], { duration: AC_T.look, delay: AC_T.peek, easing: 'ease-in-out', fill: 'forwards' });
-    // And it comes back onto his shoulders as the rest of him arrives.
-    head.animate([
-      { transform: 'translate(31px,3px) rotate(-4deg)' },
-      { transform: 'translate(0,0) rotate(0deg)' }
-    ], { duration: AC_T.out, delay: peekEnd, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'forwards' });
+    // And ducks back in BEFORE he jumps out, so there are never two of him at
+    // the edge at once.
+    animatePeek([
+      { transform: 'translate(2px,0) rotate(-3deg)' },
+      { transform: 'translate(-16px,4px) rotate(8deg)' }
+    ], { duration: AC_T.duck, delay: peekEnd, easing: 'cubic-bezier(.5,0,.9,.4)', fill: 'forwards' });
   }
   guy.animate([
     { transform: 'translate(' + (-(AC_W + 8)) + 'px, 0)' },
     { transform: 'translate(' + (-(AC_W + 8) / 2.4) + 'px, -8px)', offset: 0.55 },
     { transform: 'translate(0, 0)' }
-  ], { duration: AC_T.out, delay: peekEnd, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'forwards' });
+  ], { duration: AC_T.out, delay: duckEnd, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'forwards' });
 
   // He takes it and turns it OVER: upside down, an A is a funnel with its
   // mouth up, which is what the information can then be poured into.
-  a.animate([
+  animateA([
     { transform: 'translate(0,0) rotate(0deg) scale(1)' },
     { transform: 'translate(' + (dx * 0.4) + 'px,' + (dy * 0.4 - 6) + 'px) rotate(70deg) scale(1.25)', offset: 0.45 },
     { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(180deg) scale(1.3)' }
   ], { duration: AC_T.grab, delay: outEnd, easing: 'cubic-bezier(.34,1.3,.64,1)', fill: 'forwards' });
 
-  const lid = guy.querySelector('.ac-lid');
-  if(lid && lid.animate){
+  // Every drawing is in the svg twice (see .ac-halo), so the case's lid is too
+  // and both copies have to open, or the rim opens without the case.
+  guy.querySelectorAll('.ac-lid').forEach(lid => {
+    if(!lid.animate) return;
     lid.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(-46deg)' }],
       { duration: 180, delay: outEnd, easing: 'ease-out', fill: 'forwards' });
     lid.animate([{ transform: 'rotate(-46deg)' }, { transform: 'rotate(0deg)' }],
       { duration: 170, delay: tipAt + 180, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'forwards' });
-  }
+  });
 
   bits.forEach((b, i)=>{
     const el = document.createElement('div');
@@ -16521,7 +16687,7 @@ function addCourier(btn){
   }
 
   // The letter TIPS in his hand rather than going in the case with them.
-  a.animate([
+  animateA([
     { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(180deg) scale(1.3)' },
     { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(325deg) scale(1.3)' }
   ], { duration: AC_T.tip, delay: tipAt, easing: 'cubic-bezier(.4,0,.5,1)', fill: 'forwards' });
@@ -16534,28 +16700,81 @@ function addCourier(btn){
   guy.animate([
     { transform: 'translate(0,0)' },
     { transform: 'translate(' + runDist + 'px, 0)' }
-  ], { duration: AC_T.run, delay: runAt, easing: 'cubic-bezier(.35,0,.85,.6)', fill: 'forwards' });
+  ], { duration: AC_T.run, delay: runAt, easing: AC_RUN_EASE, fill: 'forwards' });
+
+  // HE DOES NOT RUN THROUGH WHAT IS IN HIS WAY. He jumps up onto it, it takes
+  // his weight and squashes a little, he runs along it and drops off the far
+  // end -- for whatever is actually there, at every Add button in the app.
+  // The hop is keyframed against the run's own easing (see acRunOffsetAt), or
+  // he lands beside the thing rather than on it.
+  const steps = acSteps(btn, guyLeft, guyTop + AC_FOOT);
+  const hopFrames = [{ transform: 'translateY(0)', offset: 0 }];
+  const stood = [];
+  let lastO = 0;
+  steps.forEach(st => {
+    const rise = Math.min(34, Math.max(6, Math.round(guyTop + AC_FOOT - st.r.top)));
+    // Whatever he jumps on is usually the pill standing right beside the
+    // button he came out of, so there is no run-up and the geometry alone puts
+    // the whole leap inside the first thirty milliseconds of the run. Each of
+    // the four moments therefore has a MINIMUM of its own: a leap, a stretch
+    // along the top, and a drop off the end all take time to read whatever
+    // distance they happen to cover. Threaded through lastO, so the list is
+    // in order by construction however the rects fall.
+    const o0 = Math.max(lastO + 0.02, acRunOffsetAt(st.r.left - AC_W * 0.8, guyLeft, runDist));
+    const on = Math.max(o0 + 0.22, acRunOffsetAt(st.r.left + 2, guyLeft, runDist));
+    const off = Math.max(on + 0.05, acRunOffsetAt(st.r.right - 2, guyLeft, runDist));
+    const o1 = Math.max(off + 0.12, acRunOffsetAt(st.r.right + AC_W * 0.5, guyLeft, runDist));
+    if(o1 >= 0.99) return;
+    lastO = o1;
+    hopFrames.push({ transform: 'translateY(0)', offset: o0, easing: 'cubic-bezier(.2,.8,.4,1)' });
+    hopFrames.push({ transform: 'translateY(' + (-rise - 5) + 'px)', offset: o0 + (on - o0) * 0.6 });
+    hopFrames.push({ transform: 'translateY(' + (-rise) + 'px)', offset: on, easing: 'linear' });
+    hopFrames.push({ transform: 'translateY(' + (-rise) + 'px)', offset: off, easing: 'cubic-bezier(.5,0,.9,.5)' });
+    hopFrames.push({ transform: 'translateY(0)', offset: o1 });
+    // And it takes his weight. About its own BOTTOM edge, because a thing
+    // being stepped on squashes down onto what it is standing on.
+    stood.push({ el: st.el, origin: st.el.style.transformOrigin });
+    st.el.style.transformOrigin = 'center bottom';
+    // LINEAR overall, with the curve on each keyframe instead: a springy
+    // timing function over the whole effect reads its own offsets through that
+    // curve, which crushed the squash into the first twenty milliseconds and
+    // left the rebound where the squash should have been.
+    st.el.animate([
+      { transform: 'scale(1,1)', easing: 'cubic-bezier(.2,.9,.3,1)' },
+      { transform: 'scale(1.05,.84)', offset: 0.22, easing: 'ease-out' },
+      { transform: 'scale(.99,1.04)', offset: 0.6, easing: 'ease-in-out' },
+      { transform: 'scale(1,1)' }
+    ], { duration: 420, delay: runAt + on * AC_T.run, easing: 'linear', fill: 'none' });
+  });
+  hopFrames.push({ transform: 'translateY(0)', offset: 1 });
+  let hopOk = hopFrames.length > 2;
+  for(let i = 1; i < hopFrames.length && hopOk; i++) if(hopFrames[i].offset <= hopFrames[i - 1].offset) hopOk = false;
+  if(hopOk){
+    // The letter is in his hand, so it hops with him.
+    [lift, hopPage, hopBtn].forEach(el => el.animate(hopFrames,
+      { duration: AC_T.run, delay: runAt, easing: 'linear', fill: 'none' }));
+  }
   // The letter goes with him, in his hand, and is thrown back in from off
   // screen to land at the front of the word (real-user request). It lands
   // upright -- 720 degrees is two whole turns, so the end pose is the pose it
   // started in -- and its own fill fades over the last of the flight, which
   // is what makes it become the letter on the button again rather than a chip
   // sitting on top of it.
-  a.animate([
+  animateA([
     { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(325deg) scale(1.3)' },
     { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(365deg) scale(1.3)' }
-  ], { duration: AC_T.run, delay: runAt, easing: 'cubic-bezier(.35,0,.85,.6)', fill: 'forwards' });
-  a.animate([
+  ], { duration: AC_T.run, delay: runAt, easing: AC_RUN_EASE, fill: 'forwards' });
+  animateA([
     { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(365deg) scale(1.3)' },
     { transform: 'translate(' + (dx * 0.5) + 'px,' + (dy - 54) + 'px) rotate(560deg) scale(1.2)', offset: 0.55 },
     { transform: 'translate(0,0) rotate(720deg) scale(1)' }
   ], { duration: AC_T.back, delay: backAt, easing: 'cubic-bezier(.2,.6,.3,1)', fill: 'forwards' });
   const takeTimer = setTimeout(()=>{
-    a.style.visibility = '';
+    letters.forEach(el => { el.style.visibility = ''; });
     gSpan.style.visibility = 'hidden';
   }, outEnd);
   const landTimer = setTimeout(()=>{
-    a.style.visibility = 'hidden';
+    letters.forEach(el => { el.style.visibility = 'hidden'; });
     gSpan.style.visibility = '';
   }, total);
   const runTimer = setTimeout(()=> guy.classList.add('ac-running'), runAt);
@@ -16575,6 +16794,7 @@ function addCourier(btn){
     clearTimeout(clearTimer);
     acRunPendingClear();
     layer.remove();
+    stood.forEach(x => { x.el.style.transformOrigin = x.origin; });
     acBusy = false;
     // Put the label back, unless a language change has already rewritten it --
     // this button's text is owned by STATIC_MAP, and restoring the old string
