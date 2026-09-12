@@ -3920,3 +3920,64 @@ Worth keeping from the testing:
   holds a table-wide UPDATE grant on profiles, and the own-row update policies
   cover a new column on the same row, so no grant was needed. A device that
   saved favourites before this carries them up on its next load.
+
+## The Type list reads in the order the calendar is used, and a colour link is painted in that colour (12 Sep, forty-eighth pass)
+
+Two small ones off one screenshot each.
+
+### The order
+
+"In the calendar the order here should be Event, Deadline, Birthday, Course,
+Pill cycle." It was Deadline, Event, Course, Birthday, Pill cycle, which is
+the order the kinds happened to be added in rather than any order a reader
+would look for them in.
+
+- **The edit panel's list moved with it**, so the choices do not reshuffle
+  between adding something and editing it. That one is written as literal
+  `<option>` markup rather than built from the same array, so the two can
+  drift; they agree today and it is worth checking both whenever a kind is
+  added.
+- **The default is still Deadline.** `rebuildEventKindSelect` falls back to
+  `'deadline'` explicitly rather than to the first entry, so reordering the
+  list cannot change what a fresh form opens on.
+- **The edit panel now draws a Pill cycle option for an event that already IS
+  one.** It never had one, so the select matched nothing, fell back to its
+  first entry and saving silently rewrote the pill cycle as that kind. Before
+  this pass that was Deadline and after it would have been Event; either is
+  wrong, and it is only reachable by the one account that has pill cycles, so
+  it had gone unnoticed. Drawn from `ev.kind === 'pill'`, not from
+  `isPillCycleAccount()`, so the option only ever exists where it is already
+  the answer.
+
+### The colour links
+
+"The 'Use my color' and 'Use Roxy's color' buttons should be in my color and
+roxy's color respectively." Both wore `--celadon-4` like every other
+`.linkbtn`, so the one control whose whole subject is a colour said nothing
+about which colour it would give you.
+
+- **Through a custom property (`--use-color`), not an inline `color`.** An
+  inline colour beats `.linkbtn:hover` -- inline style wins over any selector
+  -- so painting it directly would have taken the hover feedback away
+  entirely. The rule reads the property with the old value as its fallback, so
+  every other linkbtn is untouched.
+- **Hover SOFTENS rather than shifting hue** (opacity 0.78). The ordinary
+  hover moves celadon-4 to celadon-3, and moving the hue is exactly what this
+  link cannot do: the hue is the whole point of it.
+- **`applyMyColor` repaints it**, alongside the name pill and the popover. The
+  link names a colour, so it has to follow a change of that colour in the same
+  frame. The repaint sits before the Supabase write, which is awaited.
+- **The raw colour is used, with no legibility correction**, which is what
+  `#whoName` and `--my-color` already do. A colour picked dark enough to
+  vanish on the dark theme would vanish here too; that exposure is the app's
+  existing one rather than a new one, and inventing a one-off contrast rule
+  for two links would be the drift.
+
+### Checked how
+
+In the browser at 1024 wide, light and dark, with a fake two-person state
+(Kristoffer `#6FB894`, Roxy `#C2748E`): the add form's list comes out
+`event, deadline, birthday, course, pill` with `deadline` selected; the edit
+panel's comes out in the same order and a pill event keeps `pill` selected;
+the two links compute to `rgb(111,184,148)` and `rgb(194,116,142)`; and a real
+hover holds the colour at opacity 0.78.

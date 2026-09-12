@@ -1388,6 +1388,8 @@ button:hover{background:var(--ink-hover);}
 .linkbtn.act-icon:hover{background:none;}
 .linkbtn.act-icon svg{display:block;}
 .linkbtn:hover{background:none;color:var(--celadon-3);}
+.linkbtn.color-use-link{color:var(--use-color, var(--celadon-4));}
+.linkbtn.color-use-link:hover{color:var(--use-color, var(--celadon-3));opacity:0.78;}
 .icon-pill-btn{display:inline-flex;align-items:center;gap:5px;background:var(--paper-dim);border:1px solid var(--line);color:var(--ink);font-size:12px;font-weight:600;padding:4px 11px;border-radius:999px;cursor:pointer;text-decoration:none;}
 .icon-pill-btn:hover{background:rgba(127,127,127,0.16);}
 .icon-pill-btn svg{flex:none;}
@@ -3786,7 +3788,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
           <div style="display:flex;align-items:center;gap:8px;">
             <input type="color" id="eventColor" value="#4F7563">
             <span id="eventColorUseLinks" style="display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap;">
-              <button type="button" class="linkbtn" id="eventColorUseMyDefaultBtn"></button>
+              <button type="button" class="linkbtn color-use-link" id="eventColorUseMyDefaultBtn"></button>
             </span>
           </div>
         </div>
@@ -11721,7 +11723,7 @@ function rebuildEventKindSelect(){
   const sel = document.getElementById('eventKind');
   const prev = sel.value || 'deadline';
   sel.innerHTML = '';
-  const kinds = [['deadline','kindDeadline'],['event','kindEvent'],['course','kindCourse'],['birthday','kindBirthday']];
+  const kinds = [['event','kindEvent'],['deadline','kindDeadline'],['birthday','kindBirthday'],['course','kindCourse']];
   // Pill-cycle tracking is Kristoffer-only (see PILL_CYCLE_ACCOUNT_NAME) --
   // the option itself is simply never offered to anyone else, same pattern
   // as the Job Board sync button being account-gated.
@@ -12614,12 +12616,14 @@ function renderEventColorLinks(){
   if(!wrap || !mine || !currentUser) return;
   const uids = eventForUidsForColor();
   mine.classList.toggle('hidden', !uids.includes(currentUser.id));
+  mine.style.setProperty('--use-color', colorForUser(currentUser.id));
   wrap.querySelectorAll('.event-color-use-other').forEach(b=> b.remove());
   uids.filter(uid=> uid !== currentUser.id).forEach(uid=>{
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'linkbtn event-color-use-other';
+    b.className = 'linkbtn color-use-link event-color-use-other';
     b.dataset.uid = uid;
+    b.style.setProperty('--use-color', colorForUser(uid));
     b.textContent = t('eventColorUseTheirBtn').replace('{name}', nameFor(uid));
     wrap.appendChild(b);
   });
@@ -21369,10 +21373,11 @@ function buildEventEditFieldsHtml(ev){
     <div class="field">
       <label>${t('eventKind')}</label>
       <select class="edit-kind">
-        <option value="deadline" ${ev.kind==='deadline'?'selected':''}>${t('kindDeadline')}</option>
         <option value="event" ${ev.kind==='event'?'selected':''}>${t('kindEvent')}</option>
-        <option value="course" ${ev.kind==='course'?'selected':''}>${t('kindCourse')}</option>
+        <option value="deadline" ${ev.kind==='deadline'?'selected':''}>${t('kindDeadline')}</option>
         <option value="birthday" ${ev.kind==='birthday'?'selected':''}>${t('kindBirthday')}</option>
+        <option value="course" ${ev.kind==='course'?'selected':''}>${t('kindCourse')}</option>
+        ${ev.kind==='pill' ? `<option value="pill" selected>${t('kindPill')}</option>` : ''}
       </select>
     </div>
     <div class="field">
@@ -32941,6 +32946,7 @@ async function applyMyColor(color){
   document.getElementById('whoEmail').style.color = color;
   setMyColorInputs(color);
   renderColorPop();
+  renderEventColorLinks();
   await supabaseClient.from('profiles').update({ color }).eq('id', currentUser.id);
   renderLectureList();
 }
