@@ -4855,6 +4855,9 @@ certification or an application -- and this tab is a second way of reading
 those. So nothing can drift out of step with them, deleting the link where it
 was added is what removes it here, and no migration was needed.
 
+**SUPERSEDED on 13 Sep, sixty-sixth pass: it is grammar only now.** What
+follows is how it was built and why the widening was wrong.
+
 **It scans every field in the app a link can be typed into**, not only the
 grammar resources it was asked for. That costs nothing, because a link that is
 not a video never gets past `ytVideoId` -- and missing one would mean a video
@@ -5679,3 +5682,76 @@ three offers, `accepted` / `declined` / `pending` return one each, `assignment`
 returns the row stored as `withdrawn`, `withdrawn` returns it too, `acquired`
 and `in progress` each return their own certification, the company and role
 searches are untouched, and a word that is nowhere returns nothing.
+
+## The videos tab is Korean only, and the letter flies slower on a phone (13 Sep, sixty-sixth pass)
+
+### It was gathering videos from three places that are not Korean
+
+"'Videos. Every video link added anywhere in the app, in one place. Add one by
+putting a YouTube link on a grammar point, an article, a certification or an
+application.' This was only meant to be for the Korean things where you add
+YouTube links."
+
+The fifty-seventh pass built this tab to scan EVERY field in the app a link can
+be typed into and wrote that down as a feature ("not only the grammar resources
+it was asked for ... missing one would mean a video somebody added and cannot
+find"). The widening was mine rather than asked for, and it is what is being
+corrected. **The tab sits under Korean**, and the three extra sources it swept
+up live under Reading and under Jobs, so a video from the reading tracker or
+the job board was turning up inside a Korean sub-tab.
+
+**A grammar point is the only thing under Korean that carries a link at all**,
+so "the Korean things" is grammar, and `collectVideoLinks` reads `GRAMMAR_DATA`
+and nothing else. How it reads it is untouched: every resource is still
+scanned rather than only the ones somebody thought to label as a video, since
+a link that is not a video never gets past `ytVideoId`.
+
+**And the SOURCE went with them, which is the part worth recording.** With one
+source left, the chip on every card could only ever read "Grammar" (a thing the
+line above it already says better, by naming the grammar point itself) and the
+"Source" sort level could only ever leave the list exactly as it found it. Both
+are gone, with `VIDEO_SOURCE_KEY` and the five translation keys that fed them,
+rather than left on screen doing nothing. A level stored from the old build
+names a field that no longer exists, and `loadListSort` filters against the
+field list it is given, so it falls back to Added on its own: checked.
+
+Measured against a seeded set, two grammar points carrying three video links
+and one plain `example.com` page, plus a YouTube link on an article, a
+certification and a job application: **three cards, all three from grammar**,
+the plain link correctly not among them, the `?t=90` start still carried, no
+source chip, and a search for "grammar" now matches nothing, which is right
+because that word is no longer on any card, while a search for 는데 still
+returns its two.
+
+### The letter's flight is slower on a narrow screen
+
+"The courier's throw (A travel time) should be slower on app."
+
+Nothing about the PACE was wrong, which is why the answer is per screen rather
+than a fifth pass at the one number. What differs is the PATH: the letter
+crosses the whole window and bounces off its far edge, so on a 375px phone it
+covers about a third of the ground it covers on a desktop, and the same speed
+therefore buys about a third of the time. Measured on the real courier at
+375px: **495ms**, against 919ms over a 1203px path at 1024. That is nearer a
+blink than a throw.
+
+`AC_A_SPEED` is the full speed and `acASpeed()` answers **1000 on a narrow
+screen**, two thirds of it, which takes that same flight to **709ms** and is
+still well clear of the flat 400 once rejected as "WAYYY too slow".
+
+- **Asked as a WIDTH** (`isMobileDevice()`, the app's own 640px question)
+  rather than as a pointer type, because what is short is the path, and a
+  narrow desktop window has exactly as little of it as a phone does.
+- **The brake and the settle come DOWN with it.** They are distances DERIVED
+  from the speed, the ground covered in about a seventh and an eighth of a
+  second, so they are `acABrake()` and `acASettle()` now rather than constants
+  fixed at load: 135 and 118 on a phone against 203 and 177. Left at the
+  desktop's numbers a slower letter would spend more of a short flight braking
+  than flying.
+- **The delivery toss reads the same function**, since its own comment says it
+  runs "at the same speed as everything else" and one speed per screen is what
+  keeps that true.
+
+Verified by running the REAL courier at both widths: 28 animations and no error
+either way, and the same flight priced at both speeds comes out 495ms against
+709ms, which is 43% longer.
