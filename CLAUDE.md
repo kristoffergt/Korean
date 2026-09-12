@@ -4596,3 +4596,114 @@ their own line. Measured at both widths: at 1024 the row reads Overview,
 controls, Members with Members ending on the row's own right edge (981 of 981);
 at 375 Overview and Members share the first line (both at y 421, Members
 260..332 against a row ending at 332) and the controls take the two below.
+
+## One ink for the letter, a slower throw, and a peek you can actually see (12 Sep, fifty-fifth pass)
+
+"The A still doesnt retain its font color as it should when he picks it up, and
+the throw back in animation is way too fast. And when he looks around, make his
+head come out a bit more, looking from side to side. Right now you can barely
+see what is happening."
+
+### The two-copy letter was answering the wrong question
+
+Last round drew the letter TWICE -- the page's ink underneath and the button's
+ink clipped to the pill -- so it was "lit by whatever is behind it" and split at
+the pill's edge on the way out. That is a defensible picture and it is not what
+was asked for either time: the letter he picks up off the button has to still be
+the letter that was on the button, and a handover at the pill's edge is exactly
+the switch the report calls a switch.
+
+**So it is ONE copy in ONE ink, and the ink is the button's own `color`.** What
+makes that legible off the button is a RIM in the button's own
+`backgroundColor`, and the reason that works is arithmetic rather than luck:
+the Add pill is `--ink`, on a page whose ground is `--paper` and whose text is
+`--ink`. **That one value is at once invisible ON the pill and the page's own
+ink OFF it.** Over the button the letter is the solid glyph the button draws;
+over the page it is the same glyph, in the same colour, outlined in the page's
+ink. Neither value ever changes, and both are read off the button rather than
+named, so it holds in either theme -- verified: light is `rgb(245,245,246)` on a
+`rgb(30,31,34)` rim and dark is exactly the mirror, `rgb(24,25,27)` on
+`rgb(237,237,239)`, identical at all five sampled moments in both.
+
+**The rim has to be sized against the GLYPH'S OWN STROKE, and the first try was
+three times too wide.** Measured on a canvas in the button's own face and
+weight, the A's strokes are **1.9px at 14px** -- so the 1.6px rim I started with
+buried a 2.5px stroke under 4.2px of rim, and the letter read as a dark mark
+whatever colour its middle was. Which is the very complaint, arrived at from the
+other direction. Six candidates were rendered at 1:1 and magnified nine times
+with `imageSmoothingEnabled = false`, which is the only honest way to judge this
+(the preview pane downscales a screenshot, so a 14px glyph cannot be read off
+one): the balance that reads as a light letter with an edge round it rather than
+as a dark one is a rim of about **0.38 of the carried scale**. `AC_A_RIM` 0.65
+against `AC_A_HELD` 1.7 leaves 1.1px of rim against a 3.2px stroke.
+
+- **`AC_A_HELD` went 1.3 to 1.7** on the same evidence: the rim needs room
+  round the strokes, and a funnel somebody is pouring into wants to be readable
+  anyway. It still starts and lands at scale 1, which is what lets it hand over
+  to the button's real glyph invisibly.
+- **A text-shadow, not `-webkit-text-stroke`.** A text stroke is centred on the
+  outline and so eats half its width out of the glyph, and `paint-order` on HTML
+  text is not worth betting on. A shadow is painted BEHIND the text, so the
+  letter itself is untouched at any size or rotation.
+- **The clip now has four states instead of two copies.** It takes in the pill
+  as well as everything left of it to begin with (the letter starts on the pill
+  and is picked up from it), tightens to the button's LEFT edge at the run, and
+  changes sides with his gate at the crossing. `pillClip` and the second copy
+  are gone.
+
+### The throw home was 500ms for 540px
+
+Doubled to **1000ms**, with the beat before it up from 200 to 260. The letter
+crosses about half the window and turns twice on the way; at 1080px a second
+there is nothing to see.
+
+### The peek: 6.55px of head was not a peek
+
+Measured against the button's own top edge, the old pose put **6.55 of his 8.5
+head** over it, which is why "you can barely see what is happening" is the right
+report. It is **14.9px now** -- the whole head and the top of his shoulders --
+and the look runs over 620ms rather than 380.
+
+**What made that affordable is giving the raised arm its own shoulder joint.**
+At the old height his hand landed on the edge for free, because his hand is
+drawn at the same height as his head; eight pixels higher it would have been
+waving in the air, and the hand ON the button is half of what was asked for two
+rounds ago. So `.ac-arm-b` is a group on its own origin (13, 15.4) and swings
+**down** by as much as he rises. **The angle is derived, not picked**: -47.4
+degrees is the rotation about that shoulder that takes his hand from 7.4 units
+above it to 0.6 below, which is the same 8 his body has gained. The arm is
+rigid, so it also reaches further out doing it -- which is what somebody hanging
+off a ledge does with it. Measured: the hand sits **2px above the edge at both
+heights**, so the grip is exactly as it was.
+
+- **His head and shoulders stay one shape.** The torso's shoulder arc is a
+  semicircle peaking at y 10.9 and the head's own bottom is 11.95, so they
+  overlap on the centre line by a pixel and there is no neck gap to show at any
+  height. Checked before raising him, since a floating head is what raising a
+  head usually buys.
+- **A head that only TILTS reads as a wobble.** It slides the way it is looking
+  as well (-24 degrees with -2.6px, then 20 with 2.2), and it **HOLDS at each
+  end**: a glance is a stop, not a sweep, and the hold is most of what makes it
+  readable at this size. The head's centre travels 8px across a 30px figure.
+- **Barely a bob while he is up there**, 1px either way, because he is holding
+  on to an edge and his hand cannot slide about.
+
+### Checked
+
+Stepped frame by frame at eleven moments through the peek (hidden at 0, up and
+gripping by 170, 14.9px of head at 340, the head at its left hold at 588 and its
+right at 762, ducked by 1150) and at thirteen through the carry: the letter's
+colour and rim are the same two values at every one of them, in both themes, and
+the clip is `inset(0 377.9 0 0)` before the run, `inset(0 501 0 0)` at it,
+`inset(0 0 0 646)` past the crossing and `inset(0)` for the flight home. The hop
+and the squish still ride on the single letter (one animation on `.ac-hop`, the
+420ms squash on the thing he lands on). Then once with real timers end to end:
+no layer left, the label back as one text node, `acBusy` false, and no
+`transform-origin` left on anything.
+
+- **A frozen transition read as the theme not applying.** The Add button's
+  computed background came back as the LIGHT theme's `--ink` immediately after
+  `body.dark` was set, which looks exactly like a token that does not swap. It
+  is the 0.13s colour transition reported at its start value while the pane was
+  not painting -- the trap this file already records for `body`'s own
+  background. Screenshot first, measure after.
