@@ -4050,3 +4050,123 @@ the right one, landing on Birthday hides the time field and relabels Title as
 Name, another uid on the same browser reads empty, all three controls in that
 row measure 39px tall, and the wider Visibility select overflows nothing at
 375 (216px inside a 375px screen).
+
+## Every box grows now, and something comes out from behind the Add button (12 Sep, fiftieth pass)
+
+### The grow, extended to the boxes
+
+"This one makes the box bigger when hovering over. Maybe we need to simply add
+that functionality to ALL boxes across the site." So the vocabulary the words
+have had (1.08 on hover, 0.98 on press) now covers every box the reader can
+press or type in: the form's inputs, selects and textareas, the auth fields,
+the primary button in each form (`.log-form > button`), and the
+`.export-btn` / `.icon-pill-btn` / `.day-toggle-btn` / `.person-filter-btn`
+families. **201 controls across the app**, counted with every panel laid out at
+once.
+
+Two things differ from the words, and both are forced rather than chosen:
+
+- **The origin is the CENTRE.** A word grows from where it starts reading; a
+  box in a row of boxes has neighbours on both sides, so growing about its
+  middle spends half the growth into each gap rather than all of it into one.
+- **The factor is 1.04, not 1.08**, and that number is measured: the widest
+  control in the app is **320px** and `.log-form`'s own gap is **10px**, so the
+  words' 1.08 would put a hovered box **13px into its neighbour** where 1.04
+  stays inside the gap (6.4px) at every size on the page. A proportional scale
+  cannot serve a 16px mark and a 320px input at one factor, which is why this
+  is its own tier rather than more selectors on the existing rule.
+- **`:focus` is excluded outright.** A box being typed in is the one place this
+  reads as a fault rather than as feedback.
+
+Three things had to be kept out of it, each for its own reason:
+
+- **The PIN gate's digit boxes** (`.pin-digit`) carry their own transform, both
+  as a class and as keyframes, and a transition on the same property is the
+  fight this file already records three times over.
+- **Containers are not boxes.** A card is 984px wide; 4% of it is 39px of
+  overflow, and nothing on the page is pressable at that size anyway.
+- **The reminder trigger needed the word rule turned OFF explicitly.** It
+  carries `.cal-seg` as well (`wireEventReminderAddTrigger` adds it so the
+  inline picker works), and that selector is the MORE specific of the two --
+  (0,3,0) with its two `:not()`s against this rule's (0,1,0) -- so it would
+  have gone on growing 1.08 from its left edge in a row of boxes growing 1.04
+  about their middles. Source order would not have saved it; `:not(.reminder-
+  add-trigger)` on the word rule is what does.
+
+`body.no-anim-ui` and the reduced-motion block name all of it, or the one
+switch that is meant to stop this would leave the bigger half running.
+
+### The add courier
+
+"Whenever you add a big thing where you entered a lot of information, when you
+press Add, a little guy comes out from behind the button, grabs the A in Add,
+turns it around and sucks up all the information, puts it in a suitcase, before
+sprinting off the screen to the right." That, exactly, in `addCourier()`.
+
+- **It only ever runs on a SAVE.** Every one of the nine add handlers calls it
+  from inside its own `if(!error && data)` branch, which is also before that
+  handler clears its form -- so the pills he collects carry what was really
+  typed, and a courier is never seen carrying off an add that did not happen.
+  The study log is the one that goes through a shared function rather than
+  writing its own row, so `logStudySession` returns whether it logged anything
+  and the button asks.
+- **The letter is a COPY, and the real one is only made invisible.** Taking the
+  glyph out of the button would reflow it mid-animation, so the first character
+  is wrapped in a span, hidden, and drawn again in the overlay at the same
+  rect. The button keeps its own width and reads "dd" while he has the A.
+- **It is the first CHARACTER of whatever the label says**, code-point safe, so
+  it is the A of Add and the 추 of 추가. Checked: `Array.from('추가')[0]` is 추.
+- **Turned around, an A is a funnel** -- apex down, legs open upward -- which is
+  what the information can then be poured into. That is the whole reason the
+  brief's "turns it around" is also the thing that makes the next beat read.
+- **He is drawn facing LEFT, at the form**, and is flipped (`scaleX(-1)`) at the
+  moment he turns to go. One element carries the run and another the flip: one
+  element cannot animate one property from two places.
+- **He is hidden behind the button by a CLIP on a gate**, not by paint order
+  (an overlay cannot be behind a button in a card). The gate starts at the
+  button's own right edge and runs to the edge of the window, so a single
+  `clip-path: inset(0)` hides him while he is still behind the button AND takes
+  him off screen at the far end, with no value that has to be kept in step with
+  the animation.
+- **He stands to the right, because that is the way he leaves.** Measured at
+  375px: every Add button in the app has at least 44px of room there and he
+  needs 34, so the guard against there being no room is a guard rather than a
+  case anybody meets.
+- **Its own animation group**, `add`, so it can be turned off on its own like
+  the header, the title and the interface -- four `ANIM_GROUPS` now, with its
+  own row, label and hint in all three languages. Off, nothing runs at all: no
+  overlay, and the button's own glyph is never touched.
+
+### Two things that cost real time
+
+- **`fill: 'both'` on a DELAYED animation holds its first keyframe from time
+  zero**, which overrides whatever earlier animation is meant to be showing
+  until its turn. Measured by stepping the timeline: the courier stood fully
+  out from behind the button at t=0 and the letter sat in his hand before he
+  had reached for it, because the run and the tip were filling backwards over
+  the emerge and the grab. **Anything with a delay fills FORWARDS only.**
+- **The letter was invisible the moment it left the button.** It was drawn in
+  the button's own ink, and the Add button is a solid near-black pill with
+  near-white text -- so its ink is exactly the colour of the page behind it
+  (and the reverse in the dark theme). It crosses from the button's ink to the
+  page's as he lifts it, both read at run time, so it is right in both themes.
+  Same trap this file already records for a hard-coded white.
+
+### Checked how
+
+- **The sequence cannot be watched at speed in the preview pane**: it freezes
+  the document timeline unless something is painting, so six screenshots in one
+  batch returned six copies of one frozen frame. Every frame was verified by
+  **stepping `currentTime` by hand** with the cleanup timers stubbed out, which
+  is deterministic and is what caught the `fill` bug: A on the glyph at t=0,
+  him clipped behind the button, out and hopping at 200, the letter in his hand
+  at 400, the pills staggered at 93/35/4/0/0/0 percent opacity at 700, the
+  letter at the case at 1700, running at 1900.
+- **The drawing was judged at 3.4x**, by scaling the layer about itself, since
+  the pane cannot crop a screenshot. Light and dark.
+- The whole path end to end: it starts, a second call while it is running does
+  not stack a second one, and after 3.2s the layer is gone, `acBusy` is false
+  and the button is back to a single text node reading "Add".
+- 201 controls picked up by the new hover rule, one clash found (the reminder
+  trigger, above) and fixed, and the pin boxes confirmed to keep their own
+  transition rather than this one.

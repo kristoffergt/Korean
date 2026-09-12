@@ -556,6 +556,16 @@ body.no-anim-ui label.file-upload-btn:hover, body.no-anim-ui .linkbtn:hover,
 body.no-anim-ui .reminder-add-trigger:hover, body.no-anim-ui .tap-word:active,
 body.no-anim-ui .cal-seg:active, body.no-anim-ui label.file-upload-btn:active,
 body.no-anim-ui .linkbtn:active, body.no-anim-ui .reminder-add-trigger:active,
+body.no-anim-ui .field input:hover, body.no-anim-ui .field select:hover,
+body.no-anim-ui .field textarea:hover, body.no-anim-ui .auth-field input:hover,
+body.no-anim-ui .auth-field select:hover, body.no-anim-ui .log-form > button:hover,
+body.no-anim-ui .export-btn:hover, body.no-anim-ui .icon-pill-btn:hover,
+body.no-anim-ui .day-toggle-btn:hover, body.no-anim-ui .person-filter-btn:hover,
+body.no-anim-ui .field input:active, body.no-anim-ui .field select:active,
+body.no-anim-ui .field textarea:active, body.no-anim-ui .auth-field input:active,
+body.no-anim-ui .auth-field select:active, body.no-anim-ui .log-form > button:active,
+body.no-anim-ui .export-btn:active, body.no-anim-ui .icon-pill-btn:active,
+body.no-anim-ui .day-toggle-btn:active, body.no-anim-ui .person-filter-btn:active,
 body.no-anim-ui .tap-mark:hover, body.no-anim-ui .item-del:hover,
 body.no-anim-ui .note-del:hover, body.no-anim-ui .gram-note-del:hover,
 body.no-anim-ui .gram-resource-del:hover, body.no-anim-ui .reminder-chip-remove:hover,
@@ -1520,14 +1530,49 @@ button:hover{background:var(--ink-hover);}
    motion vocabulary rather than two.
    `:not(:has(...))` because an OPEN picker is a CHILD of the word, and
    scaling the word would scale the menu hanging off it. */
-.tap-word, .cal-seg, label.file-upload-btn, .linkbtn, .reminder-add-trigger{
+.tap-word, .cal-seg:not(.reminder-add-trigger), .linkbtn{
   transform-origin:left center;
   transition:transform 0.13s cubic-bezier(0.4,0,0.2,1),color 0.13s cubic-bezier(0.4,0,0.2,1);}
-.tap-word:hover, .cal-seg:not(:has(.cal-seg-picker)):not(:has(.inline-seg-picker)):hover,
-label.file-upload-btn:hover, .linkbtn:hover, .reminder-add-trigger:hover{
+.tap-word:hover,
+.cal-seg:not(.reminder-add-trigger):not(:has(.cal-seg-picker)):not(:has(.inline-seg-picker)):hover,
+.linkbtn:hover{
   transform:scale(1.08);}
-.tap-word:active, .cal-seg:active, label.file-upload-btn:active,
-.linkbtn:active, .reminder-add-trigger:active{transform:scale(0.98);transition-duration:0.06s;}
+.tap-word:active, .cal-seg:not(.reminder-add-trigger):active,
+.linkbtn:active{transform:scale(0.98);transition-duration:0.06s;}
+/* And every BOX the reader can press or type in grows the same way the words
+   do (real-user request: "maybe we need to simply add that functionality to
+   ALL boxes across the site"). Two things differ from the words above, and
+   both are forced rather than chosen:
+   THE ORIGIN IS THE CENTRE. A word grows from where it starts reading; a box
+   in a row of boxes has neighbours on both sides, so growing about its middle
+   spends half the growth into each gap rather than all of it into one.
+   THE FACTOR IS SMALLER, because the growth is proportional and these are far
+   bigger than a word. Measured: the widest control in the app is 320px and
+   .log-form's own gap is 10px, so the words' 1.08 would put a hovered box
+   13px into its neighbour, where 1.04 stays inside the gap (6.4px) at every
+   size on the page.
+   :focus is excluded outright -- a box being typed in is the one place this
+   reads as a fault rather than as feedback -- and so are the checkbox and the
+   radio, which are 16px and carry their own drawn mark. */
+.field input:not([type=checkbox]):not([type=radio]), .field select, .field textarea,
+.auth-field input:not(.pin-digit), .auth-field select, .log-form > button, .export-btn, .icon-pill-btn,
+.day-toggle-btn, .person-filter-btn, .reminder-add-trigger, label.file-upload-btn{
+  transform-origin:center center;
+  transition:transform 0.13s cubic-bezier(0.4,0,0.2,1),
+             background-color 0.13s cubic-bezier(0.4,0,0.2,1),
+             border-color 0.13s cubic-bezier(0.4,0,0.2,1),
+             color 0.13s cubic-bezier(0.4,0,0.2,1);}
+.field input:not([type=checkbox]):not([type=radio]):hover:not(:focus),
+.field select:hover:not(:focus), .field textarea:hover:not(:focus),
+.auth-field input:not(.pin-digit):hover:not(:focus), .auth-field select:hover:not(:focus),
+.log-form > button:hover, .export-btn:hover, .icon-pill-btn:hover,
+.day-toggle-btn:hover, .person-filter-btn:hover, .reminder-add-trigger:hover,
+label.file-upload-btn:hover{transform:scale(1.04);}
+.field input:not([type=checkbox]):not([type=radio]):active, .field select:active,
+.field textarea:active, .auth-field input:not(.pin-digit):active, .auth-field select:active,
+.log-form > button:active, .export-btn:active, .icon-pill-btn:active,
+.day-toggle-btn:active, .person-filter-btn:active, .reminder-add-trigger:active,
+label.file-upload-btn:active{transform:scale(0.98);transition-duration:0.06s;}
 /* The other half of the vocabulary: a MARK is the control -- a bare glyph
    with no box, which is what every delete and close ✕ in the app is.
    Three things make it different from a word rather than the same rule
@@ -1579,6 +1624,16 @@ body.no-anim-ui .linkbtn.act-icon:active{transform:none;}
   .tap-word:hover, .cal-seg:hover, label.file-upload-btn:hover, .linkbtn:hover,
   .reminder-add-trigger:hover, .tap-word:active, .cal-seg:active,
   label.file-upload-btn:active, .linkbtn:active, .reminder-add-trigger:active{transform:none;}
+  .field input, .field select, .field textarea, .auth-field input:not(.pin-digit), .auth-field select,
+  .log-form > button, .export-btn, .icon-pill-btn, .day-toggle-btn,
+  .person-filter-btn{transition-duration:0s;}
+  .field input:hover, .field select:hover, .field textarea:hover,
+  .auth-field input:hover, .auth-field select:hover, .log-form > button:hover,
+  .export-btn:hover, .icon-pill-btn:hover, .day-toggle-btn:hover,
+  .person-filter-btn:hover, .field input:active, .field select:active,
+  .field textarea:active, .auth-field input:not(.pin-digit):active, .auth-field select:active,
+  .log-form > button:active, .export-btn:active, .icon-pill-btn:active,
+  .day-toggle-btn:active, .person-filter-btn:active{transform:none;}
 }
 /* Was an inline style="font-size:15px" -- inline styles beat :hover's
    selector-based font-size:1.1em outright regardless of source order, so
@@ -2630,6 +2685,46 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
 .modal-box h2{font-family:'Noto Serif KR',serif;font-size:16px;margin:0 0 14px;}
 .modal-box p{font-size:13.5px;color:var(--ink);margin:0;}
 .tab-icon-korea{width:14px;height:14px;flex:none;display:inline-block;background-color:currentColor;-webkit-mask-image:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00OCAtNDggOTYgOTYiPjxjaXJjbGUgY3g9IjAiIGN5PSIwIiByPSIyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjMiLz48ZyBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iNCIgZmlsbD0ibm9uZSI+PHBhdGggdHJhbnNmb3JtPSJyb3RhdGUoMzMuNjkwMDY3NTI1OTgpIiBkPSJNLTUwLTEydjI0bTYgMHYtMjRtNiAwdjI0bTc2IDBWMW0wLTJ2LTExbTYgMHYxMW0wIDJ2MTFtNiAwVjFtMC0ydi0xMSIvPjxwYXRoIHRyYW5zZm9ybT0icm90YXRlKC0zMy42OTAwNjc1MjU5OCkiIGQ9Ik0tNTAtMTJ2MjRtNiAwVjFtMC0ydi0xMW02IDB2MjRtNzYgMFYxbTAtMnYtMTFtNiAwdjI0bTYgMFYxbTAtMnYtMTEiLz48L2c+PGcgdHJhbnNmb3JtPSJyb3RhdGUoMzMuNjkwMDY3NTI1OTgpIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNLTI0IDBhMjQgMjQgMCAxMDQ4IDBBMTIgMTIgMCAxMDAgMGExMiAxMiAwIDExLTI0IDAiLz48L2c+PC9zdmc+');mask-image:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00OCAtNDggOTYgOTYiPjxjaXJjbGUgY3g9IjAiIGN5PSIwIiByPSIyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjMiLz48ZyBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iNCIgZmlsbD0ibm9uZSI+PHBhdGggdHJhbnNmb3JtPSJyb3RhdGUoMzMuNjkwMDY3NTI1OTgpIiBkPSJNLTUwLTEydjI0bTYgMHYtMjRtNiAwdjI0bTc2IDBWMW0wLTJ2LTExbTYgMHYxMW0wIDJ2MTFtNiAwVjFtMC0ydi0xMSIvPjxwYXRoIHRyYW5zZm9ybT0icm90YXRlKC0zMy42OTAwNjc1MjU5OCkiIGQ9Ik0tNTAtMTJ2MjRtNiAwVjFtMC0ydi0xMW02IDB2MjRtNzYgMFYxbTAtMnYtMTFtNiAwdjI0bTYgMFYxbTAtMnYtMTEiLz48L2c+PGcgdHJhbnNmb3JtPSJyb3RhdGUoMzMuNjkwMDY3NTI1OTgpIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNLTI0IDBhMjQgMjQgMCAxMDQ4IDBBMTIgMTIgMCAxMDAgMGExMiAxMiAwIDExLTI0IDAiLz48L2c+PC9zdmc+');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;}
+/* ---------- THE ADD COURIER ----------
+   What happens when something is actually SAVED (real-user request): a little
+   guy comes out from behind the Add button, takes the first letter off its
+   label, turns it upside down so it is a funnel, everything you typed pours
+   into it, he packs it into his suitcase and sprints off the screen.
+   The geometry is all measured at run time (where the button is, where the
+   fields are, how wide the window is), so the timeline lives in JS with the
+   Web Animations API -- see addCourier(). What is HERE is only what is fixed
+   in the figure's own units: the run cycle, and the boxes the parts sit in.
+   The figure is drawn facing LEFT, towards the form he is emptying, and is
+   flipped when he turns to go. */
+.ac-layer{position:fixed;inset:0;z-index:960;pointer-events:none;}
+/* He is hidden until he has come out from behind the button, and that is this
+   box's LEFT EDGE doing it: the gate starts at the button's own right edge and
+   runs to the edge of the window, so one `inset(0)` clip hides him while he is
+   still behind the button AND takes him off screen at the far end, with no
+   value anywhere that has to be kept in step with the animation. The headroom
+   above is for his hop; the figure sits at the bottom of the gate. */
+.ac-gate{position:absolute;clip-path:inset(0);}
+.ac-guy{position:absolute;color:var(--ink);}
+.ac-guy svg{display:block;overflow:visible;}
+.ac-a{position:absolute;text-align:center;white-space:pre;}
+/* One field, one pill, carrying what was actually typed into it. */
+.ac-bit{position:absolute;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
+  line-height:1.5;padding:1px 7px;border-radius:9px;max-width:140px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;background:var(--paper-dim);
+  border:1px solid var(--line);color:var(--ink-soft);}
+/* Every part that swings does it about a JOINT, which is a point in the
+   drawing rather than the middle of the box it happens to sit in -- so
+   transform-box is the view-box and the origin is spelled out in its units,
+   the same way the moon's own angler is drawn. */
+.ac-leg-b, .ac-leg-f, .ac-top, .ac-lid{transform-box:view-box;}
+.ac-leg-b, .ac-leg-f{transform-origin:15px 27.5px;}
+.ac-lid{transform-origin:19px 20.5px;}
+@keyframes ac-run-b{0%,100%{transform:rotate(24deg);}50%{transform:rotate(-20deg);}}
+@keyframes ac-run-f{0%,100%{transform:rotate(-20deg);}50%{transform:rotate(24deg);}}
+@keyframes ac-bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-1.4px);}}
+.ac-running .ac-leg-b{animation:ac-run-b 0.2s linear infinite;}
+.ac-running .ac-leg-f{animation:ac-run-f 0.2s linear infinite;}
+.ac-running .ac-top{animation:ac-bob 0.2s linear infinite;}
 </style>
 </head>
 <body>
@@ -4275,7 +4370,12 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
         <input type="checkbox" class="anim-toggle" data-anim="ui" style="width:15px;height:15px;">
         <span id="animUiLabel"></span>
       </label>
-      <div class="hint" id="animUiHint" style="margin:2px 0 0 24px;"></div>
+      <div class="hint" id="animUiHint" style="margin:2px 0 8px 24px;"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" class="anim-toggle" data-anim="add" style="width:15px;height:15px;">
+        <span id="animAddLabel"></span>
+      </label>
+      <div class="hint" id="animAddHint" style="margin:2px 0 0 24px;"></div>
     </div>
     <div id="settingsShowTopikRow" style="margin-top:14px;">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
@@ -10375,7 +10475,7 @@ const I18N = {
     topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
-    lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name shines when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over a word you can click, and the squeeze when you press it.',
+    lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name shines when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over anything you can click or type in, and the squeeze when you press it.', animAddLabel:'The add courier', animAddHint:'When something is saved, a courier comes out from behind the Add button, takes the first letter off it, turns it into a funnel, pours in what you typed, packs it and runs off.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time (events only)', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color', eventColorUseTheirBtn:"Use {name}'s color", splitTooNarrow:"Split view needs a wider window: at least {n} px, twice the app's width. Widen the window to open two tabs side by side.", splitClosedNarrow:'The window got too narrow for two tabs, so it went back to one.', splitClosePane:'Close {name}', splitDropHere:'Let go to open side by side', splitResizeLabel:'Resize the two halves', splitResizeHint:'Drag to resize. Double-click to make them even again.', splitSwap:'Swap sides', colorPopTitle:'Your color', colorFavSave:'Save', colorFavSaveHint:'Save this color to your favorites', colorFavSaved:'Saved', colorFavUnsave:'Remove from favorites', colorFavs:'Favorites', colorFavsEmpty:'None yet. Save a color to keep it for later.', colorPickNew:'Pick a new color', colorFavRemove:'Remove',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
     calExportTitle:'Download calendar', calExportUseList:'Pick from list', calExportUseCalendar:'Pick on calendar', calExportPickHint:'Click events on the calendar to leave them out.', calExportCountTpl:'{in} of {total}', calExportBtn:'Download', calExportInclude:'Include', calExportAll:'All', calExportNone:'None', calExportGo:'Download', calExportWorking:'Preparing the file...', calExportFailed:"Couldn't create the file. Check your connection and try again.", calExportEmpty:'Nothing on the calendar in this range.', eventKind:'Type', kindDeadline:'Deadline', kindEvent:'Event', yourEvents:'Your events',
@@ -10498,7 +10598,7 @@ const I18N = {
     topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
-    lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 반짝입니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누를 수 있는 단어 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.',
+    lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 반짝입니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누르거나 입력할 수 있는 것 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.', animAddLabel:'추가 배달원', animAddHint:'저장되면 추가 버튼 뒤에서 배달원이 나와 버튼의 첫 글자를 떼어 깔때기로 뒤집고, 입력한 내용을 쏟아 넣은 뒤 가방에 담아 달려갑니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각 (일정 전용)', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용', eventColorUseTheirBtn:'{name}의 색상 사용', splitTooNarrow:'화면 분할에는 더 넓은 창이 필요합니다. 앱 너비의 두 배인 {n}px 이상이어야 합니다. 두 탭을 나란히 열려면 창을 넓혀 주세요.', splitClosedNarrow:'창이 두 탭을 담기에는 좁아져서 한 탭으로 돌아갔습니다.', splitClosePane:'{name} 닫기', splitDropHere:'놓으면 나란히 열립니다', splitResizeLabel:'두 화면 크기 조절', splitResizeHint:'끌어서 크기를 조절합니다. 두 번 클릭하면 다시 반반이 됩니다.', splitSwap:'좌우 바꾸기', colorPopTitle:'내 색상', colorFavSave:'저장', colorFavSaveHint:'이 색상을 즐겨찾기에 저장', colorFavSaved:'저장됨', colorFavUnsave:'즐겨찾기에서 삭제', colorFavs:'즐겨찾는 색상', colorFavsEmpty:'아직 없습니다. 색상을 저장해 두면 나중에 다시 쓸 수 있어요.', colorPickNew:'새 색상 고르기', colorFavRemove:'삭제',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
     calExportTitle:'캘린더 내려받기', calExportUseList:'목록에서 선택', calExportUseCalendar:'캘린더에서 선택', calExportPickHint:'캘린더에서 일정을 클릭하면 제외됩니다.', calExportCountTpl:'{total}개 중 {in}개', calExportBtn:'내려받기', calExportInclude:'포함할 항목', calExportAll:'전체', calExportNone:'해제', calExportGo:'내려받기', calExportWorking:'파일을 만드는 중...', calExportFailed:'파일을 만들지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', calExportEmpty:'이 기간에는 캘린더에 아무것도 없습니다.', eventKind:'유형', kindDeadline:'마감일', kindEvent:'일정', yourEvents:'나의 일정',
@@ -10621,7 +10721,7 @@ const I18N = {
     topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
-    lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn sáng lên khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Chữ bấm được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.',
+    lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn sáng lên khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Mọi thứ bấm được hoặc nhập được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.', animAddLabel:'Người đưa thư khi thêm', animAddHint:'Khi một mục được lưu, một người đưa thư bước ra từ sau nút Thêm, lấy chữ đầu tiên trên nút, lật thành cái phễu, rót những gì bạn đã nhập vào, xếp vào vali rồi chạy đi.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc (chỉ sự kiện)', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi', eventColorUseTheirBtn:'Dùng màu của {name}', splitTooNarrow:'Chia đôi màn hình cần cửa sổ rộng hơn: ít nhất {n} px, gấp đôi độ rộng của ứng dụng. Hãy mở rộng cửa sổ để mở hai thẻ cạnh nhau.', splitClosedNarrow:'Cửa sổ quá hẹp cho hai thẻ nên đã trở lại một thẻ.', splitClosePane:'Đóng {name}', splitDropHere:'Thả ra để mở cạnh nhau', splitResizeLabel:'Đổi kích thước hai bên', splitResizeHint:'Kéo để đổi kích thước. Nhấp đúp để chia đều lại.', splitSwap:'Đổi bên', colorPopTitle:'Màu của tôi', colorFavSave:'Lưu', colorFavSaveHint:'Lưu màu này vào mục yêu thích', colorFavSaved:'Đã lưu', colorFavUnsave:'Xóa khỏi mục yêu thích', colorFavs:'Màu yêu thích', colorFavsEmpty:'Chưa có. Hãy lưu một màu để dùng lại sau.', colorPickNew:'Chọn màu mới', colorFavRemove:'Xóa',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
     calExportTitle:'Tải lịch về', calExportUseList:'Chọn từ danh sách', calExportUseCalendar:'Chọn trên lịch', calExportPickHint:'Nhấp vào sự kiện trên lịch để loại bỏ.', calExportCountTpl:'{in}/{total}', calExportBtn:'Tải về', calExportInclude:'Bao gồm', calExportAll:'Tất cả', calExportNone:'Bỏ chọn', calExportGo:'Tải về', calExportWorking:'Đang tạo tệp...', calExportFailed:'Không tạo được tệp. Hãy kiểm tra kết nối và thử lại.', calExportEmpty:'Không có gì trên lịch trong khoảng này.', eventKind:'Loại', kindDeadline:'Hạn chót', kindEvent:'Sự kiện', yourEvents:'Sự kiện của bạn',
@@ -10762,7 +10862,7 @@ const STATIC_MAP = {
   lblAnimations:'lblAnimations',
   animHeaderLabel:'animHeaderLabel', animHeaderHint:'animHeaderHint',
   animTitleLabel:'animTitleLabel', animTitleHint:'animTitleHint',
-  animUiLabel:'animUiLabel', animUiHint:'animUiHint', setGroupAppearanceLabel:'setGroupAppearanceLabel',
+  animUiLabel:'animUiLabel', animUiHint:'animUiHint', animAddLabel:'animAddLabel', animAddHint:'animAddHint', setGroupAppearanceLabel:'setGroupAppearanceLabel',
   setGroupNotifyLabel:'setGroupNotifyLabel',
   setGroupSecurityLabel:'setGroupSecurityLabel', setGroupDangerLabel:'setGroupDangerLabel',
   resumePublicHeader:'lblResumeUpload',
@@ -16101,11 +16201,214 @@ const MESSAGING_KEY = 'trackerMessaging';
 // header marks moving but not the title can have exactly that. Each is its
 // own key, absent means ON, and each turns off a body class that its own CSS
 // block watches -- nothing else in the sheet has to know these exist.
-const ANIM_GROUPS = ['header','title','ui'];
+const ANIM_GROUPS = ['header','title','ui','add'];
 const animKey = g => 'trackerAnim' + g.charAt(0).toUpperCase() + g.slice(1);
 function animEnabled(g){ return localStorage.getItem(animKey(g)) !== '0'; }
 function applyAnimPrefs(){
   ANIM_GROUPS.forEach(g=> document.body.classList.toggle('no-anim-' + g, !animEnabled(g)));
+}
+
+/* ---------- THE ADD COURIER ---------- */
+// The sequence itself, in order: he comes out from behind the button, takes
+// the first letter off its label, turns it around so it is a funnel, the
+// information pours in, it goes in the suitcase, and he sprints off to the
+// right. See the stylesheet's own block for the figure and the run cycle.
+//
+// It only ever runs on a SAVE. Every add handler calls it from inside its own
+// `if(!error && data)` branch, which is also before the form is cleared -- so
+// the pills he collects carry what was really typed, and a courier is never
+// seen carrying off an add that did not happen.
+const AC_T = { out: 280, grab: 240, bit: 430, step: 70, tip: 280, turn: 130, run: 560 };
+const AC_W = 30, AC_H = 46;      // the figure's own box, in px and in its own units
+const AC_FOOT = 43;              // where his feet are in it, so they land on the button's own line
+const AC_HAND = { x: 7, y: 10 }; // the hand he holds the letter up in
+const AC_CASE = { x: 23.5, y: 22 };
+const AC_BITS_MAX = 6;
+let acBusy = false;
+function acFigure(){
+  // Stroked, round-capped, one part per element: the same drawing language as
+  // the moon's angler. Facing left, at the form.
+  return '<svg width="' + AC_W + '" height="' + AC_H + '" viewBox="0 0 ' + AC_W + ' ' + AC_H + '"'
+    + ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+    + ' stroke-linejoin="round" aria-hidden="true">'
+    + '<g class="ac-leg-b"><path d="M15 27.5L12 36l-1 7"></path></g>'
+    + '<g class="ac-leg-f"><path d="M15 27.5l3 8.5 1.5 7"></path></g>'
+    + '<g class="ac-top">'
+    + '<circle cx="15" cy="7" r="4.3"></circle>'
+    + '<path d="M15 11.3v16.2"></path>'
+    + '<path d="M15 14.5L7 10"></path>'
+    + '<path d="M15 14.5l7 5.5"></path>'
+    + '<path class="ac-lid" d="M19 20.5h9.5"></path>'
+    + '<path d="M20.8 20.5v-1.6h3.6v1.6"></path>'
+    + '<rect x="19" y="20.5" width="9.5" height="7.5" rx="1.4"></rect>'
+    + '</g></svg>';
+}
+// What he carries: one pill per field that was actually filled in, in the
+// order they are on screen. A select says what it SAYS rather than the value
+// behind it, since that is what was chosen.
+function acBits(form){
+  if(!form) return [];
+  const out = [];
+  form.querySelectorAll('input, select, textarea').forEach(el=>{
+    if(out.length >= AC_BITS_MAX) return;
+    const type = (el.type || '').toLowerCase();
+    if(type === 'checkbox' || type === 'radio' || type === 'file' || type === 'hidden'
+      || type === 'color' || type === 'range') return;
+    let text = '';
+    if(el.tagName === 'SELECT'){
+      const opt = el.options[el.selectedIndex];
+      text = opt ? opt.textContent : '';
+    } else {
+      text = el.value || '';
+    }
+    text = (text || '').trim();
+    if(!text) return;
+    const r = el.getBoundingClientRect();
+    if(!r.width || r.bottom < 0 || r.top > window.innerHeight) return;
+    out.push({ text: text.length > 22 ? text.slice(0, 21) + '…' : text, r });
+  });
+  return out;
+}
+function addCourier(btn){
+  if(typeof btn === 'string') btn = document.getElementById(btn);
+  if(!btn || acBusy || !btn.animate) return;
+  if(!animEnabled('add')) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // The first CHARACTER of the label, whatever the language: the A of Add, the
+  // 추 of 추가. Code-point safe, and nothing runs if the label is not one plain
+  // text node -- a button carrying a mark has no glyph to lift.
+  const label = btn.textContent || '';
+  const first = Array.from(label)[0];
+  if(!first || !first.trim() || btn.childNodes.length > 1) return;
+  const r = btn.getBoundingClientRect();
+  if(!r.width || r.bottom < 30 || r.top > window.innerHeight - 20) return; // nothing to watch
+  const guyLeft = r.right + 4, guyTop = r.bottom - AC_FOOT;
+  // He stands to the RIGHT of the button, because that is the way he leaves.
+  // Measured at 375px, every Add button in the app has at least 44px of room
+  // there and he needs 34, so this is a guard against a narrower window or a
+  // longer label rather than a case anybody meets.
+  if(guyTop < 10 || window.innerWidth - r.right < AC_W + 8) return;
+
+  // Lift the glyph: the button keeps its own label at its own width, and the
+  // first letter is only made INVISIBLE, with the copy that gets carried off
+  // drawn over it in the overlay. Taking the real one out would reflow the
+  // button mid-animation.
+  const gSpan = document.createElement('span');
+  gSpan.textContent = first;
+  const restSpan = document.createElement('span');
+  restSpan.textContent = label.slice(first.length);
+  btn.textContent = '';
+  btn.append(gSpan, restSpan);
+  const gr = gSpan.getBoundingClientRect();
+  gSpan.style.visibility = 'hidden';
+
+  acBusy = true;
+  const cs = getComputedStyle(btn);
+  const layer = document.createElement('div');
+  layer.className = 'ac-layer';
+  const gate = document.createElement('div');
+  gate.className = 'ac-gate';
+  gate.style.left = guyLeft + 'px';
+  gate.style.top = (guyTop - 40) + 'px';
+  gate.style.width = Math.max(80, window.innerWidth - guyLeft) + 'px';
+  gate.style.height = (AC_H + 40) + 'px';
+  const guy = document.createElement('div');
+  guy.className = 'ac-guy';
+  guy.style.left = '0px';
+  guy.style.top = '40px';
+  guy.innerHTML = acFigure();
+  gate.appendChild(guy);
+  const a = document.createElement('div');
+  a.className = 'ac-a';
+  a.textContent = first;
+  a.style.left = gr.left + 'px';
+  a.style.top = gr.top + 'px';
+  a.style.width = gr.width + 'px';
+  a.style.height = gr.height + 'px';
+  a.style.lineHeight = gr.height + 'px';
+  a.style.fontFamily = cs.fontFamily;
+  a.style.fontSize = cs.fontSize;
+  a.style.fontWeight = cs.fontWeight;
+  a.style.color = cs.color;
+  const pageInk = getComputedStyle(document.body).color;
+  layer.append(gate, a);
+  document.body.appendChild(layer);
+
+  const bits = acBits(btn.closest('.log-form') || btn.closest('.card'));
+  const handX = guyLeft + AC_HAND.x, handY = guyTop + AC_HAND.y;
+  const caseX = guyLeft + AC_CASE.x, caseY = guyTop + AC_CASE.y;
+  // Everything is declared up front with its own delay, so the sequence is one
+  // list to read rather than a chain of timers that can drift apart.
+  const bitsEnd = AC_T.out + AC_T.grab + (bits.length ? (bits.length - 1) * AC_T.step + AC_T.bit : 0);
+  const tipAt = bitsEnd + 60;
+  const turnAt = tipAt + AC_T.tip;
+  const runAt = turnAt + AC_T.turn;
+  const total = runAt + AC_T.run;
+
+  guy.animate([
+    { transform: 'translate(' + (-(AC_W + 8)) + 'px, 0)' },
+    { transform: 'translate(' + (-(AC_W + 8) / 2.4) + 'px, -7px)', offset: 0.55 },
+    { transform: 'translate(0, 0)' }
+  ], { duration: AC_T.out, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'both' });
+
+  // He takes it and turns it OVER: upside down, an A is a funnel with its
+  // mouth up, which is what the information can then be poured into.
+  const dx = handX - (gr.left + gr.width / 2), dy = handY - (gr.top + gr.height / 2);
+  a.animate([
+    { transform: 'translate(0,0) rotate(0deg) scale(1)', color: cs.color },
+    { transform: 'translate(' + (dx * 0.35) + 'px,' + (dy * 0.35) + 'px) rotate(70deg) scale(1.2)', color: pageInk, offset: 0.45 },
+    { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(180deg) scale(1.5)', color: pageInk }
+  ], { duration: AC_T.grab, delay: AC_T.out, easing: 'cubic-bezier(.34,1.3,.64,1)', fill: 'both' });
+
+  const lid = guy.querySelector('.ac-lid');
+  if(lid && lid.animate){
+    lid.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(-42deg)' }],
+      { duration: 180, delay: AC_T.out, easing: 'ease-out', fill: 'both' });
+    lid.animate([{ transform: 'rotate(-42deg)' }, { transform: 'rotate(0deg)' }],
+      { duration: 170, delay: tipAt + 170, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'forwards' });
+  }
+
+  bits.forEach((b, i)=>{
+    const el = document.createElement('div');
+    el.className = 'ac-bit';
+    el.textContent = b.text;
+    el.style.left = b.r.left + 'px';
+    el.style.top = (b.r.top + b.r.height / 2 - 9) + 'px';
+    layer.appendChild(el);
+    const er = el.getBoundingClientRect();
+    const bx = handX - (er.left + er.width / 2), by = handY - (er.top + er.height / 2);
+    el.animate([
+      { transform: 'translate(0,0) scale(.7)', opacity: 0 },
+      { transform: 'translate(' + (bx * 0.35) + 'px,' + (by * 0.35 - 26) + 'px) scale(1)', opacity: 1, offset: 0.45 },
+      { transform: 'translate(' + bx + 'px,' + by + 'px) scale(.25)', opacity: 0 }
+    ], { duration: AC_T.bit, delay: AC_T.out + AC_T.grab + i * AC_T.step, easing: 'cubic-bezier(.4,0,.5,1)', fill: 'both' });
+  });
+
+  a.animate([
+    { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(180deg) scale(1.5)', opacity: 1, color: pageInk },
+    { transform: 'translate(' + (caseX - (gr.left + gr.width / 2)) + 'px,' + (caseY - (gr.top + gr.height / 2)) + 'px) rotate(330deg) scale(.25)', opacity: 0, color: pageInk }
+  ], { duration: AC_T.tip, delay: tipAt, easing: 'cubic-bezier(.5,0,.8,.7)', fill: 'forwards' });
+
+  const svg = guy.querySelector('svg');
+  if(svg && svg.animate){
+    svg.animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(-1)' }],
+      { duration: AC_T.turn, delay: turnAt, easing: 'ease-in-out', fill: 'forwards' });
+  }
+  guy.animate([
+    { transform: 'translate(0,0)' },
+    { transform: 'translate(' + (window.innerWidth - guyLeft + 40) + 'px, 0)' }
+  ], { duration: AC_T.run, delay: runAt, easing: 'cubic-bezier(.35,0,.85,.6)', fill: 'forwards' });
+  const runTimer = setTimeout(()=> guy.classList.add('ac-running'), runAt);
+
+  setTimeout(()=>{
+    clearTimeout(runTimer);
+    layer.remove();
+    acBusy = false;
+    // Put the label back, unless a language change has already rewritten it --
+    // this button's text is owned by STATIC_MAP, and restoring the old string
+    // over a new one would leave it in the language it was pressed in.
+    if(btn.firstChild === gSpan) btn.textContent = label;
+  }, total + 60);
 }
 function messagingEnabled(){ return localStorage.getItem(MESSAGING_KEY) !== '0'; }
 function applyMessagingPref(){
@@ -17103,6 +17406,7 @@ async function addBook(){
   const row = { user_id: currentUser.id, title, author: author || null, status, total_pages: pages, pages_read: status==='finished' ? pages : 0, finished_at: status==='finished' ? todayStr() : null, notes: [] };
   const { data, error } = await supabaseClient.from('books').insert(row).select();
   if(!error && data){
+    addCourier('addBookBtn');
     if(!allBooks[currentUser.id]) allBooks[currentUser.id] = [];
     allBooks[currentUser.id].unshift(data[0]);
   }
@@ -17372,6 +17676,7 @@ async function addArticle(){
   const row = { user_id: currentUser.id, title, author: author || null, source: source || null, link: link || null, status, finished_at: status==='finished' ? todayStr() : null, notes: [] };
   const { data, error } = await supabaseClient.from('articles').insert(row).select();
   if(!error && data){
+    addCourier('addArticleBtn');
     if(!allArticles[currentUser.id]) allArticles[currentUser.id] = [];
     allArticles[currentUser.id].unshift(data[0]);
   }
@@ -17721,6 +18026,7 @@ async function addJob(){
   };
   const { data, error } = await supabaseClient.from('job_applications').insert(row).select();
   if(!error && data){
+    addCourier('addJobBtn');
     if(!allJobs[currentUser.id]) allJobs[currentUser.id] = [];
     allJobs[currentUser.id].unshift(data[0]);
   }
@@ -18145,6 +18451,7 @@ async function addCert(){
   const row = { user_id: currentUser.id, name, issuer: issuer || null, status, date_completed: dateCompleted, link: link || null };
   const { data, error } = await supabaseClient.from('certifications').insert(row).select();
   if(!error && data){
+    addCourier('addCertBtn');
     if(!allCerts[currentUser.id]) allCerts[currentUser.id] = [];
     allCerts[currentUser.id].unshift(data[0]);
   }
@@ -20789,6 +21096,7 @@ async function addEvent(){
   try {
     const { data, error } = await supabaseClient.from('events').insert(rows).select();
     if(!error && data){
+      addCourier('addEventBtn');
       rememberEventKind(kind);
       data.forEach(row=>{
         const ownerUid = row.user_id;
@@ -32312,20 +32620,25 @@ function initForm(){
   newEventReminders = [];
   renderEventReminderChips();
 }
+// Answers whether it actually logged anything, which is what the Add button
+// needs in order to send the courier out only on a real save. The timer's own
+// save calls it too and ignores the answer.
 async function logStudySession(dateVal, actVal, hoursVal){
-  if(!dateVal || !actVal || isNaN(hoursVal) || hoursVal <= 0) return;
+  if(!dateVal || !actVal || isNaN(hoursVal) || hoursVal <= 0) return false;
   if(!allEntries[currentUser.id]) allEntries[currentUser.id] = {};
   const day = allEntries[currentUser.id][dateVal] || {};
   day[actVal] = (day[actVal] || 0) + hoursVal;
   allEntries[currentUser.id][dateVal] = day;
   await upsertMyDay(dateVal, day);
   renderAll();
+  return true;
 }
 document.getElementById('addBtn').addEventListener('click', async ()=>{
   const dateVal = document.getElementById('dateInput').value;
   const actVal = document.getElementById('activityInput').value;
   const hoursVal = parseFloat(document.getElementById('hoursInput').value);
-  await logStudySession(dateVal, actVal, hoursVal);
+  const logged = await logStudySession(dateVal, actVal, hoursVal);
+  if(logged) addCourier('addBtn');
   document.getElementById('hoursInput').value = '';
 });
 /* ---------- STUDY TIMER ---------- */
@@ -32574,6 +32887,7 @@ async function addCourse(){
   };
   const { data, error } = await supabaseClient.from('courses').insert(row).select();
   if(!error && data && data[0]){
+    addCourier('addCourseBtn');
     const ownerUid = data[0].user_id;
     if(!allCourses[ownerUid]) allCourses[ownerUid] = [];
     allCourses[ownerUid].unshift(data[0]);
@@ -33211,6 +33525,7 @@ async function addLecture(){
   const row = { user_id: currentUser.id, course_id: courseId, header, lecture_title: title, content: '', sort_order: maxOrder+1 };
   const { data, error } = await supabaseClient.from('course_notes').insert(row).select();
   if(!error && data && data[0]){
+    addCourier('addLectureBtn');
     if(!allNotes[groupKey]) allNotes[groupKey] = [];
     allNotes[groupKey].push(data[0]);
     expandedNoteGroups.add(groupKey);
@@ -34612,6 +34927,7 @@ async function addNotebookNote(){
   const row = { user_id: currentUser.id, header, lecture_title: title, content: '', sort_order: maxOrder+1 };
   const { data, error } = await supabaseClient.from('notebook_notes').insert(row).select();
   if(!error && data && data[0]){
+    addCourier('addNotebookBtn');
     if(!allNotebookNotes[groupKey]) allNotebookNotes[groupKey] = [];
     allNotebookNotes[groupKey].push(data[0]);
     expandedNotebookGroups.add(groupKey);
