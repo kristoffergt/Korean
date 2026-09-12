@@ -4580,3 +4580,19 @@ prompt pill, and the A flying home at 3400. Then once with real timers end to
 end: no layer left behind, the label back with one child node, `acBusy` false,
 and the button he stepped on back to 75.3x14.5 with its own transform-origin
 restored.
+
+### Members rides in the Overview heading's own corner on a phone (12 Sep)
+
+"The Members in expense should be in the right corner, same line as the
+Overview when you are on the App version." It was the last item in the row of
+currency controls, which on a desktop puts it at the far right of the heading's
+own line and on a phone leaves it stranded below them.
+
+**Ordered rather than moved**, so there is one of each in the document:
+`.exp-head` is the row, the button is a child of it rather than of
+`.exp-head-controls`, and `order` puts the controls before it on a desktop and
+after it under 640px, where the controls also take `flex-basis:100%` and drop to
+their own line. Measured at both widths: at 1024 the row reads Overview,
+controls, Members with Members ending on the row's own right edge (981 of 981);
+at 375 Overview and Members share the first line (both at y 421, Members
+260..332 against a row ending at 332) and the controls take the two below.
