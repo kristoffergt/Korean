@@ -5404,3 +5404,189 @@ keyed by class for exactly that reason.
 **Do not reach for `icon-maskable-512.png` as the substitute**: it is the same
 artwork with the mark inset inside a safe zone for Android's crop, so it would
 draw the logo visibly smaller in its frame.
+
+## The header was faking its own travel, and the courier was nailed to the window (12 Sep, sixty-fourth pass)
+
+### A FIXED box cannot travel with a page, and a phone is where that shows
+
+"When you scroll fast on the app, a bunch of shit looks like it flies out from
+the top (leaderboard and stuff)", with a recording. Measured off it rather than
+argued about: over fifteen consecutive frames the gap between the bar's own
+bottom and the subtab row underneath it runs **50, 63, 69, 73, 71 physical px**
+and then holds. The bar and the content beside it are moving by different
+amounts, which is the whole complaint in one number.
+
+**The bar was `position: fixed` with its `top` rewritten on every scroll
+event** (`--topbar-rest`, the resting offset less the scroll). That is exactly
+right when the scroll and the handler are in the same task, which is why the
+7 Sep verification passed it -- "the bar's top matched `max(pinTop, restTop -
+scrollY)` to the pixel on every step" of a 50-step crawl. **It is never true on
+a phone.** The scroll runs on the compositor and the handler arrives behind it,
+so the value is stale by however far the fling has got; and worse, a rubber-band
+bounce at the top moves the CONTENT and cannot move a fixed box at all, since
+that box is nailed to the layout viewport. So at the top of the page, which is
+where a fast scroll ends up, the bar's own opaque background slides over the
+content and lets go of it again.
+
+**So the SPACER is the sticky one now, and the bar is absolute inside it.** Not
+a third attempt at the 6/7 Sep design: those made the BAR sticky and had a
+spacer grow by what the bar's condense lost, which is a compensation that can
+be a frame late and locked the scroll twice. Here the only box in flow is the
+spacer, its height is the bar's RESTING height and nothing ever changes it, and
+the browser both travels and sticks it on the compositor with no script at all.
+The condense cannot reach the document at any instant, mid-transition included,
+because what condenses is not in the document.
+
+- **`--topbar-rest` and `positionTopBar()` are gone.** A scroll now costs a
+  class toggle and nothing else. Verified the position is the browser's: sampled
+  at eleven scroll offsets with no handler having run, the bar's top reads
+  32, 27, 22, 12, 1, 0, 0, 0 ... against `max(0, 32 - scrollY)` exactly.
+- **The threshold is measured with the sticky taken OFF.** A spacer that has
+  already stuck reports the offset it is stuck AT rather than the place it
+  belongs, so `topBarRestTop` would be measured against itself. `position:
+  static` for the one read, inside the same task, so nothing paints in between.
+- **The pinned offset is read off the SPACER's own `top`** now, which is a plain
+  value: the `max()` and the `-99999px` read-back trick it needed are both gone.
+- **The spacer takes no pointer events and the bar takes them back.** Stuck and
+  condensed, the spacer is 33.5px TALLER than what is painted in it, and that
+  band would otherwise swallow taps meant for the content showing through it.
+  Verified with `elementFromPoint` in the middle of it: `timerDisplay`, the
+  content behind, not the spacer.
+- **The bar is the width of the page COLUMN now, not the window**, which costs
+  nothing and removes the trap the 7 Sep entry records: the bar and the page are
+  the SAME box, so their columns cannot be centred differently past 1440px.
+  Measured at 1600: the wrap, the bar, its inner, the tab row and the cards all
+  run 100..1500. What does still bleed is the strip above the bar and the shadow
+  below it, by exactly body's own padding, so both reach the screen edge without
+  ever overhanging the page (`scrollWidth == innerWidth` at 393, 1024 and 1600).
+- Checked with the guest banner up (the bar sticks at 31, immediately below it,
+  not behind it), with the preference off (`body.topbar-loose` takes both boxes
+  to `static`, the spacer to 0 and `--topbar-h` to 0), and back on again.
+
+**What cannot be checked here is the rubber band itself**, since the pane has no
+fling. That is the one thing the fix rests on rather than proves: a sticky box
+is in flow and joins the bounce by construction, where a fixed one cannot.
+
+### The letter goes ALL THE WAY to the edge, and it always bounces
+
+"The A doesnt go to the edge of the actual window. It stops short and falls
+down slightly weird. Just make it go ALL THE WAY to the edge and bounce back
+in." Two faults, and the bigger one is that it was not bouncing at all.
+
+**`bounce` asked for 90px of room west of the button**, and an Add button at the
+left of its own form never has it: the animation already requires `guyLeft >= 4`,
+so `r.left >= 38` and the letter's own centre sits around 44 to 67 there. The
+gate could not be reached on the very layout it was reported on, so the letter
+flew straight in on an arc whose apex is drawn between the button and the wall
+-- which is the "falls down slightly weird". It is 24px now, which is a guard
+against a twitch rather than a rule.
+
+**And the pad in front of the wall is the letter's OWN REACH at the angle it is
+turned to when it gets there**, rather than the half-DIAGONAL of its line box.
+Both of those held it back: a diagonal is the bound at ANY rotation, so it is
+only tight at the one angle that needs it, and the box is a LINE box -- measured
+at the button's own face, the A is **10.8 x 11.5 of ink (rim included) in a
+10.2 x 17 box**. Pad 18.85px before, **12.10px** after (16.76 if the box is used
+at the wall's own angle), so about seven pixels of daylight.
+
+- **`acGlyphInk` measures it on a canvas**, the way the rim's own width was
+  settled: the glyph's `actualBoundingBox*` against the half-leaded baseline
+  inside the line box, plus `AC_A_RIM`, as offsets from the box's CENTRE, which
+  is the point it rotates and scales about. It falls back to the box itself if
+  anything comes back wrong or outside it, which is what it used to fly against
+  anyway. `acWallReach` is then the most negative rotated x of the four corners
+  -- exact rather than a bound, because the wall angle is known.
+- **Verified in the browser, three layouts**: the letter's leftmost visible
+  pixel lands at **0.05, 0.04 and 0.07px** of the window's west edge with the
+  button at 337 and 533 of 1024 and at 43 of 420.
+- **A LEG SHORTER THAN THE SLOWING-DOWN IT ENDS WITH is all arrival now.** The
+  settle only fired on a leg longer than 180px, and the arc home off the wall is
+  drawn between the wall and the button -- so for any Add button in the left half
+  of the window it was shorter than that and the letter arrived at the full
+  900px/s and stopped dead. Traced: the last frames of the flight went from a
+  flat **900** to **276, 215, 154, 93, 31**. Max speed is still 900 and the only
+  dip is the wall.
+
+### And he runs to the left edge to collect
+
+"When the add button is not at the left edge, the guy should run to the left
+edge to suck it all in." He takes the letter out of the button first, since that
+is where the letter lives and it is two strides away, and carries the funnel
+west with him -- so the form pours into it from the edge of the window rather
+than from wherever the button happens to sit in its row.
+
+- **At the same pace as the run OUT on that window**, floored at 200ms so a
+  short dash still reads as a run and capped at 700 so a wide one is not a
+  journey. Measured on the certification form at 1024: a 497px dash in 457ms,
+  and he ends up standing at **x = 2**.
+- **He faces the way he is going.** The drawing faces LEFT of its own accord, so
+  the dash west is the one part of this he does un-mirrored. The letter is drawn
+  OUTSIDE him and stays at the hand he is mirrored on for the length of it,
+  which at this size and speed reads as a carried thing trailing him; moving it
+  with the flip would jump it a hand's width at both ends of the run.
+- **Everything he collects with moves west with him**: the pills fly to his new
+  hand (measured landing at 27,367 against a hand at 27,368), the drops pour
+  from there into his case, and the letter's carried offset is `dxc`.
+- **The run out then starts from the edge**, so it is that much longer and the
+  hop offsets are computed against the whole of it. That is how he now vaults
+  the LINK field on the way back east, which is the only thing at his own level
+  on that form. The flight home still begins at `dx + runDist`, since that is
+  the point off the east edge he ends up at either way.
+- Under 30px of dash he stays put, which is every Add button already at the
+  edge: on a 420px phone both forms wrap the button to x=43 and there is no
+  dash at all.
+
+### The overlay is pinned to the PAGE, not to the window
+
+"If you start scrolling he doesn't retain the position he should have on the
+site, he moves with the scroll." Every position in that animation is a VIEWPORT
+coordinate read at the moment the button was pressed -- the button's rect, the
+fields' rects, the window's own edge -- and the layer is `fixed`, so the page
+slid out from under all of it.
+
+**The layer is scrolled by hand instead**, which moves the whole overlay with
+the page and leaves every one of those numbers exactly as it was. It stays fixed
+rather than becoming absolute, because absolute children this far outside the
+window -- he runs a window's width past the right edge -- would add real
+scrollable overflow and flash up a scrollbar.
+
+- **Measured off the BUTTON rather than off `window.scrollY`**, so it holds for
+  a form inside a pane with its own scroller as well, and listened for on the
+  DOCUMENT with capture, since a scroll event from an inner scroller never
+  reaches the window.
+- **One rect read per FRAME at most, never one per event.** The read forces
+  layout, and a scroll handler is the one place that cannot afford to do it
+  repeatedly.
+- **A rect read LATER has to come back through `anchorOffset()`**, which is the
+  delivery packet: its target is measured at the moment of the throw, in the
+  window's coordinates, and the layer is no longer at the window's origin. The
+  visibility test above it deliberately stays on the raw rect, since whether the
+  reader can SEE the list is a question about the window.
+- Verified in real time: through two scrolls in both directions the gap between
+  the courier and the button held at **-6px** at every sample, and the layer's
+  own transform tracked the button exactly (+60, -80).
+
+### The delete question names what is actually attached
+
+"No CV or resume? Why say it." It always warned about both. The row is read
+BEFORE the confirm now and the wording follows what is really on it -- nothing,
+the CV, the cover letter, or both -- in all three languages, and the short link
+is no longer mentioned at all (it is still freed; see the sixty-second pass).
+Driven through `deleteJob` with `confirm` stubbed and every answer cancelled:
+four rows, four wordings, and all four keys resolve in en, ko and vi.
+
+### Traps, all of them from the harness
+
+- **A module-scope `let` cannot be set through `window.`** -- `window.allJobs = …`
+  makes a second binding and the app goes on reading its own. Assign the bare
+  name. This file already records it for `allArticles`.
+- **The courier leaves the button as two spans until its cleanup timer runs**,
+  so a harness that froze the timers cannot run it a second time: `addCourier`
+  bails on `btn.childNodes.length > 1` and it looks exactly like a broken guard.
+  Put the label back by hand between runs.
+- **`scrollIntoView` is smooth here**, so a rect read in the same task as the
+  call is the rect from before it. Scroll in one call and run in the next.
+- **A `visibility: hidden` element still measures and still reports its
+  transform**, which is why the flight's geometry checked out while the
+  screenshots showed nothing: the letter is hidden until he takes it, and the
+  timer that shows it was frozen with the rest.

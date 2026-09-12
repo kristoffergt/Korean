@@ -931,30 +931,42 @@ header{display:flex;flex-direction:row;align-items:center;justify-content:space-
    pinned up out of sight (real-user report: "it's fixed way too high, it
    completely goes out"). It is 0 in an ordinary browser tab, so the desktop
    is unaffected. */
-/* OUT OF FLOW, and that is the whole point. A sticky bar sits in normal flow,
-   so condensing it shortens the document under the reader's hand: the browser
-   corrects the scroll to hold the content still, that carries the bar back
-   over its own threshold, and it un-condenses. Three rounds of compensating
-   for that with a spacer failed. Fixed, the bar's height cannot reach the
-   document at all, so it may condense as freely as it likes.
-   `top` is a max() of the pinned offset and the resting one: JS writes only
-   --topbar-rest (the resting offset less the scroll) and the browser picks,
-   which keeps env() out of the arithmetic since only it can resolve one. */
-#topBar{position:fixed;left:0;right:0;
-  top:max(calc(var(--topbar-top,0px) + env(safe-area-inset-top)), var(--topbar-rest,0px));
-  z-index:200;background:var(--paper);padding-bottom:22px;
-  padding-left:calc(20px + env(safe-area-inset-left));
-  padding-right:calc(20px + env(safe-area-inset-right));}
-/* The bar is full-bleed so its background covers the page's own side padding,
-   and these two put its CONTENT back in exactly the column .wrap gave it: the
-   BAR reproduces body's side padding and the inner is the same centred
-   max-width block .wrap is. Padding on the inner instead is only right until
-   the max-width binds -- past 1440px the two are centred as different-sized
-   boxes and the bar's content sits 20px in from the page's. */
+/* THE BAR IS PAINTED OUT OF FLOW INSIDE A STICKY BOX THAT NEVER CHANGES
+   HEIGHT, and both halves of that are load-bearing.
+   Out of flow, because a bar that is itself in flow shortens the document when
+   it condenses: the browser corrects the scroll to hold the content still,
+   that carries the bar back over its own threshold, and it un-condenses.
+   Three rounds of compensating for that with a spacer failed, and they could
+   not have worked -- the sticky element's own box WAS the thing moving.
+   STICKY, because the resting travel cannot be faked from JS. The bar used to
+   be `fixed` with its `top` rewritten on every scroll event, and on a phone
+   that lags the scroll by whatever the main thread is behind by AND cannot
+   join a rubber-band bounce at all, since a fixed box is nailed to the layout
+   viewport while the content beside it is pulled down (real-user report, with
+   a recording: "when you scroll fast on the app, a bunch of shit looks like it
+   flies out from the top"). What lurched was the bar's own opaque background
+   sliding over the content and letting go of it again.
+   So the SPACER is the sticky one. It is the only box in flow, it is set to
+   the bar's RESTING height and nothing ever changes it, and the browser both
+   travels and sticks it on the compositor with no script at all. The bar is
+   absolute inside it, so condensing changes nothing the document can see. */
+#topBar{position:absolute;left:0;right:0;top:0;pointer-events:auto;
+  z-index:200;background:var(--paper);padding-bottom:22px;}
+/* The bar is the width of the page COLUMN now rather than the window, and
+   that costs nothing: everything on the page lives in this column, and the
+   strips either side of it are body's own padding, in the same --paper the
+   bar is painted in. So there is nothing behind them to cover. */
 .topbar-inner{max-width:1400px;margin:0 auto;}
 /* And the strip the bar now sits below still has the page running through
    it, so it is painted rather than left as a window onto scrolling content. */
-#topBar::before{content:'';position:absolute;left:0;right:0;bottom:100%;
+/* These two DO bleed, out over body's own side padding to the edge of the
+   screen: one paints the strip the bar sits below and the other is the shadow
+   it casts, and both read as cut off if they stop short of the edge. Exactly
+   body's padding, so neither can overhang the page and make it scroll
+   sideways. */
+#topBar::before{content:'';position:absolute;bottom:100%;
+  left:calc(-20px - env(safe-area-inset-left));
+  right:calc(-20px - env(safe-area-inset-right));
   height:calc(var(--topbar-top,0px) + env(safe-area-inset-top));
   background:var(--paper);pointer-events:none;}
 #topBar #tabNav{margin-bottom:0;}
@@ -1006,22 +1018,32 @@ header{display:flex;flex-direction:row;align-items:center;justify-content:space-
    picker with the full names, exactly as it does under 1024px. */
 #topBar.stuck .who .lang-switch-label,
 #topBar.stuck .who .lang-switch-caret{display:none;}
-#topBar::after{content:'';position:absolute;left:0;right:0;top:100%;height:10px;
+#topBar::after{content:'';position:absolute;top:100%;height:10px;
+  left:calc(-20px - env(safe-area-inset-left));
+  right:calc(-20px - env(safe-area-inset-right));
   pointer-events:none;opacity:0;transition:opacity 0.18s ease;
   background:linear-gradient(rgba(30,31,34,0.13),rgba(30,31,34,0));}
 #topBar.stuck::after{opacity:1;}
 body.dark #topBar::after{background:linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0));}
 /* Turned off, the bar is an ordinary block again: no pinning, and no
-   condensing either, since there is nothing to condense FOR. */
-body.topbar-loose #topBar{position:static;padding-left:0;padding-right:0;}
+   condensing either, since there is nothing to condense FOR. Both boxes go
+   static, or the spacer would still stick with nothing in it. */
+body.topbar-loose #topBarSpacer{position:static;}
+body.topbar-loose #topBar{position:static;}
 body.topbar-loose .topbar-inner{max-width:none;}
-/* The spacer is the bar's stand-in in the document, and it holds the bar's
-   RESTING height for good -- set once per measure, never on a scroll. That is
-   the whole trick: the page below sits at the same offset whether the bar is
-   condensed or not, so a condense changes no distance the browser could want
-   to correct the scroll for. Zero until the app screen is revealed, since the
-   bar has no height to reserve while it is hidden. */
-#topBarSpacer{height:0;flex:none;pointer-events:none;}
+/* The spacer is the bar's stand-in in the document AND the box that sticks,
+   and it holds the bar's RESTING height for good -- set once per measure,
+   never on a scroll. That is the whole trick: the page below sits at the same
+   offset whether the bar is condensed or not, so a condense changes no
+   distance the browser could want to correct the scroll for. Zero until the
+   app screen is revealed, since the bar has no height to reserve while it is
+   hidden.
+   It takes no pointer events, and the bar inside it takes them back: stuck and
+   condensed, the spacer is TALLER than what is painted in it, and without this
+   that band would swallow taps meant for the content showing through it. */
+#topBarSpacer{height:0;flex:none;pointer-events:none;
+  position:sticky;top:calc(var(--topbar-top,0px) + env(safe-area-inset-top));
+  z-index:200;}
 /* A fixed element is not an anchor candidate anyway; this says so out loud,
    and covers the spacer, whose height is written from JS. */
 #topBar, #topBarSpacer{overflow-anchor:none;}
@@ -2962,6 +2984,11 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
 </div>
 <!-- APP -->
 <div class="wrap hidden" id="appScreen">
+  <!-- The spacer is the box in FLOW and the box that STICKS; the bar is
+       painted out of flow inside it, so condensing it cannot move the page.
+       See the CSS. It carries no aria-hidden now that the header is its
+       child. -->
+  <div id="topBarSpacer">
   <div id="topBar">
   <!-- The bar itself is full-bleed and OUT OF FLOW, so this reproduces the
        page column it used to inherit from .wrap and the body padding. -->
@@ -3049,9 +3076,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
   </div>
   </div>
   </div>
-  <!-- Takes back exactly the height the bar gives up when it condenses; see
-       the CSS for why the page must not be allowed to move. -->
-  <div id="topBarSpacer" aria-hidden="true"></div>
+  </div>
   <!-- Shown in place of every real panel from the moment appScreen becomes
        visible until loadAllData() actually resolves -- see appDataLoading.
        That gap is where any panel's own "you have none of X" fallback text
@@ -10697,7 +10722,7 @@ const I18N = {
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', editRemindersModalTitle:'Edit reminders', deleteEventBtn:'Delete',
     addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries, its notes and its syllabus for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', saveFailed:'That change could not be saved, so it has been put back. Check your connection and try again.', studySubVideos:'Videos', hVideos:'Videos', videoIntroHint:'Every video link added anywhere in the app, in one place. Add one by putting a YouTube link on a grammar point, an article, a certification or an application.', lblVideoSearch:'Search', lblVideoSort:'Sort', videoSearchPlaceholder:'Search videos...', videoEmpty:'No video links yet. Put a YouTube link on a grammar point and it shows up here.', videoNoMatches:'No video matches that search.', videoSourceGrammar:'Grammar', videoSourceArticles:'Articles', videoSourceCerts:'Certifications', videoSourceJobs:'Applications', videoPlay:'Play', videoOpenOnYouTube:'Open on YouTube', sortFieldAdded:'Added', sortFieldSource:'Source',  hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header (optional)',
-    hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?', deleteJobConfirm:'Delete this application? Any CV or cover letter uploaded with it is deleted too, and its short link is freed.', deleteCertConfirm:'Delete this certification?', deleteBookConfirm:'Delete this book? Its notes go with it.', deleteArticleConfirm:'Delete this article? Its notes go with it.', charCountLabel:'{n} characters', charCountTarget:'{n} characters (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description (optional)', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image (optional)', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'Random', lblWritingQ53Image:'Attach an image (optional)', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'Start a Q54 mock exam (35 min)', writingMockStartBtn:'Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
+    hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?', deleteJobConfirm:'Delete this application?', deleteJobConfirmCv:'Delete this application? The attached CV will be removed too.', deleteJobConfirmCover:'Delete this application? The attached cover letter will be removed too.', deleteJobConfirmBoth:'Delete this application? The attached CV and cover letter will be removed too.', deleteCertConfirm:'Delete this certification?', deleteBookConfirm:'Delete this book? Its notes go with it.', deleteArticleConfirm:'Delete this article? Its notes go with it.', charCountLabel:'{n} characters', charCountTarget:'{n} characters (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description (optional)', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image (optional)', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'Random', lblWritingQ53Image:'Attach an image (optional)', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'Start a Q54 mock exam (35 min)', writingMockStartBtn:'Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
     lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
     gramJumpPlaceholder:'- Select -', gramAllLevels:'All', gramIntermediateGroup:'Intermediate', gramAdvancedGroup:'Advanced',
@@ -10820,7 +10845,7 @@ const I18N = {
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', editRemindersModalTitle:'알림 수정', deleteEventBtn:'삭제',
     addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목, 노트, 강의계획서도 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', saveFailed:'변경 내용을 저장할 수 없어 이전 상태로 되돌렸습니다. 연결 상태를 확인하고 다시 시도하세요.', studySubVideos:'영상', hVideos:'영상', videoIntroHint:'앱 어디에서든 추가한 영상 링크를 한곳에 모았습니다. 문법, 아티클, 자격증, 지원 내역에 유튜브 링크를 넣으면 여기에 나타납니다.', lblVideoSearch:'검색', lblVideoSort:'정렬', videoSearchPlaceholder:'영상 검색...', videoEmpty:'아직 영상 링크가 없습니다. 문법 항목에 유튜브 링크를 넣으면 여기에 나타납니다.', videoNoMatches:'검색 결과가 없습니다.', videoSourceGrammar:'문법', videoSourceArticles:'아티클', videoSourceCerts:'자격증', videoSourceJobs:'지원 내역', videoPlay:'재생', videoOpenOnYouTube:'유튜브에서 열기', sortFieldAdded:'추가일', sortFieldSource:'출처',  hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더 (선택)',
-    hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', deleteJobConfirm:'이 지원 기록을 삭제하시겠습니까? 함께 업로드한 이력서와 자기소개서도 삭제되고 단축 링크도 해제됩니다.', deleteCertConfirm:'이 자격증을 삭제하시겠습니까?', deleteBookConfirm:'이 책을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', deleteArticleConfirm:'이 논문을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명 (선택)', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부 (선택)', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'무작위', lblWritingQ53Image:'이미지 첨부 (선택)', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'54번 모의고사 시작 (35분)', writingMockStartBtn:'실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
+    hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', deleteJobConfirm:'이 지원 기록을 삭제하시겠습니까?', deleteJobConfirmCv:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서도 함께 삭제됩니다.', deleteJobConfirmCover:'이 지원 기록을 삭제하시겠습니까? 첨부한 자기소개서도 함께 삭제됩니다.', deleteJobConfirmBoth:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서와 자기소개서도 함께 삭제됩니다.', deleteCertConfirm:'이 자격증을 삭제하시겠습니까?', deleteBookConfirm:'이 책을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', deleteArticleConfirm:'이 논문을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명 (선택)', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부 (선택)', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'무작위', lblWritingQ53Image:'이미지 첨부 (선택)', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'54번 모의고사 시작 (35분)', writingMockStartBtn:'실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
     lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
     gramJumpPlaceholder:'- 선택 -', gramAllLevels:'전체', gramIntermediateGroup:'중급', gramAdvancedGroup:'고급',
@@ -10944,7 +10969,7 @@ const I18N = {
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', editRemindersModalTitle:'Sửa nhắc nhở', deleteEventBtn:'Xóa',
     addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch, ghi chú và đề cương cho tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', saveFailed:'Không thể lưu thay đổi đó nên đã hoàn lại. Kiểm tra kết nối và thử lại.', studySubVideos:'Video', hVideos:'Video', videoIntroHint:'Mọi liên kết video đã thêm ở bất kỳ đâu trong ứng dụng, gom về một chỗ. Thêm bằng cách dán liên kết YouTube vào một điểm ngữ pháp, một bài viết, một chứng chỉ hoặc một đơn ứng tuyển.', lblVideoSearch:'Tìm kiếm', lblVideoSort:'Sắp xếp', videoSearchPlaceholder:'Tìm video...', videoEmpty:'Chưa có liên kết video nào. Dán một liên kết YouTube vào điểm ngữ pháp và nó sẽ hiện ở đây.', videoNoMatches:'Không có video nào khớp với tìm kiếm đó.', videoSourceGrammar:'Ngữ pháp', videoSourceArticles:'Bài viết', videoSourceCerts:'Chứng chỉ', videoSourceJobs:'Đơn ứng tuyển', videoPlay:'Phát', videoOpenOnYouTube:'Mở trên YouTube', sortFieldAdded:'Đã thêm', sortFieldSource:'Nguồn',  hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh (tùy chọn)',
-    hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?', deleteJobConfirm:'Xóa đơn ứng tuyển này? CV và thư xin việc đã tải lên cũng bị xóa, và liên kết ngắn được giải phóng.', deleteCertConfirm:'Xóa chứng chỉ này?', deleteBookConfirm:'Xóa cuốn sách này? Các ghi chú sẽ bị xóa theo.', deleteArticleConfirm:'Xóa bài báo này? Các ghi chú sẽ bị xóa theo.', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ (tùy chọn)', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh (tùy chọn)', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh (tùy chọn)', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
+    hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?', deleteJobConfirm:'Xóa đơn ứng tuyển này?', deleteJobConfirmCv:'Xóa đơn ứng tuyển này? CV đã tải lên cũng sẽ bị xóa.', deleteJobConfirmCover:'Xóa đơn ứng tuyển này? Thư xin việc đã tải lên cũng sẽ bị xóa.', deleteJobConfirmBoth:'Xóa đơn ứng tuyển này? CV và thư xin việc đã tải lên cũng sẽ bị xóa.', deleteCertConfirm:'Xóa chứng chỉ này?', deleteBookConfirm:'Xóa cuốn sách này? Các ghi chú sẽ bị xóa theo.', deleteArticleConfirm:'Xóa bài báo này? Các ghi chú sẽ bị xóa theo.', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ (tùy chọn)', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh (tùy chọn)', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh (tùy chọn)', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
     lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
     gramJumpPlaceholder:'- Chọn -', gramAllLevels:'Tất cả', gramIntermediateGroup:'Trung cấp', gramAdvancedGroup:'Cao cấp',
@@ -16506,10 +16531,14 @@ function applyAnimPrefs(){
 
 /* ---------- THE ADD COURIER ---------- */
 // The sequence, in order: he comes out from behind the Add button, takes the
-// first letter off its label, turns it upside down so it is a funnel, the
-// information pours in, he tips it into his suitcase, shuts it, turns and
-// sprints off to the right -- and then throws the letter back in from off
-// screen, where it lands at the front of the word again.
+// first letter off its label, turns it upside down so it is a funnel, dashes
+// to the left edge of the window with it, the information pours in, he tips it
+// into his suitcase, shuts it, turns and sprints off to the right -- and then
+// throws the letter back in from off screen, where it bounces off the west
+// wall and lands at the front of the word again.
+//
+// The whole overlay is pinned to the PAGE while it runs, not to the window, so
+// scrolling takes it with the button he came out of (see syncAnchor).
 //
 // It only ever runs on a SAVE. Every add handler calls it from inside its own
 // `if(!error && data)` branch, and the form is not emptied until he has taken
@@ -16669,6 +16698,11 @@ function acFigure(){
 // he IS rather than against distance travelled, or he lands beside the thing
 // he is jumping on rather than on top of it.
 const AC_RUN_EASE = 'cubic-bezier(.35,0,.85,.6)';
+// The dash to the left edge needs a curve of its own: the run out never stops,
+// so AC_RUN_EASE has no landing in it at all, and this one has to stand still
+// at the edge. Quick off the mark, and everything after the halfway point is
+// him arriving.
+const AC_DASH_EASE = 'cubic-bezier(.4,0,.25,1)';
 function acEase(o){
   const bx = t => 3 * (1 - t) * (1 - t) * t * 0.35 + 3 * (1 - t) * t * t * 0.85 + t * t * t;
   const by = t => 3 * (1 - t) * t * t * 0.6 + t * t * t;
@@ -16688,17 +16722,80 @@ function acEase(o){
 // the last AC_A_BRAKE pixels into the wall, kicks away over the same distance
 // out of it, and settles over the last AC_A_SETTLE into the button. Each is a
 // DISTANCE, so the impact is the same event at any window width.
+// THE LETTER'S OWN INK, inside the box it is drawn in, as offsets from that
+// box's CENTRE -- which is the point it rotates and scales about. Worth
+// measuring rather than using the box: the box is a LINE BOX, so it is a good
+// deal taller than anything drawn in it (a capital A at the button's size is
+// about 10px of ink in an 18px line), and flying the letter against the box
+// holds it that far back from the window's edge at every angle.
+//
+// The RIM counts as ink here. It is painted behind the letter and reaches
+// AC_A_RIM past it, and off the pill the rim is the part that can be SEEN (see
+// .ac-a), so it is the rim that has to kiss the wall.
+//
+// Measured on a canvas at the button's own face and weight, which is how the
+// rim's own width was settled. Anything it cannot answer falls back to the box,
+// which is what this used to fly against anyway.
+function acGlyphInk(ch, font, w, h){
+  const box = { x0: -w / 2, y0: -h / 2, x1: w / 2, y1: h / 2 };
+  try{
+    const c = document.createElement('canvas').getContext('2d');
+    if(!c) return box;
+    c.font = font;
+    const m = c.measureText(ch);
+    const asc = m.fontBoundingBoxAscent, desc = m.fontBoundingBoxDescent;
+    if(!(asc > 0) || !(m.actualBoundingBoxAscent > 0) || !(m.width > 0)) return box;
+    // The text sits on a baseline half-leaded inside the line box and is
+    // centred across it (see .ac-a), so where the ink falls in the box follows
+    // from the glyph's own metrics rather than from anything measured on screen.
+    const base = (h - (asc + desc)) / 2 + asc;
+    const ox = (w - m.width) / 2;
+    const ink = {
+      x0: ox - m.actualBoundingBoxLeft - AC_A_RIM - w / 2,
+      x1: ox + m.actualBoundingBoxRight + AC_A_RIM - w / 2,
+      y0: base - m.actualBoundingBoxAscent - AC_A_RIM - h / 2,
+      y1: base + m.actualBoundingBoxDescent + AC_A_RIM - h / 2
+    };
+    // A measurement taken in a face the page is not actually using could be
+    // anything, and this one decides how close to the edge the letter flies,
+    // so it has to be inside the box it is supposed to describe.
+    if(ink.x1 - ink.x0 < 1 || ink.y1 - ink.y0 < 1) return box;
+    if(ink.x0 < -w / 2 - 4 || ink.x1 > w / 2 + 4) return box;
+    if(ink.y0 < -h / 2 - 4 || ink.y1 > h / 2 + 4) return box;
+    return ink;
+  }catch(e){ return box; }
+}
+// How far LEFT of its own centre the letter reaches once it is turned to a
+// given angle: the most negative rotated x of its ink box's four corners.
+// `rotate() scale()` composes right to left, so the scale is the caller's to
+// apply. Exact rather than a bound, because the angle is known.
+function acWallReach(ink, deg){
+  const th = deg * Math.PI / 180, c = Math.cos(th), s = Math.sin(th);
+  let reach = 0;
+  [[ink.x0, ink.y0], [ink.x1, ink.y0], [ink.x0, ink.y1], [ink.x1, ink.y1]]
+    .forEach(pt => { reach = Math.max(reach, -(pt[0] * c - pt[1] * s)); });
+  return reach;
+}
 function acFlightHome(o){
-  // The letter's CENTRE stops its own half-DIAGONAL short of the edge, which
-  // is the bound at any rotation -- measured off its own glyph box rather than
-  // guessed, since a half-width alone let the ink cross the edge by 2px while
-  // the letter was turned 45 degrees. Plus two, so it kisses the wall.
-  const wallPad = Math.max(10, Math.hypot(o.gw, o.gh) * o.held * 0.5 + 2);
+  // IT GOES ALL THE WAY TO THE EDGE (real-user report: "the A doesnt go to the
+  // edge of the actual window. It stops short and falls down slightly weird").
+  // So the room left in front of the wall is the letter's own REACH at the
+  // angle it is turned to when it gets there -- its ink and its rim, scaled by
+  // the size it is carried at -- and its outermost pixel then lands exactly on
+  // the window's edge. What it was is the half-DIAGONAL of its LINE BOX, and
+  // both of those hold it back: a diagonal is the bound at ANY rotation, so it
+  // is only tight at the one angle that needs it, and the box is taller than
+  // the glyph in it. Measured, that is about eight pixels of daylight, on top
+  // of a bounce that was not happening at all.
+  const aWall = o.aFly - 120;
+  const wallPad = Math.max(2, acWallReach(o.ink, aWall) * o.held);
   const wallDx = wallPad - o.aCx;
-  // A window too narrow for it to get properly west of the button makes a
-  // wobble rather than a bounce, so there it flies straight in. On a phone the
-  // Add button really can sit a thumb's width from the left edge.
-  const bounce = o.aCx - wallPad > 90;
+  // A letter that is ALREADY on the edge has nothing to bounce off, and a few
+  // pixels of travel is a twitch rather than a bounce, so there it flies
+  // straight in. Everything else bounces: this used to ask for 90px of room
+  // west of the button, which an Add button at the left of its own form never
+  // has -- which is precisely the case it was reported on.
+  const bounce = o.aCx - wallPad > 24;
   // The arc is capped against the top of the window rather than being a fixed
   // height, or a button near the top would throw the letter off the screen.
   const arcUp = Math.min(54, Math.max(10, o.aCy - 16));
@@ -16706,7 +16803,6 @@ function acFlightHome(o){
   // rather than curved: backwards on the way out, forwards on the way home,
   // landing on a whole number of turns so the pose it lands in is the pose the
   // button draws.
-  const aWall = o.aFly - 120;
   const aLand = bounce ? Math.ceil((aWall + 40) / 360) * 360
                        : Math.round((o.aFly + 320) / 360) * 360;
   const start = { x: o.dx + o.runDist, y: o.dy - 1, r: o.aFly, s: o.held };
@@ -16754,10 +16850,21 @@ function acFlightHome(o){
     }
     const len = Math.hypot(b.x - a.x, b.y - a.y);
     const cut = b.brake ? AC_A_BRAKE : (b.settle ? AC_A_SETTLE : 0);
+    const ease = b.brake ? AC_A_BRAKE_EASE : AC_A_SETTLE_EASE;
+    const stretch = b.brake ? AC_A_SLOW : AC_A_REST;
     if(cut > 0 && len > cut * 1.7){
       const k = along(b, a, cut);
       add(a, k, 'linear', 1);
-      add(k, b, b.brake ? AC_A_BRAKE_EASE : AC_A_SETTLE_EASE, b.brake ? AC_A_SLOW : AC_A_REST);
+      add(k, b, ease, stretch);
+    } else if(cut > 0){
+      // A LEG SHORTER THAN THE SLOWING-DOWN IT ENDS WITH is all arrival: it
+      // gets no run at the flat pace first. Without this it lands at the full
+      // 900px/s and stops dead, and that is not a corner case -- the arc home
+      // off the wall is drawn between the wall and the button, so on any Add
+      // button in the left half of the window it is shorter than the settle
+      // and the letter was arriving at full speed every time. Measured: the
+      // last frame of the flight went from 900px/s to 180.
+      add(a, b, ease, stretch);
     } else {
       add(a, b, 'linear', 1);
     }
@@ -16909,7 +17016,8 @@ function addCourier(btn){
   // either of those transforms would simply replace one of them.
   const lift = document.createElement('div');
   lift.innerHTML = acFigure();
-  lift.firstChild.style.transform = 'scaleX(-1)';   // he faces the button, see handX
+  const fig = lift.firstChild;
+  fig.style.transform = 'scaleX(-1)';   // he faces the button, see handX
   guy.appendChild(lift);
   gate.appendChild(guy);
   // The peek's own gate is the space ABOVE the button, no wider than the button
@@ -16959,7 +17067,12 @@ function addCourier(btn){
   a.style.fontFamily = cs.fontFamily;
   a.style.fontSize = cs.fontSize;
   a.style.fontWeight = cs.fontWeight;
+  a.style.fontStyle = cs.fontStyle;
   a.style.color = cs.color;
+  // The same face, in the shorthand a canvas takes, so what is measured is
+  // what is drawn (see acGlyphInk).
+  const aFont = (cs.fontStyle || 'normal') + ' ' + cs.fontWeight + ' ' + cs.fontSize
+    + ' ' + cs.fontFamily;
   // Eight offsets rather than a stroke: -webkit-text-stroke is centred on the
   // outline and so eats into the glyph, and paint-order on HTML text is not
   // worth betting on. A text-shadow is painted BEHIND the text, so the letter
@@ -16995,6 +17108,43 @@ function addCourier(btn){
   layer.append(peekGate, gate, aClip);
   document.body.appendChild(layer);
 
+  // HE IS ANCHORED TO THE PAGE, NOT TO THE WINDOW (real-user report: "if you
+  // start scrolling he doesn't retain the position he should have on the site,
+  // he moves with the scroll"). Every position in here is a VIEWPORT
+  // coordinate read at the moment the button was pressed -- the button's rect,
+  // the fields' rects, the window's own edge -- and the layer is `fixed`, so
+  // the page slid out from under all of it.
+  //
+  // The layer is SCROLLED BY HAND instead: one transform, which moves the
+  // whole overlay with the page and leaves every one of those numbers exactly
+  // as it was. It stays fixed rather than becoming absolute, because absolute
+  // children this far outside the window (he runs a window's width past the
+  // right edge) would add real scrollable overflow and flash up a scrollbar.
+  //
+  // Measured off the BUTTON rather than off window.scrollY, so it holds for a
+  // form inside a pane with its own scroller as well -- and listened for on
+  // the document with capture, since a scroll event from an inner scroller
+  // does not reach the window. One rect read per FRAME at most, never one per
+  // event: the read forces layout, and a scroll handler is the one place that
+  // cannot afford to do it repeatedly.
+  let anchorPending = false, anchorLive = true;
+  const anchorOffset = ()=>{
+    const now = btn.getBoundingClientRect();
+    return { x: now.left - r.left, y: now.top - r.top };
+  };
+  const syncAnchor = ()=>{
+    anchorPending = false;
+    if(!anchorLive) return;
+    const off = anchorOffset();
+    layer.style.transform = 'translate(' + off.x.toFixed(1) + 'px,' + off.y.toFixed(1) + 'px)';
+  };
+  const onAnchorScroll = ()=>{
+    if(anchorPending || !anchorLive) return;
+    anchorPending = true;
+    requestAnimationFrame(syncAnchor);
+  };
+  document.addEventListener('scroll', onAnchorScroll, { capture: true, passive: true });
+
   const bits = acBits(btn.closest('.log-form') || btn.closest('.card'));
   // HE IS MIRRORED, because he comes out on the left and everything he wants is
   // on his right: the letter, the button, and the way out. The drawing faces
@@ -17004,6 +17154,29 @@ function addCourier(btn){
   const aCx = gr.left + gr.width / 2, aCy = gr.top + gr.height / 2;
   const dx = handX - aCx, dy = handY - aCy;
   const runDist = window.innerWidth - guyLeft + 40;
+  // AND HE RUNS TO THE LEFT EDGE TO COLLECT (real-user request: "when the add
+  // button is not at the left edge, the guy should run to the left edge to
+  // suck it all in"). He takes the letter out of the button first, since that
+  // is where the letter lives and it is two strides away, and carries the
+  // funnel west with him -- so the form pours into it from the edge of the
+  // window rather than from wherever the button happens to sit in its row.
+  //
+  // An Add button already at the edge has nowhere to go, and a dash of a few
+  // pixels is a twitch rather than a run, so under thirty he stays put.
+  const westDist = guyLeft - 2 > 30 ? Math.round(guyLeft - 2) : 0;
+  // At the same pace as the run OUT on this window, with a floor so a short
+  // dash still reads as a run and a ceiling so a wide one is not a journey of
+  // its own.
+  const westMs = westDist
+    ? Math.round(Math.min(700, Math.max(200, AC_T.run * westDist / Math.max(1, runDist)))) : 0;
+  // Where the run out starts from and how far it travels, which is that much
+  // further now. The letter's own flight home still begins at dx + runDist,
+  // since that is the point off the east edge he ends up at either way.
+  const runFrom = guyLeft - westDist, runSpan = runDist + westDist;
+  // His hand and his case once he is AT THE EDGE, which is his own box moved
+  // west, and the letter's carried offset with them. dx itself is untouched:
+  // he reaches for the letter while he is still standing by the button.
+  const collectX = handX - westDist, dxc = dx - westDist;
   // THE FUNNEL'S MOUTH POINTS UP AND TO THE RIGHT, at 45 degrees (real-user
   // request, twice: "the open mouth of the A should be point right/up 45
   // degrees. It is currently pointing left/up").
@@ -17027,11 +17200,13 @@ function addCourier(btn){
   // Built HERE because `total` depends on how long it takes, and that depends
   // on how far it goes -- which is a fact about this window and this button.
   const flight = acFlightHome({ dx: dx, dy: dy, runDist: runDist, aCx: aCx, aCy: aCy,
-    aFly: aFly, held: AC_A_HELD, gw: gr.width, gh: gr.height });
+    aFly: aFly, held: AC_A_HELD, ink: acGlyphInk(first, aFont, gr.width, gr.height) });
   const peekEnd = AC_T.peek + AC_T.look;   // he has looked
   const duckEnd = peekEnd + AC_T.duck;     // pulled his head back in, and jumps from here
   const outEnd = duckEnd + AC_T.out;       // standing beside the button, ready to reach
-  const bitsEnd = outEnd + AC_T.grab + (bits.length ? (bits.length - 1) * AC_T.step + AC_T.bit : 0);
+  const takeEnd = outEnd + AC_T.grab;      // the letter is in his hand, turned over
+  const westEnd = takeEnd + westMs;        // and he is at the left edge with it
+  const bitsEnd = westEnd + (bits.length ? (bits.length - 1) * AC_T.step + AC_T.bit : 0);
   const tipAt = bitsEnd + 60;
   const turnAt = tipAt + AC_T.tip;
   const runAt = turnAt + AC_T.turn;
@@ -17154,6 +17329,21 @@ function addCourier(btn){
     { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + AC_A_FUNNEL + 'deg) scale(' + AC_A_HELD + ')' }
   ], { duration: AC_T.grab, delay: outEnd, easing: 'cubic-bezier(.34,1.3,.64,1)', fill: 'forwards' });
 
+  // THE DASH WEST, with the funnel in his hand. Its own easing rather than the
+  // run's: the run out never stops, so AC_RUN_EASE has no landing in it, and
+  // this one has to stand still at the edge.
+  if(westDist){
+    guy.animate([
+      { transform: 'translate(0,0)' },
+      { transform: 'translate(' + (-westDist) + 'px, 0)' }
+    ], { duration: westMs, delay: takeEnd, easing: AC_DASH_EASE, fill: 'forwards' });
+    // The letter goes with him, in the pose it is already held in.
+    a.animate([
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + AC_A_FUNNEL + 'deg) scale(' + AC_A_HELD + ')' },
+      { transform: 'translate(' + dxc + 'px,' + dy + 'px) rotate(' + AC_A_FUNNEL + 'deg) scale(' + AC_A_HELD + ')' }
+    ], { duration: westMs, delay: takeEnd, easing: AC_DASH_EASE, fill: 'forwards' });
+  }
+
   // Every drawing is in the svg twice (see .ac-halo), so the case's lid is too
   // and both copies have to open, or the rim opens without the case.
   guy.querySelectorAll('.ac-lid').forEach(lid => {
@@ -17178,8 +17368,8 @@ function addCourier(btn){
     el.style.top = (b.r.top + b.r.height / 2 - 9) + 'px';
     layer.appendChild(el);
     const er = el.getBoundingClientRect();
-    const bx = handX - (er.left + er.width / 2), by = handY - (er.top + er.height / 2);
-    const launch = outEnd + AC_T.grab + i * AC_T.step;
+    const bx = collectX - (er.left + er.width / 2), by = handY - (er.top + er.height / 2);
+    const launch = westEnd + i * AC_T.step;
     el.animate([
       { transform: 'translate(0,0) scale(.7)', opacity: 0 },
       { transform: 'translate(' + (bx * 0.35) + 'px,' + (by * 0.35 - 26) + 'px) scale(1)', opacity: 1, offset: 0.45 },
@@ -17198,7 +17388,7 @@ function addCourier(btn){
   for(let i = 0; i < 3; i++){
     const drop = document.createElement('div');
     drop.className = 'ac-drop';
-    drop.style.left = handX + 'px';
+    drop.style.left = collectX + 'px';
     drop.style.top = handY + 'px';
     layer.appendChild(drop);
     drop.animate([
@@ -17210,14 +17400,14 @@ function addCourier(btn){
 
   // The letter TIPS in his hand rather than going in the case with them.
   a.animate([
-    { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + AC_A_FUNNEL + 'deg) scale(' + AC_A_HELD + ')' },
-    { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(' + aCarry + 'deg) scale(' + AC_A_HELD + ')' }
+    { transform: 'translate(' + dxc + 'px,' + dy + 'px) rotate(' + AC_A_FUNNEL + 'deg) scale(' + AC_A_HELD + ')' },
+    { transform: 'translate(' + dxc + 'px,' + (dy + 2) + 'px) rotate(' + aCarry + 'deg) scale(' + AC_A_HELD + ')' }
   ], { duration: AC_T.tip, delay: tipAt, easing: 'cubic-bezier(.4,0,.5,1)', fill: 'forwards' });
 
   // Nothing turns at turnAt any more: he came out facing the button and that is
   // the way he leaves, so the beat is a wind-up rather than a spin.
   guy.animate([
-    { transform: 'translate(0,0)' },
+    { transform: 'translate(' + (-westDist) + 'px, 0)' },
     { transform: 'translate(' + runDist + 'px, 0)' }
   ], { duration: AC_T.run, delay: runAt, easing: AC_RUN_EASE, fill: 'forwards' });
 
@@ -17226,7 +17416,7 @@ function addCourier(btn){
   // end -- for whatever is actually there, at every Add button in the app.
   // The hop is keyframed against the run's own easing (see acRunOffsetAt), or
   // he lands beside the thing rather than on it.
-  const steps = acSteps(btn, guyLeft, guyTop + AC_FOOT);
+  const steps = acSteps(btn, runFrom, guyTop + AC_FOOT);
   const hopFrames = [{ transform: 'translateY(0)', offset: 0 }];
   const stood = [];
   let lastO = 0;
@@ -17239,10 +17429,10 @@ function addCourier(btn){
     // along the top, and a drop off the end all take time to read whatever
     // distance they happen to cover. Threaded through lastO, so the list is
     // in order by construction however the rects fall.
-    const o0 = Math.max(lastO + 0.02, acRunOffsetAt(st.r.left - AC_W * 0.8, guyLeft, runDist));
-    const on = Math.max(o0 + 0.22, acRunOffsetAt(st.r.left + 2, guyLeft, runDist));
-    const off = Math.max(on + 0.05, acRunOffsetAt(st.r.right - 2, guyLeft, runDist));
-    const o1 = Math.max(off + 0.12, acRunOffsetAt(st.r.right + AC_W * 0.5, guyLeft, runDist));
+    const o0 = Math.max(lastO + 0.02, acRunOffsetAt(st.r.left - AC_W * 0.8, runFrom, runSpan));
+    const on = Math.max(o0 + 0.22, acRunOffsetAt(st.r.left + 2, runFrom, runSpan));
+    const off = Math.max(on + 0.05, acRunOffsetAt(st.r.right - 2, runFrom, runSpan));
+    const o1 = Math.max(off + 0.12, acRunOffsetAt(st.r.right + AC_W * 0.5, runFrom, runSpan));
     if(o1 >= 0.99) return;
     lastO = o1;
     hopFrames.push({ transform: 'translateY(0)', offset: o0, easing: 'cubic-bezier(.2,.8,.4,1)' });
@@ -17280,13 +17470,29 @@ function addCourier(btn){
   // is what makes it become the letter on the button again rather than a chip
   // sitting on top of it.
   a.animate([
-    { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(' + aCarry + 'deg) scale(' + AC_A_HELD + ')' },
+    { transform: 'translate(' + dxc + 'px,' + (dy + 2) + 'px) rotate(' + aCarry + 'deg) scale(' + AC_A_HELD + ')' },
     { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(' + aFly + 'deg) scale(' + AC_A_HELD + ')' }
   ], { duration: AC_T.run, delay: runAt, easing: AC_RUN_EASE, fill: 'forwards' });
   // THE FLIGHT HOME, AT ONE SPEED THE WHOLE WAY. `flight` is worked out above
   // the timeline (see acFlightHome) because its own length is what sets how
   // long it takes, and `total` depends on that.
   a.animate(flight.frames, { duration: flight.ms, delay: backAt, easing: 'linear', fill: 'forwards' });
+  // HE FACES THE WAY HE IS GOING. The drawing faces LEFT of its own accord
+  // (see acFigure), so the dash west is the one part of this he does
+  // un-mirrored, and he turns back to face the form the moment he arrives --
+  // which is where everything he wants is again: the fields, the button and
+  // the way out. The letter is drawn OUTSIDE him and stays at the hand he is
+  // mirrored on for the length of the dash; at this size, at this speed, for a
+  // third of a second, that is nothing, where moving it with the flip would
+  // jump it a hand's width at both ends of the run.
+  const westTimer = westDist ? setTimeout(()=>{
+    fig.style.transform = 'scaleX(1)';
+    guy.classList.add('ac-running');
+  }, takeEnd) : 0;
+  const westDoneTimer = westDist ? setTimeout(()=>{
+    fig.style.transform = 'scaleX(-1)';
+    guy.classList.remove('ac-running');
+  }, westEnd) : 0;
   const takeTimer = setTimeout(()=>{
     a.style.visibility = '';
     gSpan.style.visibility = 'hidden';
@@ -17306,7 +17512,7 @@ function addCourier(btn){
   // whichever side is showing and the swap cannot be seen; his own `left` is
   // moved by the same amount, since he is placed in the gate by viewport
   // coordinates and the run is a transform on top of that.
-  const crossAt = runAt + acRunOffsetAt(r.left + r.width / 2 - AC_W / 2, guyLeft, runDist) * AC_T.run;
+  const crossAt = runAt + acRunOffsetAt(r.left + r.width / 2 - AC_W / 2, runFrom, runSpan) * AC_T.run;
   const crossTimer = setTimeout(()=>{
     gate.style.left = r.right + 'px';
     gate.style.width = Math.max(80, window.innerWidth - r.right) + 'px';
@@ -17335,6 +17541,14 @@ function addCourier(btn){
     // the row is simply rendered. A packet flying to somewhere nobody can see
     // would only delay it.
     if(!tr || !tr.width || tr.bottom < 4 || tr.top > window.innerHeight - 4){ acRunPendingReveals(); return; }
+    // That rect is the WINDOW's, and the layer is no longer at the window's
+    // origin if the page has been scrolled since he came out (see syncAnchor),
+    // so it comes back into the layer's own coordinates -- which are the
+    // page's, and which is what every other number in here is in. The test
+    // above is deliberately on the raw rect: whether the reader can SEE the
+    // list is a question about the window.
+    const layerAt = anchorOffset();
+    const tx = tr.left - layerAt.x, ty = tr.top - layerAt.y;
     // IT COMES OUT OF THE A (real-user report: "it does not look like it's the
     // A that is firing it out to the position it should be in. Let the box and
     // text fly out of it and land"). So the packet starts ON the letter's own
@@ -17344,8 +17558,8 @@ function addCourier(btn){
     const pw = Math.min(Math.max(tr.width, 180), 340), ph = 34;
     const pack = document.createElement('div');
     pack.className = 'ac-pack';
-    pack.style.left = tr.left + 'px';
-    pack.style.top = tr.top + 'px';
+    pack.style.left = tx + 'px';
+    pack.style.top = ty + 'px';
     pack.style.width = pw + 'px';
     pack.style.height = ph + 'px';
     // WHAT IT CARRIES IS THE ROW'S OWN FIRST LINE (real-user request: "whatever
@@ -17374,8 +17588,8 @@ function addCourier(btn){
     layer.appendChild(pack);
     // Aligned on the GLYPH, not on the button: the letter has just landed back
     // on its label, and that is the thing it has to look like it came out of.
-    const px = (gr.left + gr.width / 2) - (tr.left + pw / 2);
-    const py = (gr.top + gr.height / 2) - (tr.top + ph / 2);
+    const px = (gr.left + gr.width / 2) - (tx + pw / 2);
+    const py = (gr.top + gr.height / 2) - (ty + ph / 2);
     // The letter's own height against the row's, so it leaves exactly the size
     // of the A it came out of rather than at a picked fraction.
     const s0 = Math.max(0.12, Math.min(0.5, gr.height / ph));
@@ -17422,6 +17636,10 @@ function addCourier(btn){
   }, bitsEnd);
 
   setTimeout(()=>{
+    anchorLive = false;
+    document.removeEventListener('scroll', onAnchorScroll, { capture: true });
+    clearTimeout(westTimer);
+    clearTimeout(westDoneTimer);
     clearTimeout(takeTimer);
     clearTimeout(landTimer);
     clearTimeout(runTimer);
@@ -17465,6 +17683,11 @@ let topBarMeasuring = false;
 // banner is sticky at the top too and comes first in the document, so at the
 // same offset it would cover the header. Its height is read rather than
 // hard-coded, since it wraps to two lines on a phone.
+//
+// WHAT IS LEFT FOR JS IS THE HEIGHT AND THE CONDENSE, never the position: the
+// spacer is sticky, so where the bar sits at rest, where it lands when it
+// sticks, and what it does during a rubber-band bounce are all the browser's
+// now (see the CSS).
 function syncTopBarMetrics(){
   const bar = document.getElementById('topBar');
   const sp = document.getElementById('topBarSpacer');
@@ -17475,7 +17698,6 @@ function syncTopBarMetrics(){
     // scrollIntoView target and the bar is an ordinary block again.
     root.style.setProperty('--topbar-top', '0px');
     root.style.setProperty('--topbar-h', '0px');
-    root.style.removeProperty('--topbar-rest');
     sp.style.height = '0px';
     return;
   }
@@ -17485,13 +17707,9 @@ function syncTopBarMetrics(){
     ? Math.round(banner.getBoundingClientRect().height) : 0;
   root.style.setProperty('--topbar-top', gh + 'px');
 
-  // The pinned offset carries an env(), which only the browser can resolve, so
-  // it is read back off the max() with the resting branch pushed out of range.
-  const prevRest = root.style.getPropertyValue('--topbar-rest');
-  root.style.setProperty('--topbar-rest', '-99999px');
-  topBarPinTop = parseFloat(getComputedStyle(bar).top) || 0;
-  if(prevRest) root.style.setProperty('--topbar-rest', prevRest);
-  else root.style.removeProperty('--topbar-rest');
+  // Where it sticks, read off the spacer's own sticky offset rather than
+  // recomputed: it carries an env(), and only the browser can resolve one.
+  topBarPinTop = parseFloat(getComputedStyle(sp).top) || 0;
 
   // The RESTING height, read with the condensed class off. This is the only
   // thing the spacer is ever set to, and it is set here and nowhere else.
@@ -17504,29 +17722,23 @@ function syncTopBarMetrics(){
     const px = Math.round(full) + 'px';
     if(sp.style.height !== px) sp.style.height = px;
   }
-  // Where the bar sits when it is NOT pinned is simply the top of the room the
-  // spacer reserves. Independent of the spacer's own height, so measuring it
-  // straight after setting that height is sound.
+  // Where the reserved room STARTS in the document, which is the one number
+  // the condense threshold needs. Read with the sticky taken off, because a
+  // spacer that has already stuck reports the offset it is stuck AT rather
+  // than the place it belongs -- and then the threshold would be measured
+  // against itself. Nothing paints in between, so the swap cannot be seen.
+  const prevPos = sp.style.position;
+  sp.style.position = 'static';
   topBarRestTop = Math.round(sp.getBoundingClientRect().top + window.scrollY);
+  sp.style.position = prevPos;
   root.style.setProperty('--topbar-h',
     Math.round(bar.getBoundingClientRect().height + topBarPinTop) + 'px');
   topBarMeasuring = false;
-  positionTopBar();
-}
-
-// One custom property per scroll and nothing else: no layout read, no class
-// write, and nothing that can move the document. CSS takes the max() of this
-// and the pinned offset, so the browser keeps ownership of the env().
-function positionTopBar(){
-  const root = document.documentElement;
-  if(!stickyTopBarEnabled()){ root.style.removeProperty('--topbar-rest'); return; }
-  root.style.setProperty('--topbar-rest', (topBarRestTop - window.scrollY) + 'px');
 }
 
 function updateTopBarStuck(){
   const bar = document.getElementById('topBar');
   if(!bar || !stickyTopBarEnabled()) return;
-  positionTopBar();
   // Pure arithmetic against numbers measured off the scroll path. It does not
   // consult the bar's own box, so the bar's height can never feed back into
   // the decision that changes the bar's height.
@@ -19177,9 +19389,16 @@ document.getElementById('interviewDateSaveBtn').addEventListener('click', async 
   closeInterviewDateModal();
 });
 async function deleteJob(jobId){
-  if(!confirm(t('deleteJobConfirm'))) return;
-  // Captured before the row goes, removed after -- see deleteStoredFile.
+  // Read the row BEFORE asking, so the question can name what is actually
+  // attached rather than warning about files that may not exist (real-user
+  // report: "No CV or resume? Why say it").
   const doomed = (allJobs[currentUser.id]||[]).find(x=>x.id===jobId);
+  const hasCv = !!(doomed && doomed.resume_url), hasCover = !!(doomed && doomed.cover_letter_url);
+  const askKey = hasCv && hasCover ? 'deleteJobConfirmBoth'
+    : hasCv ? 'deleteJobConfirmCv'
+    : hasCover ? 'deleteJobConfirmCover' : 'deleteJobConfirm';
+  if(!confirm(t(askKey))) return;
+  // Captured before the row goes, removed after -- see deleteStoredFile.
   const files = doomed ? [doomed.resume_url, doomed.cover_letter_url] : [];
   await supabaseClient.from('job_applications').delete().eq('id', jobId);
   allJobs[currentUser.id] = (allJobs[currentUser.id]||[]).filter(x=>x.id!==jobId);
