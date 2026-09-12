@@ -4934,3 +4934,145 @@ sub-tab buttons at 63px in a 335px row, nothing clipped and no overflow.
 bindings, so `window.allArticles = ...` from the console creates a SECOND
 binding and the app goes on reading the real one. A fake that appears to do
 nothing is that, not a bug in the reader -- assign the bare name.
+
+## The offer response was never saved, because the column was never added (12 Sep, fifty-eighth pass)
+
+"I noticed when I edit the job offers to be accepted/rejected etc., it never
+saves. Every time I come back, it just says pending again."
+
+**`job_applications.offer_response` did not exist in the live database.** Its
+migration (`sql migrations/job_offer_response_migration.sql`) was written and
+never run, so every accept/decline was a PostgREST 400 (`42703: column
+job_applications.offer_response does not exist`) -- and nothing looked at it.
+
+Proved before changing anything, with the app's own anon key, which is the
+cheapest possible check: `GET /rest/v1/job_applications?select=offer_response`
+returns that error while `?select=status` returns `[]`. **A column probe
+through the REST API needs no session and is unambiguous**: a missing column is
+a 400 where an RLS-empty result is a 200 and `[]`.
+
+**Applied to the live database on 12 Sep** (project kbqwitmxpmkueryjsyip,
+"Korean"), and checked after: the column is there, nullable, readable through
+the API the app uses, and its check constraint is live (probed inside a rolled-
+back block, leaving nothing behind).
+
+- **The grants did NOT need touching, and that was checked rather than
+  assumed.** This file records for the sibling project that a column added
+  after a grant with an explicit column list is not covered by it, and
+  `information_schema.column_privileges` looks exactly like that here -- 12
+  rows per grantee. It is not: `pg_class.relacl` shows the grants are
+  TABLE-level (`authenticated=arwdDxtm`) and **zero columns have their own
+  ACL**, so a new column is covered by construction. Read `relacl` and
+  `pg_attribute.attacl`, not the information_schema view, which reports a
+  table-level grant per column and cannot tell the two apart.
+- RLS was already right: `job_applications_update` is `auth.uid() = user_id`
+  both ways.
+
+### The code bug is that a refused write looked like a successful one
+
+That is the part worth fixing, because it is what let this sit there. Every
+status picker in the app writes, then updates its own copy of the row, then
+re-renders -- and **ignores the error**. So a refused write leaves the new
+value on screen and the old one in the database, and the first anybody hears of
+it is the next load reading back what was there before. Which is exactly the
+report, word for word.
+
+`saved(query, onFail)` asks for the result, and **`onFail` is the half that
+matters**: it puts the row back. A message on its own would still leave a value
+on screen that the database does not have. Applied to the four pickers where
+"I changed it and it didn't stick" is the same complaint -- job status, job
+offer response, certification status, course status.
+
+**There are 25 more updates in this file whose error is still dropped** (book
+and article patches and notes, event locations, the note autosaves, the
+sort-order swaps). They are not all the same shape -- several have their own
+saving indicator and would want a different answer than an alert -- so they are
+written down here rather than swept quietly. `saved()` is the thing to reach
+for.
+
+## The cap is what says which way he is looking, and the A bounces off the wall (12 Sep, fifty-eighth pass)
+
+"You are literally pointing the A the wrong way... It's not difficult to make a
+2D figure look around and be peeking. Literally just make his head one way (he
+is wearing a cap so....) and then his head the other way (cap literally just
+faces the other way...?) and then crack his neck so he is looking STRAIGHT
+UPWARDS... Make the A bounce off the west side of the window."
+
+### The derived funnel angle was the mistake
+
+Last pass DERIVED the tilt from where the form's fields sit, and that is what
+got it wrong: on a wide form the fields wrap across rows ABOVE the button, so
+their centroid lands to the RIGHT of his hand and the rule tilted the mouth
+up-LEFT. **`AC_A_FUNNEL` is a constant, 225.** Settled by rendering an A at
+135, 180, 225 and 270 at 86px and looking: 135 is mouth up-left, 180 straight
+up, **225 up-right**, 270 right. Confirmed in the finished animation -- the
+collect pose measures 225 and the mouth reads up-right at 6x.
+
+**The lesson is about the derivation, not the number.** A rule that computes
+something the eye can check is worth having only if it is checked against the
+eye; this one was reasoned from "the pills come from the fields" and never
+looked at.
+
+### A flat silhouette turns by MIRRORING, and the cap is the only part that can
+
+Third report on the same four seconds, and the answer was in the report: "he is
+wearing a cap so...". A rotation about the neck is a head TIPPING, whatever
+size it is drawn -- which is why two passes of it read as throwing his head
+back. What a flat drawing has instead of a three-quarter view is a mirror.
+
+- **The peak is its own group**, because it is the only asymmetric thing on the
+  head: the skull is a circle, and the cap's crown and its brim line are both
+  symmetric about the centre line. So mirroring the PEAK alone turns the head
+  round, where mirroring the whole group would squash the skull to a line on
+  the way through `scaleX(0)`.
+- **It flips DURING each move rather than at a hold**, so what the eye sees is
+  the peak narrowing as the head swings and opening out on the other side --
+  the same cosine the header's globe turns on.
+- **Looking straight up is a quarter turn about the SKULL'S OWN CENTRE**, not
+  the neck. About the neck a 90-degree turn swings the whole head out sideways
+  like a ball on a stick (the head circle's centre moves from 4.3 above the
+  neck to 4.3 beside it); about the skull's own centre the circle does not move
+  at all and only the cap does, which is the whole of what says which way he is
+  facing. `.ac-head`'s origin moved from `15px 12px` to `15px 7.7px`, and the
+  springy curve into it is the crack.
+- Measured at the beats: peak LEFT of the head (576 against a head at 581),
+  then RIGHT of it (594 against 590) with `scaleX(-1)`, then rotated **90
+  degrees** with the peak un-flipped and centred over the head -- pointing at
+  the ceiling.
+
+### The throw bounces off the west wall
+
+`AC_T.back` is 2200 and the path is: in from off-screen east, across the whole
+window, onto the left edge, and back to the button.
+
+- **Every number is measured off the window and the letter's own glyph box**,
+  so it is the same throw at any width. Verified at 1024 and at 375: the
+  letter's left edge reaches **2px** from the window's edge in both, and it
+  lands back on the label to the pixel.
+- **The pad is the letter's half-DIAGONAL, not its half-width.** The first
+  version used the width and the ink crossed the edge by 2px while the letter
+  was turned 45 degrees; the diagonal is the bound at any rotation.
+- **The spin REVERSES at the wall**, which is most of what says it bounced
+  rather than curved: backwards on the way out (365 to 245) and forwards on the
+  way home, landing on a whole number of turns so the pose it lands in is the
+  pose the button draws (measured: 5, 283, 252, 245 at the wall, then 302, 341,
+  0).
+- **The beat is placed by DISTANCE, not at a fixed offset.** The two legs are
+  very different lengths -- about 1050px out and 570 back on a desktop -- so a
+  fixed 0.5 would run the short leg home at half the pace of the long one out.
+- **The arc is capped against the top of the window** rather than being a fixed
+  height, or an Add button near the top would throw the letter off the screen.
+- **A window too narrow to get properly west of the button flies straight in
+  as before.** On a phone the Add button really can sit a thumb's width from
+  the left edge, and 30px of westward travel is a wobble rather than a bounce.
+
+### Checked, and the cost
+
+One real-timer run end to end: no layer left, the label back as one text node,
+`acBusy` and `acRevealing` both false, the deferred row rendered exactly once,
+and **no animation left on any field** with all three inks back to full.
+
+The whole run is now **5.84s to the landing and 6.3s to the row**. That is the
+price of the 2200ms bounce, and it is worth saying plainly: the row not
+appearing for six seconds is the one part of this nobody asked for, and the
+packet could leave as the A passes the wall rather than after it lands.

@@ -2791,10 +2791,15 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
    drawing rather than the middle of the box it happens to sit in -- so
    transform-box is the view-box and the origin is spelled out in its units,
    the same way the moon's own angler is drawn. */
-.ac-leg-b, .ac-leg-f, .ac-top, .ac-lid, .ac-head, .ac-arm-b{transform-box:view-box;}
-/* The head turns about its own NECK, which is a point in the drawing, and the
-   raised arm about its own SHOULDER. */
-.ac-head{transform-origin:15px 12px;}
+.ac-leg-b, .ac-leg-f, .ac-top, .ac-lid, .ac-head, .ac-arm-b, .ac-peak{transform-box:view-box;}
+/* The head turns about ITS OWN CENTRE, not the neck below it: cracking it back
+   to look straight up is a quarter turn, and about the neck that swings the
+   whole head out sideways like a ball on a stick. About the skull's own centre
+   the circle stays exactly where it is and only the cap moves, which is the
+   whole of what says which way he is facing. The raised arm turns about its
+   own SHOULDER, and the peak about the head's centre line. */
+.ac-head{transform-origin:15px 7.7px;}
+.ac-peak{transform-origin:15px 7.75px;}
 .ac-arm-b{transform-origin:13px 15.4px;}
 .ac-leg-b, .ac-leg-f{transform-origin:15px 27.5px;}
 .ac-lid{transform-origin:19px 20.5px;}
@@ -10524,6 +10529,30 @@ const realSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_A
 // createGuestSupabaseClient() near enterGuestMode()) rather than touching
 // any of the ~193 existing supabaseClient.* call sites across the file.
 let supabaseClient = realSupabaseClient;
+// A WRITE THAT FAILED MUST NOT LOOK LIKE ONE THAT WORKED.
+//
+// Every status picker in this app writes, then updates its own copy of the
+// row, then re-renders -- so a REFUSED write leaves the new value on screen
+// and the old one in the database, and the first anybody hears of it is the
+// next load reading back what was there before. That is not a hypothetical:
+// `job_applications.offer_response` had never been added to the live database
+// (its migration was written and never run), so every accept/decline was
+// answered with a 400 that nothing looked at, and the row showed Accepted
+// until the page was reloaded (real-user report: "when I edit the job offers
+// to be accepted/rejected, it never saves. every time i come back, it just
+// says pending again").
+//
+// So the result is ASKED. `onFail` is what puts the row back, which is the
+// half that matters: a message alone would still leave a value on screen that
+// the database does not have.
+async function saved(query, onFail){
+  const { error } = await query;
+  if(!error) return true;
+  console.error('Save refused:', error);
+  if(typeof onFail === 'function') onFail();
+  alert(t('saveFailed'));
+  return false;
+}
 // The one place TOPIK dates live. Wall-clock KST strings, because
 // ensureTopikEvents() writes them into events.event_date/event_time
 // verbatim -- deriving them back out of a Date object would shift by the
@@ -10638,7 +10667,7 @@ const I18N = {
     thisOccurrenceOnly:'This event only', allOccurrences:'All events', cancelBtn:'Cancel',
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', editRemindersModalTitle:'Edit reminders', deleteEventBtn:'Delete',
-    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', studySubVideos:'Videos', hVideos:'Videos', videoIntroHint:'Every video link added anywhere in the app, in one place. Add one by putting a YouTube link on a grammar point, an article, a certification or an application.', lblVideoSearch:'Search', lblVideoSort:'Sort', videoSearchPlaceholder:'Search videos...', videoEmpty:'No video links yet. Put a YouTube link on a grammar point and it shows up here.', videoNoMatches:'No video matches that search.', videoSourceGrammar:'Grammar', videoSourceArticles:'Articles', videoSourceCerts:'Certifications', videoSourceJobs:'Applications', videoPlay:'Play', videoOpenOnYouTube:'Open on YouTube', sortFieldAdded:'Added', sortFieldSource:'Source',  hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header (optional)',
+    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', saveFailed:'That change could not be saved, so it has been put back. Check your connection and try again.', studySubVideos:'Videos', hVideos:'Videos', videoIntroHint:'Every video link added anywhere in the app, in one place. Add one by putting a YouTube link on a grammar point, an article, a certification or an application.', lblVideoSearch:'Search', lblVideoSort:'Sort', videoSearchPlaceholder:'Search videos...', videoEmpty:'No video links yet. Put a YouTube link on a grammar point and it shows up here.', videoNoMatches:'No video matches that search.', videoSourceGrammar:'Grammar', videoSourceArticles:'Articles', videoSourceCerts:'Certifications', videoSourceJobs:'Applications', videoPlay:'Play', videoOpenOnYouTube:'Open on YouTube', sortFieldAdded:'Added', sortFieldSource:'Source',  hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header (optional)',
     hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?', deleteJobConfirm:'Delete this application? Any CV or cover letter uploaded with it stays in storage and keeps its short link.', deleteCertConfirm:'Delete this certification?', deleteBookConfirm:'Delete this book? Its notes go with it.', deleteArticleConfirm:'Delete this article? Its notes go with it.', charCountLabel:'{n} characters', charCountTarget:'{n} characters (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description (optional)', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image (optional)', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'Random', lblWritingQ53Image:'Attach an image (optional)', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'Start a Q54 mock exam (35 min)', writingMockStartBtn:'Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
     lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
@@ -10761,7 +10790,7 @@ const I18N = {
     thisOccurrenceOnly:'이 일정만', allOccurrences:'전체 일정', cancelBtn:'취소',
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', editRemindersModalTitle:'알림 수정', deleteEventBtn:'삭제',
-    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', studySubVideos:'영상', hVideos:'영상', videoIntroHint:'앱 어디에서든 추가한 영상 링크를 한곳에 모았습니다. 문법, 아티클, 자격증, 지원 내역에 유튜브 링크를 넣으면 여기에 나타납니다.', lblVideoSearch:'검색', lblVideoSort:'정렬', videoSearchPlaceholder:'영상 검색...', videoEmpty:'아직 영상 링크가 없습니다. 문법 항목에 유튜브 링크를 넣으면 여기에 나타납니다.', videoNoMatches:'검색 결과가 없습니다.', videoSourceGrammar:'문법', videoSourceArticles:'아티클', videoSourceCerts:'자격증', videoSourceJobs:'지원 내역', videoPlay:'재생', videoOpenOnYouTube:'유튜브에서 열기', sortFieldAdded:'추가일', sortFieldSource:'출처',  hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더 (선택)',
+    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', saveFailed:'변경 내용을 저장할 수 없어 이전 상태로 되돌렸습니다. 연결 상태를 확인하고 다시 시도하세요.', studySubVideos:'영상', hVideos:'영상', videoIntroHint:'앱 어디에서든 추가한 영상 링크를 한곳에 모았습니다. 문법, 아티클, 자격증, 지원 내역에 유튜브 링크를 넣으면 여기에 나타납니다.', lblVideoSearch:'검색', lblVideoSort:'정렬', videoSearchPlaceholder:'영상 검색...', videoEmpty:'아직 영상 링크가 없습니다. 문법 항목에 유튜브 링크를 넣으면 여기에 나타납니다.', videoNoMatches:'검색 결과가 없습니다.', videoSourceGrammar:'문법', videoSourceArticles:'아티클', videoSourceCerts:'자격증', videoSourceJobs:'지원 내역', videoPlay:'재생', videoOpenOnYouTube:'유튜브에서 열기', sortFieldAdded:'추가일', sortFieldSource:'출처',  hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더 (선택)',
     hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', deleteJobConfirm:'이 지원 기록을 삭제하시겠습니까? 함께 업로드한 이력서나 자기소개서는 저장소에 남고 단축 링크도 계속 작동합니다.', deleteCertConfirm:'이 자격증을 삭제하시겠습니까?', deleteBookConfirm:'이 책을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', deleteArticleConfirm:'이 논문을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명 (선택)', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부 (선택)', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'무작위', lblWritingQ53Image:'이미지 첨부 (선택)', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'54번 모의고사 시작 (35분)', writingMockStartBtn:'실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
     lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
@@ -10885,7 +10914,7 @@ const I18N = {
     thisOccurrenceOnly:'Chỉ sự kiện này', allOccurrences:'Tất cả sự kiện', cancelBtn:'Hủy',
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', editRemindersModalTitle:'Sửa nhắc nhở', deleteEventBtn:'Xóa',
-    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', studySubVideos:'Video', hVideos:'Video', videoIntroHint:'Mọi liên kết video đã thêm ở bất kỳ đâu trong ứng dụng, gom về một chỗ. Thêm bằng cách dán liên kết YouTube vào một điểm ngữ pháp, một bài viết, một chứng chỉ hoặc một đơn ứng tuyển.', lblVideoSearch:'Tìm kiếm', lblVideoSort:'Sắp xếp', videoSearchPlaceholder:'Tìm video...', videoEmpty:'Chưa có liên kết video nào. Dán một liên kết YouTube vào điểm ngữ pháp và nó sẽ hiện ở đây.', videoNoMatches:'Không có video nào khớp với tìm kiếm đó.', videoSourceGrammar:'Ngữ pháp', videoSourceArticles:'Bài viết', videoSourceCerts:'Chứng chỉ', videoSourceJobs:'Đơn ứng tuyển', videoPlay:'Phát', videoOpenOnYouTube:'Mở trên YouTube', sortFieldAdded:'Đã thêm', sortFieldSource:'Nguồn',  hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh (tùy chọn)',
+    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', saveFailed:'Không thể lưu thay đổi đó nên đã hoàn lại. Kiểm tra kết nối và thử lại.', studySubVideos:'Video', hVideos:'Video', videoIntroHint:'Mọi liên kết video đã thêm ở bất kỳ đâu trong ứng dụng, gom về một chỗ. Thêm bằng cách dán liên kết YouTube vào một điểm ngữ pháp, một bài viết, một chứng chỉ hoặc một đơn ứng tuyển.', lblVideoSearch:'Tìm kiếm', lblVideoSort:'Sắp xếp', videoSearchPlaceholder:'Tìm video...', videoEmpty:'Chưa có liên kết video nào. Dán một liên kết YouTube vào điểm ngữ pháp và nó sẽ hiện ở đây.', videoNoMatches:'Không có video nào khớp với tìm kiếm đó.', videoSourceGrammar:'Ngữ pháp', videoSourceArticles:'Bài viết', videoSourceCerts:'Chứng chỉ', videoSourceJobs:'Đơn ứng tuyển', videoPlay:'Phát', videoOpenOnYouTube:'Mở trên YouTube', sortFieldAdded:'Đã thêm', sortFieldSource:'Nguồn',  hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh (tùy chọn)',
     hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?', deleteJobConfirm:'Xóa đơn ứng tuyển này? CV hoặc thư xin việc đã tải lên vẫn còn trong bộ nhớ và liên kết ngắn vẫn hoạt động.', deleteCertConfirm:'Xóa chứng chỉ này?', deleteBookConfirm:'Xóa cuốn sách này? Các ghi chú sẽ bị xóa theo.', deleteArticleConfirm:'Xóa bài báo này? Các ghi chú sẽ bị xóa theo.', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ (tùy chọn)', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh (tùy chọn)', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh (tùy chọn)', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
     lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
@@ -16362,7 +16391,7 @@ function applyAnimPrefs(){
 // It only ever runs on a SAVE. Every add handler calls it from inside its own
 // `if(!error && data)` branch, and the form is not emptied until he has taken
 // the information off it (see acClear).
-const AC_T = { peek: 340, look: 820, duck: 190, out: 300, grab: 240, bit: 380, step: 60, tip: 320, turn: 130, run: 520, gone: 220, back: 1700, deliver: 480 };
+const AC_T = { peek: 340, look: 820, duck: 190, out: 300, grab: 240, bit: 380, step: 60, tip: 320, turn: 130, run: 520, gone: 220, back: 2200, deliver: 480 };
 const AC_W = 30, AC_H = 46;      // the figure's own box, in px and in its own units
 const AC_FOOT = 43;              // where his feet are in it, so they land on the button's own line
 const AC_HAND = { x: 5.4, y: 8 };  // the hand he holds the letter up in
@@ -16447,7 +16476,12 @@ function acFigure(){
     + '<g class="ac-head">'
     + '<circle cx="15" cy="7.7" r="4.25" fill="currentColor" stroke="none"></circle>'
     + '<path fill="currentColor" stroke="none" d="M10.75 7.4a4.25 4.25 0 0 1 8.5 0z"></path>'
-    + '<path fill="currentColor" stroke="none" d="M11 6.9H7.4a.85.85 0 0 0 0 1.7H11z"></path>'
+    // The peak is its own group because it is the ONLY asymmetric thing on
+    // the head: the skull is a circle and the cap's crown and its brim line
+    // are both symmetric about the centre line, so mirroring the peak alone
+    // turns the head round and mirroring the whole group would squash the
+    // skull to a line on the way through (see the peek).
+    + '<g class="ac-peak"><path fill="currentColor" stroke="none" d="M11 6.9H7.4a.85.85 0 0 0 0 1.7H11z"></path></g>'
     + '<path class="ac-knock" d="M10.9 7.55h8.2" stroke-width="1"></path>'
     + '</g>'
     // The case, with its lid on the hinge at the back and its own clasp.
@@ -16693,22 +16727,21 @@ function addCourier(btn){
   const aCx = gr.left + gr.width / 2, aCy = gr.top + gr.height / 2;
   const dx = handX - aCx, dy = handY - aCy;
   const runDist = window.innerWidth - guyLeft + 40;
-  // THE FUNNEL IS AIMED AT WHAT IT IS CATCHING (real-user request: "the A he
-  // sucks everything in with should have a 45 degree angle, since he sucks
-  // everything up from there"). Upside down, an A is a funnel with its mouth
-  // straight UP, which is the one direction the pills never come from; tilted
-  // 45 degrees toward the side the fields are on, that mouth faces them.
-  // DERIVED from the bits' own centroid rather than picked, so a form whose
-  // fields sit the other way round tilts the other way.
-  const bitsMidX = bits.length
-    ? bits.reduce((sum, b) => sum + b.r.left + b.r.width / 2, 0) / bits.length
-    : handX - 1;
-  const aFunnel = 180 + (bitsMidX <= handX ? 45 : -45);
-  // And the poses that follow from it: tipped into the case, carried at a run,
-  // and landed UPRIGHT -- which is why the last is rounded to a whole number
-  // of turns rather than being a fixed 720.
-  const aCarry = aFunnel + 100, aFly = aCarry + 40;
-  const aLand = Math.round((aFly + 320) / 360) * 360;
+  // THE FUNNEL'S MOUTH POINTS UP AND TO THE RIGHT, at 45 degrees (real-user
+  // request, twice: "the open mouth of the A should be point right/up 45
+  // degrees. It is currently pointing left/up").
+  //
+  // AC_A_FUNNEL IS A CONSTANT, and the pass before this had it DERIVED from
+  // where the form's fields happen to sit -- which is what got it wrong. On a
+  // wide form the fields wrap across rows above the button, so their centroid
+  // lands to the RIGHT of his hand and the rule tilted the mouth the other
+  // way. 225 was checked by rendering an A at 135, 180, 225 and 270 and
+  // looking: 135 is mouth up-LEFT, 180 straight up, 225 up-RIGHT.
+  const AC_A_FUNNEL = 225;
+  // And the poses that follow from it: tipped into the case, and carried at a
+  // run. Where it LANDS is worked out from the bounce below, since that is
+  // what decides which way it is last turning.
+  const aCarry = AC_A_FUNNEL + 100, aFly = aCarry + 40;
   // Everything is declared up front with its own delay, so the sequence is one
   // list to read rather than a chain of timers that can drift apart. ANYTHING
   // WITH A DELAY FILLS FORWARDS ONLY: fill:'both' holds its first keyframe
@@ -16774,33 +16807,54 @@ function addCourier(btn){
         { transform: 'rotate(0deg)' }
       ], { duration: AC_T.duck, delay: peekEnd, easing: 'ease-in', fill: 'forwards' });
     });
-    // ONE SIDE, THEN THE OTHER, THEN UP, and only then back down and out
-    // (real-user request, whose report names the fault exactly: "you just
-    // make him throw his head back"). A ROTATION about the neck is the one
-    // thing a flat silhouette cannot use for a sideways look -- it IS a head
-    // tipping back or forward, which is what the last pass drew. So the two
-    // side beats are almost pure SLIDE, and the big rotation is kept for the
-    // one beat it really means: the cap's peak sits left of the neck, so
-    // turning the head clockwise lifts it, and a raised peak is a chin up.
+    // HE IS WEARING A CAP, SO THE CAP IS WHAT SAYS WHICH WAY HE IS FACING
+    // (real-user request, which is the whole answer: "literally just make his
+    // head one way (he is wearing a cap so....) and then his head the other
+    // way (cap literally just faces the other way...?) and then crack his
+    // neck so he is looking STRAIGHT UPWARDS").
+    //
+    // Which settles what the pass before got wrong. A small ROTATION is a head
+    // tipping, never a head turning -- so the two side beats MIRROR the peak,
+    // which is what a flat silhouette has instead of a three-quarter view, and
+    // the quarter turn is kept for the one beat that really is a tip: looking
+    // straight up.
     //
     // Each beat moves and then HOLDS. A glance is a stop; without the holds,
-    // four poses inside eight hundred milliseconds read as one wobble.
+    // four poses inside eight hundred milliseconds read as one wobble. LINEAR
+    // overall with the curve on each keyframe, which this file already records
+    // as the rule -- an overall easing re-reads the offsets through its own
+    // curve and the holds stop landing where they were written.
     peek.querySelectorAll('.ac-head').forEach(h => {
       if(!h.animate) return;
-      // LINEAR overall with the curve on each keyframe, which this file
-      // already records as the rule: an overall easing re-reads the offsets
-      // through its own curve, so the four beats stop being equal and the
-      // holds stop being holds. Each MOVE carries the ease; each hold is
-      // linear between two identical poses, so its own easing says nothing.
       h.animate([
         { transform: 'translate(0,0) rotate(0deg)', easing: 'ease-in-out' },
-        { transform: 'translate(-4.2px,0.4px) rotate(-7deg)', offset: 0.17, easing: 'linear' },
-        { transform: 'translate(-4.2px,0.4px) rotate(-7deg)', offset: 0.3, easing: 'ease-in-out' },
-        { transform: 'translate(3.8px,0.2px) rotate(5deg)', offset: 0.46, easing: 'linear' },
-        { transform: 'translate(3.8px,0.2px) rotate(5deg)', offset: 0.59, easing: 'ease-in-out' },
-        { transform: 'translate(-0.5px,-2.4px) rotate(20deg)', offset: 0.75, easing: 'linear' },
-        { transform: 'translate(-0.5px,-2.4px) rotate(20deg)', offset: 0.88, easing: 'ease-in-out' },
+        { transform: 'translate(-2.4px,0) rotate(0deg)', offset: 0.17, easing: 'linear' },
+        { transform: 'translate(-2.4px,0) rotate(0deg)', offset: 0.3, easing: 'ease-in-out' },
+        { transform: 'translate(2.4px,0) rotate(0deg)', offset: 0.46, easing: 'linear' },
+        { transform: 'translate(2.4px,0) rotate(0deg)', offset: 0.59, easing: 'cubic-bezier(.5,-0.3,.4,1.35)' },
+        // STRAIGHT UP. A quarter turn about the skull's own centre takes the
+        // peak from pointing at the form to pointing at the ceiling and swings
+        // the crown round to the back of his head, which is a head cracked
+        // back -- and the springy curve into it is the crack.
+        { transform: 'translate(0,-1.4px) rotate(90deg)', offset: 0.75, easing: 'linear' },
+        { transform: 'translate(0,-1.4px) rotate(90deg)', offset: 0.88, easing: 'ease-in-out' },
         { transform: 'translate(0,0) rotate(0deg)' }
+      ], { duration: AC_T.look, delay: AC_T.peek, easing: 'linear', fill: 'forwards' });
+    });
+    // And the cap itself turns round. It flips DURING each move rather than at
+    // a hold, so what the eye sees is the peak narrowing as the head swings
+    // and opening out on the other side -- the same cosine the header's globe
+    // turns on. It is back to facing forward for the look up, since the
+    // quarter turn is what points it at the ceiling.
+    peek.querySelectorAll('.ac-peak').forEach(pk => {
+      if(!pk.animate) return;
+      pk.animate([
+        { transform: 'scaleX(1)', easing: 'linear' },
+        { transform: 'scaleX(1)', offset: 0.3, easing: 'ease-in-out' },
+        { transform: 'scaleX(-1)', offset: 0.46, easing: 'linear' },
+        { transform: 'scaleX(-1)', offset: 0.59, easing: 'ease-in-out' },
+        { transform: 'scaleX(1)', offset: 0.75, easing: 'linear' },
+        { transform: 'scaleX(1)' }
       ], { duration: AC_T.look, delay: AC_T.peek, easing: 'linear', fill: 'forwards' });
     });
   }
@@ -16815,8 +16869,8 @@ function addCourier(btn){
   // mouth up, which is what the information can then be poured into.
   a.animate([
     { transform: 'translate(0,0) rotate(0deg) scale(1)' },
-    { transform: 'translate(' + (dx * 0.4) + 'px,' + (dy * 0.4 - 6) + 'px) rotate(' + (aFunnel * 0.39) + 'deg) scale(' + (AC_A_HELD * 0.94) + ')', offset: 0.45 },
-    { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + aFunnel + 'deg) scale(' + AC_A_HELD + ')' }
+    { transform: 'translate(' + (dx * 0.4) + 'px,' + (dy * 0.4 - 6) + 'px) rotate(' + (AC_A_FUNNEL * 0.39) + 'deg) scale(' + (AC_A_HELD * 0.94) + ')', offset: 0.45 },
+    { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + AC_A_FUNNEL + 'deg) scale(' + AC_A_HELD + ')' }
   ], { duration: AC_T.grab, delay: outEnd, easing: 'cubic-bezier(.34,1.3,.64,1)', fill: 'forwards' });
 
   // Every drawing is in the svg twice (see .ac-halo), so the case's lid is too
@@ -16875,7 +16929,7 @@ function addCourier(btn){
 
   // The letter TIPS in his hand rather than going in the case with them.
   a.animate([
-    { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + aFunnel + 'deg) scale(' + AC_A_HELD + ')' },
+    { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + AC_A_FUNNEL + 'deg) scale(' + AC_A_HELD + ')' },
     { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(' + aCarry + 'deg) scale(' + AC_A_HELD + ')' }
   ], { duration: AC_T.tip, delay: tipAt, easing: 'cubic-bezier(.4,0,.5,1)', fill: 'forwards' });
 
@@ -16948,11 +17002,57 @@ function addCourier(btn){
     { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(' + aCarry + 'deg) scale(' + AC_A_HELD + ')' },
     { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(' + aFly + 'deg) scale(' + AC_A_HELD + ')' }
   ], { duration: AC_T.run, delay: runAt, easing: AC_RUN_EASE, fill: 'forwards' });
-  a.animate([
-    { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(' + aFly + 'deg) scale(' + AC_A_HELD + ')' },
-    { transform: 'translate(' + (dx * 0.5) + 'px,' + (dy - 54) + 'px) rotate(' + (aLand - 160) + 'deg) scale(' + (AC_A_HELD * 0.91) + ')', offset: 0.55 },
-    { transform: 'translate(0,0) rotate(' + aLand + 'deg) scale(1)' }
-  ], { duration: AC_T.back, delay: backAt, easing: 'cubic-bezier(.15,.55,.25,1)', fill: 'forwards' });
+  // IT BOUNCES OFF THE WEST WALL (real-user request: "make the A bounce off
+  // the west side of the window (however big it is, should be dynamic and
+  // should work/look good on the App too)"). Every number in it is measured
+  // off the window and the letter's own size, so it is the same throw at any
+  // width: he throws it in from the east, it crosses the whole screen, hits
+  // the left edge, and comes back to the button.
+  //
+  // The letter's CENTRE stops its own half-DIAGONAL short of the edge, which
+  // is the bound at any rotation -- measured off its own glyph box rather
+  // than guessed, since a width alone let the ink cross the edge by 2px while
+  // it was turned 45 degrees. Plus two, so it kisses the wall rather than
+  // touching it exactly.
+  const wallPad = Math.max(10, Math.hypot(gr.width, gr.height) * AC_A_HELD * 0.5 + 2);
+  const wallDx = wallPad - aCx;
+  // A window too narrow for the letter to get properly west of the button
+  // makes a wobble rather than a bounce, so there it flies straight in as it
+  // did. On a phone the Add button really can sit a thumb's width from the
+  // left edge.
+  const canBounce = aCx - wallPad > 90;
+  // The spin REVERSES at the wall, which is most of what says it bounced
+  // rather than curved. It runs backwards on the way out and settles forwards
+  // on the way home, landing on a whole number of turns so the pose it lands
+  // in is the pose the button draws.
+  const aWall = aFly - 120;
+  const aLand = canBounce ? Math.ceil((aWall + 40) / 360) * 360
+                          : Math.round((aFly + 320) / 360) * 360;
+  // The arc is capped against the top of the window rather than being a fixed
+  // height, or a button near the top would throw the letter off the screen.
+  const arcUp = Math.min(54, Math.max(10, aCy - 16));
+  if(canBounce){
+    // The two legs are very different lengths, so the beat is placed by
+    // DISTANCE rather than at a fixed offset -- otherwise the short leg home
+    // runs at a fraction of the pace of the long one out.
+    const outLen = Math.abs((dx + runDist) - wallDx), backLen = Math.abs(wallDx);
+    const hit = Math.max(0.34, Math.min(0.8, outLen / (outLen + backLen)));
+    a.animate([
+      { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(' + aFly + 'deg) scale(' + AC_A_HELD + ')',
+        easing: 'cubic-bezier(.2,.5,.5,1)' },
+      { transform: 'translate(' + wallDx + 'px,' + (-arcUp * 0.42) + 'px) rotate(' + aWall + 'deg) scale(' + AC_A_HELD + ')',
+        offset: hit, easing: 'cubic-bezier(.2,.75,.4,1)' },
+      { transform: 'translate(' + (wallDx * 0.42) + 'px,' + (-arcUp) + 'px) rotate(' + Math.round((aWall + aLand) / 2) + 'deg) scale(' + (AC_A_HELD * 0.95) + ')',
+        offset: hit + (1 - hit) * 0.52, easing: 'cubic-bezier(.4,0,.6,1)' },
+      { transform: 'translate(0,0) rotate(' + aLand + 'deg) scale(1)' }
+    ], { duration: AC_T.back, delay: backAt, easing: 'linear', fill: 'forwards' });
+  } else {
+    a.animate([
+      { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(' + aFly + 'deg) scale(' + AC_A_HELD + ')' },
+      { transform: 'translate(' + (dx * 0.5) + 'px,' + (dy - arcUp) + 'px) rotate(' + (aLand - 160) + 'deg) scale(' + (AC_A_HELD * 0.91) + ')', offset: 0.55 },
+      { transform: 'translate(0,0) rotate(' + aLand + 'deg) scale(1)' }
+    ], { duration: AC_T.back, delay: backAt, easing: 'cubic-bezier(.15,.55,.25,1)', fill: 'forwards' });
+  }
   const takeTimer = setTimeout(()=>{
     a.style.visibility = '';
     gSpan.style.visibility = 'hidden';
@@ -18716,18 +18816,22 @@ async function addJob(){
   if(!error && data && status === 'interview') openInterviewDateModal(data[0]);
 }
 async function updateJobStatus(jobId, status){
-  await supabaseClient.from('job_applications').update({ status }).eq('id', jobId);
   const j = (allJobs[currentUser.id]||[]).find(x=>x.id===jobId);
+  const was = j ? j.status : null;
   if(j) j.status = status;
   renderJobs();
-  if(status === 'interview' && j) openInterviewDateModal(j);
+  const ok = await saved(supabaseClient.from('job_applications').update({ status }).eq('id', jobId),
+    ()=>{ if(j) j.status = was; renderJobs(); });
+  if(ok && status === 'interview' && j) openInterviewDateModal(j);
 }
 async function updateJobOfferResponse(jobId, offerResponse){
   const value = offerResponse || null;
-  await supabaseClient.from('job_applications').update({ offer_response: value }).eq('id', jobId);
   const j = (allJobs[currentUser.id]||[]).find(x=>x.id===jobId);
+  const was = j ? j.offer_response : null;
   if(j) j.offer_response = value;
   renderJobs();
+  await saved(supabaseClient.from('job_applications').update({ offer_response: value }).eq('id', jobId),
+    ()=>{ if(j) j.offer_response = was; renderJobs(); });
 }
 // Asks when, then drops a 1-hour, default-color calendar event for it --
 // saves having to flip to the Calendar tab and re-type the company name
@@ -19138,10 +19242,12 @@ async function addCert(){
   acReveal(renderCerts, document.getElementById('certList'));
 }
 async function updateCertStatus(certId, status){
-  await supabaseClient.from('certifications').update({ status }).eq('id', certId);
   const c = (allCerts[currentUser.id]||[]).find(x=>x.id===certId);
+  const was = c ? c.status : null;
   if(c) c.status = status;
   renderCerts();
+  await saved(supabaseClient.from('certifications').update({ status }).eq('id', certId),
+    ()=>{ if(c) c.status = was; renderCerts(); });
 }
 async function deleteCert(certId){
   if(!confirm(t('deleteCertConfirm'))) return;
@@ -33767,11 +33873,13 @@ async function addCourse(){
 }
 document.getElementById('addCourseBtn').addEventListener('click', addCourse);
 async function updateCourseStatus(courseId, status){
-  await supabaseClient.from('courses').update({status}).eq('id', courseId);
+  const hits = [];
   Object.values(allCourses).forEach(list=>{
     const c = list.find(x=>x.id===courseId);
-    if(c) c.status = status;
+    if(c){ hits.push({ c: c, was: c.status }); c.status = status; }
   });
+  await saved(supabaseClient.from('courses').update({status}).eq('id', courseId),
+    ()=>{ hits.forEach(h=>{ h.c.status = h.was; }); renderCourses(); renderLectureList(); });
   renderCourses();
   // Locking in immediately reserves the course's note-group header in the
   // (shared) Notes tab — refresh it in case that tab is already open.
