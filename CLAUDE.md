@@ -5755,3 +5755,62 @@ still well clear of the flat 400 once rejected as "WAYYY too slow".
 Verified by running the REAL courier at both widths: 28 animations and no error
 either way, and the same flight priced at both speeds comes out 495ms against
 709ms, which is 43% longer.
+
+## The videos tab says less, and the bounce back has a floor (13 Sep, sixty-seventh pass)
+
+### Two lines of copy, one of them deleted outright
+
+"Delete the 'Every YouTube link...' stuff, and change the 'Put a YouTube link
+on...' sentence to 'YouTube links on grammar points show up here.'"
+
+- **The intro line is gone**, element and key and all three translations. Once
+  the tab gathered from one place it was a paragraph explaining a heading that
+  already says Videos, above a card whose only other state says the same thing.
+- **The empty state states the rule rather than giving an instruction**: "No
+  video links yet. YouTube links on grammar points show up here." Korean and
+  Vietnamese moved with it, both re-cast the same way (문법 항목의 유튜브 링크가
+  여기에 나타납니다, rather than "넣으면").
+
+Checked in all three languages against an empty list, and the card is down to
+its heading, the search and sort row, and the list.
+
+### The way home off the wall is over in a fifth of a second
+
+"The courier A throw bounce back is too fast on phone."
+
+**How long it takes was a share of the clock worked out from its LENGTH, and
+its length is not a fact about the flight.** It is how far the Add button's own
+letter sits from the edge of the window: the letter runs the width of the
+screen, brakes into the wall, and then has only that much ground to cover on
+the way back. On a phone the button is at the left of a full-width card, so
+it is about ninety pixels. Measured at 375px, per leg:
+
+| | before | after |
+|---|---|---|
+| the run in | 297ms | 297 |
+| braking into the wall | 203 | 202 |
+| the kick off it | 89 | **162** |
+| the top of the arc | 5 | 9 |
+| settling into the button | 115 | **209** |
+| **the way home** | **209** | **380** |
+| the whole flight | 709 | 879 |
+
+`AC_A_HOME_MIN_MS` is that floor, and it is applied as a STRETCH on the legs
+after the wall rather than as a duration written over them, so it goes through
+the same clock every other leg is timed by (the total being weighted / speed, a
+return worth `floor * speed / 1000` of weighted length takes exactly the floor).
+Uniform across those legs, so the shape of the return is what it was and only
+the whole of it is slower.
+
+- **`homeAt` is recorded where the KICK is pushed**, which is the one place the
+  code already knows the letter has turned round. It stays -1 on a flight with
+  no bounce in it, so a button already hard against the edge is untouched:
+  checked, 3 frames and no floor.
+- **Not applied on a desktop**, where nothing was reported. The same return is
+  139ms there, and it is shorter rather than longer (the button sits about as
+  far from the left edge either way, and the speed is half again as high), so
+  the floor would land as a bigger change to something nobody asked about. One
+  line if it is wanted there too.
+- Verified by running the real courier at 375px: 28 animations, no error, and
+  the way out unchanged at 499ms.
+
