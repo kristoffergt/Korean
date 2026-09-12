@@ -3981,3 +3981,72 @@ In the browser at 1024 wide, light and dark, with a fake two-person state
 panel's comes out in the same order and a pill event keeps `pill` selected;
 the two links compute to `rgb(111,184,148)` and `rgb(194,116,142)`; and a real
 hover holds the colour at opacity 0.78.
+
+## The form opens on the kind you last added, and "public" said too much (12 Sep, forty-ninth pass)
+
+Four off two screenshots.
+
+### The default kind
+
+"It should default to what you picked last time you added something." It opened
+on Deadline for ever, so anybody who mostly adds events re-picked Event every
+time.
+
+- **Written on a real ADD, not on the select's own change.** It sits inside
+  `insert(...).select()`'s success branch, so a kind picked and then abandoned
+  is not remembered, which is what the request says.
+- **Per DEVICE, keyed by the ACCOUNT** (`ptLastEventKind:<uid>`), the shape the
+  calendar's own view mode already uses: the phone and the desktop are rightly
+  allowed different answers, and two people sharing a browser are not handed
+  each other's.
+- **It is applied by the rebuild that runs AFTER sign-in**, and that is forced
+  rather than chosen: `rebuildEventKindSelect` also runs from `applyLanguage`
+  before sign-in, where `currentUser` is null and the account's key cannot be
+  read. That second call already existed for the same reason (the Pill cycle
+  option), so the note there now records both.
+- **`eventKindTouched` is what stops it overwriting a live choice.** Without it
+  the post-sign-in rebuild would put the stored default back over a kind just
+  picked by hand; with it, a language change keeps whatever is on screen.
+- **A rebuild that MOVES the kind calls `updateKindFieldVisibility`.** The
+  fields on offer follow the kind, so landing on Birthday without it would have
+  shown the deadline layout until the select was touched. Only when it moves:
+  every other rebuild is a relabelling.
+- **The stored kind is validated against the kinds on OFFER**, so a stored
+  `pill` on anyone else's account falls back to Deadline rather than selecting
+  nothing.
+
+### Three off the form's own row
+
+- **"Public" claimed more than it means.** Nothing here is ever visible outside
+  the circle, so the choice is who IN the circle sees it (real-user report:
+  "this 'public' only means your circle could see it, so it is kind of a weird
+  phrasing"). It reads **Shared with your circle** / Private, using each
+  language's own word for the circle (내 그룹, nhóm; see `hLinkedCircle`). The
+  select is sized to its own widest option now, with the shared 150px as the
+  floor, in the add form and the edit panel alike.
+- **The reminder field carries no worked example.** "e.g. 45m, 3h, 2d" is gone,
+  key and all: that box is reached by pressing the trigger a second time with
+  the preset list already open, which is deliberate enough not to need the
+  format spelled out in it.
+- **The "+ Add reminder" trigger is drawn as one of the form's controls.** It
+  wore a dashed pill in a row of solid 6px boxes and was the only thing there
+  that looked like it belonged to something else (real-user report: "it's kind
+  of weird only that button is different from all the other ones"). Same
+  border, radius, ground, padding and type as `.field select`. The CHIP keeps
+  its pill: a reminder that is set is a state rather than a control.
+  - **`white-space: nowrap` and an explicit `line-height`, both measured.**
+    Without the first the label wrapped to two lines inside its own box (54px
+    against the selects' 39); without the second it came out 2px short, because
+    a `<select>` takes its line box from the font's own and a span does not.
+
+### Checked how
+
+In the browser at 1024 and at 375, light and dark, with a two-person state: a
+fresh account opens on Deadline, `rememberEventKind('event')` then a
+pre-sign-in plus post-sign-in rebuild lands on Event (the pre-sign-in one
+correctly cannot see it), a hand-picked Course survives a language rebuild, a
+stored `pill` comes back as Deadline on another account and as Pill cycle on
+the right one, landing on Birthday hides the time field and relabels Title as
+Name, another uid on the same browser reads empty, all three controls in that
+row measure 39px tall, and the wider Visibility select overflows nothing at
+375 (216px inside a 375px screen).

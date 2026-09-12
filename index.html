@@ -1247,6 +1247,9 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 .field input[type="checkbox"], .field input[type="radio"]{width:16px !important;height:16px !important;min-width:16px;min-height:16px;padding:0 !important;margin:0;border-radius:5px;flex-shrink:0;}
 .field.wide input, .field.wide textarea, .field.wide select{width:320px;}
 .field select{font-family:'Inter',sans-serif;font-size:14px;}
+/* Visibility names the circle now, which no longer fits the shared width.
+   Both the add form's own select and the edit panel's copy of it. */
+#eventPrivate, .field select.edit-private{width:auto;min-width:150px;max-width:100%;}
 .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
 .person-filter-btn{font-family:'Inter',sans-serif;font-weight:500;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:fit-content;min-width:56px;max-width:220px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .person-filter-btn:hover{background:var(--paper-dim);}
@@ -2610,9 +2613,17 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
 .reminder-chip-remove{background:none;border:none;color:var(--danger);cursor:pointer;
   padding:0 2px;font-size:12px;line-height:1;opacity:0.7;}
 .reminder-chip-remove:hover{opacity:1;}
+/* The trigger is one of the form's controls, so it is drawn as one: the same
+   border, radius, ground, padding and type as .field select rather than the
+   dashed pill it used to wear, which was the only thing in that row that
+   looked like it belonged to something else (real-user report).
+   line-height is spelled out because a <select> takes its line box from the
+   font's own, which is taller than a span's at the same size -- matching the
+   padding alone left the button 2px short of the controls beside it. */
 .reminder-add-trigger{display:inline-flex;align-items:center;color:var(--ink-soft);
-  font-weight:600;font-size:12px;padding:4px 10px;border:1px dashed var(--line);
-  border-radius:20px;cursor:pointer;}
+  font-family:'Inter',sans-serif;font-size:14px;padding:9px 10px;
+  border:1px solid var(--line);border-radius:6px;background:var(--paper);
+  cursor:pointer;white-space:nowrap;line-height:19px;}
 .reminder-add-trigger:hover{color:var(--ink);border-color:var(--ink-soft);}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
 .modal-box{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:22px 24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;}
@@ -10382,10 +10393,10 @@ const I18N = {
     forgotPassword:'Forgot password?', resetSent:'Check your email for a reset link.', resetError:'Could not send reset email.',
     lblSetNewPassword:'Set a new password', lblNewPassword:'New password', updatePasswordBtn:'Update password',
     passwordUpdated:'Password updated! Signing you in...', passwordUpdateError:'Could not update password.', enterEmailFirst:'Enter your email above first.',
-    lblEventPrivate:'Visibility', publicOpt:'Public', privateOpt:'Private', ownedBy:'by',
+    lblEventPrivate:'Visibility', publicOpt:'Shared with your circle', privateOpt:'Private', ownedBy:'by',
     lblEventReminder:'Reminder', reminderOptNone:'No reminder', reminderOptAtTime:'At the time', reminderOpt1Hour:'1 hour before', reminderOpt1Day:'1 day before', eventReminderFor:'Remind',
     reminderUnitMinute:'minute', reminderUnitMinutes:'minutes', reminderUnitHour:'hour', reminderUnitHours:'hours', reminderUnitDay:'day', reminderUnitDays:'days',
-    reminderBeforeSuffix:'before', eventReminderTypeHint:'e.g. 45m, 3h, 2d', removeReminderTitle:'Remove reminder', reminderPrecisionNote:'Reminders are checked every 30 minutes, so exact minute offsets fire within that window rather than to the second.',
+    reminderBeforeSuffix:'before', removeReminderTitle:'Remove reminder', reminderPrecisionNote:'Reminders are checked every 30 minutes, so exact minute offsets fire within that window rather than to the second.',
     editBtn:'Edit', saveChanges:'Save changes', cancelEdit:'Cancel',
     kindCourse:'Course', kindBirthday:'Birthday', kindPill:'Pill cycle', lblPillVersion:'Pill version', pillVersionStandard:'Standard (21 active / 7 off)', repeatYear:'Year(s)', amLabel:'AM', pmLabel:'PM', countdownDaysShort:'d', countdownHoursShort:'h', countdownMinsShort:'m', countdownSecsShort:'s',
     hCoursesCal:'Courses', hBirthdays:'Birthdays',
@@ -10505,10 +10516,10 @@ const I18N = {
     forgotPassword:'비밀번호를 잊으셨나요?', resetSent:'재설정 링크를 이메일로 보냈습니다.', resetError:'재설정 이메일을 보낼 수 없습니다.',
     lblSetNewPassword:'새 비밀번호 설정', lblNewPassword:'새 비밀번호', updatePasswordBtn:'비밀번호 변경',
     passwordUpdated:'비밀번호가 변경되었습니다! 로그인 중...', passwordUpdateError:'비밀번호를 변경할 수 없습니다.', enterEmailFirst:'먼저 위에 이메일을 입력하세요.',
-    lblEventPrivate:'공개 범위', publicOpt:'공개', privateOpt:'비공개', ownedBy:'',
+    lblEventPrivate:'공개 범위', publicOpt:'내 그룹에 공유', privateOpt:'비공개', ownedBy:'',
     lblEventReminder:'알림', reminderOptNone:'알림 없음', reminderOptAtTime:'정시', reminderOpt1Hour:'1시간 전', reminderOpt1Day:'1일 전', eventReminderFor:'알림 대상',
     reminderUnitMinute:'분', reminderUnitMinutes:'분', reminderUnitHour:'시간', reminderUnitHours:'시간', reminderUnitDay:'일', reminderUnitDays:'일',
-    reminderBeforeSuffix:'전', eventReminderTypeHint:'예: 45m, 3h, 2d', removeReminderTitle:'알림 삭제', reminderPrecisionNote:'알림은 30분마다 확인되므로, 정확한 분 단위 설정도 그 범위 안에서 전송됩니다.',
+    reminderBeforeSuffix:'전', removeReminderTitle:'알림 삭제', reminderPrecisionNote:'알림은 30분마다 확인되므로, 정확한 분 단위 설정도 그 범위 안에서 전송됩니다.',
     editBtn:'수정', saveChanges:'변경사항 저장', cancelEdit:'취소',
     kindCourse:'수업', kindBirthday:'생일', kindPill:'피임약 주기', lblPillVersion:'피임약 종류', pillVersionStandard:'표준 (복용 21일 / 휴약 7일)', repeatYear:'년', amLabel:'오전', pmLabel:'오후', countdownDaysShort:'일', countdownHoursShort:'시간', countdownMinsShort:'분', countdownSecsShort:'초',
     hCoursesCal:'수업', hBirthdays:'생일',
@@ -10628,10 +10639,10 @@ const I18N = {
     forgotPassword:'Quên mật khẩu?', resetSent:'Kiểm tra email để lấy liên kết đặt lại mật khẩu.', resetError:'Không thể gửi email đặt lại mật khẩu.',
     lblSetNewPassword:'Đặt mật khẩu mới', lblNewPassword:'Mật khẩu mới', updatePasswordBtn:'Cập nhật mật khẩu',
     passwordUpdated:'Đã cập nhật mật khẩu! Đang đăng nhập...', passwordUpdateError:'Không thể cập nhật mật khẩu.', enterEmailFirst:'Hãy nhập email của bạn ở trên trước.',
-    lblEventPrivate:'Chế độ hiển thị', publicOpt:'Công khai', privateOpt:'Riêng tư', ownedBy:'bởi',
+    lblEventPrivate:'Chế độ hiển thị', publicOpt:'Chia sẻ với nhóm', privateOpt:'Riêng tư', ownedBy:'bởi',
     lblEventReminder:'Nhắc nhở', reminderOptNone:'Không nhắc', reminderOptAtTime:'Đúng giờ', reminderOpt1Hour:'1 giờ trước', reminderOpt1Day:'1 ngày trước', eventReminderFor:'Nhắc cho',
     reminderUnitMinute:'phút', reminderUnitMinutes:'phút', reminderUnitHour:'giờ', reminderUnitHours:'giờ', reminderUnitDay:'ngày', reminderUnitDays:'ngày',
-    reminderBeforeSuffix:'trước', eventReminderTypeHint:'vd: 45m, 3h, 2d', removeReminderTitle:'Xóa nhắc nhở', reminderPrecisionNote:'Nhắc nhở được kiểm tra mỗi 30 phút, nên mốc phút chính xác sẽ được gửi trong khoảng đó thay vì đúng từng giây.',
+    reminderBeforeSuffix:'trước', removeReminderTitle:'Xóa nhắc nhở', reminderPrecisionNote:'Nhắc nhở được kiểm tra mỗi 30 phút, nên mốc phút chính xác sẽ được gửi trong khoảng đó thay vì đúng từng giây.',
     editBtn:'Sửa', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy',
     kindCourse:'Khóa học', kindBirthday:'Sinh nhật', kindPill:'Chu kỳ thuốc tránh thai', lblPillVersion:'Loại thuốc', pillVersionStandard:'Tiêu chuẩn (uống 21 ngày / nghỉ 7 ngày)', repeatYear:'Năm', amLabel:'SA', pmLabel:'CH', countdownDaysShort:'ngày', countdownHoursShort:'giờ', countdownMinsShort:'phút', countdownSecsShort:'giây',
     hCoursesCal:'Khóa học', hBirthdays:'Sinh nhật',
@@ -11719,21 +11730,40 @@ function rebuildCertStatusSelect(){
   });
   sel.value = prev;
 }
+const LAST_EVENT_KIND_KEY = 'ptLastEventKind';
+function lastEventKindKey(){ return LAST_EVENT_KIND_KEY + ':' + (currentUser ? currentUser.id : 'guest-local'); }
+function lastEventKind(){ try { return localStorage.getItem(lastEventKindKey()) || ''; } catch(e){ return ''; } }
+function rememberEventKind(kind){ try { localStorage.setItem(lastEventKindKey(), kind); } catch(e){} }
+// Whether the reader has picked a kind BY HAND this session. Without it the
+// rebuild that runs right after sign-in would put the stored default back over
+// a choice just made, and with it a language change keeps whatever is on
+// screen rather than reverting.
+var eventKindTouched = false;
 function rebuildEventKindSelect(){
   const sel = document.getElementById('eventKind');
-  const prev = sel.value || 'deadline';
-  sel.innerHTML = '';
   const kinds = [['event','kindEvent'],['deadline','kindDeadline'],['birthday','kindBirthday'],['course','kindCourse']];
   // Pill-cycle tracking is Kristoffer-only (see PILL_CYCLE_ACCOUNT_NAME) --
   // the option itself is simply never offered to anyone else, same pattern
   // as the Job Board sync button being account-gated.
   if(isPillCycleAccount()) kinds.push(['pill','kindPill']);
+  // The stored kind is read HERE rather than written into the markup, because
+  // this runs twice: once from applyLanguage() before sign-in, where the
+  // account's own key cannot be read yet, and again straight after it (see
+  // the note at that second call). Validated against the kinds actually on
+  // offer, so a stored 'pill' on anyone else's account, or a kind that stops
+  // existing, falls back rather than selecting nothing.
+  const before = sel.value;
+  const want = eventKindTouched ? before : (lastEventKind() || before);
+  sel.innerHTML = '';
   kinds.forEach(([val,key])=>{
     const opt = document.createElement('option');
     opt.value = val; opt.textContent = t(key);
     sel.appendChild(opt);
   });
-  sel.value = (prev === 'pill' && !isPillCycleAccount()) ? 'deadline' : prev;
+  sel.value = kinds.some(([val])=> val === want) ? want : 'deadline';
+  // The fields on offer follow the kind, so a rebuild that MOVES the kind has
+  // to move them with it. Only then: every other rebuild is a relabelling.
+  if(sel.value !== before && before !== '') updateKindFieldVisibility();
 }
 function rebuildPillVersionSelect(){
   const sel = document.getElementById('eventPillVersion');
@@ -12443,7 +12473,9 @@ async function onAuthed(user){
   // page load, but that's BEFORE sign-in -- currentUser is still null then,
   // so isPillCycleAccount() always came back false and "Pill cycle" could
   // never appear even for the right account. Nothing rebuilt it again after
-  // sign-in until now.
+  // sign-in until now. It is also the run that applies the kind last added on
+  // this device by THIS account, for the same reason: the key is keyed by the
+  // account, which that first run does not know yet.
   rebuildEventKindSelect();
   rebuildPillVersionSelect();
   setWhoName(profiles[user.id] || user.email);
@@ -20757,6 +20789,7 @@ async function addEvent(){
   try {
     const { data, error } = await supabaseClient.from('events').insert(rows).select();
     if(!error && data){
+      rememberEventKind(kind);
       data.forEach(row=>{
         const ownerUid = row.user_id;
         if(!allEvents[ownerUid]) allEvents[ownerUid] = [];
@@ -20869,7 +20902,6 @@ function wireEventReminderAddTrigger(el){
         const input = document.createElement('input');
         input.type = 'text';
         input.className = 'cal-seg-input';
-        input.placeholder = t('eventReminderTypeHint');
         input.style.width = '96px';
         el.textContent = '';
         el.appendChild(input);
@@ -21191,7 +21223,10 @@ function updateKindFieldVisibility(){
     updateRecurFieldVisibility();
   }
 }
-document.getElementById('eventKind').addEventListener('change', updateKindFieldVisibility);
+document.getElementById('eventKind').addEventListener('change', ()=>{
+  eventKindTouched = true;
+  updateKindFieldVisibility();
+});
 function formatTime12h(timeStr){
   if(!timeStr) return '';
   const [hStr, mStr] = timeStr.split(':');
