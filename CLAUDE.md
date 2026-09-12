@@ -4170,3 +4170,89 @@ sprinting off the screen to the right." That, exactly, in `addCourier()`.
 - 201 controls picked up by the new hover rule, one clash found (the reminder
   trigger, above) and fixed, and the pin boxes confirmed to keep their own
   transition rather than this one.
+
+## An application fills itself from a link, the courier keeps the letter, and a delete asks (12 Sep, fifty-first pass)
+
+### Fill from AI, on the application form
+
+"Add a copy AI prompt button that either just needs the link to the job
+posting or the name of the company/position to fill out the log an application
+fields." The machinery the book and the article forms use is already generic --
+a `[data-ai-scope]`, a `data-ai-field` per input, and `aiFillControlsHtml(kind)`
+-- so the job form joins it rather than growing its own.
+
+- **A job posting is not a bibliographic record**, so `aiPromptFor` has its own
+  `job` branch asking for the three things the form can actually hold: company,
+  role, link. It also tells the model NOT to answer with a careers homepage, a
+  search page, or an aggregator where the employer has its own posting, which
+  is what an LLM reaches for when it cannot find the real one.
+- **`aiSeedFor(kind, scope)` is new, and it is what made the request
+  expressible**: the old code seeded the prompt from `[data-ai-field="title"]`
+  alone, and a job has no title. For a job it prefers the LINK where there is
+  one (that is the whole posting; a company and a position are a description of
+  it), falls back to "Role at Company", then to whichever of the two is filled.
+- **`title` is deliberately NOT mapped to the role** in the shared FIELDS
+  table: it already means a book's title, and in a job scope there is no title
+  field for it to find, so a stray one is skipped rather than landing in the
+  wrong box. `employer`, `position` and `job_title` are mapped, since an LLM
+  reaches for those.
+- Checked with real answers: a fenced JSON reply with prose around it fills all
+  three; the alias keys fill all three; "I could not find that posting, sorry."
+  fills nothing and says so; and a BOOK answer pasted into the job scope fills
+  nothing rather than something.
+
+### A delete asks first
+
+"Add a warning when you try to remove job applications/certificates. currently
+there is no warning." `confirm(t(...))` inside the delete FUNCTION rather than
+on the button, so every path that can delete one goes through it -- the shape
+`deleteCourse` already had.
+
+**Books and articles were in exactly the same state and got it too**, so all
+four owned lists behave the same rather than two asking and two not. Each
+message says what goes with the row: an application's uploaded CV stays in
+storage and keeps its short link, and a book's or an article's NOTES go with
+it, which is the part worth knowing before pressing Delete.
+
+### The courier, second pass
+
+Four reports, all of them right.
+
+- **The letter must not change colour.** It was drawn in the button's own ink
+  and then crossed to the page's, because the Add button is a solid near-black
+  pill with near-white text (and the reverse in the dark theme) -- its ink is
+  exactly the colour of the page behind it, so a bare letter is invisible the
+  moment it leaves. It is **a chip OF THE BUTTON** now: the button's ink on the
+  button's own fill, with a 4px radius. Nothing about it changes on the way,
+  it is legible wherever it goes, and it reads as the piece he tore off. Only
+  its FILL fades, over the last of the flight home, which is what turns it back
+  into the letter on the button rather than a chip sitting on top of one.
+  Measured at four moments: ink `rgb(24,25,27)` throughout, identical to the
+  button's own.
+- **The letter comes back.** He keeps it while he runs (it travels with his
+  hand) and **throws it in from off screen**, arcing, spinning two whole turns
+  so it lands upright exactly on its own glyph. Stepped: it leaves at 2400 with
+  him and lands at [559,374], which is the glyph's own home to the pixel. What
+  goes in the suitcase is the INFORMATION, which is what the brief said --
+  three drops now pour out of the funnel into the case while he tips it, so the
+  pour is something you can see rather than something implied.
+- **He has some substance.** Not a stroked stick figure: a filled torso with
+  arced shoulders, a head with a CAP (its peak out to the left, the way he
+  faces), a bag strap, hands, feet, and a case with a clasp -- with the details
+  **knocked out in the page's own ground**, the trick the checkbox tick and the
+  train's windscreen already use. The knockouts are a CSS class, not a
+  `fill="var(--paper)"` attribute: a `var()` in a presentation attribute does
+  not resolve.
+  - The chip came down from 1.45 to 1.3 and his reaching hand went up and out
+    (5.4, 8 rather than 7, 10.6), because at 1.45 a 15px letter is 22px wide
+    against a 30px figure and it covered his head.
+- **The form is not emptied until he has taken the information off it.** It was
+  cleared the moment the insert returned, so the pills flew out of fields that
+  were already blank. Every add handler's own clear block now goes through
+  `acClear(fn)`: the courier decides WHEN (at the moment the last pill lands in
+  the funnel), the handler still owns WHAT. **With no courier out it runs at
+  once**, so nothing about a form depends on the animation being on -- checked
+  with the group turned off, with no room for him on screen, and with a second
+  add fired while one was already running (one courier, and the second
+  handler's own clear still ran). Measured: the title field still reads
+  "Dentist appointment" at 1100ms and is cleared at 1206.
