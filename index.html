@@ -14354,10 +14354,28 @@ closeOnBackdrop(document.getElementById('friendsModal'), ()=>{
 // THE TITLE RUNS ITS OWN ANIMATION WHEN THIS OPENS (real-user request), which
 // is the header's animation rather than a copy: `.tl-play` is a second thing
 // that can arm the same rules, so there is nothing to keep in step.
+// The header's own icons are 280px PNGs inlined in the CSS -- the right size
+// for a 26-32px mark and a 2.3x upscale at the lightbox's 320 CSS px, which is
+// what made it read as low quality (real-user report). The PWA icon beside it
+// is the SAME artwork at 512, verified rather than assumed: the mark spans
+// x 0.350..0.648 of the frame in both, so swapping the file moves nothing. It
+// also has no alpha and runs full-bleed to the corner, so .brand-lightbox-img's
+// own 22% radius defines the shape instead of being laid over the asset's.
+//
+// Only the DARK-looking icon has a 512 twin; the light-looking one (which is
+// what the dark theme shows) has nothing bigger than its inline 280 anywhere
+// in the repo, so there it still comes from the CSS.
+const BRAND_HIRES = { 'brand-icon-dark': 'icon-512.png' };
+function brandHiresFor(icon){
+  for(const cls in BRAND_HIRES) if(icon.classList.contains(cls)) return BRAND_HIRES[cls];
+  return null;
+}
 function openBrandLightbox(icon){
   const box = document.getElementById('brandLightbox');
   const title = document.getElementById('brandLightboxTitle');
-  document.getElementById('brandLightboxImg').style.backgroundImage = getComputedStyle(icon).backgroundImage;
+  const hires = brandHiresFor(icon);
+  document.getElementById('brandLightboxImg').style.backgroundImage =
+    hires ? "url('" + hires + "')" : getComputedStyle(icon).backgroundImage;
   box.classList.remove('hidden');
   // Off first, so reopening plays it again rather than showing it already
   // finished -- and then on TWO frames later. A transition needs its start

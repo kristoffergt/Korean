@@ -5362,3 +5362,45 @@ and later un-shared is a row that can point at a file in my folder while being
 invisible to me. Getting that wrong deletes documents. The durable fix is the
 delete path; the ten duplicates want either the Supabase dashboard or a
 one-off action somebody presses.
+
+## The logo lightbox was upscaling a 280px icon 2.3x (12 Sep, sixty-third pass)
+
+"I noticed this is very low quality when opening, do we not have a higher
+quality version of this picture?"
+
+**Measured rather than guessed.** The header's brand icons are PNGs inlined in
+the CSS at **280x280** -- the right size for a mark drawn at 26-32px. The
+lightbox shows them at `min(60vw, 320px)`, which on a 2x screen is **640
+device pixels: a 2.3x upscale**. That is the whole of the low quality.
+
+**The PWA icon beside it is the same artwork at 512**, and the lightbox was not
+using it. Verified it really is the same rather than assumed: the mark spans
+**x 0.350..0.648, y 0.195..0.805** of the frame in the 512 and
+**0.350..0.646, 0.196..0.804** in the 280, so swapping the file moves nothing.
+It is also 3-channel with no alpha and runs full-bleed to the corner, where the
+280 carries its own transparent rounded corners -- so `.brand-lightbox-img`'s
+own 22% radius now defines the shape instead of being laid over the asset's,
+which is cleaner. 512 into 640 is a 1.25x upscale, which does not read.
+
+**Only ONE of the two variants has a hi-res twin, and it is not the one that
+was reported.** The class names are the opposite way round to what they look
+like: `.brand-icon-dark` is the DARK-LOOKING icon and shows in the LIGHT theme,
+`.brand-icon-light` is the white one and shows in the DARK theme
+(`body.dark .brand-icon-light{display:block}`). Every file in the repo --
+`icon-512`, `icon-maskable-512`, `icon-192`, `apple-touch-icon` -- is the
+dark-looking artwork. So:
+
+| variant | shows in | best asset |
+|---|---|---|
+| dark-looking | light theme | **icon-512.png**, 512x512 |
+| white | **dark theme** (what was reported) | the inline 280 only |
+
+Checked the history too: the icons came in via `Add files via upload`, and no
+larger image has ever been committed or deleted. So the reported one cannot be
+improved from anything here; it needs a fresh export at 512 or more, dropped in
+as `icon-light-512.png` and added to `BRAND_HIRES`, which is a one-line map
+keyed by class for exactly that reason.
+
+**Do not reach for `icon-maskable-512.png` as the substitute**: it is the same
+artwork with the mark inset inside a safe zone for Android's crop, so it would
+draw the logo visibly smaller in its frame.
