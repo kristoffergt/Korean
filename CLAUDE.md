@@ -4175,6 +4175,25 @@ sprinting off the screen to the right." That, exactly, in `addCourier()`.
 
 ### Fill from AI, on the application form
 
+**Reworked the same day, on the same person's word**, and the second shape is
+the one to keep: one **Copy prompt** beside Add application, and the answer is
+pasted into the **Company field**, which has parsed a whole pasted application
+since long before any of this existed. So there is no second button and no
+labelled field of its own, and the model replies with the LABELLED BLOCK that
+field already reads rather than with JSON.
+
+- **The prompt makes the model end with one fixed sentence, word for word**
+  ("Paste this whole answer into the Company field of the application form"),
+  which is how the answer says where it goes -- and `parseJobPasteText` drops
+  that line on the way in. It matches the exact sentence, and falls back to the
+  opening words for a model that rewords the tail. Checked all three ways:
+  exact, reworded, and absent.
+- The date is deliberately NOT asked for: when you applied is a fact about you,
+  and the paste already fills it with today.
+- Everything below is the first shape, and the reasoning still holds.
+
+#### The first shape, and why the prompt is written the way it is
+
 "Add a copy AI prompt button that either just needs the link to the job
 posting or the name of the company/position to fill out the log an application
 fields." The machinery the book and the article forms use is already generic --
