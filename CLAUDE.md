@@ -4707,3 +4707,134 @@ no layer left, the label back as one text node, `acBusy` false, and no
   is the 0.13s colour transition reported at its start value while the pane was
   not painting -- the trap this file already records for `body`'s own
   background. Screenshot first, measure after.
+
+## Four beats to the peek, a funnel aimed at what it catches, and the row waits to be delivered (12 Sep, fifty-sixth pass)
+
+"Now you just make him throw his head back. Just make him look to one side,
+then the other side, then up, then go back down, then go out. And the A he
+sucks everything in with should have a 45 degree angle, since he sucks
+everything up from there. The A coming back animation is still way too fast.
+Also there is no animation of the text actually disappearing when he sucks it
+in... Also the thing that it adds shouldnt be added right away, when the A
+comes back it should shoot it out to that position."
+
+### A rotation about the neck IS throwing the head back
+
+The report names the fault exactly, and it is a fact about flat drawing rather
+than a tuning problem: **a 2D rotation cannot turn a head, it can only tip
+one.** Last round's look was ±24 degrees of rotation, so what it drew was a
+head nodding forward and then thrown back -- which is what was reported.
+
+So the two SIDE beats are almost pure SLIDE (-4.2px, then +3.8px, with 7 and 5
+degrees of lean for life), and the big rotation is kept for the one beat it
+really means. The cap's peak sits left of the neck, so turning the head
+clockwise LIFTS it, and a raised peak is a chin up: **looking up is
+rotate(+20deg)**, and nothing else in the sequence goes near it.
+
+**Four beats, each of which moves and then HOLDS**: one side, the other side,
+up, back to centre -- then duck, then out, in that order (real-user request).
+`look` went 620 to 820ms to pay for it. The holds are most of what makes it
+readable: without them, four poses inside eight hundred milliseconds are one
+wobble.
+
+- **LINEAR overall with the easing on each keyframe.** This file already
+  records the rule from the hop's own squash, and it bites harder here: an
+  overall `ease-in-out` re-reads the eight offsets through its own curve, so
+  the four beats stop being equal and a hold between two identical poses stops
+  landing where it was written. Measured before and after -- with the overall
+  easing the right-hand hold read 3.3 degrees at its start and 10.1 at its end,
+  i.e. it was not a hold at all; linear, it is 5.0 at both.
+- Measured at the beats: neutral (head centre 582.9, 0 degrees), left hold
+  (578.2, -7), right hold (587.1, +5), up (rot +20 with the head 21.2px clear
+  of the button's edge against 14.9 at rest), neutral again, then hidden.
+- **The body holds still through the side beats** and stretches up 1.6px on
+  the one where he looks up. He is holding on to the edge, so his hand cannot
+  slide about.
+
+### The funnel is aimed at what it is catching
+
+Upside down an A is a funnel with its mouth straight UP, which is the one
+direction the pills never come from. It is **45 degrees off that now, toward
+the side the fields are on** -- so the mouth faces them (real-user request:
+"should have a 45 degree angle, since he sucks everything up from there").
+
+**DERIVED from the bits' own centroid, not picked**: a form whose fields sit
+the other way round tilts the other way. Everything downstream follows from
+that one number -- tipped into the case at `aFunnel + 100`, carried at `+140`,
+and **landed at a whole number of turns** (`round((aFly + 320) / 360) * 360`)
+rather than at a fixed 720, which would have left the letter lying on its side
+in the mirrored case. Measured: 0 to 225 over the grab, held at 225 for the
+whole collection, 325 at the run, and 720 -- upright -- on landing.
+
+### The throw home: 500, then 1000, then 1700
+
+Third report on the same number. 540px in 500ms is 1080px a second and in 1000
+is 540; at 1700 it is 320, which is a thrown letter rather than a streak. The
+spin over that flight is one turn, not two.
+
+### The text actually leaves the field
+
+"There is no animation of the text actually disappearing when he sucks it in."
+There was not: the pill was a copy that flew away while the words sat in the
+field until the handler emptied it all at once. Now the field's own INK fades
+out under its pill, staggered with it -- and only the ink, so this is
+decoration over data that is already saved, exactly as the report says.
+
+**And whether it comes back is ASKED of the field, not listed.** The handlers
+each clear their own fields and they do not all clear the same ones: the study
+form empties the hours and deliberately keeps the date and the activity. So at
+`bitsEnd`, after the handler's own clear has run, a field that is now EMPTY
+simply gets its colour back under an empty box, and one that still holds its
+value is faded back in -- which reads as him having taken a copy rather than
+the value. Measured, stepping the fields' own animations: date 0.875 at 1990,
+0.44 at 2060, gone by 2130; activity gone by 2200; hours gone by 2260; then at
+2390 hours is empty with its ink back while the other two fade 0.353, 0.8, full
+by 2650.
+
+### What was added waits to be delivered
+
+`acReveal(fn, target)`, beside `acClear` and with the same contract: the
+handler owns WHAT is rendered and the courier owns WHEN, and with no courier
+out it runs at once, so nothing about any list depends on the animation being
+on. **All nine add paths go through it**, each naming the list its row belongs
+in (`bookList`, `articleList`, `jobList`, `certList`, `courseFullList`,
+`lectureList`, `notebookList`, the visible calendar grid, `entryList`).
+
+The A lands on the button and a row-shaped **packet** is thrown out of it to
+that list, arriving as the row itself is rendered -- so the packet and the row
+are one object changing hands rather than two things appearing. Measured with
+real timers: the packet left the button at 5412 and landed on `entryList`'s own
+top edge (681 against a target at 680.5) at 5772, and the render fired at 5892.
+
+- **A target that cannot be seen gets no packet**, just the render: a collapsed
+  tab, an empty list, a list off the bottom of the screen. A parcel flying to
+  somewhere nobody is looking would only delay the row.
+- **`logStudySession` no longer renders.** It could not: the courier has to be
+  out before the render can be held, and that is decided after it returns. Both
+  timer paths (the study timer and the writing-sample timer) render for
+  themselves now.
+- **Two backstops, and they are the point.** The cleanup runs the pending
+  reveal and cancels every field fade whatever else happened. A list left
+  un-rendered or a field left transparent is the one way this animation could
+  cost somebody something, so neither may depend on a callback having fired.
+- **A second add while one is in flight renders the first list immediately**
+  rather than dropping it: the two can be different lists and only one can be
+  held.
+
+### The cost, stated plainly
+
+The whole run is now **5.34s to the landing and about 5.9s to the row**, against
+3.9s two rounds ago. Most of that is what was asked for (the 700ms on the throw
+and 200 on the look), but a list that does not update for five and a half
+seconds is the real price, and the packet could start as the A comes in rather
+than after it lands if that turns out to be too long.
+
+### And the pane's document timeline lags its wall clock
+
+A whole diagnosis was spent on fades that "never ran": `setInterval` and
+`performance.now()` advance on the wall clock while the preview pane's document
+timeline only advances as it paints, so a WAAPI animation created at t=0 was
+still in its delay phase when the wall clock said it should have finished --
+and the `setTimeout` that cancels it fired on time. Anything timed against
+`performance.now()` in that pane is measuring two different clocks. Pause the
+animations and step `currentTime`, including the ones OUTSIDE the layer.

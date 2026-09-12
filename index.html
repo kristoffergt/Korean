@@ -2751,6 +2751,12 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
    beats a value inherited from its parent. */
 .ac-layer .ac-halo *{stroke:var(--paper);fill:var(--paper);stroke-width:3.6;}
 .ac-drop{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--ink-soft);}
+/* What he delivers: a row-shaped packet thrown from the button to the list the
+   new thing belongs in, which is rendered as it lands. Drawn as one of that
+   list's own rows rather than as a parcel, so what arrives and what appears
+   are the same object. */
+.ac-pack{position:absolute;border-radius:9px;background:var(--paper-dim);
+  border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,0.18);}
 /* One field, one pill, carrying what was actually typed into it. */
 .ac-bit{position:absolute;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
   line-height:1.5;padding:1px 7px;border-radius:9px;max-width:140px;white-space:nowrap;
@@ -16305,7 +16311,7 @@ function applyAnimPrefs(){
 // It only ever runs on a SAVE. Every add handler calls it from inside its own
 // `if(!error && data)` branch, and the form is not emptied until he has taken
 // the information off it (see acClear).
-const AC_T = { peek: 340, look: 620, duck: 190, out: 300, grab: 240, bit: 380, step: 60, tip: 320, turn: 130, run: 520, gone: 260, back: 1000 };
+const AC_T = { peek: 340, look: 820, duck: 190, out: 300, grab: 240, bit: 380, step: 60, tip: 320, turn: 130, run: 520, gone: 220, back: 1700, deliver: 480 };
 const AC_W = 30, AC_H = 46;      // the figure's own box, in px and in its own units
 const AC_FOOT = 43;              // where his feet are in it, so they land on the button's own line
 const AC_HAND = { x: 5.4, y: 8 };  // the hand he holds the letter up in
@@ -16334,6 +16340,33 @@ function acRunPendingClear(){
   const fn = acPendingClear;
   acPendingClear = null;
   if(fn) fn();
+}
+let acRevealing = false;
+let acPendingReveal = null;
+// WHAT WAS JUST ADDED DOES NOT APPEAR UNTIL HE HAS BROUGHT IT BACK (real-user
+// request: "the thing that it adds shouldnt be added right away, when the A
+// comes back it should shoot it out to that position"). Same contract as
+// acClear: the handler still owns WHAT is rendered, and the courier owns WHEN
+// -- so with no courier out it runs at once and nothing about the list depends
+// on the animation being on. `target` is the list it belongs in, which is
+// where the packet is thrown; without one the render is simply held.
+function acReveal(fn, target){
+  if(typeof fn !== 'function') return;
+  if(acRevealing){
+    // A second add while one is still in flight. The first list is rendered
+    // NOW rather than being dropped for the second's, since the two can be
+    // different lists and only one can be held.
+    if(acPendingReveal){ const q = acPendingReveal; acPendingReveal = null; q.fn(); }
+    acPendingReveal = { fn: fn, target: target || null };
+    return;
+  }
+  fn();
+}
+function acRunPendingReveal(){
+  acRevealing = false;
+  const p = acPendingReveal;
+  acPendingReveal = null;
+  if(p) p.fn();
 }
 function acFigure(){
   // Drawn as a silhouette with the details KNOCKED OUT in the page's own
@@ -16424,6 +16457,17 @@ function acSteps(btn, fromX, footY){
 // What he carries: one pill per field that was actually filled in, in the
 // order they are on screen. A select says what it SAYS rather than the value
 // behind it, since that is what was chosen.
+// What a field READS as, which for a select is its chosen option rather than
+// its value. Shared, because the pill's text and the test for whether the
+// handler has since emptied the field have to be the same question.
+function acFieldText(el){
+  if(!el) return '';
+  if(el.tagName === 'SELECT'){
+    const opt = el.options[el.selectedIndex];
+    return ((opt ? opt.textContent : '') || '').trim();
+  }
+  return (el.value || '').trim();
+}
 function acBits(form){
   if(!form) return [];
   const out = [];
@@ -16432,18 +16476,13 @@ function acBits(form){
     const type = (el.type || '').toLowerCase();
     if(type === 'checkbox' || type === 'radio' || type === 'file' || type === 'hidden'
       || type === 'color' || type === 'range') return;
-    let text = '';
-    if(el.tagName === 'SELECT'){
-      const opt = el.options[el.selectedIndex];
-      text = opt ? opt.textContent : '';
-    } else {
-      text = el.value || '';
-    }
-    text = (text || '').trim();
+    const text = acFieldText(el);
     if(!text) return;
     const r = el.getBoundingClientRect();
     if(!r.width || r.bottom < 0 || r.top > window.innerHeight) return;
-    out.push({ text: text.length > 22 ? text.slice(0, 21) + '…' : text, r });
+    // The ELEMENT comes with it, so the field's own ink can be faded out as
+    // its pill leaves (see the bits' own loop).
+    out.push({ el: el, text: text.length > 22 ? text.slice(0, 21) + '…' : text, r });
   });
   return out;
 }
@@ -16482,6 +16521,7 @@ function addCourier(btn){
 
   acBusy = true;
   acCollecting = true;
+  acRevealing = true;
   const cs = getComputedStyle(btn);
   const pageInk = getComputedStyle(document.body).color;
   const layer = document.createElement('div');
@@ -16602,6 +16642,22 @@ function addCourier(btn){
   const aCx = gr.left + gr.width / 2, aCy = gr.top + gr.height / 2;
   const dx = handX - aCx, dy = handY - aCy;
   const runDist = window.innerWidth - guyLeft + 40;
+  // THE FUNNEL IS AIMED AT WHAT IT IS CATCHING (real-user request: "the A he
+  // sucks everything in with should have a 45 degree angle, since he sucks
+  // everything up from there"). Upside down, an A is a funnel with its mouth
+  // straight UP, which is the one direction the pills never come from; tilted
+  // 45 degrees toward the side the fields are on, that mouth faces them.
+  // DERIVED from the bits' own centroid rather than picked, so a form whose
+  // fields sit the other way round tilts the other way.
+  const bitsMidX = bits.length
+    ? bits.reduce((sum, b) => sum + b.r.left + b.r.width / 2, 0) / bits.length
+    : handX - 1;
+  const aFunnel = 180 + (bitsMidX <= handX ? 45 : -45);
+  // And the poses that follow from it: tipped into the case, carried at a run,
+  // and landed UPRIGHT -- which is why the last is rounded to a whole number
+  // of turns rather than being a fixed 720.
+  const aCarry = aFunnel + 100, aFly = aCarry + 40;
+  const aLand = Math.round((aFly + 320) / 360) * 360;
   // Everything is declared up front with its own delay, so the sequence is one
   // list to read rather than a chain of timers that can drift apart. ANYTHING
   // WITH A DELAY FILLS FORWARDS ONLY: fill:'both' holds its first keyframe
@@ -16641,14 +16697,16 @@ function addCourier(btn){
       { transform: 'translateY(7px)' },
       { transform: upPose }
     ], { duration: AC_T.peek, easing: 'cubic-bezier(.3,1.25,.6,1)', fill: 'both' });
-    // Barely a bob while he is up there: he is holding on to the edge, so his
-    // hand cannot slide about, and the LOOK is what has to read.
+    // He is holding on to the edge, so his hand cannot slide about: the body
+    // holds still through the two side beats and stretches up a shade on the
+    // one where he looks UP, which is what the rest of him would do.
     peek.animate([
-      { transform: upPose },
-      { transform: 'translateY(' + (AC_PEEK_UP - 1) + 'px)', offset: 0.4 },
-      { transform: 'translateY(' + (AC_PEEK_UP + 1) + 'px)', offset: 0.8 },
+      { transform: upPose, easing: 'linear' },
+      { transform: upPose, offset: 0.59, easing: 'ease-in-out' },
+      { transform: 'translateY(' + (AC_PEEK_UP - 1.6) + 'px)', offset: 0.75, easing: 'linear' },
+      { transform: 'translateY(' + (AC_PEEK_UP - 1.6) + 'px)', offset: 0.88, easing: 'ease-in-out' },
       { transform: upPose }
-    ], { duration: AC_T.look, delay: AC_T.peek, easing: 'ease-in-out', fill: 'forwards' });
+    ], { duration: AC_T.look, delay: AC_T.peek, easing: 'linear', fill: 'forwards' });
     peek.animate([
       { transform: upPose },
       { transform: 'translateY(7px)' }
@@ -16665,21 +16723,34 @@ function addCourier(btn){
         { transform: 'rotate(0deg)' }
       ], { duration: AC_T.duck, delay: peekEnd, easing: 'ease-in', fill: 'forwards' });
     });
-    // He looks about while he is up there, on the model's OWN neck joint --
-    // and on both copies of the head, since every drawing is in the svg twice.
-    // A head that only TILTS reads as a wobble, so it slides the way it is
-    // looking as well, and it HOLDS at each end: a glance is a stop, not a
-    // sweep, and the hold is most of what makes it readable at this size.
+    // ONE SIDE, THEN THE OTHER, THEN UP, and only then back down and out
+    // (real-user request, whose report names the fault exactly: "you just
+    // make him throw his head back"). A ROTATION about the neck is the one
+    // thing a flat silhouette cannot use for a sideways look -- it IS a head
+    // tipping back or forward, which is what the last pass drew. So the two
+    // side beats are almost pure SLIDE, and the big rotation is kept for the
+    // one beat it really means: the cap's peak sits left of the neck, so
+    // turning the head clockwise lifts it, and a raised peak is a chin up.
+    //
+    // Each beat moves and then HOLDS. A glance is a stop; without the holds,
+    // four poses inside eight hundred milliseconds read as one wobble.
     peek.querySelectorAll('.ac-head').forEach(h => {
       if(!h.animate) return;
+      // LINEAR overall with the curve on each keyframe, which this file
+      // already records as the rule: an overall easing re-reads the offsets
+      // through its own curve, so the four beats stop being equal and the
+      // holds stop being holds. Each MOVE carries the ease; each hold is
+      // linear between two identical poses, so its own easing says nothing.
       h.animate([
-        { transform: 'translateX(0) rotate(0deg)' },
-        { transform: 'translateX(-2.6px) rotate(-24deg)', offset: 0.26 },
-        { transform: 'translateX(-2.6px) rotate(-24deg)', offset: 0.4 },
-        { transform: 'translateX(2.2px) rotate(20deg)', offset: 0.68 },
-        { transform: 'translateX(2.2px) rotate(20deg)', offset: 0.82 },
-        { transform: 'translateX(0) rotate(-4deg)' }
-      ], { duration: AC_T.look, delay: AC_T.peek, easing: 'ease-in-out', fill: 'forwards' });
+        { transform: 'translate(0,0) rotate(0deg)', easing: 'ease-in-out' },
+        { transform: 'translate(-4.2px,0.4px) rotate(-7deg)', offset: 0.17, easing: 'linear' },
+        { transform: 'translate(-4.2px,0.4px) rotate(-7deg)', offset: 0.3, easing: 'ease-in-out' },
+        { transform: 'translate(3.8px,0.2px) rotate(5deg)', offset: 0.46, easing: 'linear' },
+        { transform: 'translate(3.8px,0.2px) rotate(5deg)', offset: 0.59, easing: 'ease-in-out' },
+        { transform: 'translate(-0.5px,-2.4px) rotate(20deg)', offset: 0.75, easing: 'linear' },
+        { transform: 'translate(-0.5px,-2.4px) rotate(20deg)', offset: 0.88, easing: 'ease-in-out' },
+        { transform: 'translate(0,0) rotate(0deg)' }
+      ], { duration: AC_T.look, delay: AC_T.peek, easing: 'linear', fill: 'forwards' });
     });
   }
   // Out from behind the button, which is now to his RIGHT.
@@ -16693,8 +16764,8 @@ function addCourier(btn){
   // mouth up, which is what the information can then be poured into.
   a.animate([
     { transform: 'translate(0,0) rotate(0deg) scale(1)' },
-    { transform: 'translate(' + (dx * 0.4) + 'px,' + (dy * 0.4 - 6) + 'px) rotate(70deg) scale(' + (AC_A_HELD * 0.94) + ')', offset: 0.45 },
-    { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(180deg) scale(' + AC_A_HELD + ')' }
+    { transform: 'translate(' + (dx * 0.4) + 'px,' + (dy * 0.4 - 6) + 'px) rotate(' + (aFunnel * 0.39) + 'deg) scale(' + (AC_A_HELD * 0.94) + ')', offset: 0.45 },
+    { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + aFunnel + 'deg) scale(' + AC_A_HELD + ')' }
   ], { duration: AC_T.grab, delay: outEnd, easing: 'cubic-bezier(.34,1.3,.64,1)', fill: 'forwards' });
 
   // Every drawing is in the svg twice (see .ac-halo), so the case's lid is too
@@ -16707,6 +16778,12 @@ function addCourier(btn){
       { duration: 170, delay: tipAt + 180, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'forwards' });
   });
 
+  // The field's own ink goes out UNDER its pill, which is what was missing
+  // (real-user report: "there is no animation of the text actually
+  // disappearing when he sucks it in"). Only the INK: the value is untouched,
+  // so this is decoration over data that is already saved, exactly as the
+  // report says -- leave the page half way through and nothing has changed.
+  const faded = [];
   bits.forEach((b, i)=>{
     const el = document.createElement('div');
     el.className = 'ac-bit';
@@ -16716,11 +16793,18 @@ function addCourier(btn){
     layer.appendChild(el);
     const er = el.getBoundingClientRect();
     const bx = handX - (er.left + er.width / 2), by = handY - (er.top + er.height / 2);
+    const launch = outEnd + AC_T.grab + i * AC_T.step;
     el.animate([
       { transform: 'translate(0,0) scale(.7)', opacity: 0 },
       { transform: 'translate(' + (bx * 0.35) + 'px,' + (by * 0.35 - 26) + 'px) scale(1)', opacity: 1, offset: 0.45 },
       { transform: 'translate(' + bx + 'px,' + by + 'px) scale(.25)', opacity: 0 }
-    ], { duration: AC_T.bit, delay: outEnd + AC_T.grab + i * AC_T.step, easing: 'cubic-bezier(.4,0,.5,1)', fill: 'both' });
+    ], { duration: AC_T.bit, delay: launch, easing: 'cubic-bezier(.4,0,.5,1)', fill: 'both' });
+    if(b.el && b.el.animate){
+      const ink = getComputedStyle(b.el).color;
+      const fade = b.el.animate([{ color: ink }, { color: 'transparent' }],
+        { duration: 170, delay: launch + 50, easing: 'ease-in', fill: 'forwards' });
+      faded.push({ el: b.el, ink: ink, held: acFieldText(b.el), fade: fade });
+    }
   });
 
   // What goes in the case is the INFORMATION, not the letter: it pours out of
@@ -16740,8 +16824,8 @@ function addCourier(btn){
 
   // The letter TIPS in his hand rather than going in the case with them.
   a.animate([
-    { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(180deg) scale(' + AC_A_HELD + ')' },
-    { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(325deg) scale(' + AC_A_HELD + ')' }
+    { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + aFunnel + 'deg) scale(' + AC_A_HELD + ')' },
+    { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(' + aCarry + 'deg) scale(' + AC_A_HELD + ')' }
   ], { duration: AC_T.tip, delay: tipAt, easing: 'cubic-bezier(.4,0,.5,1)', fill: 'forwards' });
 
   // Nothing turns at turnAt any more: he came out facing the button and that is
@@ -16810,14 +16894,14 @@ function addCourier(btn){
   // is what makes it become the letter on the button again rather than a chip
   // sitting on top of it.
   a.animate([
-    { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(325deg) scale(' + AC_A_HELD + ')' },
-    { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(365deg) scale(' + AC_A_HELD + ')' }
+    { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(' + aCarry + 'deg) scale(' + AC_A_HELD + ')' },
+    { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(' + aFly + 'deg) scale(' + AC_A_HELD + ')' }
   ], { duration: AC_T.run, delay: runAt, easing: AC_RUN_EASE, fill: 'forwards' });
   a.animate([
-    { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(365deg) scale(' + AC_A_HELD + ')' },
-    { transform: 'translate(' + (dx * 0.5) + 'px,' + (dy - 54) + 'px) rotate(560deg) scale(' + (AC_A_HELD * 0.91) + ')', offset: 0.55 },
-    { transform: 'translate(0,0) rotate(720deg) scale(1)' }
-  ], { duration: AC_T.back, delay: backAt, easing: 'cubic-bezier(.2,.6,.3,1)', fill: 'forwards' });
+    { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(' + aFly + 'deg) scale(' + AC_A_HELD + ')' },
+    { transform: 'translate(' + (dx * 0.5) + 'px,' + (dy - 54) + 'px) rotate(' + (aLand - 160) + 'deg) scale(' + (AC_A_HELD * 0.91) + ')', offset: 0.55 },
+    { transform: 'translate(0,0) rotate(' + aLand + 'deg) scale(1)' }
+  ], { duration: AC_T.back, delay: backAt, easing: 'cubic-bezier(.15,.55,.25,1)', fill: 'forwards' });
   const takeTimer = setTimeout(()=>{
     a.style.visibility = '';
     gSpan.style.visibility = 'hidden';
@@ -16853,9 +16937,57 @@ function addCourier(btn){
   // letter's flight back in as well, so he is taken off the layer the moment
   // he is gone rather than left in it.
   const goneTimer = setTimeout(()=>{ gate.remove(); }, runAt + AC_T.run + 40);
+  // HE DELIVERS IT. The A lands back on the button, and what was added then
+  // shoots out of it to the list it belongs in, arriving as the row itself is
+  // rendered -- so the packet and the row are one thing changing hands rather
+  // than two things appearing (real-user request: "when the A comes back it
+  // should shoot it out to that position"). The packet is the size of a row in
+  // that list, and it is thrown from the button's own middle.
+  const deliverTimer = setTimeout(()=>{
+    const tgt = acPendingReveal && acPendingReveal.target;
+    const tr = tgt && tgt.getBoundingClientRect ? tgt.getBoundingClientRect() : null;
+    // Nothing to throw it at -- a collapsed tab, a list off the screen -- so
+    // the row is simply rendered. A packet flying to somewhere nobody can see
+    // would only delay it.
+    if(!tr || !tr.width || tr.bottom < 4 || tr.top > window.innerHeight - 4){ acRunPendingReveal(); return; }
+    const pw = Math.min(tr.width, 320), ph = 30;
+    const pack = document.createElement('div');
+    pack.className = 'ac-pack';
+    pack.style.left = tr.left + 'px';
+    pack.style.top = tr.top + 'px';
+    pack.style.width = pw + 'px';
+    pack.style.height = ph + 'px';
+    layer.appendChild(pack);
+    const px = (r.left + r.width / 2) - (tr.left + pw / 2);
+    const py = (r.top + r.height / 2) - (tr.top + ph / 2);
+    const flight = pack.animate([
+      { transform: 'translate(' + px + 'px,' + py + 'px) scale(.12)', opacity: 0.15 },
+      { transform: 'translate(' + (px * 0.34) + 'px,' + (py * 0.34) + 'px) scale(.66)', opacity: 1, offset: 0.55 },
+      { transform: 'translate(0,0) scale(1)', opacity: 1 }
+    ], { duration: AC_T.deliver, easing: 'cubic-bezier(.2,.75,.25,1)', fill: 'both' });
+    flight.onfinish = ()=>{
+      acRunPendingReveal();
+      pack.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: 'ease-out', fill: 'forwards' });
+    };
+  }, total);
   // The form empties once the pills are all in the funnel: the courier is
   // what decides WHEN, and the handler still owns WHAT.
-  const clearTimer = setTimeout(acRunPendingClear, bitsEnd);
+  const clearTimer = setTimeout(()=>{
+    acRunPendingClear();
+    // And the ink comes back. A field the handler EMPTIED has nothing left to
+    // show, so it simply returns to its own colour under an empty box; one it
+    // KEPT -- a date, a chosen activity -- fades back in, which reads as him
+    // having taken a copy rather than the value. Asked of the field itself
+    // rather than listed, since which fields a handler clears is its business.
+    faded.forEach(f => {
+      try{ f.fade.cancel(); }catch(e){}
+      const now = acFieldText(f.el);
+      if(now && now === f.held && f.el.animate){
+        f.el.animate([{ color: 'transparent' }, { color: f.ink }],
+          { duration: 260, easing: 'ease-out' });
+      }
+    });
+  }, bitsEnd);
 
   setTimeout(()=>{
     clearTimeout(takeTimer);
@@ -16865,7 +16997,15 @@ function addCourier(btn){
     clearTimeout(aheadTimer);
     clearTimeout(goneTimer);
     clearTimeout(clearTimer);
+    clearTimeout(deliverTimer);
     acRunPendingClear();
+    // Both of these are backstops rather than the ordinary path: the row is
+    // rendered by the delivery and the ink restored by the clear. A field left
+    // transparent or a list left un-rendered is the one way this animation
+    // could cost somebody something, so neither can depend on a callback
+    // having fired.
+    acRunPendingReveal();
+    faded.forEach(f => { try{ f.fade.cancel(); }catch(e){} });
     layer.remove();
     stood.forEach(x => { x.el.style.transformOrigin = x.origin; });
     acBusy = false;
@@ -16873,7 +17013,7 @@ function addCourier(btn){
     // this button's text is owned by STATIC_MAP, and restoring the old string
     // over a new one would leave it in the language it was pressed in.
     if(btn.firstChild === gSpan) btn.textContent = label;
-  }, total + 60);
+  }, total + AC_T.deliver + 220);
 }
 function messagingEnabled(){ return localStorage.getItem(MESSAGING_KEY) !== '0'; }
 function applyMessagingPref(){
@@ -17880,7 +18020,7 @@ async function addBook(){
     document.getElementById('bookAuthor').value = '';
     document.getElementById('bookPages').value = '';
   });
-  renderReading();
+  acReveal(renderReading, document.getElementById('bookList'));
 }
 // Books and articles were the only owned lists with no way to correct a
 // typo -- status and pages could be changed inline, but a mistyped title,
@@ -18154,7 +18294,7 @@ async function addArticle(){
     document.getElementById('articleSource').value = '';
     document.getElementById('articleLink').value = '';
   });
-  renderArticles();
+  acReveal(renderArticles, document.getElementById('articleList'));
 }
 let expandedArticleEdit = new Set();
 function buildArticleEditFieldsHtml(a){
@@ -18521,7 +18661,7 @@ async function addJob(){
     document.getElementById('jobResumeFileName').textContent = '';
     document.getElementById('jobCoverLetterFileName').textContent = '';
   });
-  renderJobs();
+  acReveal(renderJobs, document.getElementById('jobList'));
   if(!error && data && status === 'interview') openInterviewDateModal(data[0]);
 }
 async function updateJobStatus(jobId, status){
@@ -18944,7 +19084,7 @@ async function addCert(){
     document.getElementById('certDate').value = '';
     document.getElementById('certLink').value = '';
   });
-  renderCerts();
+  acReveal(renderCerts, document.getElementById('certList'));
 }
 async function updateCertStatus(certId, status){
   await supabaseClient.from('certifications').update({ status }).eq('id', certId);
@@ -21627,7 +21767,8 @@ async function addEvent(){
     newEventReminders = [];
     renderEventReminderChips();
   });
-  renderCalendarTab();
+  acReveal(renderCalendarTab,
+    document.querySelector('#monthGrid:not(.hidden)') || document.getElementById('weekGridWrap'));
 }
 // Chips + inline-seg picker for the Add Deadline/Event form's reminder
 // field -- click the "+ Add reminder" trigger for a preset list, click it
@@ -32545,7 +32686,7 @@ function pauseWritingSampleTimer(){
 async function saveWritingSampleTimer(){
   const elapsedSec = writingSampleTimerElapsedSec();
   const hours = Math.round((elapsedSec/3600)*100)/100;
-  if(hours > 0) await logStudySession(todayStr(), 'writing', hours);
+  if(hours > 0){ await logStudySession(todayStr(), 'writing', hours); renderAll(); }
   resetWritingSampleTimerState(writingSampleTimerTargetSec/60);
 }
 document.getElementById('writingSampleTimerStartBtn').addEventListener('click', startWritingSampleTimer);
@@ -33111,6 +33252,10 @@ function initForm(){
 // Answers whether it actually logged anything, which is what the Add button
 // needs in order to send the courier out only on a real save. The timer's own
 // save calls it too and ignores the answer.
+//
+// IT NO LONGER RENDERS. The Add button's row is held until the courier brings
+// it back (acReveal), and that can only be decided after the courier has gone
+// out -- which is after this returns. So the render belongs to each caller.
 async function logStudySession(dateVal, actVal, hoursVal){
   if(!dateVal || !actVal || isNaN(hoursVal) || hoursVal <= 0) return false;
   if(!allEntries[currentUser.id]) allEntries[currentUser.id] = {};
@@ -33118,7 +33263,6 @@ async function logStudySession(dateVal, actVal, hoursVal){
   day[actVal] = (day[actVal] || 0) + hoursVal;
   allEntries[currentUser.id][dateVal] = day;
   await upsertMyDay(dateVal, day);
-  renderAll();
   return true;
 }
 document.getElementById('addBtn').addEventListener('click', async ()=>{
@@ -33128,6 +33272,7 @@ document.getElementById('addBtn').addEventListener('click', async ()=>{
   const logged = await logStudySession(dateVal, actVal, hoursVal);
   if(logged) addCourier('addBtn');
   acClear(()=>{ document.getElementById('hoursInput').value = ''; });
+  acReveal(renderAll, document.getElementById('entryList'));
 });
 /* ---------- STUDY TIMER ---------- */
 let timerAccumulatedSec = 0;
@@ -33181,6 +33326,7 @@ document.getElementById('timerSaveBtn').addEventListener('click', async ()=>{
   if(hours <= 0 || !actVal) return;
   pauseTimer();
   await logStudySession(todayStr(), actVal, hours);
+  renderAll();
   resetTimer();
 });
 window.addEventListener('beforeunload', (e)=>{
@@ -33398,9 +33544,11 @@ async function addCourse(){
     document.getElementById('courseSyllabusSlug').value = '';
     refreshSlugPreview(document.getElementById('courseSyllabusSlug'), '');
   });
-  renderCourses();
-  renderCalendarTab();
-  renderNotesCourseSelect();
+  acReveal(()=>{
+    renderCourses();
+    renderCalendarTab();
+    renderNotesCourseSelect();
+  }, document.getElementById('courseFullList'));
 }
 document.getElementById('addCourseBtn').addEventListener('click', addCourse);
 async function updateCourseStatus(courseId, status){
@@ -34024,7 +34172,7 @@ async function addLecture(){
     document.getElementById('newLectureTitle').value = '';
     document.getElementById('newLectureHeader').value = '';
   });
-  renderLectureList();
+  acReveal(renderLectureList, document.getElementById('lectureList'));
 }
 document.getElementById('addLectureBtn').addEventListener('click', addLecture);
 
@@ -35428,7 +35576,7 @@ async function addNotebookNote(){
     document.getElementById('newNotebookTitle').value = '';
     document.getElementById('newNotebookHeader').value = '';
   });
-  renderNotebookList();
+  acReveal(renderNotebookList, document.getElementById('notebookList'));
 }
 document.getElementById('addNotebookBtn').addEventListener('click', addNotebookNote);
 
