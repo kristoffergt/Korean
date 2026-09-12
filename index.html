@@ -2751,7 +2751,22 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
    in the figure's own units: the run cycle, and the boxes the parts sit in.
    The figure is drawn facing LEFT, towards the form he is emptying, and is
    flipped when he turns to go. */
-.ac-layer{position:fixed;inset:0;z-index:960;pointer-events:none;}
+/* IN THE PAGE'S OWN FRAME OF REFERENCE, which is the whole of why scrolling
+   cannot shake him (real-user request: "instead of the guy being sort of
+   glitchy when you scroll up and down, can't we just have him in a certain
+   frame of reference like we do with the pills and stuff? They are completely
+   fine when scrolling"). He used to be `fixed` with the layer dragged back by
+   a scroll handler, which is a main-thread correction to a compositor scroll
+   and so is always a little behind it.
+   The box is the WINDOW as it was when the button was pressed, placed at that
+   moment's document offset (see addCourier), so every viewport coordinate in
+   here reads exactly as it did and the browser does the scrolling.
+   overflow-x, and only x: he runs a window's width PAST the right edge, and an
+   absolute box's children really do extend the document, so without this the
+   page gains 40-odd pixels of sideways scroll for the length of the run. The
+   vertical is left alone on purpose -- the packet is thrown at a row that may
+   be anywhere the reader has scrolled to by then. */
+.ac-layer{position:absolute;z-index:960;pointer-events:none;overflow-x:clip;overflow-y:visible;}
 /* He is hidden until he has come out from behind the button, and that is this
    box's LEFT EDGE doing it: the gate starts at the button's own right edge and
    runs to the edge of the window, so one `inset(0)` clip hides him while he is
@@ -16537,8 +16552,9 @@ function applyAnimPrefs(){
 // throws the letter back in from off screen, where it bounces off the west
 // wall and lands at the front of the word again.
 //
-// The whole overlay is pinned to the PAGE while it runs, not to the window, so
-// scrolling takes it with the button he came out of (see syncAnchor).
+// The whole overlay is a box pinned to the PAGE while it runs, not to the
+// window, so scrolling takes it with the button he came out of and the browser
+// is what moves it (see .ac-layer).
 //
 // It only ever runs on a SAVE. Every add handler calls it from inside its own
 // `if(!error && data)` branch, and the form is not emptied until he has taken
@@ -16561,7 +16577,14 @@ const AC_T = { peek: 340, look: 820, duck: 190, out: 300, grab: 240, bit: 380, s
 // what was wrong by then was the duration rather than the speed. So an even
 // 900 has a lower PEAK than either rejected version and takes about two
 // seconds end to end.
-const AC_A_SPEED = 900;
+// 1500 (real-user request, fourth pass at this number: "the travel speed of
+// the A should still be a lot faster"). Worth keeping the history, since two of
+// the four asks were in the other direction: what was rejected as "SOOOO
+// FUCKING FAST" was a fixed DURATION, which on a long path peaked around
+// 2500px/s and then crawled the fall, and what was rejected as "WAYYY too
+// slow" was a flat 400. A flat 1500 is still well under that peak and crosses
+// a phone in about a quarter of a second.
+const AC_A_SPEED = 1500;
 // How far it slows down for the wall, and how far it settles into the button.
 // DERIVED FROM THE SPEED, as the distance covered in about a seventh and an
 // eighth of a second: written as flat pixel counts they were tuned at 400px/s
@@ -16874,7 +16897,11 @@ function acFlightHome(o){
   let weighted = 0, pathLen = 0;
   legs.forEach(l => { weighted += l.len * l.stretch; pathLen += l.len; });
   if(!weighted) weighted = 1;
-  const ms = Math.round(Math.min(5200, Math.max(700, weighted / AC_A_SPEED * 1000)));
+  // The floor is a TIME, and it came down with the speed: at 700 it bound on
+  // every phone once the speed went up, which quietly took the letter back to
+  // about 1200px/s on exactly the screen the change was asked for. 420 is the
+  // shortest flight that still reads as one rather than as a blink.
+  const ms = Math.round(Math.min(5200, Math.max(420, weighted / AC_A_SPEED * 1000)));
   // The easing on a keyframe governs the segment STARTING there, which is how
   // the first version put the kick a whole leg late and sprinted the arc home.
   const frames = [];
@@ -16995,6 +17022,17 @@ function addCourier(btn){
   const pageInk = getComputedStyle(document.body).color;
   const layer = document.createElement('div');
   layer.className = 'ac-layer';
+  // THE BOX IS THE WINDOW, PINNED TO THE PAGE AT THE MOMENT OF THE PRESS. Every
+  // position inside it is a viewport coordinate read right now -- the button's
+  // rect, the fields' rects, the window's own edge -- so the box is placed at
+  // the document offset those were read at and none of that arithmetic has to
+  // know about scrolling. Absolute against the initial containing block, so it
+  // is the document's own origin it is measured from (body is not positioned).
+  const sx0 = window.scrollX, sy0 = window.scrollY;
+  layer.style.left = sx0 + 'px';
+  layer.style.top = sy0 + 'px';
+  layer.style.width = window.innerWidth + 'px';
+  layer.style.height = window.innerHeight + 'px';
   // The gate is everything LEFT of the button to begin with, so he is hidden
   // while he is behind it and comes out from its left edge. It is moved to the
   // other side of the button half way through the run (see crossTimer), at the
@@ -17108,42 +17146,6 @@ function addCourier(btn){
   layer.append(peekGate, gate, aClip);
   document.body.appendChild(layer);
 
-  // HE IS ANCHORED TO THE PAGE, NOT TO THE WINDOW (real-user report: "if you
-  // start scrolling he doesn't retain the position he should have on the site,
-  // he moves with the scroll"). Every position in here is a VIEWPORT
-  // coordinate read at the moment the button was pressed -- the button's rect,
-  // the fields' rects, the window's own edge -- and the layer is `fixed`, so
-  // the page slid out from under all of it.
-  //
-  // The layer is SCROLLED BY HAND instead: one transform, which moves the
-  // whole overlay with the page and leaves every one of those numbers exactly
-  // as it was. It stays fixed rather than becoming absolute, because absolute
-  // children this far outside the window (he runs a window's width past the
-  // right edge) would add real scrollable overflow and flash up a scrollbar.
-  //
-  // Measured off the BUTTON rather than off window.scrollY, so it holds for a
-  // form inside a pane with its own scroller as well -- and listened for on
-  // the document with capture, since a scroll event from an inner scroller
-  // does not reach the window. One rect read per FRAME at most, never one per
-  // event: the read forces layout, and a scroll handler is the one place that
-  // cannot afford to do it repeatedly.
-  let anchorPending = false, anchorLive = true;
-  const anchorOffset = ()=>{
-    const now = btn.getBoundingClientRect();
-    return { x: now.left - r.left, y: now.top - r.top };
-  };
-  const syncAnchor = ()=>{
-    anchorPending = false;
-    if(!anchorLive) return;
-    const off = anchorOffset();
-    layer.style.transform = 'translate(' + off.x.toFixed(1) + 'px,' + off.y.toFixed(1) + 'px)';
-  };
-  const onAnchorScroll = ()=>{
-    if(anchorPending || !anchorLive) return;
-    anchorPending = true;
-    requestAnimationFrame(syncAnchor);
-  };
-  document.addEventListener('scroll', onAnchorScroll, { capture: true, passive: true });
 
   const bits = acBits(btn.closest('.log-form') || btn.closest('.card'));
   // HE IS MIRRORED, because he comes out on the left and everything he wants is
@@ -17541,14 +17543,13 @@ function addCourier(btn){
     // the row is simply rendered. A packet flying to somewhere nobody can see
     // would only delay it.
     if(!tr || !tr.width || tr.bottom < 4 || tr.top > window.innerHeight - 4){ acRunPendingReveals(); return; }
-    // That rect is the WINDOW's, and the layer is no longer at the window's
-    // origin if the page has been scrolled since he came out (see syncAnchor),
-    // so it comes back into the layer's own coordinates -- which are the
-    // page's, and which is what every other number in here is in. The test
-    // above is deliberately on the raw rect: whether the reader can SEE the
-    // list is a question about the window.
-    const layerAt = anchorOffset();
-    const tx = tr.left - layerAt.x, ty = tr.top - layerAt.y;
+    // That rect is the WINDOW's, and the layer is a box pinned to the PAGE, so
+    // whatever has been scrolled since he came out is the difference between
+    // the two. Everything else in here was read before a scroll was possible,
+    // so this is the one place that needs it. The test above is deliberately on
+    // the raw rect: whether the reader can SEE the list is a question about the
+    // window.
+    const tx = tr.left + (window.scrollX - sx0), ty = tr.top + (window.scrollY - sy0);
     // IT COMES OUT OF THE A (real-user report: "it does not look like it's the
     // A that is firing it out to the position it should be in. Let the box and
     // text fly out of it and land"). So the packet starts ON the letter's own
@@ -17636,8 +17637,6 @@ function addCourier(btn){
   }, bitsEnd);
 
   setTimeout(()=>{
-    anchorLive = false;
-    document.removeEventListener('scroll', onAnchorScroll, { capture: true });
     clearTimeout(westTimer);
     clearTimeout(westDoneTimer);
     clearTimeout(takeTimer);

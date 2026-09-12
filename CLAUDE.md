@@ -5536,35 +5536,67 @@ than from wherever the button happens to sit in its row.
   edge: on a 420px phone both forms wrap the button to x=43 and there is no
   dash at all.
 
-### The overlay is pinned to the PAGE, not to the window
+### The overlay is a box in the PAGE's frame, and nothing corrects it
 
 "If you start scrolling he doesn't retain the position he should have on the
 site, he moves with the scroll." Every position in that animation is a VIEWPORT
 coordinate read at the moment the button was pressed -- the button's rect, the
-fields' rects, the window's own edge -- and the layer is `fixed`, so the page
+fields' rects, the window's own edge -- and the layer was `fixed`, so the page
 slid out from under all of it.
 
-**The layer is scrolled by hand instead**, which moves the whole overlay with
-the page and leaves every one of those numbers exactly as it was. It stays fixed
-rather than becoming absolute, because absolute children this far outside the
-window -- he runs a window's width past the right edge -- would add real
-scrollable overflow and flash up a scrollbar.
+**The first answer was to drag the layer back on every scroll**, off the
+button's own rect, one rAF-coalesced read at a time. It holds the position
+exactly and it still came back as "sort of glitchy when you scroll up and down,
+can't we just have him in a certain frame of reference like we do with the pills
+and stuff? They are completely fine when scrolling" -- which is the right
+instinct and the same lesson as the header in this pass: **a main-thread
+correction to a compositor scroll is always a little behind it.** The pills are
+fine because they are ordinary content in the document.
 
-- **Measured off the BUTTON rather than off `window.scrollY`**, so it holds for
-  a form inside a pane with its own scroller as well, and listened for on the
-  DOCUMENT with capture, since a scroll event from an inner scroller never
-  reaches the window.
-- **One rect read per FRAME at most, never one per event.** The read forces
-  layout, and a scroll handler is the one place that cannot afford to do it
-  repeatedly.
-- **A rect read LATER has to come back through `anchorOffset()`**, which is the
-  delivery packet: its target is measured at the moment of the throw, in the
-  window's coordinates, and the layer is no longer at the window's origin. The
-  visibility test above it deliberately stays on the raw rect, since whether the
-  reader can SEE the list is a question about the window.
-- Verified in real time: through two scrolls in both directions the gap between
-  the courier and the button held at **-6px** at every sample, and the layer's
-  own transform tracked the button exactly (+60, -80).
+**So the layer IS ordinary content: `position: absolute`, and its box is the
+WINDOW as it was when the button was pressed, placed at that moment's document
+offset.** Every viewport coordinate inside it then reads exactly as it did, and
+the browser does the scrolling. The scroll listener, the rAF and the transform
+are all gone.
+
+- **`overflow-x: clip`, and only x.** This is what made the fixed version look
+  like the safer choice: he runs a window's width PAST the right edge, and an
+  absolute box's children really do extend the document, so without it the page
+  gains 40-odd pixels of sideways scroll for the length of the run. Measured
+  with him at x=1064 of a 1024 window: `scrollWidth` 1024, `scrollHeight`
+  unchanged. The vertical is left `visible` on purpose -- the packet is thrown
+  at a row that may be anywhere the reader has scrolled to by then -- and
+  `clip` is the one overflow value that does not drag the other axis to `auto`.
+- **A rect read LATER is converted by the scroll since the press**
+  (`tr.left + (scrollX - sx0)`), which is the delivery packet and nothing else.
+  Checked against a probe placed at the computed coordinate: **0.00px** at three
+  scroll offsets. The visibility test above it deliberately stays on the raw
+  rect, since whether the reader can SEE the list is a question about the window.
+- Verified in real time on a phone-width window, with a scroll up and a scroll
+  down DURING the run: the gap between the courier and the button held at
+  **-6px** at every sample, `scrollWidth` at 393 throughout, the layer's own
+  transform `none`, and no errors.
+
+### The travel is 1500px/s
+
+"The travel speed of the A should still be a lot faster." Fourth pass at this
+number, and worth keeping the history because two of the four asks were in the
+other direction: what was rejected as "SOOOO FUCKING FAST" was a fixed
+DURATION, which on a long path peaked around 2500px/s and then crawled the
+fall, and what was rejected as "WAYYY too slow" was a flat 400. A flat 1500 is
+still well under that peak.
+
+- Measured: the cruise is **1501 to 1505px/s** with the only dip at the wall,
+  the flight is **1163ms against 1856** on a 1024 window and **475 against 777**
+  on a 393 one, and press-to-row comes down to about **4.3s** on a phone.
+- **The duration FLOOR had to come down with it.** At 700ms it bound on every
+  phone the moment the speed went up, which quietly took the letter back to
+  about 1200px/s on exactly the screen the change was asked for. It is 420.
+- The brake and the settle are derived from the speed, so they are the same
+  EVENT at any of these numbers (about 200ms each once stretched) rather than
+  the same distance. On a short path that is most of the flight -- which is the
+  next knob if this is still not enough, and it is a knob about the bounce
+  rather than about the travel.
 
 ### The delete question names what is actually attached
 
