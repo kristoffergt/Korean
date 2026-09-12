@@ -4496,3 +4496,87 @@ Copy prompt button's own `transform-origin` and rect back to what they were.
 into "acSteps returns nothing" when the file on disk was right and the browser
 was running the copy from two patches earlier -- `acSteps.toString()` is what
 named it. Reload with a `?v=<n>` that has not been used before.
+
+## He comes out on the LEFT, runs beneath the button, and the peek is the same model (12 Sep, fifty-fourth pass)
+
+The whole staging, rewritten to the script Kristoffer wrote out: "Just his head
+should stick out, and a hand grabbing the button so he can look around just for
+a little bit. Then he goes back in, comes out from the left, grabs the A, sucks
+it all up, runs beneath the button and out to the right and then throws the A
+back in." Everything below supersedes the fifty-third pass's own peek, which
+came out round the button's right edge as a bespoke drawing.
+
+### It hangs together because everything he wants is on the left
+
+He used to stand to the RIGHT of the button, which is the side he leaves by and
+the side nothing else is on. On the left are the letter he takes (the A is the
+first character of the label), the form he empties, and the room to work in.
+
+- **He is MIRRORED** (`scaleX(-1)` written on the svg, not animated), so he
+  faces the button, the letter and the way out all at once. Every anchor on the
+  drawing reads from the other side of its own box (`AC_W - AC_HAND.x`), and
+  the turn at `turnAt` is gone -- he came out facing the way he leaves, so that
+  beat is a wind-up rather than a spin.
+- **The letter's flight is now a short hop to his hand** rather than a reach
+  across the button, and the pills fly in from the fields beside him.
+
+### Running beneath the button is ONE clip changing sides
+
+The gate is everything LEFT of the button to begin with, so he is hidden while
+he is behind it and comes out from its left edge. At `crossAt` -- the one moment
+his own box is inside the button's span, so he is hidden whichever side is
+showing -- the gate is moved to the far side of the button and his own `left`
+is moved by the same amount, since he is placed in the gate by viewport
+coordinates and the run is a transform on top of that. **No hole-shaped clip,
+no second copy of the figure, and no frame where the swap can be seen.**
+
+- **`crossAt` is read off the run's own easing**, the same `acRunOffsetAt` the
+  hop uses.
+- **The letter goes behind the button with him**: its page-ink copy carries the
+  same clip and changes sides with it, and the copy drawn ON the pill stands
+  down for the length of the run -- otherwise the A crosses the button on its
+  own, or worse sits printed on it beside its own label. Both come back for the
+  flight home, which crosses the page AND the pill, so the clip is dropped
+  altogether at `backAt`.
+- **The button has to be able to hide him**, so `r.width >= AC_W` joins the
+  guard, along with his own width of room to the left.
+
+### The peek is the same drawing, and the clip does all the work
+
+"Why don't you use the same model? Just his head." Its own gate is the space
+ABOVE the button, no wider than the button itself: one `inset(0)` then shows
+whatever rises past its top edge and hides every part of him that is still over
+the pill. He stands on the button's own baseline inside it, so this is the
+figure in its ordinary pose at its ordinary size, rising 11px and dropping
+back. **No second drawing to keep in step with the first, and no leftovers.**
+
+- **-4px is what puts his head and his hand there at once.** His raised hand is
+  drawn at the same height as his head, so at that one offset the head clears
+  the top edge and the hand lands ON it. Measured: head 6.55 of its 8.5 above
+  the line, hand centre 2px above it.
+- **He looks about on the model's OWN neck joint** (`.ac-head`, origin 15px
+  12px in view-box units), which is what that group was drawn for.
+- **acPeeker and acGrip are gone**, and with them the bug that made this
+  round's report: the grip was a sibling of the layer with no gate of its own,
+  so "hiding" it by translating it left did nothing and it sat on the button
+  for the remaining three seconds. **Anything that is hidden by a clip has to
+  be INSIDE that clip.** Three pale lines left on the button is what that looks
+  like.
+
+### And `acSteps` only takes what is genuinely in front of him
+
+Starting on the left puts him standing on top of the field beside the button,
+which qualified as something to jump on -- and the hop then fired while he was
+behind the button, squashing something with nobody on it. The test is his own
+far edge now (`q.left < fromX + AC_W`), not the target's.
+
+### Checked
+
+Stepped through the whole run: hidden at rest, head-and-hand over the top edge
+at 430, ducked by 780, out on the left at 1000, the A in his hand at 1350
+(button reading "dd application"), invisible behind the button at 2560 with the
+A clipped away with him, out on the right at 2720 and straight onto the Copy
+prompt pill, and the A flying home at 3400. Then once with real timers end to
+end: no layer left behind, the label back with one child node, `acBusy` false,
+and the button he stepped on back to 75.3x14.5 with its own transform-origin
+restored.

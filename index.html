@@ -2715,13 +2715,14 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
    pill with near-white text sitting on a near-white page. */
 .ac-pill{position:absolute;inset:0;}
 .ac-hop{position:absolute;inset:0;}
-/* What peeks round the edge is its own drawing (.ac-peek) with its own hand on
-   the pill (.ac-grip). Leaning the WHOLE FIGURE out cannot do this and that is
-   arithmetic rather than taste: his case is drawn nine units further right than
-   his head, so any lean brings the case out first. */
+/* The peek is THE SAME DRAWING he runs with, stood behind the button and rising
+   until his head clears its top edge -- the gate above the button is what shows
+   his head and nothing else, so there is no second figure to keep in step with
+   the first (real-user request: "why don't you use the same model? Just his
+   head"). His own raised hand lands on that edge, which is what says he is
+   holding on to it rather than floating over it. */
 .ac-peek{position:absolute;color:var(--ink);}
-.ac-grip{position:absolute;color:var(--paper);}
-.ac-peek svg, .ac-grip svg{display:block;overflow:visible;}
+.ac-peek svg{display:block;overflow:visible;}
 .ac-layer .ac-knock{stroke:var(--paper);}
 /* HE IS THE SAME INK AS THE BUTTON HE COMES OUT FROM. A near-black figure
    against a near-black pill has no silhouette at all, which is what made the
@@ -16351,38 +16352,6 @@ function acFigure(){
     + ' stroke-linejoin="round" aria-hidden="true">'
     + '<g class="ac-halo">' + body + '</g>' + body + '</svg>';
 }
-// Peeking round a corner, which is a POSE rather than the figure moved. The
-// head with its back quarter still behind the edge, shoulders wider than it
-// with a neck's worth of daylight between the two, and the body running on
-// down to be cut off by the pill's own bottom edge -- a silhouette that stops
-// in mid-air half way down the button reads as a floating bust. The hand it
-// holds on with is drawn separately (acGrip), on the pill itself.
-function acPeeker(){
-  const body = ''
-    // Shoulders WIDER than the head with a neck's worth of daylight between
-    // them, which is the whole of what separates a head on a body from a
-    // circle on a box. Same head as the figure's own, cap and all.
-    + '<path fill="currentColor" stroke="none" d="M4.6 17a5.6 5.6 0 0 1 11.2 0l.3 19H4.6z"></path>'
-    + '<circle cx="11.2" cy="9.4" r="4.25" fill="currentColor" stroke="none"></circle>'
-    + '<path fill="currentColor" stroke="none" d="M6.95 9.1a4.25 4.25 0 0 1 8.5 0z"></path>'
-    + '<path fill="currentColor" stroke="none" d="M7.2 8.6H3.6a.85.85 0 0 0 0 1.7H7.2z"></path>'
-    + '<path class="ac-knock" d="M7.1 9.25h8.2" stroke-width="1"></path>';
-  return '<svg width="26" height="36" viewBox="0 0 26 36"'
-    + ' fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"'
-    + ' stroke-linejoin="round" aria-hidden="true">'
-    + '<g class="ac-halo">' + body + '</g>' + body + '</svg>';
-}
-// And the hand he holds on with, which is drawn ON the pill in the PAPER
-// colour rather than beside it in ink: fingertips curled round a corner are on
-// the near face of whatever they are gripping, and three pale marks on a
-// near-black pill read at the size this is drawn where three dark ones next to
-// it would be three more pixels of ink.
-function acGrip(){
-  return '<svg width="10" height="14" viewBox="0 0 10 14" fill="none" stroke="currentColor"'
-    + ' stroke-width="1.9" stroke-linecap="round" aria-hidden="true">'
-    + '<path d="M2.9 4.1h4.3"></path><path d="M2.1 7.1h5.1"></path><path d="M2.7 10.1h4.5"></path>'
-    + '</svg>';
-}
 // The run's own easing, and its inverse. A hop has to be timed against where
 // he IS rather than against distance travelled, or he lands beside the thing
 // he is jumping on rather than on top of it.
@@ -16414,7 +16383,7 @@ function acSteps(btn, fromX, footY){
     if(!txt.trim()) return;
     const q = el.getBoundingClientRect();
     if(!q.width || !q.height) return;
-    if(q.right < fromX + 12 || q.left > window.innerWidth - 6) return; // ahead of him, on screen
+    if(q.left < fromX + AC_W || q.left > window.innerWidth - 6) return; // in FRONT of him, on screen
     if(q.top > footY - 5 || q.bottom < footY - 34) return;             // standing on his own ground
     found.push({ el: el, r: q });
   });
@@ -16466,12 +16435,13 @@ function addCourier(btn){
   if(!first || !first.trim() || btn.childNodes.length > 1) return;
   const r = btn.getBoundingClientRect();
   if(!r.width || r.bottom < 30 || r.top > window.innerHeight - 20) return; // nothing to watch
-  const guyLeft = r.right + 4, guyTop = r.bottom - AC_FOOT;
-  // He stands to the RIGHT of the button, because that is the way he leaves.
-  // Measured at 375px, every Add button in the app has at least 44px of room
-  // there and he needs 34, so this is a guard against a narrower window or a
-  // longer label rather than a case anybody meets.
-  if(guyTop < 10 || window.innerWidth - r.right < AC_W + 8) return;
+  const guyLeft = r.left - AC_W - 4, guyTop = r.bottom - AC_FOOT;
+  // HE COMES OUT ON THE LEFT (real-user request), which is the side the letter
+  // he wants is on and the side the form he empties is on -- then runs BENEATH
+  // the button and away to the right. So he needs his own width of room to the
+  // left of the button, and the button has to be wide enough to hide him while
+  // he crosses it.
+  if(guyTop < 10 || guyLeft < 4 || r.width < AC_W) return;
 
   // Lift the glyph: the button keeps its own label at its own width, and the
   // first letter is only made INVISIBLE, with the copy that gets carried off
@@ -16491,47 +16461,48 @@ function addCourier(btn){
   const pageInk = getComputedStyle(document.body).color;
   const layer = document.createElement('div');
   layer.className = 'ac-layer';
+  // The gate is everything LEFT of the button to begin with, so he is hidden
+  // while he is behind it and comes out from its left edge. It is moved to the
+  // other side of the button half way through the run (see crossTimer), at the
+  // one moment he is inside its span and hidden whichever side is showing --
+  // which is what running BENEATH it is made of. The headroom above is for his
+  // hop; the figure sits at the bottom of the gate.
   const gate = document.createElement('div');
   gate.className = 'ac-gate';
-  gate.style.left = guyLeft + 'px';
+  gate.style.left = '0px';
   gate.style.top = (guyTop - 40) + 'px';
-  gate.style.width = Math.max(80, window.innerWidth - guyLeft) + 'px';
+  gate.style.width = r.left + 'px';
   gate.style.height = (AC_H + 40) + 'px';
   const guy = document.createElement('div');
   guy.className = 'ac-guy';
-  guy.style.left = '0px';
+  guy.style.left = guyLeft + 'px';   // in the gate, but placed by the VIEWPORT
   guy.style.top = '40px';
   // The hop rides on a wrapper of its own: the figure's own element carries
   // the run and the svg inside it carries the turn, and a third animation on
   // either of those transforms would simply replace one of them.
   const lift = document.createElement('div');
   lift.innerHTML = acFigure();
+  lift.firstChild.style.transform = 'scaleX(-1)';   // he faces the button, see handX
   guy.appendChild(lift);
   gate.appendChild(guy);
-  // The peek has its own gate, flush with the button's own right edge rather
-  // than the figure's, so the hand on the corner is on the pill.
+  // The peek's own gate is the space ABOVE the button, no wider than the button
+  // itself: one `inset(0)` then shows whatever rises past its top edge and
+  // hides every part of him that is still over the pill. He stands on the
+  // button's own baseline inside it, so this is the figure in its ordinary
+  // pose, at its ordinary size, with the clip doing all of the work.
+  const peekW = Math.max(AC_W, r.width - 2);
   const peekGate = document.createElement('div');
   peekGate.className = 'ac-gate';
-  peekGate.style.left = (r.right + 2) + 'px';   // clear of the pill, see .ac-halo
-  peekGate.style.top = (r.top - 7) + 'px';
-  peekGate.style.width = Math.max(60, window.innerWidth - r.right) + 'px';
-  peekGate.style.height = (r.height + 7) + 'px';
+  peekGate.style.left = (r.left + 1) + 'px';
+  peekGate.style.top = (r.top - AC_H) + 'px';
+  peekGate.style.width = peekW + 'px';
+  peekGate.style.height = AC_H + 'px';
   const peek = document.createElement('div');
   peek.className = 'ac-peek';
-  peek.style.left = '-8px';
-  peek.style.top = '9px';
-  peek.style.transformOrigin = '2px 32px';
-  peek.innerHTML = acPeeker();
+  peek.style.left = Math.round((peekW - AC_W) / 2) + 'px';
+  peek.style.top = (AC_H - AC_FOOT + r.height) + 'px';   // his feet on the button's line
+  peek.innerHTML = acFigure();
   peekGate.appendChild(peek);
-  const grip = document.createElement('div');
-  grip.className = 'ac-grip';
-  grip.style.left = (r.right - 8) + 'px';
-  grip.style.top = (r.top + r.height / 2 - 7) + 'px';
-  // The same PIVOT as the peeker, in its own box: the peeker turns about
-  // (right - 6, top + 34) of the button, so this has to name that point too
-  // or the hand swings away from the head it belongs to.
-  grip.style.transformOrigin = '2px ' + (41 - r.height / 2) + 'px';
-  grip.innerHTML = acGrip();
   // THE LETTER IS DRAWN TWICE AND NEITHER COPY EVER CHANGES COLOUR. A single
   // flat ink cannot be right in both places: the Add button is a near-black
   // pill with near-white text, and the page behind it is near-white with
@@ -16567,6 +16538,14 @@ function addCourier(btn){
   const hopPage = document.createElement('div');
   hopPage.className = 'ac-hop';
   hopPage.appendChild(aPage);
+  // The letter is in his hand, so it goes behind the button when he does: the
+  // page-ink copy carries the SAME clip as his own gate and changes sides with
+  // it. Over the pill it is the button-ink copy's business anyway, which is
+  // why clipping this one costs nothing before the run.
+  const aClip = document.createElement('div');
+  aClip.className = 'ac-pill';
+  aClip.style.clipPath = 'inset(0 ' + Math.max(0, window.innerWidth - r.left) + 'px 0 0)';
+  aClip.appendChild(hopPage);
   const pillClip = document.createElement('div');
   pillClip.className = 'ac-pill';
   pillClip.style.clipPath = 'inset(' + Math.max(0, r.top) + 'px '
@@ -16579,12 +16558,15 @@ function addCourier(btn){
   pillClip.appendChild(hopBtn);
   const letters = [aPage, aBtn];
   const animateA = (frames, opts) => letters.forEach(el => el.animate(frames, opts));
-  layer.append(peekGate, grip, gate, hopPage, pillClip);
+  layer.append(peekGate, gate, aClip, pillClip);
   document.body.appendChild(layer);
 
   const bits = acBits(btn.closest('.log-form') || btn.closest('.card'));
-  const handX = guyLeft + AC_HAND.x, handY = guyTop + AC_HAND.y;
-  const caseX = guyLeft + AC_CASE.x, caseY = guyTop + AC_CASE.y;
+  // HE IS MIRRORED, because he comes out on the left and everything he wants is
+  // on his right: the letter, the button, and the way out. The drawing faces
+  // left, so every point on it reads from the other side of its own box.
+  const handX = guyLeft + (AC_W - AC_HAND.x), handY = guyTop + AC_HAND.y;
+  const caseX = guyLeft + (AC_W - AC_CASE.x), caseY = guyTop + AC_CASE.y;
   const aCx = gr.left + gr.width / 2, aCy = gr.top + gr.height / 2;
   const dx = handX - aCx, dy = handY - aCy;
   const runDist = window.innerWidth - guyLeft + 40;
@@ -16604,36 +16586,45 @@ function addCourier(btn){
   const total = backAt + AC_T.back;
 
   // He waits behind the button until he has looked, so his resting pose is
-  // written on the element rather than filled backwards from the jump.
-  guy.style.transform = 'translate(' + (-(AC_W + 8)) + 'px, 0)';
-  const animatePeek = (frames, opts) => [peek, grip].forEach(el => el.animate(frames, opts));
+  // written on the element rather than filled backwards from the jump. Behind
+  // the button is to his RIGHT now, since he comes out on the left.
+  guy.style.transform = 'translate(' + (AC_W + 8) + 'px, 0)';
+  // Down behind the button, then up until his head is over its top edge with
+  // his hand ON that edge, a look either way, and back down. -4 rather than
+  // anything larger is what puts the two there at once: his hand is drawn at
+  // the same height as his head, so it lands on the line the head has just
+  // cleared.
   if(peek.animate){
-    // He leans out round the corner: the head clears the edge, a shoulder and
-    // the hand on it do not, and the back of the head stays behind the pill
-    // the whole time, which is the difference between peeking round something
-    // and hovering beside it.
-    animatePeek([
-      { transform: 'translate(-15px,3px) rotate(6deg)' },
-      { transform: 'translate(0,0) rotate(3deg)' }
-    ], { duration: AC_T.peek, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'both' });
-    // Then he cranes back over the pill to read the form, which is behind him,
-    // nudging out as he tilts so the tilt does not pull his head back in.
-    animatePeek([
-      { transform: 'translate(0,0) rotate(3deg)' },
-      { transform: 'translate(4px,-1px) rotate(-9deg)', offset: 0.4 },
-      { transform: 'translate(1px,1px) rotate(5deg)', offset: 0.78 },
-      { transform: 'translate(2px,0) rotate(-3deg)' }
+    peek.animate([
+      { transform: 'translateY(7px)' },
+      { transform: 'translateY(-4px)' }
+    ], { duration: AC_T.peek, easing: 'cubic-bezier(.3,1.25,.6,1)', fill: 'both' });
+    peek.animate([
+      { transform: 'translateY(-4px)' },
+      { transform: 'translateY(-6px)', offset: 0.4 },
+      { transform: 'translateY(-3px)', offset: 0.8 },
+      { transform: 'translateY(-4px)' }
     ], { duration: AC_T.look, delay: AC_T.peek, easing: 'ease-in-out', fill: 'forwards' });
-    // And ducks back in BEFORE he jumps out, so there are never two of him at
-    // the edge at once.
-    animatePeek([
-      { transform: 'translate(2px,0) rotate(-3deg)' },
-      { transform: 'translate(-16px,4px) rotate(8deg)' }
+    peek.animate([
+      { transform: 'translateY(-4px)' },
+      { transform: 'translateY(7px)' }
     ], { duration: AC_T.duck, delay: peekEnd, easing: 'cubic-bezier(.5,0,.9,.4)', fill: 'forwards' });
+    // He looks about while he is up there, on the model's OWN neck joint --
+    // and on both copies of the head, since every drawing is in the svg twice.
+    peek.querySelectorAll('.ac-head').forEach(h => {
+      if(!h.animate) return;
+      h.animate([
+        { transform: 'rotate(0deg)' },
+        { transform: 'rotate(-13deg)', offset: 0.35 },
+        { transform: 'rotate(10deg)', offset: 0.72 },
+        { transform: 'rotate(-4deg)' }
+      ], { duration: AC_T.look, delay: AC_T.peek, easing: 'ease-in-out', fill: 'forwards' });
+    });
   }
+  // Out from behind the button, which is now to his RIGHT.
   guy.animate([
-    { transform: 'translate(' + (-(AC_W + 8)) + 'px, 0)' },
-    { transform: 'translate(' + (-(AC_W + 8) / 2.4) + 'px, -8px)', offset: 0.55 },
+    { transform: 'translate(' + (AC_W + 8) + 'px, 0)' },
+    { transform: 'translate(' + ((AC_W + 8) / 2.4) + 'px, -8px)', offset: 0.55 },
     { transform: 'translate(0, 0)' }
   ], { duration: AC_T.out, delay: duckEnd, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'forwards' });
 
@@ -16692,11 +16683,8 @@ function addCourier(btn){
     { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(325deg) scale(1.3)' }
   ], { duration: AC_T.tip, delay: tipAt, easing: 'cubic-bezier(.4,0,.5,1)', fill: 'forwards' });
 
-  const svg = guy.querySelector('svg');
-  if(svg && svg.animate){
-    svg.animate([{ transform: 'scaleX(1)' }, { transform: 'scaleX(-1)' }],
-      { duration: AC_T.turn, delay: turnAt, easing: 'ease-in-out', fill: 'forwards' });
-  }
+  // Nothing turns at turnAt any more: he came out facing the button and that is
+  // the way he leaves, so the beat is a wind-up rather than a spin.
   guy.animate([
     { transform: 'translate(0,0)' },
     { transform: 'translate(' + runDist + 'px, 0)' }
@@ -16778,6 +16766,28 @@ function addCourier(btn){
     gSpan.style.visibility = '';
   }, total);
   const runTimer = setTimeout(()=> guy.classList.add('ac-running'), runAt);
+  // HE RUNS BENEATH THE BUTTON (real-user request). The gate changes sides at
+  // the one moment his own box is inside the button's span, so he is hidden by
+  // whichever side is showing and the swap cannot be seen; his own `left` is
+  // moved by the same amount, since he is placed in the gate by viewport
+  // coordinates and the run is a transform on top of that.
+  const crossAt = runAt + acRunOffsetAt(r.left + r.width / 2 - AC_W / 2, guyLeft, runDist) * AC_T.run;
+  const crossTimer = setTimeout(()=>{
+    gate.style.left = r.right + 'px';
+    gate.style.width = Math.max(80, window.innerWidth - r.right) + 'px';
+    guy.style.left = (guyLeft - r.right) + 'px';
+    aClip.style.clipPath = 'inset(0 0 0 ' + Math.max(0, r.right) + 'px)';
+  }, crossAt);
+  // While he is crossing, the copy that is drawn ON the pill would be an A
+  // printed on the button beside its own label, so it stands down for the run
+  // and comes back for the flight home, which lands inside the pill.
+  const behindTimer = setTimeout(()=>{ aBtn.style.visibility = 'hidden'; }, runAt);
+  const aheadTimer = setTimeout(()=>{
+    aBtn.style.visibility = '';
+    // Nothing is behind the button any more: the flight home crosses the page
+    // AND the pill, and the two copies between them cover both.
+    aClip.style.clipPath = 'inset(0)';
+  }, backAt);
   // The gate is what hides him behind the button, and it would clip the
   // letter's flight back in as well, so he is taken off the layer the moment
   // he is gone rather than left in it.
@@ -16790,6 +16800,9 @@ function addCourier(btn){
     clearTimeout(takeTimer);
     clearTimeout(landTimer);
     clearTimeout(runTimer);
+    clearTimeout(crossTimer);
+    clearTimeout(behindTimer);
+    clearTimeout(aheadTimer);
     clearTimeout(goneTimer);
     clearTimeout(clearTimer);
     acRunPendingClear();
