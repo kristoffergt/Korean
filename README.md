@@ -2,35 +2,61 @@
 
 A shared study and productivity tracker, live at **[kristoffergt.com](https://kristoffergt.com)**.
 
-It started as a Korean-study companion for two people to track progress side by side, and grew into a general productivity tracker that anyone can sign up for and use on their own — or link up with specific people to share progress with, the same way the two original users do.
+It started as a Korean-study companion for two people to track progress side by side, and grew into a general productivity tracker: a place to keep a study log, a degree, a job hunt, a reading list and a shared budget in one account, on your own or linked up with specific people to share progress with.
 
-It's a single self-contained HTML file (`index.html`, named for GitHub Pages), no build step, no framework, no server code beyond [Supabase](https://supabase.com) for the database, auth, and file storage. Deployed as a static site via GitHub Pages.
+It's a single self-contained HTML file (`index.html`, named for GitHub Pages), no build step, no framework, no bundler, no server code of its own beyond [Supabase](https://supabase.com) for the database, auth and file storage, plus a handful of Deno edge functions for the things that have to run on a schedule. Deployed as a static site via GitHub Pages.
+
+Signing up needs a 4-digit **site PIN**, so the instance is invite-only in practice rather than open to the web.
 
 ## Features
 
-**Calendar** — month/week/day views, deadlines and custom events, a TOPIK exam countdown, a weekly/monthly recap of activity, and a per-tab "who's events show" filter for picking specific people out of your linked circle.
+### Home
+- **Overview** – the leaderboard, the activity feed, a per-activity breakdown, a twelve-week heatmap, a study-session timer and daily logging with streaks and a personal daily goal.
+- **Calendar** – month, week and day views, deadlines and custom events, recurring events, per-event reminders, a TOPIK exam countdown, and a weekly/monthly recap of activity. A "whose events show" filter picks specific people out of your linked circle, and the whole calendar can be downloaded as a picture or exported as `.ics`.
+- **Expenses** – shared trip budgets. A vacation with its own dates and currency, members invited from your linked circle, expenses by category and payer, **balances** showing who owes whom, averages per day and per week, multi-currency with optional conversion of every amount, and per-expense, per-day and per-category exclusions for things that shouldn't count.
 
-**Study** — four sub-tabs:
-- *Log* — a study session timer and daily/weekly logging, streaks, and a personal daily goal.
-- *Grammar* — a full Korean grammar reference with formation notes, examples, colloquial/written usage, similar-grammar comparison tables, favoriting, and a multiple-choice quiz with SM-2 spaced repetition (patterns you get wrong resurface sooner).
-- *Writing* — TOPIK writing practice (Q53 data-description and Q54 essay tasks), a combined 50-minute mock exam mode with side-by-side timed editors, shareable writing samples, and a comment thread for feedback on each sample.
-- *Notebook* — freeform personal notes.
+### Korean
+- **Log** – study sessions by activity, logged by hand or from the timer.
+- **Grammar** – a full Korean grammar reference with formation notes, examples, difficulty/formality/politeness/register bars, similar-grammar comparison tables, favouriting, your own example sentences checked against the pattern, per-pattern resource links, and a multiple-choice quiz with SM-2 spaced repetition so patterns you get wrong resurface sooner.
+- **Writing** – TOPIK writing practice (Q53 data description, Q54 essay), a combined 50-minute mock exam with side-by-side timed editors, image attachments, version history, shareable samples and a comment thread for feedback on each.
+- **Notebook** – freeform personal notes, grouped under your own headers.
+- **Videos** – every video link added anywhere in the app, gathered in one place with YouTube embeds, searchable and sortable.
 
-**Courses** — a weekly course schedule with day/time slots, professor, syllabus upload, midterm/final dates, an optional TA/RA flag per course (set when adding or editing a course), and a lock-in flow once you've committed to a course.
+### Yonsei
+- **Courses** – a weekly schedule with day/time slots, professor, classroom, syllabus upload, midterm/final dates, concentration, an optional TA/RA flag, and a lock-in flow once you've committed. Courses can be shared, and each one puts its own dates on the calendar.
+- **Notes** – per-course lecture notes with pages, colours and live "someone is writing" indicators.
+- **Board** – Yonsei GSIS official notices, fetched on a schedule, searchable and filterable, with opt-in notifications when new ones land.
 
-**Notes** — per-course lecture notes, plus a general notes section with custom headers.
+### Reading
+- **Books** – currently reading / to read / finished, with notes and page tracking, and a public leaderboard.
+- **Articles** – the same for articles, with source and link.
 
-**Reading** — a book log (currently reading / finished, with notes and page tracking) and a public reading leaderboard.
+### Jobs
+- **Applications** – company, role, status, date applied, link, and CV/cover-letter PDF uploads, editable after the fact, searchable, sortable and paginated. A paste-to-autofill parses a copy-pasted summary straight into the form. Offers can be marked accepted or declined. Public leaderboard.
+- **Certifications** – name, issuer, status, completion date and link.
+- **Board** – Yonsei GSIS job and internship postings, ingested on a schedule, with industry and type filters, deadlines, and a sort.
 
-**Jobs** — a job application tracker (company, role, status, date applied, link), editable after the fact, paginated (3 shown, expanding to 10-per-page), a paste-to-autofill that parses a copy-pasted summary straight into the form, and a public leaderboard.
-
-**Accounts & privacy** — email/password auth with optional 2FA, per-user display colors, a "hide me from leaderboards" toggle, account deletion, and a moderator/admin panel. The two original users share everything with each other by default and always will; everyone else's data is private by default unless they opt into linking with up to 10 other people and choosing, per category (study log, books, jobs, grammar notes, course notes, writing samples, recap, readiness), what they share and with whom — including per-person overrides.
-
-**Everything else** — English/Korean/Vietnamese interface, light and dark mode, and a mobile-responsive layout.
+### Throughout
+- **Uploaded files get short links** – every CV, cover letter and syllabus gets a `kristoffergt.com/f/<slug>` you can rename, and deleting the row it belongs to takes the file and the link with it.
+- **Multi-level sorting** – the lists share one sort control: pick one field, or turn on multiple sort and stack several, and the choice is remembered.
+- **Notifications** – an in-app bell and optional email for calendar reminders, new Yonsei notices and accepted link invites, plus weekly/monthly recaps.
+- **Circle messaging** – direct messages within your linked circle, with attachments, read receipts, typing indicators and presence.
+- **Accounts & privacy** – email/password auth with optional 2FA and backup codes, per-user display colours, a "hide me from leaderboards" toggle, account deletion, a support form, and a moderator/admin panel. The two original users share everything with each other by default; everyone else's data is private unless they opt into linking with up to 10 people and choose, per category (study log, books, articles, jobs, certifications, grammar notes, course notes, writing samples, recap, readiness), what they share and with whom, including per-person overrides.
+- **Everything else** – English, Korean and Vietnamese, light and dark mode, a mobile-responsive layout, installable as a PWA with an offline app shell, and animations that can be switched off by group (header marks, title, interface motion, the add courier) for anyone who'd rather they weren't there.
 
 ## Tech
 
-- Single HTML file: markup, CSS, and JavaScript all in one place.
-- [Supabase](https://supabase.com) for Postgres (with row-level security), auth, and storage.
-- SQL migrations live in `sql migrations/`.
-- Hosted on GitHub Pages.
+- **One HTML file**: markup, CSS and JavaScript all in `index.html`. No build, no dependencies to install.
+- **[Supabase](https://supabase.com)** for Postgres with row-level security, auth, and storage.
+- **Edge functions** in `supabase/functions/` (Deno): fetching and notifying on the Yonsei notice board, ingesting the job board and its detail pages, and a webhook that records when a third-party page monitor sees the GSIS Instagram change.
+- **SQL migrations** in `sql migrations/`, applied by hand.
+- **Email templates** in `supabase/email-templates/`.
+- **Helper scripts** in `scripts/` for the job board sync.
+- `sw.js` caches the app shell so a reload survives a flaky connection; the data itself is always fetched live.
+- Hosted on GitHub Pages, with a `404.html` that matches the app.
+
+## Working on it
+
+`CLAUDE.md` is the running log: every round of work, what was reported, what
+was measured, and the traps that cost time. It is the first thing to read
+before changing anything.
