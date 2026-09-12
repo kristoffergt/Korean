@@ -2781,7 +2781,14 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
    list's own rows rather than as a parcel, so what arrives and what appears
    are the same object. */
 .ac-pack{position:absolute;border-radius:9px;background:var(--paper-dim);
-  border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,0.18);}
+  border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,0.18);
+  display:flex;align-items:center;gap:8px;padding:0 11px;overflow:hidden;
+  font-family:'Inter',sans-serif;white-space:nowrap;}
+/* What was typed, riding in the box: the same field values the pills carried
+   IN, so what lands in the list is recognisably the row it is about to be. */
+.ac-pack-t{font-size:12.5px;font-weight:600;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;}
+.ac-pack-s{font-size:11px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;}
 /* One field, one pill, carrying what was actually typed into it. */
 .ac-bit{position:absolute;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
   line-height:1.5;padding:1px 7px;border-radius:9px;max-width:140px;white-space:nowrap;
@@ -16391,7 +16398,32 @@ function applyAnimPrefs(){
 // It only ever runs on a SAVE. Every add handler calls it from inside its own
 // `if(!error && data)` branch, and the form is not emptied until he has taken
 // the information off it (see acClear).
-const AC_T = { peek: 340, look: 820, duck: 190, out: 300, grab: 240, bit: 380, step: 60, tip: 320, turn: 130, run: 520, gone: 220, back: 2200, deliver: 480 };
+const AC_T = { peek: 340, look: 820, duck: 190, out: 300, grab: 240, bit: 380, step: 60, tip: 320, turn: 130, run: 520, gone: 220, deliver: 900 };
+// THE THROW HOME IS A SPEED, NOT A DURATION, and that is the whole of what
+// fixes its pacing. A fixed duration over a path whose length depends on the
+// window means the letter races across a desktop and crawls across a phone --
+// and with the path timed as one block rather than segment by segment it flew
+// and then fell at completely different rates (real-user report: "the A flies
+// through the air SOOOO FUCKING FAST and then it falls down SO FUCKING SLOW").
+// So: px per second, the duration worked out from the path's own length, and
+// every segment given time in proportion to how far it actually goes.
+//
+// 400 is bracketed by what has already been rejected: 540px/s was "way too
+// fast", 734 was very much so, and 318 was accepted.
+const AC_A_SPEED = 400;
+// How far it slows down for the wall, and how far it settles into the button.
+// Both are DISTANCES rather than fractions of the duration, so the impact is
+// the same event on a phone as on a desktop.
+const AC_A_BRAKE = 66, AC_A_SETTLE = 58;
+// And how much longer than their length those legs get (see acFlightHome), with
+// the curve for each written to open at exactly that stretch: 0.3/0.2 = 1.5 and
+// 0.34/0.2 = 1.7, so both begin at the pace the letter arrived at. The brake
+// closes on a slope of 0.2 -- a slow contact rather than a dead stop -- the
+// settle closes on 0, and the kick is the brake read backwards.
+const AC_A_SLOW = 1.5, AC_A_REST = 1.7;
+const AC_A_BRAKE_EASE = 'cubic-bezier(.2,.3,.7,.94)';
+const AC_A_SETTLE_EASE = 'cubic-bezier(.2,.34,.55,1)';
+const AC_A_KICK_EASE = 'cubic-bezier(.3,.06,.8,.7)';
 const AC_W = 30, AC_H = 46;      // the figure's own box, in px and in its own units
 const AC_FOOT = 43;              // where his feet are in it, so they land on the button's own line
 const AC_HAND = { x: 5.4, y: 8 };  // the hand he holds the letter up in
@@ -16422,31 +16454,43 @@ function acRunPendingClear(){
   if(fn) fn();
 }
 let acRevealing = false;
-let acPendingReveal = null;
+// A QUEUE, not one slot. Every render that would show the new row has to be
+// held, not just the add handler's own -- and there is more than one: this app
+// subscribes to postgres_changes on these very tables, so an insert echoes
+// back to the tab that made it and scheduleSharedDataRefresh renders the whole
+// app 600ms later. That is what made the row appear a beat after Add rather
+// than when the courier delivered it (real-user report: "the row DOES SHOW UP
+// VISUALLY ALMOST RIGHT AWAY"). With one slot the second caller flushed the
+// first, which is the same leak by another road.
+let acPendingReveals = [];
 // WHAT WAS JUST ADDED DOES NOT APPEAR UNTIL HE HAS BROUGHT IT BACK (real-user
 // request: "the thing that it adds shouldnt be added right away, when the A
 // comes back it should shoot it out to that position"). Same contract as
 // acClear: the handler still owns WHAT is rendered, and the courier owns WHEN
-// -- so with no courier out it runs at once and nothing about the list depends
-// on the animation being on. `target` is the list it belongs in, which is
-// where the packet is thrown; without one the render is simply held.
+// -- so with no courier out it runs at once and nothing about any list depends
+// on the animation being on. `target` is the list the row belongs in, which is
+// where the packet is thrown; a caller with no target (a background refresh)
+// is simply held.
 function acReveal(fn, target){
   if(typeof fn !== 'function') return;
-  if(acRevealing){
-    // A second add while one is still in flight. The first list is rendered
-    // NOW rather than being dropped for the second's, since the two can be
-    // different lists and only one can be held.
-    if(acPendingReveal){ const q = acPendingReveal; acPendingReveal = null; q.fn(); }
-    acPendingReveal = { fn: fn, target: target || null };
-    return;
-  }
-  fn();
+  if(!acRevealing){ fn(); return; }
+  // Deduped by function identity, so a burst of realtime echoes queues one
+  // renderAll rather than a dozen. A later call that names a target upgrades
+  // the one already queued.
+  const seen = acPendingReveals.find(p => p.fn === fn);
+  if(seen){ if(target && !seen.target) seen.target = target; return; }
+  acPendingReveals.push({ fn: fn, target: target || null });
 }
-function acRunPendingReveal(){
+// The list the packet is thrown at: the first queued render that named one.
+function acRevealTarget(){
+  const hit = acPendingReveals.find(p => p.target);
+  return hit ? hit.target : null;
+}
+function acRunPendingReveals(){
   acRevealing = false;
-  const p = acPendingReveal;
-  acPendingReveal = null;
-  if(p) p.fn();
+  const list = acPendingReveals;
+  acPendingReveals = [];
+  list.forEach(p => { try{ p.fn(); }catch(e){} });
 }
 function acFigure(){
   // Drawn as a silhouette with the details KNOCKED OUT in the page's own
@@ -16505,6 +16549,110 @@ function acEase(o){
   let lo = 0, hi = 1;
   for(let i = 0; i < 22; i++){ const m = (lo + hi) / 2; if(bx(m) < o) lo = m; else hi = m; }
   return by((lo + hi) / 2);
+}
+// THE FLIGHT HOME: one speed the whole way, and the keyframes to draw it.
+//
+// It is built as a POLYLINE and then timed by ARC LENGTH -- every segment gets
+// time in proportion to how far it actually travels, so the long run west and
+// the short arc home run at the same pace. That is the fix for the report:
+// timed as one eased block, the letter spent most of its distance in the first
+// third and then crawled down onto the button.
+//
+// The two deliberate exceptions are the ones a bounce needs: it brakes over
+// the last AC_A_BRAKE pixels into the wall, kicks away over the same distance
+// out of it, and settles over the last AC_A_SETTLE into the button. Each is a
+// DISTANCE, so the impact is the same event at any window width.
+function acFlightHome(o){
+  // The letter's CENTRE stops its own half-DIAGONAL short of the edge, which
+  // is the bound at any rotation -- measured off its own glyph box rather than
+  // guessed, since a half-width alone let the ink cross the edge by 2px while
+  // the letter was turned 45 degrees. Plus two, so it kisses the wall.
+  const wallPad = Math.max(10, Math.hypot(o.gw, o.gh) * o.held * 0.5 + 2);
+  const wallDx = wallPad - o.aCx;
+  // A window too narrow for it to get properly west of the button makes a
+  // wobble rather than a bounce, so there it flies straight in. On a phone the
+  // Add button really can sit a thumb's width from the left edge.
+  const bounce = o.aCx - wallPad > 90;
+  // The arc is capped against the top of the window rather than being a fixed
+  // height, or a button near the top would throw the letter off the screen.
+  const arcUp = Math.min(54, Math.max(10, o.aCy - 16));
+  // The spin REVERSES at the wall, which is most of what says it bounced
+  // rather than curved: backwards on the way out, forwards on the way home,
+  // landing on a whole number of turns so the pose it lands in is the pose the
+  // button draws.
+  const aWall = o.aFly - 120;
+  const aLand = bounce ? Math.ceil((aWall + 40) / 360) * 360
+                       : Math.round((o.aFly + 320) / 360) * 360;
+  const start = { x: o.dx + o.runDist, y: o.dy - 1, r: o.aFly, s: o.held };
+  const pts = bounce
+    ? [ start,
+        { x: wallDx, y: -arcUp * 0.42, r: aWall, s: o.held, brake: true },
+        { x: wallDx * 0.42, y: -arcUp, r: Math.round((aWall + aLand) / 2), s: o.held * 0.96 },
+        { x: 0, y: 0, r: aLand, s: 1, settle: true } ]
+    : [ start,
+        { x: o.dx * 0.5, y: o.dy - arcUp, r: Math.round((o.aFly + aLand) / 2), s: o.held * 0.94 },
+        { x: 0, y: 0, r: aLand, s: 1, settle: true } ];
+  // A LEG THAT CHANGES SPEED NEEDS MORE TIME THAN ITS LENGTH BUYS, and that is
+  // not a taste call, it is arithmetic: a leg's average speed is its length
+  // over its time, so one that enters at the run's own pace and then slows
+  // down must average LESS than that pace -- which it cannot do on a share of
+  // the clock worked out from its length alone. Given exactly its share, the
+  // only way to arrive on time is to speed up first, and that is precisely
+  // what the first attempt drew: a settle that ran to 507px/s before stopping
+  // dead. So the brake, the kick and the settle are STRETCHED, and their
+  // curves are written to enter at that stretch (a cubic-bezier's opening
+  // slope is y1/x1, so y1/x1 == stretch means "carry on at the pace you
+  // arrived at" and everything after it is the slowing down).
+  const legs = [];
+  const add = (from, to, ease, stretch) => {
+    const len = Math.hypot(to.x - from.x, to.y - from.y);
+    if(len < 0.01) return;
+    legs.push({ from: from, to: to, len: len, ease: ease, stretch: stretch || 1 });
+  };
+  const along = (a, b, d) => {
+    const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const k = Math.min(0.92, d / len);
+    return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k,
+      r: a.r + (b.r - a.r) * k, s: a.s + (b.s - a.s) * k };
+  };
+  for(let i = 1; i < pts.length; i++){
+    let a = pts[i-1];
+    const b = pts[i];
+    // Away from the wall: back up to the run's pace over the same few pixels
+    // it took to brake, so the bounce is symmetric rather than an instant
+    // jump from a crawl to full speed.
+    if(a.brake){
+      const k = along(a, b, AC_A_BRAKE);
+      add(a, k, AC_A_KICK_EASE, AC_A_SLOW);
+      a = k;
+    }
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    const cut = b.brake ? AC_A_BRAKE : (b.settle ? AC_A_SETTLE : 0);
+    if(cut > 0 && len > cut * 1.7){
+      const k = along(b, a, cut);
+      add(a, k, 'linear', 1);
+      add(k, b, b.brake ? AC_A_BRAKE_EASE : AC_A_SETTLE_EASE, b.brake ? AC_A_SLOW : AC_A_REST);
+    } else {
+      add(a, b, 'linear', 1);
+    }
+  }
+  const pose = nd => 'translate(' + nd.x.toFixed(1) + 'px,' + nd.y.toFixed(1) + 'px) rotate('
+    + nd.r.toFixed(1) + 'deg) scale(' + nd.s.toFixed(3) + ')';
+  let weighted = 0, pathLen = 0;
+  legs.forEach(l => { weighted += l.len * l.stretch; pathLen += l.len; });
+  if(!weighted) weighted = 1;
+  const ms = Math.round(Math.min(5200, Math.max(700, weighted / AC_A_SPEED * 1000)));
+  // The easing on a keyframe governs the segment STARTING there, which is how
+  // the first version put the kick a whole leg late and sprinted the arc home.
+  const frames = [];
+  let run = 0;
+  legs.forEach((l, i)=>{
+    frames.push({ transform: pose(l.from), easing: l.ease,
+      offset: i === 0 ? 0 : Math.min(0.999, run / weighted) });
+    run += l.len * l.stretch;
+  });
+  frames.push({ transform: pose(legs[legs.length - 1].to), offset: 1 });
+  return { frames: frames, ms: ms, bounce: bounce, pathLen: Math.round(pathLen) };
 }
 function acRunOffsetAt(x, fromX, dist){
   const p = Math.max(0, Math.min(1, (x - fromX) / dist));
@@ -16598,6 +16746,9 @@ function addCourier(btn){
   // button mid-animation.
   const gSpan = document.createElement('span');
   gSpan.textContent = first;
+  // So it can take the kick when the packet leaves. One character either way,
+  // so its baseline and its width are what they were.
+  gSpan.style.display = 'inline-block';
   const restSpan = document.createElement('span');
   restSpan.textContent = label.slice(first.length);
   btn.textContent = '';
@@ -16747,6 +16898,10 @@ function addCourier(btn){
   // WITH A DELAY FILLS FORWARDS ONLY: fill:'both' holds its first keyframe
   // from time zero and would override whatever is meant to be showing until
   // its turn.
+  // Built HERE because `total` depends on how long it takes, and that depends
+  // on how far it goes -- which is a fact about this window and this button.
+  const flight = acFlightHome({ dx: dx, dy: dy, runDist: runDist, aCx: aCx, aCy: aCy,
+    aFly: aFly, held: AC_A_HELD, gw: gr.width, gh: gr.height });
   const peekEnd = AC_T.peek + AC_T.look;   // he has looked
   const duckEnd = peekEnd + AC_T.duck;     // pulled his head back in, and jumps from here
   const outEnd = duckEnd + AC_T.out;       // standing beside the button, ready to reach
@@ -16755,7 +16910,7 @@ function addCourier(btn){
   const turnAt = tipAt + AC_T.tip;
   const runAt = turnAt + AC_T.turn;
   const backAt = runAt + AC_T.run + AC_T.gone;
-  const total = backAt + AC_T.back;
+  const total = backAt + flight.ms;
 
   // He waits behind the button until he has looked, so his resting pose is
   // written on the element rather than filled backwards from the jump. Behind
@@ -17002,57 +17157,10 @@ function addCourier(btn){
     { transform: 'translate(' + dx + 'px,' + (dy + 2) + 'px) rotate(' + aCarry + 'deg) scale(' + AC_A_HELD + ')' },
     { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(' + aFly + 'deg) scale(' + AC_A_HELD + ')' }
   ], { duration: AC_T.run, delay: runAt, easing: AC_RUN_EASE, fill: 'forwards' });
-  // IT BOUNCES OFF THE WEST WALL (real-user request: "make the A bounce off
-  // the west side of the window (however big it is, should be dynamic and
-  // should work/look good on the App too)"). Every number in it is measured
-  // off the window and the letter's own size, so it is the same throw at any
-  // width: he throws it in from the east, it crosses the whole screen, hits
-  // the left edge, and comes back to the button.
-  //
-  // The letter's CENTRE stops its own half-DIAGONAL short of the edge, which
-  // is the bound at any rotation -- measured off its own glyph box rather
-  // than guessed, since a width alone let the ink cross the edge by 2px while
-  // it was turned 45 degrees. Plus two, so it kisses the wall rather than
-  // touching it exactly.
-  const wallPad = Math.max(10, Math.hypot(gr.width, gr.height) * AC_A_HELD * 0.5 + 2);
-  const wallDx = wallPad - aCx;
-  // A window too narrow for the letter to get properly west of the button
-  // makes a wobble rather than a bounce, so there it flies straight in as it
-  // did. On a phone the Add button really can sit a thumb's width from the
-  // left edge.
-  const canBounce = aCx - wallPad > 90;
-  // The spin REVERSES at the wall, which is most of what says it bounced
-  // rather than curved. It runs backwards on the way out and settles forwards
-  // on the way home, landing on a whole number of turns so the pose it lands
-  // in is the pose the button draws.
-  const aWall = aFly - 120;
-  const aLand = canBounce ? Math.ceil((aWall + 40) / 360) * 360
-                          : Math.round((aFly + 320) / 360) * 360;
-  // The arc is capped against the top of the window rather than being a fixed
-  // height, or a button near the top would throw the letter off the screen.
-  const arcUp = Math.min(54, Math.max(10, aCy - 16));
-  if(canBounce){
-    // The two legs are very different lengths, so the beat is placed by
-    // DISTANCE rather than at a fixed offset -- otherwise the short leg home
-    // runs at a fraction of the pace of the long one out.
-    const outLen = Math.abs((dx + runDist) - wallDx), backLen = Math.abs(wallDx);
-    const hit = Math.max(0.34, Math.min(0.8, outLen / (outLen + backLen)));
-    a.animate([
-      { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(' + aFly + 'deg) scale(' + AC_A_HELD + ')',
-        easing: 'cubic-bezier(.2,.5,.5,1)' },
-      { transform: 'translate(' + wallDx + 'px,' + (-arcUp * 0.42) + 'px) rotate(' + aWall + 'deg) scale(' + AC_A_HELD + ')',
-        offset: hit, easing: 'cubic-bezier(.2,.75,.4,1)' },
-      { transform: 'translate(' + (wallDx * 0.42) + 'px,' + (-arcUp) + 'px) rotate(' + Math.round((aWall + aLand) / 2) + 'deg) scale(' + (AC_A_HELD * 0.95) + ')',
-        offset: hit + (1 - hit) * 0.52, easing: 'cubic-bezier(.4,0,.6,1)' },
-      { transform: 'translate(0,0) rotate(' + aLand + 'deg) scale(1)' }
-    ], { duration: AC_T.back, delay: backAt, easing: 'linear', fill: 'forwards' });
-  } else {
-    a.animate([
-      { transform: 'translate(' + (dx + runDist) + 'px,' + (dy - 1) + 'px) rotate(' + aFly + 'deg) scale(' + AC_A_HELD + ')' },
-      { transform: 'translate(' + (dx * 0.5) + 'px,' + (dy - arcUp) + 'px) rotate(' + (aLand - 160) + 'deg) scale(' + (AC_A_HELD * 0.91) + ')', offset: 0.55 },
-      { transform: 'translate(0,0) rotate(' + aLand + 'deg) scale(1)' }
-    ], { duration: AC_T.back, delay: backAt, easing: 'cubic-bezier(.15,.55,.25,1)', fill: 'forwards' });
-  }
+  // THE FLIGHT HOME, AT ONE SPEED THE WHOLE WAY. `flight` is worked out above
+  // the timeline (see acFlightHome) because its own length is what sets how
+  // long it takes, and `total` depends on that.
+  a.animate(flight.frames, { duration: flight.ms, delay: backAt, easing: 'linear', fill: 'forwards' });
   const takeTimer = setTimeout(()=>{
     a.style.visibility = '';
     gSpan.style.visibility = 'hidden';
@@ -17095,30 +17203,67 @@ function addCourier(btn){
   // should shoot it out to that position"). The packet is the size of a row in
   // that list, and it is thrown from the button's own middle.
   const deliverTimer = setTimeout(()=>{
-    const tgt = acPendingReveal && acPendingReveal.target;
+    const tgt = acRevealTarget();
     const tr = tgt && tgt.getBoundingClientRect ? tgt.getBoundingClientRect() : null;
     // Nothing to throw it at -- a collapsed tab, a list off the screen -- so
     // the row is simply rendered. A packet flying to somewhere nobody can see
     // would only delay it.
-    if(!tr || !tr.width || tr.bottom < 4 || tr.top > window.innerHeight - 4){ acRunPendingReveal(); return; }
-    const pw = Math.min(tr.width, 320), ph = 30;
+    if(!tr || !tr.width || tr.bottom < 4 || tr.top > window.innerHeight - 4){ acRunPendingReveals(); return; }
+    // IT COMES OUT OF THE A (real-user report: "it does not look like it's the
+    // A that is firing it out to the position it should be in. Let the box and
+    // text fly out of it and land"). So the packet starts ON the letter's own
+    // landed glyph, at the letter's own size, and carries WHAT WAS TYPED --
+    // the same field values the pills brought in, which is what makes it read
+    // as the row rather than as a parcel.
+    const pw = Math.min(Math.max(tr.width, 180), 340), ph = 34;
     const pack = document.createElement('div');
     pack.className = 'ac-pack';
     pack.style.left = tr.left + 'px';
     pack.style.top = tr.top + 'px';
     pack.style.width = pw + 'px';
     pack.style.height = ph + 'px';
+    // A DATE or a QUANTITY is not what a row is CALLED, so the headline is the
+    // first field that is neither -- the company on an application, the title
+    // on a book, the activity on a study session -- rather than whichever
+    // field the form happens to put first. Otherwise the packet arrives
+    // announcing "2026-09-12".
+    const named = ty => { ty = (ty || '').toLowerCase();
+      return ty !== 'date' && ty !== 'time' && ty !== 'datetime-local' && ty !== 'month' && ty !== 'number'; };
+    const head = bits.find(x => named(x.el && x.el.type)) || bits[0];
+    const sub = bits.find(x => x !== head);
+    if(head){
+      pack.innerHTML = '<span class="ac-pack-t">' + escapeHtml(head.text) + '</span>'
+        + (sub ? '<span class="ac-pack-s">' + escapeHtml(sub.text) + '</span>' : '');
+    }
     layer.appendChild(pack);
-    const px = (r.left + r.width / 2) - (tr.left + pw / 2);
-    const py = (r.top + r.height / 2) - (tr.top + ph / 2);
-    const flight = pack.animate([
-      { transform: 'translate(' + px + 'px,' + py + 'px) scale(.12)', opacity: 0.15 },
-      { transform: 'translate(' + (px * 0.34) + 'px,' + (py * 0.34) + 'px) scale(.66)', opacity: 1, offset: 0.55 },
+    // Aligned on the GLYPH, not on the button: the letter has just landed back
+    // on its label, and that is the thing it has to look like it came out of.
+    const px = (gr.left + gr.width / 2) - (tr.left + pw / 2);
+    const py = (gr.top + gr.height / 2) - (tr.top + ph / 2);
+    // The letter's own height against the row's, so it leaves exactly the size
+    // of the A it came out of rather than at a picked fraction.
+    const s0 = Math.max(0.12, Math.min(0.5, gr.height / ph));
+    // At the same speed as everything else, with a floor so a short hop is
+    // still a throw and a ceiling so a long one is not a journey.
+    const dist = Math.hypot(px, py) || 1;
+    const ms = Math.round(Math.min(AC_T.deliver, Math.max(340, dist / AC_A_SPEED * 1000)));
+    const toss = pack.animate([
+      { transform: 'translate(' + px + 'px,' + py + 'px) scale(' + s0 + ')', opacity: 0, easing: 'cubic-bezier(.2,.8,.4,1)' },
+      { transform: 'translate(' + (px * 0.82) + 'px,' + (py * 0.82 - 10) + 'px) scale(' + (s0 + (1 - s0) * 0.3) + ')', opacity: 1, offset: 0.18, easing: 'linear' },
+      { transform: 'translate(' + (px * 0.3) + 'px,' + (py * 0.3 - 6) + 'px) scale(' + (s0 + (1 - s0) * 0.78) + ')', opacity: 1, offset: 0.66, easing: 'cubic-bezier(.35,0,.3,1)' },
       { transform: 'translate(0,0) scale(1)', opacity: 1 }
-    ], { duration: AC_T.deliver, easing: 'cubic-bezier(.2,.75,.25,1)', fill: 'both' });
-    flight.onfinish = ()=>{
-      acRunPendingReveal();
-      pack.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: 'ease-out', fill: 'forwards' });
+    ], { duration: ms, easing: 'linear', fill: 'both' });
+    // And the A kicks as it goes, which is what says the letter fired it. On
+    // the button's own glyph, since by now that is what is on screen.
+    if(gSpan.animate) gSpan.animate([
+      { transform: 'scale(1,1)' },
+      { transform: 'scale(1.24,.84)', offset: 0.3 },
+      { transform: 'scale(.96,1.06)', offset: 0.66 },
+      { transform: 'scale(1,1)' }
+    ], { duration: 300, easing: 'cubic-bezier(.3,.9,.3,1)', fill: 'none' });
+    toss.onfinish = ()=>{
+      acRunPendingReveals();
+      pack.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 170, easing: 'ease-out', fill: 'forwards' });
     };
   }, total);
   // The form empties once the pills are all in the funnel: the courier is
@@ -17155,7 +17300,7 @@ function addCourier(btn){
     // transparent or a list left un-rendered is the one way this animation
     // could cost somebody something, so neither can depend on a callback
     // having fired.
-    acRunPendingReveal();
+    acRunPendingReveals();
     faded.forEach(f => { try{ f.fade.cancel(); }catch(e){} });
     layer.remove();
     stood.forEach(x => { x.el.style.transformOrigin = x.origin; });
@@ -17630,7 +17775,10 @@ function scheduleSharedDataRefresh(){
   sharedDataRefreshTimer = setTimeout(async ()=>{
     sharedDataRefreshTimer = null;
     await loadAllData();
-    renderAll();
+    // The DATA is always re-read; only the render waits, and only while a
+    // courier is out. Otherwise this is the path that showed the row a beat
+    // after Add: the insert echoes back to the tab that made it.
+    acReveal(renderAll);
   }, 600);
 }
 // Every table here is visible to more than just its own row owner (shared

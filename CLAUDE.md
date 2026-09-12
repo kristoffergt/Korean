@@ -5076,3 +5076,110 @@ The whole run is now **5.84s to the landing and 6.3s to the row**. That is the
 price of the 2200ms bounce, and it is worth saying plainly: the row not
 appearing for six seconds is the one part of this nobody asked for, and the
 packet could leave as the A passes the wall rather than after it lands.
+
+## One speed the whole way, a row that really waits, and a packet out of the A (12 Sep, fifty-ninth pass)
+
+"The A flies through the air SOOOO FUCKING FAST and then it falls down SO
+FUCKING SLOW. The whole animation should be sort of the same speed, of course
+hitting the wall will make it slow down a bit... the row DOES SHOW UP VISUALLY
+ALMOST RIGHT AWAY, so that's a fucking failure in that department... it does not
+look like it's the A (as it hits the ground) that is firing it out to the
+position it should be in. Let the box and text fly out of it and land."
+
+### The throw is a SPEED now, and every leg is timed by its own length
+
+Two faults, and the second is the one that made it read as two different
+animations:
+
+- **A fixed duration over a path whose length depends on the window** means
+  the letter races across a desktop and crawls across a phone. `AC_A_SPEED` is
+  400 px/s and the duration is worked out from the path. 400 is bracketed by
+  what has already been rejected: 540 px/s was "way too fast", **734 was what
+  the bounce shipped at**, and 318 was accepted.
+- **The path was timed as ONE eased block.** A decelerating curve over a
+  1075px leg spends most of its distance in the first third, so the run west
+  was a blur and the arc home a crawl. It is a POLYLINE timed by ARC LENGTH
+  now: every segment gets time in proportion to how far it actually goes, and
+  every segment is `linear`.
+
+**A LEG THAT CHANGES SPEED NEEDS MORE TIME THAN ITS LENGTH BUYS.** That is not
+a taste call, it is arithmetic, and it cost a whole attempt: a leg's average
+speed is its length over its time, so one that enters at the run's pace and
+then slows must average LESS than that pace -- which it cannot do on a share of
+the clock worked out from its length alone. Given exactly its share, the only
+way to arrive on time is to speed up first, which is precisely what it drew: a
+settle that ran to **507 px/s** before stopping dead, in the middle of an
+otherwise flat 400. So the brake, the kick and the settle are STRETCHED (1.5,
+1.5, 1.7) and their curves are written to OPEN at that stretch -- a
+cubic-bezier's initial slope is `y1/x1`, so `y1/x1 == stretch` means "carry on
+at the pace you arrived at" and everything after it is the slowing down.
+
+Measured at 100ms over the whole flight, and this is the whole test:
+
+    400 x25   355 263 27   247 342   400 x10   393 265 86
+    <-- run west -->  <- wall ->  <- away ->  <- arc home ->  <- settle ->
+
+**`max` is 400** -- the letter never exceeds the run's own pace anywhere on the
+path. The only deviation is the wall, which is what was asked for.
+
+- **The easing on a keyframe governs the segment STARTING there**, and getting
+  that wrong put the kick a whole leg late: a front-loaded curve landed on the
+  arc home and sprinted it at 566 px/s. Only an INSERTED node carries a curve.
+- The brake and the settle are DISTANCES (66px, 58px), so the impact is the
+  same event on a phone as on a desktop.
+
+### The row was being shown by the realtime subscription, not by the courier
+
+"Almost right away" was about 600ms, and it was this: **the app subscribes to
+`postgres_changes` on `job_applications`, `books`, `certifications`, `courses`,
+`study_entries` and `events`**, so an insert echoes back to the tab that made
+it and `scheduleSharedDataRefresh` renders the whole app 600ms later. The
+courier was holding its own render and something else was doing it anyway.
+
+**The reveal is a QUEUE, not one slot**, and the refresh joins it -- the DATA
+is still always re-read, only the render waits, and only while a courier is
+out. Deduped by function identity, so a burst of echoes queues one `renderAll`
+rather than a dozen, and a later caller that names a target upgrades the
+queued entry rather than replacing it. One slot was the same leak by another
+road: the second caller flushed the first.
+
+Measured: with a courier out, the handler's own render and three background
+echoes all queue (two entries after dedupe), the packet's target is still the
+list the handler named, and both run exactly once on delivery. And with real
+timers, two echoes fired at 700ms and 1600ms and **the row rendered once, at
+8833ms.**
+
+### The packet comes out of the A, and carries what was typed
+
+It started at the button's centre at an arbitrary 0.12 scale, which read as the
+button producing it. Now it starts **exactly on the landed glyph** -- measured,
+the packet's first frame is cx 548, cy 139, h 17 against a glyph at cx 548, cy
+139, h 17, and at opacity 0, so it emerges rather than appears -- and grows to
+the row's size as it flies (170x17 to 340x34).
+
+- **It carries the field values**, which is what makes it read as the row
+  rather than a parcel: the same text the pills brought IN.
+- **A date or a quantity is not what a row is CALLED**, so the headline is the
+  first field that is neither -- the company on an application, the title on a
+  book, the activity on a study session. Without that rule the packet arrived
+  announcing "2026-09-12".
+- **The A kicks as it goes**, on the button's own glyph (which by then is what
+  is on screen), so the letter is visibly what fired it. `gSpan` is
+  `inline-block` for that; one character either way, so its baseline and width
+  are unchanged.
+- Its own duration comes from `AC_A_SPEED` too, floored at 340ms so a short hop
+  is still a throw and capped at `AC_T.deliver` so the cleanup timer, which is
+  set before the distance is known, is always long enough.
+
+### Checked, and the cost
+
+One real-timer run end to end: nothing left behind (0 layers, 0 packets), the
+label back as one text node, `acBusy` and `acRevealing` false, the queue empty,
+no animation left on any field, all three inks restored, the form cleared and
+no transform left on the button.
+
+**Press to row is now 8.8s**, from 6.3s. That is the arithmetic of the two
+things asked for together: the path is the window's width plus the way back
+(~1550px on a desktop) and the pace is 400 px/s, so the throw alone is 4.3s.
+Getting back to 6s means ~670 px/s, which is the speed that was just rejected.
+Worth saying rather than quietly splitting the difference.
