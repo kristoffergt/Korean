@@ -2750,6 +2750,31 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
    SHAPES rather than the group, because a presentation attribute on a child
    beats a value inherited from its parent. */
 .ac-layer .ac-halo *{stroke:var(--paper);fill:var(--paper);stroke-width:3.6;}
+/* ---------- THE VIDEOS TAB ----------
+   A card per video: a 16:9 stage holding either its poster or its player, and
+   the facts about where it came from underneath. The stage keeps its shape
+   whichever of the two is in it, so pressing play cannot move the grid. */
+.vid-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px;}
+.vid-card{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper-dim);
+  display:flex;flex-direction:column;}
+.vid-stage{position:relative;aspect-ratio:16/9;background:var(--ink);}
+.vid-stage > iframe, .vid-poster{position:absolute;inset:0;width:100%;height:100%;border:0;}
+.vid-poster{padding:0;background:none;cursor:pointer;display:block;border-radius:0;}
+/* The poster is 4:3 art cropped to the 16:9 stage, which is what youtube's own
+   player does with it -- object-fit is what stops it being stretched. */
+.vid-poster img{width:100%;height:100%;object-fit:cover;display:block;}
+.vid-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(20,20,22,0.74);color:#fff;transition:transform 0.16s cubic-bezier(0.4,0,0.2,1),background 0.16s;}
+.vid-play svg{margin-left:2px;}
+.vid-poster:hover .vid-play{transform:translate(-50%,-50%) scale(1.1);background:rgba(20,20,22,0.9);}
+.vid-poster:active .vid-play{transform:translate(-50%,-50%) scale(0.94);}
+.vid-meta{padding:9px 11px 10px;display:flex;flex-direction:column;gap:3px;}
+.vid-title{font-size:13px;font-weight:600;line-height:1.35;color:var(--ink);}
+.vid-sub{font-size:11.5px;color:var(--ink-soft);}
+.vid-foot{display:flex;align-items:center;flex-wrap:wrap;gap:4px 9px;margin-top:3px;font-size:11px;color:var(--ink-soft);}
+.vid-src{font-weight:600;padding:1px 7px;border-radius:8px;background:var(--paper);border:1px solid var(--line);}
+.vid-foot a{display:inline-flex;align-items:center;gap:4px;}
 .ac-drop{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--ink-soft);}
 /* What he delivers: a row-shaped packet thrown from the button to the list the
    new thing belongs in, which is rendered as it lands. Drawn as one of that
@@ -3011,6 +3036,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       <button data-view="grammar" id="studySubGrammarBtn"></button>
       <button data-view="writing" id="studySubWritingBtn"></button>
       <button data-view="notebook" id="studySubNotebookBtn"></button>
+      <button data-view="videos" id="studySubVideosBtn"></button>
     </div>
     <div id="studyLogSection">
     <div class="card">
@@ -3316,6 +3342,23 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
             <button class="export-btn" id="writingMockQ54SaveBtn" style="margin-top:6px;"></button>
           </div>
         </div>
+      </div>
+    </div>
+    <div id="studyVideosSection" class="hidden">
+      <div class="card">
+        <h2 id="hVideos"></h2>
+        <p class="hint" id="videoIntroHint"></p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0;">
+          <div class="field" style="flex:1;min-width:160px;">
+            <label for="videoSearchInput" id="lblVideoSearch"></label>
+            <input type="text" id="videoSearchInput" data-ph-key="videoSearchPlaceholder">
+          </div>
+          <div class="field">
+            <span class="sort-label" id="lblVideoSort"></span>
+            <span class="sort-levels" id="videoSortLevels"></span>
+          </div>
+        </div>
+        <div id="videoList"></div>
       </div>
     </div>
     <div id="studyNotebookSection" class="hidden">
@@ -10595,7 +10638,7 @@ const I18N = {
     thisOccurrenceOnly:'This event only', allOccurrences:'All events', cancelBtn:'Cancel',
     deleteRecurringQ:'This is a recurring event. What would you like to remove?',
     editEventModalTitle:'Edit', editRemindersModalTitle:'Edit reminders', deleteEventBtn:'Delete',
-    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header (optional)',
+    addCourseBtn:'Add course', courseHint:'Only course title and time are required.', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries and notes for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', studySubVideos:'Videos', hVideos:'Videos', videoIntroHint:'Every video link added anywhere in the app, in one place. Add one by putting a YouTube link on a grammar point, an article, a certification or an application.', lblVideoSearch:'Search', lblVideoSort:'Sort', videoSearchPlaceholder:'Search videos...', videoEmpty:'No video links yet. Put a YouTube link on a grammar point and it shows up here.', videoNoMatches:'No video matches that search.', videoSourceGrammar:'Grammar', videoSourceArticles:'Articles', videoSourceCerts:'Certifications', videoSourceJobs:'Applications', videoPlay:'Play', videoOpenOnYouTube:'Open on YouTube', sortFieldAdded:'Added', sortFieldSource:'Source',  hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header (optional)',
     hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordsLabel:'words', deleteSampleConfirm:'Delete this writing sample?', deleteJobConfirm:'Delete this application? Any CV or cover letter uploaded with it stays in storage and keeps its short link.', deleteCertConfirm:'Delete this certification?', deleteBookConfirm:'Delete this book? Its notes go with it.', deleteArticleConfirm:'Delete this article? Its notes go with it.', charCountLabel:'{n} characters', charCountTarget:'{n} characters (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description (optional)', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image (optional)', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'Random', lblWritingQ53Image:'Attach an image (optional)', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'Start a Q54 mock exam (35 min)', writingMockStartBtn:'Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
     lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
@@ -10718,7 +10761,7 @@ const I18N = {
     thisOccurrenceOnly:'이 일정만', allOccurrences:'전체 일정', cancelBtn:'취소',
     deleteRecurringQ:'이것은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     editEventModalTitle:'수정', editRemindersModalTitle:'알림 수정', deleteEventBtn:'삭제',
-    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더 (선택)',
+    addCourseBtn:'수업 추가', courseHint:'수업명과 시간만 필수입니다.', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', studySubVideos:'영상', hVideos:'영상', videoIntroHint:'앱 어디에서든 추가한 영상 링크를 한곳에 모았습니다. 문법, 아티클, 자격증, 지원 내역에 유튜브 링크를 넣으면 여기에 나타납니다.', lblVideoSearch:'검색', lblVideoSort:'정렬', videoSearchPlaceholder:'영상 검색...', videoEmpty:'아직 영상 링크가 없습니다. 문법 항목에 유튜브 링크를 넣으면 여기에 나타납니다.', videoNoMatches:'검색 결과가 없습니다.', videoSourceGrammar:'문법', videoSourceArticles:'아티클', videoSourceCerts:'자격증', videoSourceJobs:'지원 내역', videoPlay:'재생', videoOpenOnYouTube:'유튜브에서 열기', sortFieldAdded:'추가일', sortFieldSource:'출처',  hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더 (선택)',
     hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', wordsLabel:'단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', deleteJobConfirm:'이 지원 기록을 삭제하시겠습니까? 함께 업로드한 이력서나 자기소개서는 저장소에 남고 단축 링크도 계속 작동합니다.', deleteCertConfirm:'이 자격증을 삭제하시겠습니까?', deleteBookConfirm:'이 책을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', deleteArticleConfirm:'이 논문을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명 (선택)', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부 (선택)', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'무작위', lblWritingQ53Image:'이미지 첨부 (선택)', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'54번 모의고사 시작 (35분)', writingMockStartBtn:'실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
     lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
@@ -10842,7 +10885,7 @@ const I18N = {
     thisOccurrenceOnly:'Chỉ sự kiện này', allOccurrences:'Tất cả sự kiện', cancelBtn:'Hủy',
     deleteRecurringQ:'Đây là sự kiện lặp lại. Bạn muốn xóa gì?',
     editEventModalTitle:'Sửa', editRemindersModalTitle:'Sửa nhắc nhở', deleteEventBtn:'Xóa',
-    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh (tùy chọn)',
+    addCourseBtn:'Thêm khóa học', courseHint:'Chỉ tên khóa học và giờ học là bắt buộc.', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch và ghi chú liên quan cho tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', studySubVideos:'Video', hVideos:'Video', videoIntroHint:'Mọi liên kết video đã thêm ở bất kỳ đâu trong ứng dụng, gom về một chỗ. Thêm bằng cách dán liên kết YouTube vào một điểm ngữ pháp, một bài viết, một chứng chỉ hoặc một đơn ứng tuyển.', lblVideoSearch:'Tìm kiếm', lblVideoSort:'Sắp xếp', videoSearchPlaceholder:'Tìm video...', videoEmpty:'Chưa có liên kết video nào. Dán một liên kết YouTube vào điểm ngữ pháp và nó sẽ hiện ở đây.', videoNoMatches:'Không có video nào khớp với tìm kiếm đó.', videoSourceGrammar:'Ngữ pháp', videoSourceArticles:'Bài viết', videoSourceCerts:'Chứng chỉ', videoSourceJobs:'Đơn ứng tuyển', videoPlay:'Phát', videoOpenOnYouTube:'Mở trên YouTube', sortFieldAdded:'Đã thêm', sortFieldSource:'Nguồn',  hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh (tùy chọn)',
     hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', wordsLabel:'từ', deleteSampleConfirm:'Xóa bài viết này?', deleteJobConfirm:'Xóa đơn ứng tuyển này? CV hoặc thư xin việc đã tải lên vẫn còn trong bộ nhớ và liên kết ngắn vẫn hoạt động.', deleteCertConfirm:'Xóa chứng chỉ này?', deleteBookConfirm:'Xóa cuốn sách này? Các ghi chú sẽ bị xóa theo.', deleteArticleConfirm:'Xóa bài báo này? Các ghi chú sẽ bị xóa theo.', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ (tùy chọn)', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh (tùy chọn)', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh (tùy chọn)', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
     lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
@@ -10940,7 +10983,8 @@ const STATIC_MAP = {
   deleteChoiceText:'deleteRecurringQ', deleteThisOnlyBtn:'thisOccurrenceOnly', deleteAllBtn:'allOccurrences', deleteChoiceCancelBtn:'cancelBtn',
   hNotesPick:'hNotesPick', lblNotesCourse:'lblNotesCourse', lblNewLecture:'lblNewLecture', addLectureBtn:'addLectureBtn', lblNewLectureHeader:'lblCustomHeader',
   hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabelResumeUpload:'chooseFile',
-  studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', studySubNotebookBtn:'studySubNotebook', hGrammar:'hGrammar', gramAddToggleBtn:'gramAddToggleBtn',
+  studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', studySubNotebookBtn:'studySubNotebook', studySubVideosBtn:'studySubVideos', hGrammar:'hGrammar', gramAddToggleBtn:'gramAddToggleBtn',
+  hVideos:'hVideos', videoIntroHint:'videoIntroHint', lblVideoSearch:'lblVideoSearch', lblVideoSort:'lblVideoSort',
   hNotebookPick:'hNotesPick', lblNewNotebookTitle:'lblNewLecture', lblNewNotebookHeader:'lblCustomHeader', addNotebookBtn:'addLectureBtn',
   hAccountSettings:'hAccountSettings', settingsSignedInAs:'settingsSignedInAs', settingsSitePinLabel:'settingsSitePinLabel', lblSettingsDisplayName:'lblSettingsDisplayName', lblSettingsDisplayNameEdit:'lblSettingsDisplayName', saveDisplayNameBtn:'settingsSaveNameBtn', cancelDisplayNameBtn:'cancelEdit', lblHideLeaderboards:'lblHideLeaderboards', lblHideCircleToo:'lblHideCircleToo',
   lblSettingsNewEmail:'lblSettingsNewEmail', lblSettingsEmailConfirmPassword:'lblSettingsEmailConfirmPassword', saveEmailBtn:'settingsSaveEmailBtn',
@@ -11435,6 +11479,13 @@ const ICON_PATHS = {
   pageAdd: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><polyline points="14 3 14 8 19 8"></polyline><line x1="12" y1="17" x2="12" y2="11"></line><line x1="9" y1="14" x2="15" y2="14"></line>'
 };
 const ICON = {
+  // The one SOLID mark in the set, and it has to be: it sits on a
+  // photograph, where a stroked outline has nothing to separate it from
+  // whatever happens to be behind it.
+  play: function(sz){
+    return '<svg class="ui-icon" width="'+(sz||14)+'" height="'+(sz||14)+'" viewBox="0 0 24 24"'
+      + ' fill="currentColor" stroke="none" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"></path></svg>';
+  },
   pencil:  function(sz){ return svgIcon(ICON_PATHS.pencil, sz); },
   bellOn:  function(sz){ return svgIcon(ICON_PATHS.bellOn, sz); },
   bellOff: function(sz){ return svgIcon(ICON_PATHS.bellOff, sz); },
@@ -20251,6 +20302,7 @@ const TAB_STRUCTURE = [
     { key:'study.grammar', labelKey:'studySubGrammar', btnId:'studySubGrammarBtn', view:'grammar' },
     { key:'study.writing', labelKey:'studySubWriting', btnId:'studySubWritingBtn', view:'writing' },
     { key:'study.notebook', labelKey:'studySubNotebook', btnId:'studySubNotebookBtn', view:'notebook' },
+    { key:'study.videos', labelKey:'studySubVideos', btnId:'studySubVideosBtn', view:'videos' },
   ]},
   { key:'yonsei', labelKey:'tabYonsei', btnId:'tabBtnYonsei', switchFn:()=>switchYonseiSubTab, subs:[
     { key:'yonsei.courses', labelKey:'tabCourses', btnId:'yonseiSubCoursesBtn', view:'courses' },
@@ -24430,6 +24482,7 @@ function renderAll(){
   renderWritingList();
   rebuildNotebookPersonFilter();
   renderNotebookList();
+  renderVideoList();
   rebuildRecapPersonFilter();
   applyTabVisibility();
   applyGuestUiRestrictions();
@@ -32021,7 +32074,11 @@ async function addGrammarResource(patternId){
   const g = GRAMMAR_DATA.find(x=>x.id===patternId);
   if(!g) return;
   const resources = (g.resources||[]).slice();
-  resources.push({ type: detectResourceType(url), url, label: label || null });
+  // WHEN and BY WHOM, which the Videos tab sorts and credits by. Written from
+  // here on; a resource added before this has neither and is simply undated
+  // there, which is why that sort puts undated ones last.
+  resources.push({ type: detectResourceType(url), url, label: label || null,
+    added: new Date().toISOString(), by: currentUser ? currentUser.id : null });
   const { error } = await supabaseClient.from('grammar_points').update({ resources }).eq('id', patternId);
   if(!error){
     g.resources = resources;
@@ -32043,20 +32100,178 @@ async function deleteGrammarResource(patternId, idx){
     renderGrammarList();
   }
 }
+/* ---------- THE VIDEOS TAB ----------
+   Every video link anywhere in the app, gathered into one place with its own
+   embed (real-user request: "add a general videos sub-tab where all the video
+   links uploaded in grammar and stuff will be added to that tab, with the
+   YouTube type embed. Sortable like the way we sort other things on the
+   site").
+
+   It OWNS NO DATA. There is no videos table and nothing is added here: a
+   video is a link that already lives on a grammar point, an article, a
+   certification or an application, and this is a second way of reading those.
+   So nothing can drift out of step with them, and deleting the link where it
+   was added is what removes it here. */
+// The id is matched against the FORMS youtube publishes, with the id last,
+// rather than by parsing the string as a URL -- a link pasted without a
+// scheme is not a valid URL and is exactly what somebody pastes. The 11
+// characters are youtube's own fixed id length, which is also what stops this
+// matching a word that happens to follow a slash.
+function ytVideoId(raw){
+  const m = String(raw || '').match(
+    /(?:youtube\.com\/(?:watch\?(?:[^#\s]*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i);
+  return m ? m[1] : null;
+}
+// A link copied at a moment in the video carries that moment, and throwing it
+// away would land the reader back at the start of an hour-long lecture.
+function ytStartSeconds(raw){
+  const m = String(raw || '').match(/[?&#](?:t|start)=([0-9hms]+)/i);
+  if(!m) return 0;
+  const v = m[1];
+  if(/^\d+$/.test(v)) return parseInt(v, 10);
+  const h = v.match(/(\d+)h/i), mi = v.match(/(\d+)m/i), sec = v.match(/(\d+)s/i);
+  return (h ? +h[1]*3600 : 0) + (mi ? +mi[1]*60 : 0) + (sec ? +sec[1] : 0);
+}
+// youtube-nocookie is the same player on the host that does not set its own
+// cookies until something is played, which is the right default for a page
+// that may show two dozen of these.
+function ytEmbedUrl(id, startAt){
+  return 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id)
+    + '?autoplay=1&rel=0&modestbranding=1' + (startAt ? '&start=' + startAt : '');
+}
+function ytPosterUrl(id){
+  return 'https://i.ytimg.com/vi/' + encodeURIComponent(id) + '/hqdefault.jpg';
+}
+const VIDEO_SOURCE_KEY = {
+  grammar: 'videoSourceGrammar', articles: 'videoSourceArticles',
+  certifications: 'videoSourceCerts', applications: 'videoSourceJobs'
+};
+// Everywhere in the app a link can be typed. Scanning a field costs nothing,
+// because a link that is not a video never gets past ytVideoId -- and missing
+// one would mean a video the reader added and cannot find.
+function collectVideoLinks(){
+  const out = [];
+  const seen = new Set();
+  const push = (url, label, source, added, by, sub) => {
+    const id = ytVideoId(url);
+    if(!id) return;
+    // The same video linked from two places is two entries, since each says
+    // something different about WHERE it belongs; the same link twice in one
+    // place is one.
+    const key = source + '::' + id + '::' + (sub || '');
+    if(seen.has(key)) return;
+    seen.add(key);
+    out.push({ id: id, url: url, start: ytStartSeconds(url),
+      label: String(label || '').trim(), source: source,
+      added: added || '', by: by || null, sub: String(sub || '').trim() });
+  };
+  (typeof GRAMMAR_DATA !== 'undefined' ? GRAMMAR_DATA : []).forEach(g =>
+    (g.resources || []).forEach(r =>
+      push(r.url, r.label, 'grammar', r.added, r.by,
+        (g.number ? g.number + '. ' : '') + (g.pattern || ''))));
+  Object.values(typeof allArticles !== 'undefined' ? allArticles : {}).forEach(list =>
+    (list || []).forEach(a => push(a.link, a.title, 'articles', a.created_at, a.user_id, a.author || '')));
+  Object.values(typeof allCerts !== 'undefined' ? allCerts : {}).forEach(list =>
+    (list || []).forEach(c => push(c.link, c.name, 'certifications', c.created_at, c.user_id, c.issuer || '')));
+  Object.values(typeof allJobs !== 'undefined' ? allJobs : {}).forEach(list =>
+    (list || []).forEach(j => push(j.link, j.company, 'applications', j.created_at, j.user_id, j.role || '')));
+  return out;
+}
+const VIDEO_SORT_FIELDS = ['added','title','source'];
+let videoSort = loadListSort('videos', VIDEO_SORT_FIELDS, [{ field:'added', dir:'desc' }]);
+let videoSearchQuery = '';
+// A video with NO date sorts LAST whichever way the level is pointed, the same
+// sentinel the job board uses for a listing with no deadline: "undated" is not
+// "the oldest", and a grammar link added before the stamp existed has no date
+// to claim.
+function videoSortValue(v, f){
+  if(f === 'title')  return (v.label || v.sub || v.id).toLowerCase();
+  if(f === 'source') return t(VIDEO_SOURCE_KEY[v.source] || v.source).toLowerCase();
+  return v.added || '0000';
+}
+function videoMatchesSearch(v, q){
+  const needle = (q || '').trim().toLowerCase();
+  if(!needle) return true;
+  return (v.label + ' ' + v.sub + ' ' + t(VIDEO_SOURCE_KEY[v.source] || v.source) + ' ' + v.url)
+    .toLowerCase().includes(needle);
+}
+// Which cards have been PLAYED, by their own key, so a re-render (a sort, a
+// keystroke in the search box) does not tear a playing iframe out. Held here
+// rather than as state on the element, for exactly that reason.
+const videoPlaying = new Set();
+function videoKey(v){ return v.source + '::' + v.id + '::' + v.sub; }
+function renderVideoList(){
+  const list = document.getElementById('videoList');
+  if(!list) return;
+  rebuildVideoSortSelect();
+  const all = collectVideoLinks().filter(v => videoMatchesSearch(v, videoSearchQuery));
+  const rows = sortRowsBy(all, videoSort.levels, videoSortValue, (a,b)=>
+    (a.label || a.sub).localeCompare(b.label || b.sub));
+  if(rows.length === 0){
+    list.innerHTML = '<div class="empty">' + escapeHtml(t(videoSearchQuery ? 'videoNoMatches' : 'videoEmpty')) + '</div>';
+    return;
+  }
+  list.innerHTML = '<div class="vid-grid">' + rows.map(v=>{
+    const key = videoKey(v);
+    const title = v.label || v.sub || v.url;
+    const who = v.by ? nameFor(v.by) : '';
+    // A played card keeps its iframe; the rest are a POSTER and a play
+    // button, so nothing is fetched from youtube for a video nobody has
+    // asked to watch and two dozen of these cost two dozen images.
+    const stage = videoPlaying.has(key)
+      ? '<iframe class="vid-frame" src="' + escapeHtml(ytEmbedUrl(v.id, v.start)) + '" title="'
+        + escapeHtml(title) + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"'
+        + ' referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+      : '<button type="button" class="vid-poster" data-vid-key="' + escapeHtml(key) + '" aria-label="'
+        + escapeHtml(t('videoPlay') + ' ' + title) + '">'
+        + '<img src="' + escapeHtml(ytPosterUrl(v.id)) + '" alt="" loading="lazy" decoding="async">'
+        + '<span class="vid-play">' + ICON.play(22) + '</span></button>';
+    return '<div class="vid-card">'
+      + '<div class="vid-stage">' + stage + '</div>'
+      + '<div class="vid-meta">'
+      + '<div class="vid-title">' + escapeHtml(title) + '</div>'
+      + (v.sub && v.sub !== title ? '<div class="vid-sub">' + escapeHtml(v.sub) + '</div>' : '')
+      + '<div class="vid-foot"><span class="vid-src">' + escapeHtml(t(VIDEO_SOURCE_KEY[v.source] || v.source)) + '</span>'
+      + (who ? '<span class="vid-by">' + escapeHtml(who) + '</span>' : '')
+      + (v.added ? '<span class="vid-when">' + escapeHtml(localDateStr(v.added)) + '</span>' : '')
+      + externalLinkHtml(v.url, ICON.link(11) + ' ' + escapeHtml(t('videoOpenOnYouTube')))
+      + '</div></div></div>';
+  }).join('') + '</div>';
+  list.querySelectorAll('.vid-poster').forEach(btn => btn.addEventListener('click', ()=>{
+    videoPlaying.add(btn.dataset.vidKey);
+    renderVideoList();
+  }));
+}
+function rebuildVideoSortSelect(){
+  const host = document.getElementById('videoSortLevels');
+  if(!host) return;
+  host.innerHTML = sortControlHtml('videos', videoSort.levels, VIDEO_SORT_FIELDS, videoSort.multi);
+  wireSortControl(host, 'videos', videoSort.levels, VIDEO_SORT_FIELDS, videoSort.multi, (next, multi)=>{
+    videoSort = { levels: next, multi };
+    saveListSort('videos', next, multi);
+    renderVideoList();
+  });
+}
+document.getElementById('videoSearchInput').addEventListener('input', (e)=>{
+  videoSearchQuery = e.target.value;
+  renderVideoList();
+});
 function switchStudySubTab(view){
   if(splitSwitchGuard('study', view)) return;
-  const btns = { log: 'studySubLogBtn', grammar: 'studySubGrammarBtn', writing: 'studySubWritingBtn', notebook: 'studySubNotebookBtn' };
-  const sections = { log: 'studyLogSection', grammar: 'studyGrammarSection', writing: 'studyWritingSection', notebook: 'studyNotebookSection' };
+  const btns = { log: 'studySubLogBtn', grammar: 'studySubGrammarBtn', writing: 'studySubWritingBtn', notebook: 'studySubNotebookBtn', videos: 'studySubVideosBtn' };
+  const sections = { log: 'studyLogSection', grammar: 'studyGrammarSection', writing: 'studyWritingSection', notebook: 'studyNotebookSection', videos: 'studyVideosSection' };
   Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
   Object.entries(sections).forEach(([v,id])=> document.getElementById(id).classList.toggle('hidden', v!==view));
   if(view === 'grammar') rebuildGramJumpSelect();
   if(view === 'writing') renderWritingList();
   if(view === 'notebook') renderNotebookList();
+  if(view === 'videos') renderVideoList();
 }
 document.getElementById('studySubLogBtn').addEventListener('click', ()=> switchStudySubTab('log'));
 document.getElementById('studySubGrammarBtn').addEventListener('click', ()=> switchStudySubTab('grammar'));
 document.getElementById('studySubWritingBtn').addEventListener('click', ()=> switchStudySubTab('writing'));
 document.getElementById('studySubNotebookBtn').addEventListener('click', ()=> switchStudySubTab('notebook'));
+document.getElementById('studySubVideosBtn').addEventListener('click', ()=> switchStudySubTab('videos'));
 
 /* ---------- WRITING PRACTICE ---------- */
 // Q54-style essay tasks (600~700자 argumentative essays), each with the real
@@ -36947,6 +37162,7 @@ function redrawSortControls(){
   rebuildCertSortSelect();
   rebuildJobBoardSortSelect();
   rebuildModeratorSortSelect();
+  rebuildVideoSortSelect();
 }
 document.addEventListener('click', (e)=>{
   if(!sortMenuOpen) return;

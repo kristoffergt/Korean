@@ -4838,3 +4838,99 @@ still in its delay phase when the wall clock said it should have finished --
 and the `setTimeout` that cancels it fired on time. Anything timed against
 `performance.now()` in that pane is measuring two different clocks. Pause the
 animations and step `currentTime`, including the ones OUTSIDE the layer.
+
+## Every video link in one place, and it owns none of them (12 Sep, fifty-seventh pass)
+
+"For Korean, add a general 'videos' sub-tab where all the video links uploaded
+in grammar and stuff will be added to that tab, with the YouTube type embed.
+Sortable like the way we sort other things on the site."
+
+A fifth sub-tab under Korean, after Notebook.
+
+### It owns no data, and that is the whole design
+
+There is no videos table and nothing is added here. A video is a LINK that
+already lives somewhere -- on a grammar point's resources, on an article, a
+certification or an application -- and this tab is a second way of reading
+those. So nothing can drift out of step with them, deleting the link where it
+was added is what removes it here, and no migration was needed.
+
+**It scans every field in the app a link can be typed into**, not only the
+grammar resources it was asked for. That costs nothing, because a link that is
+not a video never gets past `ytVideoId` -- and missing one would mean a video
+somebody added and cannot find. Measured against a mixed set: five videos came
+back from three different sources and the two plain links (an `example.com`
+article, a lesson-notes page on a grammar point) were correctly not among them.
+Books are the one list with no link field at all, so there is nothing to scan.
+
+### The id is matched against youtube's own FORMS, not parsed as a URL
+
+A link pasted without a scheme is not a valid URL and is exactly what somebody
+pastes, so `new URL()` is no use. One regex over the forms youtube publishes
+with the id LAST, and **the 11 characters are youtube's own fixed id length** --
+which is also what stops it matching a word that happens to follow a slash.
+14 of 14 cases: `watch?v=`, `youtu.be/`, a `list=` before the `v=`, `shorts/`,
+`m.youtube.com`, `embed/`, `live/`, and `#t=45s`; and null for `example.com/
+watch?v=...`, vimeo, a plain page, an empty string and an id of the wrong
+length.
+
+**A timestamp on the link is kept.** `?t=90`, `&t=1h2m3s` (3723) and `#t=45s`
+all parse, and the embed carries `start=` -- throwing it away would land the
+reader at the beginning of an hour-long lecture.
+
+### Nothing loads from youtube until somebody asks
+
+A card is a POSTER and a play button; pressing it swaps in the player. Two
+dozen of these would otherwise be two dozen third-party iframes on a tab
+somebody opened to browse. The player is `youtube-nocookie.com`, which is the
+same player on the host that sets no cookies of its own until something plays.
+
+- **Which cards are playing is held OUTSIDE the markup**, keyed by the video's
+  own source and id, so a re-render -- a sort, a keystroke in the search box --
+  cannot tear a playing iframe out. Verified: play, re-render, still one
+  iframe, same src.
+- **The stage keeps its 16:9 whichever is in it** (measured 287x161 = 1.78 on a
+  phone), so pressing play cannot move the grid.
+- The poster is 4:3 art cropped to a 16:9 stage, which is what youtube's own
+  player does with it; `object-fit: cover` is what stops it being stretched.
+- `ICON.play` is the one SOLID mark in that set, and it has to be: it sits on a
+  photograph, where a stroked outline has nothing to separate it from whatever
+  is behind it.
+
+### Sorted with the app's own control
+
+`sortControlHtml` / `wireSortControl` / `saveListSort`, exactly as jobs, certs,
+the job board and the expenses do, so multiple sort and the remembered ordering
+come for free. Fields are **added, title, source**.
+
+- **A video with NO date sorts LAST whichever way the level is pointed**, the
+  same sentinel the job board uses for a listing with no deadline: "undated" is
+  not "the oldest".
+- **Which is why a grammar resource now records `added` and `by`.** It never
+  did, so there was nothing to sort or credit by; from now on it does, and a
+  resource added before this is simply undated and uncredited there. Nothing
+  had to change in the table -- `resources` is jsonb and `avatarFrom`-style
+  field-by-field reading means an extra key costs nothing.
+- **The render owns its own control** (`renderVideoList` calls
+  `rebuildVideoSortSelect`), the way `renderJobs` does, so the commit has one
+  thing to call and the control can never be drawn for an ordering the list is
+  not in.
+
+Checked: title ascending gives 3.-거든요, Billie, How Korean…, Talk To Me…,
+TOPIK II; source ascending gives Articles, Certifications, Grammar x3; "added"
+descending puts 12/09 before 11/09 before 10/09 with the undated one last.
+Search filters on the label, the pattern, the source and the URL. Both empty
+states say which of the two they are.
+
+### And the plumbing it had to be registered in
+
+`studySubVideosBtn` + `studyVideosSection`, `switchStudySubTab`, `STATIC_MAP`
+(four ids), `TAB_STRUCTURE`'s `study.videos` -- which is what the split view
+and the nav flyout read, so neither had to learn about it separately --
+`renderAll`, `redrawSortControls`, and en/ko/vi. Measured on a phone: five
+sub-tab buttons at 63px in a 335px row, nothing clipped and no overflow.
+
+**A harness note worth keeping**: this app's top-level lists are `let`
+bindings, so `window.allArticles = ...` from the console creates a SECOND
+binding and the app goes on reading the real one. A fake that appears to do
+nothing is that, not a bug in the reader -- assign the bare name.
