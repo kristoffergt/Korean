@@ -4275,3 +4275,102 @@ Four reports, all of them right.
   add fired while one was already running (one courier, and the second
   handler's own clear still ran). Measured: the title field still reads
   "Dentist appointment" at 1100ms and is cleared at 1206.
+
+## He looks before he jumps, and he carries the letter and nothing else (12 Sep, fifty-second pass)
+
+Two reports off the courier, and the first one reverses the fix from an hour
+earlier.
+
+### "Just the A"
+
+"The guy who appears takes the BACKGROUND of the A. Should not. Just the A."
+
+The pass before this made the letter **a chip of the button** -- its ink on its
+own fill -- and that was the right answer to the previous report ("the A
+switched color") and the wrong object. So the constraint is worth stating
+plainly, because it is what makes this awkward: **the Add button's own ink is
+exactly the colour of the page behind it**, near-white text on a near-black
+pill, and the reverse in the other theme. One flat colour cannot read on the
+button AND on the page, which is why the first attempt cross-faded and the
+second carried a fill with it.
+
+**What resolves it is that the letter does not have to exist for the whole
+run.** It is a bare glyph in the PAGE's ink, `visibility:'hidden'` until he
+takes it, and there are two one-frame handovers:
+
+| | |
+|---|---|
+| `outEnd`, the frame he reaches | the carried letter appears, the button's own letter is hidden |
+| `total`, the frame it lands | the carried letter is hidden, the button's own letter comes back |
+
+So the button keeps its own letter in its own ink right up to the moment it is
+lifted off, one flat colour covers the whole carry, and nothing anywhere
+changes colour. **Both handovers happen while the letter is moving fastest** --
+leaving his hand's reach, and landing out of a two-turn spin -- which is what
+makes a swap read as a continuation.
+
+- The element's box is now exactly the glyph's rect (no 3px bleed, no radius),
+  it takes no `backgroundColor`, and the throw-back keyframes no longer animate
+  `background` at all.
+- Both timers are cleared in the final cleanup, beside the three that were
+  already there, so an interrupted run cannot leave the button's own letter
+  hidden.
+- Measured at seven moments across the run: `backgroundColor` is
+  `rgba(0,0,0,0)` throughout, `color` is `rgb(237,237,239)` throughout and
+  equal to the page's own ink, and **exactly one A is on screen at every
+  step** -- hidden with the glyph visible up to 960, visible with the glyph
+  hidden from 1000.
+
+### The peek
+
+"It should be a bit slower animation at the start. He peeks his head out from
+behind the add pill to peek around at what was written and ONLY THEN does he
+jump out."
+
+`AC_T` gained `peek: 300` and `look: 380`, so the run is 680ms longer before
+anything else happens, and the head is its own `<g class="ac-head">` with
+`transform-origin:15px 12px` -- the NECK, which is a point in the drawing, so
+it needs `transform-box: view-box` and its origin in view-box units, the same
+rule the legs and the case's lid already follow.
+
+Three animations on it: out past the clip edge, a scan along the form
+(-14 degrees, then +6, then settling), and back onto his shoulders as the rest
+of him arrives. His jump is delayed to `peekEnd` and every downstream delay
+hangs off `outEnd` rather than `AC_T.out`.
+
+- **His resting pose is written on the element** (`guy.style.transform`) rather
+  than filled backwards from the jump's first keyframe, because a delayed
+  animation that fills backwards holds that keyframe from time zero -- which is
+  the trap this file already records: **an animation with a delay fills
+  `'forwards'`, never `'both'`.**
+- **The lean is 31px, and that number is the clip edge.** The gate starts 4px
+  past the button's right edge and he rests with his own box 8px short of it,
+  so nothing below the neck can show: measured, the torso's right edge is 18.6
+  px behind the edge and the case's lid 9.2. A 31px lean puts **10 to 13px of a
+  12px-wide head** past it, i.e. all of it including the cap's peak, which
+  points left at the form he is reading.
+- **The head's left edge stays BEHIND the clip edge for every frame of the
+  peek and the scan** (-3.1 to -0.4px, checked every 50ms), so there is never
+  daylight between the head and the pill. That is the difference between a head
+  coming out from behind something and a head floating beside it, and the
+  rotation in the scan is what could have opened one.
+- Stepped and looked at, at 4.5x: at 400 and 640 the capped head is out beside
+  the pill at two different angles with no body showing, and at 820 the whole
+  figure is standing beside the button with its case.
+
+### Two traps in the harness, both of which produced a confident wrong reading
+
+- **`.ac-head` is INSIDE `.ac-top`**, so a rect taken on `.ac-top` is the
+  group's, and once the head has leaned out that rect is the HEAD. An earlier
+  measurement read as "the torso is 12px past the edge during the peek", which
+  would have meant the body was showing; it was the leaned head all along.
+  Measure the torso's own `<path>`, or work it out from the view-box.
+- **`documentElement.style.zoom` cannot be used to look closely.**
+  `getBoundingClientRect` comes back in zoomed pixels while `window.innerWidth`
+  does not, so `addCourier`'s own "is there room to the right of the button"
+  guard compares two different units and refuses to run at all. A
+  `transform: scale()` on the LAYER is the way: the clip scales with the
+  drawing, so the picture stays faithful.
+- And re-running him by hand needs the button's label put back to one text node
+  and `acBusy` cleared, because the cleanup that does both lives in a timer the
+  harness stubs out.
