@@ -17636,7 +17636,16 @@ function addCourier(btn){
     });
   }, bitsEnd);
 
-  setTimeout(()=>{
+  // ONE ENDING, whether it ran to the end or was abandoned half way. Every one
+  // of these was already the tail of the timeline; making it a function is what
+  // lets the abort below do the whole of it rather than most of it, which on a
+  // sequence that owes the reader a rendered row and a field's own ink back is
+  // the difference between decoration and a bug.
+  let done = false;
+  const finish = ()=>{
+    if(done) return;
+    done = true;
+    clearTimeout(endTimer);
     clearTimeout(westTimer);
     clearTimeout(westDoneTimer);
     clearTimeout(takeTimer);
@@ -17647,12 +17656,13 @@ function addCourier(btn){
     clearTimeout(goneTimer);
     clearTimeout(clearTimer);
     clearTimeout(deliverTimer);
+    document.removeEventListener('scroll', onAwayScroll, { capture: true });
     acRunPendingClear();
-    // Both of these are backstops rather than the ordinary path: the row is
-    // rendered by the delivery and the ink restored by the clear. A field left
-    // transparent or a list left un-rendered is the one way this animation
-    // could cost somebody something, so neither can depend on a callback
-    // having fired.
+    // Both of these are backstops on the ordinary path -- the row is rendered
+    // by the delivery and the ink restored by the clear -- and they are the
+    // POINT of the abort: a field left transparent or a list left un-rendered
+    // is the one way this animation could cost somebody something, so neither
+    // can depend on a callback having fired.
     acRunPendingReveals();
     faded.forEach(f => { try{ f.fade.cancel(); }catch(e){} });
     layer.remove();
@@ -17662,7 +17672,44 @@ function addCourier(btn){
     // this button's text is owned by STATIC_MAP, and restoring the old string
     // over a new one would leave it in the language it was pressed in.
     if(btn.firstChild === gSpan) btn.textContent = label;
-  }, total + AC_T.deliver + 220);
+  };
+  const endTimer = setTimeout(finish, total + AC_T.deliver + 220);
+
+  // AND IT IS ABANDONED THE MOMENT HE CANNOT BE SEEN (real-user request: "if
+  // you scroll past the top of the courier with the fixed pane it should just
+  // stop the animation and show the added thing immediately"). The row is
+  // already saved and is only being HELD for the delivery, so a reader who has
+  // scrolled away from the button is being made to wait for a performance they
+  // are not watching. `finish()` renders it and puts everything back.
+  //
+  // The band he is standing in is the window less whatever the pinned header
+  // covers, read from `--topbar-h` -- the bar publishes it, it is 0 when the
+  // bar is switched off, and reading it off the inline style is a string rather
+  // than a layout read. His own top is the button's baseline less AC_FOOT,
+  // which is where the figure is placed (see guyTop).
+  const outOfSight = ()=>{
+    const now = btn.getBoundingClientRect();
+    const covered = parseFloat(document.documentElement.style
+      .getPropertyValue('--topbar-h')) || 0;
+    // The bottom end is the START guard's own line rather than his feet: a
+    // button that was near enough the edge to be pressed at all must not be
+    // abandoned by the first pixel of scroll after it.
+    return (now.bottom - AC_FOOT) < covered || now.top > window.innerHeight - 20;
+  };
+  let awayPending = false;
+  const onAwayScroll = ()=>{
+    if(awayPending || done) return;
+    awayPending = true;
+    // One rect read per FRAME at most, never one per event: the read forces
+    // layout, and a scroll handler cannot afford to do that repeatedly.
+    requestAnimationFrame(()=>{
+      awayPending = false;
+      if(!done && outOfSight()) finish();
+    });
+  };
+  // On the document with capture, since a scroll event from a pane with its own
+  // scroller never reaches the window.
+  document.addEventListener('scroll', onAwayScroll, { capture: true, passive: true });
 }
 function messagingEnabled(){ return localStorage.getItem(MESSAGING_KEY) !== '0'; }
 function applyMessagingPref(){
@@ -19553,9 +19600,25 @@ function renderJobs(){
 
   const jq = jobSearchQuery.trim().toLowerCase();
   if(jq){
-    viewList = viewList.filter(j=>
-      (j.company||'').toLowerCase().includes(jq) || (j.role||'').toLowerCase().includes(jq)
-    );
+    // IT SEARCHES WHAT IS ON THE ROW (real-user request: "allow search by
+    // status", with "offer" typed in and nothing coming back). The status goes
+    // through its own LABEL rather than its stored value, which is not a detail
+    // here: "Assignment" is stored as `withdrawn` (see JOB_STATUS_KEYS), so a
+    // value match would answer nothing for the one word actually on screen. The
+    // stored value is searched as well, since it costs nothing and is what the
+    // CSV export carries.
+    //
+    // And an offer's own answer comes with it: that row reads "Offer" and then
+    // Pending, Accepted or Declined, so all three are worth being able to type.
+    viewList = viewList.filter(j=>{
+      const bits = [j.company, j.role, jobStatusLabel(j.status), j.status];
+      if(j.status === 'offer'){
+        bits.push(j.offer_response === 'accepted' ? t('jobOfferAccepted')
+          : j.offer_response === 'declined' ? t('jobOfferDeclined') : t('jobOfferPending'));
+        bits.push(j.offer_response);
+      }
+      return bits.join(' ').toLowerCase().includes(jq);
+    });
   }
 
   // Ties fall through to the newest application, which is what this list
@@ -19846,8 +19909,13 @@ function renderCerts(){
 
   const cq = certSearchQuery.trim().toLowerCase();
   if(cq){
+    // The same list on the same tab with the same search box, so it answers the
+    // same way: the status is on the row, so the status is searchable. By its
+    // LABEL, since the stored value is `in_progress` and what is typed is
+    // "in progress".
     viewList = viewList.filter(c=>
-      (c.name||'').toLowerCase().includes(cq) || (c.issuer||'').toLowerCase().includes(cq)
+      [c.name, c.issuer, certStatusLabel(c.status), c.status]
+        .join(' ').toLowerCase().includes(cq)
     );
   }
 

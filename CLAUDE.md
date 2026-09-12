@@ -5622,3 +5622,60 @@ four rows, four wordings, and all four keys resolve in en, ko and vi.
   transform**, which is why the flight's geometry checked out while the
   screenshots showed nothing: the letter is hidden until he takes it, and the
   timer that shows it was frozen with the rest.
+
+## He is not worth waiting for once he is off the screen (13 Sep, sixty-fifth pass)
+
+"If you scroll past the top of the courier with the fixed pane it should just
+stop the animation and show the added thing immediately." Exactly right, and it
+is the one case where this animation could actually cost somebody something:
+the row is already saved and is only being HELD for the delivery, so a reader
+who has scrolled away from the button was being made to wait four seconds for a
+performance they are not watching.
+
+**The tail of the timeline is a function now**, `finish()`, and the abort calls
+the whole of it rather than most of it: the queued reveal runs, the queued form
+clear runs, every faded field gets its ink back, the label goes back on the
+button, the stepped-on elements get their `transform-origin` back, every timer
+is cleared and the layer comes off. One ending, whichever way it ends, guarded
+by a `done` flag so the timer cannot run it a second time.
+
+- **The band he is standing in is the window less whatever the pinned header
+  covers**, read from `--topbar-h` -- the bar publishes it, it is 0 when the
+  sticky preference is off, and reading it off the inline style is a string
+  rather than a layout read. His own top is the button's baseline less
+  `AC_FOOT`, which is where the figure is placed.
+- **The bottom end is the START guard's own line** (`top > innerHeight - 20`)
+  rather than his feet. A button near enough the bottom edge to be pressed at
+  all must not be abandoned by the first pixel of scroll after it, and that
+  guard lets the button's own bottom sit a little past the edge.
+- One rect read per FRAME at most, coalesced through rAF, and listened for on
+  the document with capture so a pane with its own scroller counts too.
+- Verified: scrolled so his top went to **-91** (up under a 132px header), and
+  on that frame the layer count went 1 to 0, the pending reveal and clear each
+  ran exactly once, `acBusy` went false and the label came back -- while scrolls
+  of 120px down and 60px up that keep him on screen abort nothing and the run
+  still reveals exactly once at its end.
+
+## The lists search by status (13 Sep, same pass)
+
+"Allow search by status", with "offer" typed into the application list's search
+box and nothing coming back. It matched the company and the role only.
+
+**It searches what is ON the row now**, and the status goes through its own
+LABEL rather than its stored value -- which is not a detail here: "Assignment"
+is stored as `withdrawn` (see `JOB_STATUS_KEYS`), so a value match would answer
+nothing for the one word actually on screen. The stored value is searched as
+well, since it costs nothing and is what the CSV carries.
+
+**An offer's own answer comes with it.** That row reads "Offer" and then
+Pending, Accepted or Declined, so all three are worth being able to type.
+
+The certification list is the same list on the same tab with the same search
+box, so it got the same treatment: name, issuer, and the status by label (its
+stored value is `in_progress`, and what anybody types is "in progress").
+
+Checked against seven applications and two certifications: `offer` returns all
+three offers, `accepted` / `declined` / `pending` return one each, `assignment`
+returns the row stored as `withdrawn`, `withdrawn` returns it too, `acquired`
+and `in progress` each return their own certification, the company and role
+searches are untouched, and a word that is nowhere returns nothing.
