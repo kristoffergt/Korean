@@ -5814,3 +5814,147 @@ the whole of it is slower.
 - Verified by running the real courier at 375px: 28 animations, no error, and
   the way out unchanged at 499ms.
 
+
+## The type size is a number, an old version opens, and the pages move to the bottom (14 Sep, sixty-eighth pass)
+
+### THE PASTE JUMP WAS THE EDITOR'S OWN ROOT, NOT THE CLIPBOARD
+
+"When you paste something it scrolls up the site." Reported again, with
+`keepPageStillOnPaste` already shipped and the entry above it describing the
+clipboard div's focus as the cause. That fix is real and it was never the
+whole of it.
+
+**Quill's `onPaste` ENDS in `quill.focus()`**, which is `selection.focus()`,
+which is `root.focus()` -- and the root of a long note is taller than the
+window, so the browser brings it into view by jumping to one of its own edges
+rather than leaving the caret where it is. Measured in a standalone page with
+the same Quill 1.3.6, a sixty-line note and the caret at its end:
+
+| | jump |
+|---|---|
+| nothing patched | 1181px |
+| **the shipped clipboard patch alone** | **1181px** |
+| plus `root.focus` at `preventScroll` | **0px** |
+
+Twice each, and with the second patch the focus still lands on the editor
+(`document.activeElement === quill.root`) with the caret at the index the
+paste put it. So the clipboard patch was measuring a real thing and fixing the
+smaller half of it; the two together are what hold the page still.
+
+**Worth generalising**: a "focus does not scroll" fix has to cover every
+element the library focuses in that path, not the one that looked like the
+culprit. Patching one and shipping it reads exactly like a fix that worked.
+
+### AN EARLIER VERSION OPENS, AND CANNOT EAT WHAT YOU ARE WRITING
+
+"Last versions should be openable. Right now they're not ... It shouldn't
+immediately overwrite what you're working on. Maybe it can go there and you'll
+have the option to replace it with the older versions or simply copy stuff
+from there and close it down."
+
+The panel was a list of 200-character previews of stripped text and nothing
+else: no way in, and nothing you could do with one. A row is a BUTTON now, and
+what it opens is the version itself, rendered, read-only and selectable, with
+the three things anybody wants from an old note:
+
+| | |
+|---|---|
+| **Use this version** | it asks first, and it does NOT save. The old content goes into the editor, the editor goes dirty, and Save is still what writes it, so opening one can never cost you what you were writing without a second press |
+| **Copy** | the rendered version selected and copied, so the colours, lists and headings travel; a plain-text copy of a note is most of a note thrown away |
+| **Back** | to the list, with the editor untouched behind it |
+
+- **The preview is 90 characters, not 200** (real-user request: "the preview
+  text can be shorter"). The row is a way IN to the version now rather than
+  being the version, so it only has to be enough to tell two of them apart.
+- **ONE renderer for all three editors that keep versions** -- course notes,
+  the notebook and a writing sample -- which were three copies of the same
+  list, differing only in which regex stripped the HTML.
+- **A writing sample belonging to somebody else gets no Use button.** Its
+  editor is `enable(false)` there, so the button would replace nothing;
+  `renderVersionPanel` takes the restore as a callback and draws it only when
+  it is given one.
+- **What is NOT changed, and is worth knowing**: a note keeps the last **2**
+  versions and a writing sample the last **5** (`prevVersions.slice(0,2)` /
+  `(0,5)` at each Save). Opening them was the ask; how many are kept was not.
+
+### THE SIZE OF WHAT YOU ARE TYPING IS A NUMBER
+
+"Need to add font sizes to notes" and "where font size will also be, just have
+it be a number, so it can fit it all."
+
+Quill ships `size` as a CLASS attributor with three named steps and a 98px
+select to pick them with. Neither half of that is what was asked for, so it is
+the STYLE attributor with **its whitelist taken off**, in a 36px number box,
+first in the row.
+
+- **The whitelist is what makes 17 expressible.** Quill's own is
+  `['10px','18px','32px']` and it REFUSES anything else outright; null accepts
+  any value, which is the whole reason a number can be typed at all.
+- **Style rather than class, and that is not a preference.** A note is stored
+  and re-read as raw HTML and is rendered well outside the editor: the export,
+  the list previews, an earlier version in the panel underneath it. A class
+  would need this app's stylesheet everywhere it is read; `style="font-size:
+  20px"` is true wherever the string lands.
+- **The base size is the ABSENCE of a size.** Typing 14 back in takes the span
+  out again rather than writing `font-size:14px`, so a note carries a size
+  only where somebody chose one, and the editor's own type size can move
+  without every old note disagreeing with it. `NOTE_SIZE_BASE` and
+  `.ql-container.ql-snow{font-size:14px}` have to agree, and say so at both
+  ends.
+- **A size chosen with the caret between two characters is a PENDING format**,
+  which Quill holds on the cursor and hands to the next thing typed -- and
+  which `getFormat` cannot report until then, so the box would blink back to
+  14 the moment it was set. It is remembered, and let go on the next
+  selection-change the reader themselves caused, which is exactly when the
+  number stops being what they are about to type in.
+- Measured: a selection takes `font-size: 22px`, the box reads 22 back off it
+  and 14 off plain text, 14 removes the span, and 400 clamps to 96.
+
+### THE BAR CARRIES WHAT YOU WRITE WITH; THE BOTTOM CARRIES THE PAGES
+
+"We should fix this bar ... and then also add all the page stuff at the bottom
+instead." So the page bar moved from ABOVE the editor to below it, and the New
+page button came out of the toolbar to join it -- page nav, Show all pages,
+New page, Move page, Auto pages, Delete page, one row under the note.
+
+That button had been in the toolbar deliberately ("beside the other things you
+put into a document"), which is a fair argument and one control too many on a
+row that now has to carry the type size as well. In the bar it stops being a
+28x24 icon that had to be argued into being visible at all and takes the bar's
+own ink, padding and label.
+
+**What the size box costs the row, measured rather than asserted**, as the
+toolbar's own height by the width of the editor card:
+
+| card | before | after |
+|---|---|---|
+| 375 | 2 rows | 2 rows |
+| 470 | 1 row | 2 rows |
+| 500 | 1 row | 2 rows |
+| 530 | 1 row | **1 row** |
+| 560, 700 | 1 row | 1 row |
+
+So it wraps in a band roughly 440 to 520px wide and nowhere else: a phone was
+already two rows, and on a desktop the notes editor's column is 590px at the
+1100px breakpoint where it first appears beside the list. The number box and a
+tighter group margin on it are what pulled the break point back from 560 to
+530.
+
+### "Last saved by" sits at the right-hand end
+
+Real-user request, and it is a footnote about the note rather than the first
+thing in it. `.hint.saved-info`, on all three editors that print that line
+(course notes, the notebook, a writing sample) -- it is one sentence from one
+t() key in the same place in all three, and aligning one of them is the drift
+this file keeps recording.
+
+### Checked
+
+Every script block parses, every `getElementById` has its id, and the seven
+new keys are in all three tables. Driven in a browser against the real
+components: the toolbar comes out `[14] B I U S | lists | image video | clean
+| A | highlight` on one row, the page bar renders under the editor and its New
+page button adds breaks (Page 2/2, then 3/3), a version opens, declining the
+replace leaves the editor byte-for-byte and accepting it replaces the editor
+and marks it dirty without saving, Back returns to the list, and every label
+in the bar and the panel reads correctly in en, ko and vi.

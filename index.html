@@ -1993,7 +1993,7 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
 /* Printing is where a page break earns its name. */
 @media print{ .note-page-break{break-after:page;page-break-after:always;border:none;margin:0;} }
 .note-pagebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  margin:0 0 8px;font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-soft);}
+  margin:10px 0 0;font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-soft);}
 .note-pagebar .np-count{font-weight:700;color:var(--ink);min-width:5.5em;}
 .note-pagebar button{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
   padding:3px 9px;border:1px solid var(--line);border-radius:6px;
@@ -2023,16 +2023,56 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
 /* 16px under a coarse pointer, like every other field here, or iOS zooms the
    page when the number is tapped. */
 @media (pointer: coarse){ .note-pagebar input.np-move-to{font-size:16px;} }
-/* The toolbar's own insert button, beside Quill's. Quill styles .ql-toolbar
-   button at 28x24 with a 3px pad, so it takes those rather than inventing a
-   size that would sit half a pixel off the row. */
-/* Its mark is currentColor, and a toolbar button's colour is the BASE
-   button's, which is --paper: paper strokes on the paper-dim toolbar,
-   invisible in both themes (real-user report: "you can not see the page
-   creator for notes, because it blends into the background for both light and
-   dark mode"). Quill's own marks are --ink-soft (.ql-snow .ql-stroke), so this
-   takes the same, and Quill's own hover and focus blue still win over it. */
-.ql-toolbar button.np-insert{width:28px;height:24px;padding:3px 5px;color:var(--ink-soft);}
+/* The new page is a BAR button now, at the bottom with everything else about
+   pages (real-user request: "add all the page stuff at the bottom instead").
+   In the toolbar it was a 28x24 icon that had to be argued into being visible
+   at all; down here it takes the bar's own ink and padding and carries its
+   name beside the mark, like the two buttons either side of it. */
+.note-pagebar button.np-insert{display:inline-flex;align-items:center;gap:5px;}
+.note-pagebar button.np-insert svg{display:block;}
+/* THE SIZE OF WHAT YOU ARE TYPING IS A NUMBER (real-user request: "where font
+   size will also be, just have it be a number, so it can fit it all"). Quill's
+   own size control is a select naming three sizes and about 98px wide; three
+   characters is what lets a row already carrying nine controls take a tenth,
+   and a number is also the only form that can say 17. */
+.ql-toolbar .nf-size-group{margin-right:8px;}
+.ql-toolbar input.nf-size{width:3em;height:24px;font-family:'Inter',sans-serif;font-size:12px;
+  font-weight:600;padding:2px;border:1px solid var(--line);border-radius:4px;
+  background:var(--paper);color:var(--ink);text-align:center;-moz-appearance:textfield;
+  vertical-align:middle;box-sizing:border-box;}
+.ql-toolbar input.nf-size::-webkit-inner-spin-button,
+.ql-toolbar input.nf-size::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+@media (pointer: coarse){ .ql-toolbar input.nf-size{font-size:16px;} }
+/* "Last saved by X at Y" is a footnote about the note rather than the first
+   thing in it, so it sits at the right-hand end of its row (real-user
+   request: "align right instead of left as it is currently"). */
+.hint.saved-info{text-align:right;}
+/* An earlier version is OPENED from this list rather than only previewed, so
+   a row is a button: who and when, as much of it as fits on the line, and the
+   word that says it opens. */
+.ver-row{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;
+  font-family:'Inter',sans-serif;font-size:13px;padding:8px 10px;margin-bottom:6px;
+  background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;
+  color:var(--ink);cursor:pointer;}
+.ver-row:hover{border-color:var(--ink-soft);}
+.ver-row .ver-meta{font-weight:700;white-space:nowrap;}
+.ver-row .ver-preview{color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.ver-row .ver-open{margin-left:auto;font-weight:600;color:var(--ink-soft);white-space:nowrap;}
+.ver-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;
+  font-family:'Inter',sans-serif;font-size:12px;}
+.ver-head .ver-meta{font-weight:700;margin-right:auto;}
+button.ver-btn{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
+  padding:4px 10px;border:1px solid var(--line);border-radius:6px;
+  background:var(--paper);color:var(--ink-soft);cursor:pointer;}
+button.ver-btn:hover{color:var(--ink);border-color:var(--ink-soft);}
+/* Taking the old version IS the destructive one here: it throws away what is
+   in the editor. It asks first, and it wears the edit colour rather than the
+   delete red, because what it does is replace rather than remove. */
+button.ver-btn.ver-use{color:var(--edit);border-color:var(--edit);}
+/* Selectable, because copying a piece out of an old version by hand is half
+   of why it is open at all. */
+.ver-body{background:var(--paper);border:1px solid var(--line);border-radius:8px;
+  padding:12px;max-height:min(50vh,420px);overflow:auto;user-select:text;}
 /* The lecture list is a column of headings in a card the width of the page,
    so most of it is empty (real-user report: "so much empty space here. Could
    just move the note writing section to the right of this when there is
@@ -3362,7 +3402,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       </div>
       <div class="card hidden" id="writingEditorCard">
         <h2><span id="writingEditorTopic"></span><span><button class="export-btn" id="saveWritingBtn"></button> <button class="export-btn" id="closeWritingBtn"></button></span></h2>
-        <div class="hint" id="writingLastSavedInfo"></div>
+        <div class="hint saved-info" id="writingLastSavedInfo"></div>
         <div class="writing-sample-timer" id="writingSampleTimer">
           <span class="writing-sample-timer-display" id="writingSampleTimerDisplay">00:00</span>
           <button class="icon-btn" id="writingSampleTimerStartBtn"></button>
@@ -3462,9 +3502,9 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       <div class="card hidden" id="notebookEditorCard">
         <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" title="Click to edit"></span><span><button class="export-btn" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
         <div class="notes-panel hidden" id="notebookTitleEditPanel"></div>
-        <div class="hint" id="notebookLastSavedInfo"></div>
-        <div class="note-pagebar" id="notebookPageBar" style="display:none;"></div>
+        <div class="hint saved-info" id="notebookLastSavedInfo"></div>
         <div id="notebookQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
+        <div class="note-pagebar" id="notebookPageBar" style="display:none;"></div>
         <button class="linkbtn" id="notebookVersionHistoryToggle" style="margin-top:10px;"></button>
         <div class="notes-panel hidden" id="notebookVersionHistoryPanel"></div>
       </div>
@@ -3624,9 +3664,9 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
     <div class="card hidden" id="editorCard">
       <h2><span id="editorLectureTitle"></span><span><button class="export-btn" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
       <div class="notes-panel hidden" id="editorTitleEditPanel"></div>
-      <div class="hint" id="lastSavedInfo"></div>
-      <div class="note-pagebar" id="notePageBar" style="display:none;"></div>
+      <div class="hint saved-info" id="lastSavedInfo"></div>
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
+      <div class="note-pagebar" id="notePageBar" style="display:none;"></div>
       <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
       <div class="notes-panel hidden" id="versionHistoryPanel"></div>
     </div>
@@ -10751,7 +10791,7 @@ const I18N = {
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
     generalNotes:'General notes', noNote:'No course', allPeople:'All', lblNotesPersonFilter:'Show', closeNoteBtn:'Close',
     lastSavedBy:'Last saved by {name} at {time}', neverSaved:'Not saved yet',
-    versionHistory:'Version history ({n})', noVersions:'No earlier versions', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', eventForUser:'For',
+    versionHistory:'Version history ({n})', noVersions:'No earlier versions', versionOpen:'Open', versionUse:'Use this version', versionUseConfirm:'Replace what is in the editor with this version? Nothing is saved until you press Save.', versionCopy:'Copy', versionCopied:'Copied', versionBack:'Back', noteFontSize:'Font size', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', eventForUser:'For',
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
@@ -10874,7 +10914,7 @@ const I18N = {
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
     generalNotes:'일반 노트', noNote:'수업 없음', allPeople:'전체', lblNotesPersonFilter:'보기', closeNoteBtn:'닫기',
     lastSavedBy:'{name}님이 {time}에 저장함', neverSaved:'아직 저장되지 않음',
-    versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', eventForUser:'대상',
+    versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', versionOpen:'열기', versionUse:'이 버전 사용', versionUseConfirm:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 저장을 누르기 전까지는 저장되지 않습니다.', versionCopy:'복사', versionCopied:'복사됨', versionBack:'뒤로', noteFontSize:'글자 크기', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', eventForUser:'대상',
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
@@ -10998,7 +11038,7 @@ const I18N = {
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
     generalNotes:'Ghi chú chung', noNote:'Không có khóa học', allPeople:'Tất cả', lblNotesPersonFilter:'Hiển thị', closeNoteBtn:'Đóng',
     lastSavedBy:'Lưu lần cuối bởi {name} lúc {time}', neverSaved:'Chưa được lưu',
-    versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', eventForUser:'Cho',
+    versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', versionOpen:'Mở', versionUse:'Dùng phiên bản này', versionUseConfirm:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Sẽ không có gì được lưu cho đến khi bạn nhấn Lưu.', versionCopy:'Sao chép', versionCopied:'Đã sao chép', versionBack:'Quay lại', noteFontSize:'Cỡ chữ', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', eventForUser:'Cho',
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
@@ -34166,17 +34206,14 @@ document.getElementById('writingVersionHistoryToggle').addEventListener('click',
   const panel = document.getElementById('writingVersionHistoryPanel');
   const w = (allWritingSamples[selectedWritingSampleOwner]||[]).find(x=>x.id===selectedWritingSampleId);
   if(!w){ panel.classList.add('hidden'); return; }
-  const versions = w.previous_versions || [];
-  if(versions.length === 0){
-    panel.innerHTML = `<div class="empty">${t('noVersions')}</div>`;
-  } else {
-    panel.innerHTML = versions.map(v=>{
-      const name = nameFor(v.updated_by);
-      const time = v.updated_at ? localDateTimeStr(v.updated_at) : '';
-      const preview = stripHtml(v.content||'').slice(0,200);
-      return `<div class="note-item"><div class="note-page">${name} · ${time}</div>${preview || '–'}</div>`;
-    }).join('');
-  }
+  const isMine = selectedWritingSampleOwner === currentUser.id;
+  renderVersionPanel('writingVersionHistoryPanel', w.previous_versions || [], isMine ? (v)=>{
+    ensureWritingQuillInitialized();
+    writingQuillEditor.root.innerHTML = v.content || '';
+    writingEditorDirty = true;
+    if(writingQuillEditor._updateColorTriggers) writingQuillEditor._updateColorTriggers();
+    updateWritingCharCount();
+  } : null);
   panel.classList.toggle('hidden');
 });
 window.addEventListener('beforeunload', (e)=>{
@@ -35569,6 +35606,19 @@ function keepPageStillOnPaste(quill){
     // exactly as before. Only the scroll-into-view is suppressed.
     const nativeFocus = clip.focus.bind(clip);
     clip.focus = () => nativeFocus({ preventScroll: true });
+    // AND THE EDITOR'S OWN ROOT, which is what was still moving the page
+    // (real-user report, with the clipboard fix above already shipped: "when
+    // you paste something it scrolls up the site"). Quill's onPaste ENDS in
+    // quill.focus() -> selection.focus() -> root.focus(), and the root of a
+    // long note is taller than the window, so the browser brings it into view
+    // by jumping to one of its own edges rather than leaving the caret where
+    // it is. Measured against Quill 1.3.6 with the caret at the end of a
+    // sixty-line note, pasting at the bottom of a scrolled page: 1181px of
+    // jump with the clipboard patch alone, and 0px with this one -- twice
+    // each, and the caret, the selection and the focus all land exactly as
+    // they did before.
+    const nativeRootFocus = quill.root.focus.bind(quill.root);
+    quill.root.focus = () => nativeRootFocus({ preventScroll: true });
     return;
   }
   // Safari before 15.4 ignores preventScroll, so there the position has to
@@ -35582,6 +35632,194 @@ function keepPageStillOnPaste(quill){
   }, true);
 }
 if(window.Quill && window.ImageResize) Quill.register('modules/imageResize', ImageResize.default);
+/* ---------- THE SIZE OF WHAT YOU ARE TYPING ---------- */
+// NOTE_SIZE_BASE is the editor's own type size, set once in CSS
+// (.ql-container.ql-snow{font-size:14px}) -- the two have to agree, because
+// the base size is written as the ABSENCE of a size rather than as 14px, so
+// that a note carries a font-size only where somebody actually chose one.
+const NOTE_SIZE_MIN = 8, NOTE_SIZE_MAX = 96, NOTE_SIZE_BASE = 14;
+// Quill ships `size` as a CLASS attributor with three named steps (small,
+// large, huge), which is neither a number nor enough of them. This is its
+// STYLE attributor with the whitelist taken OFF, so any size is allowed and
+// what lands in the note is an inline style="font-size:20px". That matters
+// rather than being a preference: a note is stored and re-read as raw HTML
+// and is rendered well outside the editor -- the export, the list previews,
+// an earlier version in the panel below it -- and a class would need this
+// app's stylesheet everywhere it is read.
+if(window.Quill){
+  const SizeStyle = Quill.import('attributors/style/size');
+  SizeStyle.whitelist = null;
+  Quill.register(SizeStyle, true);
+}
+// The control is a number, FIRST in the row, which is where every editor puts
+// it and what makes it read as "the size of what I am typing" rather than as
+// one more button.
+function buildNoteFontSizeControl(quill, markDirty){
+  const toolbar = quill.getModule('toolbar').container;
+  if(!toolbar || toolbar.querySelector('.nf-size')) return;
+  const group = document.createElement('span');
+  group.className = 'ql-formats nf-size-group';
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.className = 'nf-size';
+  input.min = String(NOTE_SIZE_MIN);
+  input.max = String(NOTE_SIZE_MAX);
+  input.step = '1';
+  input.inputMode = 'numeric';
+  input.title = t('noteFontSize');
+  input.setAttribute('aria-label', t('noteFontSize'));
+  // A size chosen with the caret between two characters is a PENDING format:
+  // Quill holds it on the cursor and gives it to the next thing typed, and
+  // until then getFormat cannot report it. So it is remembered here, and let
+  // go the moment the caret is moved by hand -- which is exactly when the
+  // number stops being what you are about to type in.
+  let pending = null;
+  const show = ()=>{
+    // Never under somebody typing into it, or the old number comes back under
+    // their finger. Same rule the page-move field follows.
+    if(document.activeElement === input) return;
+    const range = quill.getSelection();
+    const n = parseInt(range ? quill.getFormat(range).size : null, 10);
+    const shown = Number.isFinite(n) ? n : (pending !== null ? pending : NOTE_SIZE_BASE);
+    input.value = String(shown);
+  };
+  const apply = ()=>{
+    const typed = parseInt(input.value, 10);
+    const n = Math.max(NOTE_SIZE_MIN, Math.min(NOTE_SIZE_MAX, Number.isFinite(typed) ? typed : NOTE_SIZE_BASE));
+    input.value = String(n);
+    pending = n;
+    const value = n === NOTE_SIZE_BASE ? false : n + 'px';
+    // getSelection(true) is what hands the focus back to the editor and puts
+    // the selection the field was opened over back on screen, which is the
+    // same dance the colour pickers do.
+    const range = quill.getSelection(true);
+    if(range && range.length > 0) quill.formatText(range.index, range.length, 'size', value, 'user');
+    else quill.format('size', value, 'user');
+    if(markDirty) markDirty();
+  };
+  input.addEventListener('change', apply);
+  input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); input.blur(); } });
+  quill.on('selection-change', (range, oldRange, source)=>{ if(source === 'user') pending = null; show(); });
+  quill.on('text-change', show);
+  group.appendChild(input);
+  toolbar.insertBefore(group, toolbar.firstChild);
+  show();
+  quill._relabelFontSize = ()=>{
+    input.title = t('noteFontSize');
+    input.setAttribute('aria-label', t('noteFontSize'));
+  };
+}
+/* ---------- EARLIER VERSIONS, OPENED RATHER THAN LISTED ---------- */
+// The panel was a list of 200-character previews and nothing else (real-user
+// report: "Last versions should be openable. Right now they're not ... It
+// shouldn't immediately overwrite what you're working on"). A row OPENS its
+// version in the panel now -- read-only and selectable -- with the three
+// things anybody wants from an old one: take the whole of it, copy a piece
+// out of it by hand, or close it and leave what you are writing alone.
+// ONE renderer for the three editors that keep versions (course notes, the
+// notebook, a writing sample), which had been three copies of the same list.
+function copyVersionBody(el, btn){
+  const done = ()=>{
+    const was = btn.textContent;
+    btn.textContent = t('versionCopied');
+    setTimeout(()=>{ if(document.body.contains(btn)) btn.textContent = was; }, 1500);
+  };
+  // Selecting the RENDERED version and copying that is what carries the
+  // formatting across: a plain-text copy loses every colour, list and heading
+  // in it, which is most of what an old note is.
+  const fallback = ()=>{
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    try { if(document.execCommand('copy')) done(); } catch(e){}
+    sel.removeAllRanges();
+  };
+  if(navigator.clipboard && window.ClipboardItem){
+    try {
+      navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([el.innerHTML], { type: 'text/html' }),
+        'text/plain': new Blob([el.innerText], { type: 'text/plain' })
+      })]).then(done).catch(fallback);
+      return;
+    } catch(e){}
+  }
+  fallback();
+}
+function renderVersionPanel(panelId, versions, onUse){
+  const panel = document.getElementById(panelId);
+  if(!panel) return;
+  if(!versions || versions.length === 0){
+    panel.innerHTML = `<div class="empty">${t('noVersions')}</div>`;
+    return;
+  }
+  const stamp = (v)=> `${nameFor(v.updated_by)} \u00b7 ${v.updated_at ? localDateTimeStr(v.updated_at) : ''}`;
+  const showList = ()=>{
+    panel.innerHTML = '';
+    versions.forEach((v, i)=>{
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'ver-row';
+      const meta = document.createElement('span');
+      meta.className = 'ver-meta';
+      meta.textContent = stamp(v);
+      // The preview is SHORT now (real-user request: "the preview text can be
+      // shorter"): the row is a way in to the version rather than the version
+      // itself, so it only has to be enough to tell two of them apart.
+      const prev = document.createElement('span');
+      prev.className = 'ver-preview';
+      prev.textContent = stripHtml(v.content || '').slice(0, 90) || '\u2013';
+      const open = document.createElement('span');
+      open.className = 'ver-open';
+      open.textContent = t('versionOpen');
+      row.append(meta, prev, open);
+      row.addEventListener('click', ()=> showVersion(i));
+      panel.appendChild(row);
+    });
+  };
+  const showVersion = (i)=>{
+    const v = versions[i];
+    panel.innerHTML = '';
+    const head = document.createElement('div');
+    head.className = 'ver-head';
+    const who = document.createElement('span');
+    who.className = 'ver-meta';
+    who.textContent = stamp(v);
+    head.appendChild(who);
+    const body = document.createElement('div');
+    body.className = 'ver-body';
+    body.innerHTML = v.content || '';
+    if(onUse){
+      const use = document.createElement('button');
+      use.type = 'button';
+      use.className = 'ver-btn ver-use';
+      use.textContent = t('versionUse');
+      use.addEventListener('click', ()=>{
+        // It asks first, and it does NOT save: the old version goes into the
+        // editor and the Save button is still what writes it, so opening one
+        // can never cost you what you were writing without a second press.
+        if(!confirm(t('versionUseConfirm'))) return;
+        onUse(v);
+        panel.classList.add('hidden');
+      });
+      head.appendChild(use);
+    }
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'ver-btn';
+    copy.textContent = t('versionCopy');
+    copy.addEventListener('click', ()=> copyVersionBody(body, copy));
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'ver-btn';
+    back.textContent = t('versionBack');
+    back.addEventListener('click', showList);
+    head.append(copy, back);
+    panel.append(head, body);
+  };
+  showList();
+}
 /* ---------- A NOTE SPLIT INTO PAGES ---------- */
 // A page break is an <hr class="note-page-break"> inside the note's own HTML,
 // registered as a Quill BLOCK EMBED so it survives the round trip through the
@@ -35718,6 +35956,13 @@ function buildNotePagerBar(key){
     setNotePagedPref(!notePagedPref());
     Object.keys(notePagers).forEach(k=> renderNotePager(k));
   });
+  // Making a page sits with moving between them, moving one and deleting one
+  // (real-user request: "add all the page stuff at the bottom instead"). It
+  // used to be in the TOOLBAR, beside the other things you put into a
+  // document, which is a fair argument and one control too many on a row that
+  // now has to carry the type size as well.
+  const add = button('np-insert', ICON.pageAdd(13) + '<span class="np-add-label"></span>',
+    ()=> addNotePageAtEnd(key));
   // Moving the page on screen (real-user request): one step either way, or
   // straight to a number. The field shows where the page IS, so typing over
   // it is how you say where it goes; Enter, or leaving the field, moves it.
@@ -35768,7 +36013,7 @@ function buildNotePagerBar(key){
   });
   auto.append(autoLabel, len, lenOut);
   const del = button('np-del', '', ()=> deleteNotePage(key));
-  p.bar.append(prev, count, next, mode, move, auto, del);
+  p.bar.append(prev, count, next, mode, add, move, auto, del);
 }
 function renderNotePager(key, follow){
   const p = notePagers[key];
@@ -35842,6 +36087,9 @@ function renderNotePager(key, follow){
   len.setAttribute('aria-label', t('notePageAutoLenLabel'));
   if(document.activeElement !== len) len.value = String(noteAutoLenPref());
   lenOut.textContent = noteAutoLenLabel(len.value);
+  const add = q('.np-insert');
+  add.style.display = editable ? '' : 'none';
+  add.querySelector('.np-add-label').textContent = t('notePageAddBtn');
   const del = q('.np-del');
   del.textContent = t('notePageDelete');
   del.style.display = own ? '' : 'none';
@@ -36022,35 +36270,16 @@ function addNotePageAtEnd(key){
   q.setSelection(q.getLength() - 1, 0, 'user');
   renderNotePager(key);
 }
-// A language change re-labels everything the pager wrote with t(), the
-// toolbar button included -- its label is otherwise set once, when it is made.
+// A language change re-labels everything the pager wrote with t(). The bar
+// itself is re-rendered, which relabels every button in it; the type size in
+// the toolbar above is only ever labelled by its title, which is set once
+// when it is made, so it is asked to do that again here.
 function relabelNotePagers(){
   Object.keys(notePagers).forEach(k=>{
     renderNotePager(k);
-    const tb = notePagers[k].quill.getModule('toolbar');
-    const btn = tb && tb.container && tb.container.querySelector('.np-insert');
-    if(btn){ btn.title = t('notePageAddBtn'); btn.setAttribute('aria-label', t('notePageAddBtn')); }
+    const q = notePagers[k].quill;
+    if(q && q._relabelFontSize) q._relabelFontSize();
   });
-}
-// The new-page button lives in the TOOLBAR, beside the other things you put
-// into a document; the bar under it is for moving between pages.
-function buildNotePageAddControl(quill, key){
-  const toolbar = quill.getModule('toolbar').container;
-  if(!toolbar || toolbar.querySelector('.np-insert')) return;
-  const group = document.createElement('span');
-  group.className = 'ql-formats';
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'np-insert';
-  btn.title = t('notePageAddBtn');
-  btn.setAttribute('aria-label', t('notePageAddBtn'));
-  btn.innerHTML = ICON.pageAdd(18);
-  btn.addEventListener('click', (e)=>{
-    e.preventDefault();
-    addNotePageAtEnd(key);
-  });
-  group.appendChild(btn);
-  toolbar.appendChild(group);
 }
 
 /* ---------- LIVE PRESENCE + LIVE NOTE INSERTS (Notebook + Yonsei course notes) ----------
@@ -36277,7 +36506,7 @@ function ensureQuillInitialized(){
     }
   });
   buildCustomColorControls();
-  buildNotePageAddControl(quillEditor, 'course');
+  buildNoteFontSizeControl(quillEditor, ()=>{ editorDirty = true; });
   setupNotePager('course', quillEditor, 'notePageBar');
 }
 function buildCustomColorControls(){
@@ -36432,17 +36661,13 @@ document.getElementById('versionHistoryToggle').addEventListener('click', ()=>{
   const panel = document.getElementById('versionHistoryPanel');
   const note = (allNotes[selectedNotesCourse]||[]).find(n=>n.id===selectedLectureId);
   if(!note){ panel.classList.add('hidden'); return; }
-  const versions = note.previous_versions || [];
-  if(versions.length === 0){
-    panel.innerHTML = `<div class="empty">${t('noVersions')}</div>`;
-  } else {
-    panel.innerHTML = versions.map(v=>{
-      const name = nameFor(v.updated_by);
-      const time = v.updated_at ? localDateTimeStr(v.updated_at) : '';
-      const preview = (v.content||'').replace(/<[^>]+>/g,' ').trim().slice(0,200);
-      return `<div class="note-item"><div class="note-page">${name} · ${time}</div>${preview || '–'}</div>`;
-    }).join('');
-  }
+  renderVersionPanel('versionHistoryPanel', note.previous_versions || [], (v)=>{
+    ensureQuillInitialized();
+    quillEditor.root.innerHTML = v.content || '';
+    editorDirty = true;
+    resetNotePager('course');
+    if(quillEditor._updateColorTriggers) quillEditor._updateColorTriggers();
+  });
   panel.classList.toggle('hidden');
 });
 function openLecture(noteId, groupKey){
@@ -36757,7 +36982,7 @@ function ensureNotebookQuillInitialized(){
     }
   });
   buildQuillColorPicker(notebookQuillEditor, ()=>currentNotebookColor, ()=>{ notebookEditorDirty = true; });
-  buildNotePageAddControl(notebookQuillEditor, 'notebook');
+  buildNoteFontSizeControl(notebookQuillEditor, ()=>{ notebookEditorDirty = true; });
   setupNotePager('notebook', notebookQuillEditor, 'notebookPageBar');
 }
 window.addEventListener('beforeunload', (e)=>{
@@ -36781,17 +37006,13 @@ document.getElementById('notebookVersionHistoryToggle').addEventListener('click'
   const panel = document.getElementById('notebookVersionHistoryPanel');
   const note = (allNotebookNotes[selectedNotebookGroup]||[]).find(n=>n.id===selectedNotebookNoteId);
   if(!note){ panel.classList.add('hidden'); return; }
-  const versions = note.previous_versions || [];
-  if(versions.length === 0){
-    panel.innerHTML = `<div class="empty">${t('noVersions')}</div>`;
-  } else {
-    panel.innerHTML = versions.map(v=>{
-      const name = nameFor(v.updated_by);
-      const time = v.updated_at ? localDateTimeStr(v.updated_at) : '';
-      const preview = (v.content||'').replace(/<[^>]+>/g,' ').trim().slice(0,200);
-      return `<div class="note-item"><div class="note-page">${name} · ${time}</div>${preview || '–'}</div>`;
-    }).join('');
-  }
+  renderVersionPanel('notebookVersionHistoryPanel', note.previous_versions || [], (v)=>{
+    ensureNotebookQuillInitialized();
+    notebookQuillEditor.root.innerHTML = v.content || '';
+    notebookEditorDirty = true;
+    resetNotePager('notebook');
+    if(notebookQuillEditor._updateColorTriggers) notebookQuillEditor._updateColorTriggers();
+  });
   panel.classList.toggle('hidden');
 });
 function openNotebookNote(noteId, groupKey){
