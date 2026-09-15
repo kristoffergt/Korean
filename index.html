@@ -632,7 +632,7 @@ body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transfo
 .color-pop-save{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;
   background:var(--paper-dim);color:var(--ink);border:1px solid var(--line);border-radius:7px;
   font-family:inherit;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;}
-.color-pop-save:hover{border-color:var(--ink-soft);}
+.color-pop-save:hover{background:var(--paper);border-color:var(--ink-soft);}
 .color-pop-save.saved{color:var(--on);border-color:var(--on);}
 .color-pop-label{display:block;margin:11px 0 7px;font-size:10.5px;font-weight:700;
   letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-soft);}
@@ -648,6 +648,8 @@ body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transfo
 .color-fav-x{position:absolute;top:-5px;right:-5px;width:16px;height:16px;padding:0;
   display:none;align-items:center;justify-content:center;border-radius:50%;
   background:var(--paper);color:var(--ink);border:1px solid var(--line);cursor:pointer;}
+/* Its own ground, or the solid default's hover paints ink over an ink x. */
+.color-fav-x:hover{background:var(--paper-dim);}
 @media (hover:hover){.color-fav-wrap:hover .color-fav-x{display:inline-flex;}}
 .color-fav-wrap:focus-within .color-fav-x{display:inline-flex;}
 .color-pop-pick{display:flex;align-items:center;gap:8px;margin-top:11px;padding-top:10px;
@@ -1244,6 +1246,10 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 .list-controls{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap;}
 .page-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 10px;font-size:12px;font-weight:600;border-radius:5px;min-width:32px;}
 .page-btn.active{background:var(--ink);color:var(--paper);}
+/* The same neutral tint the day toggles below use, and NOT on the page you
+   are already on: .page-btn.active is (0,2,0), so the hover has to be more
+   specific than that or it would repaint the current page on the way past. */
+.page-btn:hover:not(.active):not(:disabled){background:rgba(127,127,127,0.16);}
 .page-btn:disabled{opacity:0.35;cursor:default;}
 .page-jump-input{width:56px;padding:5px 6px;font-size:12px;border-radius:5px;border:1px solid var(--celadon-4);background:var(--paper);color:var(--ink);text-align:center;}
 .day-toggle-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:3px 7px;font-size:10.5px;font-weight:600;border-radius:5px;min-width:26px;}
@@ -1972,7 +1978,10 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
   border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);
   font-family:'Inter',sans-serif;font-size:10px;font-weight:700;line-height:1;
   display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
-.set-info:hover{color:var(--ink);border-color:var(--ink-soft);}
+/* Its own ground restated: the hover says what it has to say with the ink
+   and the border, and without this the mark is ink on ink. The expanded
+   state below is declared after it, so an open i stays filled. */
+.set-info:hover{background:var(--paper);color:var(--ink);border-color:var(--ink-soft);}
 .set-info[aria-expanded="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper);}
 .set-hint{display:none;}
 .set-hint.open{display:block;}
@@ -2092,7 +2101,14 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
   font-family:'Inter',sans-serif;font-size:13px;padding:8px 10px;margin-bottom:6px;
   background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;
   color:var(--ink);cursor:pointer;}
-.ver-row:hover{border-color:var(--ink-soft);}
+/* A row is a <button>, so the solid default's own hover (near-black in the
+   light theme, near-WHITE in the dark one) outranks this class at (0,1,1)
+   and painted the row's own ink on top of itself -- the name and the stamp
+   went invisible the moment the pointer touched them (real report, with a
+   screenshot). Every button family that styles its background away from the
+   solid default has to declare its own hover background; see the note on
+   button:hover. Its own ground, lifted. */
+.ver-row:hover{background:var(--paper);border-color:var(--ink-soft);}
 .ver-row .ver-meta{font-weight:700;white-space:nowrap;}
 .ver-row .ver-preview{color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
 .ver-row .ver-open{margin-left:auto;font-weight:600;color:var(--ink-soft);white-space:nowrap;}
@@ -2409,6 +2425,9 @@ body.split-resizing iframe{pointer-events:none;}
    Sticky within the scroll container so it tracks the visible edge as you
    scroll, same idea as month's own "never hide something without saying so". */
 .week-more-indicator{position:sticky;top:0;left:0;right:0;z-index:20;display:none;margin:4px auto 0;width:fit-content;background:var(--celadon-4);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;border:none;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.25);}
+/* White lettering, so the ground has to stay dark: the solid default's hover
+   is pure WHITE in the dark theme and would erase the label outright. */
+.week-more-indicator:hover{background:color-mix(in srgb, var(--celadon-4) 86%, #000);}
 .week-more-indicator.below{top:auto;bottom:0;margin:0 auto 4px;}
 .week-more-indicator:not(.hidden){display:block;}
 .week-body{display:flex;}
@@ -2695,6 +2714,9 @@ body.split-resizing iframe{pointer-events:none;}
 .gram-stars{font-size:14px;letter-spacing:1px;color:var(--ink-soft);}
 .gram-stars .filled{color:#D9A441;}
 .gram-fav-toggle{background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-soft);padding:0 4px 0 0;line-height:1;vertical-align:middle;}
+/* A transparent icon stays transparent; without this the star grows a solid
+   black or white pill behind it on hover. */
+.gram-fav-toggle:hover{background:none;}
 .gram-fav-toggle.active{color:#D9A441;}
 .gram-cmp-group{border-bottom:1px solid var(--line);padding:12px 0;}
 .gram-cmp-group:last-child{border-bottom:none;}
@@ -2800,7 +2822,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
   font-weight:600;white-space:nowrap;}
 .reminder-chip-remove{background:none;border:none;color:var(--danger);cursor:pointer;
   padding:0 2px;font-size:12px;line-height:1;opacity:0.7;}
-.reminder-chip-remove:hover{opacity:1;}
+.reminder-chip-remove:hover{background:none;opacity:1;}
 /* The trigger is one of the form's controls, so it is drawn as one: the same
    border, radius, ground, padding and type as .field select rather than the
    dashed pill it used to wear, which was the only thing in that row that
@@ -2903,6 +2925,7 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
   width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   background:rgba(20,20,22,0.74);color:#fff;transition:transform 0.16s cubic-bezier(0.4,0,0.2,1),background 0.16s;}
 .vid-play svg{margin-left:2px;}
+.vid-poster:hover{background:none;}
 .vid-poster:hover .vid-play{transform:translate(-50%,-50%) scale(1.1);background:rgba(20,20,22,0.9);}
 .vid-poster:active .vid-play{transform:translate(-50%,-50%) scale(0.94);}
 .vid-meta{padding:9px 11px 10px;display:flex;flex-direction:column;gap:3px;}

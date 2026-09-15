@@ -5959,6 +5959,102 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## The row went blank under the pointer, and eight more did with it (15 Sep, seventieth pass)
+
+"When you highlight those note version fields, they become unreadable", with a
+screenshot of the version list: the hovered row white, the name and the stamp
+on it gone.
+
+**The cause is a rule this file already carries the warning for, in as many
+words.** `button:hover{background:var(--ink-hover)}` belongs to the SOLID
+default button and is **(0,1,1)**, so it outranks any single-class button at
+(0,1,0) -- and a version row is a `<button>` whose whole look is `--paper-dim`
+with `--ink` written on it. `.ver-row:hover` existed and set `border-color`
+only, so the background went on coming from the default rule: pure black in
+the light theme, pure WHITE in the dark one, with the row's own ink still
+painted on top of it.
+
+### It was never only that row, and the sweep had never been run
+
+The comment on that rule names two earlier reports ("Forgot password?", the
+inactive Sign up tab) and says outright that every button family styling its
+background away from the default must declare its own hover. Nobody had ever
+checked which families those are.
+
+Parsing the stylesheet, comparing every background declaration against
+`button:hover` on specificity AND source order, and then keeping only the
+selectors that really land on a `<button>` element gives **nine**. 86 rules
+lose that comparison; 77 of them are cards, panels, inputs and meters, which
+`button:hover` cannot match at all.
+
+**Measured hovered, in both themes, against the previous commit's own
+stylesheet** (contrast of the hover background against that control's own text,
+light / dark):
+
+| | before | after |
+|---|---|---|
+| **.ver-row** | **1.27 / 1.17** | 15.13 / 15.05 |
+| .color-fav-x | 1.27 / 1.17 | 13.72 / 13.27 |
+| .color-pop-save | 1.27 / 1.17 | 15.13 / 15.05 |
+| .set-info | 1.27 / 1.17 | 15.13 / 15.05 |
+| **.week-more-indicator** | 21.00 / **1.00** | 6.51 |
+| .reminder-chip-remove | 3.59 / 2.66 | 3.59 / 7.91 |
+| .gram-fav-toggle | 4.06 / 2.75 | 4.06 / 7.64 |
+| .page-btn | 4.06 / 2.75 | 4.00 / 5.28 |
+| .vid-poster | covered by its own image | unchanged |
+
+**1.00 is the whole of the argument**: the week's "more" pill is white
+lettering on celadon, and in the dark theme the default hover is `#FFFFFF`, so
+the label did not merely lose contrast, it was erased.
+
+**Each fix is one declaration, and each takes the answer its own family already
+uses** rather than a new one: a filled control steps to its neighbouring paper
+(`--paper-dim` <-> `--paper`, which is what `.nf-size-panel button:hover`
+already does), a transparent one stays transparent (`background:none`, which
+`.linkbtn.act-icon:hover` already does), and the pagination buttons take the
+same `rgba(127,127,127,0.16)` tint the day toggles immediately below them use.
+
+- **The pagination hover has to be MORE specific than its own active state.**
+  `.page-btn.active` is (0,2,0), so a plain `.page-btn:hover` would tie it and
+  win on order, repainting the page you are already on as you moved past it.
+  It is `.page-btn:hover:not(.active):not(:disabled)`, (0,4,0).
+- **`.set-info`'s open state survives by ORDER**: `.set-info[aria-expanded="true"]`
+  is declared after the hover at the same (0,2,0), so an opened `i` stays
+  filled.
+- **The root fix was considered and rejected.** There is no selector for "a
+  button that has not restyled its own background", and the honest version --
+  giving the default button a class and deleting the bare-element rule -- is a
+  rename across several hundred buttons in a 38.5k-line file. Per-family
+  declarations are what the existing comment prescribes and what the existing
+  families already do.
+
+### `:hover` cannot be forced from JS, so rewrite it in the live sheet
+
+The technique this was measured with, because it is worth having again:
+walk `document.styleSheets[0].cssRules` backwards, and for every rule whose
+selector contains `:hover`, delete it and insert the same `cssText` with
+`:hover` replaced by `.__h`. Then adding that class to a probe element is a
+faithful hover: **`:hover` and a class are both one unit of specificity, and
+deleting-then-inserting at the same index preserves source order**, so the
+cascade is identical. `getComputedStyle` then answers what a hovered control
+really looks like, in either theme, with no pointer involved.
+
+One trap in reading those numbers: **`rgba(127,127,127,0.16)` is not grey 127.**
+A contrast figure computed straight off the declared value reported the
+pagination hover at 1.29, when the composited colour over `--paper` is
+rgb(226,226,227) and the real figure is 4.00. Composite against the ground
+before measuring anything translucent, and `color(srgb 0.26 0.39 0.33)` is in
+0..1 rather than 0..255.
+
+### Checked
+
+The nine probed at rest and hovered in both themes, before and after, with the
+numbers above; the version rows rendered side by side at the dark theme's own
+colours, hovered and resting, which is the picture the report was about. The
+one inline script block still parses, the id cross-check is unchanged
+(`splitNotice`, which predates this), and there are no em dashes in the diff.
+CSS only: 27 lines added, 4 changed.
+
 ## The type size steps, and folds out (15 Sep, sixty-ninth pass)
 
 "Font should have up and down arrow and a fold out bar to pick a specific font
