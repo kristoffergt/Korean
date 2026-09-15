@@ -2035,14 +2035,52 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
    own size control is a select naming three sizes and about 98px wide; three
    characters is what lets a row already carrying nine controls take a tenth,
    and a number is also the only form that can say 17. */
-.ql-toolbar .nf-size-group{margin-right:8px;}
-.ql-toolbar input.nf-size{width:3em;height:24px;font-family:'Inter',sans-serif;font-size:12px;
-  font-weight:600;padding:2px;border:1px solid var(--line);border-radius:4px;
-  background:var(--paper);color:var(--ink);text-align:center;-moz-appearance:textfield;
-  vertical-align:middle;box-sizing:border-box;}
+/* One control, three ways in: type the number, step it, or fold the list of
+   sizes out and pick one (real-user request: "font should have up and down
+   arrow and a fold out bar to pick a specific font size"). They are drawn as
+   one bordered box so it reads as a field with its own arrows rather than as
+   three buttons that happen to sit together. */
+.ql-toolbar .nf-size-group{margin-right:8px;position:relative;}
+.ql-toolbar .nf-size-box{display:inline-flex;align-items:stretch;height:24px;overflow:hidden;
+  border:1px solid var(--line);border-radius:4px;background:var(--paper);vertical-align:middle;}
+.ql-toolbar input.nf-size{width:2.4em;height:100%;font-family:'Inter',sans-serif;font-size:12px;
+  font-weight:600;padding:0 2px;border:0;background:transparent;color:var(--ink);
+  text-align:center;-moz-appearance:textfield;box-sizing:border-box;}
+/* The browser's own spinner is the OS's artwork at the OS's size, which is
+   the same argument this file already makes for the tick boxes and the colour
+   picker. These are ours, and they are the app's own chevron. */
 .ql-toolbar input.nf-size::-webkit-inner-spin-button,
 .ql-toolbar input.nf-size::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
-@media (pointer: coarse){ .ql-toolbar input.nf-size{font-size:16px;} }
+.ql-toolbar .nf-size-steps{display:flex;flex-direction:column;border-left:1px solid var(--line);}
+.ql-snow.ql-toolbar button.nf-size-step{width:15px;height:11px;padding:0;border:0;float:none;
+  background:transparent;color:var(--ink-soft);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;}
+.ql-snow.ql-toolbar button.nf-size-step:first-child{border-bottom:1px solid var(--line);height:12px;}
+.ql-snow.ql-toolbar button.nf-size-step:hover{color:var(--ink);background:var(--paper-dim);}
+.ql-toolbar button.nf-size-step svg{display:block;width:9px;height:9px;}
+.ql-toolbar button.nf-size-up svg{transform:rotate(180deg);}
+.ql-snow.ql-toolbar button.nf-size-open{width:18px;height:auto;padding:0;border:0;float:none;
+  border-left:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;}
+.ql-snow.ql-toolbar button.nf-size-open:hover{color:var(--ink);background:var(--paper-dim);}
+.ql-toolbar button.nf-size-open svg{display:block;}
+/* Taller than the list is, so it scrolls rather than running off the card. */
+.nf-size-panel{display:none;position:absolute;top:100%;left:0;z-index:20;margin-top:2px;
+  background:var(--paper-dim);border:1px solid var(--line);border-radius:6px;padding:4px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.2);max-height:232px;overflow-y:auto;min-width:60px;}
+.nf-size-panel button{display:block;width:100%;font-family:'Inter',sans-serif;font-size:12px;
+  font-weight:600;padding:4px 8px;border:0;border-radius:4px;background:transparent;
+  color:var(--ink);cursor:pointer;text-align:center;}
+.nf-size-panel button:hover{background:var(--paper);}
+.nf-size-panel button.on{background:var(--ink);color:var(--paper);}
+/* 16px under a coarse pointer, like every other field here, or iOS zooms the
+   page when the number is tapped -- and the list's own rows grow with it,
+   since on a phone the list is how the size is picked at all: the arrows are
+   an eleven-pixel target and the number box is the one that takes a thumb. */
+@media (pointer: coarse){
+  .ql-toolbar input.nf-size{font-size:16px;}
+  .nf-size-panel button{padding:7px 8px;}
+}
 /* "Last saved by X at Y" is a footnote about the note rather than the first
    thing in it, so it sits at the right-hand end of its row (real-user
    request: "align right instead of left as it is currently"). */
@@ -10791,7 +10829,7 @@ const I18N = {
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
     generalNotes:'General notes', noNote:'No course', allPeople:'All', lblNotesPersonFilter:'Show', closeNoteBtn:'Close',
     lastSavedBy:'Last saved by {name} at {time}', neverSaved:'Not saved yet',
-    versionHistory:'Version history ({n})', noVersions:'No earlier versions', versionOpen:'Open', versionUse:'Use this version', versionUseConfirm:'Replace what is in the editor with this version? Nothing is saved until you press Save.', versionCopy:'Copy', versionCopied:'Copied', versionBack:'Back', noteFontSize:'Font size', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', eventForUser:'For',
+    versionHistory:'Version history ({n})', noVersions:'No earlier versions', versionOpen:'Open', versionUse:'Use this version', versionUseConfirm:'Replace what is in the editor with this version? Nothing is saved until you press Save.', versionCopy:'Copy', versionCopied:'Copied', versionBack:'Back', noteFontSize:'Font size', noteFontSizeUp:'Bigger', noteFontSizeDown:'Smaller', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', eventForUser:'For',
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
@@ -10914,7 +10952,7 @@ const I18N = {
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
     generalNotes:'일반 노트', noNote:'수업 없음', allPeople:'전체', lblNotesPersonFilter:'보기', closeNoteBtn:'닫기',
     lastSavedBy:'{name}님이 {time}에 저장함', neverSaved:'아직 저장되지 않음',
-    versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', versionOpen:'열기', versionUse:'이 버전 사용', versionUseConfirm:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 저장을 누르기 전까지는 저장되지 않습니다.', versionCopy:'복사', versionCopied:'복사됨', versionBack:'뒤로', noteFontSize:'글자 크기', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', eventForUser:'대상',
+    versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', versionOpen:'열기', versionUse:'이 버전 사용', versionUseConfirm:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 저장을 누르기 전까지는 저장되지 않습니다.', versionCopy:'복사', versionCopied:'복사됨', versionBack:'뒤로', noteFontSize:'글자 크기', noteFontSizeUp:'크게', noteFontSizeDown:'작게', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', eventForUser:'대상',
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
@@ -11038,7 +11076,7 @@ const I18N = {
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
     generalNotes:'Ghi chú chung', noNote:'Không có khóa học', allPeople:'Tất cả', lblNotesPersonFilter:'Hiển thị', closeNoteBtn:'Đóng',
     lastSavedBy:'Lưu lần cuối bởi {name} lúc {time}', neverSaved:'Chưa được lưu',
-    versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', versionOpen:'Mở', versionUse:'Dùng phiên bản này', versionUseConfirm:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Sẽ không có gì được lưu cho đến khi bạn nhấn Lưu.', versionCopy:'Sao chép', versionCopied:'Đã sao chép', versionBack:'Quay lại', noteFontSize:'Cỡ chữ', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', eventForUser:'Cho',
+    versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', versionOpen:'Mở', versionUse:'Dùng phiên bản này', versionUseConfirm:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Sẽ không có gì được lưu cho đến khi bạn nhấn Lưu.', versionCopy:'Sao chép', versionCopied:'Đã sao chép', versionBack:'Quay lại', noteFontSize:'Cỡ chữ', noteFontSizeUp:'Lớn hơn', noteFontSizeDown:'Nhỏ hơn', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', eventForUser:'Cho',
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
@@ -35651,14 +35689,24 @@ if(window.Quill){
   SizeStyle.whitelist = null;
   Quill.register(SizeStyle, true);
 }
+// The sizes the fold-out offers. The steps anybody reaches for, which is why
+// they crowd at the bottom: the difference between 9 and 10 is a different
+// note, where the difference between 64 and 72 is not.
+const NOTE_SIZE_STEPS = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 96];
 // The control is a number, FIRST in the row, which is where every editor puts
 // it and what makes it read as "the size of what I am typing" rather than as
-// one more button.
+// one more button. Three ways to set it, because they answer different
+// questions (real-user request: "font should have up and down arrow and a
+// fold out bar to pick a specific font size"): TYPE it when you know the
+// number, STEP it when you are nudging what is there, and FOLD OUT the list
+// when you want a size rather than a number.
 function buildNoteFontSizeControl(quill, markDirty){
   const toolbar = quill.getModule('toolbar').container;
   if(!toolbar || toolbar.querySelector('.nf-size')) return;
   const group = document.createElement('span');
   group.className = 'ql-formats nf-size-group';
+  const box = document.createElement('span');
+  box.className = 'nf-size-box';
   const input = document.createElement('input');
   input.type = 'number';
   input.className = 'nf-size';
@@ -35666,26 +35714,58 @@ function buildNoteFontSizeControl(quill, markDirty){
   input.max = String(NOTE_SIZE_MAX);
   input.step = '1';
   input.inputMode = 'numeric';
-  input.title = t('noteFontSize');
-  input.setAttribute('aria-label', t('noteFontSize'));
+  // A toolbar button that takes the focus takes the SELECTION's highlight with
+  // it, so the thing being formatted stops looking selected while it is being
+  // formatted. Refusing the mousedown leaves the focus in the editor; the
+  // click still lands.
+  const noSteal = (el)=> el.addEventListener('mousedown', (e)=> e.preventDefault());
+  const step = (dir)=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'nf-size-step nf-size-' + (dir > 0 ? 'up' : 'down');
+    b.innerHTML = ICON.chevD(9);
+    noSteal(b);
+    b.addEventListener('click', (e)=>{
+      e.preventDefault();
+      applyValue(shownValue() + dir);
+    });
+    return b;
+  };
+  const steps = document.createElement('span');
+  steps.className = 'nf-size-steps';
+  const open = document.createElement('button');
+  open.type = 'button';
+  open.className = 'nf-size-open';
+  open.innerHTML = ICON.chevD(11);
+  noSteal(open);
+  const panel = document.createElement('div');
+  panel.className = 'nf-size-panel';
   // A size chosen with the caret between two characters is a PENDING format:
   // Quill holds it on the cursor and gives it to the next thing typed, and
   // until then getFormat cannot report it. So it is remembered here, and let
   // go the moment the caret is moved by hand -- which is exactly when the
   // number stops being what you are about to type in.
   let pending = null;
+  const shownValue = ()=>{
+    const n = parseInt(input.value, 10);
+    return Number.isFinite(n) ? n : NOTE_SIZE_BASE;
+  };
+  const closePanel = ()=>{ panel.style.display = 'none'; };
   const show = ()=>{
     // Never under somebody typing into it, or the old number comes back under
     // their finger. Same rule the page-move field follows.
-    if(document.activeElement === input) return;
-    const range = quill.getSelection();
-    const n = parseInt(range ? quill.getFormat(range).size : null, 10);
-    const shown = Number.isFinite(n) ? n : (pending !== null ? pending : NOTE_SIZE_BASE);
-    input.value = String(shown);
+    if(document.activeElement !== input){
+      const range = quill.getSelection();
+      const n = parseInt(range ? quill.getFormat(range).size : null, 10);
+      input.value = String(Number.isFinite(n) ? n : (pending !== null ? pending : NOTE_SIZE_BASE));
+    }
+    const at = shownValue();
+    panel.querySelectorAll('button').forEach(b=>{
+      b.classList.toggle('on', Number(b.dataset.size) === at);
+    });
   };
-  const apply = ()=>{
-    const typed = parseInt(input.value, 10);
-    const n = Math.max(NOTE_SIZE_MIN, Math.min(NOTE_SIZE_MAX, Number.isFinite(typed) ? typed : NOTE_SIZE_BASE));
+  const applyValue = (raw)=>{
+    const n = Math.max(NOTE_SIZE_MIN, Math.min(NOTE_SIZE_MAX, Number.isFinite(raw) ? raw : NOTE_SIZE_BASE));
     input.value = String(n);
     pending = n;
     const value = n === NOTE_SIZE_BASE ? false : n + 'px';
@@ -35696,18 +35776,59 @@ function buildNoteFontSizeControl(quill, markDirty){
     if(range && range.length > 0) quill.formatText(range.index, range.length, 'size', value, 'user');
     else quill.format('size', value, 'user');
     if(markDirty) markDirty();
+    show();
   };
-  input.addEventListener('change', apply);
+  NOTE_SIZE_STEPS.forEach(n=>{
+    const opt = document.createElement('button');
+    opt.type = 'button';
+    opt.dataset.size = String(n);
+    opt.textContent = String(n);
+    noSteal(opt);
+    opt.addEventListener('click', (e)=>{
+      e.preventDefault();
+      closePanel();
+      applyValue(n);
+    });
+    panel.appendChild(opt);
+  });
+  open.addEventListener('click', (e)=>{
+    e.preventDefault();
+    if(panel.style.display === 'block'){ closePanel(); return; }
+    panel.style.display = 'block';
+    show();
+    // Opened on a size well down the list, the size it is ON is what you want
+    // to see rather than the top of it.
+    const on = panel.querySelector('button.on');
+    if(on) panel.scrollTop = Math.max(0, on.offsetTop - panel.clientHeight / 2 + on.offsetHeight / 2);
+  });
+  // Anything else pressed in the toolbar closes it, in the CAPTURE phase --
+  // the colour pickers beside it stop their own clicks from reaching the
+  // document, so a listener that waited for the bubble would never hear them
+  // and the two panels would sit open on top of each other.
+  toolbar.addEventListener('click', (e)=>{ if(!group.contains(e.target)) closePanel(); }, true);
+  document.addEventListener('click', (e)=>{ if(!group.contains(e.target)) closePanel(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closePanel(); });
+  input.addEventListener('change', ()=> applyValue(parseInt(input.value, 10)));
   input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); input.blur(); } });
   quill.on('selection-change', (range, oldRange, source)=>{ if(source === 'user') pending = null; show(); });
   quill.on('text-change', show);
-  group.appendChild(input);
+  steps.append(step(1), step(-1));
+  box.append(input, steps, open);
+  group.append(box, panel);
   toolbar.insertBefore(group, toolbar.firstChild);
   show();
   quill._relabelFontSize = ()=>{
-    input.title = t('noteFontSize');
-    input.setAttribute('aria-label', t('noteFontSize'));
+    const label = t('noteFontSize');
+    input.title = label;
+    input.setAttribute('aria-label', label);
+    open.title = label;
+    open.setAttribute('aria-label', label);
+    group.querySelector('.nf-size-up').title = t('noteFontSizeUp');
+    group.querySelector('.nf-size-up').setAttribute('aria-label', t('noteFontSizeUp'));
+    group.querySelector('.nf-size-down').title = t('noteFontSizeDown');
+    group.querySelector('.nf-size-down').setAttribute('aria-label', t('noteFontSizeDown'));
   };
+  quill._relabelFontSize();
 }
 /* ---------- EARLIER VERSIONS, OPENED RATHER THAN LISTED ---------- */
 // The panel was a list of 200-character previews and nothing else (real-user

@@ -5958,3 +5958,47 @@ page button adds breaks (Page 2/2, then 3/3), a version opens, declining the
 replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
+
+## The type size steps, and folds out (15 Sep, sixty-ninth pass)
+
+"Font should have up and down arrow and a fold out bar to pick a specific font
+size." So the number box from the pass above is one control with three ways
+in, because they answer different questions: **type** it when you know the
+number, **step** it when you are nudging what is already there, and **fold out
+the list** when you want a size rather than a number.
+
+- **Drawn as ONE bordered box** -- the field, a stacked chevron pair against
+  its right edge, and a caret past that -- so it reads as a field with its own
+  arrows rather than as three buttons that happen to sit together.
+- **The arrows are OURS, not the browser's.** A number input's own spinner is
+  the OS's artwork at the OS's size, which is the same argument this file
+  already makes for the tick boxes and for replacing the native colour input.
+  They are the app's own chevron, the up one being the down one turned over.
+- **The list is 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 96**,
+  crowded at the bottom because that is where the differences are: 9 against
+  10 is a different note, 64 against 72 is not. It opens SCROLLED TO the size
+  it is on rather than to the top of itself, and marks it.
+- **Anything else in the toolbar closes it, in the CAPTURE phase.** The colour
+  pickers beside it stop their own clicks from reaching the document, so a
+  listener waiting for the bubble would never hear them and the two panels
+  would sit open on top of each other. Escape and a click anywhere else close
+  it too.
+- **The buttons refuse their own mousedown.** A toolbar button that takes the
+  focus takes the SELECTION'S HIGHLIGHT with it, so the words being formatted
+  stop looking selected at the moment they are being formatted. Refusing the
+  mousedown leaves the focus in the editor and the click still lands --
+  verified by eye: "world" stays blue through opening the list, picking 24 and
+  three presses of the arrows.
+- **The toolbar's break point did not move**: one row from 530px of editor
+  width up, exactly as before, because the row had that much slack. The
+  control is 65px wide against Quill's own 98px select for three named sizes.
+- Measured with real clicks: the list applies to the selection and closes,
+  the arrows step 24 -> 25 -> 26 -> 25 and keep the selection, both ends clamp
+  at 8 and 96, and the box reads the size back off whatever is selected.
+
+**One thing to know about testing any of this**: `quill.getSelection()`
+returns NULL while the browser pane does not have the focus, so every toolbar
+control looks broken when it is driven from `javascript_tool` alone -- the
+format silently does nothing, exactly as it would if the caret were nowhere.
+Click into the editor with the pointer first, or format by hand with
+`formatText` to separate the two.
