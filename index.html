@@ -1233,6 +1233,56 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
   .tab-slider{transition:opacity 0.2s ease;}
   button.tab-popped > *{animation:none;}
 }
+/* ---------- THE PHONE'S BOTTOM DOCK ----------
+   On a phone the five top-level tabs are a floating bar at the BOTTOM of the
+   screen, icons only, and the row of pills at the top is not drawn at all
+   (real-user request, with a screenshot of Instagram's own bar). It is where
+   a thumb already is, and it gives the top bar its whole row back.
+   It is a SECOND VIEW of #tabNav rather than a second source of truth: the
+   buttons carry the same data-tab, the bar is rebuilt from the nav's own
+   children and mirrors their .active and .hidden, and pressing one calls the
+   same switchTopLevelTab the pill does. Every route that sets the active tab
+   -- a deep link, a notification, the hidden-tab fallback -- therefore reaches
+   it without a call site of its own.
+   NO FLY-OUT, deliberately (real-user request): the sub-tabs are a row inside
+   the panel and are reached there. showTabFlyout already refuses a phone.
+   Declared BEFORE the .has-slider block, like every other row that opts into
+   the travelling pill: the fallback fill below is (0,2,1) and so is
+   .has-slider.slider-ready > button, so source order is the whole of what
+   lets the pill take the fill over once it has actually been placed. */
+.tab-dock{position:fixed;z-index:70;left:12px;right:12px;margin-inline:auto;max-width:420px;
+  bottom:calc(10px + env(safe-area-inset-bottom));
+  display:none;align-items:stretch;gap:2px;padding:6px;
+  background:var(--paper-dim);border:1px solid var(--line);border-radius:30px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.22);
+  /* pan-y and nothing else: the bar owns every HORIZONTAL gesture on it, which
+     is what the drag-to-pick below needs, and the browser keeps the vertical
+     one, so the page still scrolls under a thumb that started on the bar.
+     touch-action:none would have taken that away for nothing -- the bar is not
+     scrollable, so there is no horizontal pan to compete with. */
+  touch-action:pan-y;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+.tab-dock > button{position:relative;z-index:2;flex:1;min-width:0;height:44px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  background:transparent;color:var(--ink-soft);border:none;border-radius:24px;
+  -webkit-tap-highlight-color:transparent;}
+/* Its own, or the solid default's hover paints a black/white pill behind the
+   icon; see the note on button:hover. */
+.tab-dock > button:hover{background:rgba(127,127,127,0.14);}
+/* The fallback fill for a bar that has not been measured yet, exactly as
+   .tabs carries one: without the pill an active icon is --paper on --paper-dim
+   and there is nothing to see. */
+.tab-dock > button.active{background:var(--ink);color:var(--paper);}
+.tab-dock > .tab-slider{border-radius:24px;}
+.tab-dock > button > .tab-icon,
+.tab-dock > button > .tab-icon-korea,
+.tab-dock > button > .tab-icon-yonsei{width:23px;height:23px;flex:none;}
+/* While a finger is on the bar, what is lit is where the FINGER is, not the
+   tab still on screen -- the pill has already travelled there and two lit
+   icons would read as two chosen tabs. Declared after .active so a finger
+   resting on the tab you are already on lights that one. */
+.tab-dock.dragging > button.active{color:var(--ink-soft);}
+.tab-dock.dragging > button.dock-aim{color:var(--paper);}
 .card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:22px;}
 .card h2{font-family:'Noto Serif KR',serif;font-size:15px;margin:0 0 14px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:10px;}
 .export-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:5px 10px;font-size:11px;font-weight:600;border-radius:6px;}
@@ -2503,6 +2553,19 @@ body.split-resizing iframe{pointer-events:none;}
   .auth-field input, .field input, .field select, .field textarea{ font-size: 16px; }
 }
 @media (max-width: 640px){
+  /* The dock replaces the top pills outright, rather than sitting under them:
+     two rows of the same five choices is one row of them wasted.
+     --dock-space is the whole strip the bar occupies measured from the bottom
+     of the safe area: 44px of button + 12 of padding + 2 of border, plus the
+     10 it floats above. Everything that has to keep clear of it reads THAT
+     rather than repeating the arithmetic. */
+  :root{--dock-space:68px;}
+  .tab-dock{display:flex;}
+  #tabNav{display:none;}
+  body{padding-bottom:calc(var(--dock-space) + 20px + env(safe-area-inset-bottom));}
+  /* The chat launcher is the one other thing anchored to that corner, and at
+     its own 10px it would have sat under the bar. */
+  #chatDock{bottom:calc(var(--dock-space) + 10px + env(safe-area-inset-bottom));}
   /* Everything above the header's black divider line gets smaller on
      mobile so the title, tagline, language control, and account controls
      all fit comfortably without crowding or wrapping awkwardly. */
@@ -16473,7 +16536,7 @@ supabaseClient.auth.onAuthStateChange((event, session)=>{
    The pill is one element that travels, rather than each tab painting its
    own fill. width/transform are written straight onto it and the transition
    does the rest -- no rAF loop, nothing to keep in step. */
-const SLIDER_ROWS = '#tabNav, .cal-view-toggle';
+const SLIDER_ROWS = '#tabNav, #tabDock, .cal-view-toggle';
 const rowSliderState = new WeakMap();
 function sliderState(row){
   let st = rowSliderState.get(row);
@@ -16494,12 +16557,20 @@ function ensureRowSlider(row){
   return el;
 }
 function moveRowSlider(row, opts){
+  if(!row) return;
+  placeRowSlider(row, row.querySelector(':scope > button.active'), opts);
+}
+// The pill on an ARBITRARY button of the row, which is not always the active
+// one: the phone's dock drags it to whichever icon the finger is over, well
+// before anything has been chosen. moveRowSlider is that with the active
+// button filled in, so there is one placement rather than two that could
+// disagree about where a pill sits.
+function placeRowSlider(row, active, opts){
   const instant = !!(opts && opts.instant);
   if(!row) return;
   const slider = ensureRowSlider(row);
   if(!slider) return;
   const st = sliderState(row);
-  const active = row.querySelector(':scope > button.active');
   if(!active){ slider.style.opacity = '0'; return; }
   const rowBox = row.getBoundingClientRect();
   const box = active.getBoundingClientRect();
@@ -16515,7 +16586,17 @@ function moveRowSlider(row, opts){
     st.parked = false;
     return;
   }
-  const x = Math.round(box.left - rowBox.left);
+  // Against the row's PADDING box, which is where an absolutely positioned
+  // child's own 0,0 is -- getBoundingClientRect answers the BORDER box, so on
+  // a row with a border of its own the pill lands one pixel down and right of
+  // the button it is supposed to be under. clientLeft/clientTop ARE those
+  // border widths, and both are 0 on the two rows this started with, so
+  // nothing already placed moves.
+  const x = Math.round(box.left - rowBox.left - row.clientLeft);
+  // And the vertical, measured rather than assumed 0 for the same reason: the
+  // old rows have no padding so their buttons begin at the row's own top edge,
+  // and the dock is a padded bar where the pill would otherwise ride high.
+  slider.style.top = Math.round(box.top - rowBox.top - row.clientTop) + 'px';
   // The very first placement must not travel from the left edge -- there is
   // nowhere it came from.
   const jump = instant || !st.parked;
@@ -16601,6 +16682,172 @@ function refreshRowSliders(force){
 // the lag that was reported. Deliberately not a ResizeObserver on the rows: a
 // row sized by its own content resizes when a tab is chosen, and that would
 // cut the pill's travel short on every click.
+/* ---------- THE PHONE'S BOTTOM DOCK ----------
+   Built from #tabNav rather than written out in the markup, so the bar cannot
+   hold a tab the nav does not, in an order the nav does not have, with an icon
+   the nav has stopped using -- the icon node is CLONED off the nav's own
+   button. It mirrors .active and .hidden off the same buttons through one
+   observer, which is the same argument watchRowSliders makes for itself: the
+   active tab is set from a dozen places (deep links, notifications,
+   applyHiddenTabs, the fly-out) and none of them should need to know this bar
+   exists. */
+let tabDockObserver = null;
+let tabDockDrag = null;
+// A pointer gesture chooses on pointerup, so the click that follows it has
+// already been acted on. Keyboard activation produces a click with no pointer
+// gesture before it, which is the one this has to let through. Time-bounded
+// rather than a flag somebody has to remember to clear: a flag that no click
+// ever arrives to consume stays armed and eats the NEXT press.
+let tabDockPointerAt = 0;
+// Far enough that a thumb pressing an icon is not read as a drag, near enough
+// that the bar starts following early.
+const DOCK_DRAG_SLOP = 6;
+function ensureTabDock(){
+  const nav = document.getElementById('tabNav');
+  const app = document.getElementById('appScreen');
+  if(!nav || !app) return null;
+  let dock = document.getElementById('tabDock');
+  if(!dock){
+    dock = document.createElement('nav');
+    dock.id = 'tabDock';
+    dock.className = 'tab-dock';
+    // Inside #appScreen, so .hidden takes the bar away with the app rather
+    // than leaving it floating over the sign-in screen. .wrap carries no
+    // transform, so a fixed child of it is still fixed to the viewport.
+    app.appendChild(dock);
+    wireTabDock(dock);
+  }
+  if(!tabDockObserver){
+    // characterData and childList as well as class: a language change
+    // rewrites the label spans, and those are what name the icons for a
+    // screen reader.
+    tabDockObserver = new MutationObserver(()=> syncTabDock());
+    tabDockObserver.observe(nav, { attributes:true, attributeFilter:['class'],
+                                   childList:true, subtree:true, characterData:true });
+  }
+  syncTabDock();
+  return dock;
+}
+function syncTabDock(){
+  const nav = document.getElementById('tabNav');
+  const dock = document.getElementById('tabDock');
+  if(!nav || !dock) return;
+  const src = Array.from(nav.querySelectorAll(':scope > button'));
+  const sig = src.map(b=> b.dataset.tab).join('|');
+  // Rebuilt only when the nav's own set or order really changed, so the
+  // ordinary case -- a tab being chosen -- touches two class lists and
+  // nothing else. Rebuilding here would throw away the button the pill is
+  // mid-flight to.
+  if(dock.dataset.sig !== sig){
+    dock.dataset.sig = sig;
+    Array.from(dock.querySelectorAll(':scope > button')).forEach(b=> b.remove());
+    src.forEach(b=>{
+      const d = document.createElement('button');
+      d.type = 'button';
+      d.dataset.tab = b.dataset.tab || '';
+      const icon = b.firstElementChild;
+      if(icon) d.appendChild(icon.cloneNode(true));
+      // Appended, so the pill (ensureRowSlider puts it first) stays behind them.
+      dock.appendChild(d);
+    });
+  }
+  Array.from(dock.querySelectorAll(':scope > button')).forEach(d=>{
+    const b = nav.querySelector(':scope > button[data-tab="' + d.dataset.tab + '"]');
+    if(!b) return;
+    const on = b.classList.contains('active');
+    d.classList.toggle('active', on);
+    d.classList.toggle('hidden', b.classList.contains('hidden'));
+    d.setAttribute('aria-current', on ? 'page' : 'false');
+    // The icon is the whole button, so the tab's own name is the only thing
+    // that can say what it is. Read off the nav's label span, which is what
+    // applyLanguage writes.
+    const label = ((b.lastElementChild && b.lastElementChild.textContent) || '').trim();
+    if(label) d.setAttribute('aria-label', label);
+  });
+}
+// Which icon a given x is over, and the NEAREST one past either end rather
+// than nothing: a finger that runs off the side of the bar is still plainly
+// asking for the tab at that end.
+function tabDockButtonAt(dock, x){
+  const btns = Array.from(dock.querySelectorAll(':scope > button'))
+    .filter(b=> !b.classList.contains('hidden'));
+  let best = null, bestD = Infinity;
+  for(const b of btns){
+    const r = b.getBoundingClientRect();
+    if(!r.width) continue;
+    if(x >= r.left && x <= r.right) return b;
+    const d = x < r.left ? r.left - x : x - r.right;
+    if(d < bestD){ bestD = d; best = b; }
+  }
+  return best;
+}
+// The pill LOCKS to whichever icon the finger is over rather than floating
+// under it: it is a choice being made, and an option half-picked is not one
+// of the five things this bar can do.
+function tabDockAim(dock, btn){
+  if(!tabDockDrag || !btn || tabDockDrag.aim === btn) return;
+  if(tabDockDrag.aim) tabDockDrag.aim.classList.remove('dock-aim');
+  tabDockDrag.aim = btn;
+  btn.classList.add('dock-aim');
+  placeRowSlider(dock, btn);
+}
+function endTabDockDrag(dock, commit){
+  if(!tabDockDrag) return;
+  const aim = tabDockDrag.aim, id = tabDockDrag.id;
+  // Cleared BEFORE anything below can run, so a switch that re-enters this
+  // through the observers cannot find a gesture still in progress.
+  tabDockDrag = null;
+  tabDockPointerAt = Date.now();
+  try { if(dock.hasPointerCapture(id)) dock.releasePointerCapture(id); } catch(e){}
+  dock.classList.remove('dragging');
+  if(aim) aim.classList.remove('dock-aim');
+  if(commit && aim && aim.dataset.tab) switchTopLevelTab(aim.dataset.tab);
+  // Cancelled -- the browser took the gesture for a page scroll -- so the bar
+  // goes back to saying where you actually are.
+  else if(!commit) placeRowSlider(dock, dock.querySelector(':scope > button.active'));
+}
+function wireTabDock(dock){
+  dock.addEventListener('pointerdown', (e)=>{
+    if(!e.isPrimary || e.button > 0) return;
+    const btn = tabDockButtonAt(dock, e.clientX);
+    if(!btn) return;
+    tabDockDrag = { id:e.pointerId, startX:e.clientX, moved:false, aim:null };
+    dock.classList.add('dragging');
+    // Lit from the press, not from the first move: a thumb resting on an icon
+    // should already be showing what letting go would do.
+    tabDockAim(dock, btn);
+  });
+  dock.addEventListener('pointermove', (e)=>{
+    if(!tabDockDrag || e.pointerId !== tabDockDrag.id) return;
+    if(!tabDockDrag.moved && Math.abs(e.clientX - tabDockDrag.startX) > DOCK_DRAG_SLOP){
+      tabDockDrag.moved = true;
+      // Captured only once it IS a drag. Taken on pointerdown it would swallow
+      // every gesture that merely began on the bar, and the browser's own
+      // click would then be aimed at the bar rather than at the icon.
+      try { dock.setPointerCapture(e.pointerId); } catch(err){}
+    }
+    if(tabDockDrag.moved) tabDockAim(dock, tabDockButtonAt(dock, e.clientX));
+  });
+  // On the WINDOW, not on the bar. A touch pointer is implicitly captured to
+  // the element it went down on, so its release always comes back here -- a
+  // MOUSE is not, and before the drag threshold nothing has been captured
+  // explicitly either, so a press that slides off the bar and lets go outside
+  // it would never end: the gesture would stay open with an icon lit and the
+  // bar refusing the next press. Guarded on the pointer id, and tabDockDrag is
+  // null except while a gesture is actually running, so this costs nothing.
+  window.addEventListener('pointerup', (e)=>{
+    if(tabDockDrag && e.pointerId === tabDockDrag.id) endTabDockDrag(dock, true);
+  });
+  window.addEventListener('pointercancel', (e)=>{
+    if(tabDockDrag && e.pointerId === tabDockDrag.id) endTabDockDrag(dock, false);
+  });
+  dock.addEventListener('click', (e)=>{
+    // Everything a pointer does is already done by the time the click lands.
+    if(Date.now() - tabDockPointerAt < 700) return;
+    const btn = e.target.closest('button');
+    if(btn && btn.dataset.tab) switchTopLevelTab(btn.dataset.tab);
+  });
+}
 let rowSliderResizeFrame = 0;
 window.addEventListener('resize', ()=>{
   if(rowSliderResizeFrame) return;
@@ -24222,6 +24469,9 @@ function setWhoName(fullName){
 let tabNavCanonicalOrder = null;
 function reorderMobileTabs(){
   reorderMobileTabsInner();
+  // Before the two lines below, so the bar exists to be observed and measured
+  // by them rather than waiting a whole call for its pill.
+  ensureTabDock();
   // Whatever the row just did to itself, every pill has to be measured
   // against it again -- and without animating, since nothing was chosen.
   watchRowSliders();

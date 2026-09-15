@@ -5959,6 +5959,139 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## The phone's tabs are a bar at the bottom, and a finger picks from it (15 Sep, seventy-first pass)
+
+"I want a floating bar like this instagram one at the bottom with the icons,
+instead of the 'Home, Korean, etc.' pills at the top ... can you make it smart,
+like, when you run your finger over it, it follows your finger and locks to the
+different options?"
+
+**Phone only, under the same 640px `isMobileDevice()` uses**, and that is the
+reading under which every sentence of the request holds at once: the reference
+is a phone app's bar, "run your finger over it" is a touch, and "it should not
+have the pop-out sub bars for mobile" only means anything if the desktop keeps
+its fly-outs. A floating bar is also not what a 1400px window wants. So the
+five labelled pills and their hover fly-outs are untouched above 640, and below
+it they are not drawn at all rather than sitting above the dock: two rows of
+the same five choices is one row of them wasted.
+
+**No fly-out on the bar, by construction** (and `showTabFlyout` has refused a
+phone since it was written). A panel's sub-tabs are a row inside the panel and
+are reached there, which is where they already were.
+
+### It is a second VIEW of #tabNav, not a second source of truth
+
+The bar is built from the nav's own buttons: same `data-tab`, the icon node
+CLONED off the nav's button, and `.active` and `.hidden` mirrored through one
+`MutationObserver` on the nav. Pressing one calls the same `switchTopLevelTab`
+the pill does.
+
+That is the same argument `watchRowSliders` already makes for itself, and it is
+what makes the bar cheap: the active tab is set from a dozen places -- deep
+links, notification navigation, `applyHiddenTabs`' fallback, the fly-out's own
+items -- and **not one of them needed a line about the bar**. Hiding a tab in
+settings drops it from the dock, and a drag cannot aim at it, for free.
+
+- The observer watches `childList` and `characterData` as well as `class`,
+  because a language change rewrites the label spans, and those are what name
+  the icons for a screen reader.
+- The buttons are rebuilt only when the nav's own set or ORDER changes,
+  compared as a signature string. Rebuilding on every tab change would throw
+  away the button the pill is mid-flight to.
+
+### The pill is the row slider, which already existed
+
+`#tabDock` joins `SLIDER_ROWS`, so the travelling pill, its stretch, the pop on
+arrival and the resize re-measure all come for nothing. Two things had to
+change in it:
+
+- **`moveRowSlider` split into `placeRowSlider(row, button)`**, since the pill
+  now has to sit under a button that is NOT the active one: during a drag it is
+  under the finger, well before anything has been chosen.
+- **The pill is placed against the row's PADDING box**, not its border box.
+  `getBoundingClientRect` answers the border box and an absolutely positioned
+  child's own 0,0 is the padding box, so on the first row with a border and
+  padding of its own the pill landed **one pixel down and right** of the icon
+  and six pixels high in the bar. `clientLeft`/`clientTop` are those border
+  widths and both are 0 on the two rows this started with, so nothing already
+  placed moved: measured after, the top pill is still dx 0.00, dy 0.00 on its
+  tab with `top: 0px`.
+
+### The gesture, and the four ways it can be taken away from you
+
+Press lights the icon under the thumb, a drag moves the pill from icon to icon
+and LOCKS to each one (an option half-picked is not one of the five things the
+bar can do), and letting go chooses whatever it is on.
+
+- **`touch-action: pan-y`, not `none`.** The bar is not scrollable, so there is
+  no horizontal pan to compete with and the horizontal gesture is ours
+  uncontested; the browser keeps the vertical one, so **the page still scrolls
+  under a thumb that started on the bar**. `none` would have taken that away
+  for nothing. A drag the browser then claims as a scroll arrives as
+  `pointercancel`, and the bar puts its pill back on the tab you are actually
+  on.
+- **The pointer is captured only once the drag passes 6px**, never on
+  `pointerdown`. Captured from the press it would swallow every gesture that
+  merely began on the bar, and the browser's own click would then be aimed at
+  the bar rather than at the icon.
+- **`pointerup` and `pointercancel` are on the WINDOW.** A touch pointer is
+  implicitly captured to the element it went down on, so its release always
+  comes back; a MOUSE is not, and before the threshold nothing has been
+  captured explicitly either -- so a press that slid off the bar and let go
+  outside it would never have ended, leaving an icon lit and the bar refusing
+  the next press. Reproduced and then fixed: release at (200,120), well off the
+  bar, now commits the last icon the pointer was over and leaves no `dragging`
+  class and no stray aim behind.
+- **There is no click-suppression flag**, which is the trap this whole shape
+  invites: a one-shot flag that no click ever arrives to consume stays armed
+  and eats the NEXT press. A pointer gesture chooses on `pointerup`, and the
+  click handler simply ignores anything within 700ms of one. Keyboard
+  activation produces a click with no pointer gesture in front of it, so it
+  goes through.
+
+### Measured
+
+At 390px the bar is 366 by 58 with five 69 by 44 targets and 23px icons, the
+pill exactly on the active one (**dx 0.00, dy 0.00**) and exactly inside the
+bar at both ends (**0.00px of spill** at the last icon). Driven with real
+pointer input as well as synthetic: a real drag from the first icon to the last
+selects the last, a real tap on the fourth selects the fourth, and both land
+the pill on the icon to the pixel.
+
+| | |
+|---|---|
+| drag across and release | chooses where it stops |
+| tap, no movement | chooses that one |
+| cancelled mid-drag | active unchanged, pill back on it |
+| press, slide off, release away | chooses the last icon it was over, nothing stuck |
+| keyboard activation | chooses, and is not eaten by the pointer guard |
+| a tab hidden in settings | dropped from the bar and unaimable |
+| at 1100px | bar gone, pills back, top pill dx/dy 0.00 |
+
+- **`--dock-space` is the whole strip the bar occupies** (44 of button + 12 of
+  padding + 2 of border, plus the 10 it floats above), declared once in the
+  phone block. `body`'s bottom padding and `#chatDock` read THAT rather than
+  repeating the arithmetic: measured, 88px and 78px on a phone against the
+  unchanged 60 and 16 on a desktop, and the chat launcher no longer sits under
+  the bar.
+- **The bar lives inside `#appScreen`**, so `.hidden` takes it away with the app
+  rather than leaving it floating over the sign-in screen. Confirmed on the PIN
+  screen: the element is built and has no client rects.
+
+### Two things about checking this here
+
+- **The preview pane freezes a CSS transition at its start value**, because its
+  clock only advances while something is painting it. A test that measured the
+  pill's RECT after a switch reported it 212px from where it belonged while the
+  behaviour was perfectly correct; the same test reading `style.transform` --
+  the value that was written, which no transition can freeze -- passes. This
+  file already records the same trap for the tab pill and for rAF; it applies
+  to anything eased.
+- **The id cross-check now reports `tabDock`** alongside the long-standing
+  `splitNotice`. It is not a fault: the bar is created in JS, so its id is
+  assigned rather than written in the markup, which is the one case that check
+  cannot see.
+
 ## The row went blank under the pointer, and eight more did with it (15 Sep, seventieth pass)
 
 "When you highlight those note version fields, they become unreadable", with a
