@@ -5959,6 +5959,45 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## The bar stopped holding room for tabs it no longer draws (15 Sep, seventy-second pass)
+
+"On the app, we can now move the sub tabs up to be right under the line at the
+top."
+
+Two gaps were stacked under the header's divider and only one of them was ever
+about the header: its own `margin-bottom: 14px`, plus **22px of `#topBar`
+padding that existed to separate the tab pills from the panel below them**.
+With the pills moved to the dock there is nothing in between, so what the 22
+separated was nothing from nothing, and every panel's sub-tab row sat **36px**
+adrift of the line it belongs under.
+
+`#topBar{padding-bottom:0}` in the phone block, so the header keeps the 14 it
+already reserves and the bar stops reserving a second gap for tabs it is not
+drawing. **22px back at the top of every phone screen**, and it is the same 14
+on all five panels because every one of them begins with its own
+`.cal-view-toggle`.
+
+- **NOT `#topBar.stuck`**, which is `(1,1,0)` against this rule's `(1,0,0)` and
+  keeps its own tighter 10. The condensed bar floats over the page and the air
+  under its line is where the content is seen scrolling past.
+- **The spacer follows for free.** It is the box in flow and its height is
+  written from the bar's own measured resting height, so nothing had to be told
+  a number: measured, it went 80 to 58 on its own, and it still holds that 58
+  while the bar is condensed, which is the whole reason a condense moves
+  nothing.
+
+Measured at 390px: the line at 76, the bar's bottom edge at 90, and all five
+sub-tab rows at exactly 90, so the bar meets them with **no overlap and 14px of
+air under the line**. Condensed it is 10, the spacer unchanged at 58, and at
+1100px the padding is still 22 with the line, the pills and the sub tabs
+18/22.5px apart exactly as before.
+
+**And a cached page is not a fixed page.** `python3 -m http.server` answers a
+re-navigation with a 304, so the first round of measurements was taken against
+the previous stylesheet and read 36px for a change that was already on disk.
+A `?v=` on the URL is what settles whether a rule is failing or simply is not
+loaded.
+
 ## The phone's tabs are a bar at the bottom, and a finger picks from it (15 Sep, seventy-first pass)
 
 "I want a floating bar like this instagram one at the bottom with the icons,
