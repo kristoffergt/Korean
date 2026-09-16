@@ -5959,6 +5959,74 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## The note you just added opens when the courier has delivered it (16 Sep, seventy-fifth pass)
+
+"When you add a note, the page should open that note when the courier
+animation is over (either cuz you scrolled down past it or naturally
+stopped)."
+
+**The two endings are already one place**, which is what makes this small:
+`acRunPendingReveals()` is called by the delivery's own `toss.onfinish`, by
+the "nothing to throw it at" branch, AND by `finish()`, which is the single
+ending the courier already funnels both a finished lap and an abandoned one
+through. So a hook hanging there covers "naturally stopped" and "you scrolled
+past him" without either being a case.
+
+- **`acAfterReveal(fn)`, a separate one-shot queue**, run at the END of
+  `acRunPendingReveals()` -- after the renders, because what it does reads the
+  rows they have just written. Not folded into `acReveal`, which is DEDUPED BY
+  FUNCTION IDENTITY so that a burst of realtime echoes collapses into one
+  render; these are one-shot closures that must each run exactly once.
+- **The queue is emptied before it is walked**, so the backstop call from
+  `finish()` -- which arrives after `toss.onfinish` on an ordinary lap -- cannot
+  open anything a second time.
+- **Same contract as `acClear` and `acReveal`**: with no courier out it runs at
+  once. So with the add animation switched off, or under reduced motion, or
+  with the button off screen, the note still opens -- nothing about it depends
+  on the animation being on.
+- **Registered AFTER `addCourier()`**, which is what puts the courier out.
+  Before it, `acRevealing` is still false and the note would open on the spot,
+  ahead of the row it belongs to.
+- **The open reports whether it took.** Both editors refuse while another note
+  has unsaved changes, and a refusal must not then scroll to somebody else's
+  note -- so the hook is handed a function that opens and returns
+  `selectedLectureId === newId`.
+- **And it scrolls the editor into view.** The editor card sits BELOW the list
+  the row was added to, so on a phone it opens off the bottom of the screen and
+  nothing looks to have happened. `block: 'nearest'`, so a card already in view
+  is not moved at all.
+- **It does not take the focus.** Raising the keyboard unasked on a phone is
+  intrusive, and `quickNoteFromGrammar` -- which has opened a note straight
+  after creating it since it was written -- does not either.
+
+Both note lists: course notes (Yonsei) and the notebook (Korean). Nothing else
+the courier carries has a note to open.
+
+### Checked
+
+Driven at the real handlers with the INSERT STUBBED, so nothing reached the
+database. The queue itself first: with no courier out it runs immediately; with
+one out it is held and then runs after the render, in that order; a second
+`acRunPendingReveals()` does not run it again; and a hook that throws does not
+stop the next one.
+
+Then end to end, at 1024x768:
+
+| | |
+|---|---|
+| courier runs its lap | row appears, "Courier test note" opens, editor scrolled to |
+| **scrolled clean past him mid-lap** | courier abandoned, row appears, "Abandoned mid lap" opens |
+| course notes, under Yonsei | "Course note via courier" opens after the delivery |
+| the add animation switched OFF | opens at once, `acRevealing` false throughout |
+| another note dirty, reader declines | the new note is still CREATED, the editor stays on the note that was already open, and nothing scrolls |
+
+**One thing about testing the abandoned path in the preview pane**: the
+courier's own lap is on `setTimeout` and runs whether or not anything paints,
+but the scroll-away check is throttled to one rect read per FRAME -- so after
+scrolling past him the abort sits waiting on a `requestAnimationFrame` that
+never comes until something screenshots the pane. It looks exactly like the
+abort not working.
+
 ## The month is dots and a day you can read, and the dock gives way as you scroll (16 Sep, seventy-fourth pass)
 
 "And then can we change the layout of the calendar on the app specifically.

@@ -17343,11 +17343,52 @@ function acRevealTarget(){
   const hit = acPendingReveals.find(p => p.target);
   return hit ? hit.target : null;
 }
+// Anything that has to happen once the row is on screen rather than instead of
+// it -- opening the note that was just added, say. Same contract as acReveal
+// and acClear: with no courier out it runs at once, so nothing depends on the
+// animation being on. Not folded into acReveal because that one is DEDUPED BY
+// FUNCTION IDENTITY (a burst of realtime echoes has to collapse into one
+// render), and these are one-shot closures that must each run exactly once.
+let acPendingAfter = [];
+function acAfterReveal(fn){
+  if(typeof fn !== 'function') return;
+  if(!acRevealing){ fn(); return; }
+  acPendingAfter.push(fn);
+}
 function acRunPendingReveals(){
   acRevealing = false;
   const list = acPendingReveals;
   acPendingReveals = [];
   list.forEach(p => { try{ p.fn(); }catch(e){} });
+  // After the renders, because what these do reads the rows the renders have
+  // just written. Emptied first, so the backstop call from finish() -- which
+  // runs whether the lap finished or was abandoned -- cannot open anything a
+  // second time.
+  const after = acPendingAfter;
+  acPendingAfter = [];
+  after.forEach(fn => { try{ fn(); }catch(e){} });
+}
+// THE NOTE YOU JUST ADDED OPENS WHEN THE COURIER HAS DELIVERED IT, which is
+// the moment its row appears -- whether he ran his whole lap or was abandoned
+// half way because the reader scrolled off him (real-user request: "when you
+// add a note, the page should open that note when the courier animation is
+// over, either cuz you scrolled down past it or naturally stopped"). BOTH
+// endings go through acRunPendingReveals(), so hanging it there is the whole
+// of what makes the two cases one case.
+// `openNote` returns whether it actually opened: both editors refuse while
+// another note has unsaved changes, and a refusal must not then scroll to
+// somebody else's note.
+function acOpenAddedNote(openNote, cardId){
+  acAfterReveal(()=>{
+    if(!openNote()) return;
+    // The editor card sits BELOW the list the row was added to, so on a phone
+    // it opens off the bottom of the screen and nothing looks to have
+    // happened. 'nearest' so a card already in view is not moved at all.
+    const card = document.getElementById(cardId);
+    if(card && !card.classList.contains('hidden')){
+      card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  });
 }
 function acFigure(){
   // Drawn as a silhouette with the details KNOCKED OUT in the page's own
@@ -35913,6 +35954,14 @@ async function addLecture(){
     if(!allNotes[groupKey]) allNotes[groupKey] = [];
     allNotes[groupKey].push(data[0]);
     expandedNoteGroups.add(groupKey);
+    // Registered AFTER addCourier, which is what puts the courier out: before
+    // it, acRevealing is still false and this would open the note on the spot,
+    // ahead of the row it belongs to.
+    const newId = data[0].id;
+    acOpenAddedNote(()=>{
+      openLecture(newId, groupKey);
+      return selectedLectureId === newId;
+    }, 'editorCard');
   }
   acClear(()=>{
     document.getElementById('newLectureTitle').value = '';
@@ -37588,6 +37637,11 @@ async function addNotebookNote(){
     if(!allNotebookNotes[groupKey]) allNotebookNotes[groupKey] = [];
     allNotebookNotes[groupKey].push(data[0]);
     expandedNotebookGroups.add(groupKey);
+    const newId = data[0].id;
+    acOpenAddedNote(()=>{
+      openNotebookNote(newId, groupKey);
+      return selectedNotebookNoteId === newId;
+    }, 'notebookEditorCard');
   }
   acClear(()=>{
     document.getElementById('newNotebookTitle').value = '';
