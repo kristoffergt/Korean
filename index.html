@@ -1287,6 +1287,21 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 .tab-dock{position:fixed;z-index:70;left:12px;right:12px;margin-inline:auto;max-width:420px;
   bottom:calc(10px + env(safe-area-inset-bottom));
   display:none;align-items:stretch;gap:2px;padding:6px;
+  /* --dock-k is 1 at full size and 0 compact, written once a frame by the
+     follower in wireDockShrink(). It is ONE eased number and the geometry is
+     derived from it here, so height, width, the icons and the corner all
+     move together and there is no second thing to keep in step.
+     A TRANSFORM, not a height: the bar's layout box has to stay exactly where
+     it is, because --dock-space is what body's padding-bottom, the chat
+     launcher and the update pill all keep clear of -- shrinking the box would
+     move all three every frame, and re-laying out the page on a scroll is the
+     trap this file already records for the condensing top bar. It is also
+     what lets the travelling pill inside come along for nothing.
+     About the BOTTOM edge, so the bar keeps its 10px float and shrinks into
+     place rather than drifting down the screen. */
+  --dock-k:1;--dock-min:0.82;
+  transform:scale(calc(var(--dock-min) + (1 - var(--dock-min)) * var(--dock-k)));
+  transform-origin:bottom center;
   background:var(--paper-dim);border:1px solid var(--line);border-radius:30px;
   box-shadow:0 8px 28px rgba(0,0,0,0.22);
   /* pan-y and nothing else: the bar owns every HORIZONTAL gesture on it, which
@@ -1296,6 +1311,10 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
      scrollable, so there is no horizontal pan to compete with. */
   touch-action:pan-y;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+/* Promoted only while the follower is running -- a layer kept on the
+   compositor for the whole session is memory for nothing, and a bar that is
+   not moving composites fine from its own paint. */
+.tab-dock.dock-easing{will-change:transform;}
 .tab-dock > button{position:relative;z-index:2;flex:1;min-width:0;height:44px;padding:0;
   display:flex;align-items:center;justify-content:center;
   background:transparent;color:var(--ink-soft);border:none;border-radius:24px;
@@ -1836,6 +1855,15 @@ body.no-anim-ui .linkbtn.act-icon:active{transform:none;}
 .event-chip:has(> .chip-initial){padding-right:12px;}
 .chip-initial{position:absolute;top:1px;right:1px;font-size:6.5px;min-width:9px;height:9px;line-height:9px;padding:0 2px;text-align:center;border-radius:5px;background:rgba(255,255,255,0.4);color:inherit;font-weight:800;box-sizing:border-box;}
 .month-day .more-count{font-size:8px;color:var(--ink-soft);}
+/* Drawn on every screen and shown on none but a phone, where it replaces the
+   chip stack (see the media query). Fixed height, so a day with nothing on
+   still reserves the row and no cell is a different height from its
+   neighbours -- a grid whose rows jog about as the month changes is the
+   thing this layout is here to stop. */
+.day-dots{display:none;height:5px;align-items:center;justify-content:center;gap:3px;flex-shrink:0;}
+.day-dot{width:5px;height:5px;border-radius:50%;flex:none;}
+/* "and more", rather than a fourth dot nobody could count past anyway. */
+.day-dot.more{width:9px;border-radius:2.5px;height:3px;background:var(--ink-soft);}
 /* A breakdown row is a real <button> for the keyboard and for its pressed
    state, so it has to be told not to be the global solid-ink button -- the
    same trap the month arrows fell into. */
@@ -2505,6 +2533,23 @@ body.split-resizing iframe{pointer-events:none;}
 }
 
 .week-grid-wrap{margin-top:4px;}
+/* The phone's week strip. Rendered only there (see renderWeekGrid), so these
+   need no media query of their own -- the element is simply never in the
+   document otherwise. Same seven-column grid and the same number-in-a-circle
+   as the month view, so a day is marked the same way in both. */
+.week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:10px;}
+.week-strip.hidden{display:none;}
+.week-strip > button{background:none;border:none;border-radius:8px;padding:5px 0 6px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink-soft);}
+.week-strip > button:hover{background:rgba(127,127,127,0.12);}
+.week-strip .wd{font-size:10px;text-transform:uppercase;line-height:1;}
+.week-strip .dnum{width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;
+  font-size:13px;color:var(--ink);font-family:'Space Grotesk',monospace;box-sizing:border-box;}
+.week-strip .day-dots{display:flex;}
+.week-strip > button.today .dnum{color:var(--celadon-4);font-weight:700;}
+.week-strip > button.today:hover .dnum{color:var(--celadon-4);}
+.week-strip > button.selected .dnum{background:var(--ink);color:var(--paper);font-weight:700;}
+.week-strip > button.today.selected .dnum{background:var(--celadon-4);color:#fff;}
 .week-header-row{display:flex;}
 .week-corner{width:44px;flex-shrink:0;}
 .week-day-header{flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 2px;border-left:1px solid var(--line);color:var(--ink-soft);}
@@ -2622,6 +2667,40 @@ body.split-resizing iframe{pointer-events:none;}
      condensed bar floats over the page, and the air under its line is where
      the content is seen scrolling past. */
   #topBar{padding-bottom:0;}
+  /* THE MONTH IS A GRID OF DAYS WITH DOTS, AND THE DAY IS READ UNDERNEATH IT.
+     A cell is about 50px wide on a phone, which is four characters of an 8.5px
+     chip: every event in the grid read as "B..." or "C...". So the cells carry
+     the number and the events' own colours, and the panel below the grid --
+     which already existed, and already listed the selected day in full -- is
+     where the day is actually read (real-user request, with a screenshot of a
+     phone calendar doing exactly this).
+     The cell loses its box with the chips: a bordered card is what held a
+     stack of chips, and around a number and four dots it is just 42 boxes. */
+  .month-grid{gap:1px;}
+  /* A HEIGHT, not an aspect ratio. The grid is 289px inside the card's own
+     padding, so a square cell is 40px against content that needs 41 (3 of
+     padding, the 26px circle, a 4px gap and the 5px dot row) -- and the dots
+     spilled a pixel into the row below, which reads as them belonging to the
+     wrong week. The cell is as tall as what is in it; the width follows the
+     column and the cell is near enough square either way. */
+  .month-day{min-height:42px;border:none;background:none;padding:3px 0 4px;
+    align-items:center;justify-content:flex-start;gap:4px;overflow:visible;}
+  .month-day .chip-stack{display:none;}
+  .month-day .day-dots{display:flex;}
+  /* The number sits IN the circle that marks it, so today and the selected day
+     are the same shape in two states rather than two different marks. 26px is
+     a real target at this size and still leaves the dots their row. */
+  .month-day .dnum{width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;
+    font-size:13px;color:var(--ink);box-sizing:border-box;}
+  .month-day.today{border:none;}
+  .month-day.today .dnum{color:var(--celadon-4);font-weight:700;}
+  .month-day.selected{background:none;}
+  .month-day.selected .dnum{background:var(--ink);color:var(--paper);font-weight:700;}
+  .month-day.today.selected .dnum{background:var(--celadon-4);color:#fff;}
+  .month-dow{font-size:10px;padding-bottom:2px;}
+  /* There is always a day selected here (see renderMonthGrid), so a close
+     button would empty the one panel the layout depends on. */
+  #monthAgendaCloseBtn{display:none;}
   /* Everything above the header's black divider line gets smaller on
      mobile so the title, tagline, language control, and account controls
      all fit comfortably without crowding or wrapping awkwardly. */
@@ -4235,6 +4314,11 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       <div class="month-grid" id="monthGrid"></div>
       <div id="monthAgendaPanel" class="notes-panel hidden" style="margin-top:10px;"></div>
       <div class="week-grid-wrap hidden" id="weekGridWrap">
+        <!-- The phone's week view: the seven days as a strip, and the day you
+             pick drawn underneath at the day view's own size. See
+             renderWeekStrip(). Never shown on a desktop, where all seven
+             columns fit and the grid IS the week. -->
+        <div class="week-strip hidden" id="weekStrip"></div>
         <div class="week-header-row" id="weekHeaderRow"></div>
         <div class="week-body-scroll">
           <button type="button" class="week-more-indicator hidden" id="weekMoreAbove"></button>
@@ -16673,25 +16757,33 @@ function placeRowSlider(row, active, opts){
     st.parked = false;
     return;
   }
+  // getBoundingClientRect reports the box as PAINTED, so inside a scaled
+  // ancestor every distance it gives is already multiplied by that scale --
+  // while the pill's own left/width/transform are written in the row's
+  // untransformed coordinates. The dock scales as it shrinks on scroll, so
+  // without dividing it back out the pill would be placed at 82% of the way
+  // to the button it belongs under. Measured off the row's own two boxes, so
+  // it holds for any scale from any ancestor and is exactly 1 everywhere else.
+  const k = rowBox.width / row.offsetWidth || 1;
   // Against the row's PADDING box, which is where an absolutely positioned
   // child's own 0,0 is -- getBoundingClientRect answers the BORDER box, so on
   // a row with a border of its own the pill lands one pixel down and right of
   // the button it is supposed to be under. clientLeft/clientTop ARE those
   // border widths, and both are 0 on the two rows this started with, so
   // nothing already placed moves.
-  const x = Math.round(box.left - rowBox.left - row.clientLeft);
+  const x = Math.round((box.left - rowBox.left) / k - row.clientLeft);
   // And the vertical, measured rather than assumed 0 for the same reason: the
   // old rows have no padding so their buttons begin at the row's own top edge,
   // and the dock is a padded bar where the pill would otherwise ride high.
-  slider.style.top = Math.round(box.top - rowBox.top - row.clientTop) + 'px';
+  slider.style.top = Math.round((box.top - rowBox.top) / k - row.clientTop) + 'px';
   // The very first placement must not travel from the left edge -- there is
   // nowhere it came from.
   const jump = instant || !st.parked;
   if(jump) row.classList.add('no-slide-anim');
   slider.style.opacity = '1';
   row.classList.add('slider-ready');
-  slider.style.width = Math.round(box.width) + 'px';
-  slider.style.height = Math.round(box.height) + 'px';
+  slider.style.width = Math.round(box.width / k) + 'px';
+  slider.style.height = Math.round(box.height / k) + 'px';
   slider.style.transform = 'translateX(' + x + 'px)' + (jump ? '' : ' scaleX(1.07) scaleY(0.88)');
   if(jump){
     // A stretch still pending from the last move would land after this and
@@ -16803,6 +16895,7 @@ function ensureTabDock(){
     // transform, so a fixed child of it is still fixed to the viewport.
     app.appendChild(dock);
     wireTabDock(dock);
+    wireDockShrink(dock);
   }
   if(!tabDockObserver){
     // characterData and childList as well as class: a language change
@@ -16892,6 +16985,105 @@ function endTabDockDrag(dock, commit){
   // Cancelled -- the browser took the gesture for a page scroll -- so the bar
   // goes back to saying where you actually are.
   else if(!commit) placeRowSlider(dock, dock.querySelector(':scope > button.active'));
+}
+/* ---------- THE DOCK GIVES WAY AS YOU READ DOWN THE PAGE ----------
+   Scroll down and the bar eases to a smaller version of itself; scroll up and
+   it eases back to full size. Two resting states with a continuous motion
+   between them, which is what Safari's own bottom bar and Instagram's do
+   (real-user request: "the dock's shrink should be a continuous, eased
+   number... it should also happen width wise... resizing should be smooth").
+
+   ONE number does all of it. --dock-k runs 0 to 1 and the CSS derives the
+   scale from it, so width, height, the icons, the padding and the corner
+   radius cannot get out of step with each other, and there is nothing to
+   tune per property.
+
+   EASED AGAINST THE CLOCK, never per frame. `k += (target - k) * 0.2` moves
+   at whatever rate the phone happens to be painting, so a dropped frame
+   carries it further than a kept one -- worst exactly where the motion is
+   fastest. 1 - exp(-dt/TAU) is the same curve at any frame rate.
+   The target can change mid-flight (scroll down, then up again before it has
+   settled) and an exponential follower simply turns round from wherever it
+   is, which is the whole reason for a follower rather than a CSS transition
+   on a class: a transition would restart from its own start value. */
+const DOCK_SHRINK_TAU = 0.115;   // seconds; ~95% of the way in a third of a second
+const DOCK_FLIP_PX = 18;         // travel in one direction before the target flips
+const DOCK_TOP_PX = 40;          // this near the top it is always full size
+let dockK = 1, dockKTarget = 1, dockKFrame = 0, dockKLastT = 0;
+let dockScrollY = 0, dockScrollRun = 0;
+function dockWriteK(dock){
+  dock.style.setProperty('--dock-k', dockK.toFixed(4));
+}
+function dockTick(dock, t){
+  const dt = dockKLastT ? Math.min(0.05, (t - dockKLastT) / 1000) : 1 / 60;
+  dockKLastT = t;
+  dockK += (dockKTarget - dockK) * (1 - Math.exp(-dt / DOCK_SHRINK_TAU));
+  // Land ON the resting value rather than approaching it for ever, so the
+  // loop actually stops and the promoted layer can be given back. 0.004 of k
+  // is 0.0007 of scale, which on a 351px bar is a quarter of a pixel.
+  if(Math.abs(dockKTarget - dockK) < 0.004) dockK = dockKTarget;
+  dockWriteK(dock);
+  if(dockK !== dockKTarget){
+    dockKFrame = requestAnimationFrame((ts)=> dockTick(dock, ts));
+  } else {
+    dockKFrame = 0; dockKLastT = 0;
+    dock.classList.remove('dock-easing');
+  }
+}
+function dockAimK(dock, target){
+  if(target === dockKTarget && dockK === dockKTarget) return;
+  dockKTarget = target;
+  // A reader who has asked for less motion gets the two states and no travel
+  // between them: the shrink is here to give the page room, which is useful
+  // either way, and it is the MOTION that was opted out of.
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    dockK = target;
+    dockWriteK(dock);
+    return;
+  }
+  if(dockKFrame) return;            // already following; it will turn round
+  dock.classList.add('dock-easing');
+  dockKLastT = 0;
+  dockKFrame = requestAnimationFrame((ts)=> dockTick(dock, ts));
+}
+function wireDockShrink(dock){
+  const onScroll = ()=>{
+    // The bar is display:none above the media query's own width, and a
+    // gesture on a desktop has nothing to shrink.
+    if(!isMobileDevice()) { if(dockK !== 1) dockAimK(dock, 1); return; }
+    const y = Math.max(0, window.scrollY);
+    const dy = y - dockScrollY;
+    dockScrollY = y;
+    // Run length in the CURRENT direction, so a couple of pixels of jitter
+    // cannot flip the bar back and forth -- it has to be a deliberate
+    // DOCK_FLIP_PX of travel one way.
+    dockScrollRun = (dy > 0) === (dockScrollRun > 0) ? dockScrollRun + dy : dy;
+    // A page with nothing to scroll has nothing to give way for.
+    const scrollable = document.documentElement.scrollHeight - window.innerHeight > 80;
+    if(!scrollable || y <= DOCK_TOP_PX) dockAimK(dock, 1);
+    else if(dockScrollRun > DOCK_FLIP_PX) dockAimK(dock, 0);
+    else if(dockScrollRun < -DOCK_FLIP_PX) dockAimK(dock, 1);
+  };
+  dockScrollY = Math.max(0, window.scrollY);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  // Rotating the phone or opening the keyboard changes what is scrollable.
+  window.addEventListener('resize', onScroll);
+  // Touching the bar brings it back to full size -- but on the way UP, not on
+  // the way down. The drag-to-pick reads the buttons' live rects, so growing
+  // the bar under a finger that is already on it would slide the icons out
+  // from under the aim by several pixels near the ends. The whole gesture
+  // therefore happens at whatever size the bar is, and it returns to full
+  // when the finger lifts.
+  let downOnDock = false;
+  dock.addEventListener('pointerdown', (e)=>{ if(e.isPrimary) downOnDock = true; });
+  const release = ()=>{
+    if(!downOnDock) return;
+    downOnDock = false;
+    dockScrollRun = 0;
+    dockAimK(dock, 1);
+  };
+  window.addEventListener('pointerup', release);
+  window.addEventListener('pointercancel', release);
 }
 function wireTabDock(dock){
   dock.addEventListener('pointerdown', (e)=>{
@@ -24374,6 +24566,40 @@ function wireInlineSeg(el, options, current, onCommit, rerender){
   });
 }
 
+// Every visible account's events, expanded across a date range, keyed by
+// date. The month grid, the week/day grid and the week strip all wanted the
+// identical block; three copies of it is three places for the export rule
+// below to drift out of step.
+function eventsInRange(startKey, endKey){
+  const byDate = {};
+  calendarVisibleUserIds().forEach(uid=>{
+    (allEvents[uid]||[]).forEach(ev=>{
+      // Held out of the PICTURE, and only while the picture is being taken.
+      // With the dialog open on the calendar the chip has to stay put --
+      // faded, and still clickable, or there is no way to put it back.
+      if(calExportOut(ev) && document.body.classList.contains('cal-exporting')) return;
+      expandOccurrences(ev, startKey, endKey).forEach(dateKey=>{
+        if(!byDate[dateKey]) byDate[dateKey] = [];
+        byDate[dateKey].push(ev);
+      });
+    });
+  });
+  return byDate;
+}
+// Up to four dots under a date, in the events' own colours and in time
+// order. A fifth event does not get a fifth dot -- past three the row ends
+// in a short dash instead, because "and more" is the only thing a reader can
+// take from a fourth 4px dot anyway, and it keeps every cell the same width.
+// Drawn for the phone, where a 50px cell cannot hold a legible text chip: the
+// dots say WHETHER and roughly WHAT, and the agenda under the grid says which.
+const MONTH_DOTS_MAX = 4;
+function dayDotsHtml(events){
+  if(!events.length) return '<div class="day-dots"></div>';
+  const shown = events.slice(0, events.length > MONTH_DOTS_MAX ? MONTH_DOTS_MAX - 1 : MONTH_DOTS_MAX);
+  let html = shown.map(ev=> `<span class="day-dot" style="background:${ev.color || '#4F7563'}"></span>`).join('');
+  if(events.length > MONTH_DOTS_MAX) html += '<span class="day-dot more"></span>';
+  return `<div class="day-dots">${html}</div>`;
+}
 function renderMonthGrid(){
   const grid = document.getElementById('monthGrid');
   grid.innerHTML = '';
@@ -24389,21 +24615,15 @@ function renderMonthGrid(){
   const todayKey = todayStr();
   const monthStart = `${y}-${String(m+1).padStart(2,'0')}-01`;
   const monthEnd = `${y}-${String(m+1).padStart(2,'0')}-${String(daysInMonth).padStart(2,'0')}`;
+  // On a phone the agenda under the grid is where the day is actually READ,
+  // so something always has to be in it: today while today is in the month on
+  // screen, and the first otherwise. On a desktop the chips in the cells are
+  // the readout and the panel is an extra, so it stays closed until asked for.
+  if(isMobileDevice() && (!selectedAgendaDate || selectedAgendaDate < monthStart || selectedAgendaDate > monthEnd)){
+    selectedAgendaDate = (todayKey >= monthStart && todayKey <= monthEnd) ? todayKey : monthStart;
+  }
 
-  const myEventsByDate = {};
-  calendarVisibleUserIds().forEach(uid=>{
-    (allEvents[uid]||[]).forEach(ev=>{
-      // Held out of the PICTURE, and only while the picture is being taken.
-      // With the dialog open on the calendar the chip has to stay put --
-      // faded, and still clickable, or there is no way to put it back.
-      if(calExportOut(ev) && document.body.classList.contains('cal-exporting')) return;
-      const occ = expandOccurrences(ev, monthStart, monthEnd);
-      occ.forEach(dateKey=>{
-        if(!myEventsByDate[dateKey]) myEventsByDate[dateKey] = [];
-        myEventsByDate[dateKey].push(ev);
-      });
-    });
-  });
+  const myEventsByDate = eventsInRange(monthStart, monthEnd);
   // No hardcoded TOPIK chip injection here any more -- TOPIK dates are
   // real, ordinary events now (ensureTopikEvents), so they arrive through
   // myEventsByDate like everything else, for exactly the accounts that
@@ -24433,10 +24653,17 @@ function renderMonthGrid(){
     });
     const extra = events.length - maxShow;
     if(extra > 0){ chips += `<div class="more-count">+${extra}</div>`; }
-    cell.innerHTML = `<div class="dnum">${day}</div><div class="chip-stack">${chips}</div>`;
+    // Both readouts are always in the DOM and CSS picks which one shows: the
+    // chips on a desktop, the dots on a phone. That way a rotation or a
+    // resize is the browser's problem rather than something this renderer
+    // has to be re-run for, which is the same call the tab dock makes.
+    cell.innerHTML = `<div class="dnum">${day}</div><div class="chip-stack">${chips}</div>${dayDotsHtml(events)}`;
     if(dateKey === selectedAgendaDate) cell.classList.add('selected');
     cell.addEventListener('click', ()=>{
-      selectedAgendaDate = selectedAgendaDate === dateKey ? null : dateKey;
+      // A second tap on the same day closes the panel on a desktop, where it
+      // is an extra. On a phone it is the only place that day's events are
+      // written out, so a tap only ever moves the selection.
+      selectedAgendaDate = (!isMobileDevice() && selectedAgendaDate === dateKey) ? null : dateKey;
       grid.querySelectorAll('.month-day.selected').forEach(el=>el.classList.remove('selected'));
       if(selectedAgendaDate) cell.classList.add('selected');
       renderMonthAgenda();
@@ -24468,7 +24695,11 @@ function renderMonthGrid(){
 function renderMonthAgenda(){
   const panel = document.getElementById('monthAgendaPanel');
   if(!panel) return;
-  if(!selectedAgendaDate){ panel.classList.add('hidden'); panel.innerHTML = ''; return; }
+  // The panel is the month grid's own second half, and on a phone
+  // renderMonthGrid() always leaves a day selected -- so without the mode
+  // check a week or a day view restored on load would come up with a stale
+  // agenda card sitting above its time grid.
+  if(!selectedAgendaDate || calViewMode !== 'month'){ panel.classList.add('hidden'); panel.innerHTML = ''; return; }
   const dateKey = selectedAgendaDate;
   const events = [];
   calendarVisibleUserIds().forEach(uid=>{
@@ -24726,6 +24957,14 @@ function getWeekStart(d){
   return date;
 }
 function renderCalGrid(dates){
+  // Drawing a time grid means the week or the day view, and the month's
+  // agenda panel is the month grid's own second half. It was never taken
+  // down by the view buttons -- they cleared selectedAgendaDate and left the
+  // card on screen -- which nobody met while the panel only opened on a tap,
+  // and which a phone now meets every time, because the month view always
+  // leaves a day selected. One place, so every route in is covered: the view
+  // buttons, a restore on load, and the agenda's own "open day view".
+  renderMonthAgenda();
   HOUR_PX = isMobileDevice() ? 60 : 44;
   const startKey = todayStr(dates[0]);
   const endKey = todayStr(dates[dates.length-1]);
@@ -24755,20 +24994,7 @@ function renderCalGrid(dates){
   const body = document.getElementById('weekBody');
   body.innerHTML = '';
 
-  const eventsByDate = {};
-  calendarVisibleUserIds().forEach(uid=>{
-    (allEvents[uid]||[]).forEach(ev=>{
-      // Held out of the PICTURE, and only while the picture is being taken.
-      // With the dialog open on the calendar the chip has to stay put --
-      // faded, and still clickable, or there is no way to put it back.
-      if(calExportOut(ev) && document.body.classList.contains('cal-exporting')) return;
-      const occ = expandOccurrences(ev, startKey, endKey);
-      occ.forEach(dateKey=>{
-        if(!eventsByDate[dateKey]) eventsByDate[dateKey] = [];
-        eventsByDate[dateKey].push(ev);
-      });
-    });
-  });
+  const eventsByDate = eventsInRange(startKey, endKey);
 
   // The grid is only as tall as the day actually IS. Drawn from midnight to
   // midnight a column is mostly empty rows on any real week, and the one
@@ -24987,13 +25213,68 @@ document.getElementById('weekMoreBelow').addEventListener('click', ()=>{
   updateWeekMoreIndicators();
 });
 document.querySelector('.week-body-scroll').addEventListener('scroll', updateWeekMoreIndicators, { passive: true });
+// THE WEEK, ON A PHONE, IS SEVEN DAYS YOU CAN SEE AND ONE YOU CAN READ.
+// A seven-column time grid is 44px of labels plus 7 columns of 49 at 375px
+// wide, and an event bar in 49px holds about four characters -- so the week
+// view was a picture of a week with none of it legible. The strip keeps what
+// a week view is FOR (which days are busy, and where you are in the week) and
+// the day underneath is the day view, at its own size, which needed no
+// second renderer and no changes: renderCalGrid() of a single date is
+// literally what renderDayGrid() does.
+//
+// Which day is picked is just calViewDate, so nothing new is stored: every
+// day of a week shares a week start, so moving within the week leaves the
+// strip where it is, and the ‹ › buttons still step a whole week and keep the
+// weekday you were on.
 function renderWeekGrid(){
   const weekStart = getWeekStart(calViewDate);
   const weekDates = [];
   for(let i=0;i<7;i++){ const d = new Date(weekStart); d.setDate(d.getDate()+i); weekDates.push(d); }
+  const strip = document.getElementById('weekStrip');
+  if(isMobileDevice()){
+    renderWeekStrip(weekDates);
+    strip.classList.remove('hidden');
+    renderCalGrid([new Date(calViewDate)]);
+    return;
+  }
+  strip.classList.add('hidden');
   renderCalGrid(weekDates);
 }
+function renderWeekStrip(weekDates){
+  const strip = document.getElementById('weekStrip');
+  const todayKey = todayStr();
+  const pickedKey = todayStr(calViewDate);
+  const byDate = eventsInRange(todayStr(weekDates[0]), todayStr(weekDates[6]));
+  // The month grid's own initials, indexed by the day of the week -- both
+  // grids start their week on Sunday (getWeekStart and the month's own
+  // startOffset are both getDay()), so the two rows read identically and
+  // there is one place a language's letters come from.
+  const initials = weekdayInitials();
+  strip.innerHTML = '';
+  weekDates.forEach(d=>{
+    const key = todayStr(d);
+    const events = (byDate[key] || []).slice().sort((a,b)=> (a.event_time||'99:99').localeCompare(b.event_time||'99:99'));
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = (key===todayKey ? 'today ' : '') + (key===pickedKey ? 'selected' : '');
+    btn.setAttribute('aria-pressed', key===pickedKey ? 'true' : 'false');
+    btn.innerHTML = `<span class="wd">${initials[d.getDay()]}</span>`
+      + `<span class="dnum">${d.getDate()}</span>${dayDotsHtml(events)}`;
+    btn.addEventListener('click', ()=>{
+      calViewDate = new Date(key+'T00:00:00');
+      // The grid keeps its own scroll only while the range key is unchanged,
+      // and moving to another day IS another range -- so this lands on that
+      // day's own earliest event rather than wherever the last day was read.
+      calGridScrolledForKey = null;
+      renderWeekGrid();
+    });
+    strip.appendChild(btn);
+  });
+}
 function renderDayGrid(){
+  // The strip is the WEEK view's, and both views draw into the same wrap, so
+  // it has to be put away here or switching week -> day keeps it.
+  document.getElementById('weekStrip').classList.add('hidden');
   renderCalGrid([new Date(calViewDate)]);
 }
 document.getElementById('calViewMonthBtn').addEventListener('click', ()=>{

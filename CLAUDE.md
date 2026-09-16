@@ -5959,6 +5959,188 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## The month is dots and a day you can read, and the dock gives way as you scroll (16 Sep, seventy-fourth pass)
+
+"And then can we change the layout of the calendar on the app specifically.
+The month view should be reminiscent of the Apple calendar [screenshot]. And
+think of something smart layout we can do with the week. Day is good as is.
+Lastly, when you scroll down on the App, can we make the option selector
+shrink dynamically? And when you scroll up it expands back to full size?"
+
+**Which control the last one meant was genuinely ambiguous** -- the sub-tab row
+just moved under the header line, the calendar's own Month/Week/Day row, and
+the new bottom dock all fit the words -- so it was asked rather than guessed
+at, with a sketch of each. **It is the DOCK**, and the guess would have been
+the sub-tab row. One question was worth the whole item.
+
+### A 50px CELL IS FOUR CHARACTERS OF A CHIP
+
+The month grid drew up to three text chips per day at 8.5px. At 375px the
+grid is 289px inside the card's own padding, so a cell is 40px, and every
+event in it read as "B..." or "C...". The reference (a phone calendar, in the
+screenshot) does the obvious thing: the cells carry the date and the events'
+own COLOURS, and the day is read in full underneath.
+
+**Half of that already existed.** `#monthAgendaPanel` has sat under the grid
+since the month view was built, listing a tapped day's events with their
+times and owners; what was missing was the dots, and a reason for the panel to
+be open. So the work is a dot row and two rules about the selection, not a new
+view.
+
+- **Both readouts are always in the DOM and CSS picks.** The chips on a
+  desktop, the dots on a phone. A rotation or a resize is then the browser's
+  problem rather than something the renderer has to be re-run for, which is
+  the call the tab dock already makes.
+- **Up to four dots, and the fourth is a DASH when there are more.** Past
+  three, "and more" is the only thing a reader can take from another 5px dot,
+  and a short dash says it while keeping every cell the same width.
+- **The dot row has a fixed height even when empty**, so no cell is a
+  different height from its neighbours and the grid does not jog about as the
+  month changes.
+- **A phone always has a day selected** -- today while today is in the month
+  on screen, the first otherwise -- because the panel is where the day is
+  actually read there. On a desktop the chips are the readout and the panel is
+  an extra, so it stays closed until asked for and a second tap still closes
+  it. On a phone a tap only ever MOVES the selection, and the panel's ✕ is not
+  drawn at all: it would empty the one thing the layout depends on.
+- **The cell is sized by its CONTENT, not by an aspect ratio.** `aspect-ratio:
+  1/0.92` on a 40px column gives 37px against content that needs 41 (3 of
+  padding, the 26px circle, a 4px gap, the 5px dots), and the dots spilled a
+  pixel into the row below -- which reads as them belonging to the wrong week.
+- The number sits IN the circle that marks it, so today and the selected day
+  are one shape in two states rather than two different marks.
+
+### THE WEEK IS SEVEN DAYS YOU CAN SEE AND ONE YOU CAN READ
+
+At 375px the week grid is a 44px label column plus seven columns of 49, and an
+event bar in 49px holds about four characters. It was a picture of a week with
+none of it legible.
+
+The phone gets a **strip of the seven days** -- the same number-in-a-circle and
+the same dots as the month grid, so a day is marked identically in both -- and
+**the day you pick drawn underneath at the day view's own size.** That keeps
+what a week view is FOR (which days are busy, where you are in the week) and
+makes the day readable, which is the half that was broken.
+
+**It needed no second renderer and no new state.** `renderCalGrid()` of a
+single date is literally what `renderDayGrid()` does, and which day is picked
+is just `calViewDate` -- every day of a week shares a week start, so moving
+within the week leaves the strip where it is and the ‹ › buttons still step a
+whole week and keep the weekday you were on. The desktop is untouched: all
+seven columns fit there and the grid IS the week.
+
+- **The strip takes its letters from `weekdayInitials()`**, the month grid's
+  own, indexed by `getDay()`. Both grids start their week on Sunday, so the
+  two rows read identically and a language's letters come from one place.
+- **Picking a day clears `calGridScrolledForKey`**, so the grid lands on that
+  day's own earliest event rather than wherever the last day was read.
+
+### AND THE MONTH'S AGENDA WAS NEVER TAKEN DOWN
+
+Found on the way: the view buttons cleared `selectedAgendaDate` and left the
+agenda CARD on screen, so a week view opened after tapping a day in the month
+came up with a stale day's card above its time grid. Nobody met it while the
+panel only opened on a tap; a phone now meets it every time. It is taken down
+in `renderCalGrid()` -- drawing a time grid means the week or the day view --
+so every route in is covered at once: the view buttons, a restore on load, and
+the agenda's own "open day view".
+
+### THE DOCK IS ONE EASED NUMBER, AND IT SHRINKS BOTH WAYS
+
+"The dock's shrink should be a continuous, eased number. When you make the bar
+smaller, it should also happen width wise. And it should be more dynamic in
+the sense that there should be a smooth motion to a smaller size (default
+state would just be the two like safari instagram and others do it, but
+resizing should be smooth)."
+
+`--dock-k` runs 0 to 1 and the CSS derives a `scale()` from it, so width,
+height, the icons, the padding and the corner radius cannot get out of step
+and there is nothing to tune per property.
+
+- **A TRANSFORM, not a height.** The bar's layout box has to stay exactly
+  where it is: `--dock-space` is what `body`'s padding-bottom, the chat
+  launcher and the update pill all keep clear of, so shrinking the BOX would
+  move all three on every frame -- re-laying out the page on a scroll, which is
+  the trap this file already records for the condensing top bar. It also means
+  the travelling pill inside comes along for nothing.
+- **About the bottom edge**, so the bar keeps its 10px float and shrinks into
+  place rather than drifting down the screen. Measured: **351x58 to 287.8x47.6
+  with the bottom gap unchanged at 10.0px**, and the buttons at 36px.
+- **Eased against the CLOCK, never per frame.** `k += (target - k) * 0.2`
+  moves at whatever rate the phone happens to be painting, so a dropped frame
+  carries it further than a kept one, worst exactly where the motion is
+  fastest. `1 - exp(-dt/TAU)` is the same curve at any rate: driven with a
+  synthetic clock at **30, 60 and 120 fps, the spread at 100, 200, 300 and 400
+  ms is 0.0000 at every one.**
+- **A follower rather than a CSS transition on a class**, because the target
+  changes mid-flight: scroll down, then up before it has settled, and an
+  exponential follower turns round from wherever it is (measured: leaves at
+  0.419 and comes back smoothly) where a transition would restart from its own
+  start value.
+- **The direction is a RUN, not a delta.** 18px of travel one way before the
+  target flips, so a couple of pixels of jitter cannot flip the bar back and
+  forth. Full size within 40px of the top, and on a page with nothing to
+  scroll.
+- **Touching it restores it on the way UP, not the way down.** The
+  drag-to-pick reads the buttons' live rects, so growing the bar under a
+  finger already on it would slide the icons out from under the aim by several
+  pixels near the ends. The gesture happens at whatever size the bar is, and
+  it returns to full when the finger lifts.
+- **Reduced motion gets the two states and no travel between them.** The
+  shrink gives the page room, which is useful either way; it is the MOTION
+  that was opted out of.
+- **The promoted layer is given back.** `will-change: transform` only while
+  the follower is running, and `k` lands ON its resting value (0.004 of k is
+  0.0007 of scale, a quarter of a pixel on a 351px bar) so the loop actually
+  stops.
+
+### `getBoundingClientRect` INSIDE A SCALED ANCESTOR IS ALREADY SCALED
+
+The one thing the scale broke, and it is worth knowing generally.
+`placeRowSlider()` measures the row and the active button with
+`getBoundingClientRect` and writes the pill's `left`, `width` and `translateX`
+in the row's OWN coordinates. Inside a scaled ancestor those two are different
+units: at `scale(0.82)` every distance the rects report is already multiplied
+by 0.82, so the pill was being placed at 82% of the way to the button it
+belongs under.
+
+It divides by the row's own measured scale now (`rowBox.width /
+row.offsetWidth`), which holds for any scale from any ancestor and is exactly
+1 everywhere else. Measured: the pill sits on the active button at **dx 0.00,
+dy 0.00** at full size, mid-ease at k 0.686, and fully compact at k 0 -- and
+the top row on a desktop is unchanged at **dx 0.00, dy 0.00**.
+
+### And three copies of one loop became one
+
+`renderMonthGrid`, `renderCalGrid` and the new strip all wanted the same
+block: every visible account's events, expanded across a date range, keyed by
+date. `eventsInRange()` is that block once. Three copies of it is three places
+for the export rule inside it to drift out of step.
+
+### Checked
+
+At 375x812 and at 1024, light and dark. The month grid draws its dots and the
+agenda under it (9:30 Standup, 1:00 Essay due with their owner badges), a day
+with five events comes out three dots and a dash, tapping the 24th moves the
+selection and the panel with it, and today keeps its celadon while the
+selected day takes the filled circle. The week strip reads S M T W T F S over
+13 to 19 with the dots under them and the day grid below at full width. On a
+desktop the chips are back (`chip-stack` flex, `day-dots` none), the strip is
+not drawn, the header row has its eight columns, the agenda stays closed until
+asked for and the dock is `display: none`.
+
+The project's own verification script: 1 inline script block, 0 parse
+failures; 616 `getElementById` targets against 1,062 ids with only the two
+known misses; 1,003 i18n keys in each of en, ko and vi; 46 em dashes, the same
+count as at HEAD.
+
+**One thing about testing the follower in the preview pane**: rAF only advances
+while something paints it, so `k` sits at its start value however long you
+wait and the loop looks dead. Successive screenshots ARE the clock -- that is
+how the 351 to 287.8 was watched -- and the CURVE itself was measured by
+driving the same arithmetic with a synthetic clock, which does not depend on
+anything painting at all.
+
 ## A 14-pixel icon cost a fifth of the download, and 21 reads waited in a queue (16 Sep, seventy-third pass)
 
 "Can we optimize loading? Especially on the app it feels very slow when
