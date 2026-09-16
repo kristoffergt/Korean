@@ -5959,6 +5959,127 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## A link in a note is a link now (16 Sep, seventy-sixth pass)
+
+"Add the ability to make hyperlinks from links."
+
+A URL in a note was dead text: the toolbar had no link button and nothing
+turned an address into something you could follow. Four ways in, and they are
+ONE feature rather than four, because every one of them lands on Quill's own
+`link` format and so reads back, saves, broadcasts to a collaborator and undoes
+the same way:
+
+| | |
+|---|---|
+| **type** an address | the space or the return after it links it |
+| **paste** text with addresses in it | they arrive linked |
+| **paste an address over a selection** | the selection becomes the link, which is how every editor people already use does it |
+| **the link button** | opens the link box on a selection, on the link the caret is in, or -- with nothing selected -- inserts the address as linked text |
+
+**The note editors only**, course notes and the notebook. The TOPIK writing
+editors are essays against a character count and were already stripped of
+images and video; a link has no business in one.
+
+### What each road had to get right
+
+- **An address without a scheme gets one.** Quill's sanitize resolves an href
+  against the PAGE, so "google.com" left alone becomes kristoffergt.com/google.com
+  -- a link that goes nowhere while looking fine. `noteLinkHref` prefixes
+  https://, turns an email into mailto:, and counts a scheme only when what
+  follows the colon is not a port, or "www.x.com:8080" reads as a protocol
+  called www.x.com.
+- **The punctuation a sentence puts after an address is not part of it.** "see
+  https://x.com." links x.com; a closing bracket stays when its opener is inside
+  the address, which is how `wiki/Seoul_(city)` survives; "(https://x.com)"
+  links without either bracket.
+- **An address has to START a word** -- "foohttps://x" is not one.
+- **Typing is read off the DELTA, not the keyboard**, so autocorrect replacing a
+  word and a space in one go counts the same as a keystroke, and only the
+  current LINE is read, never the whole note.
+- **The link is its own undo step.** `history.cutoff()` before formatting, so one
+  Cmd-Z takes the link off and leaves what was typed -- which is what an editor
+  that links FOR you owes the reader when it guessed wrong.
+- **A pasted anchor keeps its own href.** The text matcher skips text inside an
+  `<a>`, because the anchor's own matcher runs after it and an attribute set
+  first would win.
+- **Paste-over-selection is decided on the CONTAINER in the capture phase**, so it
+  runs before Quill's paste handler on the root has taken the clipboard, and
+  anything that is not an address falls straight through to Quill untouched.
+- **Quill's own button does nothing with nothing selected**, which reads as a
+  broken button. The handler covers all three states, and saving with a bare
+  caret inserts the address rather than setting an invisible cursor format.
+- **Cmd- or Ctrl-click follows a link.** A plain click still places the caret,
+  and the box that comes up under it has the link to open.
+
+### THE HREF IS REWRITTEN AS THE BLOT IS BUILT
+
+Quill sanitizes an href when IT writes one, and only then. A link that arrives
+as stored HTML -- and every note is opened by assigning its saved HTML to the
+editor -- is wrapped as it stands, so a "javascript:" href written into a shared
+note by any means other than this editor sat in the DOM untouched, and the
+snow tooltip's "Visit" link copies the raw href out of it.
+
+`NoteLink` extends the link format and rewrites the href in its CONSTRUCTOR,
+which covers stored HTML, a paste and a collaborator's delta at once, because
+all three end up constructing one. **It has to be the node, not an override of
+`formats()`**: Quill 1.3.6's tooltip reads the href through the ORIGINAL class's
+static method, not whatever is registered. Measured: a stored
+`javascript:alert(1)` comes up as `about:blank` in the note AND in the tooltip's
+preview. The version panel renders note HTML as plain markup with real anchors,
+so `sanitizeNoteLinks()` does the same rewrite there.
+
+A native `class extends` of Quill's Babel-compiled ES5 Link constructs fine,
+which was worth checking rather than assuming.
+
+**And a wider, older problem, NOT fixed here and flagged as its own task**:
+stored note HTML is assigned with innerHTML on every open, so an inline handler
+in it runs. Confirmed on a local copy with a benign marker -- an
+`<img onerror>` fired the moment `openNotebookNote()` ran. Notes are shared
+across a link group, so that is stored XSS between accounts. The link rewrite
+above is a subset of what the real fix (an allowlist sanitizer on every render
+path) has to do.
+
+### The link box is the app's own card, in the reader's language
+
+Quill's snow tooltip is a white box with #444 text wherever it is drawn -- a
+white slab in the dark theme -- and its labels are CSS `content` in English.
+It takes the app's tokens now, and every label reads a custom property that
+`applyLanguage()` writes with `JSON.stringify(t(key))`, which is exactly a quoted
+CSS string with its own quotes escaped; Hangul and Vietnamese pass straight
+through. Measured: 링크 열기 / 수정 / 제거 / 링크 입력 / 저장 in Korean, "Nhập liên
+kết:" in Vietnamese. The video box shares the tooltip and got its label too.
+
+- **A link is coloured, not only underlined**, because the U button draws the
+  identical line: `--celadon-4` in light (4.7:1) and `--celadon-3` in dark, where
+  celadon-4 is only 3.4:1 against the page. A colour the writer set on purpose
+  is an inline style and still wins.
+- **On a phone the preview address ellipsises at 120px.** Quill keeps the box
+  inside the page by SLIDING it, not by shrinking it, and with its own 200px
+  preview the box was 352px wide on a 375px screen, hard against the edge.
+  313px with margin both sides now. The link box's text field is 16px there, so
+  iOS does not zoom on it.
+- **The toolbar now needs 512px to stay on one row**, against 484 before: the
+  button is 28px. A phone wrapped to two rows before and still does, and a
+  desktop is one row either way; only a narrow window between the two changes.
+
+### Checked
+
+Driven at the real notebook editor on a local copy, nothing saved: typed
+https/www/trailing dot/balanced bracket/brackets round it/no trigger yet/not at
+a word start/plain words; one undo after an autolink; a paste with two addresses
+and a bold one (bold kept); a pasted anchor whose text disagrees with its href; an
+address pasted over "syllabus"; a non-address pasted over a selection (left to
+Quill); the button with an address selected, a word selected and a bare domain
+typed, nothing selected, and the caret inside a link; Remove from the tooltip;
+a stored javascript: link and its tooltip preview; the version panel with
+javascript:, data: and mailto:; Cmd-click, Ctrl-click, a plain click and a
+sanitized link; the labels in en, ko and vi; the link colour in both themes; and
+the phone at 375px in both modes of the box, light and dark.
+
+The project's verification script: 1 inline script block, 0 parse failures;
+616 targets against 1,062 ids with only the two known misses; 1,009 i18n keys in
+each of en, ko and vi; 46 em dashes, the same count as at HEAD.
+
 ## The note you just added opens when the courier has delivered it (16 Sep, seventy-fifth pass)
 
 "When you add a note, the page should open that note when the courier

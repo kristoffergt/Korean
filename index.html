@@ -2232,6 +2232,11 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
    an eleven-pixel target and the number box is the one that takes a thumb. */
 @media (pointer: coarse){
   .ql-toolbar input.nf-size{font-size:16px;}
+  .ql-snow .ql-tooltip input[type=text]{font-size:16px;width:150px;}
+  /* Quill keeps the box inside the page by sliding it, not by shrinking it, and
+     with its own 200px preview a link box on a 375px phone is 352px wide and
+     sits hard against the screen edge. The address ellipsises sooner instead. */
+  .ql-snow .ql-tooltip a.ql-preview{max-width:120px;}
   .nf-size-panel button{padding:7px 8px;}
 }
 /* "Last saved by X at Y" is a footnote about the note rather than the first
@@ -2606,6 +2611,38 @@ body.split-resizing iframe{pointer-events:none;}
 .ql-editor .ql-video{resize:both;overflow:hidden;display:block;min-width:120px;min-height:90px;}
 .ql-container.ql-snow{border-color:var(--line) !important;border-radius:0 0 8px 8px;min-height:220px;font-size:14px;}
 #quillContainer .ql-editor{color:var(--note-author-color, var(--ink));background:transparent !important;min-height:220px;}
+/* A LINK IN A NOTE. Underline alone would not do it: the U button draws the
+   identical line, so a link and underlined text would be indistinguishable.
+   The app's own link colour, one step lighter in the dark theme where
+   --celadon-4 on the page is 3.4:1 and --celadon-3 is 6.4:1. A colour the
+   writer set on purpose is an inline style and still wins, and keeps the
+   underline. Quill's stock rule paints every anchor #06c. */
+.ql-snow .ql-editor a{color:var(--celadon-4);text-decoration:underline;text-underline-offset:2px;}
+body.dark .ql-snow .ql-editor a{color:var(--celadon-3);}
+.ver-body a{color:var(--celadon-4);text-decoration:underline;text-underline-offset:2px;}
+body.dark .ver-body a{color:var(--celadon-3);}
+/* THE LINK BOX. Quill's snow tooltip is a white box with a grey border and
+   #444 text wherever it is drawn -- a white slab in the dark theme -- and its
+   labels are CSS content in English. It is the app's own card now, and every
+   label reads a custom property that applyLanguage() writes, so it follows the
+   language like everything else; the literal in each var() is only the
+   fallback for a page that has not set them yet.
+   Each rule repeats Quill's own selector, so it ties on specificity and wins on
+   order: this block comes after quill.snow.css in the document. */
+.ql-snow .ql-tooltip{background:var(--paper);border:1px solid var(--line);color:var(--ink);
+  border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.18);padding:6px 12px;z-index:40;font-size:13px;}
+.ql-snow .ql-tooltip::before{content:var(--ql-visit,"Visit link:");color:var(--ink-soft);}
+.ql-snow .ql-tooltip[data-mode=link]::before{content:var(--ql-enter-link,"Enter link:");}
+.ql-snow .ql-tooltip[data-mode=video]::before{content:var(--ql-enter-video,"Enter video:");}
+.ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-4);text-decoration:underline;text-underline-offset:2px;}
+body.dark .ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-3);}
+.ql-snow .ql-tooltip a.ql-action,.ql-snow .ql-tooltip a.ql-remove{color:var(--ink);font-weight:600;}
+.ql-snow .ql-tooltip a.ql-action::after{content:var(--ql-edit,"Edit");border-right-color:var(--line);}
+.ql-snow .ql-tooltip.ql-editing a.ql-action::after{content:var(--ql-save,"Save");}
+.ql-snow .ql-tooltip a.ql-remove::before{content:var(--ql-remove,"Remove");color:var(--danger);}
+.ql-snow .ql-tooltip input[type=text]{background:var(--paper-dim);color:var(--ink);
+  border:1px solid var(--line);border-radius:6px;height:28px;padding:3px 8px;}
+.ql-snow .ql-tooltip input[type=text]:focus{outline:none;border-color:var(--ink-soft);}
 #writingQuillContainer .ql-editor{color:var(--writing-author-color, var(--ink));background:transparent !important;min-height:220px;max-height:min(46vh, 460px);overflow-y:auto;}
 #writingMockQ53QuillContainer .ql-editor, #writingMockQ54QuillContainer .ql-editor{color:var(--writing-author-color, var(--ink));background:transparent !important;min-height:220px;max-height:min(40vh, 400px);overflow-y:auto;}
 /* Only the "head" (title + task prompt) needs its height matched between
@@ -11105,7 +11142,7 @@ const I18N = {
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
     tabYonsei:'Yonsei', tabBoards:'Board', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', lblYonseiBoardsSince:'Period', lblYonseiBoardsSort:'Sort', yonseiPeriodAll:'All time', yonseiPeriodWeek:'Last week', yonseiPeriodMonth:'Last month', yonseiPeriod6Months:'Last 6 months', yonseiPeriodYear:'Last year', yonseiPeriod2Years:'Last 2 years', yonseiPeriod3Years:'Last 3 years', yonseiPeriod4Years:'Last 4 years', yonseiPeriod5Years:'Last 5 years', yonseiSortNewest:'Newest first', yonseiSortOldest:'Oldest first', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobsSubJobBoard:'Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardAiUpdateBtn:'AI Job Fetch', jobBoardAiFetching:'Fetching', jobBoardUpdating:'Updating...', jobBoardIndBankingFinance:'Banking/Finance', jobBoardIndConsumerFashion:'Consumer/Fashion', jobBoardIndForeignFirms:'Foreign firms', jobBoardIndIntlOrg:'International Organization', jobBoardIndNGO:'NGO', jobBoardIndOthers:'Others', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Public', jobBoardIndResearchInstitute:'Research Institute', jobBoardIndTechnology:'Technology', jobBoardIndTopChaebol:'Top Chaebol', jobBoardIndTrade:'Trade', jobBoardNewBadge:'NEW', cdcLoginWarnTitle:'Logged in to CDC?', cdcLoginWarnBody:'The Yonsei CDC site needs its own separate login. Make sure you\'re signed in there before opening this posting, or the page may not load right.', cdcLoginWarnContinueBtn:'Continue', cdcLoginWarnLoginBtn:'Log in', cdcLoginWarnCancelBtn:'Cancel',
-    tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet. Create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', expLoadFailedHint:'Couldn\'t load your vacations. Check your connection and try again.', expRetryLoadBtn:'Retry', expAmountInvalid:'Enter a number, optionally ending in k or m (e.g. 4k, 1.5m).', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', hExpAllExpenses:'All expenses', sortLabel:'Sort', sortFieldStatus:'Status', sortFieldCompany:'Company', sortFieldRole:'Role', sortFieldIssuer:'Issuer', sortFieldDeadline:'Deadline', sortFieldTitle:'Title', sortFieldPosted:'Posted', sortFieldMfa:'2FA', sortFieldConfirmed:'Confirmed', sortFieldDate:'Date', sortFieldAmount:'Amount', sortFieldName:'Name', sortFieldCategory:'Category', sortFieldPaidBy:'Paid by', sortAsc:'Sorting up. Press to sort down.', sortDesc:'Sorting down. Press to sort up.', sortThen:'then', sortMultiple:'Multiple sort', expExcludedOne:'1 expense left out', expExcludedMany:'{n} expenses left out', expShowLabel:'Show', expShowAll:'All', expShowCounted:'Counted only', expShowExcluded:'Excluded only', expNoExcluded:'Nothing is excluded right now.', expNoCounted:'Everything here is excluded right now.', expNoExpensesYet:'No expenses logged yet.', expCountCategory:'Count this category', expDontCountCategory:"Don't count this category", expCountAllCategories:'Count all categories', expDontCountDay:"Don't count this day", expCountDay:'Count this day', expDontCountExpense:"Don't count this expense", expCountExpense:'Count this expense', expCountEverything:'Count everything', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default; a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', hEditVacation:'Edit vacation', expPickVacationHint:'Pick a vacation above.', expVacationDeleteConfirm:'Delete "{name}"? Every expense logged on it goes with it, for everyone on the trip.', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expCircleEmpty:'You\'re not linked with anyone yet. Add people to your Linked circle from Account settings.', expCircleAllOnTrip:'Everyone in your Linked circle is already on this trip.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip', lblExpCustomCategoryName:'Custom name (optional)', optNewVacationCurrencyCustom:'Other…', lblNewVacationCustomCurrency:'Currency code', lblExpDisplayCurrency:'Show in', optExpDisplayCurrencyOriginal:'Original', lblExpDisplayFull:'Convert every amount', expDisplayFullHint:'Shows every amount in the chosen currency. What was typed in is kept as it is, so switching back gives the exact amounts again.', hInviteBySearch:'Or invite by name', vacationInviteSearchPlaceholder:'Search by name...', recapLoadingHint:'Loading…', shellUpdatedText:'A new version is ready.', shellUpdatedBtn:'Reload'
+    tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet. Create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', expLoadFailedHint:'Couldn\'t load your vacations. Check your connection and try again.', expRetryLoadBtn:'Retry', expAmountInvalid:'Enter a number, optionally ending in k or m (e.g. 4k, 1.5m).', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', hExpAllExpenses:'All expenses', sortLabel:'Sort', sortFieldStatus:'Status', sortFieldCompany:'Company', sortFieldRole:'Role', sortFieldIssuer:'Issuer', sortFieldDeadline:'Deadline', sortFieldTitle:'Title', sortFieldPosted:'Posted', sortFieldMfa:'2FA', sortFieldConfirmed:'Confirmed', sortFieldDate:'Date', sortFieldAmount:'Amount', sortFieldName:'Name', sortFieldCategory:'Category', sortFieldPaidBy:'Paid by', sortAsc:'Sorting up. Press to sort down.', sortDesc:'Sorting down. Press to sort up.', sortThen:'then', sortMultiple:'Multiple sort', expExcludedOne:'1 expense left out', expExcludedMany:'{n} expenses left out', expShowLabel:'Show', expShowAll:'All', expShowCounted:'Counted only', expShowExcluded:'Excluded only', expNoExcluded:'Nothing is excluded right now.', expNoCounted:'Everything here is excluded right now.', expNoExpensesYet:'No expenses logged yet.', expCountCategory:'Count this category', expDontCountCategory:"Don't count this category", expCountAllCategories:'Count all categories', expDontCountDay:"Don't count this day", expCountDay:'Count this day', expDontCountExpense:"Don't count this expense", expCountExpense:'Count this expense', expCountEverything:'Count everything', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default; a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', hEditVacation:'Edit vacation', expPickVacationHint:'Pick a vacation above.', expVacationDeleteConfirm:'Delete "{name}"? Every expense logged on it goes with it, for everyone on the trip.', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expCircleEmpty:'You\'re not linked with anyone yet. Add people to your Linked circle from Account settings.', expCircleAllOnTrip:'Everyone in your Linked circle is already on this trip.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip', lblExpCustomCategoryName:'Custom name (optional)', optNewVacationCurrencyCustom:'Other…', lblNewVacationCustomCurrency:'Currency code', lblExpDisplayCurrency:'Show in', optExpDisplayCurrencyOriginal:'Original', lblExpDisplayFull:'Convert every amount', expDisplayFullHint:'Shows every amount in the chosen currency. What was typed in is kept as it is, so switching back gives the exact amounts again.', hInviteBySearch:'Or invite by name', vacationInviteSearchPlaceholder:'Search by name...', recapLoadingHint:'Loading…', shellUpdatedText:'A new version is ready.', shellUpdatedBtn:'Reload', qlVisit:'Visit link:', qlEnterLink:'Enter link:', qlEnterVideo:'Enter video:', qlEdit:'Edit', qlSave:'Save', qlRemove:'Remove'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
@@ -11228,7 +11265,7 @@ const I18N = {
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
     tabYonsei:'연세', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', lblYonseiBoardsSince:'기간', lblYonseiBoardsSort:'정렬', yonseiPeriodAll:'전체 기간', yonseiPeriodWeek:'지난 1주', yonseiPeriodMonth:'지난 1개월', yonseiPeriod6Months:'지난 6개월', yonseiPeriodYear:'지난 1년', yonseiPeriod2Years:'지난 2년', yonseiPeriod3Years:'지난 3년', yonseiPeriod4Years:'지난 4년', yonseiPeriod5Years:'지난 5년', yonseiSortNewest:'최신순', yonseiSortOldest:'오래된순', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobsSubJobBoard:'게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardAiUpdateBtn:'AI 확인', jobBoardAiFetching:'가져오는 중', jobBoardUpdating:'업데이트 중...', jobBoardIndBankingFinance:'금융', jobBoardIndConsumerFashion:'소비재/패션', jobBoardIndForeignFirms:'외국계 기업', jobBoardIndIntlOrg:'국제기구', jobBoardIndNGO:'NGO', jobBoardIndOthers:'기타', jobBoardIndPRMarketing:'PR/마케팅', jobBoardIndPublic:'공공기관', jobBoardIndResearchInstitute:'연구소', jobBoardIndTechnology:'기술/IT', jobBoardIndTopChaebol:'대기업(재벌)', jobBoardIndTrade:'무역', jobBoardNewBadge:'신규', cdcLoginWarnTitle:'CDC 사이트에 로그인하셨나요?', cdcLoginWarnBody:'연세 CDC 사이트는 별도의 로그인이 필요합니다. 이 공고를 열기 전에 CDC 사이트에 로그인되어 있는지 확인하세요. 그렇지 않으면 페이지가 제대로 열리지 않을 수 있습니다.', cdcLoginWarnContinueBtn:'계속', cdcLoginWarnLoginBtn:'로그인', cdcLoginWarnCancelBtn:'취소',
-    tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', expLoadFailedHint:'여행 정보를 불러오지 못했습니다. 연결 상태를 확인하고 다시 시도하세요.', expRetryLoadBtn:'다시 시도', expAmountInvalid:'숫자를 입력하세요. 끝에 k 또는 m을 붙일 수 있습니다 (예: 4k, 1.5m).', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', hExpAllExpenses:'전체 지출', sortLabel:'정렬', sortFieldStatus:'상태', sortFieldCompany:'회사', sortFieldRole:'직무', sortFieldIssuer:'발급기관', sortFieldDeadline:'마감일', sortFieldTitle:'제목', sortFieldPosted:'등록일', sortFieldMfa:'2단계 인증', sortFieldConfirmed:'인증 여부', sortFieldDate:'날짜', sortFieldAmount:'금액', sortFieldName:'이름', sortFieldCategory:'카테고리', sortFieldPaidBy:'결제자', sortAsc:'오름차순입니다. 누르면 내림차순으로 바뀝니다.', sortDesc:'내림차순입니다. 누르면 오름차순으로 바뀝니다.', sortThen:'그다음', sortMultiple:'다중 정렬', expExcludedOne:'{n}개 항목 제외됨', expExcludedMany:'{n}개 항목 제외됨', expShowLabel:'표시', expShowAll:'전체', expShowCounted:'포함된 것만', expShowExcluded:'제외된 것만', expNoExcluded:'지금은 제외된 항목이 없습니다.', expNoCounted:'지금은 모든 항목이 제외되어 있습니다.', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCountCategory:'이 카테고리 포함', expDontCountCategory:'이 카테고리 제외', expCountAllCategories:'모든 카테고리 포함', expDontCountDay:'이 날 제외', expCountDay:'이 날 포함', expDontCountExpense:'이 지출 제외', expCountExpense:'이 지출 포함', expCountEverything:'모두 포함', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', hEditVacation:'여행 수정', expPickVacationHint:'위에서 여행을 선택하세요.', expVacationDeleteConfirm:'"{name}" 여행을 삭제할까요? 이 여행에 기록된 모든 지출이 참여자 전원에게서 함께 삭제됩니다.', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expCircleEmpty:'아직 아무와도 연결되어 있지 않습니다. 계정 설정의 연결된 그룹에서 사람을 추가하세요.', expCircleAllOnTrip:'연결된 그룹의 모든 사람이 이미 이 여행에 참여하고 있습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거', lblExpCustomCategoryName:'맞춤 이름 (선택 사항)', optNewVacationCurrencyCustom:'기타…', lblNewVacationCustomCurrency:'통화 코드', lblExpDisplayCurrency:'표시 통화', optExpDisplayCurrencyOriginal:'원래 통화', lblExpDisplayFull:'모든 금액 변환', expDisplayFullHint:'모든 금액을 선택한 통화로 보여줍니다. 입력한 금액은 그대로 남아 있어 다시 바꾸면 정확한 금액이 돌아옵니다.', hInviteBySearch:'또는 이름으로 초대', vacationInviteSearchPlaceholder:'이름으로 검색...', recapLoadingHint:'불러오는 중...', shellUpdatedText:'새 버전이 준비되었습니다.', shellUpdatedBtn:'새로 고침'
+    tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', expLoadFailedHint:'여행 정보를 불러오지 못했습니다. 연결 상태를 확인하고 다시 시도하세요.', expRetryLoadBtn:'다시 시도', expAmountInvalid:'숫자를 입력하세요. 끝에 k 또는 m을 붙일 수 있습니다 (예: 4k, 1.5m).', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', hExpAllExpenses:'전체 지출', sortLabel:'정렬', sortFieldStatus:'상태', sortFieldCompany:'회사', sortFieldRole:'직무', sortFieldIssuer:'발급기관', sortFieldDeadline:'마감일', sortFieldTitle:'제목', sortFieldPosted:'등록일', sortFieldMfa:'2단계 인증', sortFieldConfirmed:'인증 여부', sortFieldDate:'날짜', sortFieldAmount:'금액', sortFieldName:'이름', sortFieldCategory:'카테고리', sortFieldPaidBy:'결제자', sortAsc:'오름차순입니다. 누르면 내림차순으로 바뀝니다.', sortDesc:'내림차순입니다. 누르면 오름차순으로 바뀝니다.', sortThen:'그다음', sortMultiple:'다중 정렬', expExcludedOne:'{n}개 항목 제외됨', expExcludedMany:'{n}개 항목 제외됨', expShowLabel:'표시', expShowAll:'전체', expShowCounted:'포함된 것만', expShowExcluded:'제외된 것만', expNoExcluded:'지금은 제외된 항목이 없습니다.', expNoCounted:'지금은 모든 항목이 제외되어 있습니다.', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCountCategory:'이 카테고리 포함', expDontCountCategory:'이 카테고리 제외', expCountAllCategories:'모든 카테고리 포함', expDontCountDay:'이 날 제외', expCountDay:'이 날 포함', expDontCountExpense:'이 지출 제외', expCountExpense:'이 지출 포함', expCountEverything:'모두 포함', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', hEditVacation:'여행 수정', expPickVacationHint:'위에서 여행을 선택하세요.', expVacationDeleteConfirm:'"{name}" 여행을 삭제할까요? 이 여행에 기록된 모든 지출이 참여자 전원에게서 함께 삭제됩니다.', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expCircleEmpty:'아직 아무와도 연결되어 있지 않습니다. 계정 설정의 연결된 그룹에서 사람을 추가하세요.', expCircleAllOnTrip:'연결된 그룹의 모든 사람이 이미 이 여행에 참여하고 있습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거', lblExpCustomCategoryName:'맞춤 이름 (선택 사항)', optNewVacationCurrencyCustom:'기타…', lblNewVacationCustomCurrency:'통화 코드', lblExpDisplayCurrency:'표시 통화', optExpDisplayCurrencyOriginal:'원래 통화', lblExpDisplayFull:'모든 금액 변환', expDisplayFullHint:'모든 금액을 선택한 통화로 보여줍니다. 입력한 금액은 그대로 남아 있어 다시 바꾸면 정확한 금액이 돌아옵니다.', hInviteBySearch:'또는 이름으로 초대', vacationInviteSearchPlaceholder:'이름으로 검색...', recapLoadingHint:'불러오는 중...', shellUpdatedText:'새 버전이 준비되었습니다.', shellUpdatedBtn:'새로 고침', qlVisit:'링크 열기:', qlEnterLink:'링크 입력:', qlEnterVideo:'동영상 주소:', qlEdit:'수정', qlSave:'저장', qlRemove:'제거'
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
@@ -11352,7 +11389,7 @@ const I18N = {
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
     tabYonsei:'Yonsei', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', lblYonseiBoardsSince:'Khoảng thời gian', lblYonseiBoardsSort:'Sắp xếp', yonseiPeriodAll:'Mọi lúc', yonseiPeriodWeek:'Tuần trước', yonseiPeriodMonth:'Tháng trước', yonseiPeriod6Months:'6 tháng qua', yonseiPeriodYear:'Năm trước', yonseiPeriod2Years:'2 năm qua', yonseiPeriod3Years:'3 năm qua', yonseiPeriod4Years:'4 năm qua', yonseiPeriod5Years:'5 năm qua', yonseiSortNewest:'Mới nhất', yonseiSortOldest:'Cũ nhất', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobsSubJobBoard:'Bảng', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardAiUpdateBtn:'Kiểm tra AI', jobBoardAiFetching:'Đang lấy dữ liệu', jobBoardUpdating:'Đang cập nhật...', jobBoardIndBankingFinance:'Ngân hàng/Tài chính', jobBoardIndConsumerFashion:'Hàng tiêu dùng/Thời trang', jobBoardIndForeignFirms:'Doanh nghiệp nước ngoài', jobBoardIndIntlOrg:'Tổ chức quốc tế', jobBoardIndNGO:'Tổ chức phi chính phủ (NGO)', jobBoardIndOthers:'Khác', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Khu vực công', jobBoardIndResearchInstitute:'Viện nghiên cứu', jobBoardIndTechnology:'Công nghệ', jobBoardIndTopChaebol:'Tập đoàn lớn (Chaebol)', jobBoardIndTrade:'Thương mại', jobBoardNewBadge:'MỚI', cdcLoginWarnTitle:'Đã đăng nhập vào CDC chưa?', cdcLoginWarnBody:'Trang CDC của Yonsei cần đăng nhập riêng. Hãy chắc chắn bạn đã đăng nhập ở đó trước khi mở tin này, nếu không trang có thể không tải đúng.', cdcLoginWarnContinueBtn:'Tiếp tục', cdcLoginWarnLoginBtn:'Đăng nhập', cdcLoginWarnCancelBtn:'Hủy',
-    tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào. Tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', expLoadFailedHint:'Không thể tải chuyến đi của bạn. Kiểm tra kết nối và thử lại.', expRetryLoadBtn:'Thử lại', expAmountInvalid:'Nhập một số, có thể kết thúc bằng k hoặc m (vd: 4k, 1.5m).', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', hExpAllExpenses:'Tất cả khoản chi', sortLabel:'Sắp xếp', sortFieldStatus:'Trạng thái', sortFieldCompany:'Công ty', sortFieldRole:'Vị trí', sortFieldIssuer:'Đơn vị cấp', sortFieldDeadline:'Hạn nộp', sortFieldTitle:'Tiêu đề', sortFieldPosted:'Ngày đăng', sortFieldMfa:'Xác thực 2 bước', sortFieldConfirmed:'Đã xác nhận', sortFieldDate:'Ngày', sortFieldAmount:'Số tiền', sortFieldName:'Tên', sortFieldCategory:'Danh mục', sortFieldPaidBy:'Người trả', sortAsc:'Đang sắp tăng dần. Nhấn để sắp giảm dần.', sortDesc:'Đang sắp giảm dần. Nhấn để sắp tăng dần.', sortThen:'rồi', sortMultiple:'Sắp xếp nhiều tiêu chí', expExcludedOne:'{n} khoản chi bị loại', expExcludedMany:'{n} khoản chi bị loại', expShowLabel:'Hiển thị', expShowAll:'Tất cả', expShowCounted:'Chỉ mục được tính', expShowExcluded:'Chỉ mục bị loại', expNoExcluded:'Hiện không có mục nào bị loại.', expNoCounted:'Hiện tất cả các mục đều bị loại.', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCountCategory:'Tính danh mục này', expDontCountCategory:'Không tính danh mục này', expCountAllCategories:'Tính tất cả danh mục', expDontCountDay:'Không tính ngày này', expCountDay:'Tính ngày này', expDontCountExpense:'Không tính khoản chi này', expCountExpense:'Tính khoản chi này', expCountEverything:'Tính tất cả', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên. Một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', hEditVacation:'Sửa chuyến đi', expPickVacationHint:'Chọn một chuyến đi ở trên.', expVacationDeleteConfirm:'Xóa "{name}"? Mọi khoản chi đã ghi cho chuyến đi này sẽ bị xóa theo, với tất cả mọi người trong chuyến.', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expCircleEmpty:'Bạn chưa liên kết với ai. Hãy thêm người vào Nhóm liên kết trong Cài đặt tài khoản.', expCircleAllOnTrip:'Mọi người trong Nhóm liên kết của bạn đã tham gia chuyến đi này.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi', lblExpCustomCategoryName:'Tên tùy chỉnh (không bắt buộc)', optNewVacationCurrencyCustom:'Khác…', lblNewVacationCustomCurrency:'Mã tiền tệ', lblExpDisplayCurrency:'Hiển thị bằng', optExpDisplayCurrencyOriginal:'Ban đầu', lblExpDisplayFull:'Đổi mọi số tiền', expDisplayFullHint:'Hiển thị mọi số tiền bằng loại tiền đã chọn. Số tiền đã nhập vẫn giữ nguyên, nên khi đổi lại sẽ thấy đúng số đã nhập.', hInviteBySearch:'Hoặc mời theo tên', vacationInviteSearchPlaceholder:'Tìm theo tên...', recapLoadingHint:'Đang tải...', shellUpdatedText:'Đã có phiên bản mới.', shellUpdatedBtn:'Tải lại'
+    tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào. Tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', expLoadFailedHint:'Không thể tải chuyến đi của bạn. Kiểm tra kết nối và thử lại.', expRetryLoadBtn:'Thử lại', expAmountInvalid:'Nhập một số, có thể kết thúc bằng k hoặc m (vd: 4k, 1.5m).', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', hExpAllExpenses:'Tất cả khoản chi', sortLabel:'Sắp xếp', sortFieldStatus:'Trạng thái', sortFieldCompany:'Công ty', sortFieldRole:'Vị trí', sortFieldIssuer:'Đơn vị cấp', sortFieldDeadline:'Hạn nộp', sortFieldTitle:'Tiêu đề', sortFieldPosted:'Ngày đăng', sortFieldMfa:'Xác thực 2 bước', sortFieldConfirmed:'Đã xác nhận', sortFieldDate:'Ngày', sortFieldAmount:'Số tiền', sortFieldName:'Tên', sortFieldCategory:'Danh mục', sortFieldPaidBy:'Người trả', sortAsc:'Đang sắp tăng dần. Nhấn để sắp giảm dần.', sortDesc:'Đang sắp giảm dần. Nhấn để sắp tăng dần.', sortThen:'rồi', sortMultiple:'Sắp xếp nhiều tiêu chí', expExcludedOne:'{n} khoản chi bị loại', expExcludedMany:'{n} khoản chi bị loại', expShowLabel:'Hiển thị', expShowAll:'Tất cả', expShowCounted:'Chỉ mục được tính', expShowExcluded:'Chỉ mục bị loại', expNoExcluded:'Hiện không có mục nào bị loại.', expNoCounted:'Hiện tất cả các mục đều bị loại.', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCountCategory:'Tính danh mục này', expDontCountCategory:'Không tính danh mục này', expCountAllCategories:'Tính tất cả danh mục', expDontCountDay:'Không tính ngày này', expCountDay:'Tính ngày này', expDontCountExpense:'Không tính khoản chi này', expCountExpense:'Tính khoản chi này', expCountEverything:'Tính tất cả', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên. Một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', hEditVacation:'Sửa chuyến đi', expPickVacationHint:'Chọn một chuyến đi ở trên.', expVacationDeleteConfirm:'Xóa "{name}"? Mọi khoản chi đã ghi cho chuyến đi này sẽ bị xóa theo, với tất cả mọi người trong chuyến.', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expCircleEmpty:'Bạn chưa liên kết với ai. Hãy thêm người vào Nhóm liên kết trong Cài đặt tài khoản.', expCircleAllOnTrip:'Mọi người trong Nhóm liên kết của bạn đã tham gia chuyến đi này.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi', lblExpCustomCategoryName:'Tên tùy chỉnh (không bắt buộc)', optNewVacationCurrencyCustom:'Khác…', lblNewVacationCustomCurrency:'Mã tiền tệ', lblExpDisplayCurrency:'Hiển thị bằng', optExpDisplayCurrencyOriginal:'Ban đầu', lblExpDisplayFull:'Đổi mọi số tiền', expDisplayFullHint:'Hiển thị mọi số tiền bằng loại tiền đã chọn. Số tiền đã nhập vẫn giữ nguyên, nên khi đổi lại sẽ thấy đúng số đã nhập.', hInviteBySearch:'Hoặc mời theo tên', vacationInviteSearchPlaceholder:'Tìm theo tên...', recapLoadingHint:'Đang tải...', shellUpdatedText:'Đã có phiên bản mới.', shellUpdatedBtn:'Tải lại', qlVisit:'Mở liên kết:', qlEnterLink:'Nhập liên kết:', qlEnterVideo:'Nhập video:', qlEdit:'Sửa', qlSave:'Lưu', qlRemove:'Xóa'
   }
 };
 const STATIC_MAP = {
@@ -12584,6 +12621,14 @@ function rebuildRecurFreqSelect(){
 function applyLanguage(lang){
   currentLang = lang;
   localStorage.setItem('trackerLang', lang);
+  // The note editors' link box takes its labels from CSS content (see
+  // .ql-snow .ql-tooltip), so they are handed over as custom properties.
+  // JSON.stringify makes each a quoted string with its own quotes escaped,
+  // which is exactly what `content` needs; Hangul and Vietnamese pass through.
+  [['--ql-visit','qlVisit'], ['--ql-enter-link','qlEnterLink'], ['--ql-enter-video','qlEnterVideo'],
+   ['--ql-edit','qlEdit'], ['--ql-save','qlSave'], ['--ql-remove','qlRemove']].forEach(([prop, key])=>{
+    document.documentElement.style.setProperty(prop, JSON.stringify(t(key)));
+  });
   Object.entries(STATIC_MAP).forEach(([id,key])=>{
     const el = document.getElementById(id);
     if(el) el.textContent = t(key);
@@ -36448,6 +36493,272 @@ if(window.Quill){
   SizeStyle.whitelist = null;
   Quill.register(SizeStyle, true);
 }
+/* ---------- LINKS IN A NOTE ----------
+   A URL in a note was dead text: the toolbar had no link button and nothing
+   turned an address into something you could follow (real-user request: "add
+   the ability to make hyperlinks from links"). Four ways in now, and they are
+   one feature rather than four, because every one of them lands on Quill's
+   own `link` format and so reads back, saves, broadcasts to a collaborator
+   and undoes the same way:
+     - TYPE an address and the space or the return after it links it;
+     - PASTE text with addresses in it and they arrive linked;
+     - PASTE an address OVER a selection and the selection becomes the link,
+       which is how every editor people already use does it;
+     - the LINK BUTTON, which also opens an existing link to edit or remove.
+   The note editors only. The TOPIK writing editors are essays against a
+   character count, deliberately stripped of images and video already, and a
+   link has no business in one. */
+
+// What an address typed WITHOUT a scheme is taken to mean. Quill's own sanitize
+// resolves the href against the page, so "google.com" left as it is becomes a
+// RELATIVE link -- kristoffergt.com/google.com -- which is a link that goes
+// nowhere while looking fine. A scheme counts only when what follows the colon
+// is not a port, or "www.x.com:8080" would read as a protocol called www.x.com.
+function noteLinkHref(raw){
+  const v = String(raw == null ? '' : raw).trim();
+  if(!v) return v;
+  if(/^[a-z][a-z0-9+.\-]*:(?!\d)/i.test(v)) return v;
+  if(/^\/\//.test(v)) return 'https:' + v;
+  if(/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(v)) return 'mailto:' + v;
+  if(/^[^\s\/]+\.[^\s\/]+/.test(v)) return 'https://' + v;
+  return v;
+}
+// Whether a run of text IS an address (the whole of it, once trimmed): what a
+// paste over a selection has to be before it links the selection instead of
+// replacing it, and what the link button pre-fills from.
+function isNoteUrl(text){
+  const v = String(text || '').trim();
+  return /^(?:https?:\/\/[^\s\/?#]+|www\.[^\s.\/]+\.[^\s]+)[^\s]*$/i.test(v);
+}
+// The punctuation a sentence puts after an address is not part of it: "see
+// https://x.com." links x.com, not "x.com.". A closing bracket is kept when it
+// has its opener inside the address, which is how a Wikipedia link survives.
+function trimNoteUrlTail(url){
+  let u = url;
+  for(;;){
+    const last = u.slice(-1);
+    if(/[.,;:!?'"]/.test(last)){ u = u.slice(0, -1); continue; }
+    if(last === ')' && (u.split('(').length - 1) < (u.split(')').length - 1)){ u = u.slice(0, -1); continue; }
+    if(last === ']' && (u.split('[').length - 1) < (u.split(']').length - 1)){ u = u.slice(0, -1); continue; }
+    break;
+  }
+  return u;
+}
+// Every address in a run of text, as [{text, url}] pieces with the plain text
+// between them, so a paste can be rebuilt op for op. An address has to START a
+// word -- "foohttps://x" is not one.
+function splitNoteUrls(text){
+  const parts = [];
+  const re = /(?:https?:\/\/|www\.)[^\s<>]+/gi;
+  let last = 0, m;
+  while((m = re.exec(text))){
+    const before = m.index > 0 ? text[m.index - 1] : '';
+    if(before && /[\w@\/.\-]/.test(before)) continue;
+    const url = trimNoteUrlTail(m[0]);
+    if(!isNoteUrl(url)) continue;
+    if(m.index > last) parts.push({ text: text.slice(last, m.index) });
+    parts.push({ text: url, url: noteLinkHref(url) });
+    last = m.index + url.length;
+    re.lastIndex = last;
+  }
+  if(last < text.length) parts.push({ text: text.slice(last) });
+  return parts;
+}
+
+// THE LINK FORMAT, HARDENED. Quill sanitizes an href when IT writes one, and
+// only then: a link that arrives as stored HTML -- every note is opened by
+// assigning its saved HTML to the editor -- is wrapped as it stands. So a
+// "javascript:" href written into a shared note by any means other than this
+// editor would sit in the DOM untouched, and the snow tooltip's "Visit" link
+// copies the raw href out of it; one press from there runs it. Rewriting the
+// href as the blot is BUILT covers every road in at once, because stored HTML,
+// a paste and a collaborator's delta all end up constructing one.
+// Quill 1.3.6's tooltip reads the href through the ORIGINAL class's static
+// formats(), not whatever is registered, which is why the fix has to be on the
+// node itself rather than an override of formats().
+// Typed or edited values also go through noteLinkHref, so "google.com" in the
+// link box means https://google.com rather than a path on this site.
+let NoteLink = null;
+if(window.Quill){
+  const BaseLink = Quill.import('formats/link');
+  NoteLink = class extends BaseLink {
+    constructor(domNode, value){
+      super(domNode, value);
+      const href = domNode.getAttribute('href');
+      const safe = BaseLink.sanitize(href);
+      if(safe !== href) domNode.setAttribute('href', safe);
+      domNode.setAttribute('rel', 'noopener noreferrer');
+      domNode.setAttribute('target', '_blank');
+    }
+    static create(value){ return super.create(noteLinkHref(value)); }
+    format(name, value){
+      super.format(name, (name === 'link' && value) ? noteLinkHref(value) : value);
+    }
+  };
+  Quill.register(NoteLink, true);
+}
+// The same rewrite for note HTML shown OUTSIDE an editor -- an earlier version
+// in the history panel is plain markup with real, clickable anchors in it.
+function sanitizeNoteLinks(root){
+  if(!root) return;
+  root.querySelectorAll('a').forEach(a=>{
+    const href = a.getAttribute('href') || '';
+    a.setAttribute('href', NoteLink ? NoteLink.sanitize(href) : 'about:blank');
+    a.setAttribute('rel', 'noopener noreferrer');
+    a.setAttribute('target', '_blank');
+  });
+}
+
+// The toolbar's link button. Quill's own does nothing at all with nothing
+// selected, which reads as a button that is broken, so:
+//   - a selection opens the link box on it, pre-filled when the selection is
+//     itself an address (select a URL, press link, press save);
+//   - the caret INSIDE a link opens that link to edit;
+//   - the caret anywhere else opens the box, and saving INSERTS the address as
+//     linked text where the caret was.
+// Pressing it again on a selected link takes the link off, which is Quill's
+// own behaviour and the only way off for a keyboard.
+function noteLinkToolbarHandler(value){
+  const q = this.quill;
+  const tip = q.theme && q.theme.tooltip;
+  const range = q.getSelection(true);
+  if(!range || !tip) return;
+  delete tip.linkRange;
+  tip.noteInsertAt = null;
+  if(!value && range.length){ q.format('link', false, 'user'); return; }
+  if(range.length){
+    const sel = q.getText(range.index, range.length).trim();
+    tip.linkRange = { index: range.index, length: range.length };
+    tip.edit('link', isNoteUrl(sel) ? noteLinkHref(sel) : '');
+    return;
+  }
+  const [link, offset] = q.scroll.descendant(b => b instanceof NoteLink, range.index);
+  if(link){
+    tip.linkRange = { index: range.index - offset, length: link.length() };
+    tip.edit('link', link.domNode.getAttribute('href'));
+    return;
+  }
+  tip.noteInsertAt = range.index;
+  tip.edit('link', '');
+}
+
+function enableNoteLinks(quill){
+  if(!quill || !NoteLink || quill.__noteLinks) return;
+  quill.__noteLinks = true;
+  const Delta = Quill.import('delta');
+  const tip = quill.theme && quill.theme.tooltip;
+
+  // (1) A PASTE with addresses in it. Only text that is not already inside an
+  // <a>: a pasted anchor carries its own href, and the anchor's matcher runs
+  // after this one and would lose to an attribute set here.
+  quill.clipboard.addMatcher(Node.TEXT_NODE, (node, delta)=>{
+    const inAnchor = node.parentNode && node.parentNode.closest && node.parentNode.closest('a');
+    if(inAnchor) return delta;
+    const ops = [];
+    let changed = false;
+    delta.ops.forEach(op=>{
+      if(typeof op.insert !== 'string'){ ops.push(op); return; }
+      const parts = splitNoteUrls(op.insert);
+      if(parts.length === 1 && !parts[0].url){ ops.push(op); return; }
+      changed = true;
+      parts.forEach(part=>{
+        const attributes = Object.assign({}, op.attributes || {}, part.url ? { link: part.url } : {});
+        ops.push(Object.keys(attributes).length ? { insert: part.text, attributes } : { insert: part.text });
+      });
+    });
+    return changed ? new Delta(ops) : delta;
+  });
+
+  // (2) An address pasted OVER a selection links the selection. On the
+  // CONTAINER in the capture phase, so it is decided before Quill's own paste
+  // handler on the root has taken the clipboard -- and anything else pasted
+  // falls straight through to that handler untouched.
+  quill.container.addEventListener('paste', (e)=>{
+    const range = quill.getSelection();
+    if(!range || !range.length) return;
+    const text = ((e.clipboardData && e.clipboardData.getData('text/plain')) || '').trim();
+    if(!isNoteUrl(text)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    quill.history.cutoff();
+    quill.formatText(range.index, range.length, 'link', noteLinkHref(text), 'user');
+    quill.setSelection(range.index + range.length, 0, 'silent');
+  }, true);
+
+  // (3) An address TYPED, linked by the space or the return after it. Read off
+  // the delta rather than the keyboard, so autocorrect replacing a word and a
+  // space in one go counts the same as a keystroke. Only the current LINE is
+  // read, never the whole note. `cutoff()` first makes the link its own undo
+  // step: one Cmd-Z takes the link off and leaves what was typed, which is what
+  // an editor that links for you owes the reader when it got it wrong.
+  quill.on('text-change', (delta, oldDelta, source)=>{
+    if(source !== 'user') return;
+    let index = 0, at = -1;
+    delta.ops.forEach(op=>{
+      if(op.retain) index += op.retain;
+      else if(typeof op.insert === 'string'){
+        index += op.insert.length;
+        if(/\s$/.test(op.insert)) at = index - 1;
+      } else if(op.insert) index += 1;
+    });
+    if(at < 1) return;
+    const [line, offset] = quill.getLine(at);
+    if(!line) return;
+    const lineStart = at - offset;
+    const before = quill.getText(lineStart, offset);
+    const m = /(\S+)$/.exec(before);
+    if(!m) return;
+    let token = m[1];
+    let start = lineStart + m.index;
+    const lead = /^[(<"'\[]+/.exec(token);
+    if(lead){ token = token.slice(lead[0].length); start += lead[0].length; }
+    if(!/^(?:https?:\/\/|www\.)/i.test(token)) return;
+    const url = trimNoteUrlTail(token);
+    if(!isNoteUrl(url)) return;
+    if(quill.getFormat(start, url.length).link) return;
+    quill.history.cutoff();
+    quill.formatText(start, url.length, 'link', noteLinkHref(url), 'user');
+  });
+
+  // (4) Saving from the link box with nothing selected INSERTS the address as
+  // linked text (see noteLinkToolbarHandler). Every other save is Quill's own.
+  if(tip && !tip.__noteLinkSave){
+    tip.__noteLinkSave = true;
+    const origSave = tip.save.bind(tip);
+    tip.save = function(){
+      if(this.root.getAttribute('data-mode') === 'link' && this.noteInsertAt != null && !this.linkRange){
+        const typed = this.textbox.value.trim();
+        const at = this.noteInsertAt;
+        this.noteInsertAt = null;
+        this.textbox.value = '';
+        this.hide();
+        if(!typed) return;
+        quill.insertText(at, typed, 'link', noteLinkHref(typed), 'user');
+        quill.setSelection(at + typed.length, 0, 'user');
+        return;
+      }
+      this.noteInsertAt = null;
+      origSave();
+    };
+    const origHide = tip.hide.bind(tip);
+    tip.hide = function(){ this.noteInsertAt = null; origHide(); };
+    // "https://quilljs.com" is Quill's own placeholder for the link box.
+    tip.textbox.setAttribute('data-link', 'https://');
+  }
+
+  // Cmd- or Ctrl-click FOLLOWS a link, the way every editor people write in
+  // does. A plain click still places the caret, and the tooltip that comes up
+  // under it carries the link to open.
+  quill.root.addEventListener('click', (e)=>{
+    if(!(e.metaKey || e.ctrlKey)) return;
+    const a = e.target.closest && e.target.closest('a');
+    if(!a || !quill.root.contains(a)) return;
+    const href = NoteLink.sanitize(a.getAttribute('href') || '');
+    if(!href || href === NoteLink.SANITIZED_URL) return;
+    e.preventDefault();
+    window.open(href, '_blank', 'noopener');
+  });
+}
 // The sizes the fold-out offers. The steps anybody reaches for, which is why
 // they crowd at the bottom: the difference between 9 and 10 is a different
 // note, where the difference between 64 and 72 is not.
@@ -36670,6 +36981,10 @@ function renderVersionPanel(panelId, versions, onUse){
     const body = document.createElement('div');
     body.className = 'ver-body';
     body.innerHTML = v.content || '';
+    // Real anchors here, outside any editor, so they are the one place a
+    // stored link can be pressed straight through. Same rewrite the editor's
+    // own link blot applies (see NoteLink).
+    sanitizeNoteLinks(body);
     if(onUse){
       const use = document.createElement('button');
       use.type = 'button';
@@ -37368,15 +37683,16 @@ function ensureQuillInitialized(){
         container: [
           ['bold','italic','underline','strike'],
           [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-          ['image','video'],
+          ['link','image','video'],
           ['clean']
         ],
-        handlers: { image: quillImageUploadHandler }
+        handlers: { image: quillImageUploadHandler, link: noteLinkToolbarHandler }
       },
       imageResize: {}
     }
   });
   keepPageStillOnPaste(quillEditor);
+  enableNoteLinks(quillEditor);
   quillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
       editorDirty = true;
@@ -37851,13 +38167,14 @@ function ensureNotebookQuillInitialized(){
     theme: 'snow',
     modules: {
       toolbar: {
-        container: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['image','video'], ['clean']],
-        handlers: { image: quillImageUploadHandler }
+        container: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link','image','video'], ['clean']],
+        handlers: { image: quillImageUploadHandler, link: noteLinkToolbarHandler }
       },
       imageResize: {}
     }
   });
   keepPageStillOnPaste(notebookQuillEditor);
+  enableNoteLinks(notebookQuillEditor);
   notebookQuillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
       notebookEditorDirty = true;
