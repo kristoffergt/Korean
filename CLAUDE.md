@@ -5959,6 +5959,215 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## A 14-pixel icon cost a fifth of the download, and 21 reads waited in a queue (16 Sep, seventy-third pass)
+
+"Can we optimize loading? Especially on the app it feels very slow when
+opening the app. Loads for a while."
+
+Measured rather than guessed at, and the four things that came out of it are
+each much bigger than they sound.
+
+### THE YONSEI TAB ICON WAS 486 KB, AND IT WAS IN THERE TWICE
+
+`.tab-icon-yonsei` carried the university's own crest as an inlined SVG --
+**256 paths, 124 clip paths, gradients and three embedded PNGs, 182 KB** --
+base64'd to 243,008 characters, and the SAME 243,008 characters appeared a
+second time because the declaration sets `-webkit-mask-image` and
+`mask-image` separately. **One line of the stylesheet was 486,417
+characters: 17.5% of the whole file, and about 197 KB of the 862 KB that
+actually went over the wire.**
+
+For a mark drawn at **14px** (23 in the phone's dock), where none of that
+detail survives. Its neighbour in the same row, the taegeuk, is a hand-drawn
+540-byte SVG made for the size; this one was 337 times larger.
+
+- **It is a 96px raster of exactly what the browser was already
+  compositing.** The declaration sets `mask-mode: luminance`, so what was on
+  screen was the crest's own light and dark turned into coverage -- that is
+  baked into plain ALPHA now, which means the raster needs no `mask-mode` at
+  all and its colour plane is constant (and so compresses to nothing).
+  **7,224 characters**, and the payload is a custom property named once and
+  referenced by both mask properties rather than repeated.
+- **96px because the dock's 23 CSS px at a device ratio of 4 is 92.** Checked
+  against the old one at 14px and 23px magnified 8x, side by side:
+  indistinguishable. At 96px the raster is a shade softer in the "1885",
+  which is a size the icon is never drawn at.
+- **The first two attempts at the raster were wrong in ways worth knowing.**
+  Rendering the mask with the default (alpha) mode draws a plain filled
+  DISC -- the artwork is opaque across the whole crest, so alpha says nothing
+  and `luminance` is where the picture is. And `qlmanage` flattens a
+  thumbnail onto opaque WHITE and pads the box, so a naive render came out as
+  a black square with a hairline down two edges; the alpha it throws away is
+  recoverable by rendering twice over two known backdrops, but the render
+  that shipped is the browser's own canvas, which is the renderer that
+  matters. Verified by sha256 against the page that produced it.
+
+**2,782,119 bytes to 2,304,129, and 848,637 gzipped to 656,566.**
+
+### 99% OF THE RENDER-BLOCKING FONT CSS WAS KOREAN
+
+The four families were one `@import` at the top of the inline `<style>`
+block. Fetched and measured:
+
+| | bytes | gzipped | @font-face rules |
+|---|---|---|---|
+| Inter + Space Grotesk | 11,436 | **830** | 30 |
+| Noto Sans KR + Noto Serif KR | 476,480 | **116,276** | **620** |
+
+So a render-blocking stylesheet that **cost 589 ms before anything could
+paint** was 99.3% Korean subset ranges. The Latin pair still blocks, which is
+one round trip and buys the right type on the first frame; the Korean pair
+loads off the critical path (`media="print"`, swapped to `all` on load).
+
+**Nothing about the swapping changed**, which is the part to be clear about:
+both requests already carried `display=swap`, so a face that had not arrived
+was always going to render in the fallback and swap. What moved is only how
+soon the first frame happens.
+
+**And an `@import` inside an inline `<style>` is invisible to the preload
+scanner** -- it cannot be requested until the CSS parser reaches it, where a
+`<link>` in the head is found in the document's first bytes. Both are
+`<link>`s now, with `preconnect` for both font origins and both script CDNs
+(`crossorigin` only on gstatic: font FILES are fetched CORS and a script is
+not, so putting it on the others warms a connection nothing then uses).
+
+### THE THREE SCRIPTS IN THE HEAD BLOCKED THE STYLE BLOCK
+
+supabase-js, quill and quill-image-resize were classic `<script src>` tags in
+`<head>`, so the parser stopped on all three -- three requests to two origins
+-- before it had even reached the stylesheet. They are at the FOOT of the
+body now, immediately above the app's own inline script.
+
+- **Order is preserved and they still run before the inline script**, so
+  every site that reads `window.Quill` or `window.ImageResize` is untouched
+  and nothing had to become async. That is what made this cheap: making the
+  four `ensure*QuillInitialized()` functions lazy would have meant six call
+  sites that currently do `ensureQuillInitialized(); quillEditor.root.
+  innerHTML = ...` synchronously.
+- **supabase-js is the one the boot sequence cannot start without**, so its
+  FETCH is asked for in the head with `rel="preload" as="script"` while it
+  RUNS at the bottom. No `crossorigin`, or it would be a different cache
+  entry from the one the plain `<script>` asks for.
+- Quill's own theme stylesheet goes non-blocking the same way the Korean
+  fonts do. The editor is not on screen until a note is opened.
+
+Measured in a browser, each document in a fresh iframe reading its own
+timeline, with the CDN already in the HTTP cache so this isolates the
+document and the critical path from the network:
+
+| | before | after |
+|---|---|---|
+| **render-blocking subresources** | **5** | **1** |
+| domInteractive | 345 ms | **107 ms** |
+| domContentLoaded | 346 ms | **107 ms** |
+| load | 349 ms | **108 ms** |
+| **first contentful paint** | **508 ms** | **72 ms** |
+
+A second run: 262 ms to 103 ms on domInteractive. **FCP is the unreliable one
+in the preview pane** (it only advances while something paints the pane, and
+one run reported none at all), so domInteractive is the number to trust; it
+is consistently about two and a half times better.
+
+### AND loadAllData WAS 21 SEQUENTIAL ROUND TRIPS
+
+This is the half of the complaint that happens AFTER the app opens.
+`loadAllData()` read 21 tables, and **not one of them needs an answer before
+it can ask its own question** -- they were sequential for no reason at all.
+Plus a tail of four loaders, two of which are independent too.
+
+Measured to the project's own Supabase host from this machine: a warm round
+trip is **46 ms**, so 21 of them is **0.97 seconds of pure latency on a good
+connection**, before any query runs. On a phone on mobile data at 100 to 250
+ms, it is two to five seconds of doing nothing.
+
+They are one `Promise.all` now, and **the transform was deliberately
+mechanical**: every query is hoisted into a `__rows` object at the top and
+each `const { data: X } = await supabaseClient...` became
+`const { data: X } = await __rows.<table>`. Not one line of the 130 lines of
+assignment code below changed, so the order results are APPLIED in is
+identical -- which matters in exactly one place, where `study_daily_totals`
+only fills the days `allEntries` has no detail for.
+
+- **A postgrest query builder is a lazy thenable, so BUILDING one sends
+  nothing.** This file already records that from the other end, where a
+  `void`ed builder was never sent at all. `Promise.all` is what fires them,
+  and one HTTP/2 connection multiplexes the lot.
+- **The three reads inside `if(currentUser)` keep that condition** on the
+  promise as well as on the await, so a null session still sends nothing and
+  never destructures a null.
+- `loadFileLinks()` and `loadExpenditureVacations()` are whole loaders rather
+  than single queries, so they start alongside the batch and are joined where
+  the things that read them need them. `backfillShortLinks()` is the one item
+  here with a real predecessor (it needs the links AND `allJobs`/
+  `allCourses`), so it and `ensureTopikEvents()` go together at the end.
+- **`withLoadingGate` got a `finally`.** A throw used to leave
+  `appDataLoading` true for the rest of the session, and with the reads fired
+  as one batch a dropped connection now fails all of them at once rather than
+  at whichever one happened to be next.
+
+### THE DOCUMENT IS SERVED FROM THE CACHE AND REVALIDATED BEHIND IT
+
+The service worker was network-first for navigations, and its own comment
+argued the case well: a cache-first document is how a service worker bricks
+an app after a real deploy. That is true of cache-ONLY. What it meant in
+practice is that **every single open, including an app-switcher relaunch from
+the home screen, waited for 640 KB of HTML before anything could be drawn**,
+and GitHub Pages sends `max-age=600`, so past ten minutes that is a real
+download every time.
+
+It is stale-while-revalidate now: the cached copy renders at once, the
+network copy is fetched alongside and cached for next time, and when the copy
+that lands is a DIFFERENT document the page is told. The revalidate half is
+what answers the old comment's objection.
+
+- **It offers a reload, it never takes one.** The document is the whole app,
+  so replacing it under somebody's hands would throw away whatever they were
+  in the middle of. A pill in the bottom left (clear of the chat launcher on
+  the right and the tab dock in the middle) says a new version is ready;
+  pressing it is the only thing that reloads.
+- **Same document is decided by the ETag**, which is what GitHub Pages
+  actually varies per content hash, with `last-modified` and then the length
+  as fallbacks for a host that sends none.
+- **Keyed on the bare path, `ignoreSearch`.** A `?go=...` deep link out of an
+  email is the same document; without that it would write its own entry and
+  the plain open would go on being served an old one for ever.
+- **`new Request(url, {mode:'navigate'})` THROWS** -- 'navigate' cannot be
+  constructed from script. A plain Request is the right cache key anyway,
+  since `Cache.match` compares the URL rather than the mode. Got this wrong
+  first and the unit test below is what caught it.
+- A first visit still waits for the network, because there is nothing to be
+  instant with, and still falls back to the precached shell when offline.
+- Supabase is untouched, for the reason the file already gives: a cached
+  response is exactly how a shared device hands someone else a previous
+  session's data.
+
+### Checked
+
+**The service worker's navigation branch is driven directly** rather than
+looked at (`scripts`-style Node harness with a stand-in Cache, fetch and
+clients): **15 of 15** -- a first visit serves and caches the network copy, a
+repeat serves the cache and announces nothing, a repeat after a deploy serves
+the CACHE and announces once and stores the new copy, a `?go=...` link is the
+same entry, offline serves the cache, an offline first visit falls back to
+the shell, a host with no ETag catches the change by `last-modified`, and a
+Supabase request is left alone.
+
+The project's own verification script: **1 inline script block, 0 parse
+failures; 615 `getElementById` targets against 1,061 ids with only the two
+known misses (`tabDock`, `splitNotice`); 1,003 i18n keys in each of en, ko
+and vi with none missing from a table; 46 em dashes, which is the identical
+count at HEAD, so none of them is mine.**
+
+The app boots, the crest is in the tab row, and the update pill renders at
+249x46 in the bottom-left corner with its copy in place.
+
+**One thing that could NOT be exercised in the preview pane**: registering a
+service worker over `python3 -m http.server` fails with "an unknown error
+occurred when fetching the script", because that server answers HTTP/1.0.
+Checked against the live site instead, where the registration succeeds and
+the worker is controlling the page -- so the pane is the limitation, and the
+registration code is unchanged either way.
+
 ## The bar stopped holding room for tabs it no longer draws (15 Sep, seventy-second pass)
 
 "On the app, we can now move the sub tabs up to be right under the line at the

@@ -6,7 +6,7 @@
 // icons, and the pinned-version CDN scripts/fonts it loads) survives a
 // flaky connection or a fully offline app-switcher relaunch, while data
 // calls still go live over the network exactly as before.
-const CACHE = 'productivity-tracker-shell-v2';
+const CACHE = 'productivity-tracker-shell-v3';
 const SHELL_URLS = [
   './',
   'index.html',
@@ -40,25 +40,74 @@ function isSupabase(url) {
   return url.hostname.endsWith('.supabase.co');
 }
 
+// Whether two responses for the same URL are the same document. The etag is
+// what the host actually varies (GitHub Pages sends one per content hash);
+// last-modified and the length are there for a host that does not.
+function sameDoc(a, b) {
+  if (!a || !b) return false;
+  const tag = (r) => r.headers.get('etag') || '';
+  if (tag(a) && tag(b)) return tag(a) === tag(b);
+  const mod = (r) => r.headers.get('last-modified') || '';
+  if (mod(a) && mod(b)) return mod(a) === mod(b);
+  const len = (r) => r.headers.get('content-length') || '';
+  return len(a) !== '' && len(a) === len(b);
+}
+
+async function tellClients(msg) {
+  const all = await self.clients.matchAll({ type: 'window' });
+  all.forEach((c) => c.postMessage(msg));
+}
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (isSupabase(url)) return; // let the browser handle it, untouched
 
-  // Navigations (the HTML document itself): network-first. A cache-first
-  // document is how a service worker bricks an app after a real deploy --
-  // the cached copy would stay on screen forever with no way back to the
-  // new one. Cache is only ever the offline fallback here.
+  // Navigations (the HTML document itself). This file is 2.3 MB, 640 KB of it
+  // over the wire, so network-first meant every single open -- including an
+  // app-switcher relaunch from the home screen -- waited for the whole
+  // document before it could draw anything. That is most of what "loads for a
+  // while when opening the app" is.
+  //
+  // So: the cached copy is served AT ONCE and the network copy is fetched
+  // alongside it and cached for next time. The old comment here warned that a
+  // cache-first document is how a service worker bricks an app after a real
+  // deploy, and that is still true of cache-ONLY -- the revalidate half is
+  // what answers it. When the copy that lands differs from the one that was
+  // served, the page is told, and it offers a reload rather than taking one:
+  // never pull the document out from under somebody mid-sentence.
   if (req.mode === 'navigate') {
     e.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy));
-          return res;
+      caches.open(CACHE).then((c) =>
+        // ignoreSearch, because a ?go=... deep link out of an email is the same
+        // document as a plain open. The copy is stored under the bare path for
+        // the same reason: otherwise every distinct query string would write
+        // its own entry and the plain open would go on being served an old one.
+        // A plain Request is the right key even though this is a navigation --
+        // mode 'navigate' cannot be constructed from script, and Cache.match
+        // compares the URL rather than the mode.
+        c.match(req, { ignoreSearch: true }).then((cached) => {
+          const key = url.origin + url.pathname;
+          const fresh = fetch(req)
+            .then((res) => {
+              if (res && res.ok) {
+                c.put(new Request(key), res.clone());
+                if (cached && !sameDoc(cached, res)) tellClients({ type: 'wk-shell-updated' });
+              }
+              return res;
+            })
+            .catch(() => null);
+          // Nothing cached yet (a first visit) means there is nothing to be
+          // instant with, so that one load waits for the network as before,
+          // with the precached shell as the offline fallback it always had.
+          if (!cached) {
+            return fresh.then((res) => res || c.match('index.html'));
+          }
+          e.waitUntil(fresh);
+          return cached;
         })
-        .catch(() => caches.match(req).then((cached) => cached || caches.match('index.html')))
+      )
     );
     return;
   }
