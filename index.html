@@ -34761,6 +34761,7 @@ function ensureWritingQuillInitialized(){
     modules: { toolbar: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']] }
   });
   keepPageStillOnPaste(writingQuillEditor);
+  enableTouchUndo(writingQuillEditor);
   writingQuillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
       writingEditorDirty = true;
@@ -34776,6 +34777,7 @@ function ensureWritingMockQuillInitialized(){
       modules: { toolbar: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']] }
     });
     keepPageStillOnPaste(writingMockQ53Quill);
+    enableTouchUndo(writingMockQ53Quill);
     writingMockQ53Quill.on('text-change', (delta, oldDelta, source)=>{
       if(source === 'user'){ writingMockQ53Dirty = true; updateWritingMockCharCount('q53'); }
     });
@@ -34787,6 +34789,7 @@ function ensureWritingMockQuillInitialized(){
       modules: { toolbar: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']] }
     });
     keepPageStillOnPaste(writingMockQ54Quill);
+    enableTouchUndo(writingMockQ54Quill);
     writingMockQ54Quill.on('text-change', (delta, oldDelta, source)=>{
       if(source === 'user'){ writingMockQ54Dirty = true; updateWritingMockCharCount('q54'); }
     });
@@ -36473,6 +36476,82 @@ function keepPageStillOnPaste(quill){
     setTimeout(()=> window.scrollTo(x, y), 20);
   }, true);
 }
+/* ---------- TOUCH GESTURES IN THE EDITORS ----------
+   A phone has no Cmd-Z and nothing on screen undoes anything, so a slip of the
+   thumb in a note or an essay could only be typed out again (real-user report:
+   "there's no way to undo writing on phone"). Two gestures, both read off the
+   raw touch events because neither is anything a browser recognises:
+     - a DOUBLE TAP WITH TWO FINGERS undoes, in every editor;
+     - a double tap with ONE finger on a link opens it, in the note editors.
+   A tap is a touch that lifts within TAP_MAX_MS having travelled less than
+   TAP_SLOP_PX, so a scroll, a pinch or a long press is never one. */
+const TAP_MAX_MS = 400, TAP_SLOP_PX = 12;
+// The most time from the first tap LIFTING to the second one landing. A little
+// more than a one-finger double tap needs, because putting two fingers down
+// together twice is slower than putting one down twice.
+const DOUBLE_TAP_GAP_MS = 350;
+function watchTaps(el, onTap){
+  let g = null;
+  el.addEventListener('touchstart', e=>{
+    // Every finger down is a new one: a fresh gesture, rather than one more
+    // finger joining the gesture already running.
+    if(!g || e.touches.length === e.changedTouches.length){
+      g = { start: e.timeStamp, fingers: 0, moved: false, points: {}, target: e.target };
+    }
+    for(const t of e.changedTouches) g.points[t.identifier] = { x: t.clientX, y: t.clientY };
+    g.fingers = Math.max(g.fingers, e.touches.length);
+  }, { passive: true });
+  el.addEventListener('touchmove', e=>{
+    if(!g || g.moved) return;
+    for(const t of e.changedTouches){
+      const p = g.points[t.identifier];
+      if(p && Math.hypot(t.clientX - p.x, t.clientY - p.y) > TAP_SLOP_PX){ g.moved = true; return; }
+    }
+  }, { passive: true });
+  el.addEventListener('touchend', e=>{
+    if(!g || e.touches.length) return;
+    const done = g;
+    g = null;
+    if(done.moved || e.timeStamp - done.start > TAP_MAX_MS) return;
+    const pts = Object.values(done.points);
+    onTap({
+      fingers: done.fingers, start: done.start, end: e.timeStamp, target: done.target, event: e,
+      x: pts.reduce((sum, pt)=> sum + pt.x, 0) / pts.length,
+      y: pts.reduce((sum, pt)=> sum + pt.y, 0) / pts.length
+    });
+  }, { passive: false });
+  el.addEventListener('touchcancel', ()=>{ g = null; }, { passive: true });
+}
+function enableTouchUndo(quill){
+  if(!quill || quill.__touchUndo) return;
+  quill.__touchUndo = true;
+  let last = null;
+  // On the CONTAINER, so a tap on the empty space under a short note counts.
+  watchTaps(quill.container, tap=>{
+    if(tap.fingers !== 2){ last = null; return; }
+    const pair = last && tap.start - last.end <= DOUBLE_TAP_GAP_MS
+      && Math.hypot(tap.x - last.x, tap.y - last.y) <= 100;
+    if(!pair){ last = tap; return; }
+    last = null;
+    if(!quill.isEnabled()) return;
+    if(tap.event.cancelable) tap.event.preventDefault();
+    // Quill's own history, the one Cmd-Z walks, so a phone and a computer undo
+    // the same steps. It puts the caret back where the change was, the way
+    // Cmd-Z does.
+    quill.history.undo();
+  });
+  // The phone's OWN undo (three fingers swiped left, a shake, the undo key on
+  // an iPad keyboard) reaches the page as a beforeinput asking for
+  // historyUndo. The browser's record of the edits knows nothing about what
+  // Quill has done to the note, so it is handed to Quill's history instead.
+  // Cmd-Z never gets here: Quill takes the keydown first.
+  quill.root.addEventListener('beforeinput', e=>{
+    if(e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') return;
+    e.preventDefault();
+    if(e.inputType === 'historyUndo') quill.history.undo();
+    else quill.history.redo();
+  });
+}
 if(window.Quill && window.ImageResize) Quill.register('modules/imageResize', ImageResize.default);
 /* ---------- THE SIZE OF WHAT YOU ARE TYPING ---------- */
 // NOTE_SIZE_BASE is the editor's own type size, set once in CSS
@@ -36746,17 +36825,60 @@ function enableNoteLinks(quill){
     tip.textbox.setAttribute('data-link', 'https://');
   }
 
-  // Cmd- or Ctrl-click FOLLOWS a link, the way every editor people write in
-  // does. A plain click still places the caret, and the tooltip that comes up
-  // under it carries the link to open.
-  quill.root.addEventListener('click', (e)=>{
-    if(!(e.metaKey || e.ctrlKey)) return;
-    const a = e.target.closest && e.target.closest('a');
-    if(!a || !quill.root.contains(a)) return;
-    const href = NoteLink.sanitize(a.getAttribute('href') || '');
-    if(!href || href === NoteLink.SANITIZED_URL) return;
-    e.preventDefault();
+  // FOLLOWING a link. A plain click places the caret, and the tooltip that
+  // comes up under it carries the link to open. These open it directly:
+  //   - Cmd-, Ctrl- or Shift-click on a computer;
+  //   - a double tap with one finger on a phone, which has no modifier key.
+  const linkIn = target=>{
+    const a = target && target.closest && target.closest('a');
+    return a && quill.root.contains(a) ? a : null;
+  };
+  const follow = raw=>{
+    const href = NoteLink.sanitize(raw || '');
+    if(!href || href === NoteLink.SANITIZED_URL) return false;
     window.open(href, '_blank', 'noopener');
+    return true;
+  };
+  // Shift-click would otherwise EXTEND the selection to the link on its way to
+  // opening it, leaving half the note highlighted behind the new tab.
+  quill.root.addEventListener('mousedown', (e)=>{
+    if(e.shiftKey && e.button === 0 && linkIn(e.target)) e.preventDefault();
+  });
+  quill.root.addEventListener('click', (e)=>{
+    if(!(e.metaKey || e.ctrlKey || e.shiftKey)) return;
+    const a = linkIn(e.target);
+    if(a && follow(a.getAttribute('href'))) e.preventDefault();
+  });
+  // The second tap is recognised by WHERE THE FINGER IS, not by what is under
+  // it: the first tap on a note nobody is editing brings the keyboard up, and
+  // the page can move under the finger before the second one lands.
+  let lastLinkTap = null;
+  const isSecondTap = (x, y, t)=> !!lastLinkTap && t - lastLinkTap.end <= DOUBLE_TAP_GAP_MS
+    && Math.hypot(x - lastLinkTap.x, y - lastLinkTap.y) <= 40;
+  quill.root.addEventListener('touchstart', (e)=>{
+    if(e.touches.length !== 1 || !e.cancelable) return;
+    const t = e.changedTouches[0];
+    // Held back from the phone, or the same tap also selects the word under
+    // the finger and leaves a copy/paste menu up behind the link it opened.
+    if(isSecondTap(t.clientX, t.clientY, e.timeStamp)) e.preventDefault();
+  }, { passive: false });
+  watchTaps(quill.root, tap=>{
+    if(tap.fingers !== 1 || !quill.isEnabled()){ lastLinkTap = null; return; }
+    if(isSecondTap(tap.x, tap.y, tap.start)){
+      const { href, hadFocus } = lastLinkTap;
+      lastLinkTap = null;
+      if(!follow(href)) return;
+      if(tap.event.cancelable) tap.event.preventDefault();
+      // A note that was only being READ goes back to being read: the first
+      // tap brought the keyboard up, and it should not be waiting behind the
+      // tab the link opened in.
+      if(!hadFocus) quill.blur();
+      return;
+    }
+    const a = linkIn(tap.target);
+    // Whether the editor had the focus is read HERE, on the first tap's
+    // touchend, which comes before the tap has moved the focus anywhere.
+    lastLinkTap = a ? { href: a.getAttribute('href'), x: tap.x, y: tap.y, end: tap.end, hadFocus: quill.hasFocus() } : null;
   });
 }
 // The sizes the fold-out offers. The steps anybody reaches for, which is why
@@ -37692,6 +37814,7 @@ function ensureQuillInitialized(){
     }
   });
   keepPageStillOnPaste(quillEditor);
+  enableTouchUndo(quillEditor);
   enableNoteLinks(quillEditor);
   quillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
@@ -38174,6 +38297,7 @@ function ensureNotebookQuillInitialized(){
     }
   });
   keepPageStillOnPaste(notebookQuillEditor);
+  enableTouchUndo(notebookQuillEditor);
   enableNoteLinks(notebookQuillEditor);
   notebookQuillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){

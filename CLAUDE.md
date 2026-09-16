@@ -5959,6 +5959,70 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## Undo on a phone, and a link that opens without a menu (16 Sep, seventy-seventh pass)
+
+"There's no way to undo writing on phone. Should be able to double tab with
+two fingers. Also double tabbing (one finger) the link should open/click it,
+and shift+click on desktop should open it."
+
+Three gestures, and none of them is anything a browser recognises on its own,
+so all of them are read off raw touch and mouse events.
+
+| | where | what it does |
+|---|---|---|
+| **two-finger double tap** | all five editors: course notes, notebook, TOPIK writing, both mock-exam answers | one step back through Quill's history, the same steps Cmd-Z walks |
+| **one-finger double tap on a link** | the two note editors | opens the link in a new tab |
+| **Shift-click on a link** | the two note editors | opens it, beside the Cmd- and Ctrl-click that already did |
+
+`watchTaps(el, onTap)` is the one tap reader both touch gestures use. A tap is
+a touch that lifts within `TAP_MAX_MS` (400) having travelled less than
+`TAP_SLOP_PX` (12), so a scroll, a pinch or a long press is never one; a pair is
+two taps whose gap from lifting to landing is under `DOUBLE_TAP_GAP_MS` (350).
+`enableTouchUndo(quill)` sits beside `keepPageStillOnPaste` in each editor's
+init, so a sixth editor gets it by copying that line.
+
+### What each one had to get right
+
+- **The undo watches the CONTAINER, not the root**, so a double tap on the empty
+  space under a two-line note still counts.
+- **A read-only editor is not undone**, and the link taps stand down there too:
+  a disabled editor's anchors are ordinary links the browser opens on one tap.
+- **The phone's own undo goes to Quill as well.** Three fingers swiped left, a
+  shake, or the undo key on an iPad keyboard reach the page as a `beforeinput`
+  asking for `historyUndo`/`historyRedo`; the browser's own record of the edits
+  knows nothing about what Quill did to the note, so those are cancelled and
+  handed to `quill.history`. Cmd-Z never reaches it, because Quill's keyboard
+  module takes the keydown first. **Not tested on a real iPhone**: whether iOS
+  sends that event for a shake is WebKit's business, and if it does not,
+  nothing changes.
+- **The second link tap is matched by where the FINGER is, not what is under
+  it.** The first tap on a note nobody is editing brings the keyboard up, and
+  the page can move under the finger before the second tap lands, so the link
+  is remembered from the first tap and the second only has to land within 40px.
+- **The second touchstart is cancelled**, or the same tap also selects the word
+  under the finger and leaves a copy/paste menu up behind the tab it opened.
+  That listener is `passive: false`; the tap reader's own start and move stay
+  passive.
+- **A note that was only being READ is blurred again after the link opens**, so
+  the keyboard the first tap raised is not waiting when you come back. Whether
+  the editor had focus is read on the FIRST tap's touchend, which comes before
+  the tap has moved the focus. A note being edited keeps its keyboard.
+- **Shift-mousedown on a link is cancelled**, or the click extends the selection
+  to the link on its way to opening it. Only on a link: Shift-click on plain
+  text still extends a selection.
+- **Every open goes through `NoteLink.sanitize`**, so a stored `javascript:` link
+  opens nothing by any of the three roads.
+
+Checked on a standalone copy with Quill 1.3.6 and the code lifted verbatim out
+of index.html, driving synthetic `TouchEvent`s with real gaps between them:
+**44 of 44**, including a single two-finger tap, taps 500ms apart, two-finger
+drags and holds, and a one-finger double tap all doing nothing; undo running
+twice in a row; both editor kinds; `beforeinput` undo and redo; the page-moved
+case; the far second tap; the blur and the kept focus; and all three mouse
+modifiers plus a plain click. Synthetic touches cannot show what iOS itself
+does around them (the keyboard, word selection, the callout), so that part is
+reasoned rather than seen.
+
 ## A link in a note is a link now (16 Sep, seventy-sixth pass)
 
 "Add the ability to make hyperlinks from links."
