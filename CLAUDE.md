@@ -6117,6 +6117,43 @@ block: every visible account's events, expanded across a date range, keyed by
 date. `eventsInRange()` is that block once. Three copies of it is three places
 for the export rule inside it to drift out of step.
 
+### AND THE DOCK'S ICON FILLS IN WHEN IT IS THE TAB YOU ARE ON
+
+"For the icons at the bottom of the app, can we make it so they're somewhat
+filled in when clicked? The house can fill in everything but the door, the
+korean flag good as is, the yonsei good as is, the book, fill in some
+'scribbles' on each page, and the briefcase, fill in parts of it."
+
+Each of the three stroke marks carries a filled version of itself drawn BEFORE
+its outline, invisible until the dock's active button turns it on. So the
+marks at rest, the desktop pill row and the calendar's quick-nav are
+byte-identical to what they drew before: this can only ADD to the dock.
+
+**Every one of them leaves something out**, which is what keeps them marks
+rather than blobs, and both of the holes are real knockouts (`fill-rule:
+evenodd`) so they take the colour of whatever is behind them and cannot be
+wrong in either theme. Confirmed: the fill paints `--paper` on the pill's
+`--ink` in light and the inverted pair in dark, from `currentColor` alone.
+
+- **The house** is its own body path with the old door polyline closed off as
+  a second subpath, so the doorway is a hole in a solid house.
+- **The book** fills three lines of text on each page, the last one short,
+  which is what says a paragraph at this size. Kept inside x 4.2..9.2 and its
+  mirror, clear of both the spine and the arc across each page's top corner.
+- **The briefcase** is the case filled with its clasp line knocked out, which
+  the two verticals then cut into three dashes. **Filling the two side PANELS
+  instead was drawn and rejected**: at 23px a white case with a dark column
+  down the middle reads as a hole punched in it rather than as a briefcase.
+  A filled lower half was drawn too and reads as a bag with a white top band.
+  Three candidates rendered at the dock's own 23px on the real pill, and the
+  choice made by looking at them.
+- **The taegeuk and the crest are untouched**, as asked. Both are mask images
+  rather than paths and both are already solid marks.
+- **Mid-drag the LIT icon is the one the finger is over**, not the one the app
+  is still on -- the same swap the two colour rules already make, written
+  beside them so the fill and the ink cannot disagree about which button is
+  being picked.
+
 ### Checked
 
 At 375x812 and at 1024, light and dark. The month grid draws its dots and the
@@ -6127,7 +6164,11 @@ selected day takes the filled circle. The week strip reads S M T W T F S over
 13 to 19 with the dots under them and the day grid below at full width. On a
 desktop the chips are back (`chip-stack` flex, `day-dots` none), the strip is
 not drawn, the header row has its eight columns, the agenda stays closed until
-asked for and the dock is `display: none`.
+asked for and the dock is `display: none`. All five dock icons were looked at in
+both states at once, by cloning the bar five times with a different button
+marked active in each -- house filled but for its door, taegeuk and crest
+unchanged, text on both pages of the book, the case filled with its clasp
+cut out of it.
 
 The project's own verification script: 1 inline script block, 0 parse
 failures; 616 `getElementById` targets against 1,062 ids with only the two
