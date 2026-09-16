@@ -5959,6 +5959,73 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## The note toolbar on a phone is a grid (16 Sep, seventy-eighth pass)
+
+"This layout looks kind of weird on app", with a screenshot of the course-notes
+toolbar in the dark theme.
+
+Two faults, and neither was about any one icon.
+
+- **The rows lined up with nothing.** Quill's groups are inline-blocks with a
+  15px margin between them, built for one long row. On a phone the row breaks
+  wherever a group runs out of room, so the second row started under the size
+  box and ended wherever it ended, with a wide gap after the lists and another
+  after the video button. Two rows of the same icons read as two unrelated
+  rows.
+- **Every border that runs down ONE side of a button came out as an arc.** The
+  global `button{border-radius:6px}` rule reaches the toolbar and Quill's styles
+  never take it back, so the rule between the size arrows and the size list
+  bent, and the colour button's underline curved up at both ends. At a phone's
+  pixel density that is the first thing anybody sees. Fixed at every width, not
+  only on a phone.
+
+### What it is now, at `max-width: 640px`
+
+Every control is one cell of one width, so the columns line up down the
+toolbar and each button is a 36px target instead of 28x24. The groups become
+`display: contents`, so their buttons are the grid's own items.
+
+| | cells |
+|---|---|
+| **row 1**, how the TEXT looks | size (two cells), B, I, U, S, colour, highlight |
+| **row 2**, what shapes or inserts | numbered list, bullets, link, image, video, clear formatting |
+
+The note editors get that arrangement through an `nf-toolbar` class that
+`buildNoteFontSizeControl` puts on the toolbar. It is placed BY CLASS rather than
+by order, because the size box and the two colour buttons are added after Quill
+has built the toolbar, at its two ends. The three TOPIK writing toolbars have no
+size box and nine controls, so they are one even row of nine.
+
+What each piece had to get right:
+
+- **Quill's clearfixes are pseudo-elements, and in a grid a pseudo-element is one
+  more cell.** The toolbar's `::after` and every group's are switched off, or
+  the grid grows phantom columns.
+- **The three wrappers that open a fold-out stay boxes** (the size group and the
+  two colour wraps), because the fold-out needs its parent for
+  `position: relative`. Their inline `display: inline-block` needs `!important`
+  to become a centred flex cell.
+- **The cell rule is for the toolbar's DIRECT children only**
+  (`.ql-formats > button`). Written as every button in the toolbar, it also
+  turned the size list's rows and the colour swatches into 36px cells.
+- **The colour button keeps the width of its letter.** Stretched to the cell, its
+  underline ran wall to wall.
+- **The highlight button IS its 16px square**, so its target grows through a
+  pseudo-element with `inset: -10px` rather than by growing the square.
+- **The colour lists open from their button's RIGHT edge on a phone**: from the
+  left edge of the last two columns, a 132px list ran off the screen.
+- **Under 360px the size arrows are hidden.** Two cells come to about 54px
+  there, which left "96" no room, and the arrows were the smallest targets in
+  the toolbar anyway. The number box and the list are still one tap each.
+
+Measured in the browser at 393px (dark) and 320px (light): the eight columns
+share their left edges row to row, nothing overflows the toolbar or the page,
+both colour lists end inside the screen (306 and 343 of 393), and the size list
+still opens under its box. The writing toolbar is nine cells of 31px. At desktop
+width the toolbar is untouched: `display: block`, one 42px row, 28x24 buttons.
+Above 640px it never wraps, since the toolbar is still about 555px wide at a
+641px window against the 512px its one row needs.
+
 ## Undo on a phone, and a link that opens without a menu (16 Sep, seventy-seventh pass)
 
 "There's no way to undo writing on phone. Should be able to double tab with
