@@ -605,7 +605,8 @@ body.no-anim-ui .lecture-del:hover, body.no-anim-ui .e-chip .del:hover,
 body.no-anim-ui .tap-mark:active, body.no-anim-ui .item-del:active,
 body.no-anim-ui .note-del:active, body.no-anim-ui .gram-note-del:active,
 body.no-anim-ui .gram-resource-del:active, body.no-anim-ui .reminder-chip-remove:active,
-body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active{transform:none;}
+body.no-anim-ui .lecture-del:active, body.no-anim-ui .e-chip .del:active,
+body.no-anim-ui .wk-key-press{transform:none;}
 
 @media (prefers-reduced-motion: reduce){
   /* The title still says it is finished, it just does not take 0.65s to get
@@ -1775,6 +1776,9 @@ label.file-upload-btn:hover{transform:scale(1.04);}
 .log-form > button:active, .export-btn:active, .icon-pill-btn:active,
 .day-toggle-btn:active, .person-filter-btn:active, .reminder-add-trigger:active,
 label.file-upload-btn:active{transform:scale(0.98);transition-duration:0.06s;}
+/* An Enter press has no :active of its own to show for itself (see the ENTER
+   ADDS listener), so the button borrows this one for a beat. */
+.wk-key-press{transform:scale(0.98);transition-duration:0.06s;}
 /* The other half of the vocabulary: a MARK is the control -- a bare glyph
    with no box, which is what every delete and close ✕ in the app is.
    Three things make it different from a word rather than the same rule
@@ -1835,7 +1839,7 @@ body.no-anim-ui .linkbtn.act-icon:active{transform:none;}
   .person-filter-btn:hover, .field input:active, .field select:active,
   .field textarea:active, .auth-field input:not(.pin-digit):active, .auth-field select:active,
   .log-form > button:active, .export-btn:active, .icon-pill-btn:active,
-  .day-toggle-btn:active, .person-filter-btn:active{transform:none;}
+  .day-toggle-btn:active, .person-filter-btn:active, .wk-key-press{transform:none;}
 }
 /* Was an inline style="font-size:15px" -- inline styles beat :hover's
    selector-based font-size:1.1em outright regardless of source order, so
@@ -17349,6 +17353,27 @@ function applyAnimPrefs(){
 // It only ever runs on a SAVE. Every add handler calls it from inside its own
 // `if(!error && data)` branch, and the form is not emptied until he has taken
 // the information off it (see acClear).
+// WHAT THE READER CAN ACTUALLY SEE, which is not the window. On a phone the
+// software keyboard covers the bottom of the screen and `window.innerHeight`
+// does not move for it on iOS, so a button under the keyboard reads as
+// perfectly visible. That was harmless while the only way to press Add was to
+// tap it -- you cannot tap what you cannot see -- and stopped being harmless
+// the moment Enter could press it with the keyboard up: the courier ran his
+// whole lap behind the keyboard, and since he is the one carrying the new row,
+// the note appeared to vanish along with the title (real-user report: "when I
+// try to add a note now and press enter, nothing happens. It just deletes the
+// title I'd written").
+//
+// Refusing to run is the right answer rather than a worse one: every one of
+// acClear/acReveal/acAfterReveal runs AT ONCE with no courier out, so an add
+// made with the keyboard up puts the row on screen immediately, which is what
+// a keypress should do. The visual viewport is also what a pinch-zoom moves,
+// so this is right for that too.
+function acViewTop(){ const vv = window.visualViewport; return vv ? vv.offsetTop : 0; }
+function acViewBottom(){
+  const vv = window.visualViewport;
+  return vv ? vv.offsetTop + vv.height : window.innerHeight;
+}
 const AC_T = { peek: 340, look: 820, duck: 190, out: 300, grab: 240, bit: 380, step: 60, tip: 320, turn: 130, run: 520, gone: 220, deliver: 900 };
 // THE THROW HOME IS A SPEED, NOT A DURATION, and that is the whole of what
 // fixes its pacing. A fixed duration over a path whose length depends on the
@@ -17852,7 +17877,7 @@ function acBits(form){
     const text = acFieldText(el);
     if(!text) return;
     const r = el.getBoundingClientRect();
-    if(!r.width || r.bottom < 0 || r.top > window.innerHeight) return;
+    if(!r.width || r.bottom < acViewTop() || r.top > acViewBottom()) return;
     // The ELEMENT comes with it, so the field's own ink can be faded out as
     // its pill leaves (see the bits' own loop).
     out.push({ el: el, text: text.length > 22 ? text.slice(0, 21) + '…' : text, r });
@@ -17871,7 +17896,7 @@ function addCourier(btn){
   const first = Array.from(label)[0];
   if(!first || !first.trim() || btn.childNodes.length > 1) return;
   const r = btn.getBoundingClientRect();
-  if(!r.width || r.bottom < 30 || r.top > window.innerHeight - 20) return; // nothing to watch
+  if(!r.width || r.bottom < acViewTop() + 30 || r.top > acViewBottom() - 20) return; // nothing to watch
   const guyLeft = r.left - AC_W - 4, guyTop = r.bottom - AC_FOOT;
   // HE COMES OUT ON THE LEFT (real-user request), which is the side the letter
   // he wants is on and the side the form he empties is on -- then runs BENEATH
@@ -18436,7 +18461,7 @@ function addCourier(btn){
     // Nothing to throw it at -- a collapsed tab, a list off the screen -- so
     // the row is simply rendered. A packet flying to somewhere nobody can see
     // would only delay it.
-    if(!tr || !tr.width || tr.bottom < 4 || tr.top > window.innerHeight - 4){ acRunPendingReveals(); return; }
+    if(!tr || !tr.width || tr.bottom < acViewTop() + 4 || tr.top > acViewBottom() - 4){ acRunPendingReveals(); return; }
     // That rect is the WINDOW's, and the layer is a box pinned to the PAGE, so
     // whatever has been scrolled since he came out is the difference between
     // the two. Everything else in here was read before a scroll was possible,
@@ -18553,6 +18578,7 @@ function addCourier(btn){
     clearTimeout(deliverTimer);
     if(followRaf) cancelAnimationFrame(followRaf);
     document.removeEventListener('scroll', onAwayScroll, { capture: true });
+    if(window.visualViewport) window.visualViewport.removeEventListener('resize', onAwayScroll);
     acRunPendingClear();
     // Both of these are backstops on the ordinary path -- the row is rendered
     // by the delivery and the ink restored by the clear -- and they are the
@@ -18590,7 +18616,9 @@ function addCourier(btn){
     // The bottom end is the START guard's own line rather than his feet: a
     // button that was near enough the edge to be pressed at all must not be
     // abandoned by the first pixel of scroll after it.
-    return (now.bottom - AC_FOOT) < covered || now.top > window.innerHeight - 20;
+    // The keyboard counts as cover, the same way the pinned bar does.
+    return (now.bottom - AC_FOOT) < Math.max(covered, acViewTop())
+      || now.top > acViewBottom() - 20;
   };
   let awayPending = false;
   const onAwayScroll = ()=>{
@@ -18606,6 +18634,9 @@ function addCourier(btn){
   // On the document with capture, since a scroll event from a pane with its own
   // scroller never reaches the window.
   document.addEventListener('scroll', onAwayScroll, { capture: true, passive: true });
+  // A keyboard that comes up AFTER he set off covers him just as surely, and
+  // the visual viewport is what reports it.
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', onAwayScroll);
 
   // The follow loop promised above. One rect read and at most one transform
   // write per frame, which is what the abort watcher already costs, and a
@@ -36694,6 +36725,12 @@ document.addEventListener('keydown', (e)=>{
   const btn = scope.querySelector(sel) || document.querySelector(sel);
   if(!btn || btn.disabled || !btn.getClientRects().length) return;
   e.preventDefault();
+  // A click paints :active under the pointer and a keypress paints nothing, so
+  // the button borrows one for a beat. Without it the only sign that an add had
+  // started was the form emptying a second or two later, which reads as the
+  // field being wiped rather than as a press.
+  btn.classList.add('wk-key-press');
+  setTimeout(()=> btn.classList.remove('wk-key-press'), 160);
   btn.click();
 });
 function watchTaps(el, onTap){

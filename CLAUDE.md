@@ -5959,6 +5959,81 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## `window.innerHeight` DOES NOT MOVE FOR THE KEYBOARD (22 Sep, eightieth pass)
+
+"When I try to add a note now and press enter, nothing happens. It just
+deletes the title I'd written."
+
+The note was being added every time. What was wrong is that **the courier was
+running his whole lap behind the phone's keyboard**, and he is the one who
+carries the new row: `acReveal` holds the render until he delivers it, and
+`acClear` empties the form part way through his run. So the visible sequence
+was the title disappearing after about two and a half seconds and the row
+arriving after five, with the animation that explains both of them drawn
+underneath the keyboard.
+
+**The guard that should have refused the run asks the wrong window.**
+`addCourier` bows out when the button is off screen, and it measured that
+against `window.innerHeight` -- which on iOS does not change when the software
+keyboard opens. Only `visualViewport.height` does. That was harmless for as
+long as the only way to press Add was to TAP it, since you cannot tap a button
+you cannot see; **it stopped being harmless the moment Enter could press one
+with the keyboard up**, which is the feature shipped in the pass above.
+
+`acViewTop()` / `acViewBottom()` are the visible band, and the four visibility
+tests in the courier read them: whether to run at all, which fields are worth
+flying in as pills, whether the list he is throwing the packet at can be seen,
+and the abort watcher's own "he cannot be seen any more". **A keyboard that
+comes up mid-lap now ends the run too**, off `visualViewport`'s resize, the
+same way a scroll does.
+
+**Refusing to run is the right answer and not a lesser one**, which is what
+makes this a two-line fix rather than a redesign: `acClear`, `acReveal` and
+`acAfterReveal` all run AT ONCE when no courier is out, so an add made with
+the keyboard up puts the row on screen immediately. That is what a keypress
+should do anyway.
+
+Measured in the real page, with the insert stubbed so nothing left the browser
+and the keyboard simulated by shrinking the visual viewport to 428 of 768 with
+the button at y 453:
+
+| | courier | title cleared | row rendered |
+|---|---|---|---|
+| keyboard up, before | ran, invisible | 2639ms | 5368ms |
+| **keyboard up, after** | **refused** | **102ms** | **102ms** |
+| keyboard down, after | starts at 109ms | ~2.6s | 5366ms |
+| a mouse click, for comparison | starts at 102ms | 2527ms | 5361ms |
+
+The last row is the one that settles what this was NOT: **Enter and a click
+behave identically**, so the delay was never something the keypress did
+differently. It was where the button was standing.
+
+### AND A KEYPRESS NOW LOOKS LIKE A PRESS
+
+A click paints `:active` under the pointer for as long as it is held; a
+keypress paints nothing at all, so with the courier refused there was no
+acknowledgement of any kind between pressing Enter and the row appearing.
+`.wk-key-press` is the same 0.98 the press vocabulary already uses, for 160ms,
+and it stands down under `body.no-anim-ui` and `prefers-reduced-motion` with
+the rest of that vocabulary.
+
+### How it was found, which is the reusable part
+
+Four theories were wrong before the measurement: that the insert was failing,
+that my own follow loop had wedged the courier, that the reveal queue was
+leaking, and that Enter was firing twice. **None of them survived running the
+add flow in the real page** with `supabaseClient.from('course_notes')` stubbed
+and `renderLectureList` wrapped in a counter. Two facts fell straight out of
+that and named the cause between them: the row always appeared eventually, and
+a click was exactly as slow as Enter.
+
+- **The auth gate hides the whole app screen, so `getClientRects()` is 0 for
+  everything** and the Enter listener bails. That is what the FIRST reproduction
+  showed, and it was an artifact: un-hide `appScreen`, the tab panel and the
+  section before testing anything behind it.
+- A `focus()` scrolls its element into view, which quietly moved the button on
+  screen and changed the answer. Scroll deliberately instead.
+
 ## Enter adds, pages are a switch, and the courier follows its button (22 Sep, seventy-ninth pass)
 
 Seven things in one batch. Three of them are the same sentence said about
