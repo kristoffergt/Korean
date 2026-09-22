@@ -1303,7 +1303,25 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
   --dock-k:1;--dock-min:0.82;
   transform:scale(calc(var(--dock-min) + (1 - var(--dock-min)) * var(--dock-k)));
   transform-origin:bottom center;
-  background:var(--paper-dim);border:1px solid var(--line);border-radius:30px;
+  /* LIQUID GLASS: the bar is slightly see-through and the page is blurred
+     behind it, which is what a bar floating over a scrolling page does on
+     iOS (real-user request: "a way in the settings to lower the opacity of
+     the bottom horizontal bar ... it should generally start with lower
+     opacity, so it's slightly see through").
+     --dock-alpha is a SHARE OF --paper-dim rather than a second colour, so
+     the light and dark bars cannot drift apart: there is still exactly one
+     value saying what this bar is painted in.
+     Both custom properties carry a fallback that is precisely today's bar,
+     opaque and unblurred, so a browser that never ran the script -- or one
+     handed a stored value it cannot use -- gets a solid bar rather than an
+     invisible one.
+     At 100% the blur is written as none rather than as blur(0): a
+     backdrop-filter pins the bar to its own layer and recomputes the strip
+     under it on every frame the page scrolls, and none of that is worth
+     paying for behind a surface nothing shows through. */
+  background:color-mix(in srgb, var(--paper-dim) var(--dock-alpha, 100%), transparent);
+  -webkit-backdrop-filter:var(--dock-glass, none);backdrop-filter:var(--dock-glass, none);
+  border:1px solid var(--line);border-radius:30px;
   box-shadow:0 8px 28px rgba(0,0,0,0.22);
   /* pan-y and nothing else: the bar owns every HORIZONTAL gesture on it, which
      is what the drag-to-pick below needs, and the browser keeps the vertical
@@ -1316,6 +1334,12 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
    compositor for the whole session is memory for nothing, and a bar that is
    not moving composites fine from its own paint. */
 .tab-dock.dock-easing{will-change:transform;}
+/* Somebody whose system has asked for less transparency has already answered
+   this question, and their answer outranks the slider's: same specificity as
+   the rule above and declared after it, so it simply wins. */
+@media (prefers-reduced-transparency: reduce){
+  .tab-dock{background:var(--paper-dim);-webkit-backdrop-filter:none;backdrop-filter:none;}
+}
 .tab-dock > button{position:relative;z-index:2;flex:1;min-width:0;height:44px;padding:0;
   display:flex;align-items:center;justify-content:center;
   background:transparent;color:var(--ink-soft);border:none;border-radius:24px;
@@ -4989,7 +5013,17 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
         <span id="settingsStickyTopBarLabel"></span>
       </label>
       <div class="hint" id="settingsStickyTopBarHint" style="margin-top:4px;"></div>
-    </div>    <div id="settingsAnimRow" style="margin-top:16px;">
+    </div>
+    <div id="settingsDockGlassRow" style="margin-top:16px;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;flex-wrap:wrap;">
+        <label for="settingsDockGlassSlider" id="settingsDockGlassLabel" style="cursor:pointer;"></label>
+        <input type="range" id="settingsDockGlassSlider" min="30" max="100" step="5"
+               style="flex:1;min-width:120px;max-width:200px;margin:0;accent-color:var(--ink);">
+        <span id="settingsDockGlassValue" style="font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;"></span>
+      </div>
+      <div class="hint" id="settingsDockGlassHint" style="margin-top:4px;"></div>
+    </div>
+    <div id="settingsAnimRow" style="margin-top:16px;">
       <div class="wtc-title" id="lblAnimations"></div>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
         <input type="checkbox" class="anim-toggle" data-anim="header" style="width:15px;height:15px;">
@@ -11154,7 +11188,7 @@ const I18N = {
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
     topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
-    settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
+    settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsDockGlassLabel:'Bottom bar opacity', settingsDockGlassHint:'The floating tab bar at the bottom of a phone is slightly see-through, with the page blurred behind it. Lower this for more glass; at 100% the bar is solid.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
     lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name shines when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over anything you can click or type in, and the squeeze when you press it.', animAddLabel:'The add courier', animAddHint:'When something is saved, a courier comes out from behind the Add button, takes the first letter off it, turns it into a funnel, pours in what you typed, packs it and runs off.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color', eventColorUseTheirBtn:"Use {name}'s color", splitTooNarrow:"Split view needs a wider window: at least {n} px, twice the app's width. Widen the window to open two tabs side by side.", splitClosedNarrow:'The window got too narrow for two tabs, so it went back to one.', splitClosePane:'Close {name}', splitDropHere:'Let go to open side by side', splitResizeLabel:'Resize the two halves', splitResizeHint:'Drag to resize. Double-click to make them even again.', splitSwap:'Swap sides', colorPopTitle:'Your color', colorFavSave:'Save', colorFavSaveHint:'Save this color to your favorites', colorFavSaved:'Saved', colorFavUnsave:'Remove from favorites', colorFavs:'Favorites', colorFavsEmpty:'None yet. Save a color to keep it for later.', colorPickNew:'Pick a new color', colorFavRemove:'Remove',
@@ -11277,7 +11311,7 @@ const I18N = {
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
     topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
-    settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
+    settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsDockGlassLabel:'하단 바 불투명도', settingsDockGlassHint:'휴대폰 화면 아래에 떠 있는 탭 바가 살짝 비치고, 뒤쪽 페이지는 흐릿하게 보입니다. 값을 낮출수록 유리처럼 보이고, 100%에서는 완전히 불투명해집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
     lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 반짝입니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누르거나 입력할 수 있는 것 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.', animAddLabel:'추가 배달원', animAddHint:'저장되면 추가 버튼 뒤에서 배달원이 나와 버튼의 첫 글자를 떼어 깔때기로 뒤집고, 입력한 내용을 쏟아 넣은 뒤 가방에 담아 달려갑니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용', eventColorUseTheirBtn:'{name}의 색상 사용', splitTooNarrow:'화면 분할에는 더 넓은 창이 필요합니다. 앱 너비의 두 배인 {n}px 이상이어야 합니다. 두 탭을 나란히 열려면 창을 넓혀 주세요.', splitClosedNarrow:'창이 두 탭을 담기에는 좁아져서 한 탭으로 돌아갔습니다.', splitClosePane:'{name} 닫기', splitDropHere:'놓으면 나란히 열립니다', splitResizeLabel:'두 화면 크기 조절', splitResizeHint:'끌어서 크기를 조절합니다. 두 번 클릭하면 다시 반반이 됩니다.', splitSwap:'좌우 바꾸기', colorPopTitle:'내 색상', colorFavSave:'저장', colorFavSaveHint:'이 색상을 즐겨찾기에 저장', colorFavSaved:'저장됨', colorFavUnsave:'즐겨찾기에서 삭제', colorFavs:'즐겨찾는 색상', colorFavsEmpty:'아직 없습니다. 색상을 저장해 두면 나중에 다시 쓸 수 있어요.', colorPickNew:'새 색상 고르기', colorFavRemove:'삭제',
@@ -11400,7 +11434,7 @@ const I18N = {
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
     topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
-    settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
+    settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsDockGlassLabel:'Độ mờ của thanh dưới cùng', settingsDockGlassHint:'Thanh tab nổi ở cuối màn hình điện thoại hơi trong suốt, với trang phía sau được làm mờ. Giảm giá trị này để trông giống kính hơn; ở 100% thanh sẽ đục hoàn toàn.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
     lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn sáng lên khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Mọi thứ bấm được hoặc nhập được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.', animAddLabel:'Người đưa thư khi thêm', animAddHint:'Khi một mục được lưu, một người đưa thư bước ra từ sau nút Thêm, lấy chữ đầu tiên trên nút, lật thành cái phễu, rót những gì bạn đã nhập vào, xếp vào vali rồi chạy đi.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi', eventColorUseTheirBtn:'Dùng màu của {name}', splitTooNarrow:'Chia đôi màn hình cần cửa sổ rộng hơn: ít nhất {n} px, gấp đôi độ rộng của ứng dụng. Hãy mở rộng cửa sổ để mở hai thẻ cạnh nhau.', splitClosedNarrow:'Cửa sổ quá hẹp cho hai thẻ nên đã trở lại một thẻ.', splitClosePane:'Đóng {name}', splitDropHere:'Thả ra để mở cạnh nhau', splitResizeLabel:'Đổi kích thước hai bên', splitResizeHint:'Kéo để đổi kích thước. Nhấp đúp để chia đều lại.', splitSwap:'Đổi bên', colorPopTitle:'Màu của tôi', colorFavSave:'Lưu', colorFavSaveHint:'Lưu màu này vào mục yêu thích', colorFavSaved:'Đã lưu', colorFavUnsave:'Xóa khỏi mục yêu thích', colorFavs:'Màu yêu thích', colorFavsEmpty:'Chưa có. Hãy lưu một màu để dùng lại sau.', colorPickNew:'Chọn màu mới', colorFavRemove:'Xóa',
@@ -11537,6 +11571,7 @@ const STATIC_MAP = {
   hTopik:'topikCountdown', topikTestLabel:'testIn',
   circleMessageSendBtn:'circleSendBtn', chatTitle:'circleTabMessages',
   settingsStickyTopBarLabel:'settingsStickyTopBarLabel', settingsStickyTopBarHint:'settingsStickyTopBarHint',
+  settingsDockGlassLabel:'settingsDockGlassLabel', settingsDockGlassHint:'settingsDockGlassHint',
   hCalExport:'calExportTitle', lblCalExportInclude:'calExportInclude',
   calExportAllBtn:'calExportAll', calExportNoneBtn:'calExportNone', calExportGoBtn:'calExportGo',
   settingsShowTopikLabel:'settingsShowTopikLabel', settingsShowTopikHint:'settingsShowTopikHint',
@@ -13387,6 +13422,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   document.getElementById('settingsHideCircleToo').checked = !!hiddenFromCircleToo[currentUser.id];
   document.getElementById('settingsHideCircleTooWrap').classList.toggle('hidden', !hiddenFromLeaderboards[currentUser.id]);
   document.getElementById('settingsStickyTopBarToggle').checked = stickyTopBarEnabled();
+  syncDockGlassRow();
   document.getElementById('settingsMessagingToggle').checked = messagingEnabled();
   document.querySelectorAll('.anim-toggle').forEach(cb=>{ cb.checked = animEnabled(cb.dataset.anim); });
   document.getElementById('settingsShowTopikToggle').checked = showTopik;
@@ -17155,6 +17191,68 @@ function endTabDockDrag(dock, commit){
   // goes back to saying where you actually are.
   else if(!commit) placeRowSlider(dock, dock.querySelector(':scope > button.active'));
 }
+/* ---------- HOW MUCH GLASS THE BAR IS, AND THAT IS A SETTING ----------
+   A display preference, so it lives exactly where the theme, the language and
+   the sticky header already do: localStorage, per device.
+
+   Stored as a WHOLE PERCENT rather than a 0-1 fraction. It is what the slider
+   carries, what the label prints and what the CSS wants (color-mix takes a
+   percentage), so there is no float being rounded on the way through and a
+   stored value can be read by eye.
+
+   ABSENT MEANS GLASS, not solid. The bar is meant to start slightly
+   see-through and nobody should have to find this setting to get that
+   (real-user request: "it should generally start with lower opacity, so it's
+   slightly see through").
+
+   THE FLOOR IS 30, NOT 0, and that is the one number here that is not taste:
+   this bar is how every top-level tab is reached on a phone, and at 0 it is a
+   border and a shadow with nothing in between. A setting that can leave the
+   app's own navigation invisible is not one worth offering. */
+const DOCK_ALPHA_KEY = 'ptDockOpacity';
+const DOCK_ALPHA_MIN = 30, DOCK_ALPHA_MAX = 100, DOCK_ALPHA_STEP = 5;
+const DOCK_ALPHA_DEFAULT = 70;
+function dockAlphaPref(){
+  let n = DOCK_ALPHA_DEFAULT;
+  try{
+    const raw = localStorage.getItem(DOCK_ALPHA_KEY);
+    if(raw !== null && raw !== '') n = Number(raw);
+  }catch(e){}
+  if(!Number.isFinite(n)) n = DOCK_ALPHA_DEFAULT;
+  n = Math.round(n / DOCK_ALPHA_STEP) * DOCK_ALPHA_STEP;
+  return Math.min(DOCK_ALPHA_MAX, Math.max(DOCK_ALPHA_MIN, n));
+}
+function setDockAlphaPref(n){
+  try{ localStorage.setItem(DOCK_ALPHA_KEY, String(n)); }catch(e){}
+}
+// Both properties are written together, so the CSS never has to decide
+// whether a blur is worth having. 100% is the single value at which nothing
+// behind the bar can be seen at all, and there the filter is dropped outright
+// rather than left running at zero radius: a backdrop-filter costs its strip
+// of the screen every frame whatever its radius is.
+function applyDockGlassPref(pct){
+  const n = Number.isFinite(pct) ? pct : dockAlphaPref();
+  if(!document.body) return;
+  const st = document.body.style;
+  st.setProperty('--dock-alpha', n + '%');
+  st.setProperty('--dock-glass', n >= DOCK_ALPHA_MAX ? 'none' : 'blur(20px) saturate(1.7)');
+}
+// All three languages the app carries write a percentage the same way, so
+// nothing has to re-render this when the language changes -- unlike the label
+// and the hint beside it, which STATIC_MAP already handles. Through Intl
+// anyway, so a fourth language gets its own convention for free.
+function dockAlphaLabel(n){
+  try{ return new Intl.NumberFormat(appLocale(), { style:'percent' }).format(n / 100); }
+  catch(e){ return n + '%'; }
+}
+function syncDockGlassRow(){
+  const slider = document.getElementById('settingsDockGlassSlider');
+  const out = document.getElementById('settingsDockGlassValue');
+  const n = dockAlphaPref();
+  if(slider) slider.value = String(n);
+  if(out) out.textContent = dockAlphaLabel(n);
+}
+applyDockGlassPref();
 /* ---------- THE DOCK GIVES WAY AS YOU READ DOWN THE PAGE ----------
    Scroll down and the bar eases to a smaller version of itself; scroll up and
    it eases back to full size. Two resting states with a continuous motion
@@ -18788,6 +18886,24 @@ document.getElementById('settingsStickyTopBarToggle').addEventListener('change',
   localStorage.setItem(STICKY_TOPBAR_KEY, e.target.checked ? '1' : '0');
   applyStickyTopBarPref();
 });
+// Applied on every step of the drag, because watching the bar change IS the
+// control. One custom property write is free -- the note pager's own slider
+// commits on release only because each step there re-pages a whole note.
+// PERSISTED on release, so a drag is one localStorage write and not fifteen.
+const dockGlassSlider = document.getElementById('settingsDockGlassSlider');
+if(dockGlassSlider){
+  dockGlassSlider.addEventListener('input', (e)=>{
+    const n = Number(e.target.value);
+    applyDockGlassPref(n);
+    const out = document.getElementById('settingsDockGlassValue');
+    if(out) out.textContent = dockAlphaLabel(n);
+  });
+  dockGlassSlider.addEventListener('change', (e)=>{
+    const n = Number(e.target.value);
+    setDockAlphaPref(n);
+    applyDockGlassPref(n);
+  });
+}
 document.getElementById('settingsMessagingToggle').addEventListener('change', (e)=>{
   localStorage.setItem(MESSAGING_KEY, e.target.checked ? '1' : '0');
   applyMessagingPref();

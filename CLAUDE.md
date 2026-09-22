@@ -5959,6 +5959,103 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE PHONE'S BOTTOM BAR IS GLASS, AND HOW MUCH IS A SETTING (22 Sep, eighty-first pass)
+
+"There should also be a way in the settings to lower the opacity of the bottom
+horizontal bar on the app, and it should generally start with lower opacity, so
+it's slightly see through (think of it like apple's iOS 27 Liquid Glass
+feature)."
+
+### ONE SHARE OF `--paper-dim`, NEVER A SECOND COLOUR
+
+The bar was `background:var(--paper-dim)`, and the obvious way to make that
+translucent is to write an rgba beside it. That is a second copy of a colour
+the two themes already disagree about (`#EAEAEC` light, `#232427` dark), and
+two copies drift. It is a `color-mix` of the token itself now, so there is
+still exactly one value saying what this bar is painted in:
+
+    background:color-mix(in srgb, var(--paper-dim) var(--dock-alpha, 100%), transparent);
+    -webkit-backdrop-filter:var(--dock-glass, none);backdrop-filter:var(--dock-glass, none);
+
+`color-mix` was already used five times in this file, so it is not a new bet.
+`backdrop-filter` IS new here, and it needs the `-webkit-` prefix: this app is
+installed to an iOS home screen (it pays for the safe-area insets), and Safari
+wants both.
+
+**BOTH FALLBACKS ARE TODAY'S BAR.** `var(--dock-alpha, 100%)` and
+`var(--dock-glass, none)` mean a browser that never ran the script, or one
+handed a stored value it cannot use, gets the solid unblurred bar rather than
+an invisible one. So the feature can only ever ADD.
+
+### AT 100% THE FILTER IS DROPPED OUTRIGHT, NOT SET TO `blur(0)`
+
+A backdrop-filter pins the bar to its own compositor layer and recomputes the
+strip of screen under it on every frame the page scrolls, whatever its radius
+is. At full opacity nothing behind it can be seen, so none of that is worth
+paying for. `applyDockGlassPref` writes `--dock-glass: none` there, which makes
+100% byte-identical to the bar as it was before this round: the setting can
+always be put back.
+
+### THE FLOOR IS 30, AND THAT ONE IS NOT TASTE
+
+This bar is how every top-level tab is reached on a phone. At 0 it is a border
+and a shadow with nothing in between, and a setting that can leave the app's
+own navigation invisible is not one worth offering. 30 to 100 in steps of 5,
+stored as a WHOLE PERCENT rather than a 0-1 fraction -- it is what the slider
+carries, what the label prints and what `color-mix` wants, so there is no float
+being rounded on the way through.
+
+**Absent means 70, not 100**, which is the half of the request that is easy to
+skip: the bar is meant to start see-through and nobody should have to find the
+setting to get the look.
+
+### AND SOMEBODY WHO HAS ALREADY ANSWERED THIS KEEPS THEIR ANSWER
+
+    @media (prefers-reduced-transparency: reduce){ .tab-dock{ ...solid... } }
+
+Same specificity as the rule it overrides and declared after it, so it simply
+wins, and a browser that does not know the feature evaluates the query false
+and never applies the block. Checked in the pane rather than assumed: the
+feature IS known there, the rule parsed, and it correctly does not match.
+
+### The control
+
+A range input in Account settings, under "Keep the header and tabs on screen",
+because both are settings about a bar. There was no `type="range"` anywhere in
+the markup and it still is not new to the app: the note pager builds one in JS
+(`.np-auto-len`), so this borrows its `accent-color:var(--ink)`.
+
+**Applied on `input`, persisted on `change`.** Watching the bar change IS the
+control, and one custom property write is free -- the note pager's own slider
+commits on release only because each step there re-pages a whole note. Letting
+go is one localStorage write rather than fifteen.
+
+The label is `Intl.NumberFormat(appLocale(), {style:'percent'})`. All three
+languages write "70%" identically, so nothing has to re-render it on a language
+change; the label and the hint beside it go through STATIC_MAP as usual. EN, KO
+and VI all added in the same round, which is this file's own standing rule.
+
+### Checked
+
+Syntax clean, i18n **en 1025 / ko 1013 / vi 1015** (+2 each, so no table was
+missed), em dashes unchanged at 46. Driven in the pane at 375x812 with a
+striped strip behind the bar:
+
+| | |
+|---|---|
+| default | `--dock-alpha: 70%`, computed `srgb .917 .917 .925 / 0.7`, blur running |
+| at 100 | `backdrop-filter: none`, background fully opaque, stripes stop dead at the bar's edge |
+| at 30 | alpha 0.3, blur running |
+| stored "nonsense" | 70 |
+| stored 5 / 999 | 30 / 100 |
+| stored 63 | 65 (snapped to the step) |
+| dark theme at 70 | dark glass, icons and the active pill still legible |
+
+**`computer{action:"zoom"}` still cannot crop in this pane** ("region crop not
+yet supported") and hands back the whole screenshot. Scale the shot instead, or
+put the thing being judged on a strongly contrasting ground, which is what the
+stripes were for.
+
 ## `window.innerHeight` DOES NOT MOVE FOR THE KEYBOARD (22 Sep, eightieth pass)
 
 "When I try to add a note now and press enter, nothing happens. It just
