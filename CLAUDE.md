@@ -5959,6 +5959,233 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## Enter adds, pages are a switch, and the courier follows its button (22 Sep, seventy-ninth pass)
+
+Seven things in one batch. Three of them are the same sentence said about
+different parts of the app: **a control should mean what it says**. A counter
+that says "1 / 3" over a note being read as one page, a field labelled "End
+time (events only)" sitting on a deadline, and a green Add beside a green
+"reminders are on" are all the app contradicting itself.
+
+### ENTER ADDS, AND IT IS ONE LISTENER
+
+"Add the ability to press enter to add (for notes and stuff)."
+
+Every add form in here is a `.log-form` whose submit button is a child of it,
+so this is **one delegated keydown listener plus one attribute per form**
+(`data-enter-add="#addBookBtn"`), rather than a handler per form. Fourteen
+forms opted in: the study log, the notebook, a course, a lecture note, a book,
+an article, a job, a certificate, a calendar entry, a vacation, an expense,
+the grammar add form, and the two little add-a-sentence / add-a-resource forms
+on every grammar pattern.
+
+- **The attribute names the BUTTON, and it is a selector resolved inside the
+  form first.** The grammar patterns each carry their own add buttons by class
+  rather than by id, so a scoped lookup presses the one belonging to the form
+  the caret is in; anything else falls back to the document.
+- **A form that has not opted in is untouched**, which is the point: Enter is
+  already the sign-in chain, the inline editors' commit, and a newline in every
+  textarea, and none of those is allowed to change.
+- **`e.isComposing` (and the legacy keyCode 229) is the Korean and Vietnamese
+  case.** There Enter confirms the syllable being built, and a listener that
+  read it as a press would submit a half-typed word. Checked.
+- **In a textarea only Cmd/Ctrl+Enter reaches the button**, since plain Enter
+  there is a new line.
+- A disabled button, a button with no box (its tab is switched away), a file
+  input and a checkbox are all ignored.
+
+### A NOTE CANNOT BE DELETED BY ONE CLICK ANY MORE
+
+"And give warnings for deletions of notes." Both note deletes went straight to
+`supabase.delete()` with nothing in between, and a note is the one thing in
+this app that can hold hours of writing. `confirmNoteDelete` is shared by the
+course notes and the notebook, and **the title goes INTO the question**:
+"delete this note?" over a list of eight of them does not say which one is
+about to go.
+
+**With no title there is nothing to quote, and the placeholder is dropped
+rather than left as a pair of empty quotes.** All three languages were written
+so that taking the quoted part out still reads ("Delete the note?", "노트를
+삭제하시겠습니까?", "Xóa ghi chú?"), which is what makes that fallback safe.
+A note cannot be created without a title today, so it is a guard rather than a
+path anybody takes.
+
+### PAGES ARE A SWITCH, AND A PAGE IS A NUMBER OF LINES
+
+"Rework the way pages work right now. For example, if I decide to just have it
+all on one page, I should be able to do that (right now I can show all on one,
+but it still says #/3 for example). Also I should be able to use spacing to
+move things to a new page."
+
+Two separate faults, and the second one is arithmetic.
+
+**"Show all pages" was never one page.** It showed every page in a row and
+left the counter reading "Page 1 / 3", the rule drawn between each pair, and
+the page controls hidden, which is a note that is still three pages being read
+badly. The mode is now **Use pages / One long page**: off, the counter, the
+prev/next pair, move, delete, New page and the auto-pages tick are all gone,
+nothing auto-pages, and the breaks are **not drawn** (`.note-pages-off` on the
+editor's own root).
+
+- **The breaks stay IN the note**, hidden rather than deleted, which is what
+  keeps this a way of reading: it is a per-browser preference, and turning
+  pages back on brings every break back exactly where it was. Deleting them
+  would be a local view preference rewriting a shared document.
+- **The switch stays reachable whenever pages are off**, whatever the page
+  count, or there would be no way to turn them back on.
+- Turning them back on reflows the note in front of you, since nothing was
+  re-paged while they were off.
+
+**And a blank line used to cost nothing.** Auto pages counted CHARACTERS, so
+no amount of spacing moved anything onto the next page, which is exactly what
+was reported. A page is a number of **lines** now: a line is
+`NOTE_LINE_CHARS` (90) of text, a paragraph is as many lines as it needs, an
+image is a dozen, and **every block is at least one**, which is what a short
+line and an empty one both are on a page.
+
+- **Nominal lines, not measured ones**, and that is the same argument the
+  character count rested on: how many lines a paragraph really takes depends
+  on the width of whichever screen is typing, and a break is saved into the
+  note, so a page split by real height on a phone would be a different page on
+  a laptop.
+- **The stored length is CONVERTED, not clamped.** It used to be 500 to 10000
+  characters and is now 8 to 120 lines, so anything at or above 300 is read as
+  the old figure and divided by the line width: a stored 3000 comes back as 34
+  lines, which is the page length it always was. Clamping it to the new ceiling
+  would have silently tripled somebody's pages.
+- The slider label says "about {n} lines". `NOTE_AUTO_MIN` is 8, so it never
+  has to say "1 line" and one plural form does for every language; that is
+  written down beside the label, since lowering the floor would break it.
+- **Auto pages stays OFF by default.** Turning it on writes breaks into a note
+  other people read, so it is not a default to flip on somebody's behalf.
+
+### THE END TIME IS ONLY SHOWN WHERE IT CAN BE SAVED
+
+"For the calendar it says that end times are for events only. why even show it
+if you have picked another option. Should be a general rule not to show
+something useless."
+
+`addEvent()` and `saveEventEdit()` have always written `event_end_time` for an
+event or a course and dropped it for everything else, so on a deadline or a
+birthday that field was a control that could not do anything, with the reason
+written into its own label. `KIND_HAS_END_TIME` **is** that rule rather than a
+second copy of it, the label is just "End time", and the field follows the kind
+in both forms.
+
+- **Cleared as well as hidden**, so what is on screen and what would be saved
+  cannot disagree.
+- **The edit panel's kind can be changed with the panel open**, so there the
+  field follows the dropdown rather than being decided once when the panel was
+  drawn.
+- Swept for the rest of it: `(events only)` was the only label of its kind in
+  the app, and the end time is the only column either save path drops by kind.
+  The general rule is recorded here rather than enforced by anything.
+
+### THE COURIER'S SCENE FOLLOWS ITS BUTTON
+
+"For add buttons with courier animation, they might move at times after
+adding, so the courier thing fucks up his A throw. Probably should calculate
+its position to bounce to after it hits the wall."
+
+Every coordinate in `addCourier` is a rect read at the moment of the press, and
+the whole scene is a box pinned to the page at that moment, which is what makes
+the arithmetic simple. It holds only while the button stays where it was, and
+it often does not: the form clears, a hint appears or goes, a list above
+re-renders, and now the phone's keyboard closes after an Enter. The letter then
+flies home to where the button used to be.
+
+So **the layer is offset by however far the button has travelled since the
+press, once a frame**, and nothing inside it has to know: the guy, the letter's
+landing and the peek are placed against that one origin, so they move together.
+One rect read and at most one transform write per frame, which is what the
+abort watcher already costs, and a scene that does not move writes nothing.
+
+- **The pack is the one thing placed from a LIVE rect** (the list it is thrown
+  at), so it is the one thing that has to subtract the offset again.
+- The loop is cancelled in `finish()`, with everything else.
+
+### SAVE IS GREEN AND CANCEL IS RED
+
+"On edits: Save changes should be green, cancel should be red. General
+normative rule." Nineteen buttons across every edit form in the app, plus the
+grammar add form, the reminders panel, the interview-date modal and the
+moderator's study modal: `.act-save` in `--on` and `.act-cancel` in
+`--danger`, the same shape `.act-danger` already had (ink now, the border on
+hover) so a pair reads as two words rather than two boxes.
+
+**This EXTENDS the colour doctrine in the token block**, which says green is a
+state that is on and never an affordance, so the exception is written down
+beside the rule: a save is the one affordance whose whole meaning is "keep
+this", which is near enough to a state, and Kristoffer asked for it by name.
+
+Three places deliberately left neutral, and the reasons are the rule working:
+
+- **The delete-choice modal's Cancel.** Its two other buttons are red deletes,
+  and a third red button beside them makes red mean nothing.
+- **The timer's own Save**, and the two writing-session ones. Those ADD an
+  entry and are their card's primary action, not the commit half of an edit.
+- **The colour popover's save**, where a green button would read as one of the
+  swatches.
+
+### TWO HYPHENS ARE AN EN DASH AND THREE ARE AN EM DASH
+
+"Add some easy en/em dash functionalities, 2 dashes in a row becomes an en
+dash, 3 becomes an em dash." `enableDashShortcuts`, on all five Quill editors.
+
+- **Quill only, and that is the whole of the scope on purpose.** A slug, a
+  short link, a Vietnamese word and a Korean grammar pattern all carry
+  hyphens, and none of them wants one rewritten. Prose does.
+- **Only what was TYPED.** A paste carrying `--` is somebody's command line, so
+  the rewrite fires only on a delta whose last op is an inserted `-` from
+  'user'.
+- **`history.cutoff()` first, then ONE delta** (`retain / delete 2 / insert`),
+  so one undo puts the hyphens back rather than swallowing the word being
+  typed, and the autosave, the live delta and the pager see one edit.
+- The characters are written as `\u2013` / `\u2014` escapes rather than typed,
+  since this repo's own rule is that no em dash appears in its source. The
+  file's em dash count is unchanged at 46.
+
+### Checked
+
+`tsc` has no place here; what this app has is the verifier and a harness, and
+both were rebuilt because the scratchpad from the last session was gone.
+
+**46 checks against the REAL code, in a browser**, by fetching index.html into
+a harness page, slicing the three regions out of it (the pager, the Enter
+listener, the dash shortcuts) and a fourth for the courier, and running them
+against a real Quill and the app's own stylesheet.
+
+| | |
+|---|---|
+| a blank line, a short line, 200 characters, an image | 1, 1, 3 and 12 lines |
+| a stored 3000 (the old characters) | reads back as 34 lines |
+| **20 blank lines with a 10-line page** | **3 pages, and nothing typed lost** |
+| pages off | no counter, no prev/next, no auto, no New page, no move or delete, the switch still there, the rule not drawn, nothing auto-pages, every page shown |
+| pages on again | the counter back, one page shown, the editor unmarked |
+| `--`, a third `-`, a fourth | en dash, em dash, left alone |
+| a pasted `ls --color` | untouched |
+| undo after the en dash | `b--` back |
+| Enter in a field / a textarea / with Cmd / composing / on a file input / outside a form / on a disabled button | adds, does not, adds, does not, does not, does not, does not |
+| Save, Cancel, Delete, neutral | `#4F7563`, `#B33B34`, the same red as Delete, `#6B6D72`; in the dark theme `#86B49F` and `#E8827A` |
+| the courier, when its button moves 40px | `translate3d(0px, 40px, 0px)`, that axis only, and it holds still when the button does |
+
+Three traps, all of them about reading this file programmatically:
+
+- **A marker used to slice the file matched the TABLE OF CONTENTS.** The
+  section heading `A NOTE SPLIT INTO PAGES` appears twice, the second time as
+  the real section, so the slice ran from the top of the file and would not
+  compile. **Count the marker before trusting it** (`s.count(marker) == 1`) and
+  prefer a line of code over a heading.
+- **`<style>` matched one inside an HTML COMMENT**, so the extracted
+  stylesheet began with comment text and every token resolved to nothing,
+  which read as the new colours not applying. The tell was that both sides of
+  a colour comparison were black: **a comparison between two empty values
+  passes**, so assert the token is non-empty first.
+- **The pane's `window.innerHeight` can be 0 on a fresh open**, which fires
+  the courier's own "nothing to watch" guard and looks exactly like the scene
+  failing to build. And rAF only advances while the pane is painting, so a
+  test that awaits frames needs a screenshot in between.
+
 ## The note toolbar on a phone is a grid (16 Sep, seventy-eighth pass)
 
 "This layout looks kind of weird on app", with a screenshot of the course-notes
