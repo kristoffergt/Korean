@@ -5959,6 +5959,112 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## A DELETE THAT ASKS NOTHING AND CLOSES NOTHING READS AS A DEAD BUTTON (23 Sep, eighty-second pass)
+
+"The delete button doesnt give a warning, and when I clicked it a bunch of
+times, it apparently deleted the event but didnt close down the box, so I didnt
+even know it was deleted. I just thought the delete option did nothing. also i
+dont like that we have two cancel options here. Just remove the red cancel
+option. also the delete X also doesnt give a warning on deletion."
+
+Four reports, and the first two are one branch of one function seen from either
+end.
+
+### ONE ENTRY, TWO KINDS OF DELETE, AND ONLY ONE OF THEM ASKED
+
+`promptDeleteChoice` carried a line nobody had looked at since the repeating
+case was built around it:
+
+    if(!ev.recur_freq){ deleteEvent(eventId); return; }
+
+A REPEATING entry got the this-one-or-all modal, which names the scope and
+carries its own Cancel, so it was guarded already. **A one-off got nothing at
+all**: the row was gone from the database on the first press, and the panel
+describing it stayed open in front of it. So the same press both destroyed
+something without asking AND gave no sign of having done anything, which is
+exactly why it was pressed repeatedly.
+
+**The rule is one ask per delete, whichever way it was reached.** A one-off
+gets a confirm naming the entry; a repeating one keeps the choice modal and
+does NOT also get a confirm, because asking twice is asking the same question
+twice.
+
+**And a panel whose subject has just been deleted closes.**
+`promptDeleteChoice` answers whether it deleted RIGHT HERE rather than handing
+over to the choice modal, so a caller with a panel open on that entry knows
+which of the two happened. The choice modal's own buttons were already closing
+it for the repeating path, which is why only the one-off looked broken.
+
+### THE LIST'S OWN X CROSSED OFF A SERIES FROM A ROW SHOWING ONE DATE
+
+`.del-event-btn` called `deleteEvent` directly, so it skipped the choice modal
+as well as any confirm. On a repeating entry that is worse than it sounds: the
+row shows ONE date beside its recurrence ("2026-09-25 . 8:00 AM . Every 1
+month(s)"), and the X beside it removed every occurrence there will ever be,
+silently. It goes through `promptDeleteChoice` now, with the row's own
+`nextOccurrence` as the date, so "this event only" means the date the row is
+actually showing.
+
+### THE QUESTION NAMES WHAT IS ABOUT TO GO
+
+Both asks carry the title, which `confirmNoteDelete` already does for notes and
+for the same reason: **a list can hold two entries with the same name.** The
+screenshot that came with this report has exactly that, "Rent Due" twice, one
+Kristoffer's and one Roxy's, told apart only by an owner tag.
+
+- **`deleteChoiceText` therefore left `STATIC_MAP`.** That loop writes the raw
+  string, so the question would have read a literal `{title}`. It is written by
+  `promptDeleteChoice` with the title substituted, like every other line in the
+  app whose text depends on what it is about.
+- **The title is guaranteed, so the fallback is a safety net rather than a
+  state the UI can reach**: `addEvent` and `saveEventEdit` both `return` on an
+  empty one. Where there somehow is none, `eventLabel` uses the kind's own name
+  (Event, Deadline, Birthday), which at least says what is going. No regex
+  stripping a quoted placeholder, which is what `confirmNoteDelete` needs and
+  which leaves dangling punctuation in one of the three languages here.
+
+### ONE WAY OUT PER SURFACE, NOT TWO
+
+`buildEventEditFieldsHtml` drew a red Cancel beside Save changes, and it is
+shared by two surfaces that EACH already had their own way out: the calendar
+modal has a Cancel button and an X, the inline row panel has an X. Both were
+carrying two controls for one job. The red one is gone from the builder, so
+both keep exactly one, and the two listeners wired to it went with it -- the
+modal's would have thrown on a null once the button was gone, the row's was
+guarded and merely dead.
+
+### Checked
+
+Every script block parses, `deleteEventConfirm` is in all three tables (en
+1026, ko 1014, vi 1016, which is +1 each, so no table was missed), and em
+dashes are unchanged at 46.
+
+Driven in a browser against the real functions, with `confirm` and
+`deleteEvent` stubbed so nothing reached the database:
+
+| | |
+|---|---|
+| modal, one-off, refused | asked once, deleted nothing, **modal stayed open** |
+| modal, one-off, accepted | asked once, deleted, **modal closed** |
+| modal, repeating | **0 confirms**, choice modal reading `"Rent Due" is a repeating entry` |
+| "All events" | deleted, both modals closed |
+| row X, one-off | the same two outcomes as the modal |
+| row X, repeating | 0 confirms, and the pending date is **2026-09-25**, the row's own next occurrence |
+| the modal's buttons | Save changes, Delete, Cancel, X. **One Cancel** |
+| the inline panel | `panel-close-btn` only, and no `.edit-cancel-btn` |
+
+**Nothing was clicked through**: `#appScreen` was un-hidden from the console and
+the functions called directly, which is this file's own way past the PIN gate,
+and both `confirm` and `deleteEvent` were replaced first so a real delete could
+never leave the page.
+
+**Reported and deliberately NOT fixed, being nobody's ask this round**: the
+recurrence badge reads "Every 1 month(s)" in English. `recurBadge` is
+'Every {n} {unit}' and the units are the dropdown's own labels, 'Day(s)',
+'Month(s)', 'Year(s)' -- right in a dropdown with no number beside them and
+wrong the moment one is interpolated in. English only; Korean and Vietnamese
+do not inflect. The weekly case was already fixed by naming the weekday.
+
 ## THE PHONE'S BOTTOM BAR IS GLASS, AND HOW MUCH IS A SETTING (22 Sep, eighty-first pass)
 
 "There should also be a way in the settings to lower the opacity of the bottom
