@@ -24,6 +24,28 @@ linking system (see below) to share with specific other people.
    that happens, use `AskUserQuestion` to ask whether it's been run yet —
    don't just state it as a reminder in prose. Do not re-ask about older
    `*_migration.sql` files that were only mentioned in past sessions.
+3. **NEVER WRITE "{n} item(s)".** Where a number meets a word, the word has a
+   singular form for exactly 1 and a plural for everything else, 0 included.
+   A parenthesised s is the app declining to answer a question it already knows
+   the answer to (real-user rule, 23 Sep: "we should never have the (s) issue.
+   Should be a rule that we have the 1 special case and then plural denotation
+   for the rest"). **English is the only one of the three languages here that
+   inflects** -- Korean and Vietnamese say "3 book" exactly the way they say
+   "1 book" -- so a counted string is ONE entry in ko/vi and TWO in en.
+   - The convention is **`<key>` for the plural and `<key>One` beside it for the
+     singular**, both carrying `{n}`, read through **`tCount(key, n)`**. A
+     language that does not need a singular simply has no `One` entry, and
+     `tCount` falls through to its one form. `tForm(key, n)` is the same lookup
+     without the substitution, for a bare word going into a bigger sentence.
+   - **Sometimes the number itself does not belong in the singular at all**:
+     "Every month", not "Every 1 month". `recurBadgeOne` carries no `{n}` for
+     that reason, which costs nothing because the substitution is then a no-op.
+   - Check **0 and 1** specifically, not just 1. English puts 0 with the plural.
+   - A string with no noun after the number ("{n} online", "Page {n} / {total}",
+     "{n} px", "a {n}-minute countdown") needs none of this, and neither does a
+     count that cannot reach 1 -- say which, in a comment, the way
+     `noteAutoLenLabel` already does.
+
 
 ## Architecture patterns to follow when extending the app
 
@@ -5959,6 +5981,111 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## "EVERY 1 MONTH(S)" IS TWO FAULTS IN FOUR CHARACTERS (23 Sep, eighty-third pass)
+
+"Yeah, it should just read every month of course. Generally, we should never
+have the (s) issue. Should be a rule that we have the '1' special case and then
+plural denotation for the rest."
+
+So: the badge, then every other place in the app with the same fault, then the
+rule written down where it will be read. **It is standing instruction 3 at the
+top of this file now**, which is the actual reason this kept coming back: the
+expenses tab's own code says it is following "the rule at the top of this
+file", and there was no such rule up there to follow.
+
+### THE NUMBER DOES NOT BELONG IN THE SINGULAR AT ALL
+
+"Every 1 month" is not the fix for "Every 1 month(s)", it is the same sentence
+with one fault removed instead of two. At an interval of one the count is not a
+fact worth stating: **"Every month".** `recurBadgeOne` carries no `{n}` for
+exactly that reason, and the substitution is then a harmless no-op.
+
+Read off the real row afterwards, which is where it was reported:
+
+| | |
+|---|---|
+| en | Every month / Every 3 months / Every other Friday |
+| ko | **매월** / 3개월마다 / 매주 화요일 |
+| vi | Mỗi tháng / Mỗi 3 tháng |
+
+**Korean wanted a different WORD, not a different form**, which is the one place
+this is more than English bookkeeping: 3개월마다 is right and 매개월 is not, so
+ko gets `repeatMonthOne:'월'` and 일/주/년 need no singular at all because 매일,
+매주 and 매년 are already correct. That is the whole shape of the convention in
+one example.
+
+### `tCount(key, n)`, AND WHY THE SINGULAR IS A SEPARATE KEY
+
+`<key>` is the plural and `<key>One` beside it is the singular. **English is the
+only one of these three languages that inflects a noun for number**, so a
+counted string is two entries in en and ONE in ko and vi, and a language that
+needs no singular simply does not have a `One`.
+
+**The singular is taken from whichever table answered the plural**, never from
+English's. Reaching for `I18N.en[key + 'One']` when the current language has its
+own plural would drop an English word into a Korean sentence on precisely the
+counts where the reader is least expecting one.
+
+The dropdown that fed the badge went to plain plurals (Days, Weeks, Months,
+Years), which is what reads beside its own "Every: 3" number field. The
+pre-hydration `<option>`s in the markup moved with it: `applyLanguage` rewrites
+them, so they are only ever seen for one frame, and a frame is enough.
+
+### THE SWEEP, AND WHAT WAS DELIBERATELY LEFT
+
+Every `(s)` in a translation value, and every counted string that breaks at one:
+
+| | was | now |
+|---|---|---|
+| `recurBadge` + the four units | Every 1 month(s) | Every month |
+| `quizDueCount` | 1 pattern(s) due for review | 1 pattern due for review |
+| `gramAddPatternNamesLabel` | Grammar pattern(s) | Grammar patterns |
+| `aiFilled` | Filled 1 fields. | Filled 1 field. |
+| `importSuccess` | Imported 1 events | Imported 1 event |
+| `charCountLabel` / `charCountTarget` | 1 characters | 1 character |
+| `deleteAllWritingConfirm1` | Delete all 1 of your writing samples? | Delete your one writing sample? |
+| the writing list | `${count} ${t('wordsLabel')}` | `tCount('wordCountLabel', n)` |
+
+**`wordsLabel` is gone**, and the fault it had was structural rather than a
+wording slip: a bare noun concatenated after a number can never inflect,
+because nothing at the join knows what the number is. `wordCountLabel` was
+sitting unused two entries away with the count already in it.
+
+**Three pairs that were already correct were brought onto the one convention**
+-- `expExcludedOne`/`expExcludedMany` and the two recap titles, which were
+right but spelled the rule two other ways, `{count}` placeholder and all. A
+rule with three spellings in one file is how the fourth one gets written.
+
+**Left alone, each for a reason that is now written beside it**: a number with
+no noun after it ("{n} online", "Page {n} / {total}", "{n} px", "and {n}
+earlier", "Version history ({n})"), an attributive count that is correct at one
+("a {n}-minute countdown"), a count that cannot reach one (`notePageAutoLen`,
+whose floor is 8 and whose comment has said so since it was written), and the
+"(s)" inside the LLM prompts, where "author name(s) as printed" is an
+instruction to a model about a field that really does take one or several.
+
+`pluralUnit(n, a, b)` stays. It picks between two WORDS inside a sentence
+rather than between two messages, which is a different job, and its callers
+were already right.
+
+### Checked
+
+Every script block parses. Keys: **en 1037, ko 1012, vi 1013** -- en gains the
+twelve singulars it needs, ko gains two (`repeatMonthOne`, `recurBadgeOne`) and
+loses four to the merges, vi gains one and loses four. Em dashes unchanged at
+46.
+
+Driven in the browser at 0, 1 and 2 in all three languages: every counted
+string reads correctly at every count, **0 takes the plural in English**, the
+live dropdown rebuilds as "No repeat / Days / Weeks / Months / Years", and
+**no `<option>` anywhere in the app still carries an "(s)"**. A re-parse of the
+three tables finds **zero** values containing "(s)".
+
+**And the audit is worth re-running after any new counted string**: parse the en
+table, list every value carrying `{n}`, and print whether a `<key>One` exists
+beside it. Every row without one should be explainable in a sentence, and the
+eight above are.
+
 ## A DELETE THAT ASKS NOTHING AND CLOSES NOTHING READS AS A DEAD BUTTON (23 Sep, eighty-second pass)
 
 "The delete button doesnt give a warning, and when I clicked it a bunch of
@@ -6058,8 +6185,9 @@ the functions called directly, which is this file's own way past the PIN gate,
 and both `confirm` and `deleteEvent` were replaced first so a real delete could
 never leave the page.
 
-**Reported and deliberately NOT fixed, being nobody's ask this round**: the
-recurrence badge reads "Every 1 month(s)" in English. `recurBadge` is
+**Reported and deliberately NOT fixed, being nobody's ask this round** (and
+then asked for and done in the pass above): the recurrence badge reads
+"Every 1 month(s)" in English. `recurBadge` is
 'Every {n} {unit}' and the units are the dropdown's own labels, 'Day(s)',
 'Month(s)', 'Year(s)' -- right in a dropdown with no number beside them and
 wrong the moment one is interpolated in. English only; Korean and Vietnamese
