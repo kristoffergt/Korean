@@ -5981,6 +5981,95 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE REPO IS THE WEB ROOT, SO EVERY FILE IN IT IS A PUBLIC URL (24 Sep, eighty-fourth pass)
+
+"We should only include useful things on github. Why do we have claude.md and
+fix_grammar_numbering.sql? Maybe there are others???"
+
+There were others, and the question turned out to be bigger than tidiness.
+GitHub Pages serves this repo from the root of `main` (there is a `CNAME`), so
+a tracked file is not merely clutter on GitHub, it is a file anybody can
+download from kristoffergt.com. Measured rather than assumed:
+
+| | |
+|---|---|
+| `kristoffergt.com/CLAUDE.md` | **200, 444,208 bytes**, the whole log |
+| `kristoffergt.com/fix_grammar_numbering.sql` | 200 |
+| `kristoffergt.com/sql%20migrations/privacy_rls_migration.sql` | 200 |
+| `kristoffergt.com/scripts/yonsei_jobboard_sync.py` | 200 |
+
+**No credential is exposed, and that was checked rather than hoped.** Every
+tracked file was swept for secret-shaped strings: the `service_role` hits are
+the Postgres ROLE NAME in `GRANT` statements, the `eyJ...` tokens are the anon
+key, which is public by design and sits in `index.html` anyway, the site PIN
+lives in Postgres behind `verify_site_pin()` and appears in no file, and
+`YONSEI_INGEST_SECRET` is in a gitignored `.env` beside its own `.env.example`.
+CLAUDE.md holds no e-mail address, no UUID and no project ref. So this is
+information disclosure and not a breach: what was on offer is the shape of the
+database and 7,657 lines of working notes.
+
+### The two questions are separate, and so is the fix
+
+Version control should keep the migrations, the edge functions and this log:
+they are the project's own history. The BROWSER needs none of them. `_config.yml`
+excludes them from the Pages build, so git keeps everything and the site
+publishes only what a browser fetches.
+
+- **Jekyll is what makes that work, and it is confirmed running.**
+  `kristoffergt.com/.claude/launch.json` is a **404** while every other file is
+  a 200, which is Jekyll's own default dotfile rule doing it. Without a Jekyll
+  build an `exclude:` list would be inert.
+- **Setting `exclude` REPLACES Jekyll's defaults rather than adding to them**,
+  so `node_modules`, `vendor` and the Gemfiles are repeated in the list. None of
+  them is committed, so it is a guard rather than a fix.
+- **Nothing excluded is fetched by anything**, checked before it was written:
+  every reference to `sql migrations`, `scripts/`, `supabase/` or `CLAUDE` inside
+  `index.html`, `sw.js` and `resume/index.html` is a COMMENT pointing a reader at
+  the source file. The service worker's own `SHELL_URLS` is `./`, `index.html`,
+  `manifest.json` and the four icons, every one of which stays published.
+
+### Two files removed outright
+
+- **`fix_grammar_numbering.sql` at the root is a superseded first draft** of
+  `sql migrations/fix_grammar_numbering.sql`, tracked twice under one name in two
+  places. The root copy renumbers in one global sweep; the copy that was kept
+  also splits the numbering per level (Intermediate 1..74, Advanced 75..123) and
+  drops the unique index on `number` first, because reassigning in place collides
+  with whatever old value still sits in another row mid-update. Both were applied
+  long ago; only one of them is the truth.
+- **`scripts/__pycache__/*.pyc`** is compiled bytecode, regenerated on every run
+  and stale the moment its `.py` changes. `__pycache__/` and `*.pyc` are ignored
+  now, which they never were.
+
+### And `logos/` is referenced by nothing
+
+All three files (`YonseiUniversityEmblem.svg` at 182 KB, `shared-time-light-final.png`,
+`shared-time-dark-final.png`, 207 KB together) are named by no tracked file at
+all: not `index.html`, not `manifest.json`, whose icons are the four `icon-*`
+PNGs, and not `sw.js`. They are kept in git, because source art is worth keeping
+even when nothing points at it, and excluded from the build, because there is no
+reason to serve a university's emblem off a personal domain. Deleting them is a
+judgement about the art rather than about the repo, so it was left alone.
+
+### Two things about git worth not re-learning
+
+- **IGNORING DOES NOTHING TO SOMETHING ALREADY TRACKED.** A `.gitignore` line for
+  a tracked file changes nothing at all; it needs `git rm --cached` as well, which
+  is why this shows as a deletion against a file still sitting on disk.
+- **This does not shrink a clone.** The bytes stay in every past commit, and
+  rewriting that means a force-push to a published branch. What it buys is a repo
+  whose CONTENTS are the things the project uses, and a domain that stops handing
+  out the notes.
+
+### Checked
+
+`_config.yml` parses as YAML (confirmed with PyYAML, all nine exclude entries
+read back). Nothing in `index.html` was touched, so the app is byte-for-byte what
+shipped. The site itself cannot be verified until the push: a Pages build reads
+`_config.yml`, so **watch that the build goes green afterwards**, and the proof it
+worked is `kristoffergt.com/CLAUDE.md` answering 404 while `kristoffergt.com/`
+still loads the app.
+
 ## "EVERY 1 MONTH(S)" IS TWO FAULTS IN FOUR CHARACTERS (23 Sep, eighty-third pass)
 
 "Yeah, it should just read every month of course. Generally, we should never
