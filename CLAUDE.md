@@ -5999,7 +5999,9 @@ the reset screen (Settings' password change goes through the reset email, so
 that covers it). **It fails OPEN** (4s timeout, any error lets the password
 through), deliberately: this protects people from a weak choice, it is not a
 gate, and anybody bypassing the page to set a leaked password on their own
-account only hurts themselves. HIBP answers CORS preflight for `Add-Padding`
+account only hurts themselves. The refusal reads "That password has been
+involved in a data breach. Please pick another password." (Kristoffer's
+wording; ko/vi say the same). HIBP answers CORS preflight for `Add-Padding`
 (`access-control-allow-headers: Add-Padding`), checked with curl. In the
 browser: "password" is caught, a random string is not.
 
