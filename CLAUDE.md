@@ -5981,6 +5981,139 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## ONE BUTTON PER JOB, AND THE SAME ONE EVERYWHERE (26 Sep, eighty-fifth pass)
+
+"You need to run checks across the whole site to standardize buttons and
+stuff. Because there are a lot of varying designs on the site."
+
+Measured rather than eyeballed: every button's computed background, ink,
+border, radius, font and padding, grouped by look. The static page alone had
+**220 of them in 47 distinct looks**; it has **36** now, and what is left is
+deliberate (the header's own chrome, the tab bar and dock, the language menu,
+active against inactive states, link colours). The rows that only exist with
+data were measured in a guest session seeded with sample rows (below).
+
+### The vocabulary, which every button now belongs to
+
+| job | look |
+|---|---|
+| a form's own submit | the solid default `button`, 14px, 10px 20px |
+| everything smaller: row actions, toolbars, dialog secondaries | `.export-btn`, 11px, outlined |
+| Save / Cancel, Accept / Decline | `.act-save` green, `.act-cancel` red, at either size |
+| a boxed delete | solid red: `.btn-danger` full size, `.export-btn.btn-danger` small |
+| a choice between views | the Month/Week/Day row: 12px/600, 6px 14px, dark when chosen |
+| a picker standing in a field row | the height of the fields (14px, 9px 10px) |
+| closing a dialog or panel | `.icon-btn.close-x`, 4px 10px |
+| a row's delete | the bare red ✕ at 15px |
+| a row's edit / reorder | a mark that grows 1.2 from its centre |
+
+### What moved onto it
+
+- **Thirteen close ✕ carried their own inline padding**, 4px 10px on nine and
+  2px 8px on four, so two dialogs opened one after the other had two different
+  crosses. One class, `close-x`, and the inline styles are gone.
+- **Four kinds of view switch were four sizes.** The activity breakdown's
+  7/30/All (500 weight, 5px 12px), the recap's Week/Month (paper-dim, radius 8,
+  and GREEN when chosen), the sign-in tabs (13px, 8px) and the calendar export's
+  PNG/PDF (6px 16px) all take the Month/Week/Day row's numbers now, and all go
+  dark when chosen. The Jump-to pills on Overview and the tab fly-out's items
+  are the sub-tabs reached from somewhere else, so they are drawn as the
+  sub-tabs too. The vacation picker, a single choice, went from green to dark
+  with them.
+- **Save was neutral grey in eight static places** while every inline editor
+  already drew it green (the writing editor, both mock-exam saves, notebook,
+  notes, Save name, Update email, Confirm and enable), and **Cancel was the big
+  black button** in two of those pairs: Account settings put a small outlined
+  "Save name" beside a solid black "Cancel", and 2FA setup the same. Both
+  pairs are the standard green and red now. "I've saved these" is a confirm,
+  so it is green.
+- **The calendar event dialog's hierarchy was upside down**: Save a small
+  green outline, Delete a small red outline, Cancel the one big black button.
+  All three are the small size now, Delete solid red. The delete-choice dialog
+  (this event only / all events) is solid red with a neutral Cancel, because
+  there Cancel is the safe answer rather than a discard.
+- **One look per pair of answers.** The linked-circle invite had Accept as an
+  outline and Decline as a solid black button; the vacation invite had Accept
+  as an outline and Decline as a link. Both are green Accept and red Decline.
+  The two Invite buttons (circle and vacation) were a small solid and an
+  outline; both are outlines.
+- **A picker in a field row is a field.** The Sort control shares its row with
+  a search box and selects on Videos, Applications, Certifications and the job
+  board, and at 27px it sat beside 37px fields. Inside a `.field` it is field
+  height now; the person filter, which always sits in a `.field` under its own
+  label, went from 32px to the same 37px. Outside a field (the expense list's
+  sort rows, the recap header's person filter) both keep the compact size.
+- **One-offs brought into the family**: the calendar's Download (a header-style
+  icon button beside Import/Export), the writing timers' Start/Pause/Reset/Save
+  (the same, eight of them), Sign out (its `.textbtn` rule was scoped to
+  `.who` and never reached it, so it fell to the solid default), the colour
+  popover's save, the grammar AI panel's Copy prompt (a solid black button,
+  where books and articles draw the same action as a link), the book and
+  article note save, the circle's Leave (now red: it is the destructive one)
+  and the roster's gear and ✕ (inline-sized header buttons; now the edit mark
+  and the row delete).
+- **Row deletes were five sizes**: 15px on most rows, 13px on lecture notes,
+  12px on book notes, 11px on grammar resources, and 12px with the base
+  button's 10px 20px padding still on it on grammar sentences, so that one was
+  a wide invisible target round a small glyph. All 15px; the ✕ inside a chip
+  stays 12px, being inside a chip. The lecture pencil and arrows and the
+  sentence pencil grow like every other mark.
+- **The writing forms showed the browser's own "Choose File" button**, the one
+  native file control left in the app. They use `label.file-upload-btn` over a
+  `.hidden-file-input` like every other upload, so the delegated listener shows
+  the chosen name; the save routines call `syncFileChosenName` after clearing,
+  since clearing fires no change event.
+- Smaller: the month arrows take the pager's paper fill, the pager, weekday
+  toggles and Jump-to parents take radius 6, the icon pills 5px 11px like the
+  circle's thread chips, and the month title's caret lost its inline style to
+  a class.
+
+### A BOXED DELETE IS SOLID RED, and the outlined one is retired
+
+The one call that reverses an earlier pass. The thirty-ninth pass made the
+solid-pill deletes bright red and left the outlined red-text ones
+(`.export-btn.act-danger`) alone as "a different control". Standardizing
+forced the choice: once Cancel is red text, an outlined red Delete beside it is
+the same red word, which is exactly the calendar dialog. So every boxed delete
+is solid red, at whichever size its row uses, and `.export-btn.act-danger` is
+gone with nothing left using it. If the outlined look is wanted back for the
+small ones, it is one rule.
+
+### Checked
+
+The verifier: the real script block compiles, and the only `getElementById`
+targets without a static id are `tabDock` and `splitNotice`, both built at run
+time as before. Em dashes 46 and en dashes 113 in index.html, unchanged. No new
+strings: the two upload labels reuse `chooseFile`, which all three languages
+have.
+
+In the browser at 1,100 and 390 wide with a guest session: every changed
+button's computed metrics read back as intended, and the calendar, event
+dialog, account settings, writing page, job board and Overview were looked at.
+**At 390 the edited page was compared view by view against the untouched copy
+served on a second port with the same seeded data**: no horizontal overflow on
+any of the fifteen views, no toggle row wrapping, heights within a few pixels,
+and the writing page 30px shorter for losing the native file input. That
+comparison is what caught the one regression: the Jump-to pills' phone font
+had crept from 11.5px to 11.7px and wrapped one more row, and the phone cap is
+back at 11.5.
+
+**Not seen, because a guest cannot reach them**: expenses (the guest backend
+has no `.in()`), the moderator panel, and the linked-circle roster and invite
+rows. Their buttons were changed through the same classes and checked in the
+markup only.
+
+### Reaching a populated page without signing in, for next time
+
+`enterGuestMode()` runs on a local fake backend (nothing is sent anywhere), and
+it reads its tables from `localStorage[GUEST_STORE_KEY]` (`guestAppData_v1`),
+so writing `{version:1, tables:{books:[...], events:[...], ...}}` there first
+gives every list real rows. Hide `#pinGateScreen`, call `enterGuestMode()`,
+then `switchTopLevelTab(top)` and the matching `switch...SubTab(view)`.
+`study_entries.activities` is an OBJECT of activity to hours, not an array.
+A second copy of the site on another port has its own localStorage, so it
+needs the same seed before any comparison means anything.
+
 ## THE REPO IS THE WEB ROOT, SO EVERY FILE IN IT IS A PUBLIC URL (24 Sep, eighty-fourth pass)
 
 "We should only include useful things on github. Why do we have claude.md and
