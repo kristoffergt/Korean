@@ -13,19 +13,20 @@
 <meta name="apple-mobile-web-app-title" content="kristoffergt">
 <!-- Every CDN here is pinned by version, so the connections are worth opening
      while the document is still arriving rather than when the parser first
-     reaches one. crossorigin only on gstatic: font FILES are fetched CORS and
-     a script is not, so putting it on the others would warm a connection
-     nothing then uses. -->
+     reaches one. crossorigin on gstatic, jsdelivr and cdnjs: font FILES are
+     fetched CORS, and so is every script and the Quill stylesheet now that
+     they carry an integrity hash (SRI only works on a CORS response). Google's
+     font CSS is not, so its preconnect stays without. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdn.jsdelivr.net">
-<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <!-- supabase-js is the one script the boot sequence cannot start without, so
      the FETCH is asked for here and the script itself RUNS at the foot of the
      body: downloaded alongside the document instead of blocking the parser in
-     the head. No crossorigin, so this is the same cache entry the plain
-     <script> down there asks for. -->
-<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+     the head. Same URL, same crossorigin and same integrity as the <script>
+     down there, or the browser treats them as two requests and fetches twice. -->
+<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js" integrity="sha384-WgXwGL6fUsYJWNaKJgVbrJKGRQwc1vieh2oy4kw9nXqpNDz3tdSsqEYUgeHD/NuF" crossorigin="anonymous">
 <!-- The four families were one @import at the top of the style block below.
      Measured: the Latin pair (Inter, Space Grotesk) is 30 @font-face rules and
      830 bytes gzipped, the two Korean families are 620 rules and 116 KB -- so
@@ -42,7 +43,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
 <!-- Quill's own theme. The editor is not on screen until a note is opened, so
      this has no business holding up the first paint either. -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.6/quill.snow.min.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" integrity="sha384-Cr4NirNGPwhXoUPml2HA5PmMExeUuxM/oxUMDhMdSzUi9udHL+hdgDZZpq/2rOrp" crossorigin="anonymous" media="print" onload="this.media='all'">
 <style>
 :root{
   color-scheme: light;
@@ -5311,13 +5312,21 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
      and the parser has nothing left to hold up -- and they still run in order,
      before the inline script below, so every site that reads window.Quill or
      window.ImageResize is unchanged. -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.6/quill.min.js"></script>
+<!-- Every third-party file is pinned to one exact version and carries its
+     sha384 hash, so a CDN that starts serving something else is refused
+     instead of being run with the page's session in reach. supabase-js is the
+     version "@2" resolved to when it was pinned. A new version means a new
+     hash: curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js" integrity="sha384-WgXwGL6fUsYJWNaKJgVbrJKGRQwc1vieh2oy4kw9nXqpNDz3tdSsqEYUgeHD/NuF" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js" integrity="sha384-QUJ+ckWz1M+a7w0UfG1sEn4pPrbQwSxGm/1TIPyioqXBrwuT9l4f9gdHWLDLbVWI" crossorigin="anonymous"></script>
 <!-- Adds drag-to-resize corner handles when an inserted image is clicked in
      a note editor (Quill has no built-in resize UI). Video (an iframe embed)
      isn't covered by this module -- given a native CSS resize handle instead,
      see .ql-video in the stylesheet above. -->
-<script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js" integrity="sha384-Zqkl3J4E3Reep1JWgL7XE4k6rbPoAnCa6C8lMi02L5p7pAc2Fir9f124JRLTpX9Y" crossorigin="anonymous"></script>
+<!-- Sanitizes every piece of stored rich text (notes, writing samples, their
+     earlier versions) before it reaches the DOM; see safeRichHtml. -->
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.16/dist/purify.min.js" integrity="sha384-a7SzOxErzJ3ZpQz0zJ32d67dSitNzPcbfybc/ykU9KJhMgZkwqfSxlhhdJRS+XGL" crossorigin="anonymous"></script>
 <script>
 const GRAMMAR_SEED = [
   {
@@ -11843,7 +11852,7 @@ function lbNameCell(r){
     if(isMe) hiddenTag = `<span class="lb-hidden-tag">(${t('lbHiddenFromOthers')})</span>`;
     else if(isAdminViewer()) hiddenTag = `<span class="lb-hidden-tag">(${t('lbHiddenTag')})</span>`;
   }
-  return `${r.name}${youTag}${hiddenTag}`;
+  return `${escapeHtml(r.name)}${youTag}${hiddenTag}`;
 }
 function amICore(){ return !!(currentUser && coreMembers[currentUser.id]); }
 /* ---------- GENERALIZED LINKING ---------- */
@@ -20277,16 +20286,16 @@ function renderReading(){
       <div class="note-item">
         ${isMine ? `<button class="note-del" data-book="${b.id}" data-note="${n.id}">✕</button>` : ''}
         ${n.page ? `<div class="note-page">${t('page')} ${n.page}</div>` : ''}
-        ${n.text.replace(/</g,'&lt;')}
+        ${escapeHtml(n.text)}
       </div>`).join('') || `<div class="empty">–</div>`;
     const ownerTag = !isMine ? `<span class="e-who" style="background:${colorForUser(b.user_id)}26;color:${colorForUser(b.user_id)};">${nameFor(b.user_id)}</span>` : '';
     div.innerHTML =
       `<div class="item-top">
-        <div><div class="item-title">${b.title} ${ownerTag}</div><div class="item-sub">${b.author || ''}</div></div>
+        <div><div class="item-title">${escapeHtml(b.title)} ${ownerTag}</div><div class="item-sub">${escapeHtml(b.author || '')}</div></div>
         ${isMine ? `<button class="item-del" data-id="${b.id}" data-kind="book" title="Delete">✕</button>` : ''}
       </div>
       <div class="item-meta">
-        <span class="badge ${b.status}">${bookStatusLabel(b.status)}</span>
+        <span class="badge ${escapeHtml(b.status)}">${bookStatusLabel(b.status)}</span>
         ${isMine ? `<select data-id="${b.id}" class="book-status-select">
           <option value="to_read" ${b.status==='to_read'?'selected':''}>${bookStatusLabel('to_read')}</option>
           <option value="reading" ${b.status==='reading'?'selected':''}>${bookStatusLabel('reading')}</option>
@@ -20524,13 +20533,13 @@ function renderArticles(){
       <div class="note-item">
         ${isMine ? `<button class="note-del" data-article="${a.id}" data-note="${n.id}">✕</button>` : ''}
         ${n.page ? `<div class="note-page">${t('page')} ${n.page}</div>` : ''}
-        ${n.text.replace(/</g,'&lt;')}
+        ${escapeHtml(n.text)}
       </div>`).join('') || `<div class="empty">–</div>`;
     const ownerTag = !isMine ? `<span class="e-who" style="background:${colorForUser(a.user_id)}26;color:${colorForUser(a.user_id)};">${nameFor(a.user_id)}</span>` : '';
     const subParts = [a.author, a.source].filter(Boolean).join(' · ');
     div.innerHTML =
       `<div class="item-top">
-        <div><div class="item-title">${a.title} ${ownerTag}</div><div class="item-sub">${subParts}</div></div>
+        <div><div class="item-title">${escapeHtml(a.title)} ${ownerTag}</div><div class="item-sub">${escapeHtml(subParts)}</div></div>
         ${isMine ? `<button class="item-del" data-id="${a.id}" data-kind="article" title="Delete">✕</button>` : ''}
       </div>
       <div class="item-meta">
@@ -21093,7 +21102,7 @@ function renderJobs(){
     div.className = 'item-row';
     div.innerHTML =
       `<div class="item-top">
-        <div><div class="item-title">${j.company} ${ownerTag}</div><div class="item-sub">${j.role || ''} ${j.date_applied ? '· ' + j.date_applied : ''}</div></div>
+        <div><div class="item-title">${escapeHtml(j.company)} ${ownerTag}</div><div class="item-sub">${escapeHtml(j.role || '')} ${j.date_applied ? '· ' + escapeHtml(j.date_applied) : ''}</div></div>
         ${isMine ? `<button class="item-del" data-id="${j.id}" data-kind="job" title="Delete">✕</button>` : ''}
       </div>
       <div class="item-meta">
@@ -21111,8 +21120,8 @@ function renderJobs(){
           <option value="declined" ${j.offer_response==='declined'?'selected':''}>${t('jobOfferDeclined')}</option>
         </select>` : ''}
         ${externalLinkHtml(j.link, extLinkLabel('linkOpen'))}
-        ${j.resume_url ? `<a href="${j.resume_url}" target="_blank" rel="noopener">${t('jobResumeView')}</a>` : ''}
-        ${j.cover_letter_url ? `<a href="${j.cover_letter_url}" target="_blank" rel="noopener">${t('jobCoverLetterView')}</a>` : ''}
+        ${j.resume_url ? `<a href="${escapeHtml(safeUrl(j.resume_url))}" target="_blank" rel="noopener">${t('jobResumeView')}</a>` : ''}
+        ${j.cover_letter_url ? `<a href="${escapeHtml(safeUrl(j.cover_letter_url))}" target="_blank" rel="noopener">${t('jobCoverLetterView')}</a>` : ''}
         ${isMine ? `<button class="linkbtn act-edit act-icon job-edit-toggle" data-id="${j.id}" title="${t('editBtn')}" aria-label="${t('editBtn')}">${ICON.pencil(14)}</button>` : ''}
         ${addMyselfBtn}
       </div>
@@ -21382,7 +21391,7 @@ function renderCerts(){
     div.className = 'item-row';
     div.innerHTML =
       `<div class="item-top">
-        <div><div class="item-title">${c.name} ${ownerTag}</div><div class="item-sub">${c.issuer || ''} ${c.date_completed ? '· ' + c.date_completed : ''}</div></div>
+        <div><div class="item-title">${escapeHtml(c.name)} ${ownerTag}</div><div class="item-sub">${escapeHtml(c.issuer || '')} ${c.date_completed ? '· ' + escapeHtml(c.date_completed) : ''}</div></div>
         ${isMine ? `<button class="item-del" data-id="${c.id}" data-kind="cert" title="Delete">✕</button>` : ''}
       </div>
       <div class="item-meta">
@@ -21879,7 +21888,7 @@ function renderJobBoard(){
   const start = (jobBoardPage - 1) * JOB_BOARD_PAGE_SIZE;
   const pageItems = sorted.slice(start, start + JOB_BOARD_PAGE_SIZE);
   list.innerHTML = pageItems.map(it=>
-    `<a class="jobboard-row" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer">
+    `<a class="jobboard-row" href="${escapeHtml(safeUrl(it.link))}" target="_blank" rel="noopener noreferrer">
       <span class="jobboard-date">${escapeHtml(it.date_posted)}</span>
       <span class="jobboard-title">${(!jobBoardSeenIds.has(it.idx) && jobBoardIsRecentlyPosted(it.date_posted)) ? `<span class="tag" style="background:var(--seal);color:#fff;padding:1px 6px;border-radius:4px;margin-right:6px;vertical-align:middle;">${t('jobBoardNewBadge')}</span>` : ''}${escapeHtml(it.title)}</span>
       ${it.deadline ? `<span class="jobboard-deadline" style="color:${jobBoardDeadlineColor(it.deadline)};">${t('jobBoardDeadlineLabel')} ${escapeHtml(it.deadline)}</span>` : ''}
@@ -22264,7 +22273,7 @@ function renderYonseiBoards(){
   const start = (yonseiBoardsPage - 1) * YONSEI_BOARD_PAGE_SIZE;
   const pageItems = sorted.slice(start, start + YONSEI_BOARD_PAGE_SIZE);
   list.innerHTML = pageItems.map(it=>
-    `<a class="yonsei-board-row" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer"><span class="yonsei-board-date">${escapeHtml(it.date)}</span><span class="yonsei-board-title" title="${escapeHtml(it.title)}">${escapeHtml(it.title)}</span>${it.subTag ? `<span class="yonsei-board-subtag">${escapeHtml(it.subTag)}</span>` : ''}<span class="yonsei-board-tag ${yonseiCategoryClass(it.category)}">${escapeHtml(yonseiCategoryLabel(it.category))}</span></a>`
+    `<a class="yonsei-board-row" href="${escapeHtml(safeUrl(it.link))}" target="_blank" rel="noopener noreferrer"><span class="yonsei-board-date">${escapeHtml(it.date)}</span><span class="yonsei-board-title" title="${escapeHtml(it.title)}">${escapeHtml(it.title)}</span>${it.subTag ? `<span class="yonsei-board-subtag">${escapeHtml(it.subTag)}</span>` : ''}<span class="yonsei-board-tag ${yonseiCategoryClass(it.category)}">${escapeHtml(yonseiCategoryLabel(it.category))}</span></a>`
   ).join('');
   if(pagination){
     // totalPages only reflects what's loaded so far -- if there's more
@@ -24183,17 +24192,17 @@ function openQuickView(eventId, dateKey){
   if(ev.kind === 'course' && ev.course_id){
     const course = findCourseById(ev.course_id);
     if(course){
-      if(course.professor) extraHtml += `<div style="margin-top:8px;">${course.professor}</div>`;
-      if(course.classroom) extraHtml += `<div style="margin-top:4px;font-weight:600;">${course.classroom}</div>`;
+      if(course.professor) extraHtml += `<div style="margin-top:8px;">${escapeHtml(course.professor)}</div>`;
+      if(course.classroom) extraHtml += `<div style="margin-top:4px;font-weight:600;">${escapeHtml(course.classroom)}</div>`;
       const codeConc = [course.code, course.concentration].filter(Boolean).join(' · ');
-      if(codeConc) extraHtml += `<div style="margin-top:4px;color:var(--ink-soft);">${codeConc}</div>`;
+      if(codeConc) extraHtml += `<div style="margin-top:4px;color:var(--ink-soft);">${escapeHtml(codeConc)}</div>`;
     }
   }
-  if(ev.notes) extraHtml += `<div style="margin-top:8px;">${ev.notes}</div>`;
+  if(ev.notes) extraHtml += `<div style="margin-top:8px;">${escapeHtml(ev.notes)}</div>`;
   const initials = initialsForEvent(ev);
   content.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-      <h2 style="margin-bottom:6px;">${ev.title}</h2>
+      <h2 style="margin-bottom:6px;">${escapeHtml(ev.title)}</h2>
       <div style="flex-shrink:0;display:flex;align-items:center;gap:8px;">
         <span style="background:var(--paper-dim);border:1px solid var(--line);border-radius:12px;padding:3px 9px;font-size:12px;font-weight:800;color:var(--ink);">${initials}</span>
         <button class="icon-btn close-x" id="quickViewCloseBtn" title="Close">✕</button>
@@ -24582,7 +24591,7 @@ function buildEventEditFieldsHtml(ev){
     </div>` : ''}
     <div class="field">
       <label>${t('eventColor')}</label>
-      <input type="color" class="edit-color" value="${ev.color||'#4F7563'}">
+      <input type="color" class="edit-color" value="${escapeHtml(safeColor(ev.color, '#4F7563'))}">
     </div>`}
     ${amICore() ? `<div class="field">
       <label>${t('lblEventPrivate')}</label>
@@ -24791,8 +24800,8 @@ function buildEventRowEl(ev){
   wrap.dataset.editOpen = isEditOpen ? '1' : '0';
   wrap.innerHTML =
     `<div class="deadline-left">
-      <div class="deadline-title">${ownerTag}<span class="deadline-color" style="background:${ev.color||'#4F7563'}"></span>${ev.title}</div>
-      <div class="deadline-notes">${[dateText, timeText, ev.notes, recurText ? '↻ ' + recurText : ''].filter(Boolean).join(' · ')}</div>
+      <div class="deadline-title">${ownerTag}<span class="deadline-color" style="background:${safeColor(ev.color, '#4F7563')}"></span>${escapeHtml(ev.title)}</div>
+      <div class="deadline-notes">${escapeHtml([dateText, timeText, ev.notes, recurText ? '↻ ' + recurText : ''].filter(Boolean).join(' · '))}</div>
       <div style="display:flex;gap:12px;margin-top:6px;">
         <button class="linkbtn sub-toggle act-icon ${mySubForRow?'act-on':'act-off'}" data-id="${ev.id}" title="${bellWord}" aria-label="${bellWord}">${bellLabel}</button>
         <button class="linkbtn act-edit act-icon edit-toggle" data-id="${ev.id}" title="${t('editBtn')}" aria-label="${t('editBtn')}">${ICON.pencil(14)}</button>
@@ -25365,7 +25374,7 @@ const MONTH_DOTS_MAX = 4;
 function dayDotsHtml(events){
   if(!events.length) return '<div class="day-dots"></div>';
   const shown = events.slice(0, events.length > MONTH_DOTS_MAX ? MONTH_DOTS_MAX - 1 : MONTH_DOTS_MAX);
-  let html = shown.map(ev=> `<span class="day-dot" style="background:${ev.color || '#4F7563'}"></span>`).join('');
+  let html = shown.map(ev=> `<span class="day-dot" style="background:${safeColor(ev.color, '#4F7563')}"></span>`).join('');
   if(events.length > MONTH_DOTS_MAX) html += '<span class="day-dot more"></span>';
   return `<div class="day-dots">${html}</div>`;
 }
@@ -25413,12 +25422,12 @@ function renderMonthGrid(){
     const maxShow = 3;
     let chips = '';
     events.slice(0, maxShow).forEach(ev=>{
-      const bg = ev.color || '#4F7563';
+      const bg = safeColor(ev.color, '#4F7563');
       const recurPrefix = ev.recur_freq ? '↻ ' : '';
       const ownerSuffix = ev.user_id !== currentUser.id ? ` (${t('ownedBy')} ${nameFor(ev.user_id)})` : '';
       const tip = ev.event_time ? `${recurPrefix}${ev.title} · ${formatTime12h(ev.event_time)}${ownerSuffix}` : `${recurPrefix}${ev.title}${ownerSuffix}`;
       const bellIcon = mySubscriptions[ev.id] ? ICON.bellOn(11) : ICON.bellOff(11);
-      chips += `<div class="event-chip cal-chip" data-ev="${ev.id}" data-date="${dateKey}" style="background:${bg};color:${textColorFor(bg)}" title="${tip}"><span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">${ICON.pencil(11)}</span>${recurPrefix ? '<span class="chip-recur">' + recurPrefix + '</span>' : ''}${ev.title}<span class="chip-initial">${initialsForEvent(ev)}</span></div>`;
+      chips += `<div class="event-chip cal-chip" data-ev="${ev.id}" data-date="${dateKey}" style="background:${bg};color:${textColorFor(bg)}" title="${escapeHtml(tip)}"><span class="chip-bell" data-ev="${ev.id}">${bellIcon}</span><span class="chip-edit" data-ev="${ev.id}" data-date="${dateKey}">${ICON.pencil(11)}</span>${recurPrefix ? '<span class="chip-recur">' + recurPrefix + '</span>' : ''}${escapeHtml(ev.title)}<span class="chip-initial">${initialsForEvent(ev)}</span></div>`;
     });
     const extra = events.length - maxShow;
     if(extra > 0){ chips += `<div class="more-count">+${extra}</div>`; }
@@ -25480,7 +25489,7 @@ function renderMonthAgenda(){
   const dateObj = new Date(dateKey+'T00:00:00');
   const label = capFirst(dateObj.toLocaleDateString(appLocale(), {weekday:'long', month:'long', day:'numeric'}));
   const rows = events.length ? events.map(ev=>{
-    const bg = ev.color || '#4F7563';
+    const bg = safeColor(ev.color, '#4F7563');
     const timeText = ev.event_time ? formatTime12h(ev.event_time) : '';
     return `<div class="agenda-row" data-ev="${ev.id}" data-date="${dateKey}" style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;">
       <span style="width:8px;height:8px;border-radius:50%;background:${bg};flex-shrink:0;"></span>
@@ -25827,7 +25836,7 @@ function renderCalGrid(dates){
       const minHeight = mobilePad ? 40 : 18;
       const top = (startMin/60 - gridFrom)*HOUR_PX;
       const height = Math.max(((endMin-startMin)/60)*HOUR_PX, minHeight);
-      const bg = ev.color || '#4F7563';
+      const bg = safeColor(ev.color, '#4F7563');
       const recurPrefix = ev.recur_freq ? '↻ ' : '';
       const bellIcon = mySubscriptions[ev.id] ? ICON.bellOn(11) : ICON.bellOff(11);
       const bar = document.createElement('div');
@@ -25868,17 +25877,17 @@ function renderCalGrid(dates){
       const dayCard = isDayView && !overlapping && height >= (mobilePad ? 54 : 40);
       if(dayCard) titleSize = '13px';
       const roomSize = height >= (mobilePad ? 64 : 50) ? '22px' : '14px';
-      let bodyHtml = `<div style="font-size:${titleSize};font-weight:${dayCard ? 700 : 'inherit'};margin-top:${titleTopMargin};">${displayTitle}</div>`;
+      let bodyHtml = `<div style="font-size:${titleSize};font-weight:${dayCard ? 700 : 'inherit'};margin-top:${titleTopMargin};">${escapeHtml(displayTitle)}</div>`;
       if(ev.kind === 'course' && ev.course_id){
         const course = findCourseById(ev.course_id);
         if(course){
-          const line2 = course.professor ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:${detailMargin};">${course.professor}</div>` : '';
+          const line2 = course.professor ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:${detailMargin};">${escapeHtml(course.professor)}</div>` : '';
           const line3Text = [course.code, course.concentration].filter(Boolean).join(' · ');
-          const line3 = line3Text ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:${detailMargin};">${line3Text}</div>` : '';
+          const line3 = line3Text ? `<div style="font-size:${detailSize};font-weight:400;opacity:0.9;margin-top:${detailMargin};">${escapeHtml(line3Text)}</div>` : '';
           // The room gets its own line at full weight rather than joining
           // line 3's muted code/concentration -- standing in the hallway,
           // which room to walk into is the one fact this bar is FOR.
-          const roomLine = course.classroom ? `<div style="font-size:${detailSize};font-weight:600;margin-top:${detailMargin};">${course.classroom}</div>` : '';
+          const roomLine = course.classroom ? `<div style="font-size:${detailSize};font-weight:600;margin-top:${detailMargin};">${escapeHtml(course.classroom)}</div>` : '';
           // The card reads top down in the order you need it while you are
           // walking to the class: what it is, WHICH ROOM, what kind of class,
           // who teaches it, and last the course code, which is the one line
@@ -26352,6 +26361,10 @@ function loadHtml2Canvas(){
   return new Promise((res, rej)=>{
     const el = document.createElement('script');
     el.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    // Same pin-and-hash as the scripts in the page (see the block above the
+    // main script); crossOrigin has to be set for the hash to be checked.
+    el.integrity = 'sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H';
+    el.crossOrigin = 'anonymous';
     el.onload = ()=> window.html2canvas ? res(window.html2canvas) : rej(new Error('html2canvas missing'));
     el.onerror = ()=> rej(new Error('html2canvas failed to load'));
     document.head.appendChild(el);
@@ -33647,10 +33660,114 @@ function buildBarHtml(labelKey, value, maxVal, endLowKey, endHighKey){
     <div class="gram-bar-ends"><span>${t(endLowKey)}</span><span>${t(endHighKey)}</span></div>
   </div>`;
 }
+// Escapes a value for use in HTML text AND inside a quoted attribute. The old
+// textContent trick left " and ' alone, so a value put into title="..." or
+// data-x="..." could close the attribute and add its own (onmouseover=...).
 function escapeHtml(str){
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
+  if(str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+// A stored URL headed for href= or src=. Only http(s), mailto and relative
+// addresses survive; anything else (javascript:, data:, vbscript:) becomes
+// '#'. Still needs escapeHtml around it for the quoting.
+function safeUrl(u){
+  if(u === null || u === undefined) return '#';
+  const s = String(u).trim();
+  if(!s) return '#';
+  // Control characters and whitespace inside a scheme are how "java\tscript:"
+  // slips past a naive check, so they are stripped before the scheme is read.
+  const probe = s.replace(/[\u0000- \u007f-\u009f]/g, '');
+  const scheme = probe.match(/^([a-z][a-z0-9+.-]*):/i);
+  if(!scheme) return s; // relative: path, query, fragment, or protocol-relative
+  const p = scheme[1].toLowerCase();
+  return (p === 'http' || p === 'https' || p === 'mailto') ? s : '#';
+}
+// A stored colour headed for style="...". Hex, rgb()/rgba()/hsl()/hsla() or a
+// bare keyword like "red" or "transparent"; anything else (a colour that
+// carries ";" or a quote to write its own CSS or attributes) falls back.
+function safeColor(c, fallback){
+  const fb = fallback === undefined ? '' : fallback;
+  if(c === null || c === undefined) return fb;
+  const s = String(c).trim();
+  if(/^#[0-9a-f]{3,8}$/i.test(s)) return s;
+  if(/^(rgb|rgba|hsl|hsla)\(\s*[-+0-9.%,\s\/a-z]*\)$/i.test(s) && !/[;"'<>{}\\]/.test(s)) return s;
+  if(/^[a-z]{3,20}$/i.test(s)) return s;
+  return fb;
+}
+// The only places a note's video embed may point: what Quill's own video box
+// turns a YouTube or Vimeo link into, plus the no-cookie YouTube host the
+// Videos tab plays from. Anything else is an iframe somebody else chose.
+const RICH_VIDEO_EMBEDS = [
+  { hosts: ['www.youtube.com', 'youtube.com', 'www.youtube-nocookie.com', 'youtube-nocookie.com'], path: /^\/embed\/[A-Za-z0-9_-]+/ },
+  { hosts: ['player.vimeo.com'], path: /^\/video\/\d+/ },
+];
+// The https form of an allowed video embed, or null. An http:// one on the
+// same host is upgraded rather than dropped: it is the same player, and on an
+// https page the http copy was blocked as mixed content anyway.
+function richVideoSrc(src){
+  let u;
+  try { u = new URL(String(src || '').trim()); } catch(e){ return null; }
+  if(u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+  const ok = RICH_VIDEO_EMBEDS.some(r=> r.hosts.indexOf(u.hostname.toLowerCase()) !== -1 && r.path.test(u.pathname));
+  if(!ok) return null;
+  u.protocol = 'https:';
+  return u.href;
+}
+// Stored rich text (a note, a writing sample, an earlier version of either) is
+// HTML somebody else may have written straight into the database, so it goes
+// through DOMPurify before it touches the DOM -- the editor's root included,
+// because assigning to it parses the markup and runs an <img onerror> before
+// Quill ever sees it. What Quill 1.x writes survives: its tags, inline style
+// and class, data-* (the page break's data-auto), links, images, video embeds.
+let richPurifier = null;
+function getRichPurifier(){
+  if(richPurifier || !window.DOMPurify) return richPurifier;
+  // Its own instance, so these hooks cannot leak into any other use.
+  const p = window.DOMPurify(window);
+  p.addHook('uponSanitizeElement', (node, data)=>{
+    if(data.tagName !== 'iframe') return;
+    const src = richVideoSrc(node.getAttribute && node.getAttribute('src'));
+    if(!src){ if(node.parentNode) node.parentNode.removeChild(node); return; }
+    node.setAttribute('src', src);
+  });
+  p.addHook('afterSanitizeAttributes', node=>{
+    const tag = node.nodeName;
+    if(tag === 'A' && node.hasAttribute('target')) node.setAttribute('rel', 'noopener noreferrer');
+    if(tag === 'IMG'){
+      const src = (node.getAttribute('src') || '').trim();
+      if(!/^https?:\/\//i.test(src) && !/^data:image\//i.test(src)) node.removeAttribute('src');
+    }
+    // Checked again after the attributes were cleaned, so an iframe cannot
+    // survive with its src stripped out from under it.
+    if(tag === 'IFRAME' && !richVideoSrc(node.getAttribute('src'))){
+      if(node.parentNode) node.parentNode.removeChild(node);
+    }
+  });
+  richPurifier = p;
+  return p;
+}
+const RICH_HTML_CONFIG = {
+  USE_PROFILES: { html: true },
+  ADD_TAGS: ['iframe'],
+  ADD_ATTR: ['target', 'allowfullscreen', 'frameborder'],
+  // Nothing Quill writes, and each can dress a note up as part of the app: a
+  // <style> restyles the whole page, a form posts wherever it likes, an id or
+  // name can shadow the app's own elements for getElementById.
+  FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select', 'option'],
+  FORBID_ATTR: ['id', 'name'],
+};
+function safeRichHtml(html){
+  if(html === null || html === undefined || html === '') return '';
+  const p = getRichPurifier();
+  // Fails closed: with no sanitizer loaded the note is shown as its text
+  // rather than as markup nobody has checked.
+  if(!p) return escapeHtml(stripHtml(String(html)));
+  return p.sanitize(String(html), RICH_HTML_CONFIG);
 }
 // Checks whether a practice sentence correctly uses the grammar pattern, and returns
 // HTML with the matched portion bolded. finalOnly patterns must appear at the very end
@@ -33699,14 +33816,14 @@ function buildGrammarCardHtml(g){
     // when Vietnamese is selected, falling back to English if a
     // translation isn't available for that particular example.
     const exHtml = s.examples.map(([kr,en,vi])=>
-      `<div class="gram-ex-kr">${kr}</div><div class="gram-ex-en">${currentLang==='vi' ? (vi||en) : en}</div>`
+      `<div class="gram-ex-kr">${escapeHtml(kr)}</div><div class="gram-ex-en">${escapeHtml(currentLang==='vi' ? (vi||en) : en)}</div>`
     ).join('');
     return `
-      ${label ? `<div class="gram-sense-label">${label}</div>` : ''}
-      <div class="gram-formation">${formation}</div>
-      <div>${definition}</div>
+      ${label ? `<div class="gram-sense-label">${escapeHtml(label)}</div>` : ''}
+      <div class="gram-formation">${escapeHtml(formation)}</div>
+      <div>${escapeHtml(definition)}</div>
       <div class="gram-examples">${exHtml}</div>
-      <div class="gram-notes">${notes}</div>`;
+      <div class="gram-notes">${escapeHtml(notes)}</div>`;
   }).join('');
   const myNotes = allGrammarNotes[g.id] || [];
   const notesListHtml = myNotes.map(n=>{
@@ -33743,7 +33860,7 @@ function buildGrammarCardHtml(g){
   return `
     <div class="gram-row${isOpen?' open':''}" data-gram-id="${g.id}">
       <div class="gram-head">
-        <div><button class="gram-fav-toggle${isFav?' active':''}" data-id="${g.id}" title="${t('gramFavorite')}">${isFav?'★':'☆'}</button><span class="gram-number">${g.number||''}.</span><span class="gram-caret">▸</span> <span class="gram-pattern">${g.pattern}</span>${g.topik?'<span class="gram-topik-pill">TOPIK</span>':''}</div>
+        <div><button class="gram-fav-toggle${isFav?' active':''}" data-id="${g.id}" title="${t('gramFavorite')}">${isFav?'★':'☆'}</button><span class="gram-number">${g.number||''}.</span><span class="gram-caret">▸</span> <span class="gram-pattern">${escapeHtml(g.pattern)}</span>${g.topik?'<span class="gram-topik-pill">TOPIK</span>':''}</div>
         <span class="gram-stars">${buildStarsHtml(g.commonality)}</span>
       </div>
       <div class="gram-body">
@@ -33961,7 +34078,7 @@ function renderGrammarComparisons(){
       const patternText = g ? g.pattern : row.id;
       const note = (langSuffix && row['note'+langSuffix]) || row.note;
       return `<div class="gram-cmp-row">
-        <button class="gram-cmp-pattern" data-id="${row.id}">${patternText}</button>
+        <button class="gram-cmp-pattern" data-id="${row.id}">${escapeHtml(patternText)}</button>
         <div class="gram-cmp-note">${note}</div>
       </div>`;
     }).join('');
@@ -34244,7 +34361,7 @@ function rebuildGramJumpSelect(){
   const sel = document.getElementById('gramJumpSelect');
   const items = GRAMMAR_DATA.filter(g => gramLevelFilterVal === 'all' || g.level === gramLevelFilterVal);
   sel.innerHTML = `<option value="">${t('gramJumpPlaceholder')}</option>` +
-    items.map(g => `<option value="${g.id}">${g.pattern}</option>`).join('');
+    items.map(g => `<option value="${g.id}">${escapeHtml(g.pattern)}</option>`).join('');
 }
 function jumpToGrammarPattern(id){
   const g = GRAMMAR_DATA.find(x=>x.id===id);
@@ -35189,10 +35306,13 @@ function hasUnsavedWritingProgress(){
   return writingEditorDirty || writingMockQ53Dirty || writingMockQ54Dirty || writingSampleTimerDirty();
 }
 
+// Parsed with DOMParser, whose document is inert: nothing in it loads or
+// runs. A detached <div>'s innerHTML is not -- an <img onerror> in a stored
+// note fired just by having its text counted.
 function stripHtml(html){
-  const d = document.createElement('div');
-  d.innerHTML = html || '';
-  return d.textContent || '';
+  if(!html) return '';
+  const doc = new DOMParser().parseFromString(String(html), 'text/html');
+  return (doc.body && doc.body.textContent) || '';
 }
 function countWords(html){
   return stripHtml(html).trim().split(/\s+/).filter(Boolean).length;
@@ -35608,7 +35728,7 @@ function openWritingSample(id, ownerUid){
   const authorColor = colorForUser(ownerUid);
   currentWritingColor = authorColor;
   document.getElementById('writingQuillContainer').style.setProperty('--writing-author-color', authorColor);
-  writingQuillEditor.root.innerHTML = w.content || '';
+  writingQuillEditor.root.innerHTML = safeRichHtml(w.content);
   writingQuillEditor.enable(isMine);
   if(writingQuillEditor._updateColorTriggers) writingQuillEditor._updateColorTriggers();
   writingEditorDirty = false;
@@ -35711,7 +35831,7 @@ document.getElementById('writingVersionHistoryToggle').addEventListener('click',
   const isMine = selectedWritingSampleOwner === currentUser.id;
   renderVersionPanel('writingVersionHistoryPanel', w.previous_versions || [], isMine ? (v)=>{
     ensureWritingQuillInitialized();
-    writingQuillEditor.root.innerHTML = v.content || '';
+    writingQuillEditor.root.innerHTML = safeRichHtml(v.content);
     writingEditorDirty = true;
     if(writingQuillEditor._updateColorTriggers) writingQuillEditor._updateColorTriggers();
     updateWritingCharCount();
@@ -36147,7 +36267,7 @@ function buildCourseEditFieldsHtml(c){
     </div>
     <div class="field wide">
       ${c.syllabus_url ? `<label>${t('courseSyllabus')}</label><div style="display:flex;align-items:center;gap:8px;">
-        <a href="${shortLinkForUrl(c.syllabus_url) ? shortLinkUrl(shortLinkForUrl(c.syllabus_url)) : c.syllabus_url}" target="_blank" rel="noopener" style="font-size:12px;">${c.syllabus_name||'file'}</a>
+        <a href="${escapeHtml(safeUrl(shortLinkForUrl(c.syllabus_url) ? shortLinkUrl(shortLinkForUrl(c.syllabus_url)) : c.syllabus_url))}" target="_blank" rel="noopener" style="font-size:12px;">${escapeHtml(c.syllabus_name||'file')}</a>
         <button type="button" class="linkbtn act-remove ce-syllabus-remove" data-id="${c.id}">${t('removeSyllabus')}</button>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;">
@@ -36286,7 +36406,7 @@ function renderCourses(){
     }).join(' ');
     div.innerHTML =
       `<div class="item-top">
-        <div><div class="item-title">${ownerTagsHtml}${c.title}</div>
+        <div><div class="item-title">${ownerTagsHtml}${escapeHtml(c.title)}</div>
         <div class="item-sub">${metaParts.join(' · ')}</div></div>
         <button class="item-del" data-id="${c.id}" title="Delete">✕</button>
       </div>
@@ -36410,11 +36530,14 @@ function hashColorForUser(userId){
   const hue = Math.abs(hash) % 360;
   return hslToHex(hue, 55, 45);
 }
+// Both colours are whatever the owner saved, and both are pasted into style=
+// all over the page, so they are checked here once (safeColor) rather than at
+// every one of those sites.
 function colorForUser(userId){
-  return profileColors[userId] || hashColorForUser(userId);
+  return safeColor(profileColors[userId]) || hashColorForUser(userId);
 }
 function colorForNote(note){
-  return (note && note.color) || colorForUser(note ? note.user_id : null);
+  return safeColor(note && note.color) || colorForUser(note ? note.user_id : null);
 }
 // Two inputs write the same setting -- the one over the header pill and the
 // one in Account settings -- so the handler is shared and each keeps the
@@ -36841,7 +36964,7 @@ function renderLectureList(){
 
     const header = document.createElement('div');
     header.className = 'note-group-header';
-    header.innerHTML = `<span>${isExpanded?'▾':'▸'}</span> ${groupLabel} <span class="note-group-count">(${notes.length})</span>`;
+    header.innerHTML = `<span>${isExpanded?'▾':'▸'}</span> ${escapeHtml(groupLabel)} <span class="note-group-count">(${notes.length})</span>`;
     header.addEventListener('click', ()=>{
       if(expandedNoteGroups.has(groupKey)) expandedNoteGroups.delete(groupKey); else expandedNoteGroups.add(groupKey);
       renderLectureList();
@@ -36862,15 +36985,15 @@ function renderLectureList(){
       row.innerHTML = `
         <div style="flex:1;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span class="lecture-title-btn" data-id="${n.id}" data-group="${groupKey}">
+            <span class="lecture-title-btn" data-id="${n.id}" data-group="${escapeHtml(groupKey)}">
               <span class="author-dot" style="background:${colorForNote(n)}" title="${nameFor(n.user_id)}"></span>
-              ${n.lecture_title}
+              ${escapeHtml(n.lecture_title)}
             </span>
             <span class="lecture-actions">
-              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${groupKey}" title="Edit">${ICON.pencil()}</button>` : ''}
-              ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${groupKey}" ${idx===0?'disabled':''} title="Move up">↑</button>` : ''}
-              ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${groupKey}" ${idx===notes.length-1?'disabled':''} title="Move down">↓</button>` : ''}
-              ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${groupKey}" title="Delete">✕</button>` : ''}
+              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="Edit">${ICON.pencil()}</button>` : ''}
+              ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===0?'disabled':''} title="Move up">↑</button>` : ''}
+              ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===notes.length-1?'disabled':''} title="Move down">↓</button>` : ''}
+              ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="Delete">✕</button>` : ''}
             </span>
           </div>
           ${isMine && isMetaEditOpen ? `
@@ -36928,7 +37051,7 @@ function buildNoteMetaFieldsHtml(n, groupKey){
       <input type="color" class="ne-color" value="${colorForNote(n)}">
     </div>
     <div style="margin-top:8px;display:flex;gap:8px;">
-      <button class="export-btn act-save ne-save-btn" data-id="${n.id}" data-group="${groupKey}">${t('saveChanges')}</button>
+      <button class="export-btn act-save ne-save-btn" data-id="${n.id}" data-group="${escapeHtml(groupKey)}">${t('saveChanges')}</button>
       <button class="export-btn act-cancel ne-cancel-btn" data-id="${n.id}">${t('cancelEdit')}</button>
     </div>`;
 }
@@ -37431,6 +37554,18 @@ if(window.Quill){
   };
   Quill.register(NoteLink, true);
 }
+// THE VIDEO FORMAT, HELD TO THE SAME HOSTS safeRichHtml keeps. Quill's own
+// sanitize lets ANY https address become an iframe, both from the video box
+// and from a collaborator's live delta, and the next load would then drop it
+// again (see RICH_VIDEO_EMBEDS). An address that is not a YouTube or Vimeo
+// player gives a blank frame instead of somebody else's page.
+if(window.Quill){
+  const BaseVideo = Quill.import('formats/video');
+  class NoteVideo extends BaseVideo {
+    static sanitize(url){ return richVideoSrc(url) || 'about:blank'; }
+  }
+  Quill.register(NoteVideo, true);
+}
 // The same rewrite for note HTML shown OUTSIDE an editor -- an earlier version
 // in the history panel is plain markup with real, clickable anchors in it.
 function sanitizeNoteLinks(root){
@@ -37859,7 +37994,7 @@ function renderVersionPanel(panelId, versions, onUse){
     head.appendChild(who);
     const body = document.createElement('div');
     body.className = 'ver-body';
-    body.innerHTML = v.content || '';
+    body.innerHTML = safeRichHtml(v.content);
     // Real anchors here, outside any editor, so they are the one place a
     // stored link can be pressed straight through. Same rewrite the editor's
     // own link blot applies (see NoteLink).
@@ -38549,7 +38684,7 @@ function subscribeNoteRealtimeInserts(){
       // identical to what's already in the editor, but rewriting innerHTML
       // with it would still reset the cursor mid-flow.
       if(payload.eventType === 'UPDATE' && row.updated_by !== currentUser.id && selectedNotebookNoteId === row.id && !notebookEditorDirty && notebookQuillEditor){
-        notebookQuillEditor.root.innerHTML = row.content || '';
+        notebookQuillEditor.root.innerHTML = safeRichHtml(row.content);
         renderNotePager('notebook');
         document.getElementById('notebookEditorTitle').textContent = row.lecture_title;
         updateNotebookLastSavedInfo(row);
@@ -38578,7 +38713,7 @@ function subscribeNoteRealtimeInserts(){
       if(!allNotes[groupKey]) allNotes[groupKey] = [];
       allNotes[groupKey].push(row);
       if(payload.eventType === 'UPDATE' && row.updated_by !== currentUser.id && selectedLectureId === row.id && !editorDirty && quillEditor){
-        quillEditor.root.innerHTML = row.content || '';
+        quillEditor.root.innerHTML = safeRichHtml(row.content);
         renderNotePager('course');
         setEditorLectureTitle(row);
         updateLastSavedInfo(row);
@@ -38799,7 +38934,7 @@ document.getElementById('versionHistoryToggle').addEventListener('click', ()=>{
   if(!note){ panel.classList.add('hidden'); return; }
   renderVersionPanel('versionHistoryPanel', note.previous_versions || [], (v)=>{
     ensureQuillInitialized();
-    quillEditor.root.innerHTML = v.content || '';
+    quillEditor.root.innerHTML = safeRichHtml(v.content);
     editorDirty = true;
     resetNotePager('course');
     if(quillEditor._updateColorTriggers) quillEditor._updateColorTriggers();
@@ -38828,7 +38963,7 @@ function openLecture(noteId, groupKey){
   // just above for the note's own visual accent/border, a separate thing.
   currentNoteColor = colorForUser(currentUser.id);
   ensureQuillInitialized();
-  quillEditor.root.innerHTML = note.content || '';
+  quillEditor.root.innerHTML = safeRichHtml(note.content);
   resetNotePager('course');
   if(quillEditor._updateColorTriggers) quillEditor._updateColorTriggers();
   editorDirty = false;
@@ -38976,7 +39111,7 @@ function renderNotebookList(){
 
     const header = document.createElement('div');
     header.className = 'note-group-header';
-    header.innerHTML = `<span>${isExpanded?'▾':'▸'}</span> ${groupLabel} <span class="note-group-count">(${notes.length})</span>`;
+    header.innerHTML = `<span>${isExpanded?'▾':'▸'}</span> ${escapeHtml(groupLabel)} <span class="note-group-count">(${notes.length})</span>`;
     header.addEventListener('click', ()=>{
       if(expandedNotebookGroups.has(groupKey)) expandedNotebookGroups.delete(groupKey); else expandedNotebookGroups.add(groupKey);
       renderNotebookList();
@@ -38997,15 +39132,15 @@ function renderNotebookList(){
       row.innerHTML = `
         <div style="flex:1;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span class="lecture-title-btn" data-id="${n.id}" data-group="${groupKey}">
+            <span class="lecture-title-btn" data-id="${n.id}" data-group="${escapeHtml(groupKey)}">
               <span class="author-dot" style="background:${colorForNote(n)}" title="${nameFor(n.user_id)}"></span>
-              ${n.lecture_title}
+              ${escapeHtml(n.lecture_title)}
             </span>
             <span class="lecture-actions">
-              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${groupKey}" title="Edit">${ICON.pencil()}</button>` : ''}
-              ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${groupKey}" ${idx===0?'disabled':''} title="Move up">↑</button>` : ''}
-              ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${groupKey}" ${idx===notes.length-1?'disabled':''} title="Move down">↓</button>` : ''}
-              ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${groupKey}" title="Delete">✕</button>` : ''}
+              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="Edit">${ICON.pencil()}</button>` : ''}
+              ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===0?'disabled':''} title="Move up">↑</button>` : ''}
+              ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===notes.length-1?'disabled':''} title="Move down">↓</button>` : ''}
+              ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="Delete">✕</button>` : ''}
             </span>
           </div>
           ${isMine && isMetaEditOpen ? `
@@ -39063,7 +39198,7 @@ function buildNotebookMetaFieldsHtml(n, groupKey){
       <input type="color" class="ne-color" value="${colorForNote(n)}">
     </div>
     <div style="margin-top:8px;display:flex;gap:8px;">
-      <button class="export-btn act-save ne-save-btn" data-id="${n.id}" data-group="${groupKey}">${t('saveChanges')}</button>
+      <button class="export-btn act-save ne-save-btn" data-id="${n.id}" data-group="${escapeHtml(groupKey)}">${t('saveChanges')}</button>
       <button class="export-btn act-cancel ne-cancel-btn" data-id="${n.id}">${t('cancelEdit')}</button>
     </div>`;
 }
@@ -39154,7 +39289,7 @@ document.getElementById('notebookVersionHistoryToggle').addEventListener('click'
   if(!note){ panel.classList.add('hidden'); return; }
   renderVersionPanel('notebookVersionHistoryPanel', note.previous_versions || [], (v)=>{
     ensureNotebookQuillInitialized();
-    notebookQuillEditor.root.innerHTML = v.content || '';
+    notebookQuillEditor.root.innerHTML = safeRichHtml(v.content);
     notebookEditorDirty = true;
     resetNotePager('notebook');
     if(notebookQuillEditor._updateColorTriggers) notebookQuillEditor._updateColorTriggers();
@@ -39183,7 +39318,7 @@ function openNotebookNote(noteId, groupKey){
   // just above is still the note's own visual accent/border).
   currentNotebookColor = colorForUser(currentUser.id);
   ensureNotebookQuillInitialized();
-  notebookQuillEditor.root.innerHTML = note.content || '';
+  notebookQuillEditor.root.innerHTML = safeRichHtml(note.content);
   resetNotePager('notebook');
   if(notebookQuillEditor._updateColorTriggers) notebookQuillEditor._updateColorTriggers();
   notebookEditorDirty = false;
