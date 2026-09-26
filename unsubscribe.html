@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Unsubscribe · Productivity Tracker</title>
+<style>
+  :root{ --paper:#F5F5F6; --ink:#1E1F22; --ink-soft:#6B6D72; --line:rgba(30,31,34,0.12); --celadon-4:#4F7563; --seal:#B5483B; }
+  @media (prefers-color-scheme: dark){ :root{ --paper:#17181B; --ink:#E9E9EC; --ink-soft:#A3A5AB; --line:rgba(233,233,236,0.14); --celadon-4:#7FA893; } }
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    background:var(--paper); color:var(--ink); font-family:'Inter',system-ui,-apple-system,sans-serif;}
+  .card{max-width:420px; text-align:center;}
+  h1{font-size:21px; margin:0 0 10px;}
+  p{font-size:14.5px; line-height:1.55; color:var(--ink-soft); margin:0 0 20px;}
+  button, a.btn{font:inherit; font-size:14px; font-weight:600; padding:10px 18px; border-radius:8px; cursor:pointer; text-decoration:none; display:inline-block;}
+  button{background:var(--celadon-4); color:#fff; border:1px solid var(--celadon-4);}
+  button[disabled]{opacity:.6; cursor:default;}
+  a.btn{border:1px solid var(--line); color:var(--ink); margin-left:8px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 id="title">Stop these emails?</h1>
+  <p id="msg"></p>
+  <div id="actions">
+    <button id="confirm" type="button">Unsubscribe</button>
+    <a class="btn" href="/">Open the app</a>
+  </div>
+</div>
+<script>
+/* The footer link in every email lands here. Nothing happens until the
+   button is pressed: mail scanners and link previews open links on their
+   own, and an unsubscribe that fired on a mere visit would switch emails off
+   that nobody asked to switch off. The link carries the account, the kind of
+   email and a signature made in the database; the unsubscribe edge function
+   checks the signature and switches off that one kind only. */
+(function(){
+  var FUNCTION_URL = 'https://kbqwitmxpmkueryjsyip.supabase.co/functions/v1/unsubscribe';
+  var KINDS = {
+    daily_recap: 'daily recap emails',
+    weekly_recap: 'weekly recap emails',
+    reminder: 'event reminder emails',
+    yonsei_board: 'Yonsei notice emails'
+  };
+  var q = new URLSearchParams(location.search);
+  var u = q.get('u') || '', k = q.get('k') || '', t = q.get('t') || '';
+  var title = document.getElementById('title'), msg = document.getElementById('msg');
+  var btn = document.getElementById('confirm');
+  if(!KINDS[k] || !u || !t){
+    title.textContent = 'This link is not complete';
+    msg.textContent = 'You can turn emails off in the app, under Notification settings.';
+    btn.style.display = 'none';
+    return;
+  }
+  msg.textContent = 'You will stop getting ' + KINDS[k] + ' from Productivity Tracker. You can turn them back on in Notification settings.';
+  btn.addEventListener('click', function(){
+    btn.disabled = true;
+    fetch(FUNCTION_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ u: u, k: k, t: t }) })
+      .then(function(r){ return r.json().catch(function(){ return {}; }); })
+      .then(function(d){
+        if(d && d.ok){
+          title.textContent = 'You are unsubscribed';
+          msg.textContent = 'No more ' + KINDS[k] + '. You can turn them back on in Notification settings.';
+          btn.style.display = 'none';
+        } else {
+          title.textContent = 'That did not work';
+          msg.textContent = 'The link may be out of date. You can turn emails off in the app, under Notification settings.';
+          btn.style.display = 'none';
+        }
+      })
+      .catch(function(){
+        btn.disabled = false;
+        msg.textContent = 'Could not reach the server. Check your connection and try again.';
+      });
+  });
+})();
+</script>
+</body>
+</html>

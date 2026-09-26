@@ -29,14 +29,31 @@ const admin = createClient(
   { auth: { persistSession: false } },
 );
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+// The page asks for the public key and a test push from the browser, so
+// those two need CORS -- but only for this site, not for any page on the web.
+// The trigger's own call comes from pg_net and carries no Origin at all.
+const ALLOWED_ORIGINS = ["https://kristoffergt.com", "https://www.kristoffergt.com"];
+function corsFor(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") || "";
+  const ok = ALLOWED_ORIGINS.includes(origin) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  return ok
+    ? {
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Vary": "Origin",
+    }
+    : { "Vary": "Origin" };
+}
 
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+// Constant-time, so the shared secret cannot be guessed a byte at a time
+// from how long a wrong one takes to be refused.
+function sameSecret(a: string | null, b: string | null): boolean {
+  if (!a || !b) return false;
+  const x = new TextEncoder().encode(a), y = new TextEncoder().encode(b);
+  let diff = x.length ^ y.length;
+  for (let i = 0; i < Math.max(x.length, y.length); i++) diff |= (x[i] ?? 0) ^ (y[i] ?? 0);
+  return diff === 0;
 }
 
 let configCache: { keys: VapidKeys; secret: string } | null = null;
@@ -93,6 +110,9 @@ async function deliver(subs: SubRow[], payload: unknown, keys: VapidKeys) {
 }
 
 Deno.serve(async (req) => {
+  const cors = corsFor(req);
+  const json = (body: unknown, status = 200): Response =>
+    new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
@@ -100,7 +120,11 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { /* empty body is handled below */ }
 
   let config;
-  try { config = await loadConfig(); } catch (e) { return json({ error: String(e) }, 500); }
+  try { config = await loadConfig(); } catch (e) {
+    // The detail goes to the function's log, not to whoever called.
+    console.error("send-push config", e);
+    return json({ error: "unavailable" }, 500);
+  }
 
   if (body.action === "public-key") {
     return json({ publicKey: config.keys.publicKey });
@@ -120,7 +144,7 @@ Deno.serve(async (req) => {
   }
 
   // From here on it is the trigger, and only the trigger knows the secret.
-  if (req.headers.get("x-push-secret") !== config.secret) return json({ error: "forbidden" }, 403);
+  if (!sameSecret(req.headers.get("x-push-secret"), config.secret)) return json({ error: "forbidden" }, 403);
   const id = Number(body.notification_id);
   if (!Number.isFinite(id)) return json({ error: "notification_id required" }, 400);
 

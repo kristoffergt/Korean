@@ -8,13 +8,24 @@
 
 import { parseYonseiBoardHtml, YONSEI_BOARD_URL } from "./parse.ts";
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Only this site may use it from a browser: without that, anyone's page
+// could use this function as a free proxy onto Yonsei's server.
+const ALLOWED_ORIGINS = ["https://kristoffergt.com", "https://www.kristoffergt.com"];
+function corsFor(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") || "";
+  const ok = ALLOWED_ORIGINS.includes(origin) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  return ok
+    ? {
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      "Vary": "Origin",
+    }
+    : { "Vary": "Origin" };
+}
 
 Deno.serve(async (req: Request) => {
+  const CORS_HEADERS = corsFor(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: CORS_HEADERS });
   }
@@ -55,8 +66,9 @@ Deno.serve(async (req: Request) => {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   } catch (err) {
+    console.error("fetch-yonsei-board", err);
     return new Response(
-      JSON.stringify({ items: [], error: true, message: String(err) }),
+      JSON.stringify({ items: [], error: true }),
       { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
     );
   }

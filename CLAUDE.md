@@ -5981,6 +5981,79 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE SECURITY AUDIT, FIXED EXCEPT THE COPYRIGHT ITEMS (26 Sep, eighty-seventh pass)
+
+A pasted audit ("HACKED" and "SUED"), and "fix all except for what you
+believed to be copyright issues". Skipped on purpose: the syllabi bucket's
+copyrighted PDFs, a DMCA agent, a takedown route, and the TOPIK writing tasks
+and grammar sets.
+
+### Database (migration `security_audit_fixes`, applied live)
+
+- **Every SECURITY DEFINER function now has an explicit grant.** Postgres gives
+  EXECUTE to PUBLIC by default, so `_purge_user_data`, the `send_*` emailers and
+  `create_notification` could be called by anybody holding the anon key. The
+  internal ones are service_role only; everything else is authenticated plus
+  service_role; only `verify_site_pin`, `reserve_display_name`,
+  `display_name_available` and `email_for_display_name` keep anon.
+  **Default privileges are revoked too, so a NEW function is callable by
+  nobody until it is granted.** Anything a signed-out page calls needs an
+  explicit `grant execute ... to anon`, or it fails with a permission error
+  that looks like a bug in the function.
+- **Stored text is escaped in every email** (`html_escape`), and the recaps and
+  reminders honour the email switch (`wants_email_notification`).
+- **`is_core_member` cannot be set by a user** (`profiles_guard_privileges`),
+  the display name is limited to letters, digits, spaces, apostrophes and
+  hyphens, and every stored colour is a CHECK-ed hex.
+- **Grammar points can only be added by a core member**; editing went.
+- **Storage**: syllabi are own-folder plus the circle, every bucket has a size
+  and type limit, and a stored URL must point at this project's storage.
+- **The site PIN is rate limited**: 10 wrong guesses per IP per 15 minutes
+  (`site_pin_attempts`, error code P0429).
+- **`_purge_user_data` deletes everything** the account owns, including the
+  tables it used to miss (grammar SRS, quiz attempts, link groups).
+
+### Page (commits 9c1de63 and this one)
+
+- **Everything stored is escaped where it is rendered**, and note HTML goes
+  through DOMPurify with an iframe allowlist (YouTube, Vimeo). Every CDN script
+  is pinned to a version and a sha384 hash.
+- **Sign-in by name goes through `sign-in-by-name`**, an edge function that
+  returns only the session, so the page never learns anybody's email address.
+- **CVs open through short-lived signed URLs** (`openStoredFile`). The popup is
+  opened BEFORE the await, or Safari blocks it.
+- **A deleted account's files are removed** by `purge-orphan-files`, called
+  right after a deletion and (after part 2) by a daily cron job. Storage cannot
+  be emptied from SQL: `storage.protect_delete` refuses it, so it has to go
+  through the Storage API. It refuses to delete more than half of storage.
+- **Short links (`/f/<slug>`) resolve through `file-link`**, which answers for
+  one slug with a signed URL. 404.html no longer carries the anon key.
+- **A privacy page** (`/privacy.html`), linked from sign-up and settings, plus a
+  13+ note on sign-up and an 8-character password minimum.
+- **AI-filled fields are marked** until they are edited.
+
+### Edge functions
+
+- `send-push`, `fetch-yonsei-board`: CORS allowlist (kristoffergt.com, www,
+  localhost), constant-time secret compare, generic error text.
+- `instagram-post-signal`: takes the secret as `X-Signal-Secret` now; the
+  `?secret=` query still works because Visualping sends it that way.
+- **`ingest-yonsei-jobboard` keeps CORS `*`**: its bookmarklet runs on
+  yonsei.ac.kr. It is secret-gated, so that is safe.
+- **`notify-yonsei-board` was NOT redeployed**: its local `parse.ts` is newer
+  than what is live, and deploying would ship that change unreviewed.
+
+### Part 2 is waiting on the push
+
+`security_audit_fixes_part2_migration.sql` closes what the OLD page still
+depends on, so it can only be applied once the new page is live: it revokes
+anon from `email_for_display_name`, makes the signup PIN a server check (a
+trigger on auth.users, reading `site_pin` from the sign-up metadata), makes the
+CV bucket private, makes `file_links` owner-only, adds signed unsubscribe links
+and the List-Unsubscribe header to every email, and schedules the daily purge.
+Applying it before the push breaks sign-in by name and every CV link on the live
+site.
+
 ## PUSH TO THE PHONE, AS A THIRD CHANNEL ON THE ONE NOTIFICATIONS TABLE (26 Sep, eighty-sixth pass)
 
 "Can we enable notifications to go to the phone (like push notifications)?",

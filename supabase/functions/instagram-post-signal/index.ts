@@ -20,14 +20,16 @@
 // Vault-secret pattern as check_yonsei_jobboard_ingest_secret. Accepts
 // GET or POST, since different services default to one or the other for
 // plain webhook notifications.
+//
+// The secret is ALSO accepted as an X-Signal-Secret header (or a Bearer
+// token), which keeps it out of URLs and so out of request logs. The query
+// form stays because Visualping's webhook field is a bare URL; the most a
+// leaked secret can do is mark "a new post today", which only prompts a job
+// board sync. No CORS: nothing calls this from a browser.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const CORS_HEADERS = {};
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -43,7 +45,9 @@ Deno.serve(async (req: Request) => {
     }
 
     const url = new URL(req.url);
-    const providedSecret = url.searchParams.get("secret");
+    const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+    const providedSecret = req.headers.get("X-Signal-Secret") || (bearer && !bearer.startsWith("eyJ") ? bearer : "") ||
+      url.searchParams.get("secret");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -71,8 +75,8 @@ Deno.serve(async (req: Request) => {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : JSON.stringify(err);
-    return new Response(JSON.stringify({ ok: false, message }), {
+    console.error("instagram-post-signal", err);
+    return new Response(JSON.stringify({ ok: false, message: "internal error" }), {
       status: 200,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });

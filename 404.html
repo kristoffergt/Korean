@@ -67,17 +67,20 @@
    browsers render and redirect from it exactly the same, which is what
    matters for a link someone opens.
 
-   The lookup is a plain REST call with the anon key rather than the
-   supabase-js bundle: this page must resolve a link for a signed-OUT
-   visitor as fast as possible, and pulling a whole SDK to read one row
-   would just slow that down. file_links is public-read by design (see
-   file_short_links_migration.sql). */
+   The lookup is a plain fetch rather than the supabase-js bundle: this
+   page must resolve a link for a signed-OUT visitor as fast as possible,
+   and pulling a whole SDK to read one row would just slow that down.
+
+   It goes through the file-link edge function, not the table. file_links
+   used to be readable by anyone signed out, which listed every CV and
+   cover letter in the app; now only the owner can read it, the CV bucket is
+   private, and the function answers for the one slug asked about with a
+   URL that works for an hour (security audit, 26 Sep). */
 (function(){
   var m = location.pathname.match(/^\/f\/([A-Za-z0-9][A-Za-z0-9-]{0,63})\/?$/);
   if(!m) return; // a genuine 404 -- leave the page exactly as it is
   var slug = m[1].toLowerCase();
   var SUPABASE_URL = 'https://kbqwitmxpmkueryjsyip.supabase.co';
-  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImticXdpdG14cG1rdWVyeWpzeWlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NzIxNjUsImV4cCI6MjEwMTE0ODE2NX0.hOuxXxjfPemuSpthbMAD7tz30oxBkI3CyyZ8fwgwZTc';
   document.getElementById('code').textContent = '';
   document.getElementById('title').textContent = 'Opening file…';
   document.getElementById('msg').textContent = '';
@@ -93,8 +96,8 @@
   // an iframe; anything else (.doc/.docx, which the syllabus field also
   // accepts) can't render inline in a browser, so that case gets an honest
   // download card rather than an empty grey frame.
-  function show(url, label){
-    var name = label || decodeURIComponent((url.split('/').pop() || '').split('?')[0]).replace(/^\d+_/, '') || slug;
+  function show(url, label, fileName){
+    var name = label || (fileName || '').replace(/^\d+_/, '') || decodeURIComponent((url.split('/').pop() || '').split('?')[0]).replace(/^\d+_/, '') || slug;
     var isPdf = /\.pdf(\?|$)/i.test(url);
     document.title = name;
     document.body.className = 'viewing';
@@ -117,10 +120,14 @@
     var frame = document.getElementById('frame');
     if(frame) frame.src = url;
   }
-  fetch(SUPABASE_URL + '/rest/v1/file_links?slug=eq.' + encodeURIComponent(slug) + '&select=url,label', {
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
-  }).then(function(r){ return r.ok ? r.json() : []; }).then(function(rows){
-    if(rows && rows[0] && rows[0].url) show(rows[0].url, rows[0].label);
+  fetch(SUPABASE_URL + '/functions/v1/file-link?slug=' + encodeURIComponent(slug))
+  .then(function(r){ return r.status === 404 ? { missing: true } : (r.ok ? r.json() : Promise.reject()); })
+  .then(function(d){
+    // Only ever this project's own storage: a stored URL must not be able
+    // to send the frame or the Download button anywhere else (javascript:
+    // included), since this page shares its origin with the app.
+    var ok = d && typeof d.url === 'string' && d.url.indexOf(SUPABASE_URL + '/storage/v1/object/') === 0;
+    if(ok) show(d.url, d.label, d.name);
     else fail('That short link doesn’t point anywhere any more.');
   }).catch(function(){ fail('Couldn’t reach the server. Check your connection and try again.'); });
 })();
