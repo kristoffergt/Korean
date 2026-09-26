@@ -6054,6 +6054,22 @@ and the List-Unsubscribe header to every email, and schedules the daily purge.
 Applying it before the push breaks sign-in by name and every CV link on the live
 site.
 
+It was dry-run against the live database in one transaction ending in a raised
+exception, which rolls everything back, and every check passed: all four senders
+rewritten, a wrong token and an unknown kind refused, the right token switching
+off only email (in-app stays on), a wrong or missing PIN refused, the right PIN
+accepted and stripped, a dashboard-style confirmed user let through, and the
+bucket, grants and cron in place. Worth knowing:
+
+- **The PIN check assumes "Confirm email" stays ON.** It exempts any user who
+  arrives already confirmed or invited, which is how dashboard-created accounts
+  arrive. With confirmation off, public sign-ups would arrive confirmed too and
+  skip the check.
+- **`send_daily_recap(text)` is dropped.** It is the old slot-based overload, no
+  cron job calls it, and it never escaped event titles.
+- **The unsubscribe key is `unsubscribe_secret` in the vault.** Rotating it kills
+  every unsubscribe link in every email already sent.
+
 ## PUSH TO THE PHONE, AS A THIRD CHANNEL ON THE ONE NOTIFICATIONS TABLE (26 Sep, eighty-sixth pass)
 
 "Can we enable notifications to go to the phone (like push notifications)?",
