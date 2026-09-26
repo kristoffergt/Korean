@@ -6043,16 +6043,28 @@ and grammar sets.
 - **`notify-yonsei-board` was NOT redeployed**: its local `parse.ts` is newer
   than what is live, and deploying would ship that change unreviewed.
 
-### Part 2 is waiting on the push
+### Part 2: applied live 26 Sep, after the push
 
-`security_audit_fixes_part2_migration.sql` closes what the OLD page still
-depends on, so it can only be applied once the new page is live: it revokes
-anon from `email_for_display_name`, makes the signup PIN a server check (a
-trigger on auth.users, reading `site_pin` from the sign-up metadata), makes the
-CV bucket private, makes `file_links` owner-only, adds signed unsubscribe links
-and the List-Unsubscribe header to every email, and schedules the daily purge.
-Applying it before the push breaks sign-in by name and every CV link on the live
-site.
+`security_audit_fixes_part2_migration.sql` (live as `security_audit_fixes_part2`)
+closes what the OLD page depended on, so it went in only once commit 6e3b9fd was
+confirmed live on kristoffergt.com (live index.html byte-identical to the repo,
+no `email_for_display_name` call left in it): it revokes anon from
+`email_for_display_name`, makes the signup PIN a server check (a trigger on
+auth.users, reading `site_pin` from the sign-up metadata), makes the CV bucket
+private, makes `file_links` owner-only, adds signed unsubscribe links and the
+List-Unsubscribe header to every email, and schedules the daily purge.
+
+Checked after applying, from outside as a signed-out caller: the email lookup
+answers "permission denied", `file_links` answers "permission denied", a forged
+unsubscribe token gets `{"ok":false,"error":"invalid"}`, and a real CV short
+link resolves through `file-link` to a signed URL that serves the PDF while the
+old public URL now fails. In the database: trigger present, bucket private, all
+four senders carry the unsubscribe header and footer, one `send_daily_recap`
+left, cron `purge-orphan-files` at `17 18 * * *`.
+
+**Still Kristoffer's, in the Supabase dashboard**: Auth's minimum password
+length to 8 (the page enforces 8, the server does not yet), and keep "Confirm
+email" ON (the PIN trigger relies on it; see below).
 
 It was dry-run against the live database in one transaction ending in a raised
 exception, which rolls everything back, and every check passed: all four senders
