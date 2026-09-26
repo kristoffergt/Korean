@@ -22,10 +22,15 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
+// The strings a push is rendered with (see the push handler below). Its own
+// cache so a new shell version does not throw it away with the old shell.
+const NOTIF_I18N_CACHE = 'pt-notif-i18n';
+const NOTIF_I18N_URL = './__notif-i18n.json';
+
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k !== CACHE && k !== NOTIF_I18N_CACHE).map((k) => caches.delete(k)))
     )
   );
   self.clients.claim();
@@ -127,4 +132,96 @@ self.addEventListener('fetch', (e) => {
       }).catch(() => cached);
     })
   );
+});
+
+// ---------------------------------------------------------------------------
+// Push notifications. The server sends a notification's type and params, not
+// finished text (supabase/functions/send-push), and the text is built here in
+// the phone's own language, from strings the app hands over on every load
+// and language change -- the same strings, and the same rules, the bell uses
+// in renderNotifText(). Anything unrecognised falls back to the stored
+// English title and body, exactly as the bell does.
+// ---------------------------------------------------------------------------
+self.addEventListener('message', (e) => {
+  const d = e.data;
+  if (!d || d.type !== 'pt-notif-i18n') return;
+  const body = JSON.stringify({ lang: d.lang || 'en', strings: d.strings || {} });
+  e.waitUntil(caches.open(NOTIF_I18N_CACHE).then((c) =>
+    c.put(NOTIF_I18N_URL, new Response(body, { headers: { 'Content-Type': 'application/json' } }))));
+});
+
+async function readNotifI18n() {
+  try {
+    const c = await caches.open(NOTIF_I18N_CACHE);
+    const r = await c.match(NOTIF_I18N_URL);
+    if (r) return await r.json();
+  } catch (_) { /* fall through to English */ }
+  return { lang: 'en', strings: {} };
+}
+
+// localDateStr() in index.html, which reads the day from a YYYY-MM-DD string.
+function pushDate(iso, lang) {
+  const parts = String(iso).split('-');
+  if (parts.length !== 3) return String(iso);
+  return lang === 'ko' ? parts[0] + '/' + parts[1] + '/' + parts[2] : parts[2] + '/' + parts[1] + '/' + parts[0];
+}
+
+function pushText(n, i18n) {
+  const s = i18n.strings || {};
+  const p = n.params || {};
+  const lang = i18n.lang;
+  if (n.type === 'push_test') return { title: s.testTitle || 'Push notifications are on', body: s.testBody || '' };
+  if (n.type === 'system' && p.key === 'site_pin_required' && s.pinTitle) return { title: s.pinTitle, body: s.pinBody || '' };
+  if (n.type === 'reminder' && p.event_title && s.reminderTitleTpl) {
+    return { title: s.reminderTitleTpl.replace('{title}', p.event_title), body: p.date ? pushDate(p.date, lang) : (n.body || '') };
+  }
+  if (n.type === 'yonsei_board' && typeof p.count === 'number' && s.yonseiOne) {
+    return { title: p.count > 1 ? s.yonseiMany : s.yonseiOne, body: n.body || '' };
+  }
+  if (n.type === 'link_accepted' && p.name && s.linkAcceptedTpl) {
+    return { title: s.linkAcceptedTpl.replace('{name}', p.name), body: n.body || '' };
+  }
+  if ((n.type === 'daily_recap' || n.type === 'weekly_recap') && typeof p.count === 'number') {
+    const daily = n.type === 'daily_recap';
+    const tpl = p.count === 1 ? (daily ? s.dailyOne : s.weeklyOne) : (daily ? s.dailyMany : s.weeklyMany);
+    if (tpl) return { title: tpl.replace('{n}', String(p.count)), body: n.body || (p.date ? pushDate(p.date, lang) : '') };
+  }
+  return { title: n.title || 'kristoffergt', body: n.body || '' };
+}
+
+self.addEventListener('push', (e) => {
+  let n = {};
+  try { n = e.data ? e.data.json() : {}; } catch (_) { n = { title: e.data ? e.data.text() : '' }; }
+  // Every push has to show something: iOS withdraws push from a web app that
+  // receives one and draws nothing.
+  e.waitUntil(readNotifI18n().then((i18n) => {
+    const text = pushText(n, i18n);
+    return self.registration.showNotification(text.title, {
+      body: text.body,
+      icon: 'icon-192.png',
+      badge: 'icon-192.png',
+      lang: i18n.lang,
+      tag: n.id ? 'pt-notif-' + n.id : 'pt-notif',
+      data: { id: n.id || null },
+    });
+  }));
+});
+
+// A tap opens the thing the notification is about. An app already open is
+// brought forward and told which one; otherwise the app opens cold with
+// ?notif=<id>, which handleDeepLinkParam() in index.html follows once signed in.
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const id = e.notification.data && e.notification.data.id;
+  const url = new URL(id ? './?notif=' + encodeURIComponent(id) : './', self.registration.scope).href;
+  e.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const open = all.find((c) => c.url.startsWith(self.registration.scope));
+    if (open) {
+      await open.focus();
+      if (id) open.postMessage({ type: 'pt-open-notif', id });
+      return;
+    }
+    await self.clients.openWindow(url);
+  })());
 });

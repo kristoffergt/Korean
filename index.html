@@ -3175,6 +3175,15 @@ footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:30px;}
    spot on the one word that is the control. It is only ever opened through
    the label, so it has no business taking a pointer at all. */
 .hidden-file-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none;}
+/* Email / In-app / Push: with a third channel on the row, "In-app" broke onto
+   two lines. The type's own name on the left is what wraps instead. */
+#notifPrefsList label, #settingsWeeklyRecapRow label, #settingsDailyRecapRow label{white-space:nowrap;}
+/* And where even that leaves the name a sliver (a phone, or Vietnamese, whose
+   In-app is "Trong ứng dụng"), the three boxes drop to their own line, still
+   hard right, rather than stacking the name one word to a line beside them. */
+.notif-pref-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;column-gap:10px;row-gap:3px;padding:5px 0;font-size:13px;}
+.notif-pref-name{flex:1 1 9em;min-width:0;}
+.notif-pref-channels{display:flex;gap:14px;flex-shrink:0;margin-left:auto;}
 /* The field's own LABEL is the control: click "Syllabus" and the picker
    opens. It used to be a solid dark button reading "Choose file" stacked
    under a label that already said Syllabus -- two elements doing one job,
@@ -5092,6 +5101,13 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       </label>
       <div class="hint" id="settingsMessagingHint" style="margin-top:4px;"></div>
     </div>
+    <div id="settingsPushRow" style="margin-top:14px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="settingsPushToggle" style="width:15px;height:15px;">
+        <span id="settingsPushLabel"></span>
+      </label>
+      <div class="hint hidden" id="settingsPushHint" style="margin-top:4px;"></div>
+    </div>
     <div class="wtc-title" style="margin-top:18px;" id="lblNotifPrefs"></div>
     <div id="notifPrefsList"></div>    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;" id="settingsRecapsHeaderRow">
       <div class="wtc-title" style="margin-bottom:0;" id="lblRecapsHeader"></div>
@@ -5101,27 +5117,33 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       </span>
     </div>
     <div style="padding:5px 0;font-size:13px;margin-top:4px;" id="settingsWeeklyRecapRow">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <span id="weeklyRecapLabel"></span>
-        <span style="display:flex;gap:14px;flex-shrink:0;">
+      <div class="notif-pref-row" style="padding:0;">
+        <span class="notif-pref-name" id="weeklyRecapLabel"></span>
+        <span class="notif-pref-channels">
           <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
             <input type="checkbox" id="notifyWeeklyRecapEmailCheck" style="width:14px;height:14px;"> <span id="lblRecapChannelEmail2"></span>
           </label>
           <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
             <input type="checkbox" id="notifyWeeklyRecapInappCheck" style="width:14px;height:14px;"> <span id="lblRecapChannelInApp2"></span>
           </label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
+            <input type="checkbox" class="recap-push-check" id="notifyWeeklyRecapPushCheck" data-type="weekly_recap" style="width:14px;height:14px;"> <span id="lblRecapChannelPush2"></span>
+          </label>
         </span>
       </div>
     </div>
     <div style="padding:5px 0;font-size:13px;" id="settingsDailyRecapRow">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <span id="dailyRecapLabel"></span>
-        <span style="display:flex;gap:14px;flex-shrink:0;">
+      <div class="notif-pref-row" style="padding:0;">
+        <span class="notif-pref-name" id="dailyRecapLabel"></span>
+        <span class="notif-pref-channels">
           <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
             <input type="checkbox" id="notifyDailyRecapEmailCheck" style="width:14px;height:14px;"> <span id="lblRecapChannelEmail1"></span>
           </label>
           <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
             <input type="checkbox" id="notifyDailyRecapInappCheck" style="width:14px;height:14px;"> <span id="lblRecapChannelInApp1"></span>
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
+            <input type="checkbox" class="recap-push-check" id="notifyDailyRecapPushCheck" data-type="daily_recap" style="width:14px;height:14px;"> <span id="lblRecapChannelPush1"></span>
           </label>
         </span>
       </div>
@@ -11214,6 +11236,7 @@ const I18N = {
     linkOpen:'Link', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
     topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsDockGlassLabel:'Bottom bar opacity', settingsDockGlassHint:'The floating tab bar at the bottom of a phone is slightly see-through, with the page blurred behind it. Lower this for more glass; at 100% the bar is solid.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
+    settingsPushLabel:'Push notifications on this device', pushIosInstallHint:'On an iPhone, add this app to your Home Screen first (Share, then Add to Home Screen) and open it from there.', pushUnsupportedHint:'This browser cannot receive push notifications.', pushBlockedHint:'Notifications are blocked for this site. Allow them in your browser or phone settings.', pushEnableFailed:'Could not turn on push notifications.', notifChannelPush:'Push', pushNeedsInApp:'Needs In-app on', pushTestTitle:'Push notifications are on', pushTestBody:'This device will now get your reminders and notices.',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
     lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name shines when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over anything you can click or type in, and the squeeze when you press it.', animAddLabel:'The add courier', animAddHint:'When something is saved, a courier comes out from behind the Add button, takes the first letter off it, turns it into a funnel, pours in what you typed, packs it and runs off.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time (optional)', eventEndTime:'End time', eventNotes:'Notes', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color', eventColorUseTheirBtn:"Use {name}'s color", splitTooNarrow:"Split view needs a wider window: at least {n} px, twice the app's width. Widen the window to open two tabs side by side.", splitClosedNarrow:'The window got too narrow for two tabs, so it went back to one.', splitClosePane:'Close {name}', splitDropHere:'Let go to open side by side', splitResizeLabel:'Resize the two halves', splitResizeHint:'Drag to resize. Double-click to make them even again.', splitSwap:'Swap sides', colorPopTitle:'Your color', colorFavSave:'Save', colorFavSaveHint:'Save this color to your favorites', colorFavSaved:'Saved', colorFavUnsave:'Remove from favorites', colorFavs:'Favorites', colorFavsEmpty:'None yet. Save a color to keep it for later.', colorPickNew:'Pick a new color', colorFavRemove:'Remove',
@@ -11338,6 +11361,7 @@ const I18N = {
     linkOpen:'링크', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
     topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsDockGlassLabel:'하단 바 불투명도', settingsDockGlassHint:'휴대폰 화면 아래에 떠 있는 탭 바가 살짝 비치고, 뒤쪽 페이지는 흐릿하게 보입니다. 값을 낮출수록 유리처럼 보이고, 100%에서는 완전히 불투명해집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
+    settingsPushLabel:'이 기기에서 푸시 알림 받기', pushIosInstallHint:'iPhone에서는 먼저 이 앱을 홈 화면에 추가한 뒤(공유, 홈 화면에 추가) 그곳에서 열어 주세요.', pushUnsupportedHint:'이 브라우저는 푸시 알림을 받을 수 없습니다.', pushBlockedHint:'이 사이트의 알림이 차단되어 있습니다. 브라우저나 휴대폰 설정에서 허용해 주세요.', pushEnableFailed:'푸시 알림을 켜지 못했습니다.', notifChannelPush:'푸시', pushNeedsInApp:'앱 내 알림이 켜져 있어야 합니다', pushTestTitle:'푸시 알림이 켜졌습니다', pushTestBody:'이제 이 기기로 알림과 공지를 받습니다.',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
     lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 반짝입니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누르거나 입력할 수 있는 것 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.', animAddLabel:'추가 배달원', animAddHint:'저장되면 추가 버튼 뒤에서 배달원이 나와 버튼의 첫 글자를 떼어 깔때기로 뒤집고, 입력한 내용을 쏟아 넣은 뒤 가방에 담아 달려갑니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각 (선택)', eventEndTime:'종료 시각', eventNotes:'메모', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용', eventColorUseTheirBtn:'{name}의 색상 사용', splitTooNarrow:'화면 분할에는 더 넓은 창이 필요합니다. 앱 너비의 두 배인 {n}px 이상이어야 합니다. 두 탭을 나란히 열려면 창을 넓혀 주세요.', splitClosedNarrow:'창이 두 탭을 담기에는 좁아져서 한 탭으로 돌아갔습니다.', splitClosePane:'{name} 닫기', splitDropHere:'놓으면 나란히 열립니다', splitResizeLabel:'두 화면 크기 조절', splitResizeHint:'끌어서 크기를 조절합니다. 두 번 클릭하면 다시 반반이 됩니다.', splitSwap:'좌우 바꾸기', colorPopTitle:'내 색상', colorFavSave:'저장', colorFavSaveHint:'이 색상을 즐겨찾기에 저장', colorFavSaved:'저장됨', colorFavUnsave:'즐겨찾기에서 삭제', colorFavs:'즐겨찾는 색상', colorFavsEmpty:'아직 없습니다. 색상을 저장해 두면 나중에 다시 쓸 수 있어요.', colorPickNew:'새 색상 고르기', colorFavRemove:'삭제',
@@ -11462,6 +11486,7 @@ const I18N = {
     linkOpen:'Liên kết', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
     topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsDockGlassLabel:'Độ mờ của thanh dưới cùng', settingsDockGlassHint:'Thanh tab nổi ở cuối màn hình điện thoại hơi trong suốt, với trang phía sau được làm mờ. Giảm giá trị này để trông giống kính hơn; ở 100% thanh sẽ đục hoàn toàn.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
+    settingsPushLabel:'Nhận thông báo đẩy trên thiết bị này', pushIosInstallHint:'Trên iPhone, hãy thêm ứng dụng này vào Màn hình chính trước (Chia sẻ, rồi Thêm vào Màn hình chính) và mở từ đó.', pushUnsupportedHint:'Trình duyệt này không nhận được thông báo đẩy.', pushBlockedHint:'Thông báo đang bị chặn cho trang này. Hãy cho phép trong cài đặt trình duyệt hoặc điện thoại.', pushEnableFailed:'Không bật được thông báo đẩy.', notifChannelPush:'Đẩy', pushNeedsInApp:'Cần bật thông báo trong ứng dụng', pushTestTitle:'Đã bật thông báo đẩy', pushTestBody:'Thiết bị này giờ sẽ nhận nhắc nhở và thông báo của bạn.',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
     lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn sáng lên khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Mọi thứ bấm được hoặc nhập được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.', animAddLabel:'Người đưa thư khi thêm', animAddHint:'Khi một mục được lưu, một người đưa thư bước ra từ sau nút Thêm, lấy chữ đầu tiên trên nút, lật thành cái phễu, rót những gì bạn đã nhập vào, xếp vào vali rồi chạy đi.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ (tùy chọn)', eventEndTime:'Giờ kết thúc', eventNotes:'Ghi chú', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi', eventColorUseTheirBtn:'Dùng màu của {name}', splitTooNarrow:'Chia đôi màn hình cần cửa sổ rộng hơn: ít nhất {n} px, gấp đôi độ rộng của ứng dụng. Hãy mở rộng cửa sổ để mở hai thẻ cạnh nhau.', splitClosedNarrow:'Cửa sổ quá hẹp cho hai thẻ nên đã trở lại một thẻ.', splitClosePane:'Đóng {name}', splitDropHere:'Thả ra để mở cạnh nhau', splitResizeLabel:'Đổi kích thước hai bên', splitResizeHint:'Kéo để đổi kích thước. Nhấp đúp để chia đều lại.', splitSwap:'Đổi bên', colorPopTitle:'Màu của tôi', colorFavSave:'Lưu', colorFavSaveHint:'Lưu màu này vào mục yêu thích', colorFavSaved:'Đã lưu', colorFavUnsave:'Xóa khỏi mục yêu thích', colorFavs:'Màu yêu thích', colorFavsEmpty:'Chưa có. Hãy lưu một màu để dùng lại sau.', colorPickNew:'Chọn màu mới', colorFavRemove:'Xóa',
@@ -11604,6 +11629,7 @@ const STATIC_MAP = {
   calExportAllBtn:'calExportAll', calExportNoneBtn:'calExportNone', calExportGoBtn:'calExportGo',
   settingsShowTopikLabel:'settingsShowTopikLabel', settingsShowTopikHint:'settingsShowTopikHint',
   settingsMessagingLabel:'settingsMessagingLabel', settingsMessagingHint:'settingsMessagingHint',
+  settingsPushLabel:'settingsPushLabel',
   lblAnimations:'lblAnimations',
   animHeaderLabel:'animHeaderLabel', animHeaderHint:'animHeaderHint',
   animTitleLabel:'animTitleLabel', animTitleHint:'animTitleHint',
@@ -11648,7 +11674,7 @@ const STATIC_MAP = {
   resumeUploadBtn:'resumeUploadBtn',
   lblResumeSync:'lblResumeSync', resumeSyncIntro:'resumeSyncIntro', resumeSyncCopyBtn:'resumeSyncCopyBtn', lblResumeSyncPaste:'lblResumeSyncPaste', resumeSyncSaveBtn:'resumeSyncSaveBtn',
   lblNotifBell:'lblNotifBell', lblNotifPrefs:'notifPrefsHeader',
-  lblRecapChannelEmail1:'notifChannelEmail', lblRecapChannelInApp1:'notifChannelInApp', lblRecapChannelEmail2:'notifChannelEmail', lblRecapChannelInApp2:'notifChannelInApp',
+  lblRecapChannelEmail1:'notifChannelEmail', lblRecapChannelInApp1:'notifChannelInApp', lblRecapChannelEmail2:'notifChannelEmail', lblRecapChannelInApp2:'notifChannelInApp', lblRecapChannelPush1:'notifChannelPush', lblRecapChannelPush2:'notifChannelPush',
   hLinkedCircle:'hLinkedCircle', linkedCircleDesc:'linkedCircleDesc', closeFriendsBtn:'closeNoteBtn',
   writingFeedbackHeader:'writingFeedbackHeader', writingFeedbackSendBtn:'writingFeedbackSendBtn',
   lblMfaPromptTitle:'mfaPromptTitle', lblMfaPromptHint:'mfaPromptHint', mfaVerifyBtn:'mfaVerifyBtn', mfaUseBackupBtn:'mfaUseBackupBtn',
@@ -12822,6 +12848,8 @@ function applyLanguage(lang){
     const el = document.getElementById(id);
     if(el) el.textContent = t(key);
   });
+  // A device with push on renders pushes in the language last handed to it.
+  if(pushOwner()) postNotifI18nToWorker();
   // Not in STATIC_MAP: that loop writes textContent, and this label ends in a
   // mark that has to be its own element to escape the link's underline.
   const rvl = document.getElementById('resumeViewLink');
@@ -13334,6 +13362,7 @@ async function signOutOrExitGuest(){
   // Leave the room before the session goes, or the entry lingers until the
   // socket times out and you show as online after signing out.
   teardownOnlinePresence();
+  if(!guestMode) await releasePushOnSignOut();
   guestMode = false;
   supabaseClient = realSupabaseClient;
   await supabaseClient.auth.signOut();
@@ -13412,6 +13441,7 @@ async function onAuthed(user){
   // on the auth screen, was a no-op).
   reorderMobileTabs();
   handleDeepLinkParam();
+  syncPushOnSignIn();
 }
 // The "Open Productivity Tracker" / "View on Productivity Tracker" email
 // buttons carry a ?go=... query param (see email_deep_links_migration.sql)
@@ -13419,6 +13449,14 @@ async function onAuthed(user){
 // of just the site root.
 function handleDeepLinkParam(){
   const params = new URLSearchParams(window.location.search);
+  // A tapped push that had to open the app cold (see sw.js) lands as ?notif=.
+  const notifId = params.get('notif');
+  if(notifId){
+    openNotificationById(Number(notifId));
+    const url = new URL(window.location.href);
+    url.searchParams.delete('notif');
+    window.history.replaceState({}, '', url);
+  }
   const go = params.get('go');
   if(!go) return;
   if(go === 'yonsei-boards'){
@@ -13481,6 +13519,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   document.getElementById('settingsShowTopikToggle').checked = showTopik;
   renderRecapPrefsRows();
   renderNotifPrefs();
+  renderPushDeviceRow();
   renderManageTabsList();
   document.getElementById('settingsNewEmail').value = '';
   document.getElementById('settingsEmailConfirmPassword').value = '';
@@ -13719,22 +13758,34 @@ document.getElementById('resumeSyncSaveBtn').addEventListener('click', async ()=
 });
 
 const NOTIF_PREF_TYPES = [['reminder','notifTypeReminder'],['yonsei_board','notifTypeYonseiBoard'],['link_accepted','notifTypeLinkAccepted']];
+// Push per type, kept apart from email/in-app because the recaps' own two
+// switches live on the profile rather than here. Default on: the device-level
+// switch is what opts a person in, and this only narrows it.
+let notifPushPrefs = {};
+function notifPushOn(type){ return notifPushPrefs[type] !== false; }
 async function renderNotifPrefs(){
   const wrap = document.getElementById('notifPrefsList');
   if(!wrap || !currentUser) return;
   const { data } = await supabaseClient.from('notification_prefs').select('*').eq('user_id', currentUser.id);
   const prefs = {};
-  (data||[]).forEach(r=>{ prefs[r.type] = r; });
+  notifPushPrefs = {};
+  (data||[]).forEach(r=>{ prefs[r.type] = r; if(r.push === false) notifPushPrefs[r.type] = false; });
+  // A push follows the bell: a type whose in-app channel is off never writes
+  // the row a push is sent from, so its push box is greyed rather than
+  // offered as a switch that does nothing.
   wrap.innerHTML = NOTIF_PREF_TYPES.map(([type,labelKey])=>{
     const p = prefs[type] || { email:true, in_app:true };
-    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0;font-size:13px;">
-      <span>${t(labelKey)}</span>
-      <span style="display:flex;gap:14px;">
+    return `<div class="notif-pref-row">
+      <span class="notif-pref-name">${t(labelKey)}</span>
+      <span class="notif-pref-channels">
         <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
           <input type="checkbox" class="notif-pref-check" data-type="${type}" data-channel="email" ${p.email?'checked':''} style="width:14px;height:14px;"> ${t('notifChannelEmail')}
         </label>
         <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);">
           <input type="checkbox" class="notif-pref-check" data-type="${type}" data-channel="in_app" ${p.in_app?'checked':''} style="width:14px;height:14px;"> ${t('notifChannelInApp')}
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-soft);" ${p.in_app?'':`title="${escapeHtml(t('pushNeedsInApp'))}"`}>
+          <input type="checkbox" class="notif-push-check" data-type="${type}" ${notifPushOn(type)?'checked':''} ${p.in_app?'':'disabled'} style="width:14px;height:14px;"> ${t('notifChannelPush')}
         </label>
       </span>
     </div>`;
@@ -13744,9 +13795,219 @@ async function renderNotifPrefs(){
       const type = cb.dataset.type;
       const row = wrap.querySelectorAll(`.notif-pref-check[data-type="${type}"]`);
       const email = row[0].checked, inApp = row[1].checked;
+      const pushBox = wrap.querySelector(`.notif-push-check[data-type="${type}"]`);
+      if(pushBox){
+        pushBox.disabled = !inApp;
+        pushBox.parentElement.title = inApp ? '' : t('pushNeedsInApp');
+      }
       await supabaseClient.rpc('set_notification_pref', { ntype: type, p_email: email, p_in_app: inApp });
     });
   });
+  wrap.querySelectorAll('.notif-push-check').forEach(cb=>{
+    cb.addEventListener('change', async ()=>{
+      const { error } = await supabaseClient.rpc('set_notification_push', { ntype: cb.dataset.type, p_push: cb.checked });
+      if(error){ cb.checked = !cb.checked; return; }
+      notifPushPrefs[cb.dataset.type] = cb.checked;
+    });
+  });
+  syncRecapPushChecks();
+}
+// The recap rows' push boxes read the same map, greyed while that recap's
+// in-app switch is off for the reason given above.
+function syncRecapPushChecks(){
+  [['daily_recap','notifyDailyRecapPushCheck', notifyDailyRecapInapp], ['weekly_recap','notifyWeeklyRecapPushCheck', notifyWeeklyRecapInapp]].forEach(([type, id, inApp])=>{
+    const cb = document.getElementById(id);
+    if(!cb) return;
+    cb.checked = notifPushOn(type);
+    cb.disabled = !inApp;
+    cb.parentElement.title = inApp ? '' : t('pushNeedsInApp');
+  });
+}
+document.querySelectorAll('.recap-push-check').forEach(cb=>{
+  cb.addEventListener('change', async ()=>{
+    const { error } = await supabaseClient.rpc('set_notification_push', { ntype: cb.dataset.type, p_push: cb.checked });
+    if(error){ cb.checked = !cb.checked; return; }
+    notifPushPrefs[cb.dataset.type] = cb.checked;
+  });
+});
+
+/* ---------- PUSH NOTIFICATIONS ---------- */
+// Web Push, the third channel beside email and in-app. Every notification
+// already lands as a row in `notifications`; a trigger on that table hands
+// each new row to the send-push edge function, which sends it to every device
+// its owner switched push on for (push_notifications_migration.sql,
+// supabase/functions/send-push). What happens here is the device's half:
+// asking for permission, subscribing, and telling the server this device
+// exists.
+//
+// A device belongs to whoever switched push on on it (localStorage
+// ptPushOwner), so a second person signing in on the same phone does not
+// start receiving the first person's reminders, and signing out takes the
+// device off the server until that same person signs back in.
+let pushPublicKeyCache = null;
+function pushSupported(){
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+// iOS only gives push to a web app opened from the Home Screen (16.4 and
+// later); in a Safari tab PushManager simply is not there. Worth telling
+// apart from "this browser cannot", because the fix is one the reader can do.
+function isIosBrowserTab(){
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  return ios && !standalone;
+}
+// The key is a literal on purpose: applyLanguage() calls pushOwner() while the
+// page is still loading, before any const further down has been initialised.
+function pushOwner(){ try { return localStorage.getItem('ptPushOwner'); } catch(e){ return null; } }
+function setPushOwner(uid){
+  try { if(uid) localStorage.setItem('ptPushOwner', uid); else localStorage.removeItem('ptPushOwner'); } catch(e){ /* private mode: the switch just will not survive a reload */ }
+}
+function b64urlToBytes(str){
+  const pad = '='.repeat((4 - str.length % 4) % 4);
+  const raw = atob((str + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(raw, c => c.charCodeAt(0));
+}
+// The key pair is made by the server the first time anybody asks (see
+// send-push), so it is fetched rather than written into this file.
+async function fetchPushPublicKey(){
+  if(pushPublicKeyCache) return pushPublicKeyCache;
+  const { data, error } = await realSupabaseClient.functions.invoke('send-push', { body: { action: 'public-key' } });
+  if(error || !data || !data.publicKey) throw (error || new Error('no push key'));
+  pushPublicKeyCache = data.publicKey;
+  return pushPublicKeyCache;
+}
+async function currentPushSubscription(){
+  if(!pushSupported()) return null;
+  const reg = await navigator.serviceWorker.getRegistration();
+  return reg ? reg.pushManager.getSubscription() : null;
+}
+// A subscription carries the server key it was made with, so one made under
+// a different key can never deliver and has to be replaced.
+function subscriptionUsesKey(sub, keyB64){
+  const have = sub && sub.options && sub.options.applicationServerKey;
+  if(!have) return false;
+  const a = new Uint8Array(have), b = b64urlToBytes(keyB64);
+  return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+async function registerPushSubscription(sub){
+  const j = sub.toJSON();
+  const { error } = await supabaseClient.rpc('register_push_subscription', {
+    p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth,
+    p_user_agent: navigator.userAgent.slice(0, 300),
+  });
+  if(error) throw error;
+}
+// The phone renders a push itself, in its own language, from these (see
+// sw.js): the server only sends a notification's type and params, the same
+// things the bell builds its text from.
+function postNotifI18nToWorker(){
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.ready.then(reg=>{
+    if(!reg.active) return;
+    reg.active.postMessage({ type: 'pt-notif-i18n', lang: currentLang, strings: {
+      reminderTitleTpl: t('notifReminderTitleTpl'),
+      yonseiOne: t('notifYonseiBoardTitleOne'), yonseiMany: t('notifYonseiBoardTitleMany'),
+      linkAcceptedTpl: t('notifLinkAcceptedTitleTpl'),
+      dailyOne: tForm('notifDailyRecapTitleTpl', 1), dailyMany: tForm('notifDailyRecapTitleTpl', 2),
+      weeklyOne: tForm('notifWeeklyRecapTitleTpl', 1), weeklyMany: tForm('notifWeeklyRecapTitleTpl', 2),
+      pinTitle: t('notifSystemPinTitle'), pinBody: t('notifSystemPinBody'),
+      testTitle: t('pushTestTitle'), testBody: t('pushTestBody'),
+    }});
+  }).catch(()=>{});
+}
+async function enablePushOnThisDevice(){
+  // Asked FIRST, before anything else is awaited: Safari only shows the
+  // prompt from inside the tap that asked for it.
+  const permission = await Notification.requestPermission();
+  if(permission !== 'granted') return false;
+  const reg = await navigator.serviceWorker.ready;
+  const key = await fetchPushPublicKey();
+  let sub = await reg.pushManager.getSubscription();
+  if(sub && !subscriptionUsesKey(sub, key)){ await sub.unsubscribe(); sub = null; }
+  if(!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64urlToBytes(key) });
+  await registerPushSubscription(sub);
+  setPushOwner(currentUser.id);
+  postNotifI18nToWorker();
+  // One push straight away, to this device only, so "on" is something seen
+  // arrive rather than taken on trust.
+  realSupabaseClient.functions.invoke('send-push', { body: { action: 'test', endpoint: sub.endpoint } }).catch(()=>{});
+  return true;
+}
+async function disablePushOnThisDevice(){
+  const sub = await currentPushSubscription();
+  if(sub){
+    try { await supabaseClient.rpc('unregister_push_subscription', { p_endpoint: sub.endpoint }); } catch(e){ /* the server drops it anyway once the push service answers 410 */ }
+    try { await sub.unsubscribe(); } catch(e){}
+  }
+  setPushOwner(null);
+}
+// Signing out takes the device off the server but leaves it subscribed and
+// remembered, so the same person signing back in gets push back without
+// asking again, and anybody else signing in does not get it at all.
+async function releasePushOnSignOut(){
+  if(!currentUser || pushOwner() !== currentUser.id) return;
+  const sub = await currentPushSubscription().catch(()=>null);
+  if(sub){ try { await supabaseClient.rpc('unregister_push_subscription', { p_endpoint: sub.endpoint }); } catch(e){} }
+}
+async function syncPushOnSignIn(){
+  if(guestMode || !currentUser || !pushSupported()) return;
+  if(Notification.permission !== 'granted' || pushOwner() !== currentUser.id) return;
+  postNotifI18nToWorker();
+  const sub = await currentPushSubscription().catch(()=>null);
+  // Permission can be withdrawn from the phone's own settings, which drops
+  // the subscription without telling anybody.
+  if(!sub){ setPushOwner(null); return; }
+  try { await registerPushSubscription(sub); } catch(e){}
+}
+async function renderPushDeviceRow(){
+  const row = document.getElementById('settingsPushRow');
+  if(!row || !currentUser) return;
+  row.classList.toggle('hidden', guestMode);
+  if(guestMode) return;
+  const toggle = document.getElementById('settingsPushToggle');
+  const hint = document.getElementById('settingsPushHint');
+  let hintKey = null;
+  if(isIosBrowserTab()) hintKey = 'pushIosInstallHint';
+  else if(!pushSupported()) hintKey = 'pushUnsupportedHint';
+  else if(Notification.permission === 'denied') hintKey = 'pushBlockedHint';
+  toggle.disabled = !!hintKey;
+  const sub = hintKey ? null : await currentPushSubscription().catch(()=>null);
+  toggle.checked = !!(sub && Notification.permission === 'granted' && pushOwner() === currentUser.id);
+  hint.textContent = hintKey ? t(hintKey) : '';
+  hint.classList.toggle('hidden', !hintKey);
+  // Warmed now so the tap that turns it on has nothing to wait for.
+  if(!hintKey) fetchPushPublicKey().catch(()=>{});
+}
+document.getElementById('settingsPushToggle').addEventListener('change', async (e)=>{
+  const toggle = e.target;
+  const hint = document.getElementById('settingsPushHint');
+  let failed = false;
+  try {
+    if(toggle.checked){
+      const ok = await enablePushOnThisDevice();
+      if(!ok) toggle.checked = false;
+    } else {
+      await disablePushOnThisDevice();
+    }
+  } catch(err){
+    failed = true;
+    toggle.checked = false;
+  }
+  await renderPushDeviceRow();
+  if(failed){
+    hint.textContent = t('pushEnableFailed');
+    hint.classList.remove('hidden');
+  }
+});
+// A tapped push opens here: the notification's own row is read back (it
+// carries the params the bell routes by), marked read, and followed.
+async function openNotificationById(id){
+  if(!currentUser || guestMode || !Number.isFinite(id)) return;
+  const { data: n } = await supabaseClient.from('notifications').select('*').eq('id', id).maybeSingle();
+  if(!n) return;
+  if(!n.read_at) await supabaseClient.rpc('mark_notification_read', { notification_id: n.id });
+  refreshNotifBell();
+  navigateToNotifTarget(n);
 }
 /* ---------- NOTIFICATION BELL ---------- */
 // Aggregates every notification source (calendar reminders, Yonsei board
@@ -16118,6 +16379,7 @@ document.getElementById('notifyDailyRecapInappCheck').addEventListener('change',
   if(error){ e.target.checked = !next; return; }
   notifyDailyRecapInapp = next;
   renderRecapPrefsRows();
+  syncRecapPushChecks();
 });
 document.getElementById('notifyWeeklyRecapEmailCheck').addEventListener('change', async (e)=>{
   const next = e.target.checked;
@@ -16132,6 +16394,7 @@ document.getElementById('notifyWeeklyRecapInappCheck').addEventListener('change'
   if(error){ e.target.checked = !next; return; }
   notifyWeeklyRecapInapp = next;
   renderRecapPrefsRows();
+  syncRecapPushChecks();
 });
 // Daily/weekly recap settings row: label built from inline segments
 // (time-of-day, on-day/day-before, weekday) using the generic segment
@@ -40601,6 +40864,7 @@ closeOnBackdrop(document.getElementById('pendingVacationInvitesModal'), ()=> doc
     // when it has fetched a different one and the offer to reload appears.
     // Pressing it is the only thing that reloads.
     navigator.serviceWorker.addEventListener('message', (e)=>{
+      if(e.data && e.data.type === 'pt-open-notif'){ openNotificationById(Number(e.data.id)); return; }
       if(!e.data || e.data.type !== 'wk-shell-updated') return;
       document.getElementById('shellUpdateBar').classList.remove('hidden');
     });

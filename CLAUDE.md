@@ -5981,6 +5981,136 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## PUSH TO THE PHONE, AS A THIRD CHANNEL ON THE ONE NOTIFICATIONS TABLE (26 Sep, eighty-sixth pass)
+
+"Can we enable notifications to go to the phone (like push notifications)?",
+then "yeah" to building it, including the live database change and the new
+edge function.
+
+### Why it is one trigger
+
+Every notification this app sends already becomes a row in `notifications`:
+reminders, Yonsei board, invite accepted, both recaps, system notices. So
+push hangs off that table and nothing else: `notifications_push` (AFTER
+INSERT) hands the new row's id to the `send-push` edge function through
+pg_net, and the function sends it to every device its owner switched push on
+for. Every type, present and future, is covered by that one trigger, and the
+trigger returns before making any request for someone with no device
+registered, which is nearly everyone nearly always.
+
+- **A push follows the bell.** A type whose in-app channel is off never writes
+  the row, so it never pushes either. The settings grey the Push box out in
+  that case (with a "Needs In-app on" tooltip) rather than offering a switch
+  that does nothing. Routing push around the in-app gate would have meant
+  editing every sender (`send_due_reminders`, the Yonsei notifier, both
+  recaps), which is where the gate lives.
+- **`notification_prefs.push`**, default true. The device switch is what opts a
+  person in; the per-type box only narrows it. **The recaps' own email and
+  in-app switches live on the profile**, not in that table, so they get
+  `set_notification_push(type, bool)`, which touches the push column alone.
+- **`set_notification_pref` had to be DROPPED and recreated with a fourth
+  argument, not overloaded.** Two versions, one with a default, and PostgREST
+  cannot choose between them for a call naming three arguments, which is
+  every call the app already makes. With one left, the three-argument call
+  still resolves and leaves push alone (checked).
+
+### Nobody ever handles a key
+
+- The **VAPID key pair is made by the edge function** the first time anything
+  asks for it (WebCrypto, in `push_config`, a one-row table with RLS on, no
+  policies and no grants to anon or authenticated). The app fetches the
+  public half with `{action: "public-key"}` rather than having it written
+  into index.html.
+- The **trigger's secret is generated in SQL** by the migration and read by
+  both ends from the same row. A forged call without it gets 403.
+- So no key passed through a person, a chat or a commit, and rotating means
+  emptying `push_config.vapid_public` (every device then re-subscribes on its
+  next switch-on; a subscription made under the old key is detected and
+  replaced by `subscriptionUsesKey`).
+
+### The encryption is by hand, and proved against the RFC
+
+`supabase/functions/send-push/webpush.ts`: RFC 8291 (aes128gcm) and RFC 8292
+(VAPID) on WebCrypto alone, because every push library leans on Node's crypto
+module and this runs on Deno. It was run under Node against **RFC 8291's own
+worked example and reproduces its output byte for byte**; a fresh random
+message decrypts from the phone's side; and the VAPID signature verifies
+against the public key. **Keep the vector if this is ever touched**: it is in
+the RFC's Appendix A and takes a minute to rerun.
+
+### The phone renders the text, in its own language
+
+The payload is the row's type, params, and the stored English title/body as a
+fallback. `sw.js` builds the text the way `renderNotifText()` does, from
+strings the app hands it (`postNotifI18nToWorker`, on sign-in, on switching
+push on, and on every language change) and keeps in a cache of its own
+(`pt-notif-i18n`) that the shell's activate step now leaves alone. So a push
+reads "알림: Rent Due" on a phone set to Korean without the server knowing
+anything about languages. Dates follow `localDateStr` (YYYY/MM/DD in Korean,
+DD/MM/YYYY otherwise). Every push shows something, because iOS withdraws push
+from a web app that receives one and draws nothing.
+
+**A tap opens the thing**: an app already open is focused and sent
+`pt-open-notif`; otherwise it opens cold on `?notif=<id>`, which
+`handleDeepLinkParam()` follows after sign-in. Either way it goes through
+`openNotificationById`, which reads the row back, marks it read and calls the
+bell's own `navigateToNotifTarget`.
+
+### Whose device it is
+
+`localStorage.ptPushOwner` is who switched push on on this device.
+`register_push_subscription` moves an endpoint to whoever registers it last
+(holding the endpoint is proof of being on that device). Signing out removes
+the server row but keeps the subscription and the owner, so the same person
+signing back in gets push back without being asked again, and anybody else
+signing in on that phone does not get it at all. A device whose permission is
+withdrawn in the phone's own settings is noticed on the next sign-in, and a
+push service answering 404/410 deletes its row.
+
+- **Safari only shows the permission prompt from inside the tap**, so
+  `Notification.requestPermission()` is the first thing the switch does,
+  before anything is awaited, and the public key is fetched when the settings
+  open so the tap has nothing else to wait for.
+- **iPhone only gets push in the Home Screen app** (iOS 16.4 and later). In a
+  Safari tab `PushManager` is absent, and the settings say how to install
+  rather than "not supported". `isIosBrowserTab()` also counts a Mac-platform
+  touch device as iOS (that is how an iPad in desktop mode presents), which is
+  why the preview pane's phone emulation shows the iPhone hint.
+- **Switching push on sends one test push to that device only**
+  (`{action: "test", endpoint}`, verified against the caller's own session),
+  so "on" is something seen arriving.
+
+### Checked
+
+Server, live: the key is generated once and stable across calls, a forged
+trigger call gets 403, a test call with no session 401, and the browser
+preflight passes. **End to end without a phone**: a throwaway device pointed
+at a dead URL on the project's own domain, one notification inserted, and the
+trigger fired, the function authenticated, encrypted and sent, got 404 and
+deleted the device; both test rows were then removed. The new SQL functions
+were exercised as a signed-in user in a transaction that was rolled back
+(two registrations of one endpoint make one row; the three-argument call
+leaves push alone; the push-only switch writes; unregister removes).
+
+`sw.js` itself was run under Node with a stand-in `self`, `caches` and
+`clients`, fed the app's real strings in all three languages: every type,
+one and many, the English fallback before any strings arrive, a non-JSON
+push, a cold tap and a warm one, and the strings surviving an activate.
+
+The settings were rendered at desktop and 390 in English and Vietnamese. With
+a third column "In-app" broke onto two lines and Vietnamese ("Trong ứng
+dụng") squeezed the type names to one word a line, so the labels are
+`nowrap` and a row now drops its three boxes to a line of their own, still
+hard right, when the name would otherwise be a sliver (`.notif-pref-row`).
+
+**Not checked, and cannot be from here: a real push arriving on a real
+phone.** The preview pane cannot register a service worker at all (the
+untouched `sw.js` from HEAD fails identically), and Apple and Google only
+deliver to real devices. The first real test is switching it on in the Home
+Screen app once this is pushed; the test push should arrive within seconds.
+If it does not, `net._http_response` and the function's own logs are where to
+look first.
+
 ## ONE BUTTON PER JOB, AND THE SAME ONE EVERYWHERE (26 Sep, eighty-fifth pass)
 
 "You need to run checks across the whole site to standardize buttons and
