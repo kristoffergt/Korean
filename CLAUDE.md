@@ -5981,6 +5981,129 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## SIGN IN WITH GOOGLE, KAKAO, GITHUB, LINKEDIN, AND NO LEAKED PASSWORDS (26 Sep, eighty-eighth pass)
+
+"Can we also activate the most common alternative login/sign-up methods?
+Google etc.?" (picked: Google, Kakao, GitHub, then "and linkedin"), and "can't
+we reject leaked passwords ourselves?" The PIN question was asked and answered:
+**keep the site PIN for provider sign-ups too.**
+
+### Leaked passwords: Have I Been Pwned, from the page
+
+Supabase's own leaked-password protection is a **Pro-plan feature and this org
+is on Free** (checked via the MCP, `plan: free`). `passwordIsPwned()` asks
+`api.pwnedpasswords.com/range/<first 5 of SHA-1>` itself, with `Add-Padding`,
+and matches the rest of the hash in the browser, so the password never leaves
+it. Padding rows carry a count of 0 and are ignored. Checked on sign-up and on
+the reset screen (Settings' password change goes through the reset email, so
+that covers it). **It fails OPEN** (4s timeout, any error lets the password
+through), deliberately: this protects people from a weak choice, it is not a
+gate, and anybody bypassing the page to set a leaked password on their own
+account only hurts themselves. HIBP answers CORS preflight for `Add-Padding`
+(`access-control-allow-headers: Add-Padding`), checked with curl. In the
+browser: "password" is caught, a random string is not.
+
+### Providers: the buttons appear when switched on, and new accounts start locked
+
+- **Buttons follow Supabase's own settings.** `loadOauthProviders()` reads
+  `/auth/v1/settings` (public, anon key) and shows a button for each of
+  `google`, `kakao`, `github`, `linkedin_oidc` whose `external[id]` is true;
+  the answer is cached in `localStorage.oauthProviders` so they are there on
+  the first frame. **Switching a provider on in the dashboard is the whole of
+  adding it.** Today only `email` is on, so nothing shows yet.
+- One outlined look for all four (`button.oauth-btn`, the submit's size) with
+  each brand's own mark; Kakao's mark is the yellow square, since a black
+  bubble alone vanishes in the dark theme.
+- **The PIN problem**: an email sign-up carries the PIN in its metadata and
+  `check_signup_site_pin` refuses it without. An OAuth sign-up cannot carry
+  anything, and a provider-confirmed email skipped that check outright. So
+  (`oauth_signup_pin_migration.sql`, **applied live 26 Sep as
+  `oauth_signup_pin`**):
+  - `lock_provider_signup` (AFTER INSERT on auth.users, reading
+    `raw_app_meta_data->>'provider'`) and `lock_provider_identity` (AFTER
+    INSERT on auth.identities, brand-new accounts with no other identity and
+    no profile only) put a new provider account in `signup_pin_pending`. Two
+    triggers because which row names the provider first is GoTrue's business.
+  - **`custom_access_token_hook` gives a locked account a token with role
+    `anon`**, so PostgREST, Storage and Realtime treat it exactly as a
+    signed-out visitor. That covers every table AND every security definer RPC
+    granted to authenticated in one place, where restrictive policies would
+    have needed all 43 tables plus a guard in each leaderboard RPC. Any error
+    in the hook returns the token unchanged, because a failing hook stops
+    every sign-in.
+  - `redeem_signup_pin(pin)` checks through `verify_site_pin` (same 10 per 15
+    minutes) and deletes the row; `signup_pin_pending_for_me()` answers the
+    page. Both granted to anon, since that is what a locked token is;
+    `auth.uid()` still reads the sub.
+  - `check_signup_site_pin` now only checks EMAIL sign-ups (a missing provider
+    counts as email, so it fails closed). Without that, GitHub with a private
+    email or Kakao without email consent would arrive unconfirmed and be
+    refused for not carrying a PIN they cannot carry.
+  - Cron `purge-locked-signups` (03:47 Seoul) deletes accounts still locked
+    after 7 days. They own nothing: they could never write.
+  - An existing member signing in with a provider on the same confirmed email
+    is LINKED by Supabase, not inserted, so none of this touches them (tested:
+    a member gaining a google identity is not locked).
+- **Dry-run against the live DB in a transaction ended by a raised exception**
+  (nothing kept, confirmed after): Google confirmed and GitHub unconfirmed
+  both created and locked; email without PIN still refused; email with PIN
+  created, not locked, PIN stripped; provider seen only on the identity still
+  locked; hook gives locked anon + `signup_pin_pending: true`, normal
+  unchanged, garbage unchanged; as the locked account with role anon,
+  profiles visible = 0, wrong PIN keeps it locked, right PIN unlocks; a true
+  stranger gets false from both RPCs. The one thing that could not be run is
+  calling the hook AS supabase_auth_admin (postgres cannot SET ROLE to it);
+  its EXECUTE grant is confirmed.
+
+### The page flow
+
+- Every signed-in arrival goes through **`routeSignedInUser()`** (init now
+  calls it instead of `checkMfaAndProceed` directly). An email account skips
+  straight on. A provider account that is locked (RPC true, or the token's own
+  role is anon) first tries the PIN this device typed at the gate, silently,
+  so somebody who just came through the gate never sees it twice; otherwise
+  the PIN screen reappears in **`pinGateMode = 'redeem'`** with its own prompt
+  and a "Use a different account" link. `finishPinRedeem()` refreshes the
+  session (the old token still says anon) before `checkMfaAndProceed`.
+- **`proceedToApp()`** sits between the MFA check and `onAuthed()`: an account
+  with no `display_name` metadata AND no profile gets the new
+  `chooseNameScreen`, prefilled from the provider's name cut to the display
+  name rules, and the choice goes into metadata via `updateUser`, where
+  `ensureProfileExists()` already looks. An email's local part is often not a
+  valid name (dots, underscores, over 12), which is why this step exists.
+- `ensureProfileExists()` fallbacks now pass `profiles_display_name_chars`: the
+  email part is cleaned and cut to 12, and the taken-name variant is 7
+  characters plus "-abcd". Before, "firstname.lastname" silently failed the
+  upsert and left an account with no profile.
+- A provider refusal or expired link comes back as `error_description` in the
+  address; `takeAuthErrorFromUrl()` reads it after `getSession()`, shows it,
+  and strips it so a reload does not repeat it.
+- `currentUser.provider` now exists; the email-change and delete-account
+  confirmations say "set a password first with Send password reset email"
+  to a provider account that types a wrong one, since it may never have had
+  one.
+- privacy.html: provider sign-in in "What is stored" and two new rows under
+  services (the four providers, and Have I Been Pwned).
+- Checked: the standard node check (script parses, every new id exists, all 13
+  new keys present once in each of en/ko/vi), and in the browser pane over a
+  local server: buttons in light and dark, the name screen and the redeem
+  screen in Korean, "Use a different account" returning to the ordinary gate.
+  **Not driven**: a real provider round trip, which needs the providers
+  switched on.
+
+### KRISTOFFER'S STEPS, IN THIS ORDER (the order matters)
+
+1. **Switch the hook on FIRST**: Authentication > Auth Hooks > Customize Access
+   Token (JWT) Claims > Postgres > `public.custom_access_token_hook`. With a
+   provider on and the hook off, a locked account gets an ordinary token: the
+   page still asks for the PIN, but the database is not locked.
+2. Authentication > URL Configuration: `https://kristoffergt.com` must be in the
+   redirect URLs (it already is if password reset works).
+3. Per provider, create the app on its own site and paste the client ID and
+   secret into Authentication > Sign In / Providers. Callback URL for all of
+   them: `https://kbqwitmxpmkueryjsyip.supabase.co/auth/v1/callback`. Kakao
+   needs the email consent item on; LinkedIn is "LinkedIn (OIDC)".
+
 ## THE SECURITY AUDIT, FIXED EXCEPT THE COPYRIGHT ITEMS (26 Sep, eighty-seventh pass)
 
 A pasted audit ("HACKED" and "SUED"), and "fix all except for what you

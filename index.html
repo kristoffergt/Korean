@@ -801,6 +801,17 @@ body.dark .brand-mark h1{color:#ffffff;}
    layout it sits in. */
 .pw-toggle-btn svg{width:16px;height:16px;flex-shrink:0;}
 .auth-submit{width:100%;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px;}
+/* Sign in with a provider: the submit's own size, outlined, so it reads as the
+   other way in rather than as the main action. One look for all four; the
+   brand is carried by each one's own mark. */
+.oauth-block{margin-top:16px;}
+.oauth-divider{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.5px;}
+.oauth-divider::before, .oauth-divider::after{content:'';flex:1;height:1px;background:var(--line);}
+.oauth-list{display:flex;flex-direction:column;gap:8px;}
+button.oauth-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--paper);color:var(--ink);border:1px solid var(--line);}
+button.oauth-btn:hover{background:var(--paper);border-color:var(--ink-soft);}
+button.oauth-btn:disabled{opacity:0.65;cursor:default;}
+button.oauth-btn svg{flex:none;width:18px;height:18px;}
 .auth-submit:disabled{opacity:0.65;cursor:default;}
 .btn-spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;animation:btn-spin 0.7s linear infinite;display:inline-block;}
 @keyframes btn-spin{to{transform:rotate(360deg);}}
@@ -3420,6 +3431,9 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       <div class="pin-progress-track"><div class="pin-progress-fill" id="pinProgressFill"></div></div>
       <button class="auth-submit" id="pinGateSubmitBtn"></button>
       <div id="pinGateMsg" class="auth-msg"></div>
+      <!-- Only while a new provider account is waiting for the PIN (redeem
+           mode): the way out for somebody who does not have it. -->
+      <button class="linkbtn hidden" id="pinGateSignOutBtn" style="margin-top:10px;width:100%;text-align:center;"></button>
     </div>
   </div>
 </div>
@@ -3463,6 +3477,12 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       <button class="auth-submit" id="authSubmit"></button>
       <button class="linkbtn" id="forgotPasswordBtn" style="margin-top:10px;width:100%;text-align:center;"></button>
       <button class="linkbtn hidden" id="resendConfirmBtn" style="margin-top:10px;width:100%;text-align:center;"></button>
+      <!-- One button per provider that is switched on in Supabase; filled by
+           renderOauthButtons(), and hidden entirely while none is. -->
+      <div id="oauthBlock" class="oauth-block hidden">
+        <div class="oauth-divider"><span id="lblOauthOr"></span></div>
+        <div class="oauth-list" id="oauthList"></div>
+      </div>
       <button class="linkbtn" id="guestModeBtn" style="margin-top:10px;width:100%;text-align:center;"></button>
       <div id="authMsg" class="auth-msg"></div>
       <div style="margin-top:12px;font-size:11.5px;color:var(--ink-soft);text-align:center;line-height:1.5;">
@@ -3516,6 +3536,21 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
     <button class="auth-submit" id="mfaVerifyBtn"></button>
     <button class="linkbtn" id="mfaUseBackupBtn" style="margin-top:10px;width:100%;text-align:center;"></button>
     <div id="mfaMsg" class="auth-msg"></div>
+  </div>
+</div>
+
+<!-- CHOOSE A DISPLAY NAME (first sign-in through Google, Kakao, GitHub or
+     LinkedIn, none of which asks for one; see proceedToApp()) -->
+<div class="auth-wrap hidden" id="chooseNameScreen">
+  <div class="auth-card">
+    <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:26px;height:26px;"></div><div class="brand-icon brand-icon-dark" style="width:26px;height:26px;"></div><h1>Productivity Tracker</h1></div>
+    <div class="auth-sub" id="lblChooseNameTitle"></div>
+    <div class="auth-field">
+      <label for="chooseNameInput" id="lblChooseNameField"></label>
+      <input type="text" id="chooseNameInput" maxlength="12" autocomplete="nickname">
+    </div>
+    <button class="auth-submit" id="chooseNameBtn"></button>
+    <div id="chooseNameMsg" class="auth-msg"></div>
   </div>
 </div>
 <!-- APP -->
@@ -11309,6 +11344,7 @@ const I18N = {
     modConfirmResetPw:"Reset this user's password?", modConfirmConfirmEmail:"Manually confirm this user's email?", modConfirmDisableMfa:'Disable two-factor authentication for this user?',
     mfaPromptTitle:'Enter your authentication code', mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.', mfaUseBackupBtn:'Use a backup code instead', mfaUseTotpBtn:'Use your authenticator app instead', mfaBackupCodePlaceholder:'Enter a backup code', mfaBackupWrongCode:'Invalid or already-used backup code.', download2faBackupBtn:'Download codes',
     lblPinGate:'Enter the site PIN to continue', pinGateSubmitBtn:'Continue', pinGateWrongMsg:'Incorrect PIN.', pinGateTooManyMsg:'Too many tries. Wait 15 minutes and try again.', signupPinAgainMsg:'Enter the site PIN again to create an account.', passwordTooShort:'Use at least 8 characters for your password.', authAgeNote:'You must be 13 or older to create an account.', privacyPolicyLink:'Privacy policy', aiCheckBeforeSaving:'AI answers can be wrong, so check the highlighted fields before saving.', aiFilledTitle:'Filled in from an AI answer. Check it before saving.', settings2faQrAlt:'QR code to scan with your authenticator app', fileOpenFailed:'Could not open the file. Try again.', settingsSitePinLabel:'Site sign-up/sign-in PIN', showPasswordBtn:'Show password', hidePasswordBtn:'Hide password',
+    oauthOr:'or', oauthGoogle:'Continue with Google', oauthKakao:'Continue with Kakao', oauthGithub:'Continue with GitHub', oauthLinkedin:'Continue with LinkedIn', pinRedeemPrompt:'Enter the site PIN to finish creating your account', pinRedeemSignOut:'Use a different account', chooseNameTitle:'Choose the name others will see', chooseNameBtn:'Continue', chooseNameEmpty:'Enter a name.', authRedirectFailed:'Sign-in did not finish.', passwordPwned:'This password has appeared in a known data breach, so it is easy to guess. Choose a different one.', settingsWrongPasswordProvider:'Incorrect password. If you signed up with Google, Kakao, GitHub or LinkedIn, set a password first with "Send password reset email".',
     guestModeBtn:'Continue as guest', guestBannerText:"Guest mode. Limited functionality. Nothing you add is saved to an account.", guestDisplayName:'Guest',
     hAddCourse:'Add a course', courseTitle:'Course title', courseCode:'Course code', courseProfessor:'Professor', courseClassroom:'Classroom',
     courseTime:'Time', courseConcentration:'Concentration', courseStatus:'Status', courseSyllabus:'Syllabus',
@@ -11434,6 +11470,7 @@ const I18N = {
     modConfirmResetPw:'이 사용자의 비밀번호를 재설정하시겠습니까?', modConfirmConfirmEmail:'이 사용자의 이메일을 수동으로 확인 처리하시겠습니까?', modConfirmDisableMfa:'이 사용자의 2단계 인증을 비활성화하시겠습니까?',
     mfaPromptTitle:'인증 코드를 입력하세요', mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.', mfaUseBackupBtn:'백업 코드 사용하기', mfaUseTotpBtn:'인증 앱 사용하기', mfaBackupCodePlaceholder:'백업 코드를 입력하세요', mfaBackupWrongCode:'백업 코드가 올바르지 않거나 이미 사용되었습니다.', download2faBackupBtn:'코드 다운로드',
     lblPinGate:'계속하려면 사이트 PIN을 입력하세요', pinGateSubmitBtn:'계속', pinGateWrongMsg:'PIN이 올바르지 않습니다.', pinGateTooManyMsg:'시도 횟수가 너무 많습니다. 15분 후에 다시 시도하세요.', signupPinAgainMsg:'계정을 만들려면 사이트 PIN을 다시 입력하세요.', passwordTooShort:'비밀번호는 8자 이상이어야 합니다.', authAgeNote:'계정을 만들려면 만 13세 이상이어야 합니다.', privacyPolicyLink:'개인정보 처리방침', aiCheckBeforeSaving:'AI 답변은 틀릴 수 있으니 저장하기 전에 표시된 항목을 확인하세요.', aiFilledTitle:'AI 답변으로 채워졌습니다. 저장하기 전에 확인하세요.', settings2faQrAlt:'인증 앱으로 스캔할 QR 코드', fileOpenFailed:'파일을 열 수 없습니다. 다시 시도하세요.', settingsSitePinLabel:'사이트 가입/로그인 PIN', showPasswordBtn:'비밀번호 표시', hidePasswordBtn:'비밀번호 숨기기',
+    oauthOr:'또는', oauthGoogle:'Google로 계속하기', oauthKakao:'카카오로 계속하기', oauthGithub:'GitHub로 계속하기', oauthLinkedin:'LinkedIn으로 계속하기', pinRedeemPrompt:'계정 만들기를 마치려면 사이트 PIN을 입력하세요', pinRedeemSignOut:'다른 계정 사용', chooseNameTitle:'다른 사람에게 보일 이름을 정하세요', chooseNameBtn:'계속', chooseNameEmpty:'이름을 입력하세요.', authRedirectFailed:'로그인을 마치지 못했습니다.', passwordPwned:'이 비밀번호는 알려진 데이터 유출에 포함되어 있어 쉽게 추측됩니다. 다른 비밀번호를 선택하세요.', settingsWrongPasswordProvider:'비밀번호가 올바르지 않습니다. Google, 카카오, GitHub 또는 LinkedIn으로 가입했다면 먼저 "비밀번호 재설정 이메일 보내기"로 비밀번호를 설정하세요.',
     guestModeBtn:'게스트로 둘러보기', guestBannerText:'게스트 모드입니다. 기능이 제한됩니다. 추가한 내용은 계정에 저장되지 않습니다.', guestDisplayName:'게스트',
     hAddCourse:'수업 추가', courseTitle:'수업명', courseCode:'수업 코드', courseProfessor:'교수', courseClassroom:'강의실',
     courseTime:'시간', courseConcentration:'전공/트랙', courseStatus:'상태', courseSyllabus:'강의계획서',
@@ -11559,6 +11596,7 @@ const I18N = {
     modConfirmResetPw:'Đặt lại mật khẩu của người dùng này?', modConfirmConfirmEmail:'Xác nhận thủ công email của người dùng này?', modConfirmDisableMfa:'Tắt xác thực hai yếu tố cho người dùng này?',
     mfaPromptTitle:'Nhập mã xác thực', mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.', mfaUseBackupBtn:'Dùng mã dự phòng thay thế', mfaUseTotpBtn:'Dùng ứng dụng xác thực thay thế', mfaBackupCodePlaceholder:'Nhập mã dự phòng', mfaBackupWrongCode:'Mã dự phòng không đúng hoặc đã được sử dụng.', download2faBackupBtn:'Tải mã xuống',
     lblPinGate:'Nhập mã PIN của trang web để tiếp tục', pinGateSubmitBtn:'Tiếp tục', pinGateWrongMsg:'Mã PIN không đúng.', pinGateTooManyMsg:'Bạn đã thử quá nhiều lần. Hãy đợi 15 phút rồi thử lại.', signupPinAgainMsg:'Hãy nhập lại mã PIN của trang web để tạo tài khoản.', passwordTooShort:'Mật khẩu phải có ít nhất 8 ký tự.', authAgeNote:'Bạn phải từ 13 tuổi trở lên để tạo tài khoản.', privacyPolicyLink:'Chính sách quyền riêng tư', aiCheckBeforeSaving:'Câu trả lời của AI có thể sai, hãy kiểm tra các ô được đánh dấu trước khi lưu.', aiFilledTitle:'Được điền từ câu trả lời của AI. Hãy kiểm tra trước khi lưu.', settings2faQrAlt:'Mã QR để quét bằng ứng dụng xác thực', fileOpenFailed:'Không thể mở tệp. Hãy thử lại.', settingsSitePinLabel:'Mã PIN đăng ký/đăng nhập trang web', showPasswordBtn:'Hiện mật khẩu', hidePasswordBtn:'Ẩn mật khẩu',
+    oauthOr:'hoặc', oauthGoogle:'Tiếp tục với Google', oauthKakao:'Tiếp tục với Kakao', oauthGithub:'Tiếp tục với GitHub', oauthLinkedin:'Tiếp tục với LinkedIn', pinRedeemPrompt:'Nhập mã PIN của trang web để hoàn tất việc tạo tài khoản', pinRedeemSignOut:'Dùng tài khoản khác', chooseNameTitle:'Chọn tên mà người khác sẽ thấy', chooseNameBtn:'Tiếp tục', chooseNameEmpty:'Hãy nhập tên.', authRedirectFailed:'Chưa đăng nhập xong.', passwordPwned:'Mật khẩu này đã xuất hiện trong một vụ rò rỉ dữ liệu đã biết nên rất dễ bị đoán. Hãy chọn mật khẩu khác.', settingsWrongPasswordProvider:'Mật khẩu không đúng. Nếu bạn đăng ký bằng Google, Kakao, GitHub hoặc LinkedIn, hãy đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".',
     guestModeBtn:'Tiếp tục với tư cách khách', guestBannerText:'Chế độ khách. Chức năng bị giới hạn. Mọi thứ bạn thêm vào đây sẽ không được lưu vào tài khoản.', guestDisplayName:'Khách',
     hAddCourse:'Thêm khóa học', courseTitle:'Tên khóa học', courseCode:'Mã khóa học', courseProfessor:'Giáo sư', courseClassroom:'Phòng học',
     courseTime:'Giờ học', courseConcentration:'Chuyên ngành', courseStatus:'Trạng thái', courseSyllabus:'Đề cương',
@@ -11598,6 +11636,7 @@ const I18N = {
 const STATIC_MAP = {
   authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password',
   authAgeNote:'authAgeNote', authPrivacyLink:'privacyPolicyLink', settingsPrivacyLink:'privacyPolicyLink',
+  lblOauthOr:'oauthOr', pinGateSignOutBtn:'pinRedeemSignOut', lblChooseNameTitle:'chooseNameTitle', lblChooseNameField:'yourName', chooseNameBtn:'chooseNameBtn',
   signOutBtn:'signOut',
   tabBtnStudyLabel:'tabStudy', tabBtnReadingLabel:'tabReading', tabBtnJobsLabel:'tabJobs', tabBtnCalendarLabel:'tabHome', tabBtnYonseiLabel:'tabYonsei',
   calendarSubOverviewLabel:'tabOverview', calendarSubCalendarLabel:'tabCalendar', calendarSubExpensesLabel:'tabExpenditure', lblQuickNav:'lblQuickNav',
@@ -11782,6 +11821,23 @@ function getDeviceToken(){
 let pendingMfaUser = null;
 let pendingMfaFactorId = null;
 let mfaEnrollFactorId = null;
+// The sign-in providers this page can offer, by Supabase's own ids. A button
+// appears only once its provider is switched on in Supabase (Authentication >
+// Sign In / Providers): loadOauthProviders() asks Auth's public settings which
+// are, so switching one on there is the whole of adding it here. The last
+// answer is kept on the device so the buttons are there on the first frame.
+const OAUTH_PROVIDERS = [
+  { id:'google', labelKey:'oauthGoogle', icon:'<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>' },
+  { id:'kakao', labelKey:'oauthKakao', icon:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#FEE500"/><path fill="#191919" d="M12 5.5c-4.14 0-7.5 2.62-7.5 5.86 0 2.08 1.39 3.9 3.48 4.94l-.71 2.6c-.06.23.2.41.4.28l3.08-2.04c.41.05.83.08 1.25.08 4.14 0 7.5-2.62 7.5-5.86S16.14 5.5 12 5.5z"/></svg>' },
+  { id:'github', labelKey:'oauthGithub', icon:'<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>' },
+  { id:'linkedin_oidc', labelKey:'oauthLinkedin', icon:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0A66C2"/><path fill="#fff" d="M7.1 9.6H4.6V19h2.5V9.6zM5.85 5a1.45 1.45 0 1 0 0 2.9 1.45 1.45 0 0 0 0-2.9zM19.4 13.6c0-2.5-1.3-4.2-3.6-4.2-1.3 0-2.1.7-2.5 1.3V9.6h-2.4V19h2.5v-4.9c0-1.3.5-2.3 1.8-2.3 1.2 0 1.7.9 1.7 2.3V19h2.5v-5.4z"/></svg>' },
+];
+let oauthEnabled = (()=>{ try { const v = JSON.parse(localStorage.getItem('oauthProviders') || '[]'); return Array.isArray(v) ? v : []; } catch(e){ return []; } })();
+// 'gate' is the ordinary site PIN before sign-in; 'redeem' is the same screen
+// asking a new provider account for the PIN that unlocks it.
+let pinGateMode = 'gate';
+let pendingSignupUser = null;
+let pendingNameUser = null;
 let profiles = {};
 let allEntries = {};
 let allBooks = {};
@@ -12864,6 +12920,10 @@ function applyLanguage(lang){
     const el = document.getElementById(id);
     if(el) el.textContent = t(key);
   });
+  // The gate's prompt is in STATIC_MAP for its ordinary job; while it is
+  // unlocking a new provider account it says something else.
+  if(pinGateMode === 'redeem') document.getElementById('lblPinGate').textContent = t('pinRedeemPrompt');
+  renderOauthButtons();
   // A device with push on renders pushes in the language last handed to it.
   if(pushOwner()) postNotifI18nToWorker();
   // Not in STATIC_MAP: that loop writes textContent, and this label ends in a
@@ -12974,6 +13034,82 @@ function setAuthMode(mode){
 }
 function showAuthMsg(text, type){
   document.getElementById('authMsg').innerHTML = `<div class="auth-msg-inner ${type}">${text}</div>`;
+}
+function renderOauthButtons(){
+  const shown = OAUTH_PROVIDERS.filter(p => oauthEnabled.includes(p.id));
+  document.getElementById('oauthBlock').classList.toggle('hidden', !shown.length);
+  document.getElementById('oauthList').innerHTML = shown.map(p =>
+    `<button type="button" class="oauth-btn" data-provider="${p.id}">${p.icon}<span>${escapeHtml(t(p.labelKey))}</span></button>`
+  ).join('');
+}
+async function loadOauthProviders(){
+  try {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/settings', { headers: { apikey: SUPABASE_ANON_KEY } });
+    if(!res.ok) return;
+    const external = ((await res.json()) || {}).external || {};
+    oauthEnabled = OAUTH_PROVIDERS.map(p => p.id).filter(id => external[id] === true);
+    localStorage.setItem('oauthProviders', JSON.stringify(oauthEnabled));
+    renderOauthButtons();
+  } catch(e){}
+}
+// Sign-in and sign-up are the same button for a provider: Supabase makes the
+// account the first time and signs it in every time after. A new account comes
+// back locked until the site PIN is redeemed (routeSignedInUser()).
+document.getElementById('oauthList').addEventListener('click', async (e)=>{
+  const btn = e.target.closest('.oauth-btn');
+  if(!btn) return;
+  btn.disabled = true;
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: btn.dataset.provider,
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  if(error){ btn.disabled = false; showAuthMsg(escapeHtml(error.message), 'error'); }
+});
+// The role in the session's own access token. A locked provider account's
+// token says anon (custom_access_token_hook), which is also how the page can
+// tell it is locked even if the lookup below fails.
+function sessionTokenRole(session){
+  try {
+    const part = ((session && session.access_token) || '').split('.')[1] || '';
+    return JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/'))).role || null;
+  } catch(e){ return null; }
+}
+// A provider that refuses, or a sign-in link that has expired, comes back with
+// the reason in the address instead of a session. Read once and taken out of
+// the address, so a reload does not show it again.
+function takeAuthErrorFromUrl(){
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const query = new URLSearchParams(window.location.search);
+  const reason = hash.get('error_description') || query.get('error_description') || hash.get('error') || query.get('error');
+  if(!reason) return null;
+  const url = new URL(window.location.href);
+  url.hash = '';
+  ['error', 'error_code', 'error_description'].forEach(k => url.searchParams.delete(k));
+  window.history.replaceState({}, '', url);
+  return reason;
+}
+// Supabase's own check against leaked passwords is a paid-plan feature, so the
+// page asks Have I Been Pwned itself. The password never leaves the browser:
+// only the first 5 characters of its SHA-1 hash are sent, the service answers
+// with every leaked hash that starts with them, and the match is made here.
+// Add-Padding makes every answer the same size, and the padding rows carry a
+// count of 0. If the service cannot be reached the password is let through:
+// this protects people from a weak choice, it is not what keeps anyone out.
+async function passwordIsPwned(password){
+  try {
+    const digest = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(password));
+    const hex = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch('https://api.pwnedpasswords.com/range/' + hex.slice(0, 5), { headers: { 'Add-Padding': 'true' }, signal: ctrl.signal });
+    clearTimeout(timer);
+    if(!res.ok) return false;
+    const suffix = hex.slice(5);
+    return (await res.text()).split('\n').some(line => {
+      const [s, count] = line.trim().split(':');
+      return s === suffix && Number(count) > 0;
+    });
+  } catch(e){ return false; }
 }
 // Disables the submit button and swaps in a spinner while a sign-in/sign-up
 // request is in flight, so clicking "Create account" gives instant feedback
@@ -13188,7 +13324,13 @@ async function submitPinGate(){
   pinVerifying = true;
   document.getElementById('pinGateMsg').innerHTML = '';
   pinBox.startVerifying();
-  const { data: ok, error } = await supabaseClient.rpc('verify_site_pin', { candidate: code });
+  // In redeem mode the same four digits unlock the provider account that is
+  // already signed in; redeem_signup_pin checks them through verify_site_pin,
+  // so the limit on wrong guesses is the same one.
+  const redeeming = pinGateMode === 'redeem';
+  const { data: ok, error } = redeeming
+    ? await supabaseClient.rpc('redeem_signup_pin', { candidate: code })
+    : await supabaseClient.rpc('verify_site_pin', { candidate: code });
   pinBox.stopVerifying();
   pinVerifying = false;
   if(error || !ok){
@@ -13205,6 +13347,7 @@ async function submitPinGate(){
     // is created (it used to be checked in this page only, which anyone
     // could skip by calling sign-up directly).
     localStorage.setItem('sitePin', code);
+    if(redeeming){ finishPinRedeem(); return; }
     document.getElementById('pinGateScreen').classList.add('hidden');
     document.querySelector('#pinGateScreen .auth-card').classList.remove('pin-card-exit');
     document.getElementById('authScreen').classList.remove('hidden');
@@ -13223,6 +13366,70 @@ function backToPinGate(){
   pinBox.reset(true);
   pinBox.playEntrance();
 }
+// Every signed-in arrival goes through here: a fresh sign-in, a reload, and
+// the return from Google, Kakao, GitHub or LinkedIn. A NEW account made
+// through a provider arrives locked (oauth_signup_pin_migration.sql): its
+// token carries role anon, so it can read and save nothing until the site PIN
+// is redeemed. The PIN typed at the gate on this device is tried first,
+// silently, so somebody who has just come through the gate never sees it
+// twice; only when there is none, or it has since changed, is the gate shown
+// again, this time to redeem. An email account is never locked and skips the
+// question entirely.
+async function routeSignedInUser(user){
+  const provider = (user.app_metadata && user.app_metadata.provider) || 'email';
+  if(provider !== 'email'){
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data: pending } = await supabaseClient.rpc('signup_pin_pending_for_me');
+    if(pending === true || sessionTokenRole(session) === 'anon'){
+      pendingSignupUser = user;
+      const storedPin = localStorage.getItem('sitePin');
+      if(storedPin){
+        const { data: ok } = await supabaseClient.rpc('redeem_signup_pin', { candidate: storedPin });
+        if(ok){ await finishPinRedeem(); return; }
+      }
+      showPinRedeem();
+      return;
+    }
+  }
+  await checkMfaAndProceed(user);
+}
+function showPinRedeem(){
+  pinGateMode = 'redeem';
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('lblPinGate').textContent = t('pinRedeemPrompt');
+  document.getElementById('pinGateSignOutBtn').classList.remove('hidden');
+  document.getElementById('pinGateMsg').innerHTML = '';
+  document.getElementById('pinGateScreen').classList.remove('hidden');
+  pinBox.reset(true);
+  pinBox.playEntrance();
+}
+function leavePinRedeemMode(){
+  pinGateMode = 'gate';
+  pendingSignupUser = null;
+  document.getElementById('lblPinGate').textContent = t('lblPinGate');
+  document.getElementById('pinGateSignOutBtn').classList.add('hidden');
+}
+// Unlocked: the token in hand still says anon, so it is swapped for a fresh
+// one (the hook no longer finds the account locked) before anything loads.
+async function finishPinRedeem(){
+  const fallbackUser = pendingSignupUser;
+  document.getElementById('pinGateScreen').classList.add('hidden');
+  document.querySelector('#pinGateScreen .auth-card').classList.remove('pin-card-exit');
+  leavePinRedeemMode();
+  const { data } = await supabaseClient.auth.refreshSession();
+  await checkMfaAndProceed((data && data.user) || fallbackUser);
+}
+document.getElementById('pinGateSignOutBtn').addEventListener('click', async ()=>{
+  leavePinRedeemMode();
+  document.getElementById('pinGateMsg').innerHTML = '';
+  await supabaseClient.auth.signOut();
+  if(localStorage.getItem('sitePinVerified') === 'true'){
+    document.getElementById('pinGateScreen').classList.add('hidden');
+    document.getElementById('authScreen').classList.remove('hidden');
+  } else {
+    pinBox.reset(true);
+  }
+});
 const PW_EYE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
 const PW_EYE_OFF_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.87 18.87 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a18.87 18.87 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
 // One toggle per password field (sign in, reset, email-change confirm,
@@ -13258,6 +13465,7 @@ document.getElementById('authSubmit').addEventListener('click', async ()=>{
     if(displayName.length > 12){ showAuthMsg(t('settingsNameTooLong'), 'error'); return; }
     if(!isValidDisplayName(displayName)){ showAuthMsg(t('settingsNameInvalidChars'), 'error'); return; }
     if(password.length < 8){ showAuthMsg(t('passwordTooShort'), 'error'); return; }
+    if(await passwordIsPwned(password)){ showAuthMsg(t('passwordPwned'), 'error'); return; }
     const sitePin = localStorage.getItem('sitePin');
     if(!sitePin){ backToPinGate(); return; }
     const { data: reserved, error: reserveError } = await supabaseClient.rpc('reserve_display_name', { p_email: email, p_name: displayName, p_browser_token: getDeviceToken() });
@@ -13350,8 +13558,61 @@ async function checkMfaAndProceed(user){
       return;
     }
   }
+  await proceedToApp(user);
+}
+// Google, Kakao, GitHub and LinkedIn never ask for a display name, and an
+// email's local part is often not a valid one (dots, underscores, more than
+// 12 characters), so a first sign-in that has no name and no profile yet asks
+// for one before the app opens. The name is written to the account's
+// metadata, which is where ensureProfileExists() already looks for it.
+async function proceedToApp(user){
+  const hasName = !!(user.user_metadata && user.user_metadata.display_name);
+  if(!hasName){
+    const { data, error } = await supabaseClient.from('profiles').select('id').eq('id', user.id).maybeSingle();
+    if(!error && !data){ showChooseName(user); return; }
+  }
   onAuthed(user);
 }
+// What the provider called them, cut down to what a display name may hold.
+function suggestedDisplayName(user){
+  const m = user.user_metadata || {};
+  const raw = String(m.full_name || m.name || m.preferred_username || m.user_name || m.nickname || '');
+  return raw.replace(/[^\p{L}\p{N} '-]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 12).trim();
+}
+function showChooseName(user){
+  pendingNameUser = user;
+  ['authScreen', 'resetScreen', 'mfaScreen', 'pinGateScreen'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  const input = document.getElementById('chooseNameInput');
+  input.value = suggestedDisplayName(user);
+  document.getElementById('chooseNameMsg').innerHTML = '';
+  document.getElementById('chooseNameScreen').classList.remove('hidden');
+  input.focus();
+}
+async function submitChooseName(){
+  const name = document.getElementById('chooseNameInput').value.trim();
+  const fail = (html)=>{ document.getElementById('chooseNameMsg').innerHTML = `<div class="auth-msg-inner error">${html}</div>`; };
+  if(!name){ fail(t('chooseNameEmpty')); return; }
+  if(name.length > 12){ fail(t('settingsNameTooLong')); return; }
+  if(!isValidDisplayName(name)){ fail(t('settingsNameInvalidChars')); return; }
+  const btn = document.getElementById('chooseNameBtn');
+  btn.disabled = true;
+  try {
+    const { data: available } = await supabaseClient.rpc('display_name_available', { dname: name });
+    if(available === false){ fail(t('duplicateName')); return; }
+    const { data, error } = await supabaseClient.auth.updateUser({ data: { display_name: name } });
+    if(error){ fail(escapeHtml(error.message)); return; }
+    const user = (data && data.user) || pendingNameUser;
+    pendingNameUser = null;
+    document.getElementById('chooseNameScreen').classList.add('hidden');
+    onAuthed(user);
+  } finally {
+    btn.disabled = false;
+  }
+}
+document.getElementById('chooseNameBtn').addEventListener('click', submitChooseName);
+document.getElementById('chooseNameInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); submitChooseName(); }
+});
 document.getElementById('mfaBackupCodeInput').addEventListener('keydown', (e)=>{
   if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('mfaVerifyBtn').click(); }
 });
@@ -13381,7 +13642,7 @@ function finishMfaChallenge(){
   mfaBackupMode = false;
   document.getElementById('mfaScreen').classList.add('hidden');
   document.querySelector('#mfaScreen .auth-card').classList.remove('pin-card-exit');
-  onAuthed(user);
+  proceedToApp(user);
 }
 async function attemptMfaTotpVerify(){
   if(mfaVerifying) return;
@@ -13440,14 +13701,23 @@ document.getElementById('signOutBtn').addEventListener('click', signOutOrExitGue
 // blocking access to an account the person already proved they own.
 async function ensureProfileExists(user){
   if(profiles[user.id]) return;
-  const desiredName = (user.user_metadata && user.user_metadata.display_name) || (user.email||'').split('@')[0] || 'User';
+  // Both fallbacks have to pass profiles_display_name_chars (letters, digits,
+  // spaces, ' and -, at most 12), or the upsert is refused and the account is
+  // left with no profile: an email's local part is cleaned and cut to 12, and
+  // the taken-name variant keeps 7 characters so the "-abcd" still fits.
+  let desiredName = (user.user_metadata && user.user_metadata.display_name) || '';
+  if(!desiredName || desiredName.length > 12 || !isValidDisplayName(desiredName)){
+    desiredName = (user.email||'').split('@')[0].replace(/[^\p{L}\p{N} '-]/gu, '').slice(0, 12) || 'User';
+  }
   const { data: available } = await supabaseClient.rpc('display_name_available', { dname: desiredName });
-  const finalName = available === false ? (desiredName + '-' + user.id.slice(0,4)) : desiredName;
+  const finalName = available === false ? (desiredName.slice(0, 7) + '-' + user.id.slice(0,4)) : desiredName;
   const { error } = await supabaseClient.from('profiles').upsert({ id: user.id, display_name: finalName });
   if(!error) profiles[user.id] = finalName;
 }
 async function onAuthed(user){
-  currentUser = { id: user.id, email: user.email };
+  // provider is how the account was first made ('email', or 'google' and the
+  // like), which decides what a wrong-password message can usefully say.
+  currentUser = { id: user.id, email: user.email, provider: (user.app_metadata && user.app_metadata.provider) || 'email' };
   document.getElementById('authScreen').classList.add('hidden');
   document.getElementById('resetScreen').classList.add('hidden');
   document.getElementById('mfaScreen').classList.add('hidden');
@@ -16744,7 +17014,7 @@ document.getElementById('saveEmailBtn').addEventListener('click', async ()=>{
   if(!email){ showSettingsMsg('settingsEmailMsg', t('enterEmailFirst'), true); return; }
   if(!pw){ showSettingsMsg('settingsEmailMsg', t('settingsEnterPassword'), true); return; }
   const { error: verifyError } = await supabaseClient.auth.signInWithPassword({ email: currentUser.email, password: pw });
-  if(verifyError){ showSettingsMsg('settingsEmailMsg', t('settingsWrongPassword'), true); return; }
+  if(verifyError){ showSettingsMsg('settingsEmailMsg', t(currentUser.provider === 'email' ? 'settingsWrongPassword' : 'settingsWrongPasswordProvider'), true); return; }
   const { error } = await supabaseClient.auth.updateUser({ email });
   if(error){ showSettingsMsg('settingsEmailMsg', error.message, true); return; }
   document.getElementById('settingsNewEmail').value = '';
@@ -16850,7 +17120,7 @@ document.getElementById('deleteAccountBtn').addEventListener('click', async ()=>
   }
   if(!pw){ showSettingsMsg('settingsDeleteMsg', t('settingsEnterPassword'), true); return; }
   const { error: verifyError } = await supabaseClient.auth.signInWithPassword({ email: currentUser.email, password: pw });
-  if(verifyError){ showSettingsMsg('settingsDeleteMsg', t('settingsDeleteWrongPassword'), true); return; }
+  if(verifyError){ showSettingsMsg('settingsDeleteMsg', t(currentUser.provider === 'email' ? 'settingsDeleteWrongPassword' : 'settingsWrongPasswordProvider'), true); return; }
   if(!confirm(t('deleteAccountConfirm1'))) return;
   if(!confirm(t('deleteAccountConfirm2'))) return;
   const { error } = await supabaseClient.rpc('delete_own_account');
@@ -17303,6 +17573,11 @@ function showResetMsg(text, type){
 document.getElementById('updatePasswordBtn').addEventListener('click', async ()=>{
   const newPassword = document.getElementById('newPasswordInput').value;
   if(!newPassword || newPassword.length < 8){ showResetMsg(t('passwordTooShort'), 'error'); return; }
+  const btn = document.getElementById('updatePasswordBtn');
+  btn.disabled = true;
+  const pwned = await passwordIsPwned(newPassword);
+  btn.disabled = false;
+  if(pwned){ showResetMsg(t('passwordPwned'), 'error'); return; }
   const { data, error } = await supabaseClient.auth.updateUser({ password: newPassword });
   if(error){ showResetMsg(t('passwordUpdateError') + ' (' + escapeHtml(error.message) + ')', 'error'); return; }
   showResetMsg(t('passwordUpdated'), 'info');
@@ -41069,16 +41344,23 @@ closeOnBackdrop(document.getElementById('pendingVacationInvitesModal'), ()=> doc
   applyDarkMode(localStorage.getItem('trackerDark') === '1');
   renderTopikCountdown();
   renderMonthGrid();
+  loadOauthProviders();
   const { data: { session } } = await supabaseClient.auth.getSession();
+  // Read after getSession(), which is what consumes a provider's return
+  // address; an error there is the one thing it leaves behind.
+  const redirectError = takeAuthErrorFromUrl();
+  const redirectErrorHtml = redirectError ? `${t('authRedirectFailed')} ${escapeHtml(redirectError)}` : '';
   if(session){
     document.getElementById('pinGateScreen').classList.add('hidden');
-    await checkMfaAndProceed(session.user);
+    await routeSignedInUser(session.user);
   } else if(localStorage.getItem('sitePinVerified') === 'true'){
     document.getElementById('pinGateScreen').classList.add('hidden');
     document.getElementById('authScreen').classList.remove('hidden');
+    if(redirectErrorHtml) showAuthMsg(redirectErrorHtml, 'error');
   } else {
     pinBox.reset(true);
     pinBox.playEntrance();
+    if(redirectErrorHtml) document.getElementById('pinGateMsg').innerHTML = `<div class="auth-msg-inner error">${redirectErrorHtml}</div>`;
   }
   if('serviceWorker' in navigator){
     // The worker now serves this document out of its cache and revalidates
