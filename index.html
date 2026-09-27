@@ -649,6 +649,15 @@ body.no-anim-ui .wk-key-press{transform:none;}
   background:var(--paper);border:1px solid var(--line);border-radius:10px;
   box-shadow:0 8px 24px rgba(0,0,0,0.18);
   animation:lang-menu-in 0.14s cubic-bezier(0.4,0,0.2,1);}
+/* The account block at the top of the name's popover. Spans throughout (the
+   popover sits inside a span), so each line is made a block here. */
+.color-pop-account{display:block;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+.color-pop-account > span{display:block;}
+.color-pop-signed{margin-bottom:3px;font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-soft);}
+.color-pop-email{font-size:13px;font-weight:600;overflow-wrap:anywhere;}
+.color-pop-pin{margin-top:6px;font-size:12px;color:var(--ink-soft);}
+.color-pop-pin code{font-weight:700;letter-spacing:1px;color:var(--ink);}
+.color-pop-signout{margin-top:10px;}
 .color-pop-head{display:flex;align-items:center;gap:8px;}
 .color-pop-swatch{flex:none;width:22px;height:22px;border-radius:50%;
   box-shadow:inset 0 0 0 1px rgba(0,0,0,0.14);}
@@ -3616,11 +3625,20 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       </a>
       <button class="icon-btn" id="accountSettingsBtn" title="Account settings"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
       <span id="whoNameWrap">
-        <span class="name" id="whoName" role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" style="font-weight:700;cursor:pointer;" title="Click to change your color"></span>
+        <span class="name" id="whoName" role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" style="font-weight:700;cursor:pointer;" title="Your account and color"></span>
         <!-- The name's colour popover: the colour now with a star to keep it,
              the colours kept, and the native picker for a new one. Spans, not
              divs, because it sits inside a span. -->
         <span class="color-pop hidden" id="whoColorPop" role="dialog">
+          <!-- Who is signed in, the PIN to hand to somebody new, and the way
+               out: moved here from the top of Account settings (real-user
+               request), since the name is where you look for your account. -->
+          <span class="color-pop-account">
+            <span class="color-pop-signed" id="settingsSignedInAs"></span>
+            <span class="color-pop-email" id="whoEmail"></span>
+            <span class="color-pop-pin" id="settingsSitePinRow"><span id="settingsSitePinLabel"></span>: <code id="settingsSitePinValue"></code></span>
+            <button type="button" class="export-btn color-pop-signout" id="signOutBtn"></button>
+          </span>
           <span class="color-pop-head">
             <span class="color-pop-swatch" id="whoColorPopSwatch"></span>
             <span class="color-pop-hex" id="whoColorPopHex"></span>
@@ -4977,18 +4995,6 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
       <span id="hAccountSettings"></span>
       <button class="icon-btn close-x" id="closeAccountSettingsX" title="Close">✕</button>
     </h2>
-
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-      <div>
-        <div class="hint" id="settingsSignedInAs" style="margin-top:0;"></div>
-        <span id="whoEmail" style="font-size:13px;"></span>
-        <div class="hint" style="margin-top:6px;" id="settingsSitePinRow"><span id="settingsSitePinLabel"></span>: <code id="settingsSitePinValue" style="font-weight:700;letter-spacing:1px;"></code></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <input type="color" id="myColorPicker" title="Your color" style="width:30px;height:30px;padding:2px;border-radius:6px;border:1px solid var(--line);cursor:pointer;">
-        <button class="export-btn" id="signOutBtn"></button>
-      </div>
-    </div>
 
     <!-- Settings used to be one flat scroll: fifteen unrelated blocks in a
          row, so finding anything meant reading all of it and there was no
@@ -11344,7 +11350,7 @@ const I18N = {
     modConfirmResetPw:"Reset this user's password?", modConfirmConfirmEmail:"Manually confirm this user's email?", modConfirmDisableMfa:'Disable two-factor authentication for this user?',
     mfaPromptTitle:'Enter your authentication code', mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.', mfaUseBackupBtn:'Use a backup code instead', mfaUseTotpBtn:'Use your authenticator app instead', mfaBackupCodePlaceholder:'Enter a backup code', mfaBackupWrongCode:'Invalid or already-used backup code.', download2faBackupBtn:'Download codes',
     lblPinGate:'Enter the site PIN to continue', pinGateSubmitBtn:'Continue', pinGateWrongMsg:'Incorrect PIN.', pinGateTooManyMsg:'Too many tries. Wait 15 minutes and try again.', signupPinAgainMsg:'Enter the site PIN again to create an account.', passwordTooShort:'Use at least 8 characters for your password.', authAgeNote:'You must be 13 or older to create an account.', privacyPolicyLink:'Privacy policy', aiCheckBeforeSaving:'AI answers can be wrong, so check the highlighted fields before saving.', aiFilledTitle:'Filled in from an AI answer. Check it before saving.', settings2faQrAlt:'QR code to scan with your authenticator app', fileOpenFailed:'Could not open the file. Try again.', settingsSitePinLabel:'Site sign-up/sign-in PIN', showPasswordBtn:'Show password', hidePasswordBtn:'Hide password',
-    oauthOr:'or', oauthGoogle:'Continue with Google', oauthKakao:'Continue with Kakao', oauthGithub:'Continue with GitHub', oauthLinkedin:'Continue with LinkedIn', pinRedeemPrompt:'Enter the site PIN to finish creating your account', pinRedeemSignOut:'Use a different account', chooseNameTitle:'Choose the name others will see', chooseNameBtn:'Continue', chooseNameEmpty:'Enter a name.', authRedirectFailed:'Sign-in did not finish.', passwordPwned:'That password has been involved in a data breach. Please pick another password.', settingsWrongPasswordProvider:'Incorrect password. If you signed up with Google, Kakao, GitHub or LinkedIn, set a password first with "Send password reset email".',
+    oauthOr:'or', oauthGoogle:'Continue with Google', oauthKakao:'Continue with Kakao', oauthGithub:'Continue with GitHub', oauthLinkedin:'Continue with LinkedIn', pinRedeemPrompt:'Enter the site PIN to finish creating your account', pinRedeemSignOut:'Use a different account', chooseNameTitle:'Choose the name others will see', chooseNameBtn:'Continue', chooseNameEmpty:'Enter a name.', authRedirectFailed:'Sign-in did not finish.', passwordPwned:'That password has been involved in a data breach. Please pick another password.', settingsWrongPasswordProvider:'Incorrect password. If you signed up with Google, Kakao, GitHub or LinkedIn, set a password first with "Send password reset email".', accountPopTitle:'Your account and color',
     guestModeBtn:'Continue as guest', guestBannerText:"Guest mode. Limited functionality. Nothing you add is saved to an account.", guestDisplayName:'Guest',
     hAddCourse:'Add a course', courseTitle:'Course title', courseCode:'Course code', courseProfessor:'Professor', courseClassroom:'Classroom',
     courseTime:'Time', courseConcentration:'Concentration', courseStatus:'Status', courseSyllabus:'Syllabus',
@@ -11470,7 +11476,7 @@ const I18N = {
     modConfirmResetPw:'이 사용자의 비밀번호를 재설정하시겠습니까?', modConfirmConfirmEmail:'이 사용자의 이메일을 수동으로 확인 처리하시겠습니까?', modConfirmDisableMfa:'이 사용자의 2단계 인증을 비활성화하시겠습니까?',
     mfaPromptTitle:'인증 코드를 입력하세요', mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.', mfaUseBackupBtn:'백업 코드 사용하기', mfaUseTotpBtn:'인증 앱 사용하기', mfaBackupCodePlaceholder:'백업 코드를 입력하세요', mfaBackupWrongCode:'백업 코드가 올바르지 않거나 이미 사용되었습니다.', download2faBackupBtn:'코드 다운로드',
     lblPinGate:'계속하려면 사이트 PIN을 입력하세요', pinGateSubmitBtn:'계속', pinGateWrongMsg:'PIN이 올바르지 않습니다.', pinGateTooManyMsg:'시도 횟수가 너무 많습니다. 15분 후에 다시 시도하세요.', signupPinAgainMsg:'계정을 만들려면 사이트 PIN을 다시 입력하세요.', passwordTooShort:'비밀번호는 8자 이상이어야 합니다.', authAgeNote:'계정을 만들려면 만 13세 이상이어야 합니다.', privacyPolicyLink:'개인정보 처리방침', aiCheckBeforeSaving:'AI 답변은 틀릴 수 있으니 저장하기 전에 표시된 항목을 확인하세요.', aiFilledTitle:'AI 답변으로 채워졌습니다. 저장하기 전에 확인하세요.', settings2faQrAlt:'인증 앱으로 스캔할 QR 코드', fileOpenFailed:'파일을 열 수 없습니다. 다시 시도하세요.', settingsSitePinLabel:'사이트 가입/로그인 PIN', showPasswordBtn:'비밀번호 표시', hidePasswordBtn:'비밀번호 숨기기',
-    oauthOr:'또는', oauthGoogle:'Google로 계속하기', oauthKakao:'카카오로 계속하기', oauthGithub:'GitHub로 계속하기', oauthLinkedin:'LinkedIn으로 계속하기', pinRedeemPrompt:'계정 만들기를 마치려면 사이트 PIN을 입력하세요', pinRedeemSignOut:'다른 계정 사용', chooseNameTitle:'다른 사람에게 보일 이름을 정하세요', chooseNameBtn:'계속', chooseNameEmpty:'이름을 입력하세요.', authRedirectFailed:'로그인을 마치지 못했습니다.', passwordPwned:'이 비밀번호는 데이터 유출에 포함된 적이 있습니다. 다른 비밀번호를 선택해 주세요.', settingsWrongPasswordProvider:'비밀번호가 올바르지 않습니다. Google, 카카오, GitHub 또는 LinkedIn으로 가입했다면 먼저 "비밀번호 재설정 이메일 보내기"로 비밀번호를 설정하세요.',
+    oauthOr:'또는', oauthGoogle:'Google로 계속하기', oauthKakao:'카카오로 계속하기', oauthGithub:'GitHub로 계속하기', oauthLinkedin:'LinkedIn으로 계속하기', pinRedeemPrompt:'계정 만들기를 마치려면 사이트 PIN을 입력하세요', pinRedeemSignOut:'다른 계정 사용', chooseNameTitle:'다른 사람에게 보일 이름을 정하세요', chooseNameBtn:'계속', chooseNameEmpty:'이름을 입력하세요.', authRedirectFailed:'로그인을 마치지 못했습니다.', passwordPwned:'이 비밀번호는 데이터 유출에 포함된 적이 있습니다. 다른 비밀번호를 선택해 주세요.', settingsWrongPasswordProvider:'비밀번호가 올바르지 않습니다. Google, 카카오, GitHub 또는 LinkedIn으로 가입했다면 먼저 "비밀번호 재설정 이메일 보내기"로 비밀번호를 설정하세요.', accountPopTitle:'내 계정과 색상',
     guestModeBtn:'게스트로 둘러보기', guestBannerText:'게스트 모드입니다. 기능이 제한됩니다. 추가한 내용은 계정에 저장되지 않습니다.', guestDisplayName:'게스트',
     hAddCourse:'수업 추가', courseTitle:'수업명', courseCode:'수업 코드', courseProfessor:'교수', courseClassroom:'강의실',
     courseTime:'시간', courseConcentration:'전공/트랙', courseStatus:'상태', courseSyllabus:'강의계획서',
@@ -11596,7 +11602,7 @@ const I18N = {
     modConfirmResetPw:'Đặt lại mật khẩu của người dùng này?', modConfirmConfirmEmail:'Xác nhận thủ công email của người dùng này?', modConfirmDisableMfa:'Tắt xác thực hai yếu tố cho người dùng này?',
     mfaPromptTitle:'Nhập mã xác thực', mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.', mfaUseBackupBtn:'Dùng mã dự phòng thay thế', mfaUseTotpBtn:'Dùng ứng dụng xác thực thay thế', mfaBackupCodePlaceholder:'Nhập mã dự phòng', mfaBackupWrongCode:'Mã dự phòng không đúng hoặc đã được sử dụng.', download2faBackupBtn:'Tải mã xuống',
     lblPinGate:'Nhập mã PIN của trang web để tiếp tục', pinGateSubmitBtn:'Tiếp tục', pinGateWrongMsg:'Mã PIN không đúng.', pinGateTooManyMsg:'Bạn đã thử quá nhiều lần. Hãy đợi 15 phút rồi thử lại.', signupPinAgainMsg:'Hãy nhập lại mã PIN của trang web để tạo tài khoản.', passwordTooShort:'Mật khẩu phải có ít nhất 8 ký tự.', authAgeNote:'Bạn phải từ 13 tuổi trở lên để tạo tài khoản.', privacyPolicyLink:'Chính sách quyền riêng tư', aiCheckBeforeSaving:'Câu trả lời của AI có thể sai, hãy kiểm tra các ô được đánh dấu trước khi lưu.', aiFilledTitle:'Được điền từ câu trả lời của AI. Hãy kiểm tra trước khi lưu.', settings2faQrAlt:'Mã QR để quét bằng ứng dụng xác thực', fileOpenFailed:'Không thể mở tệp. Hãy thử lại.', settingsSitePinLabel:'Mã PIN đăng ký/đăng nhập trang web', showPasswordBtn:'Hiện mật khẩu', hidePasswordBtn:'Ẩn mật khẩu',
-    oauthOr:'hoặc', oauthGoogle:'Tiếp tục với Google', oauthKakao:'Tiếp tục với Kakao', oauthGithub:'Tiếp tục với GitHub', oauthLinkedin:'Tiếp tục với LinkedIn', pinRedeemPrompt:'Nhập mã PIN của trang web để hoàn tất việc tạo tài khoản', pinRedeemSignOut:'Dùng tài khoản khác', chooseNameTitle:'Chọn tên mà người khác sẽ thấy', chooseNameBtn:'Tiếp tục', chooseNameEmpty:'Hãy nhập tên.', authRedirectFailed:'Chưa đăng nhập xong.', passwordPwned:'Mật khẩu này đã từng bị lộ trong một vụ rò rỉ dữ liệu. Vui lòng chọn mật khẩu khác.', settingsWrongPasswordProvider:'Mật khẩu không đúng. Nếu bạn đăng ký bằng Google, Kakao, GitHub hoặc LinkedIn, hãy đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".',
+    oauthOr:'hoặc', oauthGoogle:'Tiếp tục với Google', oauthKakao:'Tiếp tục với Kakao', oauthGithub:'Tiếp tục với GitHub', oauthLinkedin:'Tiếp tục với LinkedIn', pinRedeemPrompt:'Nhập mã PIN của trang web để hoàn tất việc tạo tài khoản', pinRedeemSignOut:'Dùng tài khoản khác', chooseNameTitle:'Chọn tên mà người khác sẽ thấy', chooseNameBtn:'Tiếp tục', chooseNameEmpty:'Hãy nhập tên.', authRedirectFailed:'Chưa đăng nhập xong.', passwordPwned:'Mật khẩu này đã từng bị lộ trong một vụ rò rỉ dữ liệu. Vui lòng chọn mật khẩu khác.', settingsWrongPasswordProvider:'Mật khẩu không đúng. Nếu bạn đăng ký bằng Google, Kakao, GitHub hoặc LinkedIn, hãy đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".', accountPopTitle:'Tài khoản và màu của tôi',
     guestModeBtn:'Tiếp tục với tư cách khách', guestBannerText:'Chế độ khách. Chức năng bị giới hạn. Mọi thứ bạn thêm vào đây sẽ không được lưu vào tài khoản.', guestDisplayName:'Khách',
     hAddCourse:'Thêm khóa học', courseTitle:'Tên khóa học', courseCode:'Mã khóa học', courseProfessor:'Giáo sư', courseClassroom:'Phòng học',
     courseTime:'Giờ học', courseConcentration:'Chuyên ngành', courseStatus:'Trạng thái', courseSyllabus:'Đề cương',
@@ -12923,6 +12929,10 @@ function applyLanguage(lang){
   // The gate's prompt is in STATIC_MAP for its ordinary job; while it is
   // unlocking a new provider account it says something else.
   if(pinGateMode === 'redeem') document.getElementById('lblPinGate').textContent = t('pinRedeemPrompt');
+  // The name's tooltip is its own full name while it is shortened to an
+  // initial (applyWhoNameForWidth), and this the rest of the time.
+  document.getElementById('whoName').dataset.fullTitle = t('accountPopTitle');
+  applyWhoNameForWidth();
   renderOauthButtons();
   // A device with push on renders pushes in the language last handed to it.
   if(pushOwner()) postNotifI18nToWorker();
@@ -13688,6 +13698,7 @@ async function signOutOrExitGuest(){
   supabaseClient = realSupabaseClient;
   await supabaseClient.auth.signOut();
   currentUser = null;
+  closeColorPop();
   document.getElementById('accountSettingsModal').classList.add('hidden');
   document.getElementById('guestBanner').classList.add('hidden');
   document.getElementById('appScreen').classList.add('hidden');
@@ -13836,9 +13847,6 @@ document.getElementById('settingsNameStaticText').addEventListener('click', ()=>
 document.getElementById('cancelDisplayNameBtn').addEventListener('click', closeDisplayNameEdit);
 document.getElementById('accountSettingsBtn').addEventListener('click', async ()=>{
   closeDisplayNameEdit();
-  supabaseClient.rpc('get_site_pin').then(({data})=>{
-    document.getElementById('settingsSitePinValue').textContent = data || '–';
-  });
   document.getElementById('settingsHideLeaderboards').checked = !!hiddenFromLeaderboards[currentUser.id];
   document.getElementById('settingsHideCircleToo').checked = !!hiddenFromCircleToo[currentUser.id];
   document.getElementById('settingsHideCircleTooWrap').classList.toggle('hidden', !hiddenFromLeaderboards[currentUser.id]);
@@ -37006,7 +37014,7 @@ function renderColorPop(){
   if(!pop || pop.classList.contains('hidden')) return;
   const cur = currentMyColor();
   const saved = myFavoriteColors.includes(cur);
-  pop.setAttribute('aria-label', t('colorPopTitle'));
+  pop.setAttribute('aria-label', t('accountPopTitle'));
   document.getElementById('whoColorPopSwatch').style.background = cur;
   document.getElementById('whoColorPopHex').textContent = cur.toUpperCase();
   const save = document.getElementById('whoColorSaveBtn');
@@ -37047,6 +37055,15 @@ function renderColorPop(){
 }
 function openColorPop(){
   closeLangMenu();
+  // A guest has no account to be signed in as, so only the way out shows. The
+  // PIN is asked for each time it opens, since it can be changed elsewhere.
+  const guest = isGuestSession();
+  ['settingsSignedInAs', 'whoEmail', 'settingsSitePinRow'].forEach(id => document.getElementById(id).classList.toggle('hidden', guest));
+  if(!guest){
+    supabaseClient.rpc('get_site_pin').then(({ data })=>{
+      document.getElementById('settingsSitePinValue').textContent = data || '–';
+    });
+  }
   document.getElementById('whoColorPop').classList.remove('hidden');
   document.getElementById('whoNameWrap').classList.add('pop-open');
   document.getElementById('whoName').setAttribute('aria-expanded', 'true');

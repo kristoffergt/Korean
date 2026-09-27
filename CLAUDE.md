@@ -5981,6 +5981,36 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE ACCOUNT BLOCK LIVES IN THE NAME'S POPOVER (27 Sep, eighty-ninth pass)
+
+"Can we add this part to the Kristoffer (i.e., the profile button) instead of
+settings?", meaning the top of Account settings: Signed in as, the email, the
+site PIN, Sign out. It is the first section of `#whoColorPop` now, above the
+colour controls, and gone from the settings modal, which opens straight on its
+sections.
+
+- **Same ids, moved, not copied** (`settingsSignedInAs`, `whoEmail`,
+  `settingsSitePinRow`/`settingsSitePinValue`, `signOutBtn`), so STATIC_MAP,
+  onAuthed's email and colour writes and the sign-out handler needed no change.
+  All spans, since the popover sits inside a span; `.color-pop-account` makes
+  each a block.
+- **The settings row's colour swatch (`#myColorPicker`) went with the row.** It
+  duplicated the popover's own picker, and every reference to it was already
+  null-guarded (`setMyColorInputs` and the change listener).
+- `get_site_pin` is asked in `openColorPop()` now (it was asked when Settings
+  opened). A guest sees only the way out: no account, no PIN.
+- `signOutOrExitGuest()` closes the popover, or it is still open at the next
+  sign-in.
+- The name's tooltip went from the hard-coded "Click to change your color" to
+  `accountPopTitle` (en/ko/vi), set through `dataset.fullTitle` +
+  `applyWhoNameForWidth()` in applyLanguage. Setting `title` directly would
+  clobber the compact case, where the tooltip is the full name behind the
+  initial. The popover's aria-label uses the same key.
+- Checked in the pane over a local server in guest mode, with example values
+  put in by hand for the signed-in lines (the real session cannot be reached
+  from here): the block lays out above the colour section and the settings
+  modal starts at its first section.
+
 ## SIGN IN WITH GOOGLE, KAKAO, GITHUB, LINKEDIN, AND NO LEAKED PASSWORDS (26 Sep, eighty-eighth pass)
 
 "Can we also activate the most common alternative login/sign-up methods?
