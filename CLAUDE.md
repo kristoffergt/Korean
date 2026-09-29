@@ -5981,6 +5981,35 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## GOOGLE'S OWN BUTTON, AND DELETING KEEPS THE ACCOUNT 30 DAYS (29 Sep, hundredth pass)
+
+**Supersedes** the ninety-ninth pass's delete-with-Google work: there is no
+email, password or Google confirmation for deleting any more, and the
+delete-reauth note/token code is gone.
+
+- **Google's own button** (`GOOGLE'S OWN BUTTON` block): Google Identity
+  Services on the sign-in screen, `signInWithIdToken` with a SHA-256 nonce, so
+  Google names kristoffergt.com instead of the supabase.co domain. Loaded only
+  while the sign-in screen is up; the redirect button stays as fallback (while
+  loading, if it fails, and in an iPhone home-screen app). `sw.js` skips
+  accounts.google.com. **Kristoffer must add https://kristoffergt.com under
+  Authorized JavaScript origins on OAuth client 982623591357-... in Google
+  Cloud BEFORE pushing**, or Google sign-in breaks. Not tested with a real
+  Google sign-in. `click_listener` gets serialized into Google's URL: not used.
+- **Delete = one confirm, then 30 days** (`sql migrations/account_deletion_grace_migration.sql`,
+  applied live as `account_deletion_grace`): `profiles.deletion_scheduled_at`,
+  set only by `request_account_deletion()` / cleared by `cancel_account_deletion()`
+  (a trigger reverts any other write). While pending: out of `shared_circle(_cat)`,
+  off all six leaderboards, no email/in-app/push (`wants_*`, both recaps), and
+  the owner gets one email with the date. `purge_scheduled_account_deletions()`
+  hourly (cron `purge-scheduled-account-deletions`). Signing in while pending
+  shows `#restoreAccountScreen` (`showRestoreIfPending`, first thing in
+  `onAuthed`). Dry-run checked on the live DB in rolled-back transactions.
+- **Part 2 still to apply AFTER the page is pushed**:
+  `account_deletion_grace_part2_migration.sql` revokes the immediate
+  `delete_own_account()` (the live old page still calls it).
+- Privacy and terms say it in all three languages.
+
 ## DELETE WITH GOOGLE CARRIES ITS OWN TOKEN, A "GET THE APP" GUIDE, AND NO PHONE-ONLY SETTINGS ON A DESKTOP (29 Sep, ninety-ninth pass)
 
 ### A fresh Google sign-up was told "different account" again

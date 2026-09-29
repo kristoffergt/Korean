@@ -68,6 +68,10 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (isSupabase(url)) return; // let the browser handle it, untouched
+  // Google's sign-in script and the calls it makes: never cached. The script
+  // is not versioned per URL, and a stored copy of one of its status answers
+  // would be replayed to the next sign-in.
+  if (url.hostname === 'accounts.google.com') return;
 
   // Navigations (the HTML document itself). This file is 2.3 MB, 640 KB of it
   // over the wire, so network-first meant every single open -- including an
