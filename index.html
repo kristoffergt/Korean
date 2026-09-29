@@ -13764,6 +13764,13 @@ async function ensureProfileExists(user){
   }
   const { data: available } = await supabaseClient.rpc('display_name_available', { dname: desiredName });
   const finalName = available === false ? (desiredName.slice(0, 7) + '-' + user.id.slice(0,4)) : desiredName;
+  // The thank-you email is sent by a trigger on this insert and is written in
+  // the language in the account's metadata. An email sign-up put it there in
+  // signUp(); a Google one arrives without it, so it is written now, first.
+  if(!(user.user_metadata && user.user_metadata.locale)){
+    try { await supabaseClient.auth.updateUser({ data: { locale: currentLang } }); }
+    catch(e){ console.error(e); }
+  }
   const { error } = await supabaseClient.from('profiles').upsert({ id: user.id, display_name: finalName });
   if(!error) profiles[user.id] = finalName;
 }

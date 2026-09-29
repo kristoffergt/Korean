@@ -5981,6 +5981,61 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## A THANK-YOU FOR SIGNING UP, AND WHY THE OLD WELCOME NEVER ARRIVED (29 Sep, ninety-seventh pass)
+
+"We need a thank you for signing up to the site email with the same
+structure/formatting as our other emails." One already existed:
+`send_welcome_email()`, fired by `on_profile_created` (AFTER INSERT on
+`profiles`). **It had never reached anybody.** It was the only email sent from
+`noreply@reminders.kristoffergt.com`, and Resend answers that domain with 403
+"The reminders.kristoffergt.com domain is not verified" (both sign-ups on 29
+Sep, in `net._http_response`). Every other email here sends from
+`noreply@kristoffergt.com`. The DNS for the subdomain (DKIM, SPF, MX) is
+still there, so it was set up once and has since been dropped or never
+finished in Resend; the admin "New signup" copy used the same sender and went
+nowhere either.
+
+`sql migrations/welcome_email_thank_you_migration.sql`, **applied to the live
+database on 29 Sep** and checked afterwards (new text in the live function,
+old sender gone, trigger enabled, EXECUTE still only postgres and
+service_role):
+
+- **Sender `noreply@kristoffergt.com`**, the same as every other email.
+- **The markup is Supabase's "Confirm signup" template's**
+  (`supabase/email-templates/confirm-signup.html`), not `email_shell`,
+  because that is the email a new account gets right before this one: icon
+  beside the name in the dark bar, a bold title, the green button, a muted
+  note, the same footer line. `email_shell` has no icon and no title, so it
+  would look like a different sender next to the confirmation.
+- **In the language they signed up in**: `raw_user_meta_data->>'locale'`,
+  'ko' or 'vi', anything else English, which is the rule the confirm-signup
+  template already follows. The text mirrors the app's own labels ("Email or
+  Username" / 이메일 또는 이름 / Email hoặc tên hiển thị, "Forgot password?",
+  "Continue with Google").
+- **A Google sign-up is told to use "Continue with Google" with its address**,
+  not about a password it does not have (`raw_app_meta_data->>'provider'`).
+- **A Google sign-up had no locale at all** (checked: the account made at 06:18
+  carries none; signUp() is the only thing that ever wrote it).
+  `ensureProfileExists()` in index.html now writes `locale: currentLang` with
+  `auth.updateUser` just before the upsert, when the metadata has none. The
+  onAuthStateChange handler only reacts to PASSWORD_RECOVERY, so the
+  USER_UPDATED this causes does nothing else.
+- The admin copy stays English and now also says how and in which language
+  they signed up.
+- **Not sent twice**: ensureProfileExists upserts, and an upsert that meets an
+  existing row fires AFTER UPDATE, not AFTER INSERT.
+- **Tested before applying, without sending anything**: a DO block that
+  installs the new function, inserts four throwaway auth.users + profiles rows
+  (email/en, email/ko, Google/vi, Google with no locale), reads what landed in
+  `net.http_request_queue`, and RAISEs it, which rolls all of it back. pg_net's
+  worker only sees committed rows, so nothing left the database; checked
+  afterwards that no test user, no queued request and no function change
+  remained. All four came out right. Worth reusing for any email trigger.
+- **The Resend key is send-only** ("restricted_api_key" on GET /domains), so
+  which domains Resend has verified cannot be read from here. That
+  `kristoffergt.com` works is inferred from every other email using it; the
+  first real sign-up is the proof.
+
 ## GREYED REMINDER PILLS SAY WHY, AND A GIT INDEX EVICTED BY iCLOUD (29 Sep, ninety-sixth pass)
 
 - **"It's not allowing me to click the remind me buttons of to-do"**, with a
