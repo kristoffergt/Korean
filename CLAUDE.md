@@ -5981,6 +5981,43 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## EACH TO-DO CAN BE PUT ON THE CALENDAR OR LEFT OFF IT (29 Sep, ninety-eighth pass)
+
+"For the to-do tab, it's good with an overall checkbox, but we should be able
+to individually pick certain to-dos to add/leave off calendar."
+
+- **`todos.on_calendar`**, nullable (`sql migrations/todo_on_calendar_migration.sql`,
+  **applied live 29 Sep** as `todo_on_calendar`, checked after: boolean,
+  nullable, no default). null = follow the list's switch
+  (`profiles.todos_on_calendar`); true/false = this to-do's own answer.
+  `todoOnCal(td)` is the one place that decides, and `calendarTodosByDate`
+  no longer returns early when the switch is off: it asks each to-do.
+- **A calendar mark on each row**, left of the pencil, in `--on` green while
+  it is on the calendar and struck through (`ICON.calOff`, the bell's on/off
+  pair again) while it is not. Title is the action ("Add to the calendar" /
+  "Leave off the calendar", en/ko/vi), like the tick box's "Mark done".
+  Shown only where the calendar could show the to-do at all
+  (`todoCanBeOnCal`: own, open, dated), so an undated or finished row, or a
+  circle member's shared one, carries no control that would do nothing.
+- **The overall checkbox is a select-all, not a default.** Pressing it puts
+  EVERY to-do the same way and clears the per-row answers (one update on the
+  account's to-dos). While any row has been put the other way it shows the
+  mixed dash (`indeterminate`), and it is UNCHECKED underneath, so pressing a
+  mixed box puts them all on. A row only ever stores an answer that differs
+  from the switch: putting it back the switch's way writes null, so it
+  follows the switch again.
+- **The add form and the editor were left alone**: a new to-do follows the
+  switch, and the row's mark is one press away the moment it is added.
+- Checked in the pane as a guest (served by a background
+  `python3 -m http.server`, stopped after; test rows removed): three dated
+  rows and an undated one give three marks; leaving one off takes it off the
+  calendar and makes the checkbox mixed; pressing the mixed box puts all three
+  on and clears the answer; unticking takes all off; adding one back puts just
+  that one on the calendar (one chip in the month grid) and the checkbox mixed
+  again; putting it back writes null; all of it survives a reload. Syntax and
+  id cross-check clean, the two new keys in all three languages, em dashes 46.
+  **Not checked signed in** against the live table.
+
 ## A THANK-YOU FOR SIGNING UP, AND WHY THE OLD WELCOME NEVER ARRIVED (29 Sep, ninety-seventh pass)
 
 "We need a thank you for signing up to the site email with the same
@@ -6290,7 +6327,8 @@ whether to-dos show on the calendar; reminders picked per to-do, easily.
   how the moment is re-worked when the due date moves in the editor. `c` holds
   the custom time for "Pick a time".
 - **Two switches under the list**, both on the profile: `todos_on_calendar`
-  (default ON) puts the owner's open, dated to-dos on the calendar as dashed
+  (default ON; since the ninety-eighth pass a select-all over a per-to-do
+  `todos.on_calendar`, see that entry) puts the owner's open, dated to-dos on the calendar as dashed
   chips with a tick box (month cells, week headers, the month agenda, a hollow
   dot in the week strip), and ticking there ticks the to-do; `share_todos`
   (default OFF) lets circle members read the list. Shown only with a circle.
