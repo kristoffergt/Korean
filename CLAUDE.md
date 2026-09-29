@@ -5981,6 +5981,17 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE GET-THE-APP SWITCH WAS 7.5PX ON A PHONE (29 Sep, hundred-and-third pass)
+
+"For the Get the app box, the iPhone and Android text should be a lot bigger."
+`#installOsToggle` is a `.cal-view-toggle`, and the phone rule for that class
+sets `font-size: clamp(7px, 2vw, 12px)` so the calendar's five views fit one
+row: 7.5px at 375, which is exactly where the guide opens by itself.
+`#installOsToggle button{font-size:16px;padding:10px 16px}` next to the other
+`.install-*` rules; the id outranks the phone rule wherever it sits. Measured
+at 375x812: 16px, two 140x42 buttons on one row. **Worth knowing for any other
+borrower of `.cal-view-toggle`**: on a phone its text is 2vw unless overridden.
+
 ## SIGN-UP SHOWS THE PASSWORD RULES AS WELCOME KOREA DOES, AND ASKS FOR IT TWICE (29 Sep, hundred-and-second pass)
 
 "When creating an account it should do the sort of display for the password
