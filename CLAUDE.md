@@ -5981,6 +5981,175 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## TERMS, THREE-LANGUAGE LEGAL PAGES, DELETE WITH GOOGLE, AND A RECAP THAT FOLLOWS THE TABS (29 Sep, ninety-fourth pass)
+
+Four asks in one round: "check the site to make sure we have translations in
+place, and also add language options for terms and the privacy policy. do we
+not have terms btw?" (there were none); "let them delete their account by
+signing in with google here ... and hide kakao, github, linkedin for now"; and
+"if i choose not to have the korean tab showing, it should not show study
+hours in recap. maybe other places have this issue?"
+
+### Translations: the tables were complete, the leaks were outside them
+
+- `I18N.en/ko/vi` had every key in all three (1,114 then). What was English
+  was text that never went through `t()`: the sign-in screen's own two
+  messages, **Supabase's auth errors shown raw** ("Invalid login credentials",
+  the rate-limit sentence, "Email not confirmed"), ~40 hover tooltips
+  ("Close", "Delete", "Account settings", "Toggle dark mode"...), three
+  developer alerts, the notes-shortcut prompt, the "Someone" fallback name,
+  and all of 404.html and unsubscribe.html.
+- **`authErrorText(error)`** (next to `showAuthMsg`) turns the auth errors a
+  person actually meets into the app's language, matched on `error.code` first
+  (supabase-js 2.117 carries it) and the wording second (the sign-in-by-name
+  function and a provider's return address carry only wording). Anything not
+  recognised is shown as it came. Every `showAuthMsg`/`showResetMsg` and the
+  email/password settings messages go through it.
+- **Tooltips in markup are `data-title-key` / `data-aria-key`**, set by
+  `applyLanguage()` the way `data-ph-key` already set placeholders. Inside JS
+  templates they are `title="${escapeHtml(t('...'))}"`. New generic keys:
+  `tipDelete`, `tipRemove`, `tipMoveUp`, `tipMoveDown`, `tipDarkMode`,
+  `tipMyNotes`, `tipClickToEdit`, `tipJumpToDate`, `tipPagesRead`,
+  `tipJobBoardAiUpdate`; Close/Edit/Notifications/Linked circle/Account
+  settings reuse `closeNoteBtn`, `editBtn`, `lblNotifBell`, `hLinkedCircle`,
+  `hAccountSettings`.
+- **404.html and unsubscribe.html carry their own small en/ko/vi table**:
+  `?lang=` first, then the app's `trackerLang` on this device, then the
+  browser's languages, then English. The unsubscribe text also stopped naming
+  a "Notification settings" that no longer exists; the section is "Account
+  settings > Notifications and messaging".
+- The standing audit (`node i18n-audit.js`, written this pass in the session
+  scratchpad, not kept): parse `I18N` and `STATIC_MAP` with `new Function`,
+  diff the key sets, check `{placeholder}` agreement, list every literal
+  `t('...')` key missing from en, then grep the markup and templates for
+  `title=|aria-label=|placeholder=|alt=` with English words and for
+  `alert/confirm/prompt('` literals. `t('kind' + ...)` is the one known
+  false positive.
+
+### privacy.html in three languages, and terms.html (new)
+
+- Both pages hold all three languages as `<article data-doc="en|ko|vi">`
+  with a pill switcher; same language order as the 404 page. **Picking a
+  language there changes that page only, never the app**, and writes
+  `?lang=` into the address so the link can be passed on. Links from the app
+  (`a[data-legal]`) get `?lang=<currentLang>` in `applyLanguage()`.
+- **English is the text that applies**; the Korean and Vietnamese versions
+  open with a line saying so. They were translated here, not by a lawyer.
+- Terms mirror Welcome Korea's where the two overlap, on purpose: run by
+  Kristoffer Tiedemann as a private individual, **Danish law** with a
+  consumer's own mandatory rules kept, no liability cap (nothing is paid for),
+  and **age 13, or 14 in Korea** (Korea's PIPA needs a guardian under 14).
+  The 14 is new here: the sign-up note (`authAgeNote`, which now also says
+  creating an account accepts the terms) and privacy.html say it too.
+  Also stated because they are true and checked: the app sends nothing to an
+  AI itself ("Fill from AI" is a clipboard round trip), it is not affiliated
+  with Yonsei, and a syllabus written by someone else should not be shared
+  publicly through a short link.
+- privacy.html now names Google as the only provider, lists to-dos and
+  projects, gives the full name, and adds the right to complain (PIPC in
+  Korea, Datatilsynet in Denmark). Dated 29 September 2026.
+
+### Delete account by signing in with Google
+
+- An account with Google among `app_metadata.providers` (now kept on
+  `currentUser.providers`) sees **Confirm with Google** first, "or with your
+  password" under it, and a no-password hint if it STARTED with Google. The
+  email-confirm field stays in front of both ways.
+- The button stores `{uid, prev, at}` in `sessionStorage['ptDeleteReauth']`,
+  where `prev` is the session's latest `oauth` timestamp from the token's
+  `amr`, and calls `signInWithOAuth` with `prompt: 'select_account'` and
+  `login_hint`. `resumeDeleteReauth()` runs at the end of `onAuthed()`: a
+  Google sign-in NEWER than `prev` (server clock against server clock, so a
+  wrong device clock cannot matter) arms `deleteReauthUntil` for 10 minutes
+  and opens Account settings on the Delete section, which then shows only
+  "Confirmed with Google" and the Delete button. A different account coming
+  back, or no new sign-in (cancelled at Google), opens the same section with
+  a message instead. `"oauth"` is the amr method name, read off the live
+  `auth.mfa_amr_claims` rather than assumed.
+- **Like the password check it replaces, it is a confirmation on the page**:
+  `delete_own_account()` asks only `auth.uid()`. Making the server demand a
+  recent sign-in would be a migration; not done.
+- The Account settings click handler is now `openAccountSettings()` so the
+  resume can await it.
+- **Kakao, GitHub and LinkedIn are parked** (`OAUTH_PROVIDERS_PARKED`), not
+  deleted: offering one again is moving its line back into `OAUTH_PROVIDERS`.
+  Only Google (and email) was switched on in Supabase anyway. Live accounts
+  29 Sep: 6 email, 1 Google-only, 1 email with Google linked.
+- **Not driven**: a real Google round trip (needs a real account). The three
+  states were rendered in the pane by setting `currentUser.providers` and
+  `deleteReauthUntil` from the console.
+
+### The recap follows the tabs
+
+- `RECAP_ROWS` pairs every number with the tab keys it is counted from; a
+  row shows only while all of its keys are visible, **for the viewer's own
+  tabs** (their app), whoever the person in the recap is. With nothing left,
+  the whole recap card hides. `applyTabVisibility()` re-renders it.
+- New rows for the school/work tab: courses (projects at work, through
+  `WORK_KEYS`) started (start date, or the day added when there is none) and
+  finished (end date), notes written, to-dos done (`done_at`).
+- Checked in the pane as a guest (Korean hidden by default): no study rows,
+  the six others present; work wording; hiding `yonsei.todos` drops only its
+  row; hiding everything hides the card.
+
+### Everything else a hidden tab owns, found by a survey of the whole file
+
+- **`tabsShown(...keys)`** is the question to ask: every key visible AND its
+  top tab visible. `isTabHidden('study.log')` says nothing about `study`
+  being hidden, which is the trap.
+- **`eventShownForTabs(ev)`**: a course's own classes and exam dates
+  (`course_id`) go with `yonsei.courses`, the TOPIK dates (`topik_key`) with
+  `study`. Applied in all four places that draw events (`eventsInRange`, the
+  month agenda, `itemsOfKind` for the Deadlines/Events/Courses lists,
+  `calExportItems` for the picture). **Matched on those columns, never on kind
+  'course'**: an .ics import turns any weekly repeater into a 'course' that
+  belongs to no tab. Nothing is deleted; showing the tab puts them back. The
+  downloaded .ics and CSV keep everything on purpose (a backup should not lose
+  rows because a tab is hidden).
+- To-do chips on the calendar (`calendarTodosByDate`) go with `yonsei.todos`;
+  the TOPIK card and `ensureTopikEvents` with `study`. **The "Show TOPIK exam
+  dates" setting stays visible**: it is what deletes those rows and their
+  reminders.
+- `applyTabVisibility(calendarDrawn)` re-draws the calendar after a tab is
+  hidden or shown; `renderAll()` passes true because it has just drawn it.
+- A notification or an email link into a hidden tab (Yonsei notices, to-do
+  reminders, `?go=yonsei-boards`, `?go=todos`) stays where it is instead of
+  opening the hidden panel; `openTodoInList` refuses on its own.
+- Kristoffer's job-board auto-sync skips while `jobs.jobboard` is hidden.
+- **Left alone on purpose** (the survey flagged them): the notification-type
+  rows (the only way to stop emails the server keeps sending), the linked-circle
+  sharing toggles (data is still shared by them; hiding them hides what you
+  share), "Hide me from all leaderboards", the workspace row, Manage visible
+  tabs, the "Course" kind in the event forms (removing it from the edit form
+  would drop an existing event's kind), job interviews (plain events with no
+  job link), and Home itself being hideable. **The server still sends to-do
+  reminders, board notices and event reminders whatever is hidden**:
+  `hidden_tabs` is read by no SQL function.
+- Found on the way: the sharing checklist filed Calendar under `tabCalendar`,
+  which stopped being a top-level label when Calendar became Home, so the
+  Calendar toggle had silently dropped out of the tree. It is `['tabHome',
+  'tabCalendar']` now, and the recap is `['tabHome','tabOverview']`. The circle
+  description no longer says "study data". The .ics is
+  `productivity-tracker.ics` with PRODID "Productivity Tracker"; the event UIDs
+  keep `@korean-tracker` so a re-import does not double every event.
+- Checked in the pane with rows made in the console (nothing saved): all tabs
+  shown puts Class, an imported repeater and TOPIK on the grid plus the to-do
+  chip and the TOPIK card; hiding study, courses and to-dos leaves only the
+  repeater; hiding the whole school tab keeps TOPIK. The sharing tree reads
+  Home: Overview[recap] Calendar[calendar].
+
+### Checked, and how
+
+- Syntax (every inline script through `new Function`, HTML comments stripped
+  first: a `<script>` mentioned inside a comment reads as a broken block),
+  every `getElementById` against the markup, the i18n audit above, em dashes
+  still 46.
+- **The preview pane's launcher reads the Welcome Korea folder's
+  launch.json** (both chats share that cwd), so `prod-tracker-static-preview`
+  cannot be started by name, and a file:// tab cannot be scripted. A plain
+  `python3 -m http.server` on 127.0.0.1 in the background, stopped afterwards,
+  is what worked.
+
 ## THE SCHOOL/WORK TAB HAS A TO-DO LIST (29 Sep, ninety-third pass)
 
 "For the yonsei/work tab, can you create a fully functional To-do List

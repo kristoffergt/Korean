@@ -819,6 +819,12 @@ button.oauth-btn{width:100%;display:flex;align-items:center;justify-content:cent
 button.oauth-btn:hover{background:var(--paper);border-color:var(--ink-soft);}
 button.oauth-btn:disabled{opacity:0.65;cursor:default;}
 button.oauth-btn svg{flex:none;width:18px;height:18px;}
+/* Delete account: the Google way sits as wide as the fields it replaces, on a
+   row of its own, with the password way under its divider. */
+#settingsDeleteAccountWrap .delete-google{flex-basis:100%;max-width:320px;}
+#settingsDeleteAccountWrap .delete-google .oauth-divider{margin:14px 0 0;}
+#settingsDeleteAccountWrap .delete-note{flex-basis:100%;margin-top:0;}
+#deleteGoogleConfirmedNote{color:var(--on);font-weight:600;}
 .auth-submit:disabled{opacity:0.65;cursor:default;}
 .btn-spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;animation:btn-spin 0.7s linear infinite;display:inline-block;}
 @keyframes btn-spin{to{transform:rotate(360deg);}}
@@ -3490,7 +3496,7 @@ body.ws-work .ws-class-only{display:none !important;}
   <div class="auth-topbar">
     <div class="topbar-controls">
       <div class="lang-switch" id="langSwitchAuth"></div>
-      <button class="icon-btn" id="darkToggleAuth" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
+      <button class="icon-btn" id="darkToggleAuth" data-title-key="tipDarkMode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
     </div>
   </div>
   <div class="auth-wrap">
@@ -3529,7 +3535,7 @@ body.ws-work .ws-class-only{display:none !important;}
       <div id="authMsg" class="auth-msg"></div>
       <div style="margin-top:12px;font-size:11.5px;color:var(--ink-soft);text-align:center;line-height:1.5;">
         <span id="authAgeNote" class="hidden"></span>
-        <a href="/privacy.html" id="authPrivacyLink" target="_blank" rel="noopener"></a>
+        <span class="legal-links" style="display:block;margin-top:4px;white-space:nowrap;"><a href="/privacy.html" id="authPrivacyLink" data-legal="privacy" target="_blank" rel="noopener"></a> · <a href="/terms.html" id="authTermsLink" data-legal="terms" target="_blank" rel="noopener"></a></span>
       </div>
     </div>
   </div>
@@ -3581,8 +3587,8 @@ body.ws-work .ws-class-only{display:none !important;}
   </div>
 </div>
 
-<!-- CHOOSE A DISPLAY NAME (first sign-in through Google, Kakao, GitHub or
-     LinkedIn, none of which asks for one; see proceedToApp()) -->
+<!-- CHOOSE A DISPLAY NAME (first sign-in through Google (or any provider
+     switched back on, see OAUTH_PROVIDERS_PARKED), none of which asks for one; see proceedToApp()) -->
 <div class="auth-wrap hidden" id="chooseNameScreen">
   <div class="auth-card">
     <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:26px;height:26px;"></div><div class="brand-icon brand-icon-dark" style="width:26px;height:26px;"></div><h1>Productivity Tracker</h1></div>
@@ -3611,9 +3617,9 @@ body.ws-work .ws-class-only{display:none !important;}
     <div class="header-row2">
     <div class="who">
       <div class="lang-switch" id="langSwitchApp"></div>
-      <button class="icon-btn" id="darkToggleApp" title="Toggle dark mode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
+      <button class="icon-btn" id="darkToggleApp" data-title-key="tipDarkMode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
       <div style="position:relative;display:inline-flex;">
-        <button class="icon-btn" id="notifBellBtn" title="Notifications" style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
+        <button class="icon-btn" id="notifBellBtn" data-title-key="lblNotifBell" style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           <span id="notifBellCount" class="hidden" style="position:absolute;top:-4px;right:-4px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:var(--seal);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;"></span>
         </button>
@@ -3629,7 +3635,7 @@ body.ws-work .ws-class-only{display:none !important;}
           <div id="notifBellList" style="max-height:240px;overflow-y:auto;"></div>
         </div>
       </div>
-      <button class="icon-btn" id="friendsBtn" title="Linked circle" style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
+      <button class="icon-btn" id="friendsBtn" data-title-key="hLinkedCircle" style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
         <!-- The two on the button are people STANDING; held over, they walk
              into a ring and a third joins them. It is ONE drawing at two sets
              of coordinates rather than two drawings cross-faded, so what you
@@ -3653,10 +3659,10 @@ body.ws-work .ws-class-only{display:none !important;}
         <span id="circleOnlineDot" class="hidden online-dot"></span>
         <span id="circleUnreadDot" class="hidden" style="position:absolute;bottom:2px;left:2px;min-width:13px;height:13px;line-height:13px;border-radius:7px;background:var(--seal);color:#fff;font-size:8.5px;font-weight:800;text-align:center;padding:0 2px;"></span>
       </button>
-      <a class="icon-btn hidden" id="notesLinkHeaderBtn" title="My notes" target="_blank" rel="noopener">
+      <a class="icon-btn hidden" id="notesLinkHeaderBtn" data-title-key="tipMyNotes" target="_blank" rel="noopener">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9z"></path><path d="M15 3v6h6"></path></svg>
       </a>
-      <button class="icon-btn" id="accountSettingsBtn" title="Account settings"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+      <button class="icon-btn" id="accountSettingsBtn" data-title-key="hAccountSettings"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
       <span id="whoNameWrap">
         <span class="name" id="whoName" role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" style="font-weight:700;cursor:pointer;" title="Your account and color"></span>
         <!-- The name's colour popover: the colour now with a star to keep it,
@@ -3679,7 +3685,7 @@ body.ws-work .ws-class-only{display:none !important;}
           <span class="color-pop-label" id="whoColorFavsLabel"></span>
           <span class="color-pop-favs" id="whoColorFavs"></span>
           <label class="color-pop-pick">
-            <input type="color" id="whoColorPicker" aria-label="Your color">
+            <input type="color" id="whoColorPicker" data-aria-key="colorPopTitle">
             <span id="whoColorPickLabel"></span>
           </label>
         </span>
@@ -4069,7 +4075,7 @@ body.ws-work .ws-class-only{display:none !important;}
         <div id="notebookList"></div>
       </div>
       <div class="card hidden" id="notebookEditorCard">
-        <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" title="Click to edit"></span><span><button class="export-btn act-save" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
+        <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" data-title-key="tipClickToEdit"></span><span><button class="export-btn act-save" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
         <div class="notes-panel hidden" id="notebookTitleEditPanel"></div>
         <div class="hint saved-info" id="notebookLastSavedInfo"></div>
         <div id="notebookQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
@@ -4576,7 +4582,7 @@ body.ws-work .ws-class-only{display:none !important;}
       <div class="card">
         <h2><span id="hJobBoard"></span> <span style="display:flex;gap:8px;">
           <button class="icon-pill-btn hidden" id="jobBoardUpdateBtn"></button>
-          <button class="icon-pill-btn hidden" id="jobBoardAiUpdateBtn" title="Walks each of today's postings individually and saves full descriptions to a local file"></button>
+          <button class="icon-pill-btn hidden" id="jobBoardAiUpdateBtn" data-title-key="tipJobBoardAiUpdate"></button>
         </span></h2>
         <div class="hint" id="jobBoardUpdatedHint"></div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0;">
@@ -4627,7 +4633,7 @@ body.ws-work .ws-class-only{display:none !important;}
         <h2 id="lblQuickNav"></h2>
         <div id="calendarQuickNav" style="display:flex;flex-direction:column;gap:14px;"></div>
       </div>
-      <div class="card">
+      <div class="card" id="recapOuterCard">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
           <div class="note-group-header" id="recapHeader"></div>
           <span class="field" style="display:flex;flex-direction:row;align-items:center;">
@@ -4664,7 +4670,7 @@ body.ws-work .ws-class-only{display:none !important;}
         <button id="monthPrevBtn">‹</button>
         <div class="month-label-group">
           <span class="month-label" id="monthLabel"></span>
-          <button type="button" class="cal-jump-btn" id="calJumpDateBtn" title="Jump to date">▾</button>
+          <button type="button" class="cal-jump-btn" id="calJumpDateBtn" data-title-key="tipJumpToDate">▾</button>
           <input type="date" id="calJumpDateInput" style="position:absolute;top:0;left:50%;opacity:0;width:0;height:0;border:0;padding:0;pointer-events:none;">
         </div>
         <button id="monthNextBtn">›</button>
@@ -4920,7 +4926,7 @@ body.ws-work .ws-class-only{display:none !important;}
   <div class="modal-box" style="max-width:520px;">
     <h2 style="display:flex;justify-content:space-between;align-items:center;">
       <span id="hCalExport"></span>
-      <button class="icon-btn close-x" id="calExportCloseX" title="Close">✕</button>
+      <button class="icon-btn close-x" id="calExportCloseX" data-title-key="closeNoteBtn">✕</button>
     </h2>
     <div class="hint" id="calExportRangeLabel" style="margin:-4px 0 12px;"></div>
     <div class="cal-view-toggle" id="calExportFormat" style="margin-bottom:14px;">
@@ -4948,7 +4954,7 @@ body.ws-work .ws-class-only{display:none !important;}
   <div class="modal-box" style="max-width:420px;">
     <h2 style="display:flex;justify-content:space-between;align-items:center;">
       <span id="hNewVacation"></span>
-      <button class="icon-btn close-x" id="closeNewVacationX" title="Close">✕</button>
+      <button class="icon-btn close-x" id="closeNewVacationX" data-title-key="closeNoteBtn">✕</button>
     </h2>
     <div class="log-form" data-enter-add="#createVacationBtn">
       <div class="field wide"><label for="newVacationName" id="lblNewVacationName"></label><input type="text" id="newVacationName"></div>
@@ -4977,7 +4983,7 @@ body.ws-work .ws-class-only{display:none !important;}
   <div class="modal-box" style="max-width:420px;">
     <h2 style="display:flex;justify-content:space-between;align-items:center;">
       <span id="expModalTitle"></span>
-      <button class="icon-btn close-x" id="closeExpenseModalX" title="Close">✕</button>
+      <button class="icon-btn close-x" id="closeExpenseModalX" data-title-key="closeNoteBtn">✕</button>
     </h2>
     <div class="log-form" data-enter-add="#saveExpenseBtn">
       <div class="field"><label for="expFormDate" id="lblExpFormDate"></label><input type="date" id="expFormDate"></div>
@@ -5003,7 +5009,7 @@ body.ws-work .ws-class-only{display:none !important;}
   <div class="modal-box" style="max-width:420px;">
     <h2 style="display:flex;justify-content:space-between;align-items:center;">
       <span id="vacationMembersName"></span>
-      <button class="icon-btn close-x" id="closeVacationMembersX" title="Close">✕</button>
+      <button class="icon-btn close-x" id="closeVacationMembersX" data-title-key="closeNoteBtn">✕</button>
     </h2>
     <div id="vacationMembersList" style="margin-bottom:14px;"></div>
     <h3 id="hInviteFromCircle" style="font-size:12.5px;color:var(--ink-soft);margin:0 0 8px;"></h3>
@@ -5018,7 +5024,7 @@ body.ws-work .ws-class-only{display:none !important;}
   <div class="modal-box" style="max-width:420px;">
     <h2 style="display:flex;justify-content:space-between;align-items:center;">
       <span id="hPendingVacationInvites"></span>
-      <button class="icon-btn close-x" id="closePendingVacationInvitesX" title="Close">✕</button>
+      <button class="icon-btn close-x" id="closePendingVacationInvitesX" data-title-key="closeNoteBtn">✕</button>
     </h2>
     <div id="pendingVacationInvitesList"></div>
   </div>
@@ -5029,7 +5035,7 @@ body.ws-work .ws-class-only{display:none !important;}
   <div class="modal-box">
     <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
       <span id="calModalTitle"></span>
-      <button class="icon-btn close-x" id="calModalCloseX" title="Close">✕</button>
+      <button class="icon-btn close-x" id="calModalCloseX" data-title-key="closeNoteBtn">✕</button>
     </h2>
     <div class="log-form" id="calModalFields"></div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -5083,7 +5089,7 @@ body.ws-work .ws-class-only{display:none !important;}
   <div class="modal-box">
     <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
       <span id="hAccountSettings"></span>
-      <button class="icon-btn close-x" id="closeAccountSettingsX" title="Close">✕</button>
+      <button class="icon-btn close-x" id="closeAccountSettingsX" data-title-key="closeNoteBtn">✕</button>
     </h2>
 
     <!-- Settings used to be one flat scroll: fifteen unrelated blocks in a
@@ -5343,23 +5349,32 @@ body.ws-work .ws-class-only{display:none !important;}
       <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupDangerLabel"></span></button>
       <div class="set-group-body hidden">
     <div class="log-form" style="margin-top:22px;" id="settingsDeleteAccountWrap">
-      <div class="field wide">
+      <div class="field wide" id="deleteEmailField">
         <label for="settingsDeleteEmailConfirm" id="lblSettingsDeleteEmailConfirm"></label>
         <input type="text" id="settingsDeleteEmailConfirm" autocomplete="off">
       </div>
-      <div class="field wide">
+      <!-- An account that signs in with Google confirms by signing in with
+           Google again; the password below is the other way. Shown by
+           renderDeleteAccountState(). -->
+      <div class="delete-google hidden" id="deleteGoogleBlock">
+        <button type="button" class="oauth-btn" id="deleteWithGoogleBtn"><span id="deleteWithGoogleLabel"></span></button>
+        <div class="oauth-divider"><span id="lblDeleteOrPassword"></span></div>
+      </div>
+      <div class="field wide" id="deletePasswordField">
         <label for="settingsDeletePasswordConfirm" id="lblSettingsDeletePasswordConfirm"></label>
         <div class="pw-field-wrap">
           <input type="password" id="settingsDeletePasswordConfirm" autocomplete="current-password">
           <button type="button" class="pw-toggle-btn" data-target="settingsDeletePasswordConfirm"></button>
         </div>
       </div>
+      <div class="hint delete-note hidden" id="deleteGoogleConfirmedNote"></div>
       <button class="export-btn btn-danger" id="deleteAccountBtn"></button>
+      <div class="hint delete-note hidden" id="deleteNoPasswordHint"></div>
     </div>
     <div class="hint hidden" id="settingsDeleteMsg"></div>      </div>
     </section>
 
-    <div style="margin-top:14px;font-size:12px;"><a href="/privacy.html" id="settingsPrivacyLink" target="_blank" rel="noopener"></a></div>
+    <div style="margin-top:14px;font-size:12px;"><a href="/privacy.html" id="settingsPrivacyLink" data-legal="privacy" target="_blank" rel="noopener"></a> · <a href="/terms.html" id="settingsTermsLink" data-legal="terms" target="_blank" rel="noopener"></a></div>
     <div style="margin-top:18px;">
       <button class="export-btn" id="closeAccountSettingsBtn"></button>
     </div>
@@ -5386,7 +5401,7 @@ body.ws-work .ws-class-only{display:none !important;}
       <span id="chatTitle"></span>
       <span class="chat-head-right">
         <span id="chatOnlineSummary" class="chat-online"></span>
-        <button class="icon-btn close-x" id="chatCloseBtn" title="Close">✕</button>
+        <button class="icon-btn close-x" id="chatCloseBtn" data-title-key="closeNoteBtn">✕</button>
       </span>
     </div>
     <div class="cm-threads" id="circleThreadPicker"></div>
@@ -5425,7 +5440,7 @@ body.ws-work .ws-class-only{display:none !important;}
   <div class="modal-box">
     <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
       <span id="hLinkedCircle"></span>
-      <button class="icon-btn close-x" id="closeFriendsX" title="Close">✕</button>
+      <button class="icon-btn close-x" id="closeFriendsX" data-title-key="closeNoteBtn">✕</button>
     </h2>
     <div class="hint" id="linkedCircleDesc"></div>
     <div id="linkedCircleContent" style="margin-top:8px;"></div>
@@ -11439,8 +11454,8 @@ const I18N = {
     modConfirmDeleteUser:'Permanently delete this account and all of its data? This cannot be undone.', modActionFailed:'Action failed.', modActionDone:'Done.',
     modStudyHead:'Study hours', modStudyHint:'Hours per activity for one day. Changes count on the leaderboards straight away.', modStudyUser:'Account', modStudyChooseUser:'Choose an account', modStudyDate:'Date', modStudySave:'Save day', modStudyDeleteDay:'Delete day', modStudyConfirmDelete:'Delete every hour {name} logged on {date}?', modStudyInvalid:'Hours have to be numbers of 0 or more.', modStudyDays:'Logged days', modStudyNoDays:'Nothing logged yet.', modStudyEmptyDay:'Nothing logged on this day.', modStudyMoreDays:'and {n} earlier',
     modConfirmResetPw:"Reset this user's password?", modConfirmConfirmEmail:"Manually confirm this user's email?", modConfirmDisableMfa:'Disable two-factor authentication for this user?',
-    mfaPromptTitle:'Enter your authentication code', mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.', mfaUseBackupBtn:'Use a backup code instead', mfaUseTotpBtn:'Use your authenticator app instead', mfaBackupCodePlaceholder:'Enter a backup code', mfaBackupWrongCode:'Invalid or already-used backup code.', download2faBackupBtn:'Download codes', passwordTooShort:'Use at least 8 characters for your password.', authAgeNote:'You must be 13 or older to create an account.', privacyPolicyLink:'Privacy policy', aiCheckBeforeSaving:'AI answers can be wrong, so check the highlighted fields before saving.', aiFilledTitle:'Filled in from an AI answer. Check it before saving.', settings2faQrAlt:'QR code to scan with your authenticator app', fileOpenFailed:'Could not open the file. Try again.', showPasswordBtn:'Show password', hidePasswordBtn:'Hide password',
-    oauthOr:'or', oauthGoogle:'Continue with Google', oauthKakao:'Continue with Kakao', oauthGithub:'Continue with GitHub', oauthLinkedin:'Continue with LinkedIn', chooseNameTitle:'Choose the name others will see', chooseNameBtn:'Continue', chooseNameEmpty:'Enter a name.', authRedirectFailed:'Sign-in did not finish.', passwordPwned:'That password has been involved in a data breach. Please pick another password.', settingsWrongPasswordProvider:'Incorrect password. If you signed up with Google, Kakao, GitHub or LinkedIn, set a password first with "Send password reset email".', accountPopTitle:'Your account and color',
+    mfaPromptTitle:'Enter your authentication code', mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.', mfaUseBackupBtn:'Use a backup code instead', mfaUseTotpBtn:'Use your authenticator app instead', mfaBackupCodePlaceholder:'Enter a backup code', mfaBackupWrongCode:'Invalid or already-used backup code.', download2faBackupBtn:'Download codes', passwordTooShort:'Use at least 8 characters for your password.', authAgeNote:'By creating an account you accept the terms of use and confirm you are 13 or older (14 or older in Korea).', privacyPolicyLink:'Privacy policy', aiCheckBeforeSaving:'AI answers can be wrong, so check the highlighted fields before saving.', aiFilledTitle:'Filled in from an AI answer. Check it before saving.', settings2faQrAlt:'QR code to scan with your authenticator app', fileOpenFailed:'Could not open the file. Try again.', showPasswordBtn:'Show password', hidePasswordBtn:'Hide password',
+    oauthOr:'or', oauthGoogle:'Continue with Google', oauthKakao:'Continue with Kakao', oauthGithub:'Continue with GitHub', oauthLinkedin:'Continue with LinkedIn', chooseNameTitle:'Choose the name others will see', chooseNameBtn:'Continue', chooseNameEmpty:'Enter a name.', authRedirectFailed:'Sign-in did not finish.', passwordPwned:'That password has been involved in a data breach. Please pick another password.', settingsWrongPasswordProvider:'Incorrect password. If you signed up with Google, set a password first with "Send password reset email".', accountPopTitle:'Your account and color',
     guestModeBtn:'Continue as guest', guestBannerText:"Guest mode. Limited functionality. Nothing you add is saved to an account.", guestDisplayName:'Guest',
     hAddCourse:'Add a course', courseTitle:'Course title', courseCode:'Course code', courseProfessor:'Professor', courseClassroom:'Classroom',
     courseTime:'Time', courseConcentration:'Concentration', courseStatus:'Status', courseSyllabus:'Syllabus',
@@ -11462,7 +11477,7 @@ const I18N = {
     gramRegister:'Register', gramColloquial:'Colloquial', gramWritten:'Written', gramFavorite:'Favorite – Mark as difficult/important', gramSortFavorite:'Favorites first', gramViewSimilar:'View similar grammar forms', gramQuickNote:'+ Note from this pattern', gramAddToggleBtn:'+ Add grammar', gramAddSaveBtn:'Add to grammar bank', gramAddMissingFields:'Enter a pattern and at least one sense (see the paste format hint below).', gramAddSaveFailed:'Could not save. Make sure the grammar_points table exists.', gramAiPromptIntro:'Copy this prompt into any AI chat (ChatGPT, Claude, etc.) and paste its answer back in underneath -- it fills in everything (level, frequency, difficulty, formality, politeness, register, definitions, examples) for every pattern you listed above.', gramCopyAiPromptBtn:'Copy AI prompt', gramCopyAiPromptCopied:'Copied!', gramPasteAiAnswerLabel:'Paste the AI\'s answer here', gramAdvancedAddToggle:'Advanced / custom add', gramSimpleAddToggle:'‹ Back to simple add', gramAddPatternNamesLabel:'Grammar patterns', gramAddPatternNamesHint:'One per line. Add as many as you want -- one prompt/paste covers all of them.',
     gramYourSentences:'Your practice sentences', gramSentencePlaceholder:'Write a sentence using this pattern...', gramAddSentence:'Add', lblGramSort:'Sort', gramSortDefault:'Default order', gramSortFreqDesc:'Most common first', gramSortFreqAsc:'Least common first', gramFrequencyHeader:'Frequency', gramLevelHeader:'Level',
     gramMarkNotReviewed:'Mark as not reviewed', gramMarkReviewedAgain:'Undo – Mark as reviewed', gramResources:'Videos & links', gramResourceUrlPlaceholder:'YouTube or website URL', gramResourceLabelPlaceholder:'Label (optional)', gramAddResource:'Add',
-    hRecap:'Recap',recapWeekBtn:'Past 7 days',recapMonthBtn:'Past 30 days',recapStudyHours:'Study hours',recapGrammarPracticed:'Grammar sentences practiced',recapBooksFinished:'Books finished',recapJobsSent:'Applications sent',hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite.',quizFromCluster:'From comparison group:',quizFillBlank:'Fill in the blank',quizCorrectAnswerLabel:'Correct answer:',quizHistoryHeader:'Your quiz history',quizMaxScoreLabel:'Best score',quizAttemptsCountLabel:'Attempts',quizAverageLabel:'Average',quizNoAttemptsYet:'No attempts yet.',quizDueCount:'{n} patterns due for review', quizDueCountOne:'{n} pattern due for review',quizReviewDueBtn:'Review due patterns',hLinkedCircle:'Linked circle',linkedCircleDesc:'Link up with other people to share your study data with them. Up to 10 people, and you control what you share.',linkInvitedYou:'{name} invited you to link up.',linkAcceptBtn:'Accept',linkDeclineBtn:'Decline',linkLeaveBtn:'Leave circle',linkRosterHeader:'Your circle',linkStatusAccepted:'Linked', circleOnlineNow:'Online', circleTabMessages:'Messages', circleOnlineCount:'{n} online', circleSearchPlaceholder:'Search messages...', circleFilesBtn:'Files', circleNoResults:'No matching messages.', circleNoFiles:'Nothing shared yet.', circleSearching:'Searching...', circleLoadOlder:'Load older messages', circleAttach:'Attach a file', circleUploading:'Uploading...', circleUploadFailed:"Couldn't upload that file.", circleFileTooBig:'That file is over 25 MB.', circleAttachment:'Attachment', circleJumpToDay:'Jump to a day', circleSearchMessages:'Search messages', circleCloseSearch:'Close search', circleBackToChat:'Back to messages', circleSent:'Sent', circleReadBy:'Read by {names}', circleNoMessagesThatDay:'Nothing said that day.', circleTabCircle:'Circle', circleThreadEveryone:'Everyone', circleNoMessages:'No messages yet.', circleMessagePlaceholder:'Write a message...', circleSendBtn:'Send', circleOnlineTitle:'Online now: {names}', linkedCircleTitle:'Linked circle',linkStatusPending:'Invite sent. Awaiting response',linkJustAccepted:'Accepted!',linkRemoveBtn:'Remove from circle',linkRemoveConfirm:'Remove {name} from your circle? They will no longer see or share data with you.',linkCatSearchPlaceholder:'Search what you share…',linkInviteSearchPlaceholder:'Search by name...',linkInviteBtn:'Invite',linkNoResults:'No matching users found.',linkCatStudyEntries:'Study log',linkCatBooks:'Reading list',linkCatJobApplications:'Job applications',linkCatGrammarNotes:'Grammar practice notes',linkCatCourseNotes:'Course notes',linkCatWritingSamples:'Writing samples & feedback',linkCatRecap:'Weekly/monthly recap',linkCatReadiness:'Grammar readiness',linkCatCalendar:'Calendar',linkCatNotebook:'Notebook',linkCatCourses:'Courses',linkSharingHeader:'What you\'re sharing',linkSharingHint:'These are your own settings. Set them before you invite anyone, or change them anytime after. They apply to whoever you\'re linked with.',linkCustomizeFor:'Customize what you share with {name}',linkOverrideHint:'Overrides your defaults just for {name}.',linkResetOverridesBtn:'Reset to your defaults',linkGroupFullMsg:'Your circle is at the 10-person limit.',linkErrorGeneric:'Something went wrong. Please try again.',linkNotLinkedYet:'You\'re not linked with anyone yet. Search for someone below to send an invite.',linkInviteSentMsg:'Invite sent.',linkStatusAlwaysShared:'Always shared',writingFeedbackHeader:'Feedback',writingFeedbackPlaceholder:'Leave feedback on this sample...',writingFeedbackSendBtn:'Send',writingFeedbackEmpty:'No feedback yet.', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently. Leave a line blank to clear that field.',
+    hRecap:'Recap',recapWeekBtn:'Past 7 days',recapMonthBtn:'Past 30 days',someoneName:'Someone', recapCoursesStarted:'Courses started', recapCoursesFinished:'Courses finished', recapProjectsStarted:'Projects started', recapProjectsFinished:'Projects finished', recapNotesWritten:'Notes written', recapTodosDone:'To-dos done', recapStudyHours:'Study hours',recapGrammarPracticed:'Grammar sentences practiced',recapBooksFinished:'Books finished',recapJobsSent:'Applications sent',hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite.',quizFromCluster:'From comparison group:',quizFillBlank:'Fill in the blank',quizCorrectAnswerLabel:'Correct answer:',quizHistoryHeader:'Your quiz history',quizMaxScoreLabel:'Best score',quizAttemptsCountLabel:'Attempts',quizAverageLabel:'Average',quizNoAttemptsYet:'No attempts yet.',quizDueCount:'{n} patterns due for review', quizDueCountOne:'{n} pattern due for review',quizReviewDueBtn:'Review due patterns',hLinkedCircle:'Linked circle',linkedCircleDesc:'Link up with other people to share what you track with them. Up to 10 people, and you control what you share.',linkInvitedYou:'{name} invited you to link up.',linkAcceptBtn:'Accept',linkDeclineBtn:'Decline',linkLeaveBtn:'Leave circle',linkRosterHeader:'Your circle',linkStatusAccepted:'Linked', circleOnlineNow:'Online', circleTabMessages:'Messages', circleOnlineCount:'{n} online', circleSearchPlaceholder:'Search messages...', circleFilesBtn:'Files', circleNoResults:'No matching messages.', circleNoFiles:'Nothing shared yet.', circleSearching:'Searching...', circleLoadOlder:'Load older messages', circleAttach:'Attach a file', circleUploading:'Uploading...', circleUploadFailed:"Couldn't upload that file.", circleFileTooBig:'That file is over 25 MB.', circleAttachment:'Attachment', circleJumpToDay:'Jump to a day', circleSearchMessages:'Search messages', circleCloseSearch:'Close search', circleBackToChat:'Back to messages', circleSent:'Sent', circleReadBy:'Read by {names}', circleNoMessagesThatDay:'Nothing said that day.', circleTabCircle:'Circle', circleThreadEveryone:'Everyone', circleNoMessages:'No messages yet.', circleMessagePlaceholder:'Write a message...', circleSendBtn:'Send', circleOnlineTitle:'Online now: {names}', linkedCircleTitle:'Linked circle',linkStatusPending:'Invite sent. Awaiting response',linkJustAccepted:'Accepted!',linkRemoveBtn:'Remove from circle',linkRemoveConfirm:'Remove {name} from your circle? They will no longer see or share data with you.',linkCatSearchPlaceholder:'Search what you share…',linkInviteSearchPlaceholder:'Search by name...',linkInviteBtn:'Invite',linkNoResults:'No matching users found.',linkCatStudyEntries:'Study log',linkCatBooks:'Reading list',linkCatJobApplications:'Job applications',linkCatGrammarNotes:'Grammar practice notes',linkCatCourseNotes:'Course notes',linkCatWritingSamples:'Writing samples & feedback',linkCatRecap:'Weekly/monthly recap',linkCatReadiness:'Grammar readiness',linkCatCalendar:'Calendar',linkCatNotebook:'Notebook',linkCatCourses:'Courses',linkSharingHeader:'What you\'re sharing',linkSharingHint:'These are your own settings. Set them before you invite anyone, or change them anytime after. They apply to whoever you\'re linked with.',linkCustomizeFor:'Customize what you share with {name}',linkOverrideHint:'Overrides your defaults just for {name}.',linkResetOverridesBtn:'Reset to your defaults',linkGroupFullMsg:'Your circle is at the 10-person limit.',linkErrorGeneric:'Something went wrong. Please try again.',linkNotLinkedYet:'You\'re not linked with anyone yet. Search for someone below to send an invite.',linkInviteSentMsg:'Invite sent.',linkStatusAlwaysShared:'Always shared',writingFeedbackHeader:'Feedback',writingFeedbackPlaceholder:'Leave feedback on this sample...',writingFeedbackSendBtn:'Send',writingFeedbackEmpty:'No feedback yet.', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently. Leave a line blank to clear that field.',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in', statusTeachingAssistant:'TA', statusResearchAssistant:'RA',
     hCourseList:'All courses', viewSyllabus:'Syllabus', saveShortLink:'Save link', copyLink:'Copy', shortLinkSaved:'Link saved.', shortLinkTaken:'That link is taken.', shortLinkInvalid:'Letters, numbers and hyphens only.', shortLinkCopied:'Copied!', shortLinkAutoPlaceholder:'auto',
     hNotesPick:'Add a note', lblNotesCourse:'Course (optional)', lblNewLecture:'Note title', addLectureBtn:'Add note',
@@ -11473,7 +11488,8 @@ const I18N = {
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
     tabYonsei:'Yonsei', tabTodos:'To-do', hAddTodo:'Add a to-do', lblTodoTitle:'To-do', lblTodoDue:'Due date (optional)', lblTodoTime:'Time (optional)', lblTodoRemind:'Remind me', remindAtTime:'At the time', remindHourBefore:'1 hour before', remindMorningOf:'Morning of (8:00)', remindDayBefore:'Day before', remindCustom:'Pick a time', addTodoBtn:'Add to-do', hTodoList:'Your to-dos', todoToday:'Today', todoTomorrow:'Tomorrow', todoOverdue:'Overdue', todoDone:'Done', todoClearDone:'Clear done', todoClearDoneConfirm:'Delete {n} finished to-dos?', todoClearDoneConfirmOne:'Delete {n} finished to-do?', deleteTodoConfirm:'Delete the to-do "{title}"?', todoMarkDone:'Mark done', todoMarkOpen:'Mark not done', todoShowOnCalendar:'Show on calendar', todoShareCircle:'Share with your circle', todoNotesLabel:'Notes (optional)', todoSave:'Save', todoCancel:'Cancel', todoEdit:'Edit', todoDelete:'Delete', todoAllCourses:'All courses', todoAllProjects:'All projects', notifTypeTodoReminder:'To-do reminders', notifTodoReminderTitleTpl:'To-do: {title}', hWorkspaceSetup:'Set up your Productivity Tracker', wsWhereLabel:'Where will you use it?', wsKindYonsei:'Yonsei', wsKindSchool:'Another school', wsKindWork:'Work', wsNameLabel:'Tab name', wsKoreanLabel:'Korean study tab', wsContinue:'Continue', wsSave:'Save', wsSaved:'Saved.', wsSettingsHeading:'School or work tab', workspaceSchoolDefault:'School', workspaceWorkDefault:'Work', tabProjects:'Projects', hAddProject:'Add a project', projectTitle:'Project name', projectLocation:'Location', addProjectBtn:'Add project', projectHint:'Only the project name and time are required.', deleteProjectConfirm:'Delete this project? This also removes its calendar entries and its notes for everyone.', lockInProjectConfirm:"Lock in this project? You won't be able to move it back to Planning or Active afterward.", statusActive:'Active', hYourProjects:'Your projects', hProjectList:'All projects', lblNotesProject:'Project (optional)', noProject:'No project', notesEmptyHintWork:'Add a project in the Projects tab first, then create notes here.', hNotesWork:'Your notes', kindProject:'Project', hProjectsCal:'Projects', linkCatProjects:'Projects', linkCatProjectNotes:'Project notes', tabBoards:'Board', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', lblYonseiBoardsSince:'Period', lblYonseiBoardsSort:'Sort', yonseiPeriodAll:'All time', yonseiPeriodWeek:'Last week', yonseiPeriodMonth:'Last month', yonseiPeriod6Months:'Last 6 months', yonseiPeriodYear:'Last year', yonseiPeriod2Years:'Last 2 years', yonseiPeriod3Years:'Last 3 years', yonseiPeriod4Years:'Last 4 years', yonseiPeriod5Years:'Last 5 years', yonseiSortNewest:'Newest first', yonseiSortOldest:'Oldest first', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobsSubJobBoard:'Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardAiUpdateBtn:'AI Job Fetch', jobBoardAiFetching:'Fetching', jobBoardUpdating:'Updating...', jobBoardIndBankingFinance:'Banking/Finance', jobBoardIndConsumerFashion:'Consumer/Fashion', jobBoardIndForeignFirms:'Foreign firms', jobBoardIndIntlOrg:'International Organization', jobBoardIndNGO:'NGO', jobBoardIndOthers:'Others', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Public', jobBoardIndResearchInstitute:'Research Institute', jobBoardIndTechnology:'Technology', jobBoardIndTopChaebol:'Top Chaebol', jobBoardIndTrade:'Trade', jobBoardNewBadge:'NEW', cdcLoginWarnTitle:'Logged in to CDC?', cdcLoginWarnBody:'The Yonsei CDC site needs its own separate login. Make sure you\'re signed in there before opening this posting, or the page may not load right.', cdcLoginWarnContinueBtn:'Continue', cdcLoginWarnLoginBtn:'Log in', cdcLoginWarnCancelBtn:'Cancel',
-    tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet. Create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', expLoadFailedHint:'Couldn\'t load your vacations. Check your connection and try again.', expRetryLoadBtn:'Retry', expAmountInvalid:'Enter a number, optionally ending in k or m (e.g. 4k, 1.5m).', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', hExpAllExpenses:'All expenses', sortLabel:'Sort', sortFieldStatus:'Status', sortFieldCompany:'Company', sortFieldRole:'Role', sortFieldIssuer:'Issuer', sortFieldDeadline:'Deadline', sortFieldTitle:'Title', sortFieldPosted:'Posted', sortFieldMfa:'2FA', sortFieldConfirmed:'Confirmed', sortFieldDate:'Date', sortFieldAmount:'Amount', sortFieldName:'Name', sortFieldCategory:'Category', sortFieldPaidBy:'Paid by', sortAsc:'Sorting up. Press to sort down.', sortDesc:'Sorting down. Press to sort up.', sortThen:'then', sortMultiple:'Multiple sort', expExcluded:'{n} expenses left out', expExcludedOne:'{n} expense left out', expShowLabel:'Show', expShowAll:'All', expShowCounted:'Counted only', expShowExcluded:'Excluded only', expNoExcluded:'Nothing is excluded right now.', expNoCounted:'Everything here is excluded right now.', expNoExpensesYet:'No expenses logged yet.', expCountCategory:'Count this category', expDontCountCategory:"Don't count this category", expCountAllCategories:'Count all categories', expDontCountDay:"Don't count this day", expCountDay:'Count this day', expDontCountExpense:"Don't count this expense", expCountExpense:'Count this expense', expCountEverything:'Count everything', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default; a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', hEditVacation:'Edit vacation', expPickVacationHint:'Pick a vacation above.', expVacationDeleteConfirm:'Delete "{name}"? Every expense logged on it goes with it, for everyone on the trip.', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expCircleEmpty:'You\'re not linked with anyone yet. Add people to your Linked circle from Account settings.', expCircleAllOnTrip:'Everyone in your Linked circle is already on this trip.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip', lblExpCustomCategoryName:'Custom name (optional)', optNewVacationCurrencyCustom:'Other…', lblNewVacationCustomCurrency:'Currency code', lblExpDisplayCurrency:'Show in', optExpDisplayCurrencyOriginal:'Original', lblExpDisplayFull:'Convert every amount', expDisplayFullHint:'Shows every amount in the chosen currency. What was typed in is kept as it is, so switching back gives the exact amounts again.', hInviteBySearch:'Or invite by name', vacationInviteSearchPlaceholder:'Search by name...', recapLoadingHint:'Loading…', shellUpdatedText:'A new version is ready.', shellUpdatedBtn:'Reload', qlVisit:'Visit link:', qlEnterLink:'Enter link:', qlEnterVideo:'Enter video:', qlEdit:'Edit', qlSave:'Save', qlRemove:'Remove'
+    tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet. Create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', expLoadFailedHint:'Couldn\'t load your vacations. Check your connection and try again.', expRetryLoadBtn:'Retry', expAmountInvalid:'Enter a number, optionally ending in k or m (e.g. 4k, 1.5m).', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', hExpAllExpenses:'All expenses', sortLabel:'Sort', sortFieldStatus:'Status', sortFieldCompany:'Company', sortFieldRole:'Role', sortFieldIssuer:'Issuer', sortFieldDeadline:'Deadline', sortFieldTitle:'Title', sortFieldPosted:'Posted', sortFieldMfa:'2FA', sortFieldConfirmed:'Confirmed', sortFieldDate:'Date', sortFieldAmount:'Amount', sortFieldName:'Name', sortFieldCategory:'Category', sortFieldPaidBy:'Paid by', sortAsc:'Sorting up. Press to sort down.', sortDesc:'Sorting down. Press to sort up.', sortThen:'then', sortMultiple:'Multiple sort', expExcluded:'{n} expenses left out', expExcludedOne:'{n} expense left out', expShowLabel:'Show', expShowAll:'All', expShowCounted:'Counted only', expShowExcluded:'Excluded only', expNoExcluded:'Nothing is excluded right now.', expNoCounted:'Everything here is excluded right now.', expNoExpensesYet:'No expenses logged yet.', expCountCategory:'Count this category', expDontCountCategory:"Don't count this category", expCountAllCategories:'Count all categories', expDontCountDay:"Don't count this day", expCountDay:'Count this day', expDontCountExpense:"Don't count this expense", expCountExpense:'Count this expense', expCountEverything:'Count everything', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default; a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', hEditVacation:'Edit vacation', expPickVacationHint:'Pick a vacation above.', expVacationDeleteConfirm:'Delete "{name}"? Every expense logged on it goes with it, for everyone on the trip.', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expCircleEmpty:'You\'re not linked with anyone yet. Add people to your Linked circle from Account settings.', expCircleAllOnTrip:'Everyone in your Linked circle is already on this trip.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip', lblExpCustomCategoryName:'Custom name (optional)', optNewVacationCurrencyCustom:'Other…', lblNewVacationCustomCurrency:'Currency code', lblExpDisplayCurrency:'Show in', optExpDisplayCurrencyOriginal:'Original', lblExpDisplayFull:'Convert every amount', expDisplayFullHint:'Shows every amount in the chosen currency. What was typed in is kept as it is, so switching back gives the exact amounts again.', hInviteBySearch:'Or invite by name', vacationInviteSearchPlaceholder:'Search by name...', recapLoadingHint:'Loading…', shellUpdatedText:'A new version is ready.', shellUpdatedBtn:'Reload', qlVisit:'Visit link:', qlEnterLink:'Enter link:', qlEnterVideo:'Enter video:', qlEdit:'Edit', qlSave:'Save', qlRemove:'Remove',
+    authEnterEmailPassword:'Enter your email and password.', authInvalidLogin:'Wrong email, name or password.', authEmailNotConfirmed:'Confirm your email first. The link is in the email we sent you.', authAlreadyRegistered:'An account with this email already exists. Sign in instead.', authRateLimited:'Too many attempts. Wait a minute and try again.', authEmailInvalid:'That email address does not look right.', authSamePassword:'Pick a password different from your current one.', authNetworkError:'Could not reach the server. Check your connection and try again.', authSignupsClosed:'Sign-ups are closed right now.', authLinkExpired:'That link has expired or was already used. Ask for a new one.', guestUnavailable:'Not available in guest mode.', tipDelete:'Delete', tipRemove:'Remove', tipMoveUp:'Move up', tipMoveDown:'Move down', tipDarkMode:'Toggle dark mode', tipMyNotes:'My notes', tipClickToEdit:'Click to edit', tipJumpToDate:'Jump to date', tipPagesRead:'Pages read', tipJobBoardAiUpdate:'Walks each of today\'s postings individually and saves full descriptions to a local file', notesLinkShortcutPrompt:'Shortcut name:', saveFailedTryAgain:'Could not save. Try again.', termsLink:'Terms of use', deleteWithGoogleBtn:'Confirm with Google', deleteOrPassword:'or with your password', deleteNoPasswordHint:'No password yet? Set one first with "Send password reset email".', deleteGoogleConfirmed:'Confirmed with Google. Press "Delete my account" to finish.', deleteGoogleNotFinished:'Google sign-in did not finish, so nothing was deleted.', deleteGoogleWrongAccount:'That Google account belongs to a different account here, so nothing was deleted. You are now signed in as {email}.', deleteGoogleExpired:'It has been more than 10 minutes since you confirmed. Confirm with Google again.', settingsDeleteWrongPasswordGoogle:'Incorrect password. Use "Confirm with Google" above instead, or set a password first with "Send password reset email".'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
@@ -11564,8 +11580,8 @@ const I18N = {
     modConfirmDeleteUser:'이 계정과 모든 데이터를 영구적으로 삭제하시겠습니까? 되돌릴 수 없습니다.', modActionFailed:'작업에 실패했습니다.', modActionDone:'완료되었습니다.',
     modStudyHead:'공부 시간', modStudyHint:'하루 동안의 활동별 시간입니다. 변경 사항은 순위표에 바로 반영됩니다.', modStudyUser:'계정', modStudyChooseUser:'계정 선택', modStudyDate:'날짜', modStudySave:'저장', modStudyDeleteDay:'이 날 삭제', modStudyConfirmDelete:'{name}님이 {date}에 기록한 시간을 모두 삭제하시겠습니까?', modStudyInvalid:'시간은 0 이상의 숫자로 입력하세요.', modStudyDays:'기록된 날', modStudyNoDays:'아직 기록이 없습니다.', modStudyEmptyDay:'이 날에는 기록이 없습니다.', modStudyMoreDays:'그 외 {n}일',
     modConfirmResetPw:'이 사용자의 비밀번호를 재설정하시겠습니까?', modConfirmConfirmEmail:'이 사용자의 이메일을 수동으로 확인 처리하시겠습니까?', modConfirmDisableMfa:'이 사용자의 2단계 인증을 비활성화하시겠습니까?',
-    mfaPromptTitle:'인증 코드를 입력하세요', mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.', mfaUseBackupBtn:'백업 코드 사용하기', mfaUseTotpBtn:'인증 앱 사용하기', mfaBackupCodePlaceholder:'백업 코드를 입력하세요', mfaBackupWrongCode:'백업 코드가 올바르지 않거나 이미 사용되었습니다.', download2faBackupBtn:'코드 다운로드', passwordTooShort:'비밀번호는 8자 이상이어야 합니다.', authAgeNote:'계정을 만들려면 만 13세 이상이어야 합니다.', privacyPolicyLink:'개인정보 처리방침', aiCheckBeforeSaving:'AI 답변은 틀릴 수 있으니 저장하기 전에 표시된 항목을 확인하세요.', aiFilledTitle:'AI 답변으로 채워졌습니다. 저장하기 전에 확인하세요.', settings2faQrAlt:'인증 앱으로 스캔할 QR 코드', fileOpenFailed:'파일을 열 수 없습니다. 다시 시도하세요.', showPasswordBtn:'비밀번호 표시', hidePasswordBtn:'비밀번호 숨기기',
-    oauthOr:'또는', oauthGoogle:'Google로 계속하기', oauthKakao:'카카오로 계속하기', oauthGithub:'GitHub로 계속하기', oauthLinkedin:'LinkedIn으로 계속하기', chooseNameTitle:'다른 사람에게 보일 이름을 정하세요', chooseNameBtn:'계속', chooseNameEmpty:'이름을 입력하세요.', authRedirectFailed:'로그인을 마치지 못했습니다.', passwordPwned:'이 비밀번호는 데이터 유출에 포함된 적이 있습니다. 다른 비밀번호를 선택해 주세요.', settingsWrongPasswordProvider:'비밀번호가 올바르지 않습니다. Google, 카카오, GitHub 또는 LinkedIn으로 가입했다면 먼저 "비밀번호 재설정 이메일 보내기"로 비밀번호를 설정하세요.', accountPopTitle:'내 계정과 색상',
+    mfaPromptTitle:'인증 코드를 입력하세요', mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.', mfaUseBackupBtn:'백업 코드 사용하기', mfaUseTotpBtn:'인증 앱 사용하기', mfaBackupCodePlaceholder:'백업 코드를 입력하세요', mfaBackupWrongCode:'백업 코드가 올바르지 않거나 이미 사용되었습니다.', download2faBackupBtn:'코드 다운로드', passwordTooShort:'비밀번호는 8자 이상이어야 합니다.', authAgeNote:'계정을 만들면 이용약관에 동의하고 만 13세 이상(한국 거주자는 만 14세 이상)임을 확인하게 됩니다.', privacyPolicyLink:'개인정보 처리방침', aiCheckBeforeSaving:'AI 답변은 틀릴 수 있으니 저장하기 전에 표시된 항목을 확인하세요.', aiFilledTitle:'AI 답변으로 채워졌습니다. 저장하기 전에 확인하세요.', settings2faQrAlt:'인증 앱으로 스캔할 QR 코드', fileOpenFailed:'파일을 열 수 없습니다. 다시 시도하세요.', showPasswordBtn:'비밀번호 표시', hidePasswordBtn:'비밀번호 숨기기',
+    oauthOr:'또는', oauthGoogle:'Google로 계속하기', oauthKakao:'카카오로 계속하기', oauthGithub:'GitHub로 계속하기', oauthLinkedin:'LinkedIn으로 계속하기', chooseNameTitle:'다른 사람에게 보일 이름을 정하세요', chooseNameBtn:'계속', chooseNameEmpty:'이름을 입력하세요.', authRedirectFailed:'로그인을 마치지 못했습니다.', passwordPwned:'이 비밀번호는 데이터 유출에 포함된 적이 있습니다. 다른 비밀번호를 선택해 주세요.', settingsWrongPasswordProvider:'비밀번호가 올바르지 않습니다. Google로 가입했다면 먼저 "비밀번호 재설정 이메일 보내기"로 비밀번호를 설정하세요.', accountPopTitle:'내 계정과 색상',
     guestModeBtn:'게스트로 둘러보기', guestBannerText:'게스트 모드입니다. 기능이 제한됩니다. 추가한 내용은 계정에 저장되지 않습니다.', guestDisplayName:'게스트',
     hAddCourse:'수업 추가', courseTitle:'수업명', courseCode:'수업 코드', courseProfessor:'교수', courseClassroom:'강의실',
     courseTime:'시간', courseConcentration:'전공/트랙', courseStatus:'상태', courseSyllabus:'강의계획서',
@@ -11587,7 +11603,7 @@ const I18N = {
     gramRegister:'문체', gramColloquial:'구어체', gramWritten:'문어체', gramFavorite:'즐겨찾기 – 어렵거나 중요함으로 표시', gramSortFavorite:'즐겨찾기 우선', gramViewSimilar:'비슷한 문법 형태 보기', gramQuickNote:'+ 이 문법으로 노트 만들기', gramAddToggleBtn:'+ 문법 추가', gramAddSaveBtn:'문법 은행에 추가', gramAddMissingFields:'문형과 최소 하나의 의미를 입력하세요 (아래 붙여넣기 형식 힌트 참고).', gramAddSaveFailed:'저장할 수 없습니다. grammar_points 테이블이 있는지 확인하세요.', gramAiPromptIntro:'이 프롬프트를 복사해 AI 채팅(ChatGPT, Claude 등)에 붙여넣고 답변을 받아 아래에 다시 붙여넣으세요 -- 위에 입력한 모든 문형에 대해 급수, 빈도, 난이도, 격식, 공손함, 문체, 뜻풀이, 예문까지 전부 채워줍니다.', gramCopyAiPromptBtn:'AI 프롬프트 복사', gramCopyAiPromptCopied:'복사됨!', gramPasteAiAnswerLabel:'AI의 답변을 여기에 붙여넣으세요', gramAdvancedAddToggle:'고급 / 직접 입력', gramSimpleAddToggle:'‹ 간편 추가로 돌아가기', gramAddPatternNamesLabel:'문법 표현', gramAddPatternNamesHint:'한 줄에 하나씩 입력하세요. 여러 개를 한 번에 추가할 수 있으며, 프롬프트 하나로 전부 처리됩니다.',
     gramYourSentences:'나의 연습 문장', gramSentencePlaceholder:'이 문법을 사용해 문장을 써 보세요...', gramAddSentence:'추가', lblGramSort:'정렬', gramSortDefault:'기본 순서', gramSortFreqDesc:'가장 흔한 순', gramSortFreqAsc:'가장 드문 순', gramFrequencyHeader:'빈도', gramLevelHeader:'난이도',
     gramMarkNotReviewed:'복습 안 함으로 표시', gramMarkReviewedAgain:'취소 – 복습함으로 표시', gramResources:'영상 및 링크', gramResourceUrlPlaceholder:'유튜브 또는 웹사이트 URL', gramResourceLabelPlaceholder:'라벨 (선택)', gramAddResource:'추가',
-    hRecap:'요약',recapWeekBtn:'지난 7일',recapMonthBtn:'지난 30일',recapStudyHours:'공부 시간',recapGrammarPracticed:'연습한 문법 문장',recapBooksFinished:'완독한 책',recapJobsSent:'지원한 곳',hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요.',quizFromCluster:'비교 그룹:',quizFillBlank:'빈칸을 채우세요',quizCorrectAnswerLabel:'정답:',quizHistoryHeader:'나의 퀴즈 기록',quizMaxScoreLabel:'최고 점수',quizAttemptsCountLabel:'시도 횟수',quizAverageLabel:'평균',quizNoAttemptsYet:'아직 기록이 없어요.',quizDueCount:'복습할 문법 {n}개',quizReviewDueBtn:'복습할 문법 풀기',hLinkedCircle:'연결된 그룹',linkedCircleDesc:'다른 사용자와 연결해서 학습 데이터를 공유하세요. 최대 10명까지 가능하며, 무엇을 공유할지는 직접 선택할 수 있습니다.',linkInvitedYou:'{name}님이 연결을 요청했습니다.',linkAcceptBtn:'수락',linkDeclineBtn:'거절',linkLeaveBtn:'그룹 나가기',linkRosterHeader:'내 그룹',linkStatusAccepted:'연결됨', circleOnlineNow:'온라인', circleTabMessages:'메시지', circleOnlineCount:'{n}명 접속 중', circleSearchPlaceholder:'메시지 검색...', circleFilesBtn:'파일', circleNoResults:'일치하는 메시지가 없습니다.', circleNoFiles:'아직 공유된 파일이 없습니다.', circleSearching:'검색 중...', circleLoadOlder:'이전 메시지 더 보기', circleAttach:'파일 첨부', circleUploading:'업로드 중...', circleUploadFailed:'파일을 업로드하지 못했습니다.', circleFileTooBig:'파일이 25MB를 초과합니다.', circleAttachment:'첨부파일', circleJumpToDay:'특정 날짜로 이동', circleSearchMessages:'메시지 검색', circleCloseSearch:'검색 닫기', circleBackToChat:'메시지로 돌아가기', circleSent:'전송됨', circleReadBy:'{names}님이 읽음', circleNoMessagesThatDay:'그날은 대화가 없습니다.', circleTabCircle:'그룹', circleThreadEveryone:'전체', circleNoMessages:'아직 메시지가 없습니다.', circleMessagePlaceholder:'메시지를 입력하세요...', circleSendBtn:'보내기', circleOnlineTitle:'지금 접속 중: {names}', linkedCircleTitle:'연결된 그룹',linkStatusPending:'초대 보냄. 응답 대기 중',linkJustAccepted:'수락함!',linkRemoveBtn:'그룹에서 제거',linkRemoveConfirm:'{name}님을 그룹에서 제거하시겠습니까? 더 이상 서로 데이터를 볼 수 없습니다.',linkCatSearchPlaceholder:'공유 항목 검색…',linkInviteSearchPlaceholder:'이름으로 검색...',linkInviteBtn:'초대',linkNoResults:'일치하는 사용자가 없습니다.',linkCatStudyEntries:'학습 기록',linkCatBooks:'독서 목록',linkCatJobApplications:'구직 지원 내역',linkCatGrammarNotes:'문법 연습 노트',linkCatCourseNotes:'수업 노트',linkCatWritingSamples:'작문 및 피드백',linkCatRecap:'주간/월간 요약',linkCatReadiness:'문법 준비도',linkCatCalendar:'캘린더',linkCatNotebook:'노트북',linkCatCourses:'수업',linkSharingHeader:'공유 중인 항목',linkSharingHint:'이 설정은 본인 계정에만 적용됩니다. 초대를 보내기 전에 미리 설정하거나, 연결된 후 언제든지 바꿀 수 있어요. 연결된 모든 사람에게 동일하게 적용됩니다.',linkCustomizeFor:'{name}님과 공유할 항목 설정',linkOverrideHint:'{name}님에게만 적용되는 개별 설정입니다.',linkResetOverridesBtn:'기본값으로 초기화',linkGroupFullMsg:'그룹이 최대 인원(10명)에 도달했습니다.',linkErrorGeneric:'문제가 발생했습니다. 다시 시도해 주세요.',linkNotLinkedYet:'아직 아무와도 연결되어 있지 않습니다. 아래에서 검색해 초대를 보내보세요.',linkInviteSentMsg:'초대를 보냈습니다.',linkStatusAlwaysShared:'항상 공유됨',writingFeedbackHeader:'피드백',writingFeedbackPlaceholder:'이 작문에 대한 피드백을 남겨보세요...',writingFeedbackSendBtn:'보내기',writingFeedbackEmpty:'아직 피드백이 없습니다.', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다. 비워두면 해당 항목이 지워집니다.',
+    hRecap:'요약',recapWeekBtn:'지난 7일',recapMonthBtn:'지난 30일',someoneName:'누군가', recapCoursesStarted:'시작한 수업', recapCoursesFinished:'끝난 수업', recapProjectsStarted:'시작한 프로젝트', recapProjectsFinished:'끝낸 프로젝트', recapNotesWritten:'작성한 노트', recapTodosDone:'완료한 할 일', recapStudyHours:'공부 시간',recapGrammarPracticed:'연습한 문법 문장',recapBooksFinished:'완독한 책',recapJobsSent:'지원한 곳',hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요.',quizFromCluster:'비교 그룹:',quizFillBlank:'빈칸을 채우세요',quizCorrectAnswerLabel:'정답:',quizHistoryHeader:'나의 퀴즈 기록',quizMaxScoreLabel:'최고 점수',quizAttemptsCountLabel:'시도 횟수',quizAverageLabel:'평균',quizNoAttemptsYet:'아직 기록이 없어요.',quizDueCount:'복습할 문법 {n}개',quizReviewDueBtn:'복습할 문법 풀기',hLinkedCircle:'연결된 그룹',linkedCircleDesc:'다른 사용자와 연결해서 기록한 내용을 공유하세요. 최대 10명까지 가능하며, 무엇을 공유할지는 직접 선택할 수 있습니다.',linkInvitedYou:'{name}님이 연결을 요청했습니다.',linkAcceptBtn:'수락',linkDeclineBtn:'거절',linkLeaveBtn:'그룹 나가기',linkRosterHeader:'내 그룹',linkStatusAccepted:'연결됨', circleOnlineNow:'온라인', circleTabMessages:'메시지', circleOnlineCount:'{n}명 접속 중', circleSearchPlaceholder:'메시지 검색...', circleFilesBtn:'파일', circleNoResults:'일치하는 메시지가 없습니다.', circleNoFiles:'아직 공유된 파일이 없습니다.', circleSearching:'검색 중...', circleLoadOlder:'이전 메시지 더 보기', circleAttach:'파일 첨부', circleUploading:'업로드 중...', circleUploadFailed:'파일을 업로드하지 못했습니다.', circleFileTooBig:'파일이 25MB를 초과합니다.', circleAttachment:'첨부파일', circleJumpToDay:'특정 날짜로 이동', circleSearchMessages:'메시지 검색', circleCloseSearch:'검색 닫기', circleBackToChat:'메시지로 돌아가기', circleSent:'전송됨', circleReadBy:'{names}님이 읽음', circleNoMessagesThatDay:'그날은 대화가 없습니다.', circleTabCircle:'그룹', circleThreadEveryone:'전체', circleNoMessages:'아직 메시지가 없습니다.', circleMessagePlaceholder:'메시지를 입력하세요...', circleSendBtn:'보내기', circleOnlineTitle:'지금 접속 중: {names}', linkedCircleTitle:'연결된 그룹',linkStatusPending:'초대 보냄. 응답 대기 중',linkJustAccepted:'수락함!',linkRemoveBtn:'그룹에서 제거',linkRemoveConfirm:'{name}님을 그룹에서 제거하시겠습니까? 더 이상 서로 데이터를 볼 수 없습니다.',linkCatSearchPlaceholder:'공유 항목 검색…',linkInviteSearchPlaceholder:'이름으로 검색...',linkInviteBtn:'초대',linkNoResults:'일치하는 사용자가 없습니다.',linkCatStudyEntries:'학습 기록',linkCatBooks:'독서 목록',linkCatJobApplications:'구직 지원 내역',linkCatGrammarNotes:'문법 연습 노트',linkCatCourseNotes:'수업 노트',linkCatWritingSamples:'작문 및 피드백',linkCatRecap:'주간/월간 요약',linkCatReadiness:'문법 준비도',linkCatCalendar:'캘린더',linkCatNotebook:'노트북',linkCatCourses:'수업',linkSharingHeader:'공유 중인 항목',linkSharingHint:'이 설정은 본인 계정에만 적용됩니다. 초대를 보내기 전에 미리 설정하거나, 연결된 후 언제든지 바꿀 수 있어요. 연결된 모든 사람에게 동일하게 적용됩니다.',linkCustomizeFor:'{name}님과 공유할 항목 설정',linkOverrideHint:'{name}님에게만 적용되는 개별 설정입니다.',linkResetOverridesBtn:'기본값으로 초기화',linkGroupFullMsg:'그룹이 최대 인원(10명)에 도달했습니다.',linkErrorGeneric:'문제가 발생했습니다. 다시 시도해 주세요.',linkNotLinkedYet:'아직 아무와도 연결되어 있지 않습니다. 아래에서 검색해 초대를 보내보세요.',linkInviteSentMsg:'초대를 보냈습니다.',linkStatusAlwaysShared:'항상 공유됨',writingFeedbackHeader:'피드백',writingFeedbackPlaceholder:'이 작문에 대한 피드백을 남겨보세요...',writingFeedbackSendBtn:'보내기',writingFeedbackEmpty:'아직 피드백이 없습니다.', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다. 비워두면 해당 항목이 지워집니다.',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정', statusTeachingAssistant:'조교(TA)', statusResearchAssistant:'연구조교(RA)',
     hCourseList:'전체 수업', viewSyllabus:'강의계획서', saveShortLink:'링크 저장', copyLink:'복사', shortLinkSaved:'링크가 저장되었습니다.', shortLinkTaken:'이미 사용 중인 링크입니다.', shortLinkInvalid:'영문, 숫자, 하이픈만 사용할 수 있습니다.', shortLinkCopied:'복사됨!', shortLinkAutoPlaceholder:'자동',
     hNotesPick:'노트 추가', lblNotesCourse:'수업 (선택)', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
@@ -11598,7 +11614,8 @@ const I18N = {
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
     tabYonsei:'연세', tabTodos:'할 일', hAddTodo:'할 일 추가', lblTodoTitle:'할 일', lblTodoDue:'마감일 (선택)', lblTodoTime:'시간 (선택)', lblTodoRemind:'알림', remindAtTime:'정각', remindHourBefore:'1시간 전', remindMorningOf:'당일 아침 (8:00)', remindDayBefore:'하루 전', remindCustom:'시간 선택', addTodoBtn:'할 일 추가', hTodoList:'나의 할 일', todoToday:'오늘', todoTomorrow:'내일', todoOverdue:'기한 지남', todoDone:'완료', todoClearDone:'완료 항목 지우기', todoClearDoneConfirm:'완료된 할 일 {n}개를 삭제할까요?', deleteTodoConfirm:'할 일 "{title}"을(를) 삭제할까요?', todoMarkDone:'완료로 표시', todoMarkOpen:'미완료로 표시', todoShowOnCalendar:'캘린더에 표시', todoShareCircle:'내 서클과 공유', todoNotesLabel:'메모 (선택)', todoSave:'저장', todoCancel:'취소', todoEdit:'수정', todoDelete:'삭제', todoAllCourses:'전체 수업', todoAllProjects:'전체 프로젝트', notifTypeTodoReminder:'할 일 알림', notifTodoReminderTitleTpl:'할 일: {title}', hWorkspaceSetup:'Productivity Tracker 설정하기', wsWhereLabel:'어디에서 사용하시나요?', wsKindYonsei:'연세', wsKindSchool:'다른 학교', wsKindWork:'직장', wsNameLabel:'탭 이름', wsKoreanLabel:'한국어 공부 탭', wsContinue:'계속', wsSave:'저장', wsSaved:'저장했습니다.', wsSettingsHeading:'학교 또는 직장 탭', workspaceSchoolDefault:'학교', workspaceWorkDefault:'직장', tabProjects:'프로젝트', hAddProject:'프로젝트 추가', projectTitle:'프로젝트명', projectLocation:'장소', addProjectBtn:'프로젝트 추가', projectHint:'프로젝트명과 시간만 필수입니다.', deleteProjectConfirm:'이 프로젝트를 삭제할까요? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInProjectConfirm:'이 프로젝트를 확정할까요? 이후에는 계획 중이나 진행 중으로 되돌릴 수 없습니다.', statusActive:'진행 중', hYourProjects:'나의 프로젝트', hProjectList:'전체 프로젝트', lblNotesProject:'프로젝트 (선택)', noProject:'프로젝트 없음', notesEmptyHintWork:'먼저 프로젝트 탭에서 프로젝트를 추가한 후 노트를 작성하세요.', hNotesWork:'내 노트', kindProject:'프로젝트', hProjectsCal:'프로젝트', linkCatProjects:'프로젝트', linkCatProjectNotes:'프로젝트 노트', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', lblYonseiBoardsSince:'기간', lblYonseiBoardsSort:'정렬', yonseiPeriodAll:'전체 기간', yonseiPeriodWeek:'지난 1주', yonseiPeriodMonth:'지난 1개월', yonseiPeriod6Months:'지난 6개월', yonseiPeriodYear:'지난 1년', yonseiPeriod2Years:'지난 2년', yonseiPeriod3Years:'지난 3년', yonseiPeriod4Years:'지난 4년', yonseiPeriod5Years:'지난 5년', yonseiSortNewest:'최신순', yonseiSortOldest:'오래된순', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobsSubJobBoard:'게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardAiUpdateBtn:'AI 확인', jobBoardAiFetching:'가져오는 중', jobBoardUpdating:'업데이트 중...', jobBoardIndBankingFinance:'금융', jobBoardIndConsumerFashion:'소비재/패션', jobBoardIndForeignFirms:'외국계 기업', jobBoardIndIntlOrg:'국제기구', jobBoardIndNGO:'NGO', jobBoardIndOthers:'기타', jobBoardIndPRMarketing:'PR/마케팅', jobBoardIndPublic:'공공기관', jobBoardIndResearchInstitute:'연구소', jobBoardIndTechnology:'기술/IT', jobBoardIndTopChaebol:'대기업(재벌)', jobBoardIndTrade:'무역', jobBoardNewBadge:'신규', cdcLoginWarnTitle:'CDC 사이트에 로그인하셨나요?', cdcLoginWarnBody:'연세 CDC 사이트는 별도의 로그인이 필요합니다. 이 공고를 열기 전에 CDC 사이트에 로그인되어 있는지 확인하세요. 그렇지 않으면 페이지가 제대로 열리지 않을 수 있습니다.', cdcLoginWarnContinueBtn:'계속', cdcLoginWarnLoginBtn:'로그인', cdcLoginWarnCancelBtn:'취소',
-    tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', expLoadFailedHint:'여행 정보를 불러오지 못했습니다. 연결 상태를 확인하고 다시 시도하세요.', expRetryLoadBtn:'다시 시도', expAmountInvalid:'숫자를 입력하세요. 끝에 k 또는 m을 붙일 수 있습니다 (예: 4k, 1.5m).', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', hExpAllExpenses:'전체 지출', sortLabel:'정렬', sortFieldStatus:'상태', sortFieldCompany:'회사', sortFieldRole:'직무', sortFieldIssuer:'발급기관', sortFieldDeadline:'마감일', sortFieldTitle:'제목', sortFieldPosted:'등록일', sortFieldMfa:'2단계 인증', sortFieldConfirmed:'인증 여부', sortFieldDate:'날짜', sortFieldAmount:'금액', sortFieldName:'이름', sortFieldCategory:'카테고리', sortFieldPaidBy:'결제자', sortAsc:'오름차순입니다. 누르면 내림차순으로 바뀝니다.', sortDesc:'내림차순입니다. 누르면 오름차순으로 바뀝니다.', sortThen:'그다음', sortMultiple:'다중 정렬', expExcluded:'{n}개 항목 제외됨', expShowLabel:'표시', expShowAll:'전체', expShowCounted:'포함된 것만', expShowExcluded:'제외된 것만', expNoExcluded:'지금은 제외된 항목이 없습니다.', expNoCounted:'지금은 모든 항목이 제외되어 있습니다.', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCountCategory:'이 카테고리 포함', expDontCountCategory:'이 카테고리 제외', expCountAllCategories:'모든 카테고리 포함', expDontCountDay:'이 날 제외', expCountDay:'이 날 포함', expDontCountExpense:'이 지출 제외', expCountExpense:'이 지출 포함', expCountEverything:'모두 포함', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', hEditVacation:'여행 수정', expPickVacationHint:'위에서 여행을 선택하세요.', expVacationDeleteConfirm:'"{name}" 여행을 삭제할까요? 이 여행에 기록된 모든 지출이 참여자 전원에게서 함께 삭제됩니다.', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expCircleEmpty:'아직 아무와도 연결되어 있지 않습니다. 계정 설정의 연결된 그룹에서 사람을 추가하세요.', expCircleAllOnTrip:'연결된 그룹의 모든 사람이 이미 이 여행에 참여하고 있습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거', lblExpCustomCategoryName:'맞춤 이름 (선택 사항)', optNewVacationCurrencyCustom:'기타…', lblNewVacationCustomCurrency:'통화 코드', lblExpDisplayCurrency:'표시 통화', optExpDisplayCurrencyOriginal:'원래 통화', lblExpDisplayFull:'모든 금액 변환', expDisplayFullHint:'모든 금액을 선택한 통화로 보여줍니다. 입력한 금액은 그대로 남아 있어 다시 바꾸면 정확한 금액이 돌아옵니다.', hInviteBySearch:'또는 이름으로 초대', vacationInviteSearchPlaceholder:'이름으로 검색...', recapLoadingHint:'불러오는 중...', shellUpdatedText:'새 버전이 준비되었습니다.', shellUpdatedBtn:'새로 고침', qlVisit:'링크 열기:', qlEnterLink:'링크 입력:', qlEnterVideo:'동영상 주소:', qlEdit:'수정', qlSave:'저장', qlRemove:'제거'
+    tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', expLoadFailedHint:'여행 정보를 불러오지 못했습니다. 연결 상태를 확인하고 다시 시도하세요.', expRetryLoadBtn:'다시 시도', expAmountInvalid:'숫자를 입력하세요. 끝에 k 또는 m을 붙일 수 있습니다 (예: 4k, 1.5m).', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', hExpAllExpenses:'전체 지출', sortLabel:'정렬', sortFieldStatus:'상태', sortFieldCompany:'회사', sortFieldRole:'직무', sortFieldIssuer:'발급기관', sortFieldDeadline:'마감일', sortFieldTitle:'제목', sortFieldPosted:'등록일', sortFieldMfa:'2단계 인증', sortFieldConfirmed:'인증 여부', sortFieldDate:'날짜', sortFieldAmount:'금액', sortFieldName:'이름', sortFieldCategory:'카테고리', sortFieldPaidBy:'결제자', sortAsc:'오름차순입니다. 누르면 내림차순으로 바뀝니다.', sortDesc:'내림차순입니다. 누르면 오름차순으로 바뀝니다.', sortThen:'그다음', sortMultiple:'다중 정렬', expExcluded:'{n}개 항목 제외됨', expShowLabel:'표시', expShowAll:'전체', expShowCounted:'포함된 것만', expShowExcluded:'제외된 것만', expNoExcluded:'지금은 제외된 항목이 없습니다.', expNoCounted:'지금은 모든 항목이 제외되어 있습니다.', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCountCategory:'이 카테고리 포함', expDontCountCategory:'이 카테고리 제외', expCountAllCategories:'모든 카테고리 포함', expDontCountDay:'이 날 제외', expCountDay:'이 날 포함', expDontCountExpense:'이 지출 제외', expCountExpense:'이 지출 포함', expCountEverything:'모두 포함', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', hEditVacation:'여행 수정', expPickVacationHint:'위에서 여행을 선택하세요.', expVacationDeleteConfirm:'"{name}" 여행을 삭제할까요? 이 여행에 기록된 모든 지출이 참여자 전원에게서 함께 삭제됩니다.', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expCircleEmpty:'아직 아무와도 연결되어 있지 않습니다. 계정 설정의 연결된 그룹에서 사람을 추가하세요.', expCircleAllOnTrip:'연결된 그룹의 모든 사람이 이미 이 여행에 참여하고 있습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거', lblExpCustomCategoryName:'맞춤 이름 (선택 사항)', optNewVacationCurrencyCustom:'기타…', lblNewVacationCustomCurrency:'통화 코드', lblExpDisplayCurrency:'표시 통화', optExpDisplayCurrencyOriginal:'원래 통화', lblExpDisplayFull:'모든 금액 변환', expDisplayFullHint:'모든 금액을 선택한 통화로 보여줍니다. 입력한 금액은 그대로 남아 있어 다시 바꾸면 정확한 금액이 돌아옵니다.', hInviteBySearch:'또는 이름으로 초대', vacationInviteSearchPlaceholder:'이름으로 검색...', recapLoadingHint:'불러오는 중...', shellUpdatedText:'새 버전이 준비되었습니다.', shellUpdatedBtn:'새로 고침', qlVisit:'링크 열기:', qlEnterLink:'링크 입력:', qlEnterVideo:'동영상 주소:', qlEdit:'수정', qlSave:'저장', qlRemove:'제거',
+    authEnterEmailPassword:'이메일과 비밀번호를 입력하세요.', authInvalidLogin:'이메일, 이름 또는 비밀번호가 올바르지 않습니다.', authEmailNotConfirmed:'먼저 이메일 인증을 완료하세요. 보내 드린 이메일에 링크가 있습니다.', authAlreadyRegistered:'이 이메일로 만든 계정이 이미 있습니다. 로그인하세요.', authRateLimited:'시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.', authEmailInvalid:'이메일 주소가 올바르지 않습니다.', authSamePassword:'현재 비밀번호와 다른 비밀번호를 선택하세요.', authNetworkError:'서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.', authSignupsClosed:'지금은 가입을 받지 않습니다.', authLinkExpired:'링크가 만료되었거나 이미 사용되었습니다. 새 링크를 요청하세요.', guestUnavailable:'게스트 모드에서는 사용할 수 없습니다.', tipDelete:'삭제', tipRemove:'제거', tipMoveUp:'위로 이동', tipMoveDown:'아래로 이동', tipDarkMode:'다크 모드 전환', tipMyNotes:'내 노트', tipClickToEdit:'클릭하여 수정', tipJumpToDate:'날짜로 이동', tipPagesRead:'읽은 페이지', tipJobBoardAiUpdate:'오늘 올라온 공고를 하나씩 열어 전체 설명을 기기의 파일로 저장합니다', notesLinkShortcutPrompt:'단축어 이름:', saveFailedTryAgain:'저장하지 못했습니다. 다시 시도하세요.', termsLink:'이용약관', deleteWithGoogleBtn:'Google로 확인', deleteOrPassword:'또는 비밀번호로', deleteNoPasswordHint:'비밀번호가 없나요? 먼저 "비밀번호 재설정 이메일 보내기"로 설정하세요.', deleteGoogleConfirmed:'Google로 확인했습니다. 마치려면 "계정 삭제"를 누르세요.', deleteGoogleNotFinished:'Google 로그인이 완료되지 않아 아무것도 삭제되지 않았습니다.', deleteGoogleWrongAccount:'선택한 Google 계정은 이곳의 다른 계정에 연결되어 있어 아무것도 삭제되지 않았습니다. 지금은 {email}(으)로 로그인되어 있습니다.', deleteGoogleExpired:'확인한 지 10분이 넘었습니다. Google로 다시 확인하세요.', settingsDeleteWrongPasswordGoogle:'비밀번호가 올바르지 않습니다. 위의 "Google로 확인"을 사용하거나, 먼저 "비밀번호 재설정 이메일 보내기"로 비밀번호를 설정하세요.'
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
@@ -11689,8 +11706,8 @@ const I18N = {
     modConfirmDeleteUser:'Xóa vĩnh viễn tài khoản này và toàn bộ dữ liệu? Không thể hoàn tác.', modActionFailed:'Thao tác thất bại.', modActionDone:'Hoàn tất.',
     modStudyHead:'Giờ học', modStudyHint:'Số giờ theo từng hoạt động trong một ngày. Thay đổi được tính ngay trên bảng xếp hạng.', modStudyUser:'Tài khoản', modStudyChooseUser:'Chọn tài khoản', modStudyDate:'Ngày', modStudySave:'Lưu ngày', modStudyDeleteDay:'Xóa ngày', modStudyConfirmDelete:'Xóa toàn bộ số giờ {name} đã ghi vào ngày {date}?', modStudyInvalid:'Số giờ phải là số từ 0 trở lên.', modStudyDays:'Những ngày đã ghi', modStudyNoDays:'Chưa ghi gì.', modStudyEmptyDay:'Chưa ghi gì vào ngày này.', modStudyMoreDays:'và {n} ngày trước đó',
     modConfirmResetPw:'Đặt lại mật khẩu của người dùng này?', modConfirmConfirmEmail:'Xác nhận thủ công email của người dùng này?', modConfirmDisableMfa:'Tắt xác thực hai yếu tố cho người dùng này?',
-    mfaPromptTitle:'Nhập mã xác thực', mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.', mfaUseBackupBtn:'Dùng mã dự phòng thay thế', mfaUseTotpBtn:'Dùng ứng dụng xác thực thay thế', mfaBackupCodePlaceholder:'Nhập mã dự phòng', mfaBackupWrongCode:'Mã dự phòng không đúng hoặc đã được sử dụng.', download2faBackupBtn:'Tải mã xuống', passwordTooShort:'Mật khẩu phải có ít nhất 8 ký tự.', authAgeNote:'Bạn phải từ 13 tuổi trở lên để tạo tài khoản.', privacyPolicyLink:'Chính sách quyền riêng tư', aiCheckBeforeSaving:'Câu trả lời của AI có thể sai, hãy kiểm tra các ô được đánh dấu trước khi lưu.', aiFilledTitle:'Được điền từ câu trả lời của AI. Hãy kiểm tra trước khi lưu.', settings2faQrAlt:'Mã QR để quét bằng ứng dụng xác thực', fileOpenFailed:'Không thể mở tệp. Hãy thử lại.', showPasswordBtn:'Hiện mật khẩu', hidePasswordBtn:'Ẩn mật khẩu',
-    oauthOr:'hoặc', oauthGoogle:'Tiếp tục với Google', oauthKakao:'Tiếp tục với Kakao', oauthGithub:'Tiếp tục với GitHub', oauthLinkedin:'Tiếp tục với LinkedIn', chooseNameTitle:'Chọn tên mà người khác sẽ thấy', chooseNameBtn:'Tiếp tục', chooseNameEmpty:'Hãy nhập tên.', authRedirectFailed:'Chưa đăng nhập xong.', passwordPwned:'Mật khẩu này đã từng bị lộ trong một vụ rò rỉ dữ liệu. Vui lòng chọn mật khẩu khác.', settingsWrongPasswordProvider:'Mật khẩu không đúng. Nếu bạn đăng ký bằng Google, Kakao, GitHub hoặc LinkedIn, hãy đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".', accountPopTitle:'Tài khoản và màu của tôi',
+    mfaPromptTitle:'Nhập mã xác thực', mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.', mfaUseBackupBtn:'Dùng mã dự phòng thay thế', mfaUseTotpBtn:'Dùng ứng dụng xác thực thay thế', mfaBackupCodePlaceholder:'Nhập mã dự phòng', mfaBackupWrongCode:'Mã dự phòng không đúng hoặc đã được sử dụng.', download2faBackupBtn:'Tải mã xuống', passwordTooShort:'Mật khẩu phải có ít nhất 8 ký tự.', authAgeNote:'Khi tạo tài khoản, bạn đồng ý với điều khoản sử dụng và xác nhận mình từ 13 tuổi trở lên (từ 14 tuổi nếu sống ở Hàn Quốc).', privacyPolicyLink:'Chính sách quyền riêng tư', aiCheckBeforeSaving:'Câu trả lời của AI có thể sai, hãy kiểm tra các ô được đánh dấu trước khi lưu.', aiFilledTitle:'Được điền từ câu trả lời của AI. Hãy kiểm tra trước khi lưu.', settings2faQrAlt:'Mã QR để quét bằng ứng dụng xác thực', fileOpenFailed:'Không thể mở tệp. Hãy thử lại.', showPasswordBtn:'Hiện mật khẩu', hidePasswordBtn:'Ẩn mật khẩu',
+    oauthOr:'hoặc', oauthGoogle:'Tiếp tục với Google', oauthKakao:'Tiếp tục với Kakao', oauthGithub:'Tiếp tục với GitHub', oauthLinkedin:'Tiếp tục với LinkedIn', chooseNameTitle:'Chọn tên mà người khác sẽ thấy', chooseNameBtn:'Tiếp tục', chooseNameEmpty:'Hãy nhập tên.', authRedirectFailed:'Chưa đăng nhập xong.', passwordPwned:'Mật khẩu này đã từng bị lộ trong một vụ rò rỉ dữ liệu. Vui lòng chọn mật khẩu khác.', settingsWrongPasswordProvider:'Mật khẩu không đúng. Nếu bạn đăng ký bằng Google, hãy đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".', accountPopTitle:'Tài khoản và màu của tôi',
     guestModeBtn:'Tiếp tục với tư cách khách', guestBannerText:'Chế độ khách. Chức năng bị giới hạn. Mọi thứ bạn thêm vào đây sẽ không được lưu vào tài khoản.', guestDisplayName:'Khách',
     hAddCourse:'Thêm khóa học', courseTitle:'Tên khóa học', courseCode:'Mã khóa học', courseProfessor:'Giáo sư', courseClassroom:'Phòng học',
     courseTime:'Giờ học', courseConcentration:'Chuyên ngành', courseStatus:'Trạng thái', courseSyllabus:'Đề cương',
@@ -11713,7 +11730,7 @@ const I18N = {
     gramRegister:'Văn phong', gramColloquial:'Khẩu ngữ', gramWritten:'Văn viết', gramFavorite:'Yêu thích – Đánh dấu khó/quan trọng', gramSortFavorite:'Yêu thích trước', gramViewSimilar:'Xem các mẫu ngữ pháp tương tự', gramQuickNote:'+ Ghi chú từ mẫu này', gramAddToggleBtn:'+ Thêm ngữ pháp', gramAddSaveBtn:'Thêm vào ngân hàng ngữ pháp', gramAddMissingFields:'Nhập mẫu câu và ít nhất một nghĩa (xem gợi ý định dạng dán bên dưới).', gramAddSaveFailed:'Không thể lưu. Hãy chắc chắn bảng grammar_points tồn tại.', gramAiPromptIntro:'Sao chép prompt này vào bất kỳ AI chat nào (ChatGPT, Claude, v.v.) và dán câu trả lời của nó vào bên dưới -- nó sẽ tự điền mọi thứ (cấp độ, tần suất, độ khó, mức trang trọng, mức lịch sự, văn phong, định nghĩa, ví dụ) cho từng mẫu ngữ pháp bạn đã liệt kê ở trên.', gramCopyAiPromptBtn:'Sao chép prompt AI', gramCopyAiPromptCopied:'Đã sao chép!', gramPasteAiAnswerLabel:'Dán câu trả lời của AI vào đây', gramAdvancedAddToggle:'Nâng cao / nhập thủ công', gramSimpleAddToggle:'‹ Quay lại thêm đơn giản', gramAddPatternNamesLabel:'Mẫu ngữ pháp', gramAddPatternNamesHint:'Mỗi dòng một mẫu. Có thể thêm nhiều mẫu cùng lúc -- một prompt/dán sẽ xử lý tất cả.',
     gramYourSentences:'Câu luyện tập của bạn', gramSentencePlaceholder:'Viết một câu dùng mẫu này...', gramAddSentence:'Thêm', lblGramSort:'Sắp xếp', gramSortDefault:'Mặc định', gramSortFreqDesc:'Phổ biến nhất trước', gramSortFreqAsc:'Ít phổ biến nhất trước', gramFrequencyHeader:'Tần suất', gramLevelHeader:'Cấp độ',
     gramMarkNotReviewed:'Đánh dấu chưa ôn tập', gramMarkReviewedAgain:'Hoàn tác – Đánh dấu đã ôn tập', gramResources:'Video & liên kết', gramResourceUrlPlaceholder:'URL YouTube hoặc trang web', gramResourceLabelPlaceholder:'Nhãn (tùy chọn)', gramAddResource:'Thêm',
-    hRecap:'Tổng kết',recapWeekBtn:'7 ngày qua',recapMonthBtn:'30 ngày qua',recapStudyHours:'Giờ học',recapGrammarPracticed:'Câu ngữ pháp đã luyện',recapBooksFinished:'Sách đã đọc xong',recapJobsSent:'Đơn ứng tuyển đã gửi',hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng.',quizFromCluster:'Nhóm so sánh:',quizFillBlank:'Điền vào chỗ trống',quizCorrectAnswerLabel:'Đáp án đúng:',quizHistoryHeader:'Lịch sử trắc nghiệm của bạn',quizMaxScoreLabel:'Điểm cao nhất',quizAttemptsCountLabel:'Số lần làm',quizAverageLabel:'Trung bình',quizNoAttemptsYet:'Chưa có lượt làm nào.',quizDueCount:'{n} mẫu ngữ pháp cần ôn tập',quizReviewDueBtn:'Ôn tập các mẫu cần ôn',hLinkedCircle:'Nhóm liên kết',linkedCircleDesc:'Liên kết với người dùng khác để chia sẻ dữ liệu học tập. Tối đa 10 người, và bạn tự quyết định chia sẻ những gì.',linkInvitedYou:'{name} đã mời bạn liên kết.',linkAcceptBtn:'Chấp nhận',linkDeclineBtn:'Từ chối',linkLeaveBtn:'Rời nhóm',linkRosterHeader:'Nhóm của bạn',linkStatusAccepted:'Đã liên kết', circleOnlineNow:'Trực tuyến', circleTabMessages:'Tin nhắn', circleOnlineCount:'{n} trực tuyến', circleSearchPlaceholder:'Tìm tin nhắn...', circleFilesBtn:'Tệp', circleNoResults:'Không có tin nhắn phù hợp.', circleNoFiles:'Chưa có gì được chia sẻ.', circleSearching:'Đang tìm...', circleLoadOlder:'Xem tin nhắn cũ hơn', circleAttach:'Đính kèm tệp', circleUploading:'Đang tải lên...', circleUploadFailed:'Không thể tải tệp lên.', circleFileTooBig:'Tệp vượt quá 25 MB.', circleAttachment:'Tệp đính kèm', circleJumpToDay:'Đi tới một ngày', circleSearchMessages:'Tìm tin nhắn', circleCloseSearch:'Đóng tìm kiếm', circleBackToChat:'Quay lại tin nhắn', circleSent:'Đã gửi', circleReadBy:'{names} đã đọc', circleNoMessagesThatDay:'Ngày đó không có tin nhắn.', circleTabCircle:'Nhóm', circleThreadEveryone:'Mọi người', circleNoMessages:'Chưa có tin nhắn nào.', circleMessagePlaceholder:'Viết tin nhắn...', circleSendBtn:'Gửi', circleOnlineTitle:'Đang trực tuyến: {names}', linkedCircleTitle:'Nhóm liên kết',linkStatusPending:'Đã gửi lời mời. Đang chờ phản hồi',linkJustAccepted:'Đã chấp nhận!',linkRemoveBtn:'Xóa khỏi nhóm',linkRemoveConfirm:'Xóa {name} khỏi nhóm của bạn? Hai bên sẽ không còn thấy hoặc chia sẻ dữ liệu với nhau.',linkCatSearchPlaceholder:'Tìm những gì bạn chia sẻ…',linkInviteSearchPlaceholder:'Tìm theo tên...',linkInviteBtn:'Mời',linkNoResults:'Không tìm thấy người dùng phù hợp.',linkCatStudyEntries:'Nhật ký học tập',linkCatBooks:'Danh sách đọc',linkCatJobApplications:'Đơn ứng tuyển',linkCatGrammarNotes:'Ghi chú luyện ngữ pháp',linkCatCourseNotes:'Ghi chú khóa học',linkCatWritingSamples:'Bài viết & phản hồi',linkCatRecap:'Tổng kết tuần/tháng',linkCatReadiness:'Mức độ sẵn sàng ngữ pháp',linkCatCalendar:'Lịch',linkCatNotebook:'Sổ tay',linkCatCourses:'Khóa học',linkSharingHeader:'Những gì bạn đang chia sẻ',linkSharingHint:'Đây là cài đặt của riêng bạn. Bạn có thể đặt trước khi mời ai đó, hoặc thay đổi bất cứ lúc nào sau khi đã liên kết. Áp dụng cho tất cả những người bạn đang liên kết.',linkCustomizeFor:'Tùy chỉnh những gì bạn chia sẻ với {name}',linkOverrideHint:'Ghi đè cài đặt mặc định chỉ riêng cho {name}.',linkResetOverridesBtn:'Đặt lại về mặc định',linkGroupFullMsg:'Nhóm của bạn đã đạt giới hạn 10 người.',linkErrorGeneric:'Đã có lỗi xảy ra. Vui lòng thử lại.',linkNotLinkedYet:'Bạn chưa liên kết với ai. Hãy tìm kiếm bên dưới để gửi lời mời.',linkInviteSentMsg:'Đã gửi lời mời.',linkStatusAlwaysShared:'Luôn được chia sẻ',writingFeedbackHeader:'Phản hồi',writingFeedbackPlaceholder:'Để lại phản hồi cho bài viết này...',writingFeedbackSendBtn:'Gửi',writingFeedbackEmpty:'Chưa có phản hồi nào.', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập. Để trống dòng nào sẽ xóa trường đó.',
+    hRecap:'Tổng kết',recapWeekBtn:'7 ngày qua',recapMonthBtn:'30 ngày qua',someoneName:'Ai đó', recapCoursesStarted:'Khóa học đã bắt đầu', recapCoursesFinished:'Khóa học đã kết thúc', recapProjectsStarted:'Dự án đã bắt đầu', recapProjectsFinished:'Dự án đã hoàn thành', recapNotesWritten:'Ghi chú đã viết', recapTodosDone:'Việc đã xong', recapStudyHours:'Giờ học',recapGrammarPracticed:'Câu ngữ pháp đã luyện',recapBooksFinished:'Sách đã đọc xong',recapJobsSent:'Đơn ứng tuyển đã gửi',hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng.',quizFromCluster:'Nhóm so sánh:',quizFillBlank:'Điền vào chỗ trống',quizCorrectAnswerLabel:'Đáp án đúng:',quizHistoryHeader:'Lịch sử trắc nghiệm của bạn',quizMaxScoreLabel:'Điểm cao nhất',quizAttemptsCountLabel:'Số lần làm',quizAverageLabel:'Trung bình',quizNoAttemptsYet:'Chưa có lượt làm nào.',quizDueCount:'{n} mẫu ngữ pháp cần ôn tập',quizReviewDueBtn:'Ôn tập các mẫu cần ôn',hLinkedCircle:'Nhóm liên kết',linkedCircleDesc:'Liên kết với người dùng khác để chia sẻ những gì bạn theo dõi. Tối đa 10 người, và bạn tự quyết định chia sẻ những gì.',linkInvitedYou:'{name} đã mời bạn liên kết.',linkAcceptBtn:'Chấp nhận',linkDeclineBtn:'Từ chối',linkLeaveBtn:'Rời nhóm',linkRosterHeader:'Nhóm của bạn',linkStatusAccepted:'Đã liên kết', circleOnlineNow:'Trực tuyến', circleTabMessages:'Tin nhắn', circleOnlineCount:'{n} trực tuyến', circleSearchPlaceholder:'Tìm tin nhắn...', circleFilesBtn:'Tệp', circleNoResults:'Không có tin nhắn phù hợp.', circleNoFiles:'Chưa có gì được chia sẻ.', circleSearching:'Đang tìm...', circleLoadOlder:'Xem tin nhắn cũ hơn', circleAttach:'Đính kèm tệp', circleUploading:'Đang tải lên...', circleUploadFailed:'Không thể tải tệp lên.', circleFileTooBig:'Tệp vượt quá 25 MB.', circleAttachment:'Tệp đính kèm', circleJumpToDay:'Đi tới một ngày', circleSearchMessages:'Tìm tin nhắn', circleCloseSearch:'Đóng tìm kiếm', circleBackToChat:'Quay lại tin nhắn', circleSent:'Đã gửi', circleReadBy:'{names} đã đọc', circleNoMessagesThatDay:'Ngày đó không có tin nhắn.', circleTabCircle:'Nhóm', circleThreadEveryone:'Mọi người', circleNoMessages:'Chưa có tin nhắn nào.', circleMessagePlaceholder:'Viết tin nhắn...', circleSendBtn:'Gửi', circleOnlineTitle:'Đang trực tuyến: {names}', linkedCircleTitle:'Nhóm liên kết',linkStatusPending:'Đã gửi lời mời. Đang chờ phản hồi',linkJustAccepted:'Đã chấp nhận!',linkRemoveBtn:'Xóa khỏi nhóm',linkRemoveConfirm:'Xóa {name} khỏi nhóm của bạn? Hai bên sẽ không còn thấy hoặc chia sẻ dữ liệu với nhau.',linkCatSearchPlaceholder:'Tìm những gì bạn chia sẻ…',linkInviteSearchPlaceholder:'Tìm theo tên...',linkInviteBtn:'Mời',linkNoResults:'Không tìm thấy người dùng phù hợp.',linkCatStudyEntries:'Nhật ký học tập',linkCatBooks:'Danh sách đọc',linkCatJobApplications:'Đơn ứng tuyển',linkCatGrammarNotes:'Ghi chú luyện ngữ pháp',linkCatCourseNotes:'Ghi chú khóa học',linkCatWritingSamples:'Bài viết & phản hồi',linkCatRecap:'Tổng kết tuần/tháng',linkCatReadiness:'Mức độ sẵn sàng ngữ pháp',linkCatCalendar:'Lịch',linkCatNotebook:'Sổ tay',linkCatCourses:'Khóa học',linkSharingHeader:'Những gì bạn đang chia sẻ',linkSharingHint:'Đây là cài đặt của riêng bạn. Bạn có thể đặt trước khi mời ai đó, hoặc thay đổi bất cứ lúc nào sau khi đã liên kết. Áp dụng cho tất cả những người bạn đang liên kết.',linkCustomizeFor:'Tùy chỉnh những gì bạn chia sẻ với {name}',linkOverrideHint:'Ghi đè cài đặt mặc định chỉ riêng cho {name}.',linkResetOverridesBtn:'Đặt lại về mặc định',linkGroupFullMsg:'Nhóm của bạn đã đạt giới hạn 10 người.',linkErrorGeneric:'Đã có lỗi xảy ra. Vui lòng thử lại.',linkNotLinkedYet:'Bạn chưa liên kết với ai. Hãy tìm kiếm bên dưới để gửi lời mời.',linkInviteSentMsg:'Đã gửi lời mời.',linkStatusAlwaysShared:'Luôn được chia sẻ',writingFeedbackHeader:'Phản hồi',writingFeedbackPlaceholder:'Để lại phản hồi cho bài viết này...',writingFeedbackSendBtn:'Gửi',writingFeedbackEmpty:'Chưa có phản hồi nào.', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập. Để trống dòng nào sẽ xóa trường đó.',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt', statusTeachingAssistant:'Trợ giảng (TA)', statusResearchAssistant:'Trợ lý nghiên cứu (RA)',
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương', saveShortLink:'Lưu liên kết', copyLink:'Sao chép', shortLinkSaved:'Đã lưu liên kết.', shortLinkTaken:'Liên kết này đã được dùng.', shortLinkInvalid:'Chỉ dùng chữ, số và dấu gạch ngang.', shortLinkCopied:'Đã sao chép!', shortLinkAutoPlaceholder:'tự động',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học (tùy chọn)', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
@@ -11724,12 +11741,14 @@ const I18N = {
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
     tabYonsei:'Yonsei', tabTodos:'Việc cần làm', hAddTodo:'Thêm việc cần làm', lblTodoTitle:'Việc cần làm', lblTodoDue:'Hạn (tùy chọn)', lblTodoTime:'Giờ (tùy chọn)', lblTodoRemind:'Nhắc tôi', remindAtTime:'Đúng giờ', remindHourBefore:'Trước 1 giờ', remindMorningOf:'Sáng hôm đó (8:00)', remindDayBefore:'Trước 1 ngày', remindCustom:'Chọn giờ', addTodoBtn:'Thêm việc', hTodoList:'Việc cần làm của bạn', todoToday:'Hôm nay', todoTomorrow:'Ngày mai', todoOverdue:'Quá hạn', todoDone:'Đã xong', todoClearDone:'Xóa việc đã xong', todoClearDoneConfirm:'Xóa {n} việc đã xong?', deleteTodoConfirm:'Xóa việc "{title}"?', todoMarkDone:'Đánh dấu đã xong', todoMarkOpen:'Đánh dấu chưa xong', todoShowOnCalendar:'Hiện trên lịch', todoShareCircle:'Chia sẻ với nhóm của bạn', todoNotesLabel:'Ghi chú (tùy chọn)', todoSave:'Lưu', todoCancel:'Hủy', todoEdit:'Sửa', todoDelete:'Xóa', todoAllCourses:'Tất cả khóa học', todoAllProjects:'Tất cả dự án', notifTypeTodoReminder:'Nhắc việc cần làm', notifTodoReminderTitleTpl:'Việc cần làm: {title}', hWorkspaceSetup:'Thiết lập Productivity Tracker', wsWhereLabel:'Bạn sẽ dùng ở đâu?', wsKindYonsei:'Yonsei', wsKindSchool:'Trường khác', wsKindWork:'Công việc', wsNameLabel:'Tên thẻ', wsKoreanLabel:'Thẻ học tiếng Hàn', wsContinue:'Tiếp tục', wsSave:'Lưu', wsSaved:'Đã lưu.', wsSettingsHeading:'Thẻ trường học hoặc công việc', workspaceSchoolDefault:'Trường học', workspaceWorkDefault:'Công việc', tabProjects:'Dự án', hAddProject:'Thêm dự án', projectTitle:'Tên dự án', projectLocation:'Địa điểm', addProjectBtn:'Thêm dự án', projectHint:'Chỉ tên dự án và thời gian là bắt buộc.', deleteProjectConfirm:'Xóa dự án này? Thao tác này cũng xóa các mục lịch và ghi chú của dự án cho tất cả mọi người.', lockInProjectConfirm:'Chốt dự án này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đang thực hiện.', statusActive:'Đang thực hiện', hYourProjects:'Dự án của bạn', hProjectList:'Tất cả dự án', lblNotesProject:'Dự án (tùy chọn)', noProject:'Không có dự án', notesEmptyHintWork:'Hãy thêm dự án trong tab Dự án trước, sau đó tạo ghi chú ở đây.', hNotesWork:'Ghi chú của bạn', kindProject:'Dự án', hProjectsCal:'Dự án', linkCatProjects:'Dự án', linkCatProjectNotes:'Ghi chú dự án', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', lblYonseiBoardsSince:'Khoảng thời gian', lblYonseiBoardsSort:'Sắp xếp', yonseiPeriodAll:'Mọi lúc', yonseiPeriodWeek:'Tuần trước', yonseiPeriodMonth:'Tháng trước', yonseiPeriod6Months:'6 tháng qua', yonseiPeriodYear:'Năm trước', yonseiPeriod2Years:'2 năm qua', yonseiPeriod3Years:'3 năm qua', yonseiPeriod4Years:'4 năm qua', yonseiPeriod5Years:'5 năm qua', yonseiSortNewest:'Mới nhất', yonseiSortOldest:'Cũ nhất', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobsSubJobBoard:'Bảng', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardAiUpdateBtn:'Kiểm tra AI', jobBoardAiFetching:'Đang lấy dữ liệu', jobBoardUpdating:'Đang cập nhật...', jobBoardIndBankingFinance:'Ngân hàng/Tài chính', jobBoardIndConsumerFashion:'Hàng tiêu dùng/Thời trang', jobBoardIndForeignFirms:'Doanh nghiệp nước ngoài', jobBoardIndIntlOrg:'Tổ chức quốc tế', jobBoardIndNGO:'Tổ chức phi chính phủ (NGO)', jobBoardIndOthers:'Khác', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Khu vực công', jobBoardIndResearchInstitute:'Viện nghiên cứu', jobBoardIndTechnology:'Công nghệ', jobBoardIndTopChaebol:'Tập đoàn lớn (Chaebol)', jobBoardIndTrade:'Thương mại', jobBoardNewBadge:'MỚI', cdcLoginWarnTitle:'Đã đăng nhập vào CDC chưa?', cdcLoginWarnBody:'Trang CDC của Yonsei cần đăng nhập riêng. Hãy chắc chắn bạn đã đăng nhập ở đó trước khi mở tin này, nếu không trang có thể không tải đúng.', cdcLoginWarnContinueBtn:'Tiếp tục', cdcLoginWarnLoginBtn:'Đăng nhập', cdcLoginWarnCancelBtn:'Hủy',
-    tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào. Tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', expLoadFailedHint:'Không thể tải chuyến đi của bạn. Kiểm tra kết nối và thử lại.', expRetryLoadBtn:'Thử lại', expAmountInvalid:'Nhập một số, có thể kết thúc bằng k hoặc m (vd: 4k, 1.5m).', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', hExpAllExpenses:'Tất cả khoản chi', sortLabel:'Sắp xếp', sortFieldStatus:'Trạng thái', sortFieldCompany:'Công ty', sortFieldRole:'Vị trí', sortFieldIssuer:'Đơn vị cấp', sortFieldDeadline:'Hạn nộp', sortFieldTitle:'Tiêu đề', sortFieldPosted:'Ngày đăng', sortFieldMfa:'Xác thực 2 bước', sortFieldConfirmed:'Đã xác nhận', sortFieldDate:'Ngày', sortFieldAmount:'Số tiền', sortFieldName:'Tên', sortFieldCategory:'Danh mục', sortFieldPaidBy:'Người trả', sortAsc:'Đang sắp tăng dần. Nhấn để sắp giảm dần.', sortDesc:'Đang sắp giảm dần. Nhấn để sắp tăng dần.', sortThen:'rồi', sortMultiple:'Sắp xếp nhiều tiêu chí', expExcluded:'{n} khoản chi bị loại', expShowLabel:'Hiển thị', expShowAll:'Tất cả', expShowCounted:'Chỉ mục được tính', expShowExcluded:'Chỉ mục bị loại', expNoExcluded:'Hiện không có mục nào bị loại.', expNoCounted:'Hiện tất cả các mục đều bị loại.', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCountCategory:'Tính danh mục này', expDontCountCategory:'Không tính danh mục này', expCountAllCategories:'Tính tất cả danh mục', expDontCountDay:'Không tính ngày này', expCountDay:'Tính ngày này', expDontCountExpense:'Không tính khoản chi này', expCountExpense:'Tính khoản chi này', expCountEverything:'Tính tất cả', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên. Một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', hEditVacation:'Sửa chuyến đi', expPickVacationHint:'Chọn một chuyến đi ở trên.', expVacationDeleteConfirm:'Xóa "{name}"? Mọi khoản chi đã ghi cho chuyến đi này sẽ bị xóa theo, với tất cả mọi người trong chuyến.', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expCircleEmpty:'Bạn chưa liên kết với ai. Hãy thêm người vào Nhóm liên kết trong Cài đặt tài khoản.', expCircleAllOnTrip:'Mọi người trong Nhóm liên kết của bạn đã tham gia chuyến đi này.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi', lblExpCustomCategoryName:'Tên tùy chỉnh (không bắt buộc)', optNewVacationCurrencyCustom:'Khác…', lblNewVacationCustomCurrency:'Mã tiền tệ', lblExpDisplayCurrency:'Hiển thị bằng', optExpDisplayCurrencyOriginal:'Ban đầu', lblExpDisplayFull:'Đổi mọi số tiền', expDisplayFullHint:'Hiển thị mọi số tiền bằng loại tiền đã chọn. Số tiền đã nhập vẫn giữ nguyên, nên khi đổi lại sẽ thấy đúng số đã nhập.', hInviteBySearch:'Hoặc mời theo tên', vacationInviteSearchPlaceholder:'Tìm theo tên...', recapLoadingHint:'Đang tải...', shellUpdatedText:'Đã có phiên bản mới.', shellUpdatedBtn:'Tải lại', qlVisit:'Mở liên kết:', qlEnterLink:'Nhập liên kết:', qlEnterVideo:'Nhập video:', qlEdit:'Sửa', qlSave:'Lưu', qlRemove:'Xóa'
+    tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào. Tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', expLoadFailedHint:'Không thể tải chuyến đi của bạn. Kiểm tra kết nối và thử lại.', expRetryLoadBtn:'Thử lại', expAmountInvalid:'Nhập một số, có thể kết thúc bằng k hoặc m (vd: 4k, 1.5m).', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', hExpAllExpenses:'Tất cả khoản chi', sortLabel:'Sắp xếp', sortFieldStatus:'Trạng thái', sortFieldCompany:'Công ty', sortFieldRole:'Vị trí', sortFieldIssuer:'Đơn vị cấp', sortFieldDeadline:'Hạn nộp', sortFieldTitle:'Tiêu đề', sortFieldPosted:'Ngày đăng', sortFieldMfa:'Xác thực 2 bước', sortFieldConfirmed:'Đã xác nhận', sortFieldDate:'Ngày', sortFieldAmount:'Số tiền', sortFieldName:'Tên', sortFieldCategory:'Danh mục', sortFieldPaidBy:'Người trả', sortAsc:'Đang sắp tăng dần. Nhấn để sắp giảm dần.', sortDesc:'Đang sắp giảm dần. Nhấn để sắp tăng dần.', sortThen:'rồi', sortMultiple:'Sắp xếp nhiều tiêu chí', expExcluded:'{n} khoản chi bị loại', expShowLabel:'Hiển thị', expShowAll:'Tất cả', expShowCounted:'Chỉ mục được tính', expShowExcluded:'Chỉ mục bị loại', expNoExcluded:'Hiện không có mục nào bị loại.', expNoCounted:'Hiện tất cả các mục đều bị loại.', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCountCategory:'Tính danh mục này', expDontCountCategory:'Không tính danh mục này', expCountAllCategories:'Tính tất cả danh mục', expDontCountDay:'Không tính ngày này', expCountDay:'Tính ngày này', expDontCountExpense:'Không tính khoản chi này', expCountExpense:'Tính khoản chi này', expCountEverything:'Tính tất cả', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên. Một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', hEditVacation:'Sửa chuyến đi', expPickVacationHint:'Chọn một chuyến đi ở trên.', expVacationDeleteConfirm:'Xóa "{name}"? Mọi khoản chi đã ghi cho chuyến đi này sẽ bị xóa theo, với tất cả mọi người trong chuyến.', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expCircleEmpty:'Bạn chưa liên kết với ai. Hãy thêm người vào Nhóm liên kết trong Cài đặt tài khoản.', expCircleAllOnTrip:'Mọi người trong Nhóm liên kết của bạn đã tham gia chuyến đi này.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi', lblExpCustomCategoryName:'Tên tùy chỉnh (không bắt buộc)', optNewVacationCurrencyCustom:'Khác…', lblNewVacationCustomCurrency:'Mã tiền tệ', lblExpDisplayCurrency:'Hiển thị bằng', optExpDisplayCurrencyOriginal:'Ban đầu', lblExpDisplayFull:'Đổi mọi số tiền', expDisplayFullHint:'Hiển thị mọi số tiền bằng loại tiền đã chọn. Số tiền đã nhập vẫn giữ nguyên, nên khi đổi lại sẽ thấy đúng số đã nhập.', hInviteBySearch:'Hoặc mời theo tên', vacationInviteSearchPlaceholder:'Tìm theo tên...', recapLoadingHint:'Đang tải...', shellUpdatedText:'Đã có phiên bản mới.', shellUpdatedBtn:'Tải lại', qlVisit:'Mở liên kết:', qlEnterLink:'Nhập liên kết:', qlEnterVideo:'Nhập video:', qlEdit:'Sửa', qlSave:'Lưu', qlRemove:'Xóa',
+    authEnterEmailPassword:'Hãy nhập email và mật khẩu.', authInvalidLogin:'Email, tên hoặc mật khẩu không đúng.', authEmailNotConfirmed:'Hãy xác nhận email trước. Đường liên kết nằm trong email chúng tôi đã gửi.', authAlreadyRegistered:'Đã có tài khoản dùng email này. Hãy đăng nhập.', authRateLimited:'Bạn đã thử quá nhiều lần. Hãy đợi một lát rồi thử lại.', authEmailInvalid:'Địa chỉ email này không hợp lệ.', authSamePassword:'Hãy chọn mật khẩu khác với mật khẩu hiện tại.', authNetworkError:'Không thể kết nối máy chủ. Hãy kiểm tra kết nối rồi thử lại.', authSignupsClosed:'Hiện chưa mở đăng ký.', authLinkExpired:'Đường liên kết đã hết hạn hoặc đã được dùng. Hãy yêu cầu liên kết mới.', guestUnavailable:'Không khả dụng ở chế độ khách.', tipDelete:'Xóa', tipRemove:'Gỡ bỏ', tipMoveUp:'Chuyển lên', tipMoveDown:'Chuyển xuống', tipDarkMode:'Bật/tắt chế độ tối', tipMyNotes:'Ghi chú của tôi', tipClickToEdit:'Nhấn để sửa', tipJumpToDate:'Đến ngày', tipPagesRead:'Số trang đã đọc', tipJobBoardAiUpdate:'Mở lần lượt từng tin đăng hôm nay và lưu toàn bộ mô tả vào một tệp trên máy', notesLinkShortcutPrompt:'Tên phím tắt:', saveFailedTryAgain:'Không lưu được. Hãy thử lại.', termsLink:'Điều khoản sử dụng', deleteWithGoogleBtn:'Xác nhận bằng Google', deleteOrPassword:'hoặc bằng mật khẩu', deleteNoPasswordHint:'Chưa có mật khẩu? Hãy đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".', deleteGoogleConfirmed:'Đã xác nhận bằng Google. Nhấn "Xóa tài khoản của tôi" để hoàn tất.', deleteGoogleNotFinished:'Đăng nhập Google chưa hoàn tất nên chưa có gì bị xóa.', deleteGoogleWrongAccount:'Tài khoản Google đó thuộc về một tài khoản khác ở đây nên chưa có gì bị xóa. Bạn đang đăng nhập bằng {email}.', deleteGoogleExpired:'Đã hơn 10 phút kể từ khi bạn xác nhận. Hãy xác nhận lại bằng Google.', settingsDeleteWrongPasswordGoogle:'Mật khẩu không đúng. Hãy dùng "Xác nhận bằng Google" ở trên, hoặc đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".'
   }
 };
 const STATIC_MAP = {
   authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password',
-  authAgeNote:'authAgeNote', authPrivacyLink:'privacyPolicyLink', settingsPrivacyLink:'privacyPolicyLink',
+  authAgeNote:'authAgeNote', authPrivacyLink:'privacyPolicyLink', settingsPrivacyLink:'privacyPolicyLink', authTermsLink:'termsLink', settingsTermsLink:'termsLink',
+  deleteWithGoogleLabel:'deleteWithGoogleBtn', lblDeleteOrPassword:'deleteOrPassword', deleteNoPasswordHint:'deleteNoPasswordHint', deleteGoogleConfirmedNote:'deleteGoogleConfirmed',
   lblOauthOr:'oauthOr', lblChooseNameTitle:'chooseNameTitle', lblChooseNameField:'yourName', chooseNameBtn:'chooseNameBtn',
   signOutBtn:'signOut',
   tabBtnStudyLabel:'tabStudy', tabBtnReadingLabel:'tabReading', tabBtnJobsLabel:'tabJobs', tabBtnCalendarLabel:'tabHome', tabBtnYonseiLabel:'tabYonsei',
@@ -11890,7 +11909,7 @@ function capFirst(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
    a profile, and a `let` read there would be read before it exists. */
 var workspaceKind = 'yonsei';   // 'yonsei' | 'school' | 'work' | null (not chosen yet)
 var workspaceName = null;       // null = the kind's own default name
-var WORK_KEYS = { tabCourses:'tabProjects', hAddCourse:'hAddProject', courseTitle:'projectTitle', courseClassroom:'projectLocation', addCourseBtn:'addProjectBtn', courseHint:'projectHint', deleteCourseConfirm:'deleteProjectConfirm', lockInCourseConfirm:'lockInProjectConfirm', statusSignedUp:'statusActive', hYourCourses:'hYourProjects', hCourseList:'hProjectList', lblNotesCourse:'lblNotesProject', noNote:'noProject', notesEmptyHint:'notesEmptyHintWork', hLectures:'hNotesWork', kindCourse:'kindProject', hCoursesCal:'hProjectsCal', linkCatCourses:'linkCatProjects', linkCatCourseNotes:'linkCatProjectNotes', todoAllCourses:'todoAllProjects' };
+var WORK_KEYS = { tabCourses:'tabProjects', hAddCourse:'hAddProject', courseTitle:'projectTitle', courseClassroom:'projectLocation', addCourseBtn:'addProjectBtn', courseHint:'projectHint', deleteCourseConfirm:'deleteProjectConfirm', lockInCourseConfirm:'lockInProjectConfirm', statusSignedUp:'statusActive', hYourCourses:'hYourProjects', hCourseList:'hProjectList', lblNotesCourse:'lblNotesProject', noNote:'noProject', notesEmptyHint:'notesEmptyHintWork', hLectures:'hNotesWork', kindCourse:'kindProject', hCoursesCal:'hProjectsCal', linkCatCourses:'linkCatProjects', linkCatCourseNotes:'linkCatProjectNotes', todoAllCourses:'todoAllProjects', recapCoursesStarted:'recapProjectsStarted', recapCoursesFinished:'recapProjectsFinished' };
 function tRaw(key){ return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key; }
 function workspaceDefaultKey(kind){ return kind === 'work' ? 'workspaceWorkDefault' : kind === 'school' ? 'workspaceSchoolDefault' : 'tabYonsei'; }
 function workspaceTabName(){
@@ -11944,6 +11963,11 @@ let mfaEnrollFactorId = null;
 // answer is kept on the device so the buttons are there on the first frame.
 const OAUTH_PROVIDERS = [
   { id:'google', labelKey:'oauthGoogle', icon:'<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>' },
+];
+// Hidden for now (real-user request, 29 Sep: "hide kakao, github, linkedin for
+// now. we dont use it"). Kept with their marks, so offering one again is moving
+// its line back into the list above and switching it on in Supabase.
+const OAUTH_PROVIDERS_PARKED = [
   { id:'kakao', labelKey:'oauthKakao', icon:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#FEE500"/><path fill="#191919" d="M12 5.5c-4.14 0-7.5 2.62-7.5 5.86 0 2.08 1.39 3.9 3.48 4.94l-.71 2.6c-.06.23.2.41.4.28l3.08-2.04c.41.05.83.08 1.25.08 4.14 0 7.5-2.62 7.5-5.86S16.14 5.5 12 5.5z"/></svg>' },
   { id:'github', labelKey:'oauthGithub', icon:'<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>' },
   { id:'linkedin_oidc', labelKey:'oauthLinkedin', icon:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0A66C2"/><path fill="#fff" d="M7.1 9.6H4.6V19h2.5V9.6zM5.85 5a1.45 1.45 0 1 0 0 2.9 1.45 1.45 0 0 0 0-2.9zM19.4 13.6c0-2.5-1.3-4.2-3.6-4.2-1.3 0-2.1.7-2.5 1.3V9.6h-2.4V19h2.5v-4.9c0-1.3.5-2.3 1.8-2.3 1.2 0 1.7.9 1.7 2.3V19h2.5v-5.4z"/></svg>' },
@@ -12304,7 +12328,7 @@ function todayStr(d = new Date()){
   const local = new Date(d.getTime() - off*60000);
   return local.toISOString().slice(0,10);
 }
-function nameFor(userId){ return profiles[userId] || 'Someone'; }
+function nameFor(userId){ return profiles[userId] || t('someoneName'); }
 function fmt(n){ return Number(n.toFixed(2)).toString(); }
 function pluralUnit(n, singularWord, pluralWord){
   return n === 1 ? singularWord : pluralWord;
@@ -13061,6 +13085,12 @@ function applyLanguage(lang){
   document.getElementById('writingQ53Search').placeholder = t('writingSearchPlaceholder');
   document.getElementById('vacationInviteSearchInput').placeholder = t('vacationInviteSearchPlaceholder');
   document.querySelectorAll('[data-ph-key]').forEach(el=>{ el.placeholder = t(el.dataset.phKey); });
+  // Tooltips and accessible names written in the markup name a key, not a
+  // word, so they follow the language like the visible labels do.
+  document.querySelectorAll('[data-title-key]').forEach(el=>{ el.title = t(el.dataset.titleKey); });
+  document.querySelectorAll('[data-aria-key]').forEach(el=>{ el.setAttribute('aria-label', t(el.dataset.ariaKey)); });
+  // The privacy policy and the terms open in the language the app is in.
+  document.querySelectorAll('a[data-legal]').forEach(a=>{ a.href = '/' + a.dataset.legal + '.html?lang=' + currentLang; });
   const launcher = document.getElementById('chatLauncher');
   if(launcher) launcher.title = t('circleTabMessages');
   const ai = document.getElementById('cmAttachIcon');
@@ -13145,6 +13175,28 @@ function setAuthMode(mode){
   document.getElementById('authMsg').innerHTML = '';
   hideResendConfirm();
 }
+// Supabase answers in English whatever the page is in, so the errors a person
+// is actually likely to meet are said in the app's own language. Matched on
+// the error's code first and its wording second (the sign-in-by-name function
+// and an address a provider sends back carry only the wording). Anything not
+// recognised is shown as it came, since an English reason beats none.
+function authErrorText(error){
+  if(!error) return '';
+  const code = String(error.code || error.error_code || '').toLowerCase();
+  const msg = String(error.message || error.error_description || error || '');
+  const is = (codes, re) => codes.includes(code) || re.test(msg);
+  if(is(['invalid_credentials', 'invalid_grant'], /invalid login credentials/i)) return t('authInvalidLogin');
+  if(is(['email_not_confirmed'], /email not confirmed/i)) return t('authEmailNotConfirmed');
+  if(is(['user_already_exists', 'email_exists'], /already (been )?registered|already exists/i)) return t('authAlreadyRegistered');
+  if(is(['over_email_send_rate_limit', 'over_request_rate_limit', 'over_sms_send_rate_limit'], /rate limit|for security purposes|too many requests/i)) return t('authRateLimited');
+  if(is(['email_address_invalid', 'validation_failed'], /unable to validate email|invalid format|email address .* is invalid/i)) return t('authEmailInvalid');
+  if(is(['weak_password'], /password should be|password is too short|weak password/i)) return t('passwordTooShort');
+  if(is(['same_password'], /should be different from the old/i)) return t('authSamePassword');
+  if(is(['signup_disabled', 'email_provider_disabled'], /signups not allowed|signup is disabled/i)) return t('authSignupsClosed');
+  if(is(['otp_expired', 'flow_state_expired', 'flow_state_not_found'], /expired|invalid or has expired/i)) return t('authLinkExpired');
+  if(/failed to fetch|networkerror|load failed|network request failed/i.test(msg)) return t('authNetworkError');
+  return msg;
+}
 function showAuthMsg(text, type){
   document.getElementById('authMsg').innerHTML = `<div class="auth-msg-inner ${type}">${text}</div>`;
 }
@@ -13175,7 +13227,7 @@ document.getElementById('oauthList').addEventListener('click', async (e)=>{
     provider: btn.dataset.provider,
     options: { redirectTo: window.location.origin + window.location.pathname }
   });
-  if(error){ btn.disabled = false; showAuthMsg(escapeHtml(error.message), 'error'); }
+  if(error){ btn.disabled = false; showAuthMsg(escapeHtml(authErrorText(error)), 'error'); }
 });
 // A provider that refuses, or a sign-in link that has expired, comes back with
 // the reason in the address instead of a session. Read once and taken out of
@@ -13252,7 +13304,7 @@ document.getElementById('resendConfirmBtn').addEventListener('click', async ()=>
   const btn = document.getElementById('resendConfirmBtn');
   btn.disabled = true;
   const { error } = await supabaseClient.auth.resend({ type: 'signup', email: pendingConfirmEmail });
-  if(error){ showAuthMsg(escapeHtml(error.message), 'error'); btn.disabled = false; return; }
+  if(error){ showAuthMsg(escapeHtml(authErrorText(error)), 'error'); btn.disabled = false; return; }
   showAuthMsg(t('resendConfirmSent'), 'info');
   armResendConfirm(pendingConfirmEmail);
 });
@@ -13419,7 +13471,7 @@ function createDigitCodeRow(wrapId, length, progressFillId, successBadgeId, card
 }
 
 // Every signed-in arrival goes through here: a fresh sign-in, a reload, and
-// the return from Google, Kakao, GitHub or LinkedIn. It used to hold a new
+// the return from a provider such as Google. It used to hold a new
 // provider account back until the site PIN was redeemed; there is no PIN any
 // more (remove_site_pin_migration.sql), so it is the MFA check and nothing else.
 async function routeSignedInUser(user){
@@ -13450,13 +13502,13 @@ document.getElementById('tabSignUp').addEventListener('click', ()=>setAuthMode('
 document.getElementById('authSubmit').addEventListener('click', async ()=>{
   const rawInput = document.getElementById('emailInput').value.trim();
   const password = document.getElementById('passwordInput').value;
-  if(!rawInput || !password){ showAuthMsg('Enter email and password.', 'error'); return; }
+  if(!rawInput || !password){ showAuthMsg(t('authEnterEmailPassword'), 'error'); return; }
   setAuthSubmitLoading(true);
   try {
   if(authMode === 'signup'){
     const email = rawInput;
     const displayName = document.getElementById('displayNameInput').value.trim();
-    if(!displayName){ showAuthMsg('Enter a name.', 'error'); return; }
+    if(!displayName){ showAuthMsg(t('chooseNameEmpty'), 'error'); return; }
     if(displayName.length > 12){ showAuthMsg(t('settingsNameTooLong'), 'error'); return; }
     if(!isValidDisplayName(displayName)){ showAuthMsg(t('settingsNameInvalidChars'), 'error'); return; }
     if(password.length < 8){ showAuthMsg(t('passwordTooShort'), 'error'); return; }
@@ -13476,7 +13528,7 @@ document.getElementById('authSubmit').addEventListener('click', async ()=>{
     // supabase/email-templates/) can branch by {{ .Data.locale }} and send
     // this account's actual site language instead of a fixed default.
     const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { display_name: displayName, locale: currentLang } } });
-    if(error){ showAuthMsg(escapeHtml(error.message), 'error'); return; }
+    if(error){ showAuthMsg(escapeHtml(authErrorText(error)), 'error'); return; }
     if(data.session){ hideResendConfirm(); checkMfaAndProceed(data.user); }
     else { showAuthMsg(t('signupCheckEmail'), 'info'); armResendConfirm(email); }
   } else {
@@ -13487,21 +13539,21 @@ document.getElementById('authSubmit').addEventListener('click', async ()=>{
       // typed a name from the leaderboards.
       const { data: tokens, error: fnError } = await supabaseClient.functions.invoke('sign-in-by-name', { body: { name: rawInput, password } });
       if(fnError || !tokens || !tokens.access_token){
-        let message = 'Invalid login credentials';
+        let message = t('authInvalidLogin');
         try {
           const body = fnError && fnError.context && fnError.context.json ? await fnError.context.json() : null;
-          if(body && body.message) message = body.message;
+          if(body && (body.error || body.message)) message = authErrorText({ code: body.error, message: body.message });
         } catch(e){}
         showAuthMsg(escapeHtml(message), 'error'); return;
       }
       const { data: sessionData, error: sessionError } = await supabaseClient.auth.setSession({ access_token: tokens.access_token, refresh_token: tokens.refresh_token });
-      if(sessionError || !sessionData || !sessionData.user){ showAuthMsg(escapeHtml(sessionError ? sessionError.message : 'Invalid login credentials'), 'error'); return; }
+      if(sessionError || !sessionData || !sessionData.user){ showAuthMsg(escapeHtml(sessionError ? authErrorText(sessionError) : t('authInvalidLogin')), 'error'); return; }
       checkMfaAndProceed(sessionData.user);
       return;
     }
     const email = rawInput;
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if(error){ showAuthMsg(escapeHtml(error.message), 'error'); return; }
+    if(error){ showAuthMsg(escapeHtml(authErrorText(error)), 'error'); return; }
     checkMfaAndProceed(data.user);
   }
   } finally {
@@ -13546,7 +13598,7 @@ async function checkMfaAndProceed(user){
   }
   await proceedToApp(user);
 }
-// Google, Kakao, GitHub and LinkedIn never ask for a display name, and an
+// Google (like the parked providers) never asks for a display name, and an
 // email's local part is often not a valid one (dots, underscores, more than
 // 12 characters), so a first sign-in that has no name and no profile yet asks
 // for one before the app opens. The name is written to the account's
@@ -13704,7 +13756,10 @@ async function ensureProfileExists(user){
 async function onAuthed(user){
   // provider is how the account was first made ('email', or 'google' and the
   // like), which decides what a wrong-password message can usefully say.
-  currentUser = { id: user.id, email: user.email, provider: (user.app_metadata && user.app_metadata.provider) || 'email' };
+  // providers is every way it can sign in now (an email account can have
+  // Google linked), which decides whether deleting it can be confirmed with Google.
+  const meta = user.app_metadata || {};
+  currentUser = { id: user.id, email: user.email, provider: meta.provider || 'email', providers: Array.isArray(meta.providers) ? meta.providers : [meta.provider || 'email'] };
   document.getElementById('authScreen').classList.add('hidden');
   document.getElementById('resetScreen').classList.add('hidden');
   document.getElementById('mfaScreen').classList.add('hidden');
@@ -13760,6 +13815,7 @@ async function onAuthed(user){
   reorderMobileTabs();
   handleDeepLinkParam();
   syncPushOnSignIn();
+  resumeDeleteReauth(user);
 }
 // The "Open Productivity Tracker" / "View on Productivity Tracker" email
 // buttons carry a ?go=... query param (see email_deep_links_migration.sql)
@@ -13778,8 +13834,9 @@ function handleDeepLinkParam(){
   const go = params.get('go');
   if(!go) return;
   if(go === 'yonsei-boards'){
-    switchTopLevelTab('yonsei');
-    switchYonseiSubTab('boards');
+    // Not into a tab the reader has hidden (the email still arrives; the
+    // notification settings are where it is switched off).
+    if(tabsShown('yonsei.boards')){ switchTopLevelTab('yonsei'); switchYonseiSubTab('boards'); }
   } else if(go === 'todos'){
     openTodoInList(null, false);
   } else if(go === 'calendar'){
@@ -13824,7 +13881,7 @@ document.getElementById('settingsNameStaticText').addEventListener('click', ()=>
   document.getElementById('settingsDisplayName').focus();
 });
 document.getElementById('cancelDisplayNameBtn').addEventListener('click', closeDisplayNameEdit);
-document.getElementById('accountSettingsBtn').addEventListener('click', async ()=>{
+async function openAccountSettings(){
   closeDisplayNameEdit();
   document.getElementById('settingsHideLeaderboards').checked = !!hiddenFromLeaderboards[currentUser.id];
   document.getElementById('settingsHideCircleToo').checked = !!hiddenFromCircleToo[currentUser.id];
@@ -13843,6 +13900,7 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   document.getElementById('settingsEmailConfirmPassword').value = '';
   document.getElementById('settingsDeleteEmailConfirm').value = '';
   document.getElementById('settingsDeletePasswordConfirm').value = '';
+  renderDeleteAccountState();
   ['settingsNameMsg','settingsEmailMsg','settingsPasswordMsg','settings2faMsg','settingsDeleteMsg'].forEach(id=>{
     const el = document.getElementById(id);
     el.classList.add('hidden');
@@ -13857,7 +13915,8 @@ document.getElementById('accountSettingsBtn').addEventListener('click', async ()
   wireSettingsHints();
   syncSettingsSections();
   document.getElementById('accountSettingsModal').classList.remove('hidden');
-});
+}
+document.getElementById('accountSettingsBtn').addEventListener('click', ()=>{ openAccountSettings(); });
 document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
   const file = document.getElementById('resumeUploadFile').files[0];
   const msg = document.getElementById('resumeUploadMsg');
@@ -14429,7 +14488,10 @@ function renderNotifBellPanel(){
 // default to a no-op instead of erroring).
 function navigateToNotifTarget(n){
   const p = n.params || {};
+  // A notice or a reminder whose tab is hidden stays in the bell; pressing it
+  // just does not open a tab the reader has put away.
   if(n.type === 'yonsei_board'){
+    if(!tabsShown('yonsei.boards')) return;
     switchTopLevelTab('yonsei');
     switchYonseiSubTab('boards');
   } else if(n.type === 'todo_reminder'){
@@ -15378,8 +15440,8 @@ function createGuestSupabaseClient(){
       mfa: {
         getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: 'aal1', nextLevel: 'aal1' }, error: null }),
         listFactors: async () => ({ data: { totp: [] }, error: null }),
-        enroll: async () => ({ data: null, error: { message: 'Not available in guest mode.' } }),
-        challengeAndVerify: async () => ({ data: null, error: { message: 'Not available in guest mode.' } }),
+        enroll: async () => ({ data: null, error: { message: t('guestUnavailable') } }),
+        challengeAndVerify: async () => ({ data: null, error: { message: t('guestUnavailable') } }),
         unenroll: async () => ({ data: null, error: null })
       }
     },
@@ -16390,9 +16452,9 @@ const LINK_CATEGORY_TABPATH = {
   grammar_notes: ['tabStudy','studySubGrammar'],
   course_notes: ['tabYonsei','tabNotes'],
   writing_samples: ['tabStudy','studySubWriting'],
-  recap: ['tabStudy','hRecap'],
+  recap: ['tabHome','tabOverview'],
   readiness: ['tabStudy','hGramReadiness'],
-  calendar: ['tabCalendar'],
+  calendar: ['tabHome','tabCalendar'],
   notebook_notes: ['tabStudy','studySubNotebook'],
   courses: ['tabYonsei','tabCourses'],
 };
@@ -17026,7 +17088,7 @@ document.getElementById('saveEmailBtn').addEventListener('click', async ()=>{
   const { error: verifyError } = await supabaseClient.auth.signInWithPassword({ email: currentUser.email, password: pw });
   if(verifyError){ showSettingsMsg('settingsEmailMsg', t(currentUser.provider === 'email' ? 'settingsWrongPassword' : 'settingsWrongPasswordProvider'), true); return; }
   const { error } = await supabaseClient.auth.updateUser({ email });
-  if(error){ showSettingsMsg('settingsEmailMsg', error.message, true); return; }
+  if(error){ showSettingsMsg('settingsEmailMsg', authErrorText(error), true); return; }
   document.getElementById('settingsNewEmail').value = '';
   document.getElementById('settingsEmailConfirmPassword').value = '';
   showSettingsMsg('settingsEmailMsg', t('settingsEmailPending'), false);
@@ -17039,7 +17101,7 @@ document.getElementById('sendPasswordResetBtn').addEventListener('click', async 
   const { error } = await supabaseClient.auth.resetPasswordForEmail(currentUser.email, {
     redirectTo: window.location.origin + window.location.pathname
   });
-  if(error){ showSettingsMsg('settingsPasswordMsg', error.message, true); return; }
+  if(error){ showSettingsMsg('settingsPasswordMsg', authErrorText(error), true); return; }
   showSettingsMsg('settingsPasswordMsg', t('settingsPasswordResetSent'), false);
 });
 
@@ -17122,15 +17184,111 @@ document.getElementById('disable2faBtn').addEventListener('click', async ()=>{
 });
 
 /* ---- Delete account ---- */
-document.getElementById('deleteAccountBtn').addEventListener('click', async ()=>{
+// An account made with Google may never have had a password, so typing one was
+// a dead end (real-user request, 29 Sep: "let them delete their account by
+// signing in with google here", with the password as the other way). Signing
+// in with Google again IS the confirmation: the button leaves a note in this
+// tab, Google sends the page back, and a Google sign-in newer than the one the
+// note recorded opens this section ready to delete, for ten minutes. "Newer"
+// compares two of the server's own timestamps (the token's amr), so a device
+// with a wrong clock can neither pass nor fail it; the note is what ties the
+// return to the account that asked. Like the password check before it, this
+// is a confirmation on the page: delete_own_account itself asks only who you are.
+const DELETE_REAUTH_KEY = 'ptDeleteReauth';
+const DELETE_REAUTH_WINDOW_MS = 10 * 60 * 1000;
+let deleteReauthUntil = 0;
+function canConfirmDeleteWithGoogle(){
+  return !!currentUser && !isGuestSession() && (currentUser.providers || []).includes('google')
+    && OAUTH_PROVIDERS.some(p => p.id === 'google') && oauthEnabled.includes('google');
+}
+// Seconds since the epoch of the session's latest Google sign-in, 0 for none.
+function lastOauthSignInSec(session){
+  try {
+    const part = session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const amr = JSON.parse(atob(part)).amr || [];
+    return Math.max(0, ...amr.filter(a => a && a.method === 'oauth').map(a => Number(a.timestamp) || 0));
+  } catch(e){ return 0; }
+}
+function renderDeleteAccountState(){
+  if(!currentUser) return;
+  const confirmed = deleteReauthUntil > Date.now();
+  const google = !confirmed && canConfirmDeleteWithGoogle();
+  const btn = document.getElementById('deleteWithGoogleBtn');
+  if(!btn.querySelector('svg')){
+    const g = OAUTH_PROVIDERS.find(p => p.id === 'google');
+    if(g) btn.insertAdjacentHTML('afterbegin', g.icon);
+  }
+  btn.disabled = false;
+  document.getElementById('deleteEmailField').classList.toggle('hidden', confirmed);
+  document.getElementById('deleteGoogleBlock').classList.toggle('hidden', !google);
+  document.getElementById('deletePasswordField').classList.toggle('hidden', confirmed);
+  document.getElementById('deleteGoogleConfirmedNote').classList.toggle('hidden', !confirmed);
+  // Only an account that started with Google can be without a password.
+  document.getElementById('deleteNoPasswordHint').classList.toggle('hidden', confirmed || !google || currentUser.provider === 'email');
+}
+document.getElementById('deleteWithGoogleBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('deleteWithGoogleBtn');
   const emailInput = document.getElementById('settingsDeleteEmailConfirm').value.trim();
-  const pw = document.getElementById('settingsDeletePasswordConfirm').value;
   if(emailInput.toLowerCase() !== (currentUser.email||'').toLowerCase()){
     showSettingsMsg('settingsDeleteMsg', t('settingsDeleteMismatch'), true); return;
   }
-  if(!pw){ showSettingsMsg('settingsDeleteMsg', t('settingsEnterPassword'), true); return; }
-  const { error: verifyError } = await supabaseClient.auth.signInWithPassword({ email: currentUser.email, password: pw });
-  if(verifyError){ showSettingsMsg('settingsDeleteMsg', t(currentUser.provider === 'email' ? 'settingsDeleteWrongPassword' : 'settingsWrongPasswordProvider'), true); return; }
+  btn.disabled = true;
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  try { sessionStorage.setItem(DELETE_REAUTH_KEY, JSON.stringify({ uid: currentUser.id, prev: lastOauthSignInSec(session), at: Date.now() })); } catch(e){}
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: 'google',
+    // Google's account chooser with this account's address already picked,
+    // rather than a silent bounce: choosing a different Google account signs
+    // in as whoever that is, which resumeDeleteReauth() then refuses.
+    options: { redirectTo: window.location.origin + window.location.pathname, queryParams: { prompt: 'select_account', login_hint: currentUser.email } }
+  });
+  if(error){
+    btn.disabled = false;
+    try { sessionStorage.removeItem(DELETE_REAUTH_KEY); } catch(e){}
+    showSettingsMsg('settingsDeleteMsg', authErrorText(error), true);
+  }
+});
+// Runs at the end of every sign-in; does nothing unless this tab left a note.
+async function resumeDeleteReauth(user){
+  let note = null;
+  try { note = JSON.parse(sessionStorage.getItem(DELETE_REAUTH_KEY) || 'null'); sessionStorage.removeItem(DELETE_REAUTH_KEY); } catch(e){}
+  if(!note || !(Date.now() - (note.at || 0) < 30 * 60 * 1000)) return;
+  let msg = null;
+  if(note.uid !== user.id){
+    msg = t('deleteGoogleWrongAccount').replace('{email}', user.email || '');
+  } else {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(lastOauthSignInSec(session) > (Number(note.prev) || 0)) deleteReauthUntil = Date.now() + DELETE_REAUTH_WINDOW_MS;
+    else msg = t('deleteGoogleNotFinished');
+  }
+  await openAccountSettings();
+  const sec = document.getElementById('setGroupDanger');
+  sec.querySelector('.set-group-head').setAttribute('aria-expanded', 'true');
+  sec.querySelector('.set-group-body').classList.remove('hidden');
+  if(msg) showSettingsMsg('settingsDeleteMsg', msg, true);
+  sec.scrollIntoView({ block: 'center' });
+}
+document.getElementById('deleteAccountBtn').addEventListener('click', async ()=>{
+  const reauthed = deleteReauthUntil > Date.now();
+  if(!reauthed && deleteReauthUntil){
+    deleteReauthUntil = 0;
+    renderDeleteAccountState();
+    showSettingsMsg('settingsDeleteMsg', t('deleteGoogleExpired'), true); return;
+  }
+  if(!reauthed){
+    const emailInput = document.getElementById('settingsDeleteEmailConfirm').value.trim();
+    const pw = document.getElementById('settingsDeletePasswordConfirm').value;
+    if(emailInput.toLowerCase() !== (currentUser.email||'').toLowerCase()){
+      showSettingsMsg('settingsDeleteMsg', t('settingsDeleteMismatch'), true); return;
+    }
+    if(!pw){ showSettingsMsg('settingsDeleteMsg', t('settingsEnterPassword'), true); return; }
+    const { error: verifyError } = await supabaseClient.auth.signInWithPassword({ email: currentUser.email, password: pw });
+    if(verifyError){
+      const key = currentUser.provider === 'email' ? 'settingsDeleteWrongPassword'
+        : canConfirmDeleteWithGoogle() ? 'settingsDeleteWrongPasswordGoogle' : 'settingsWrongPasswordProvider';
+      showSettingsMsg('settingsDeleteMsg', t(key), true); return;
+    }
+  }
   if(!confirm(t('deleteAccountConfirm1'))) return;
   if(!confirm(t('deleteAccountConfirm2'))) return;
   const { error } = await supabaseClient.rpc('delete_own_account');
@@ -17142,6 +17300,7 @@ document.getElementById('deleteAccountBtn').addEventListener('click', async ()=>
   // The rows are gone but storage cannot be emptied from SQL; this sweeps
   // every file whose account no longer exists (a daily job does the same).
   supabaseClient.functions.invoke('purge-orphan-files').catch(()=>{});
+  deleteReauthUntil = 0;
   await supabaseClient.auth.signOut();
   currentUser = null;
   document.getElementById('accountSettingsModal').classList.add('hidden');
@@ -17573,7 +17732,7 @@ document.getElementById('forgotPasswordBtn').addEventListener('click', async ()=
   const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + window.location.pathname
   });
-  if(error){ showAuthMsg(t('resetError') + ' (' + escapeHtml(error.message) + ')', 'error'); return; }
+  if(error){ showAuthMsg(t('resetError') + ' ' + escapeHtml(authErrorText(error)), 'error'); return; }
   showAuthMsg(t('resetSent'), 'info');
 });
 
@@ -17589,7 +17748,7 @@ document.getElementById('updatePasswordBtn').addEventListener('click', async ()=
   btn.disabled = false;
   if(pwned){ showResetMsg(t('passwordPwned'), 'error'); return; }
   const { data, error } = await supabaseClient.auth.updateUser({ password: newPassword });
-  if(error){ showResetMsg(t('passwordUpdateError') + ' (' + escapeHtml(error.message) + ')', 'error'); return; }
+  if(error){ showResetMsg(t('passwordUpdateError') + ' ' + escapeHtml(authErrorText(error)), 'error'); return; }
   showResetMsg(t('passwordUpdated'), 'info');
   setTimeout(()=>{ if(data.user) onAuthed(data.user); }, 1200);
 });
@@ -20086,9 +20245,11 @@ function exportIcs(){
   // No hardcoded TOPIK entries: for opted-in accounts the TOPIK dates are
   // real events (topik_key rows) and export through the ordinary loop
   // below; for everyone else TOPIK has no business in their .ics at all.
-  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Korean Tracker//EN','CALSCALE:GREGORIAN'];
+  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Productivity Tracker//EN','CALSCALE:GREGORIAN'];
   (allEvents[currentUser.id]||[]).forEach(ev=>{
     lines.push('BEGIN:VEVENT');
+    // Kept from when the app was the Korean Tracker: a calendar that imported
+    // an older file matches on it, and a new suffix would double every event.
     lines.push('UID:'+ev.id+'@korean-tracker');
     if(ev.event_time){
       const timeDigits = ev.event_time.replace(/:/g,'').padEnd(6,'0').slice(0,6);
@@ -20103,7 +20264,7 @@ function exportIcs(){
     lines.push('END:VEVENT');
   });
   lines.push('END:VCALENDAR');
-  downloadFile('korean-tracker.ics', lines.join('\r\n'), 'text/calendar');
+  downloadFile('productivity-tracker.ics', lines.join('\r\n'), 'text/calendar');
 }
 document.getElementById('exportStudyBtn').addEventListener('click', exportStudyCsv);
 document.getElementById('exportBooksBtn').addEventListener('click', exportBooksCsv);
@@ -20434,7 +20595,7 @@ function renderBreakdown(){
 }
 function chipHtml(dateKey, act, hrs, editable){
   const meta = ACT_MAP[act] || {color:'var(--c-other)'};
-  const delBtn = editable ? `<button class="del" data-date="${dateKey}" data-act="${act}" title="Remove">✕</button>` : '';
+  const delBtn = editable ? `<button class="del" data-date="${dateKey}" data-act="${act}" title="${escapeHtml(t('tipRemove'))}">✕</button>` : '';
   return `<span class="e-chip"><span class="dot" style="background:${meta.color}"></span>${actLabel(act)} ${fmt(hrs)}h${delBtn}</span>`;
 }
 function renderEntries(){
@@ -20670,7 +20831,7 @@ function renderReading(){
     div.innerHTML =
       `<div class="item-top">
         <div><div class="item-title">${escapeHtml(b.title)} ${ownerTag}</div><div class="item-sub">${escapeHtml(b.author || '')}</div></div>
-        ${isMine ? `<button class="item-del" data-id="${b.id}" data-kind="book" title="Delete">✕</button>` : ''}
+        ${isMine ? `<button class="item-del" data-id="${b.id}" data-kind="book" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
       </div>
       <div class="item-meta">
         <span class="badge ${escapeHtml(b.status)}">${bookStatusLabel(b.status)}</span>
@@ -20679,7 +20840,7 @@ function renderReading(){
           <option value="reading" ${b.status==='reading'?'selected':''}>${bookStatusLabel('reading')}</option>
           <option value="finished" ${b.status==='finished'?'selected':''}>${bookStatusLabel('finished')}</option>
         </select>` : ''}
-        ${b.total_pages ? (isMine ? `<input type="number" class="book-pages-input" data-id="${b.id}" min="0" max="${b.total_pages}" value="${b.pages_read||0}" title="Pages read"> / ${b.total_pages}p` : `${b.pages_read||0} / ${b.total_pages}p`) : ''}
+        ${b.total_pages ? (isMine ? `<input type="number" class="book-pages-input" data-id="${b.id}" min="0" max="${b.total_pages}" value="${b.pages_read||0}" title="${escapeHtml(t('tipPagesRead'))}"> / ${b.total_pages}p` : `${b.pages_read||0} / ${b.total_pages}p`) : ''}
         ${isMine ? `<button class="linkbtn act-edit act-icon book-edit-toggle" data-id="${b.id}" title="${t('editBtn')}" aria-label="${t('editBtn')}">${ICON.pencil(14)}</button>` : ''}
         ${notes.length === 0 && !isMine ? '' : `<button class="linkbtn note-toggle" data-id="${b.id}">${notes.length === 0 ? t('addNote') : t('noteBtn') + ' (' + notes.length + ')'}</button>`}
       </div>
@@ -20918,7 +21079,7 @@ function renderArticles(){
     div.innerHTML =
       `<div class="item-top">
         <div><div class="item-title">${escapeHtml(a.title)} ${ownerTag}</div><div class="item-sub">${escapeHtml(subParts)}</div></div>
-        ${isMine ? `<button class="item-del" data-id="${a.id}" data-kind="article" title="Delete">✕</button>` : ''}
+        ${isMine ? `<button class="item-del" data-id="${a.id}" data-kind="article" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
       </div>
       <div class="item-meta">
         <span class="badge ${a.status}">${bookStatusLabel(a.status)}</span>
@@ -21481,7 +21642,7 @@ function renderJobs(){
     div.innerHTML =
       `<div class="item-top">
         <div><div class="item-title">${escapeHtml(j.company)} ${ownerTag}</div><div class="item-sub">${escapeHtml(j.role || '')} ${j.date_applied ? '· ' + escapeHtml(j.date_applied) : ''}</div></div>
-        ${isMine ? `<button class="item-del" data-id="${j.id}" data-kind="job" title="Delete">✕</button>` : ''}
+        ${isMine ? `<button class="item-del" data-id="${j.id}" data-kind="job" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
       </div>
       <div class="item-meta">
         <span class="badge ${j.status}">${jobStatusLabel(j.status)}</span>
@@ -21770,7 +21931,7 @@ function renderCerts(){
     div.innerHTML =
       `<div class="item-top">
         <div><div class="item-title">${escapeHtml(c.name)} ${ownerTag}</div><div class="item-sub">${escapeHtml(c.issuer || '')} ${c.date_completed ? '· ' + escapeHtml(c.date_completed) : ''}</div></div>
-        ${isMine ? `<button class="item-del" data-id="${c.id}" data-kind="cert" title="Delete">✕</button>` : ''}
+        ${isMine ? `<button class="item-del" data-id="${c.id}" data-kind="cert" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
       </div>
       <div class="item-meta">
         <span class="badge ${c.status==='acquired' ? 'finished' : 'reading'}">${certStatusLabel(c.status)}</span>
@@ -22128,7 +22289,7 @@ function triggerJobBoardSync(){
 // block a later-that-day login from firing it.
 const JOB_BOARD_AUTO_SYNC_HOUR = 15;
 async function maybeAutoTriggerJobBoardSync(){
-  if(!isJobBoardSyncAccount()) return;
+  if(!isJobBoardSyncAccount() || !tabsShown('jobs.jobboard')) return;
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   if(localStorage.getItem('jobBoardLastAutoSync') === today) return;
@@ -22782,6 +22943,7 @@ document.getElementById('todoShareToggle').addEventListener('change', async (e)=
 // From a reminder, a deep link or the calendar: the list, with that to-do
 // flashed (and opened for editing when asked, which the calendar does).
 function openTodoInList(id, edit){
+  if(!tabsShown('yonsei.todos')) return;
   switchTopLevelTab('yonsei');
   switchYonseiSubTab('todos');
   const td = id ? allTodos.find(x=> x.id === id) : null;
@@ -22801,7 +22963,7 @@ function openTodoInList(id, edit){
 // switch is on and the calendar is showing this account at all.
 function calendarTodosByDate(startKey, endKey){
   const out = {};
-  if(!todosOnCalendar || !currentUser) return out;
+  if(!todosOnCalendar || !currentUser || !tabsShown('yonsei.todos')) return out;
   if(typeof calendarVisibleUserIds === 'function' && !calendarVisibleUserIds().includes(currentUser.id)) return out;
   allTodos.forEach(td=>{
     if(td.user_id !== currentUser.id || td.done || !td.due_date) return;
@@ -23578,6 +23740,23 @@ document.getElementById('tabFlyout').addEventListener('mouseleave', scheduleTabF
 const YONSEI_ONLY_TABS = ['yonsei.boards', 'jobs.jobboard'];
 function workspaceHidesTab(key){ return YONSEI_ONLY_TABS.includes(key) && workspaceKind !== 'yonsei'; }
 function isTabHidden(key){ return hiddenTabs.includes(key) || workspaceHidesTab(key); }
+// Whether every one of these keys is showing, a sub-tab counting as hidden
+// while its top tab is (isTabHidden('study.log') alone says nothing about
+// 'study'). What other places ask before showing something a tab owns.
+function tabsShown(...keys){ return keys.every(k=> !isTabHidden(k) && !isTabHidden(k.split('.')[0])); }
+// Calendar rows that belong to a tab rather than to the calendar: a course's
+// own classes and exam dates (course_id) to the school/work tab's courses,
+// the TOPIK dates (topik_key) to the Korean tab (real-user request, 29 Sep:
+// "the connected parts should be updated"). Hiding the tab takes them off the
+// calendar and deletes nothing, so showing it again puts them back. Matched
+// on those two columns, never on kind 'course': an imported weekly repeater
+// is a 'course' too and belongs to nobody's tab. The downloaded .ics and CSV
+// keep everything; hiding a tab is not a reason for a backup to lose rows.
+function eventShownForTabs(ev){
+  if(ev.course_id && !tabsShown('yonsei.courses')) return false;
+  if(ev.topik_key && !tabsShown('study')) return false;
+  return true;
+}
 async function saveHiddenTabs(next){
   const { error } = await supabaseClient.from('profiles').update({ hidden_tabs: next }).eq('id', currentUser.id);
   if(error){ alert(error.message); return false; }
@@ -23589,7 +23768,7 @@ async function saveHiddenTabs(next){
 // fall back to the first still-visible one; a group's sub-tab falls back to
 // the first still-visible sub in that same group) -- mirrors exactly what
 // the old Yonsei-Boards-only version did, just generalized to all of them.
-function applyTabVisibility(){
+function applyTabVisibility(calendarDrawn){
   applyWorkspaceChrome();
   splitViewDropHidden();
   TAB_STRUCTURE.forEach(t=>{
@@ -23613,6 +23792,11 @@ function applyTabVisibility(){
     }
   });
   renderCalendarQuickNav();
+  renderRecap();
+  // The calendar, its lists and the TOPIK card carry rows that belong to other
+  // tabs (eventShownForTabs, calendarTodosByDate). renderAll() has just drawn
+  // them with the same hiddenTabs, so it says so rather than paying twice.
+  if(currentUser && !calendarDrawn) renderCalendarTab();
   refreshRowSliders(true);
 }
 // Every possible key, top-level and sub, flattened -- used by Hide all/Show
@@ -23664,7 +23848,7 @@ if(window.matchMedia){
 }
 document.getElementById('notesLinkHeaderBtn').addEventListener('contextmenu', (e)=>{
   e.preventDefault();
-  const val = prompt('Shortcut name:', getNotesLinkShortcutName());
+  const val = prompt(t('notesLinkShortcutPrompt'), getNotesLinkShortcutName());
   if(val === null) return;
   const trimmed = val.trim();
   if(trimmed) localStorage.setItem(NOTES_LINK_SHORTCUT_STORAGE_KEY, trimmed);
@@ -24727,8 +24911,11 @@ function formatTopikDateTime(d){
   return `${dateStr} · ${formatTime12h(hhmm)} KST`;
 }
 function renderTopikCountdown(){
-  document.getElementById('topikCountdownCard').classList.toggle('hidden', !showTopik);
-  if(!showTopik) return;
+  // A Korean exam, so it goes with the Korean tab. The setting stays where it
+  // is: it is also what removes the TOPIK dates and their reminders.
+  const shown = showTopik && tabsShown('study');
+  document.getElementById('topikCountdownCard').classList.toggle('hidden', !shown);
+  if(!shown) return;
   const testVal = document.getElementById('topikTestVal');
   const testCd = formatCountdown(TOPIK_TEST);
   testVal.textContent = testCd ? testCd : t('examPassed');
@@ -24777,7 +24964,7 @@ setInterval(renderTopikCountdown, 30000);
 // load; a manually deleted future TOPIK event does come back on the next
 // load -- the real off-switch is the setting, not deleting the row.
 async function ensureTopikEvents(){
-  if(!showTopik || guestMode || !currentUser) return;
+  if(!showTopik || guestMode || !currentUser || !tabsShown('study')) return;
   if(!allEvents[currentUser.id]) allEvents[currentUser.id] = [];
   const mine = allEvents[currentUser.id];
   for(const te of TOPIK_CAL_EVENTS){
@@ -25179,7 +25366,7 @@ function openQuickView(eventId, dateKey){
       <h2 style="margin-bottom:6px;">${escapeHtml(ev.title)}</h2>
       <div style="flex-shrink:0;display:flex;align-items:center;gap:8px;">
         <span style="background:var(--paper-dim);border:1px solid var(--line);border-radius:12px;padding:3px 9px;font-size:12px;font-weight:800;color:var(--ink);">${initials}</span>
-        <button class="icon-btn close-x" id="quickViewCloseBtn" title="Close">✕</button>
+        <button class="icon-btn close-x" id="quickViewCloseBtn" title="${escapeHtml(t('closeNoteBtn'))}">✕</button>
       </div>
     </div>
     <div style="color:var(--ink-soft);font-size:13px;">${timeText}${recurText ? ' · ' + recurText : ''}</div>
@@ -25464,7 +25651,7 @@ function itemsOfKind(kind){
     // everyone regardless of what's selected up top.
     personFilterShowIds('calPersonFilter').forEach(uid=>{
       (allEvents[uid] || []).forEach(ev=>{
-        if((ev.kind || 'deadline') === kind) all.push(ev);
+        if((ev.kind || 'deadline') === kind && eventShownForTabs(ev)) all.push(ev);
       });
     });
   }
@@ -25650,7 +25837,7 @@ function buildReminderPanelHtml(ev){
         <option value="hours" ${r.unit==='hours'?'selected':''}>${t('unitHours')}</option>
         <option value="days" ${r.unit==='days'?'selected':''}>${t('unitDays')}</option>
       </select>
-      <button class="item-del rem-remove-btn" data-idx="${idx}" title="Remove">✕</button>
+      <button class="item-del rem-remove-btn" data-idx="${idx}" title="${escapeHtml(t('tipRemove'))}">✕</button>
     </span>`).join('');
 
   return `
@@ -25782,20 +25969,20 @@ function buildEventRowEl(ev){
       </div>
       <div class="notes-panel ${isEditOpen?'':'hidden'}" data-edit-for="${ev.id}">
         <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
-          <button class="icon-btn close-x panel-close-btn" data-close-edit="${ev.id}" title="Close">✕</button>
+          <button class="icon-btn close-x panel-close-btn" data-close-edit="${ev.id}" title="${escapeHtml(t('closeNoteBtn'))}">✕</button>
         </div>
         ${editPanelHtml}
       </div>
       <div class="notes-panel ${isOpen?'':'hidden'}" data-sub-for="${ev.id}">
         <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
-          <button class="icon-btn close-x panel-close-btn" data-close-sub="${ev.id}" title="Close">✕</button>
+          <button class="icon-btn close-x panel-close-btn" data-close-sub="${ev.id}" title="${escapeHtml(t('closeNoteBtn'))}">✕</button>
         </div>
         ${reminderPanelHtml}
       </div>
     </div>
     <div class="deadline-right">
       <span class="deadline-days ${soon?'soon':''}">${daysText}</span>
-      <button class="item-del del-event-btn" data-id="${ev.id}" title="Delete">✕</button>
+      <button class="item-del del-event-btn" data-id="${ev.id}" title="${escapeHtml(t('tipDelete'))}">✕</button>
     </div>`;
 
   const delBtn = wrap.querySelector('.del-event-btn');
@@ -26326,6 +26513,7 @@ function eventsInRange(startKey, endKey){
   const byDate = {};
   calendarVisibleUserIds().forEach(uid=>{
     (allEvents[uid]||[]).forEach(ev=>{
+      if(!eventShownForTabs(ev)) return;
       // Held out of the PICTURE, and only while the picture is being taken.
       // With the dialog open on the calendar the chip has to stay put --
       // faded, and still clickable, or there is no way to put it back.
@@ -26464,7 +26652,7 @@ function renderMonthAgenda(){
   const events = [];
   calendarVisibleUserIds().forEach(uid=>{
     (allEvents[uid]||[]).forEach(ev=>{
-      if(expandOccurrences(ev, dateKey, dateKey).length) events.push(ev);
+      if(eventShownForTabs(ev) && expandOccurrences(ev, dateKey, dateKey).length) events.push(ev);
     });
   });
   events.sort((a,b)=> (a.event_time||'99:99').localeCompare(b.event_time||'99:99'));
@@ -26489,7 +26677,7 @@ function renderMonthAgenda(){
   panel.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
       <div style="font-weight:700;font-size:13.5px;">${label}</div>
-      <button class="icon-btn close-x" id="monthAgendaCloseBtn" title="Close">✕</button>
+      <button class="icon-btn close-x" id="monthAgendaCloseBtn" title="${escapeHtml(t('closeNoteBtn'))}">✕</button>
     </div>
     ${rows}${todoRows}
     <button class="linkbtn" id="monthAgendaOpenDayBtn" style="margin-top:8px;">${t('monthAgendaOpenDay')}</button>
@@ -27124,6 +27312,7 @@ function calExportItems(){
   const seen = new Map();
   calendarVisibleUserIds().forEach(uid=>{
     (allEvents[uid]||[]).forEach(ev=>{
+      if(!eventShownForTabs(ev)) return;
       const occ = expandOccurrences(ev, start, end);
       if(!occ.length) return;
       if(!seen.has(ev.id)) seen.set(ev.id, { ev, dates: [] });
@@ -27638,6 +27827,22 @@ document.getElementById('calJumpDateInput').addEventListener('change', (e)=>{
 // partner's recap if you're a core member yourself (amICore()).
 let recapPeriod = 'week'; // 'week' | 'month'
 let recapOpen = false;
+// One row per number, each belonging to the tab it is counted from, so a
+// hidden tab takes its rows with it (real-user report, 29 Sep: with the
+// Korean tab hidden the recap still led with study hours and grammar
+// sentences). The rows follow the viewer's own tabs, for everyone shown:
+// it is this person's app, not the other person's. Ordered like the tab bar.
+const RECAP_ROWS = [
+  { key:'studyHours',       label:'recapStudyHours',       tabs:['study','study.log'], hours:true },
+  { key:'grammarPracticed', label:'recapGrammarPracticed', tabs:['study','study.grammar'] },
+  { key:'coursesStarted',   label:'recapCoursesStarted',   tabs:['yonsei','yonsei.courses'] },
+  { key:'coursesFinished',  label:'recapCoursesFinished',  tabs:['yonsei','yonsei.courses'] },
+  { key:'notesWritten',     label:'recapNotesWritten',     tabs:['yonsei','yonsei.notes'] },
+  { key:'todosDone',        label:'recapTodosDone',        tabs:['yonsei','yonsei.todos'] },
+  { key:'booksFinished',    label:'recapBooksFinished',    tabs:['reading','reading.books'] },
+  { key:'jobsSent',         label:'recapJobsSent',         tabs:['jobs','jobs.applications'] },
+];
+function recapRowsShown(){ return RECAP_ROWS.filter(r=> tabsShown(...r.tabs)); }
 function computeRecap(uid, days){
   const end = new Date();
   end.setHours(0,0,0,0);
@@ -27645,7 +27850,7 @@ function computeRecap(uid, days){
   start.setDate(start.getDate() - (days - 1));
   const inRange = (dateStr)=>{
     if(!dateStr) return false;
-    const d = new Date(dateStr + 'T00:00:00');
+    const d = new Date(String(dateStr).slice(0,10) + 'T00:00:00');
     return d >= start && d <= end;
   };
   const myEntries = allEntries[uid] || {};
@@ -27659,24 +27864,36 @@ function computeRecap(uid, days){
       if(n.user_id === uid && n.created_at && inRange(n.created_at.slice(0,10))) grammarPracticed++;
     });
   });
+  // A course (or project) starts on its start date, or the day it was added
+  // when it has none; it finishes on its end date, which the range already
+  // keeps at today or before.
+  const courses = allCourses[uid] || [];
+  const coursesStarted = courses.filter(c=> inRange(c.start_date || c.created_at)).length;
+  const coursesFinished = courses.filter(c=> inRange(c.end_date)).length;
+  let notesWritten = 0;
+  Object.values(allNotes).forEach(notes=>{
+    notes.forEach(n=>{ if(n.user_id === uid && inRange(n.created_at)) notesWritten++; });
+  });
+  const todosDone = (allTodos||[]).filter(td=> td.user_id === uid && td.done && inRange(td.done_at)).length;
   const booksFinished = (allBooks[uid]||[]).filter(b=> b.status==='finished' && inRange(b.finished_at)).length;
   const jobsSent = (allJobs[uid]||[]).filter(j=> inRange(j.date_applied)).length;
-  return { studyHours, grammarPracticed, booksFinished, jobsSent };
+  return { studyHours, grammarPracticed, coursesStarted, coursesFinished, notesWritten, todosDone, booksFinished, jobsSent };
 }
 function recapPersonHtml(uid, days){
   const r = computeRecap(uid, days);
   return `<div class="recap-person">
-    <div class="recap-person-name">${nameFor(uid)}</div>
-    <div class="recap-stat-row"><span>${t('recapStudyHours')}</span><span class="recap-stat-value">${fmt(r.studyHours)}</span></div>
-    <div class="recap-stat-row"><span>${t('recapGrammarPracticed')}</span><span class="recap-stat-value">${r.grammarPracticed}</span></div>
-    <div class="recap-stat-row"><span>${t('recapBooksFinished')}</span><span class="recap-stat-value">${r.booksFinished}</span></div>
-    <div class="recap-stat-row"><span>${t('recapJobsSent')}</span><span class="recap-stat-value">${r.jobsSent}</span></div>
+    <div class="recap-person-name">${escapeHtml(nameFor(uid))}</div>
+    ${recapRowsShown().map(row=>
+      `<div class="recap-stat-row"><span>${escapeHtml(t(row.label))}</span><span class="recap-stat-value">${row.hours ? fmt(r[row.key]) : r[row.key]}</span></div>`
+    ).join('')}
   </div>`;
 }
 function renderRecap(){
   const el = document.getElementById('recapCard');
   const header = document.getElementById('recapHeader');
   if(!el || !header || !currentUser) return;
+  // With every tab it counts from hidden there is nothing left to recap.
+  document.getElementById('recapOuterCard').classList.toggle('hidden', !recapRowsShown().length);
   header.innerHTML = `<span>${recapOpen?'▾':'▸'}</span> ${t('hRecap')}`;
   el.classList.toggle('hidden', !recapOpen);
   if(!recapOpen) return;
@@ -27754,7 +27971,7 @@ function renderAll(){
   renderTodos();
   renderVideoList();
   rebuildRecapPersonFilter();
-  applyTabVisibility();
+  applyTabVisibility(true);
   applyGuestUiRestrictions();
 }
 let expandedGrammar = new Set();
@@ -34626,7 +34843,8 @@ async function saveGrammarEdit(gramId, container){
   if(!error){
     Object.assign(g, patch);
   } else {
-    alert('Could not save. Make sure the grammar_points table exists (see grammar_points_seed.sql).');
+    console.error('grammar_points save failed (does the table exist? see grammar_points_seed.sql):', error);
+    alert(t('saveFailedTryAgain'));
     return;
   }
   expandedGrammarEdit.delete(gramId);
@@ -34841,7 +35059,7 @@ function buildGrammarCardHtml(g){
     const check = checkGrammarUsage(n.sentence, g);
     return `<div class="gram-sentence-row">
       <span><span class="author-dot" style="background:${colorForUser(n.user_id)};margin-right:6px;"></span>${authorLabel ? `<b style="color:${colorForUser(n.user_id)};">${authorLabel}:</b> ` : ''}${check.html}</span>
-      ${isMine ? `<span><button class="gram-sentence-edit-btn" data-id="${n.id}" title="Edit">${ICON.pencil()}</button><button class="gram-note-del" data-id="${n.id}" data-pattern="${g.id}">✕</button></span>` : ''}
+      ${isMine ? `<span><button class="gram-sentence-edit-btn" data-id="${n.id}" title="${escapeHtml(t('editBtn'))}">${ICON.pencil()}</button><button class="gram-note-del" data-id="${n.id}" data-pattern="${g.id}">✕</button></span>` : ''}
     </div>`;
   }).join('') || `<div class="empty">–</div>`;
   const hasMatchingSentence = myNotes.some(n=>n.user_id===currentUser.id && checkGrammarUsage(n.sentence, g).matched);
@@ -35460,7 +35678,8 @@ async function addGrammarResource(patternId){
     labelInput.value = '';
     renderGrammarList();
   } else {
-    alert('Could not save the link. Make sure new_features_migration.sql has been run.');
+    console.error('grammar resource save failed (see new_features_migration.sql):', error);
+    alert(t('saveFailedTryAgain'));
   }
 }
 async function deleteGrammarResource(patternId, idx){
@@ -36126,7 +36345,8 @@ async function createWritingSample(topic, taskType, charMin, charMax, taskPrompt
     allWritingSamples[currentUser.id].unshift(data[0]);
     return data[0];
   }
-  alert('Could not create the writing sample. Make sure new_features_migration.sql, writing_task_framework_migration.sql, and writing_images_storage_migration.sql have all been run.');
+  console.error('writing sample insert failed (see new_features_migration.sql, writing_task_framework_migration.sql, writing_images_storage_migration.sql):', error);
+  alert(t('saveFailedTryAgain'));
   return null;
 }
 document.getElementById('writingEssayStartBtn').addEventListener('click', async ()=>{
@@ -37404,7 +37624,7 @@ function renderCourses(){
       `<div class="item-top">
         <div><div class="item-title">${ownerTagsHtml}${escapeHtml(c.title)}</div>
         <div class="item-sub">${metaParts.join(' · ')}</div></div>
-        <button class="item-del" data-id="${c.id}" title="Delete">✕</button>
+        <button class="item-del" data-id="${c.id}" title="${escapeHtml(t('tipDelete'))}">✕</button>
       </div>
       <div class="item-meta">
         ${COURSE_LOCKED_STATUSES.includes(c.status) ? '' : `<span class="badge ${badgeClass}">${t(statusKey)}</span>`}
@@ -38212,10 +38432,10 @@ function renderLectureList(){
               ${escapeHtml(n.lecture_title)}
             </span>
             <span class="lecture-actions">
-              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="Edit">${ICON.pencil()}</button>` : ''}
-              ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===0?'disabled':''} title="Move up">↑</button>` : ''}
-              ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===notes.length-1?'disabled':''} title="Move down">↓</button>` : ''}
-              ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="Delete">✕</button>` : ''}
+              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="${escapeHtml(t('editBtn'))}">${ICON.pencil()}</button>` : ''}
+              ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===0?'disabled':''} title="${escapeHtml(t('tipMoveUp'))}">↑</button>` : ''}
+              ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===notes.length-1?'disabled':''} title="${escapeHtml(t('tipMoveDown'))}">↓</button>` : ''}
+              ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
             </span>
           </div>
           ${isMine && isMetaEditOpen ? `
@@ -40364,10 +40584,10 @@ function renderNotebookList(){
               ${escapeHtml(n.lecture_title)}
             </span>
             <span class="lecture-actions">
-              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="Edit">${ICON.pencil()}</button>` : ''}
-              ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===0?'disabled':''} title="Move up">↑</button>` : ''}
-              ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===notes.length-1?'disabled':''} title="Move down">↓</button>` : ''}
-              ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="Delete">✕</button>` : ''}
+              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="${escapeHtml(t('editBtn'))}">${ICON.pencil()}</button>` : ''}
+              ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===0?'disabled':''} title="${escapeHtml(t('tipMoveUp'))}">↑</button>` : ''}
+              ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" ${idx===notes.length-1?'disabled':''} title="${escapeHtml(t('tipMoveDown'))}">↓</button>` : ''}
+              ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${escapeHtml(groupKey)}" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
             </span>
           </div>
           ${isMine && isMetaEditOpen ? `
@@ -41407,7 +41627,7 @@ function expExpenseRowHtml(e, showDate){
         <span style="color:var(--ink-soft);font-size:11.5px;">${escapeHtml(t('expPaidBy'))} ${escapeHtml(nameFor(e.paid_by))}</span>
         <button class="linkbtn act-off act-icon exp-mute-btn" data-id="${e.id}" aria-pressed="${selfMuted?'true':'false'}" title="${escapeHtml(rowLabel)}" aria-label="${escapeHtml(rowLabel)}">${selfMuted ? ICON.plus(14) : ICON.minus(14)}</button>
         <button class="linkbtn act-edit act-icon exp-edit-btn" data-id="${e.id}" title="${t('editBtn')}" aria-label="${t('editBtn')}">${ICON.pencil(14)}</button>
-        <button class="item-del exp-del-btn" data-id="${e.id}" title="Delete">✕</button>
+        <button class="item-del exp-del-btn" data-id="${e.id}" title="${escapeHtml(t('tipDelete'))}">✕</button>
       </div>
     </div>`;
 }
@@ -42213,7 +42433,7 @@ closeOnBackdrop(document.getElementById('pendingVacationInvitesModal'), ()=> doc
   // Read after getSession(), which is what consumes a provider's return
   // address; an error there is the one thing it leaves behind.
   const redirectError = takeAuthErrorFromUrl();
-  const redirectErrorHtml = redirectError ? `${t('authRedirectFailed')} ${escapeHtml(redirectError)}` : '';
+  const redirectErrorHtml = redirectError ? `${t('authRedirectFailed')} ${escapeHtml(authErrorText({ message: redirectError }))}` : '';
   // What a device kept from the site PIN, which no longer exists.
   localStorage.removeItem('sitePinVerified');
   localStorage.removeItem('sitePin');

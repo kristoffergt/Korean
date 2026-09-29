@@ -55,8 +55,8 @@
   <h1 id="title">Page not found</h1>
   <p id="msg">That page doesn't exist, or the link is out of date.</p>
   <div class="links" id="links">
-    <a class="btn primary" href="/">Go home</a>
-    <a class="btn" href="/resume/">View resume ↗</a>
+    <a class="btn primary" href="/" id="homeLink">Go home</a>
+    <a class="btn" href="/resume/" id="resumeLink">View resume ↗</a>
   </div>
 </div>
 <script>
@@ -77,17 +77,48 @@
    private, and the function answers for the one slug asked about with a
    URL that works for an hour (security audit, 26 Sep). */
 (function(){
+  /* In the app's own three languages: the app's choice on this device, then
+     the browser's (a shared file link is often opened by somebody who has
+     never used the app). */
+  var L = {
+    en: { notFound: 'Page not found', notFoundMsg: 'That page doesn\u2019t exist, or the link is out of date.', home: 'Go home', resume: 'View resume \u2197',
+          opening: 'Opening file\u2026', linkNotFound: 'Link not found', dead: 'That short link doesn\u2019t point anywhere any more.',
+          network: 'Couldn\u2019t reach the server. Check your connection and try again.', homeShort: 'Home', download: 'Download',
+          noPreview: 'This file type can\u2019t be previewed in the browser.', file: 'File' },
+    ko: { notFound: '페이지를 찾을 수 없습니다', notFoundMsg: '없는 페이지이거나 오래된 링크입니다.', home: '홈으로', resume: '이력서 보기 \u2197',
+          opening: '파일 여는 중\u2026', linkNotFound: '링크를 찾을 수 없습니다', dead: '이 단축 링크는 더 이상 연결된 곳이 없습니다.',
+          network: '서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.', homeShort: '홈', download: '다운로드',
+          noPreview: '이 파일 형식은 브라우저에서 미리 볼 수 없습니다.', file: '파일' },
+    vi: { notFound: 'Không tìm thấy trang', notFoundMsg: 'Trang này không tồn tại hoặc liên kết đã cũ.', home: 'Về trang chủ', resume: 'Xem sơ yếu lý lịch \u2197',
+          opening: 'Đang mở tệp\u2026', linkNotFound: 'Không tìm thấy liên kết', dead: 'Liên kết rút gọn này không còn trỏ đến đâu nữa.',
+          network: 'Không thể kết nối máy chủ. Hãy kiểm tra kết nối rồi thử lại.', homeShort: 'Trang chủ', download: 'Tải xuống',
+          noPreview: 'Không thể xem trước loại tệp này trong trình duyệt.', file: 'Tệp' }
+  };
+  var lang = (function(){
+    var ok = { en: 1, ko: 1, vi: 1 };
+    try { var s = localStorage.getItem('trackerLang'); if(s && ok[s]) return s; } catch(e){}
+    var navs = navigator.languages || [navigator.language || 'en'];
+    for(var i = 0; i < navs.length; i++){ var p = String(navs[i]).slice(0, 2).toLowerCase(); if(ok[p]) return p; }
+    return 'en';
+  })();
+  var T = L[lang];
+  document.documentElement.lang = lang;
+  document.title = T.notFound;
+  document.getElementById('title').textContent = T.notFound;
+  document.getElementById('msg').textContent = T.notFoundMsg;
+  document.getElementById('homeLink').textContent = T.home;
+  document.getElementById('resumeLink').textContent = T.resume;
   var m = location.pathname.match(/^\/f\/([A-Za-z0-9][A-Za-z0-9-]{0,63})\/?$/);
-  if(!m) return; // a genuine 404 -- leave the page exactly as it is
+  if(!m) return; // a genuine 404: nothing more to do
   var slug = m[1].toLowerCase();
   var SUPABASE_URL = 'https://kbqwitmxpmkueryjsyip.supabase.co';
   document.getElementById('code').textContent = '';
-  document.getElementById('title').textContent = 'Opening file…';
+  document.getElementById('title').textContent = T.opening;
   document.getElementById('msg').textContent = '';
   document.getElementById('links').style.display = 'none';
   function fail(text){
     document.getElementById('code').textContent = '404';
-    document.getElementById('title').textContent = 'Link not found';
+    document.getElementById('title').textContent = T.linkNotFound;
     document.getElementById('msg').textContent = text;
     document.getElementById('links').style.display = '';
   }
@@ -103,22 +134,26 @@
     document.body.className = 'viewing';
     var bar = '<div class="viewer-bar">'
       + '<span class="viewer-name"></span>'
-      + '<a class="btn" href="/">Home</a>'
-      + '<a class="btn primary" id="dl" download>Download</a>'
+      + '<a class="btn" href="/" id="viewerHome"></a>'
+      + '<a class="btn primary" id="dl" download></a>'
       + '</div>';
     document.body.innerHTML = '<div class="viewer">' + bar
       + (isPdf
-          ? '<iframe class="viewer-frame" id="frame" title="File"></iframe>'
-          : '<div class="viewer-fallback"><p>This file type can’t be previewed in the browser.</p></div>')
+          ? '<iframe class="viewer-frame" id="frame"></iframe>'
+          : '<div class="viewer-fallback"><p id="noPreview"></p></div>')
       + '</div>';
     // Assigned as properties, never interpolated into the HTML above -- the
     // name and URL come from the database and must not be able to inject
     // markup into this page.
     document.querySelector('.viewer-name').textContent = name;
+    document.getElementById('viewerHome').textContent = T.homeShort;
+    var np = document.getElementById('noPreview');
+    if(np) np.textContent = T.noPreview;
     var dl = document.getElementById('dl');
+    dl.textContent = T.download;
     dl.href = url;
     var frame = document.getElementById('frame');
-    if(frame) frame.src = url;
+    if(frame){ frame.title = T.file; frame.src = url; }
   }
   fetch(SUPABASE_URL + '/functions/v1/file-link?slug=' + encodeURIComponent(slug))
   .then(function(r){ return r.status === 404 ? { missing: true } : (r.ok ? r.json() : Promise.reject()); })
@@ -128,8 +163,8 @@
     // included), since this page shares its origin with the app.
     var ok = d && typeof d.url === 'string' && d.url.indexOf(SUPABASE_URL + '/storage/v1/object/') === 0;
     if(ok) show(d.url, d.label, d.name);
-    else fail('That short link doesn’t point anywhere any more.');
-  }).catch(function(){ fail('Couldn’t reach the server. Check your connection and try again.'); });
+    else fail(T.dead);
+  }).catch(function(){ fail(T.network); });
 })();
 </script>
 </body>

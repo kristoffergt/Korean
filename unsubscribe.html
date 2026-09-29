@@ -26,7 +26,7 @@
   <p id="msg"></p>
   <div id="actions">
     <button id="confirm" type="button">Unsubscribe</button>
-    <a class="btn" href="/">Open the app</a>
+    <a class="btn" href="/" id="openApp">Open the app</a>
   </div>
 </div>
 <script>
@@ -38,42 +38,83 @@
    checks the signature and switches off that one kind only. */
 (function(){
   var FUNCTION_URL = 'https://kbqwitmxpmkueryjsyip.supabase.co/functions/v1/unsubscribe';
-  var KINDS = {
-    daily_recap: 'daily recap emails',
-    weekly_recap: 'weekly recap emails',
-    reminder: 'event reminder emails',
-    todo_reminder: 'to-do reminder emails',
-    yonsei_board: 'Yonsei notice emails'
+  /* In the app's own three languages. The app's choice on this device wins,
+     then the browser's; an email opened on a device that has never had the
+     app falls back to the browser. */
+  var L = {
+    en: {
+      doc: 'Unsubscribe · Productivity Tracker', ask: 'Stop these emails?', btn: 'Unsubscribe', open: 'Open the app',
+      kinds: { daily_recap: 'daily recap emails', weekly_recap: 'weekly recap emails', reminder: 'event reminder emails', todo_reminder: 'to-do reminder emails', yonsei_board: 'Yonsei notice emails' },
+      incomplete: 'This link is not complete', offInApp: 'You can turn emails off in the app, in Account settings under Notifications and messaging.',
+      willStop: 'You will stop getting {kind} from Productivity Tracker. You can turn them back on in Account settings under Notifications and messaging.',
+      done: 'You are unsubscribed', doneMsg: 'No more {kind}. You can turn them back on in Account settings under Notifications and messaging.',
+      failed: 'That did not work', failedMsg: 'The link may be out of date. You can turn emails off in the app, in Account settings under Notifications and messaging.',
+      network: 'Could not reach the server. Check your connection and try again.'
+    },
+    ko: {
+      doc: '수신 거부 · Productivity Tracker', ask: '이 이메일을 그만 받을까요?', btn: '수신 거부', open: '앱 열기',
+      kinds: { daily_recap: '일일 요약 이메일', weekly_recap: '주간 요약 이메일', reminder: '일정 알림 이메일', todo_reminder: '할 일 알림 이메일', yonsei_board: '연세 공지 이메일' },
+      incomplete: '링크가 완전하지 않습니다', offInApp: '앱의 계정 설정 > 알림과 메시지에서 이메일을 끌 수 있습니다.',
+      willStop: 'Productivity Tracker의 {kind}을 더 이상 받지 않게 됩니다. 계정 설정 > 알림과 메시지에서 다시 켤 수 있습니다.',
+      done: '수신 거부되었습니다', doneMsg: '더 이상 {kind}을 보내지 않습니다. 계정 설정 > 알림과 메시지에서 다시 켤 수 있습니다.',
+      failed: '처리하지 못했습니다', failedMsg: '링크가 오래되었을 수 있습니다. 앱의 계정 설정 > 알림과 메시지에서 이메일을 끌 수 있습니다.',
+      network: '서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.'
+    },
+    vi: {
+      doc: 'Hủy đăng ký · Productivity Tracker', ask: 'Ngừng nhận các email này?', btn: 'Hủy đăng ký', open: 'Mở ứng dụng',
+      kinds: { daily_recap: 'email tóm tắt hằng ngày', weekly_recap: 'email tóm tắt hằng tuần', reminder: 'email nhắc sự kiện', todo_reminder: 'email nhắc việc cần làm', yonsei_board: 'email thông báo của Yonsei' },
+      incomplete: 'Liên kết này chưa đầy đủ', offInApp: 'Bạn có thể tắt email trong ứng dụng, ở Cài đặt tài khoản, mục Thông báo và tin nhắn.',
+      willStop: 'Bạn sẽ không nhận {kind} từ Productivity Tracker nữa. Bạn có thể bật lại ở Cài đặt tài khoản, mục Thông báo và tin nhắn.',
+      done: 'Bạn đã hủy đăng ký', doneMsg: 'Sẽ không còn {kind} nữa. Bạn có thể bật lại ở Cài đặt tài khoản, mục Thông báo và tin nhắn.',
+      failed: 'Không thực hiện được', failedMsg: 'Liên kết có thể đã cũ. Bạn có thể tắt email trong ứng dụng, ở Cài đặt tài khoản, mục Thông báo và tin nhắn.',
+      network: 'Không thể kết nối máy chủ. Hãy kiểm tra kết nối rồi thử lại.'
+    }
   };
+  var lang = (function(){
+    var ok = { en: 1, ko: 1, vi: 1 };
+    var q = new URLSearchParams(location.search).get('lang');
+    if(q && ok[q]) return q;
+    try { var s = localStorage.getItem('trackerLang'); if(s && ok[s]) return s; } catch(e){}
+    var navs = navigator.languages || [navigator.language || 'en'];
+    for(var i = 0; i < navs.length; i++){ var p = String(navs[i]).slice(0, 2).toLowerCase(); if(ok[p]) return p; }
+    return 'en';
+  })();
+  var T = L[lang];
+  var KINDS = T.kinds;
+  document.documentElement.lang = lang;
+  document.title = T.doc;
+  document.getElementById('title').textContent = T.ask;
+  document.getElementById('confirm').textContent = T.btn;
+  document.getElementById('openApp').textContent = T.open;
   var q = new URLSearchParams(location.search);
   var u = q.get('u') || '', k = q.get('k') || '', t = q.get('t') || '';
   var title = document.getElementById('title'), msg = document.getElementById('msg');
   var btn = document.getElementById('confirm');
   if(!KINDS[k] || !u || !t){
-    title.textContent = 'This link is not complete';
-    msg.textContent = 'You can turn emails off in the app, under Notification settings.';
+    title.textContent = T.incomplete;
+    msg.textContent = T.offInApp;
     btn.style.display = 'none';
     return;
   }
-  msg.textContent = 'You will stop getting ' + KINDS[k] + ' from Productivity Tracker. You can turn them back on in Notification settings.';
+  msg.textContent = T.willStop.replace('{kind}', KINDS[k]);
   btn.addEventListener('click', function(){
     btn.disabled = true;
     fetch(FUNCTION_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ u: u, k: k, t: t }) })
       .then(function(r){ return r.json().catch(function(){ return {}; }); })
       .then(function(d){
         if(d && d.ok){
-          title.textContent = 'You are unsubscribed';
-          msg.textContent = 'No more ' + KINDS[k] + '. You can turn them back on in Notification settings.';
+          title.textContent = T.done;
+          msg.textContent = T.doneMsg.replace('{kind}', KINDS[k]);
           btn.style.display = 'none';
         } else {
-          title.textContent = 'That did not work';
-          msg.textContent = 'The link may be out of date. You can turn emails off in the app, under Notification settings.';
+          title.textContent = T.failed;
+          msg.textContent = T.failedMsg;
           btn.style.display = 'none';
         }
       })
       .catch(function(){
         btn.disabled = false;
-        msg.textContent = 'Could not reach the server. Check your connection and try again.';
+        msg.textContent = T.network;
       });
   });
 })();
