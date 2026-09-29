@@ -6029,14 +6029,22 @@ whether to-dos show on the calendar; reminders picked per to-do, easily.
   `_purge_user_data` deleting to-dos. A `todo_reminders_ok` CHECK keeps a bad
   reminder list from aborting the job for everybody. The page tolerates the
   table not existing yet (the list is simply empty).
+- **Applied live 29 Sep** (project `kbqwitmxpmkueryjsyip`, as `todos`) after
+  checking the live `unsubscribe_email` and `_purge_user_data` matched what
+  it replaces. Checked after: 4 policies, RLS on both tables, the cron job,
+  realtime, no anon access, no client access to the log or the sender. Two
+  rolled-back dry runs: a due reminder gives one bell row, one log row and
+  one queued request, a second run sends nothing more; a circle member sees
+  the to-do only with `share_todos` on and can never tick it. Nothing from
+  the tests survived (0 to-dos, 0 log rows afterwards). Every account is in
+  one circle today, so "someone outside the circle" had nobody to test with.
 - **Checked** in the pane as a guest: adding, the sort and overdue colour,
   ticking in the list and on the calendar, the Done fold, the editor, the
   course filter, month and week chips, the calendar switch, and the pill maths
   (for a 14:00 due tomorrow: 1 hour before = 13:00, morning = 08:00, a picked
   14:00 = 14:00). Syntax and id cross-check clean, every new key in en/ko/vi,
-  em dashes 46. **Not checked**: signed in against the live table, the share
-  switch with a real circle, and a reminder actually arriving by bell, push
-  or email.
+  em dashes 46. **Not checked**: the page signed in against the live table,
+  and a reminder actually arriving by bell, push or email.
 
 ## THE SITE PIN IS GONE (29 Sep, ninety-second pass)
 
