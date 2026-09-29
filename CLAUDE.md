@@ -6035,6 +6035,13 @@ service_role):
   which domains Resend has verified cannot be read from here. That
   `kristoffergt.com` works is inferred from every other email using it; the
   first real sign-up is the proof.
+- **`git status` and `git commit` hung here, and it is the iCloud eviction
+  again.** After the `read-tree HEAD` of the ninety-sixth pass the index holds
+  no stat data, so both refresh it by hashing every tracked file, and some
+  (manifest.json, the icons, CNAME, the edge functions) are dataless and block
+  forever. `git add <paths>` and `git diff --cached` are fine. What commits
+  without touching the working tree is plumbing: `git write-tree`, then
+  `git commit-tree <tree> -p HEAD -m ...`, then `git update-ref HEAD <commit>`.
 
 ## GREYED REMINDER PILLS SAY WHY, AND A GIT INDEX EVICTED BY iCLOUD (29 Sep, ninety-sixth pass)
 
