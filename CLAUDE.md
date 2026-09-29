@@ -6009,6 +6009,12 @@ limit).
   BEFORE the page is pushed**: the new page sends no PIN, and until then
   `check_signup_site_pin` refuses every email sign-up. The other order is
   harmless.
+- **Both migrations applied live 29 Sep** (project `kbqwitmxpmkueryjsyip`, as
+  `workspace_tab` then `remove_site_pin`), checked after: no PIN trigger,
+  function, table, `site_config` or purge job left (0 accounts were locked);
+  the hook returns a token unchanged and only `supabase_auth_admin` may call
+  it; all 6 existing profiles are `yonsei` with no name; both workspace
+  CHECK constraints present.
 - **`custom_access_token_hook` stays, as a pass-through**: it is switched on
   in the dashboard (Auth -> Hooks) and Auth calls it on every sign-in, so
   dropping it would stop everybody signing in. Turning the hook off in the
