@@ -1994,6 +1994,9 @@ body.no-anim-ui .gram-sentence-row .gram-sentence-edit-btn:active{transform:none
   font-size:13px;box-shadow:0 8px 28px rgba(0,0,0,0.22);}
 #shellUpdateBar.hidden{display:none;}
 #shellUpdateReloadBtn{font-size:13px;padding:6px 14px;border-radius:18px;}
+/* margin-left:auto sends it to the far end where the bar spans the phone's
+   width; on a desktop the bar is only as wide as its contents, so nothing moves. */
+#shellUpdateCloseBtn{border-radius:50%;margin-left:auto;}
 #chatDock{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));
   z-index:90;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
 #chatLauncher{position:relative;width:48px;height:48px;border-radius:50%;padding:0;
@@ -5394,6 +5397,7 @@ body.ws-work .ws-class-only{display:none !important;}
 <div id="shellUpdateBar" class="hidden">
   <span id="shellUpdateText"></span>
   <button id="shellUpdateReloadBtn"></button>
+  <button type="button" class="icon-btn close-x" id="shellUpdateCloseBtn" data-title-key="closeNoteBtn" data-aria-key="closeNoteBtn">✕</button>
 </div>
 <div id="chatDock" class="hidden">
   <div id="chatPanel" class="hidden">
@@ -42451,13 +42455,24 @@ closeOnBackdrop(document.getElementById('pendingVacationInvitesModal'), ()=> doc
     // is that the copy on screen can be one deploy behind, so the worker says
     // when it has fetched a different one and the offer to reload appears.
     // Pressing it is the only thing that reloads.
+    // Closing it declines the offer for the rest of this visit (real-user
+    // request, 29 Sep: "a way to close that if we dont want to reload"). No
+    // more is needed: the worker has already stored the new copy, so the next
+    // time the app is opened it IS the new version. The flag also keeps a
+    // second message (another page of the site revalidating, say) from
+    // putting the bar straight back.
+    let shellUpdateDeclined = false;
     navigator.serviceWorker.addEventListener('message', (e)=>{
       if(e.data && e.data.type === 'pt-open-notif'){ openNotificationById(Number(e.data.id)); return; }
-      if(!e.data || e.data.type !== 'wk-shell-updated') return;
+      if(!e.data || e.data.type !== 'wk-shell-updated' || shellUpdateDeclined) return;
       document.getElementById('shellUpdateBar').classList.remove('hidden');
     });
     document.getElementById('shellUpdateReloadBtn').addEventListener('click', ()=>{
       window.location.reload();
+    });
+    document.getElementById('shellUpdateCloseBtn').addEventListener('click', ()=>{
+      shellUpdateDeclined = true;
+      document.getElementById('shellUpdateBar').classList.add('hidden');
     });
     window.addEventListener('load', ()=>{
       navigator.serviceWorker.register('sw.js').catch(()=>{});

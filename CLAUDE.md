@@ -5981,6 +5981,18 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE "NEW VERSION" BAR CAN BE CLOSED (29 Sep, ninety-fifth pass)
+
+"Can we have a way to close that if we dont want to reload." `#shellUpdateBar`
+gained the app's usual ✕ (`icon-btn close-x`, tooltip and label from
+`closeNoteBtn`). Closing sets `shellUpdateDeclined` for the rest of the visit,
+so a second `wk-shell-updated` message (another page of the site revalidating
+also sends one) cannot put it straight back. Nothing more is needed: the worker
+has already cached the new document, so the next open is the new version
+anyway. `margin-left:auto` puts the ✕ at the far end on a phone, where the bar
+spans the width. Checked in the pane at desktop and 375px: closes, and stays
+closed after a synthetic second message.
+
 ## TERMS, THREE-LANGUAGE LEGAL PAGES, DELETE WITH GOOGLE, AND A RECAP THAT FOLLOWS THE TABS (29 Sep, ninety-fourth pass)
 
 Four asks in one round: "check the site to make sure we have translations in
