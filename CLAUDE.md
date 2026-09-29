@@ -5981,6 +5981,67 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE YONSEI TAB IS THE "SCHOOL OR WORK" TAB, AND NEW ACCOUNTS START WITHOUT KOREAN (29 Sep, ninety-first pass)
+
+"Don't show Korean tab by default ... when people log in for the first time,
+it asks if they are from Yonsei or, if not, ... an educational institution or
+work ... Let them put in another name for the tab. If they change the
+'Yonsei' name, then the icon should change too." His answers, asked first:
+new accounts AND guests start without Korean; guests get a generic (not
+Yonsei) version; new accounts pick at first login on a "Set up your
+Productivity Tracker" screen; work = Projects + Notes; a generic icon by kind;
+existing accounts are Yonsei and are never asked.
+
+- **`profiles.workspace_kind`** ('yonsei' | 'school' | 'work', NULL = not asked
+  yet) and **`workspace_name`** (NULL = the kind's own default name),
+  `sql migrations/workspace_tab_migration.sql`. The backfill to 'yonsei' only
+  runs in the run that ADDS the column, so re-running it cannot skip a new
+  account's setup. Without the migration the client reads the columns as
+  absent and behaves exactly as before (Yonsei, no setup screen).
+- **Everything goes through `t()`** (WORKSPACE block above it). `tabYonsei`
+  answers with `workspaceTabName()`; at work, `WORK_KEYS` swaps the course keys
+  for project ones (Courses -> Projects, Signed up -> Active, "Course
+  (optional)" -> "Project (optional)", "No course", the delete and lock-in
+  confirms, the calendar's Course kind, the sharing categories). So every label
+  that already went through t() -- the tab, the fly-out, the quick nav, the
+  settings tab list, notification breadcrumbs -- follows with no call site
+  touched. `tRaw()` is the old lookup. `var`, not `let`: t() runs from
+  applyLanguage long before a profile is loaded.
+- **`applyWorkspaceChrome()`**, called from `applyTabVisibility()`: body
+  classes `ws-work` (hides `.ws-class-only`: code, professor, midterm, final,
+  concentration, TA/RA and syllabus, in the add form AND the edit panel),
+  `ws-icon-cap`, `ws-icon-building`. When kind or name moves it re-runs
+  `applyLanguage` on the next frame, never inside the render that called it.
+- **The icon**: the Yonsei mark only while the kind is Yonsei and the name is
+  one of its own names (`wsIsDefaultName`, any of the three languages, plus
+  연세대/연세대학교/Yonsei University); otherwise a cap for a school and a
+  BUILDING for work -- not the briefcase that was offered, because the Jobs tab
+  beside it already wears one (measured on the phone bar: they would have been
+  the same picture twice). The Yonsei PNG moved to `:root{--yonsei-png}` so the
+  setup screen can show all three marks without repeating 20 kB of base64.
+- **The Board is Yonsei's**: `workspaceHidesTab('yonsei.boards')` makes
+  `isTabHidden` true for any other kind, the settings tab list leaves the row
+  out, and the Yonsei board notification type is only offered to Yonsei.
+- **First sign-in**: `maybeOpenWorkspaceSetup()` after `ensureProfileExists`,
+  asking the profile row itself (loadAllData ran before a brand new row
+  existed). Any read error asks nothing, so an existing account can never be
+  shown it by a bad read. The screen has no close and no preselection:
+  Continue waits for Yonsei / Another school / Work. Picking one fills the name
+  box with its default unless something else was typed. A "Korean study tab"
+  box, unticked, decides `hidden_tabs` 'study'.
+- **Settings**: the same picker and a Save, in the section with the tab list
+  (`renderWorkspaceSettings`, rendered on open).
+- **Guests**: the fresh guest profile is school with 'study' hidden, and a
+  guest store saved before this is upgraded once in `loadGuestStore`.
+- Driven in the pane in guest mode: School + cap, no Korean, no Board; the
+  setup screen, Work + "Acme" -> tab "Acme" with the building, Projects,
+  trimmed form, Active, "Project (optional)"/"No project"; Yonsei -> Yonsei
+  mark and Board back; Yonsei renamed "Korea Uni" -> cap; phone bar at 375
+  shows the building next to Jobs' briefcase. NOT driven: a real first sign-in
+  (needs a new account and the migration applied).
+- **Not changed, worth deciding**: the Jobs tab's Job board sub tab is Yonsei
+  CDC's postings and still shows for every kind.
+
 ## A NEW NOTE'S TITLE IS SUGGESTED FROM THE RUN IT JOINS (29 Sep, ninetieth pass)
 
 "Auto-suggest titles based on previous note patterns. Like here it should have
