@@ -5981,6 +5981,28 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE 2FA CARD IS A SIZE UP AND SAYS ITS INSTRUCTION ONCE (29 Sep, hundred-and-first pass)
+
+"Can we make this slightly bigger and delete the top line. It's repeating
+itself." The code screen said "Enter your authentication code" and then "Open
+your authenticator app and enter the 6-digit code." under it.
+
+- **The title line is gone** (`lblMfaPromptTitle`, its STATIC_MAP entry and
+  `mfaPromptTitle` in all three tables). The hint that stays is the one that
+  says what to do. It still reads "6-digit code" in backup-code mode, as it
+  did before; not touched.
+- **`#mfaScreen.auth-wrap` is 400px against the other auth cards' 360**, and
+  the `.compact` boxes went 39x52 with 7px gaps to 46x58 with 9px, font 22.
+  **Each box is `min(46px, a sixth of the row)`** and the track
+  `min(321px, 100%)`, so on a phone, where the card is narrower than the row
+  that makes, they shrink to fit instead of running off the card: 39px wide
+  at 375, 30px at 320. `.compact` is only used by this screen.
+- Seen in headless Chrome at 1100, and at 375 and 320 **through iframes**:
+  headless will not size a window under about 500px, so a phone screenshot of
+  the page itself is laid out wider than it is shot and looks broken. At 320
+  the "Productivity Tracker" heading runs past the card; it does on every
+  auth card and did before.
+
 ## GOOGLE'S OWN BUTTON, AND DELETING KEEPS THE ACCOUNT 30 DAYS (29 Sep, hundredth pass)
 
 **Supersedes** the ninety-ninth pass's delete-with-Google work: there is no
@@ -6005,9 +6027,11 @@ delete-reauth note/token code is gone.
   hourly (cron `purge-scheduled-account-deletions`). Signing in while pending
   shows `#restoreAccountScreen` (`showRestoreIfPending`, first thing in
   `onAuthed`). Dry-run checked on the live DB in rolled-back transactions.
-- **Part 2 still to apply AFTER the page is pushed**:
-  `account_deletion_grace_part2_migration.sql` revokes the immediate
-  `delete_own_account()` (the live old page still calls it).
+- **Part 2 APPLIED 29 Sep**, by Kristoffer in the SQL editor once this page
+  was live (the live page was checked first: it calls
+  `request_account_deletion` and never `delete_own_account`).
+  `delete_own_account()` is now `postgres` and `service_role` only, checked
+  with `has_function_privilege`; nothing else in the database calls it.
 - Privacy and terms say it in all three languages.
 
 ## DELETE WITH GOOGLE CARRIES ITS OWN TOKEN, A "GET THE APP" GUIDE, AND NO PHONE-ONLY SETTINGS ON A DESKTOP (29 Sep, ninety-ninth pass)
