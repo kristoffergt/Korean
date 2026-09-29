@@ -5981,6 +5981,54 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE PASSWORD RULES ARE SUPABASE'S OWN, AND "SEND AGAIN" FOLLOWS A CORRECTED ADDRESS (30 Sep, hundred-and-fourth pass)
+
+A brief to check the Supabase sign-up and password flows. **The visible
+formatting was kept as it was on purpose** (Kristoffer, 30 Sep: "you shouldn't
+change the formatting of our kristoffergt.com site ... not substantially"), so
+this is behaviour, messages in the existing `#authMsg` line, and one extra
+checklist row. Welcome Korea's green/red "sent again" lines were NOT brought
+over; they were that site's.
+
+- **Supabase's rule, read off its own refusal** (POST /auth/v1/signup with
+  the anon key, `probe@example.invalid`, password "a": 422 `weak_password`,
+  nothing created): **9 characters, one lowercase, one uppercase, one digit,
+  one symbol from ``!@#$%^&*()_+-=[]{};'\:"|<>?,./`~``**. Same rule as Welcome
+  Korea's project. The checklist had no lowercase row and counted anything
+  non-alphanumeric as special (æ, €, a space), so it could go green on a
+  password Supabase refuses. `PW_RULES` now has `pwRuleLower` and the symbol
+  class `/[!-\/:-@[-`{-~]/`, checked character by character against the list
+  over all printable ASCII: 32 of 32, nothing else. **If the Supabase setting
+  changes, `PW_RULES` changes with it.**
+- **Every place a password is set checks all five**: sign-up (as before), the
+  reset screen (it checked length only) and the admin's "new password" prompt
+  (`.mod-reset-pw`, which checked nothing: `admin_reset_user_password` writes
+  the hash straight into auth.users, so Supabase's rule never sees it).
+  `passwordTooShort` is gone; `passwordRulesNeeded` states the whole rule
+  and is also `authErrorText`'s answer to `weak_password`.
+- **"Send again" goes to what is in the email field now.** It used to resend
+  to the address signed up with whatever had been typed since. Editing the
+  field to another address shows the link at once as "Send to the new
+  address" (`resendToNewAddressBtn`), which clicks `#authSubmit`: a fresh
+  sign-up with the name and password still in the form, since resend only
+  reaches an address Supabase already has. The old address's wait does not
+  apply (Supabase counts per address). `reserve_display_name` lets the same
+  browser token re-reserve its own name under a new address, so the name is
+  not "taken" by the typo'd one.
+- **The wait follows Supabase's.** The link is still hidden until another
+  mail may go out (`RESEND_INTERVAL_SECONDS`, 30, `resendReadyAt`). A refusal
+  ("you can only request this after N seconds") re-arms it at N and says so
+  (`resendWaitSeconds` / `resendWaitSecondsOne`) instead of the generic "too
+  many attempts". A sign-up refused the same way (an address with a recent
+  unconfirmed sign-up) shows "check your email" and arms the link at N.
+  **Supabase's interval for this project was not readable from here**; if it
+  is not 30, set it to 30 (Authentication -> Emails -> SMTP settings).
+- Checked: the real script compiles (the "block 0" failure is a `<script`
+  inside an HTML comment, identical on HEAD), every id looked up exists, the
+  keys are in en/ko/vi, and the resend logic was driven against a stub DOM
+  with a fake clock. **Not seen in a browser**: reaching the confirm state
+  means creating an account.
+
 ## THE GET-THE-APP SWITCH WAS 7.5PX ON A PHONE (29 Sep, hundred-and-third pass)
 
 "For the Get the app box, the iPhone and Android text should be a lot bigger."
@@ -6009,8 +6057,8 @@ did not is the live checklist under the field (its `PasswordStrengthField`).
   Re-rendered on input/focus/blur, by `setAuthMode` and by `applyLanguage`.
 - **The rules are ENFORCED at sign-up now**, replacing the old 8-character
   minimum there: `passwordMeetsRules()` then the match, both before the
-  breach check, so neither costs a network request. `passwordTooShort` stays,
-  as `authErrorText`'s answer to Supabase's `weak_password`.
+  breach check, so neither costs a network request. (`passwordTooShort` is
+  gone since 30 Sep; `passwordRulesNeeded` answers `weak_password` now.)
 - **`#confirmPasswordField` ("Repeat password")**, sign-up only, with its own
   eye. Enter on the password goes to it in sign-up mode and still submits in
   sign-in mode; Enter on it submits.
@@ -6019,11 +6067,10 @@ did not is the live checklist under the field (its `PasswordStrengthField`).
 - **The minimum is 9, `MIN_PASSWORD_LENGTH`** ("also change to at least 9
   characters ... pretty sure I set it to 9"). One constant, read by the
   sign-up rule AND the reset screen, and six strings say the number in words:
-  `pwRuleLength` and `passwordTooShort` in en/ko/vi. Change all of them
+  `pwRuleLength` and `passwordRulesNeeded` in en/ko/vi. Change all of them
   together.
-- **The reset screen** (`#resetScreen`) checks the length only, not the other
-  three rules, so a reset can still set a password the sign-up would refuse.
-  Left for Kristoffer to say; Welcome Korea puts the same checklist there.
+- **The reset screen** (`#resetScreen`) checked the length only. Fixed 30 Sep:
+  it runs `passwordMeetsRules()` (see the hundred-and-fourth pass).
 - Seen in the pane (served with `python3 -m http.server 8791 --bind
   127.0.0.1`, stopped after) in light and dark, en/ko/vi, and in sign-in
   mode, where both are gone. **Not submitted**: the mismatch and rules
