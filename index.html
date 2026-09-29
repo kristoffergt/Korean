@@ -807,6 +807,12 @@ body.dark .brand-mark h1{color:#ffffff;}
    flex-shrink:0 makes the size non-negotiable regardless of the flex
    layout it sits in. */
 .pw-toggle-btn svg{width:16px;height:16px;flex-shrink:0;}
+/* The sign-up password's rules, as Welcome Korea shows them: a ring for one not
+   met yet, a tick in the "on" green once it is. Not uppercase like the field
+   label above: these are sentences to read, not a caption. */
+.pw-rules{display:flex;flex-direction:column;gap:3px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;}
+.pw-rule{display:flex;align-items:center;gap:7px;font-size:12px;line-height:1.35;color:var(--ink-soft);}
+.pw-rule.met{color:var(--on);}
 .auth-submit{width:100%;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px;}
 /* Sign in with a provider: the submit's own size, outlined, so it reads as the
    other way in rather than as the main action. One look for all four; the
@@ -3550,8 +3556,18 @@ body.ws-work .ws-class-only{display:none !important;}
       <div class="auth-field">
         <label for="passwordInput" id="lblPassword"></label>
         <div class="pw-field-wrap">
-          <input type="password" id="passwordInput">
+          <input type="password" id="passwordInput" autocomplete="current-password">
           <button type="button" class="pw-toggle-btn" data-target="passwordInput"></button>
+        </div>
+        <!-- Creating an account only: the rules, ticked off as they are met.
+             Filled by renderPwRules(). -->
+        <div class="pw-rules hidden" id="pwRules"></div>
+      </div>
+      <div id="confirmPasswordField" class="auth-field hidden">
+        <label for="confirmPasswordInput" id="lblConfirmPassword"></label>
+        <div class="pw-field-wrap">
+          <input type="password" id="confirmPasswordInput" autocomplete="new-password">
+          <button type="button" class="pw-toggle-btn" data-target="confirmPasswordInput"></button>
         </div>
       </div>
       <button class="auth-submit" id="authSubmit"></button>
@@ -11507,7 +11523,7 @@ const I18N = {
     modConfirmDeleteUser:'Permanently delete this account and all of its data? This cannot be undone.', modActionFailed:'Action failed.', modActionDone:'Done.',
     modStudyHead:'Study hours', modStudyHint:'Hours per activity for one day. Changes count on the leaderboards straight away.', modStudyUser:'Account', modStudyChooseUser:'Choose an account', modStudyDate:'Date', modStudySave:'Save day', modStudyDeleteDay:'Delete day', modStudyConfirmDelete:'Delete every hour {name} logged on {date}?', modStudyInvalid:'Hours have to be numbers of 0 or more.', modStudyDays:'Logged days', modStudyNoDays:'Nothing logged yet.', modStudyEmptyDay:'Nothing logged on this day.', modStudyMoreDays:'and {n} earlier',
     modConfirmResetPw:"Reset this user's password?", modConfirmConfirmEmail:"Manually confirm this user's email?", modConfirmDisableMfa:'Disable two-factor authentication for this user?',
-    mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.', mfaUseBackupBtn:'Use a backup code instead', mfaUseTotpBtn:'Use your authenticator app instead', mfaBackupCodePlaceholder:'Enter a backup code', mfaBackupWrongCode:'Invalid or already-used backup code.', download2faBackupBtn:'Download codes', passwordTooShort:'Use at least 8 characters for your password.', authAgeNote:'By creating an account you accept the terms of use and confirm you are 13 or older (14 or older in Korea).', privacyPolicyLink:'Privacy policy', aiCheckBeforeSaving:'AI answers can be wrong, so check the highlighted fields before saving.', aiFilledTitle:'Filled in from an AI answer. Check it before saving.', settings2faQrAlt:'QR code to scan with your authenticator app', fileOpenFailed:'Could not open the file. Try again.', showPasswordBtn:'Show password', hidePasswordBtn:'Hide password',
+    mfaPromptHint:'Open your authenticator app and enter the 6-digit code.', mfaVerifyBtn:'Verify', mfaWrongCode:'Invalid code. Try again.', mfaUseBackupBtn:'Use a backup code instead', mfaUseTotpBtn:'Use your authenticator app instead', mfaBackupCodePlaceholder:'Enter a backup code', mfaBackupWrongCode:'Invalid or already-used backup code.', download2faBackupBtn:'Download codes', passwordTooShort:'Use at least 8 characters for your password.', authAgeNote:'By creating an account you accept the terms of use and confirm you are 13 or older (14 or older in Korea).', privacyPolicyLink:'Privacy policy', aiCheckBeforeSaving:'AI answers can be wrong, so check the highlighted fields before saving.', aiFilledTitle:'Filled in from an AI answer. Check it before saving.', settings2faQrAlt:'QR code to scan with your authenticator app', fileOpenFailed:'Could not open the file. Try again.', showPasswordBtn:'Show password', hidePasswordBtn:'Hide password', lblConfirmPassword:'Repeat password', pwRuleLength:'At least 8 characters', pwRuleUpper:'At least one uppercase letter', pwRuleNumber:'At least one number', pwRuleSpecial:'At least one special character', passwordRulesUnmet:'The password does not meet the requirements above.', passwordsDontMatch:'The passwords do not match.',
     oauthOr:'or', oauthGoogle:'Continue with Google', oauthKakao:'Continue with Kakao', oauthGithub:'Continue with GitHub', oauthLinkedin:'Continue with LinkedIn', chooseNameTitle:'Choose the name others will see', chooseNameBtn:'Continue', chooseNameEmpty:'Enter a name.', authRedirectFailed:'Sign-in did not finish.', passwordPwned:'That password has been involved in a data breach. Please pick another password.', settingsWrongPasswordProvider:'Incorrect password. If you signed up with Google, set a password first with "Send password reset email".', accountPopTitle:'Your account and color',
     guestModeBtn:'Continue as guest', guestBannerText:"Guest mode. Limited functionality. Nothing you add is saved to an account.", guestDisplayName:'Guest',
     hAddCourse:'Add a course', courseTitle:'Course title', courseCode:'Course code', courseProfessor:'Professor', courseClassroom:'Classroom',
@@ -11633,7 +11649,7 @@ const I18N = {
     modConfirmDeleteUser:'이 계정과 모든 데이터를 영구적으로 삭제하시겠습니까? 되돌릴 수 없습니다.', modActionFailed:'작업에 실패했습니다.', modActionDone:'완료되었습니다.',
     modStudyHead:'공부 시간', modStudyHint:'하루 동안의 활동별 시간입니다. 변경 사항은 순위표에 바로 반영됩니다.', modStudyUser:'계정', modStudyChooseUser:'계정 선택', modStudyDate:'날짜', modStudySave:'저장', modStudyDeleteDay:'이 날 삭제', modStudyConfirmDelete:'{name}님이 {date}에 기록한 시간을 모두 삭제하시겠습니까?', modStudyInvalid:'시간은 0 이상의 숫자로 입력하세요.', modStudyDays:'기록된 날', modStudyNoDays:'아직 기록이 없습니다.', modStudyEmptyDay:'이 날에는 기록이 없습니다.', modStudyMoreDays:'그 외 {n}일',
     modConfirmResetPw:'이 사용자의 비밀번호를 재설정하시겠습니까?', modConfirmConfirmEmail:'이 사용자의 이메일을 수동으로 확인 처리하시겠습니까?', modConfirmDisableMfa:'이 사용자의 2단계 인증을 비활성화하시겠습니까?',
-    mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.', mfaUseBackupBtn:'백업 코드 사용하기', mfaUseTotpBtn:'인증 앱 사용하기', mfaBackupCodePlaceholder:'백업 코드를 입력하세요', mfaBackupWrongCode:'백업 코드가 올바르지 않거나 이미 사용되었습니다.', download2faBackupBtn:'코드 다운로드', passwordTooShort:'비밀번호는 8자 이상이어야 합니다.', authAgeNote:'계정을 만들면 이용약관에 동의하고 만 13세 이상(한국 거주자는 만 14세 이상)임을 확인하게 됩니다.', privacyPolicyLink:'개인정보 처리방침', aiCheckBeforeSaving:'AI 답변은 틀릴 수 있으니 저장하기 전에 표시된 항목을 확인하세요.', aiFilledTitle:'AI 답변으로 채워졌습니다. 저장하기 전에 확인하세요.', settings2faQrAlt:'인증 앱으로 스캔할 QR 코드', fileOpenFailed:'파일을 열 수 없습니다. 다시 시도하세요.', showPasswordBtn:'비밀번호 표시', hidePasswordBtn:'비밀번호 숨기기',
+    mfaPromptHint:'인증 앱을 열어 6자리 코드를 입력하세요.', mfaVerifyBtn:'확인', mfaWrongCode:'코드가 올바르지 않습니다. 다시 시도하세요.', mfaUseBackupBtn:'백업 코드 사용하기', mfaUseTotpBtn:'인증 앱 사용하기', mfaBackupCodePlaceholder:'백업 코드를 입력하세요', mfaBackupWrongCode:'백업 코드가 올바르지 않거나 이미 사용되었습니다.', download2faBackupBtn:'코드 다운로드', passwordTooShort:'비밀번호는 8자 이상이어야 합니다.', authAgeNote:'계정을 만들면 이용약관에 동의하고 만 13세 이상(한국 거주자는 만 14세 이상)임을 확인하게 됩니다.', privacyPolicyLink:'개인정보 처리방침', aiCheckBeforeSaving:'AI 답변은 틀릴 수 있으니 저장하기 전에 표시된 항목을 확인하세요.', aiFilledTitle:'AI 답변으로 채워졌습니다. 저장하기 전에 확인하세요.', settings2faQrAlt:'인증 앱으로 스캔할 QR 코드', fileOpenFailed:'파일을 열 수 없습니다. 다시 시도하세요.', showPasswordBtn:'비밀번호 표시', hidePasswordBtn:'비밀번호 숨기기', lblConfirmPassword:'비밀번호 확인', pwRuleLength:'8자 이상', pwRuleUpper:'대문자 1개 이상', pwRuleNumber:'숫자 1개 이상', pwRuleSpecial:'특수문자 1개 이상', passwordRulesUnmet:'비밀번호가 위의 요구 사항을 충족하지 않습니다.', passwordsDontMatch:'비밀번호가 일치하지 않습니다.',
     oauthOr:'또는', oauthGoogle:'Google로 계속하기', oauthKakao:'카카오로 계속하기', oauthGithub:'GitHub로 계속하기', oauthLinkedin:'LinkedIn으로 계속하기', chooseNameTitle:'다른 사람에게 보일 이름을 정하세요', chooseNameBtn:'계속', chooseNameEmpty:'이름을 입력하세요.', authRedirectFailed:'로그인을 마치지 못했습니다.', passwordPwned:'이 비밀번호는 데이터 유출에 포함된 적이 있습니다. 다른 비밀번호를 선택해 주세요.', settingsWrongPasswordProvider:'비밀번호가 올바르지 않습니다. Google로 가입했다면 먼저 "비밀번호 재설정 이메일 보내기"로 비밀번호를 설정하세요.', accountPopTitle:'내 계정과 색상',
     guestModeBtn:'게스트로 둘러보기', guestBannerText:'게스트 모드입니다. 기능이 제한됩니다. 추가한 내용은 계정에 저장되지 않습니다.', guestDisplayName:'게스트',
     hAddCourse:'수업 추가', courseTitle:'수업명', courseCode:'수업 코드', courseProfessor:'교수', courseClassroom:'강의실',
@@ -11759,7 +11775,7 @@ const I18N = {
     modConfirmDeleteUser:'Xóa vĩnh viễn tài khoản này và toàn bộ dữ liệu? Không thể hoàn tác.', modActionFailed:'Thao tác thất bại.', modActionDone:'Hoàn tất.',
     modStudyHead:'Giờ học', modStudyHint:'Số giờ theo từng hoạt động trong một ngày. Thay đổi được tính ngay trên bảng xếp hạng.', modStudyUser:'Tài khoản', modStudyChooseUser:'Chọn tài khoản', modStudyDate:'Ngày', modStudySave:'Lưu ngày', modStudyDeleteDay:'Xóa ngày', modStudyConfirmDelete:'Xóa toàn bộ số giờ {name} đã ghi vào ngày {date}?', modStudyInvalid:'Số giờ phải là số từ 0 trở lên.', modStudyDays:'Những ngày đã ghi', modStudyNoDays:'Chưa ghi gì.', modStudyEmptyDay:'Chưa ghi gì vào ngày này.', modStudyMoreDays:'và {n} ngày trước đó',
     modConfirmResetPw:'Đặt lại mật khẩu của người dùng này?', modConfirmConfirmEmail:'Xác nhận thủ công email của người dùng này?', modConfirmDisableMfa:'Tắt xác thực hai yếu tố cho người dùng này?',
-    mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.', mfaUseBackupBtn:'Dùng mã dự phòng thay thế', mfaUseTotpBtn:'Dùng ứng dụng xác thực thay thế', mfaBackupCodePlaceholder:'Nhập mã dự phòng', mfaBackupWrongCode:'Mã dự phòng không đúng hoặc đã được sử dụng.', download2faBackupBtn:'Tải mã xuống', passwordTooShort:'Mật khẩu phải có ít nhất 8 ký tự.', authAgeNote:'Khi tạo tài khoản, bạn đồng ý với điều khoản sử dụng và xác nhận mình từ 13 tuổi trở lên (từ 14 tuổi nếu sống ở Hàn Quốc).', privacyPolicyLink:'Chính sách quyền riêng tư', aiCheckBeforeSaving:'Câu trả lời của AI có thể sai, hãy kiểm tra các ô được đánh dấu trước khi lưu.', aiFilledTitle:'Được điền từ câu trả lời của AI. Hãy kiểm tra trước khi lưu.', settings2faQrAlt:'Mã QR để quét bằng ứng dụng xác thực', fileOpenFailed:'Không thể mở tệp. Hãy thử lại.', showPasswordBtn:'Hiện mật khẩu', hidePasswordBtn:'Ẩn mật khẩu',
+    mfaPromptHint:'Mở ứng dụng xác thực và nhập mã 6 chữ số.', mfaVerifyBtn:'Xác nhận', mfaWrongCode:'Mã không đúng. Hãy thử lại.', mfaUseBackupBtn:'Dùng mã dự phòng thay thế', mfaUseTotpBtn:'Dùng ứng dụng xác thực thay thế', mfaBackupCodePlaceholder:'Nhập mã dự phòng', mfaBackupWrongCode:'Mã dự phòng không đúng hoặc đã được sử dụng.', download2faBackupBtn:'Tải mã xuống', passwordTooShort:'Mật khẩu phải có ít nhất 8 ký tự.', authAgeNote:'Khi tạo tài khoản, bạn đồng ý với điều khoản sử dụng và xác nhận mình từ 13 tuổi trở lên (từ 14 tuổi nếu sống ở Hàn Quốc).', privacyPolicyLink:'Chính sách quyền riêng tư', aiCheckBeforeSaving:'Câu trả lời của AI có thể sai, hãy kiểm tra các ô được đánh dấu trước khi lưu.', aiFilledTitle:'Được điền từ câu trả lời của AI. Hãy kiểm tra trước khi lưu.', settings2faQrAlt:'Mã QR để quét bằng ứng dụng xác thực', fileOpenFailed:'Không thể mở tệp. Hãy thử lại.', showPasswordBtn:'Hiện mật khẩu', hidePasswordBtn:'Ẩn mật khẩu', lblConfirmPassword:'Nhập lại mật khẩu', pwRuleLength:'Ít nhất 8 ký tự', pwRuleUpper:'Ít nhất một chữ cái in hoa', pwRuleNumber:'Ít nhất một chữ số', pwRuleSpecial:'Ít nhất một ký tự đặc biệt', passwordRulesUnmet:'Mật khẩu chưa đáp ứng các yêu cầu ở trên.', passwordsDontMatch:'Mật khẩu không khớp.',
     oauthOr:'hoặc', oauthGoogle:'Tiếp tục với Google', oauthKakao:'Tiếp tục với Kakao', oauthGithub:'Tiếp tục với GitHub', oauthLinkedin:'Tiếp tục với LinkedIn', chooseNameTitle:'Chọn tên mà người khác sẽ thấy', chooseNameBtn:'Tiếp tục', chooseNameEmpty:'Hãy nhập tên.', authRedirectFailed:'Chưa đăng nhập xong.', passwordPwned:'Mật khẩu này đã từng bị lộ trong một vụ rò rỉ dữ liệu. Vui lòng chọn mật khẩu khác.', settingsWrongPasswordProvider:'Mật khẩu không đúng. Nếu bạn đăng ký bằng Google, hãy đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".', accountPopTitle:'Tài khoản và màu của tôi',
     guestModeBtn:'Tiếp tục với tư cách khách', guestBannerText:'Chế độ khách. Chức năng bị giới hạn. Mọi thứ bạn thêm vào đây sẽ không được lưu vào tài khoản.', guestDisplayName:'Khách',
     hAddCourse:'Thêm khóa học', courseTitle:'Tên khóa học', courseCode:'Mã khóa học', courseProfessor:'Giáo sư', courseClassroom:'Phòng học',
@@ -11799,7 +11815,7 @@ const I18N = {
   }
 };
 const STATIC_MAP = {
-  authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password',
+  authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password', lblConfirmPassword:'lblConfirmPassword',
   authAgeNote:'authAgeNote', authPrivacyLink:'privacyPolicyLink', settingsPrivacyLink:'privacyPolicyLink', authTermsLink:'termsLink', settingsTermsLink:'termsLink',
   installGuideTitle:'installGuideTitle', installGuideIntro:'installGuideIntro', installInAppNote:'installInAppNote', installOsIos:'installOsIos', installOsAndroid:'installOsAndroid', installNowBtn:'installNowBtn', installGuideToastText:'installGuideToast', settingsInstallGuideBtn:'settingsInstallGuideBtn',
   deleteAccountGraceHint:'deleteAccountGraceHint', restoreAccountTitle:'restoreAccountTitle', restoreAccountBtn:'restoreAccountBtn', restoreSignOutBtn:'signOut',
@@ -12430,6 +12446,8 @@ const ICON_PATHS = {
   paperclip: '<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>',
   search: '<circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>',
   check:  '<polyline points="20 6 9 17 4 12"></polyline>',
+  /* An open ring: a condition not met yet, beside `check` for one that is. */
+  ring:   '<circle cx="12" cy="12" r="6"></circle>',
   minus:  '<line x1="5" y1="12" x2="19" y2="12"></line>',
   plus:   '<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>',
   arrowDown: '<line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline>',
@@ -12469,6 +12487,7 @@ const ICON = {
   paperclip: function(sz){ return svgIcon(ICON_PATHS.paperclip, sz); },
   search:  function(sz){ return svgIcon(ICON_PATHS.search, sz); },
   check:   function(sz){ return svgIcon(ICON_PATHS.check, sz); },
+  ring:    function(sz){ return svgIcon(ICON_PATHS.ring, sz); },
   minus:   function(sz){ return svgIcon(ICON_PATHS.minus, sz); },
   plus:    function(sz){ return svgIcon(ICON_PATHS.plus, sz); },
   arrowDown:function(sz){ return svgIcon(ICON_PATHS.arrowDown, sz); },
@@ -13129,6 +13148,7 @@ function applyLanguage(lang){
   const rvl = document.getElementById('resumeViewLink');
   if(rvl) rvl.innerHTML = extLinkLabel('resumeViewLink');
   document.getElementById('authSubmit').textContent = authMode === 'signin' ? t('signIn') : t('createAccount');
+  renderPwRules();
   document.getElementById('writingCustomDescription').placeholder = t('writingCustomDescPlaceholder');
   document.getElementById('writingFeedbackInput').placeholder = t('writingFeedbackPlaceholder');
   document.getElementById('moderatorSearch').placeholder = t('modSearchPlaceholder');
@@ -13237,8 +13257,41 @@ function setAuthMode(mode){
   document.getElementById('authAgeNote').classList.toggle('hidden', mode!=='signup');
   document.getElementById('authSubmit').textContent = mode==='signin' ? t('signIn') : t('createAccount');
   document.getElementById('lblEmail').textContent = mode==='signin' ? t('signInWithNameHint') : t('email');
+  document.getElementById('confirmPasswordField').classList.toggle('hidden', mode!=='signup');
+  // What lets a password manager offer to generate a password here and to fill
+  // the saved one there: it cannot tell a new password from a current one
+  // any other way.
+  document.getElementById('passwordInput').setAttribute('autocomplete', mode==='signup' ? 'new-password' : 'current-password');
   document.getElementById('authMsg').innerHTML = '';
   hideResendConfirm();
+  renderPwRules();
+}
+// The same four rules Welcome Korea asks for at sign-up (its
+// lib/passwordStrength.ts), modest on purpose: enough that "password" or
+// "12345678" will not do. The checklist is only a picture of them; the check
+// that counts is passwordMeetsRules() when the account is created.
+// pwRuleLength names a fixed 8, which is never 1, so it has no singular.
+const PW_RULES = [
+  { key:'pwRuleLength',  test: pw => pw.length >= 8 },
+  { key:'pwRuleUpper',   test: pw => /[A-Z]/.test(pw) },
+  { key:'pwRuleNumber',  test: pw => /[0-9]/.test(pw) },
+  { key:'pwRuleSpecial', test: pw => /[^A-Za-z0-9]/.test(pw) },
+];
+function passwordMeetsRules(pw){ return PW_RULES.every(r => r.test(pw)); }
+// Creating an account only, and only once the field has been reached (it has
+// the focus or holds something), which is when Welcome Korea shows its own.
+function renderPwRules(){
+  const box = document.getElementById('pwRules');
+  const input = document.getElementById('passwordInput');
+  if(!box || !input) return;
+  const pw = input.value;
+  const show = authMode === 'signup' && (document.activeElement === input || pw.length > 0);
+  box.classList.toggle('hidden', !show);
+  if(!show){ box.innerHTML = ''; return; }
+  box.innerHTML = PW_RULES.map(r => {
+    const met = r.test(pw);
+    return `<span class="pw-rule${met ? ' met' : ''}">${met ? ICON.check(12) : ICON.ring(12)}<span>${escapeHtml(t(r.key))}</span></span>`;
+  }).join('');
 }
 // Supabase answers in English whatever the page is in, so the errors a person
 // is actually likely to meet are said in the app's own language. Matched on
@@ -13666,7 +13719,8 @@ document.getElementById('authSubmit').addEventListener('click', async ()=>{
     if(!displayName){ showAuthMsg(t('chooseNameEmpty'), 'error'); return; }
     if(displayName.length > 12){ showAuthMsg(t('settingsNameTooLong'), 'error'); return; }
     if(!isValidDisplayName(displayName)){ showAuthMsg(t('settingsNameInvalidChars'), 'error'); return; }
-    if(password.length < 8){ showAuthMsg(t('passwordTooShort'), 'error'); return; }
+    if(!passwordMeetsRules(password)){ showAuthMsg(t('passwordRulesUnmet'), 'error'); return; }
+    if(password !== document.getElementById('confirmPasswordInput').value){ showAuthMsg(t('passwordsDontMatch'), 'error'); return; }
     if(await passwordIsPwned(password)){ showAuthMsg(t('passwordPwned'), 'error'); return; }
     const { data: reserved, error: reserveError } = await supabaseClient.rpc('reserve_display_name', { p_email: email, p_name: displayName, p_browser_token: getDeviceToken() });
     if(!reserveError && reserved === false){ showAuthMsg(t('duplicateName'), 'error'); return; }
@@ -13723,9 +13777,17 @@ document.getElementById('displayNameInput').addEventListener('keydown', (e)=>{
 document.getElementById('emailInput').addEventListener('keydown', (e)=>{
   if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('passwordInput').focus(); }
 });
+// Creating an account, the password leads on to the box that repeats it.
 document.getElementById('passwordInput').addEventListener('keydown', (e)=>{
+  if(e.key !== 'Enter') return;
+  e.preventDefault();
+  if(authMode === 'signup') document.getElementById('confirmPasswordInput').focus();
+  else document.getElementById('authSubmit').click();
+});
+document.getElementById('confirmPasswordInput').addEventListener('keydown', (e)=>{
   if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('authSubmit').click(); }
 });
+['input', 'focus', 'blur'].forEach(ev => document.getElementById('passwordInput').addEventListener(ev, renderPwRules));
 // If the account has an enrolled TOTP factor, a fresh password sign-in only
 // grants aal1 — route through the MFA challenge screen before handing off to
 // onAuthed(). Accounts with no factor enrolled sail straight through.

@@ -5981,6 +5981,38 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## SIGN-UP SHOWS THE PASSWORD RULES AS WELCOME KOREA DOES, AND ASKS FOR IT TWICE (29 Sep, hundred-and-second pass)
+
+"When creating an account it should do the sort of display for the password
+that welcomekorea.org does. And there should be a confirm password box too."
+The eye was already there (`.pw-toggle-btn`); what Welcome Korea has and this
+did not is the live checklist under the field (its `PasswordStrengthField`).
+
+- **`#pwRules`, filled by `renderPwRules()`**: Welcome Korea's own four rules
+  (`PW_RULES`, copied from its `lib/passwordStrength.ts`): 8 characters, an
+  uppercase letter, a number, a special character. A ring (`ICON.ring`, new in
+  `ICON_PATHS`) turns into a tick in `--on` as each is met; no glyphs, per the
+  no-emoji rule. Shown only in sign-up mode, and there only while the field
+  has the focus or holds something, which is when Welcome Korea shows its own.
+  Re-rendered on input/focus/blur, by `setAuthMode` and by `applyLanguage`.
+- **The rules are ENFORCED at sign-up now**, replacing the old 8-character
+  minimum there: `passwordMeetsRules()` then the match, both before the
+  breach check, so neither costs a network request. `passwordTooShort` stays,
+  as `authErrorText`'s answer to Supabase's `weak_password`.
+- **`#confirmPasswordField` ("Repeat password")**, sign-up only, with its own
+  eye. Enter on the password goes to it in sign-up mode and still submits in
+  sign-in mode; Enter on it submits.
+- **`autocomplete` follows the mode** (`new-password` / `current-password`),
+  so a password manager offers to generate one on sign-up.
+- **NOT changed: the reset screen** (`#resetScreen`) still asks for 8
+  characters only, so a reset can set a password the sign-up would refuse.
+  Left for Kristoffer to say; Welcome Korea puts the same checklist there.
+- Seen in the pane (served with `python3 -m http.server 8791 --bind
+  127.0.0.1`, stopped after) in light and dark, en/ko/vi, and in sign-in
+  mode, where both are gone. **Not submitted**: the mismatch and rules
+  messages were not seen on screen, since reaching them means filling the
+  form in and pressing Create account.
+
 ## THE 2FA CARD IS A SIZE UP AND SAYS ITS INSTRUCTION ONCE (29 Sep, hundred-and-first pass)
 
 "Can we make this slightly bigger and delete the top line. It's repeating
