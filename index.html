@@ -822,7 +822,10 @@ button.oauth-btn svg{flex:none;width:18px;height:18px;}
 /* Delete account: the Google way sits as wide as the fields it replaces, on a
    row of its own, with the password way under its divider. */
 #settingsDeleteAccountWrap .delete-google{flex-basis:100%;max-width:320px;}
-#settingsDeleteAccountWrap .delete-google .oauth-divider{margin:14px 0 0;}
+/* A phone's dialog is narrower than the 320px these fields ask for. */
+#settingsDeleteAccountWrap .field{min-width:0;max-width:100%;}
+#settingsDeleteAccountWrap .field input, #settingsDeleteAccountWrap .pw-field-wrap{max-width:100%;box-sizing:border-box;}
+#settingsDeleteAccountWrap .delete-google .oauth-divider{margin:4px 0 12px;}
 #settingsDeleteAccountWrap .delete-note{flex-basis:100%;margin-top:0;}
 #deleteGoogleConfirmedNote{color:var(--on);font-weight:600;}
 .auth-submit:disabled{opacity:0.65;cursor:default;}
@@ -1993,6 +1996,20 @@ body.no-anim-ui .gram-sentence-row .gram-sentence-edit-btn:active{transform:none
   background:var(--paper-dim);border:1px solid var(--line);color:var(--ink);
   font-size:13px;box-shadow:0 8px 28px rgba(0,0,0,0.22);}
 #shellUpdateBar.hidden{display:none;}
+/* ---- Get the app (see GET THE APP) ---- */
+.install-steps{margin:0;padding:0;list-style:none;counter-reset:ig;display:flex;flex-direction:column;gap:12px;}
+.install-steps li{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.5;}
+.install-steps li::before{counter-increment:ig;content:counter(ig);flex:none;width:24px;height:24px;margin-top:-1px;border-radius:50%;background:var(--ink);color:var(--paper);display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;}
+.install-glyph{display:inline-flex;align-items:center;vertical-align:-4px;padding:2px 5px;margin:0 1px;border:1px solid var(--line);border-radius:6px;background:var(--paper);}
+.install-note{margin:-4px 0 14px;color:var(--danger);}
+/* The "it is in Settings" popup after the guide is closed: top centre, so it
+   can never land on the new-version bar, the chat launcher or the dock. */
+#installGuideToast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%);
+  z-index:1100;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 24px);box-sizing:border-box;
+  padding:6px 6px 6px 14px;border-radius:24px;background:var(--paper-dim);border:1px solid var(--line);color:var(--ink);
+  font-size:13px;box-shadow:0 8px 28px rgba(0,0,0,0.22);}
+#installGuideToast.hidden{display:none;}
+#installGuideToastCloseBtn{border-radius:50%;flex:none;}
 #shellUpdateReloadBtn{font-size:13px;padding:6px 14px;border-radius:18px;}
 /* margin-left:auto sends it to the far end where the bar spans the phone's
    width; on a desktop the bar is only as wide as its contents, so nothing moves. */
@@ -2882,6 +2899,13 @@ body.dark .ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-3);}
    how wide the window is -- desktop keeps the smaller sizes untouched. */
 @media (pointer: coarse){
   .auth-field input, .field input, .field select, .field textarea{ font-size: 16px; }
+}
+/* Settings that only mean something on a phone are not offered anywhere else
+   (real-user request, 29 Sep: "dont have strictly phone options on desktop").
+   The bottom bar's opacity follows the bar itself, which exists only below
+   this width. */
+@media (min-width: 641px){
+  #settingsDockGlassRow{display:none;}
 }
 @media (max-width: 640px){
   /* The dock replaces the top pills outright, rather than sitting under them:
@@ -5192,6 +5216,9 @@ body.ws-work .ws-class-only{display:none !important;}
     <section class="set-group" id="setGroupAppearance">
       <button type="button" class="set-group-head" aria-expanded="false"><span id="setGroupAppearanceLabel"></span></button>
       <div class="set-group-body hidden">
+    <div id="settingsInstallGuideRow" style="margin-top:14px;">
+      <button type="button" class="export-btn" id="settingsInstallGuideBtn"></button>
+    </div>
     <div id="settingsStickyTopBarRow" style="margin-top:14px;">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
         <input type="checkbox" id="settingsStickyTopBarToggle" style="width:15px;height:15px;">
@@ -5206,7 +5233,6 @@ body.ws-work .ws-class-only{display:none !important;}
                style="flex:1;min-width:120px;max-width:200px;margin:0;accent-color:var(--ink);">
         <span id="settingsDockGlassValue" style="font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;"></span>
       </div>
-      <div class="hint" id="settingsDockGlassHint" style="margin-top:4px;"></div>
     </div>
     <div id="settingsAnimRow" style="margin-top:16px;">
       <div class="wtc-title" id="lblAnimations"></div>
@@ -5361,13 +5387,6 @@ body.ws-work .ws-class-only{display:none !important;}
         <label for="settingsDeleteEmailConfirm" id="lblSettingsDeleteEmailConfirm"></label>
         <input type="text" id="settingsDeleteEmailConfirm" autocomplete="off">
       </div>
-      <!-- An account that signs in with Google confirms by signing in with
-           Google again; the password below is the other way. Shown by
-           renderDeleteAccountState(). -->
-      <div class="delete-google hidden" id="deleteGoogleBlock">
-        <button type="button" class="oauth-btn" id="deleteWithGoogleBtn"><span id="deleteWithGoogleLabel"></span></button>
-        <div class="oauth-divider"><span id="lblDeleteOrPassword"></span></div>
-      </div>
       <div class="field wide" id="deletePasswordField">
         <label for="settingsDeletePasswordConfirm" id="lblSettingsDeletePasswordConfirm"></label>
         <div class="pw-field-wrap">
@@ -5378,6 +5397,14 @@ body.ws-work .ws-class-only{display:none !important;}
       <div class="hint delete-note hidden" id="deleteGoogleConfirmedNote"></div>
       <button class="export-btn btn-danger" id="deleteAccountBtn"></button>
       <div class="hint delete-note hidden" id="deleteNoPasswordHint"></div>
+      <!-- An account that signs in with Google can confirm by signing in with
+           Google again instead, under the email and password, and needs
+           neither: Google is sent the account's own address. Shown by
+           renderDeleteAccountState(). -->
+      <div class="delete-google hidden" id="deleteGoogleBlock">
+        <div class="oauth-divider"><span id="lblDeleteOrPassword"></span></div>
+        <button type="button" class="oauth-btn" id="deleteWithGoogleBtn"><span id="deleteWithGoogleLabel"></span></button>
+      </div>
     </div>
     <div class="hint hidden" id="settingsDeleteMsg"></div>      </div>
     </section>
@@ -5399,6 +5426,28 @@ body.ws-work .ws-class-only{display:none !important;}
      than the one that was served from its cache. An offer, never a reload:
      the document is the whole app, so replacing it under somebody's hands
      would throw away whatever they were in the middle of. -->
+<!-- GET THE APP: how to put the tracker on the home screen. Shown by itself
+     once on a phone browser (see maybeShowInstallGuide), and from Settings. -->
+<div class="modal-overlay hidden" id="installGuideModal" role="dialog" aria-modal="true" aria-labelledby="installGuideTitle">
+  <div class="modal-box install-guide" style="max-width:440px;">
+    <h2 style="display:flex;justify-content:space-between;align-items:center;">
+      <span id="installGuideTitle"></span>
+      <button type="button" class="icon-btn close-x" id="installGuideCloseBtn" data-title-key="closeNoteBtn" data-aria-key="closeNoteBtn">✕</button>
+    </h2>
+    <div class="hint" id="installGuideIntro" style="margin:-4px 0 14px;"></div>
+    <div class="hint install-note hidden" id="installInAppNote"></div>
+    <div class="cal-view-toggle" id="installOsToggle">
+      <button type="button" data-os="ios" id="installOsIos"></button>
+      <button type="button" data-os="android" id="installOsAndroid"></button>
+    </div>
+    <button type="button" class="hidden" id="installNowBtn" style="width:100%;margin-bottom:14px;"></button>
+    <ol class="install-steps" id="installGuideSteps"></ol>
+  </div>
+</div>
+<div id="installGuideToast" class="hidden" role="status">
+  <span id="installGuideToastText"></span>
+  <button type="button" class="icon-btn close-x" id="installGuideToastCloseBtn" data-title-key="closeNoteBtn" data-aria-key="closeNoteBtn">✕</button>
+</div>
 <div id="shellUpdateBar" class="hidden">
   <span id="shellUpdateText"></span>
   <button id="shellUpdateReloadBtn"></button>
@@ -11334,6 +11383,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // out of the address as it signs in. Whether this load is the return from a
 // provider is what decides if a delete-with-Google note can mean anything.
 const PAGE_IS_OAUTH_RETURN = /[?&#](code|access_token|error|error_description)=/.test(window.location.search + window.location.hash);
+// The one-time token a delete-with-Google round trip sends to Google in its
+// own return address (see deleteWithGoogleBtn). Only that trip carries it.
+const PAGE_OAUTH_REAUTH = new URLSearchParams(window.location.search).get('reauth');
 const realSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Guest mode swaps this whole binding for a localStorage-backed mock (see
 // createGuestSupabaseClient() near enterGuestMode()) rather than touching
@@ -11410,7 +11462,7 @@ const I18N = {
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
     topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
-    settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsDockGlassLabel:'Bottom bar opacity', settingsDockGlassHint:'The floating tab bar at the bottom of a phone is slightly see-through, with the page blurred behind it. Lower this for more glass; at 100% the bar is solid.', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
+    settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsDockGlassLabel:'Bottom bar opacity', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
     settingsPushLabel:'Push notifications on this device', pushIosInstallHint:'On an iPhone, add this app to your Home Screen first (Share, then Add to Home Screen) and open it from there.', pushUnsupportedHint:'This browser cannot receive push notifications.', pushBlockedHint:'Notifications are blocked for this site. Allow them in your browser or phone settings.', pushEnableFailed:'Could not turn on push notifications.', notifChannelPush:'Push', pushNeedsInApp:'Needs In-app on', pushTestTitle:'Push notifications are on', pushTestBody:'This device will now get your reminders and notices.',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
     lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name shines when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over anything you can click or type in, and the squeeze when you press it.', animAddLabel:'The add courier', animAddHint:'When something is saved, a courier comes out from behind the Add button, takes the first letter off it, turns it into a funnel, pours in what you typed, packs it and runs off.',
@@ -11502,7 +11554,7 @@ const I18N = {
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
     tabYonsei:'Yonsei', tabTodos:'To-do', hAddTodo:'Add a to-do', lblTodoTitle:'To-do', lblTodoDue:'Due date (optional)', lblTodoTime:'Time (optional)', lblTodoRemind:'Remind me', remindAtTime:'At the time', remindHourBefore:'1 hour before', remindMorningOf:'Morning of (8:00)', remindDayBefore:'Day before', remindCustom:'Pick a time', addTodoBtn:'Add to-do', hTodoList:'Your to-dos', todoToday:'Today', todoTomorrow:'Tomorrow', todoOverdue:'Overdue', todoDone:'Done', todoClearDone:'Clear done', todoClearDoneConfirm:'Delete {n} finished to-dos?', todoClearDoneConfirmOne:'Delete {n} finished to-do?', deleteTodoConfirm:'Delete the to-do "{title}"?', todoMarkDone:'Mark done', todoMarkOpen:'Mark not done', todoShowOnCalendar:'Show on calendar', todoCalAdd:'Add to the calendar', todoCalLeaveOff:'Leave off the calendar', todoShareCircle:'Share with your circle', todoNotesLabel:'Notes (optional)', todoSave:'Save', todoCancel:'Cancel', todoEdit:'Edit', todoDelete:'Delete', todoAllCourses:'All courses', todoAllProjects:'All projects', notifTypeTodoReminder:'To-do reminders', notifTodoReminderTitleTpl:'To-do: {title}', hWorkspaceSetup:'Set up your Productivity Tracker', wsWhereLabel:'Where will you use it?', wsKindYonsei:'Yonsei', wsKindSchool:'Another school', wsKindWork:'Work', wsNameLabel:'Tab name', wsKoreanLabel:'Korean study tab', wsContinue:'Continue', wsSave:'Save', wsSaved:'Saved.', wsSettingsHeading:'School or work tab', workspaceSchoolDefault:'School', workspaceWorkDefault:'Work', tabProjects:'Projects', hAddProject:'Add a project', projectTitle:'Project name', projectLocation:'Location', addProjectBtn:'Add project', projectHint:'Only the project name and time are required.', deleteProjectConfirm:'Delete this project? This also removes its calendar entries and its notes for everyone.', lockInProjectConfirm:"Lock in this project? You won't be able to move it back to Planning or Active afterward.", statusActive:'Active', hYourProjects:'Your projects', hProjectList:'All projects', lblNotesProject:'Project (optional)', noProject:'No project', notesEmptyHintWork:'Add a project in the Projects tab first, then create notes here.', hNotesWork:'Your notes', kindProject:'Project', hProjectsCal:'Projects', linkCatProjects:'Projects', linkCatProjectNotes:'Project notes', tabBoards:'Board', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', lblYonseiBoardsSince:'Period', lblYonseiBoardsSort:'Sort', yonseiPeriodAll:'All time', yonseiPeriodWeek:'Last week', yonseiPeriodMonth:'Last month', yonseiPeriod6Months:'Last 6 months', yonseiPeriodYear:'Last year', yonseiPeriod2Years:'Last 2 years', yonseiPeriod3Years:'Last 3 years', yonseiPeriod4Years:'Last 4 years', yonseiPeriod5Years:'Last 5 years', yonseiSortNewest:'Newest first', yonseiSortOldest:'Oldest first', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobsSubJobBoard:'Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardAiUpdateBtn:'AI Job Fetch', jobBoardAiFetching:'Fetching', jobBoardUpdating:'Updating...', jobBoardIndBankingFinance:'Banking/Finance', jobBoardIndConsumerFashion:'Consumer/Fashion', jobBoardIndForeignFirms:'Foreign firms', jobBoardIndIntlOrg:'International Organization', jobBoardIndNGO:'NGO', jobBoardIndOthers:'Others', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Public', jobBoardIndResearchInstitute:'Research Institute', jobBoardIndTechnology:'Technology', jobBoardIndTopChaebol:'Top Chaebol', jobBoardIndTrade:'Trade', jobBoardNewBadge:'NEW', cdcLoginWarnTitle:'Logged in to CDC?', cdcLoginWarnBody:'The Yonsei CDC site needs its own separate login. Make sure you\'re signed in there before opening this posting, or the page may not load right.', cdcLoginWarnContinueBtn:'Continue', cdcLoginWarnLoginBtn:'Log in', cdcLoginWarnCancelBtn:'Cancel',
     tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet. Create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', expLoadFailedHint:'Couldn\'t load your vacations. Check your connection and try again.', expRetryLoadBtn:'Retry', expAmountInvalid:'Enter a number, optionally ending in k or m (e.g. 4k, 1.5m).', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', hExpAllExpenses:'All expenses', sortLabel:'Sort', sortFieldStatus:'Status', sortFieldCompany:'Company', sortFieldRole:'Role', sortFieldIssuer:'Issuer', sortFieldDeadline:'Deadline', sortFieldTitle:'Title', sortFieldPosted:'Posted', sortFieldMfa:'2FA', sortFieldConfirmed:'Confirmed', sortFieldDate:'Date', sortFieldAmount:'Amount', sortFieldName:'Name', sortFieldCategory:'Category', sortFieldPaidBy:'Paid by', sortAsc:'Sorting up. Press to sort down.', sortDesc:'Sorting down. Press to sort up.', sortThen:'then', sortMultiple:'Multiple sort', expExcluded:'{n} expenses left out', expExcludedOne:'{n} expense left out', expShowLabel:'Show', expShowAll:'All', expShowCounted:'Counted only', expShowExcluded:'Excluded only', expNoExcluded:'Nothing is excluded right now.', expNoCounted:'Everything here is excluded right now.', expNoExpensesYet:'No expenses logged yet.', expCountCategory:'Count this category', expDontCountCategory:"Don't count this category", expCountAllCategories:'Count all categories', expDontCountDay:"Don't count this day", expCountDay:'Count this day', expDontCountExpense:"Don't count this expense", expCountExpense:'Count this expense', expCountEverything:'Count everything', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default; a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', hEditVacation:'Edit vacation', expPickVacationHint:'Pick a vacation above.', expVacationDeleteConfirm:'Delete "{name}"? Every expense logged on it goes with it, for everyone on the trip.', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expCircleEmpty:'You\'re not linked with anyone yet. Add people to your Linked circle from Account settings.', expCircleAllOnTrip:'Everyone in your Linked circle is already on this trip.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip', lblExpCustomCategoryName:'Custom name (optional)', optNewVacationCurrencyCustom:'Other…', lblNewVacationCustomCurrency:'Currency code', lblExpDisplayCurrency:'Show in', optExpDisplayCurrencyOriginal:'Original', lblExpDisplayFull:'Convert every amount', expDisplayFullHint:'Shows every amount in the chosen currency. What was typed in is kept as it is, so switching back gives the exact amounts again.', hInviteBySearch:'Or invite by name', vacationInviteSearchPlaceholder:'Search by name...', recapLoadingHint:'Loading…', shellUpdatedText:'A new version is ready.', shellUpdatedBtn:'Reload', qlVisit:'Visit link:', qlEnterLink:'Enter link:', qlEnterVideo:'Enter video:', qlEdit:'Edit', qlSave:'Save', qlRemove:'Remove',
-    authEnterEmailPassword:'Enter your email and password.', authInvalidLogin:'Wrong email, name or password.', authEmailNotConfirmed:'Confirm your email first. The link is in the email we sent you.', authAlreadyRegistered:'An account with this email already exists. Sign in instead.', authRateLimited:'Too many attempts. Wait a minute and try again.', authEmailInvalid:'That email address does not look right.', authSamePassword:'Pick a password different from your current one.', authNetworkError:'Could not reach the server. Check your connection and try again.', authSignupsClosed:'Sign-ups are closed right now.', authLinkExpired:'That link has expired or was already used. Ask for a new one.', guestUnavailable:'Not available in guest mode.', tipDelete:'Delete', tipRemove:'Remove', tipMoveUp:'Move up', tipMoveDown:'Move down', tipDarkMode:'Toggle dark mode', tipMyNotes:'My notes', tipClickToEdit:'Click to edit', tipJumpToDate:'Jump to date', tipPagesRead:'Pages read', tipJobBoardAiUpdate:'Walks each of today\'s postings individually and saves full descriptions to a local file', notesLinkShortcutPrompt:'Shortcut name:', saveFailedTryAgain:'Could not save. Try again.', termsLink:'Terms of use', deleteWithGoogleBtn:'Confirm with Google', deleteOrPassword:'or with your password', deleteNoPasswordHint:'No password yet? Set one first with "Send password reset email".', deleteGoogleConfirmed:'Confirmed with Google. Press "Delete my account" to finish.', deleteGoogleNotFinished:'Google sign-in did not finish, so nothing was deleted.', deleteGoogleWrongAccount:'That Google account belongs to a different account here, so nothing was deleted. You are now signed in as {email}.', deleteGoogleExpired:'It has been more than 10 minutes since you confirmed. Confirm with Google again.', settingsDeleteWrongPasswordGoogle:'Incorrect password. Use "Confirm with Google" above instead, or set a password first with "Send password reset email".'
+    authEnterEmailPassword:'Enter your email and password.', authInvalidLogin:'Wrong email, name or password.', authEmailNotConfirmed:'Confirm your email first. The link is in the email we sent you.', authAlreadyRegistered:'An account with this email already exists. Sign in instead.', authRateLimited:'Too many attempts. Wait a minute and try again.', authEmailInvalid:'That email address does not look right.', authSamePassword:'Pick a password different from your current one.', authNetworkError:'Could not reach the server. Check your connection and try again.', authSignupsClosed:'Sign-ups are closed right now.', authLinkExpired:'That link has expired or was already used. Ask for a new one.', guestUnavailable:'Not available in guest mode.', tipDelete:'Delete', tipRemove:'Remove', tipMoveUp:'Move up', tipMoveDown:'Move down', tipDarkMode:'Toggle dark mode', tipMyNotes:'My notes', tipClickToEdit:'Click to edit', tipJumpToDate:'Jump to date', tipPagesRead:'Pages read', tipJobBoardAiUpdate:'Walks each of today\'s postings individually and saves full descriptions to a local file', notesLinkShortcutPrompt:'Shortcut name:', saveFailedTryAgain:'Could not save. Try again.', termsLink:'Terms of use', installGuideTitle:'Get the app', installGuideIntro:'Add Productivity Tracker to your home screen. It opens full screen like an app and can send you notifications.', installInAppNote:'This page is open inside another app, which cannot add it to your home screen. Open it in Safari or Chrome first (look for "Open in browser" in its ··· menu).', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'Install the app', installIosStep1:'Tap the Share button {icon} at the bottom of Safari. On newer iPhones it is inside the ··· menu.', installIosOtherStep1:'Tap the Share button {icon} in your browser, next to the address bar or in its menu.', installIosStep2:'Tap "View More" if you see it, then "Add to Home Screen".', installIosStep3:'Tap "Add". The app is now on your home screen.', installAndroidStep1:'Tap the menu {icon} at the top right of Chrome.', installAndroidStep2:'Tap "Add to home screen" or "Install app".', installAndroidStep3:'Tap "Install". The app is now on your home screen.', installGuideToast:'You can find this guide in Settings any time.', settingsInstallGuideBtn:'Get the app on your phone', deleteWithGoogleBtn:'Confirm with Google', deleteNoPasswordHint:'No password yet? Set one first with "Send password reset email".', deleteGoogleConfirmed:'Confirmed with Google. Press "Delete my account" to finish.', deleteGoogleNotFinished:'Google sign-in did not finish, so nothing was deleted.', deleteGoogleWrongAccount:'That Google account belongs to a different account here, so nothing was deleted. You are now signed in as {email}.', deleteGoogleExpired:'It has been more than 10 minutes since you confirmed. Confirm with Google again.', settingsDeleteWrongPasswordGoogle:'Incorrect password. Use "Confirm with Google" above instead, or set a password first with "Send password reset email".'
   },
   ko: {
     tagline:'한국어 공부 · 독서 · 구직 트래커',
@@ -11536,7 +11588,7 @@ const I18N = {
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
     topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
-    settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsDockGlassLabel:'하단 바 불투명도', settingsDockGlassHint:'휴대폰 화면 아래에 떠 있는 탭 바가 살짝 비치고, 뒤쪽 페이지는 흐릿하게 보입니다. 값을 낮출수록 유리처럼 보이고, 100%에서는 완전히 불투명해집니다.', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
+    settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsDockGlassLabel:'하단 바 불투명도', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
     settingsPushLabel:'이 기기에서 푸시 알림 받기', pushIosInstallHint:'iPhone에서는 먼저 이 앱을 홈 화면에 추가한 뒤(공유, 홈 화면에 추가) 그곳에서 열어 주세요.', pushUnsupportedHint:'이 브라우저는 푸시 알림을 받을 수 없습니다.', pushBlockedHint:'이 사이트의 알림이 차단되어 있습니다. 브라우저나 휴대폰 설정에서 허용해 주세요.', pushEnableFailed:'푸시 알림을 켜지 못했습니다.', notifChannelPush:'푸시', pushNeedsInApp:'앱 내 알림이 켜져 있어야 합니다', pushTestTitle:'푸시 알림이 켜졌습니다', pushTestBody:'이제 이 기기로 알림과 공지를 받습니다.',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
     lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 반짝입니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누르거나 입력할 수 있는 것 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.', animAddLabel:'추가 배달원', animAddHint:'저장되면 추가 버튼 뒤에서 배달원이 나와 버튼의 첫 글자를 떼어 깔때기로 뒤집고, 입력한 내용을 쏟아 넣은 뒤 가방에 담아 달려갑니다.',
@@ -11628,7 +11680,7 @@ const I18N = {
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
     tabYonsei:'연세', tabTodos:'할 일', hAddTodo:'할 일 추가', lblTodoTitle:'할 일', lblTodoDue:'마감일 (선택)', lblTodoTime:'시간 (선택)', lblTodoRemind:'알림', remindAtTime:'정각', remindHourBefore:'1시간 전', remindMorningOf:'당일 아침 (8:00)', remindDayBefore:'하루 전', remindCustom:'시간 선택', addTodoBtn:'할 일 추가', hTodoList:'나의 할 일', todoToday:'오늘', todoTomorrow:'내일', todoOverdue:'기한 지남', todoDone:'완료', todoClearDone:'완료 항목 지우기', todoClearDoneConfirm:'완료된 할 일 {n}개를 삭제할까요?', deleteTodoConfirm:'할 일 "{title}"을(를) 삭제할까요?', todoMarkDone:'완료로 표시', todoMarkOpen:'미완료로 표시', todoShowOnCalendar:'캘린더에 표시', todoCalAdd:'캘린더에 추가', todoCalLeaveOff:'캘린더에서 빼기', todoShareCircle:'내 서클과 공유', todoNotesLabel:'메모 (선택)', todoSave:'저장', todoCancel:'취소', todoEdit:'수정', todoDelete:'삭제', todoAllCourses:'전체 수업', todoAllProjects:'전체 프로젝트', notifTypeTodoReminder:'할 일 알림', notifTodoReminderTitleTpl:'할 일: {title}', hWorkspaceSetup:'Productivity Tracker 설정하기', wsWhereLabel:'어디에서 사용하시나요?', wsKindYonsei:'연세', wsKindSchool:'다른 학교', wsKindWork:'직장', wsNameLabel:'탭 이름', wsKoreanLabel:'한국어 공부 탭', wsContinue:'계속', wsSave:'저장', wsSaved:'저장했습니다.', wsSettingsHeading:'학교 또는 직장 탭', workspaceSchoolDefault:'학교', workspaceWorkDefault:'직장', tabProjects:'프로젝트', hAddProject:'프로젝트 추가', projectTitle:'프로젝트명', projectLocation:'장소', addProjectBtn:'프로젝트 추가', projectHint:'프로젝트명과 시간만 필수입니다.', deleteProjectConfirm:'이 프로젝트를 삭제할까요? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInProjectConfirm:'이 프로젝트를 확정할까요? 이후에는 계획 중이나 진행 중으로 되돌릴 수 없습니다.', statusActive:'진행 중', hYourProjects:'나의 프로젝트', hProjectList:'전체 프로젝트', lblNotesProject:'프로젝트 (선택)', noProject:'프로젝트 없음', notesEmptyHintWork:'먼저 프로젝트 탭에서 프로젝트를 추가한 후 노트를 작성하세요.', hNotesWork:'내 노트', kindProject:'프로젝트', hProjectsCal:'프로젝트', linkCatProjects:'프로젝트', linkCatProjectNotes:'프로젝트 노트', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', lblYonseiBoardsSince:'기간', lblYonseiBoardsSort:'정렬', yonseiPeriodAll:'전체 기간', yonseiPeriodWeek:'지난 1주', yonseiPeriodMonth:'지난 1개월', yonseiPeriod6Months:'지난 6개월', yonseiPeriodYear:'지난 1년', yonseiPeriod2Years:'지난 2년', yonseiPeriod3Years:'지난 3년', yonseiPeriod4Years:'지난 4년', yonseiPeriod5Years:'지난 5년', yonseiSortNewest:'최신순', yonseiSortOldest:'오래된순', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobsSubJobBoard:'게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardAiUpdateBtn:'AI 확인', jobBoardAiFetching:'가져오는 중', jobBoardUpdating:'업데이트 중...', jobBoardIndBankingFinance:'금융', jobBoardIndConsumerFashion:'소비재/패션', jobBoardIndForeignFirms:'외국계 기업', jobBoardIndIntlOrg:'국제기구', jobBoardIndNGO:'NGO', jobBoardIndOthers:'기타', jobBoardIndPRMarketing:'PR/마케팅', jobBoardIndPublic:'공공기관', jobBoardIndResearchInstitute:'연구소', jobBoardIndTechnology:'기술/IT', jobBoardIndTopChaebol:'대기업(재벌)', jobBoardIndTrade:'무역', jobBoardNewBadge:'신규', cdcLoginWarnTitle:'CDC 사이트에 로그인하셨나요?', cdcLoginWarnBody:'연세 CDC 사이트는 별도의 로그인이 필요합니다. 이 공고를 열기 전에 CDC 사이트에 로그인되어 있는지 확인하세요. 그렇지 않으면 페이지가 제대로 열리지 않을 수 있습니다.', cdcLoginWarnContinueBtn:'계속', cdcLoginWarnLoginBtn:'로그인', cdcLoginWarnCancelBtn:'취소',
     tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', expLoadFailedHint:'여행 정보를 불러오지 못했습니다. 연결 상태를 확인하고 다시 시도하세요.', expRetryLoadBtn:'다시 시도', expAmountInvalid:'숫자를 입력하세요. 끝에 k 또는 m을 붙일 수 있습니다 (예: 4k, 1.5m).', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', hExpAllExpenses:'전체 지출', sortLabel:'정렬', sortFieldStatus:'상태', sortFieldCompany:'회사', sortFieldRole:'직무', sortFieldIssuer:'발급기관', sortFieldDeadline:'마감일', sortFieldTitle:'제목', sortFieldPosted:'등록일', sortFieldMfa:'2단계 인증', sortFieldConfirmed:'인증 여부', sortFieldDate:'날짜', sortFieldAmount:'금액', sortFieldName:'이름', sortFieldCategory:'카테고리', sortFieldPaidBy:'결제자', sortAsc:'오름차순입니다. 누르면 내림차순으로 바뀝니다.', sortDesc:'내림차순입니다. 누르면 오름차순으로 바뀝니다.', sortThen:'그다음', sortMultiple:'다중 정렬', expExcluded:'{n}개 항목 제외됨', expShowLabel:'표시', expShowAll:'전체', expShowCounted:'포함된 것만', expShowExcluded:'제외된 것만', expNoExcluded:'지금은 제외된 항목이 없습니다.', expNoCounted:'지금은 모든 항목이 제외되어 있습니다.', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCountCategory:'이 카테고리 포함', expDontCountCategory:'이 카테고리 제외', expCountAllCategories:'모든 카테고리 포함', expDontCountDay:'이 날 제외', expCountDay:'이 날 포함', expDontCountExpense:'이 지출 제외', expCountExpense:'이 지출 포함', expCountEverything:'모두 포함', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', hEditVacation:'여행 수정', expPickVacationHint:'위에서 여행을 선택하세요.', expVacationDeleteConfirm:'"{name}" 여행을 삭제할까요? 이 여행에 기록된 모든 지출이 참여자 전원에게서 함께 삭제됩니다.', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expCircleEmpty:'아직 아무와도 연결되어 있지 않습니다. 계정 설정의 연결된 그룹에서 사람을 추가하세요.', expCircleAllOnTrip:'연결된 그룹의 모든 사람이 이미 이 여행에 참여하고 있습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거', lblExpCustomCategoryName:'맞춤 이름 (선택 사항)', optNewVacationCurrencyCustom:'기타…', lblNewVacationCustomCurrency:'통화 코드', lblExpDisplayCurrency:'표시 통화', optExpDisplayCurrencyOriginal:'원래 통화', lblExpDisplayFull:'모든 금액 변환', expDisplayFullHint:'모든 금액을 선택한 통화로 보여줍니다. 입력한 금액은 그대로 남아 있어 다시 바꾸면 정확한 금액이 돌아옵니다.', hInviteBySearch:'또는 이름으로 초대', vacationInviteSearchPlaceholder:'이름으로 검색...', recapLoadingHint:'불러오는 중...', shellUpdatedText:'새 버전이 준비되었습니다.', shellUpdatedBtn:'새로 고침', qlVisit:'링크 열기:', qlEnterLink:'링크 입력:', qlEnterVideo:'동영상 주소:', qlEdit:'수정', qlSave:'저장', qlRemove:'제거',
-    authEnterEmailPassword:'이메일과 비밀번호를 입력하세요.', authInvalidLogin:'이메일, 이름 또는 비밀번호가 올바르지 않습니다.', authEmailNotConfirmed:'먼저 이메일 인증을 완료하세요. 보내 드린 이메일에 링크가 있습니다.', authAlreadyRegistered:'이 이메일로 만든 계정이 이미 있습니다. 로그인하세요.', authRateLimited:'시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.', authEmailInvalid:'이메일 주소가 올바르지 않습니다.', authSamePassword:'현재 비밀번호와 다른 비밀번호를 선택하세요.', authNetworkError:'서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.', authSignupsClosed:'지금은 가입을 받지 않습니다.', authLinkExpired:'링크가 만료되었거나 이미 사용되었습니다. 새 링크를 요청하세요.', guestUnavailable:'게스트 모드에서는 사용할 수 없습니다.', tipDelete:'삭제', tipRemove:'제거', tipMoveUp:'위로 이동', tipMoveDown:'아래로 이동', tipDarkMode:'다크 모드 전환', tipMyNotes:'내 노트', tipClickToEdit:'클릭하여 수정', tipJumpToDate:'날짜로 이동', tipPagesRead:'읽은 페이지', tipJobBoardAiUpdate:'오늘 올라온 공고를 하나씩 열어 전체 설명을 기기의 파일로 저장합니다', notesLinkShortcutPrompt:'단축어 이름:', saveFailedTryAgain:'저장하지 못했습니다. 다시 시도하세요.', termsLink:'이용약관', deleteWithGoogleBtn:'Google로 확인', deleteOrPassword:'또는 비밀번호로', deleteNoPasswordHint:'비밀번호가 없나요? 먼저 "비밀번호 재설정 이메일 보내기"로 설정하세요.', deleteGoogleConfirmed:'Google로 확인했습니다. 마치려면 "계정 삭제"를 누르세요.', deleteGoogleNotFinished:'Google 로그인이 완료되지 않아 아무것도 삭제되지 않았습니다.', deleteGoogleWrongAccount:'선택한 Google 계정은 이곳의 다른 계정에 연결되어 있어 아무것도 삭제되지 않았습니다. 지금은 {email}(으)로 로그인되어 있습니다.', deleteGoogleExpired:'확인한 지 10분이 넘었습니다. Google로 다시 확인하세요.', settingsDeleteWrongPasswordGoogle:'비밀번호가 올바르지 않습니다. 위의 "Google로 확인"을 사용하거나, 먼저 "비밀번호 재설정 이메일 보내기"로 비밀번호를 설정하세요.'
+    authEnterEmailPassword:'이메일과 비밀번호를 입력하세요.', authInvalidLogin:'이메일, 이름 또는 비밀번호가 올바르지 않습니다.', authEmailNotConfirmed:'먼저 이메일 인증을 완료하세요. 보내 드린 이메일에 링크가 있습니다.', authAlreadyRegistered:'이 이메일로 만든 계정이 이미 있습니다. 로그인하세요.', authRateLimited:'시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.', authEmailInvalid:'이메일 주소가 올바르지 않습니다.', authSamePassword:'현재 비밀번호와 다른 비밀번호를 선택하세요.', authNetworkError:'서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.', authSignupsClosed:'지금은 가입을 받지 않습니다.', authLinkExpired:'링크가 만료되었거나 이미 사용되었습니다. 새 링크를 요청하세요.', guestUnavailable:'게스트 모드에서는 사용할 수 없습니다.', tipDelete:'삭제', tipRemove:'제거', tipMoveUp:'위로 이동', tipMoveDown:'아래로 이동', tipDarkMode:'다크 모드 전환', tipMyNotes:'내 노트', tipClickToEdit:'클릭하여 수정', tipJumpToDate:'날짜로 이동', tipPagesRead:'읽은 페이지', tipJobBoardAiUpdate:'오늘 올라온 공고를 하나씩 열어 전체 설명을 기기의 파일로 저장합니다', notesLinkShortcutPrompt:'단축어 이름:', saveFailedTryAgain:'저장하지 못했습니다. 다시 시도하세요.', termsLink:'이용약관', installGuideTitle:'앱으로 사용하기', installGuideIntro:'Productivity Tracker를 홈 화면에 추가하세요. 앱처럼 전체 화면으로 열리고 알림도 받을 수 있어요.', installInAppNote:'지금 다른 앱 안에서 열려 있어서 홈 화면에 추가할 수 없어요. 먼저 Safari나 Chrome에서 여세요(··· 메뉴의 "다른 브라우저로 열기").', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'앱 설치', installIosStep1:'Safari 하단의 공유 버튼 {icon}을 누르세요. 최신 iPhone에서는 ··· 메뉴 안에 있어요.', installIosOtherStep1:'브라우저의 공유 버튼 {icon}을 누르세요. 주소창 옆이나 메뉴 안에 있어요.', installIosStep2:'"더 보기"가 보이면 누른 다음 "홈 화면에 추가"를 누르세요.', installIosStep3:'"추가"를 누르면 홈 화면에 앱이 생겨요.', installAndroidStep1:'Chrome 오른쪽 위의 메뉴 {icon}를 누르세요.', installAndroidStep2:'"홈 화면에 추가" 또는 "앱 설치"를 누르세요.', installAndroidStep3:'"설치"를 누르면 홈 화면에 앱이 생겨요.', installGuideToast:'이 안내는 언제든 설정에서 다시 볼 수 있어요.', settingsInstallGuideBtn:'휴대폰에 앱 추가하기', deleteWithGoogleBtn:'Google로 확인', deleteNoPasswordHint:'비밀번호가 없나요? 먼저 "비밀번호 재설정 이메일 보내기"로 설정하세요.', deleteGoogleConfirmed:'Google로 확인했습니다. 마치려면 "계정 삭제"를 누르세요.', deleteGoogleNotFinished:'Google 로그인이 완료되지 않아 아무것도 삭제되지 않았습니다.', deleteGoogleWrongAccount:'선택한 Google 계정은 이곳의 다른 계정에 연결되어 있어 아무것도 삭제되지 않았습니다. 지금은 {email}(으)로 로그인되어 있습니다.', deleteGoogleExpired:'확인한 지 10분이 넘었습니다. Google로 다시 확인하세요.', settingsDeleteWrongPasswordGoogle:'비밀번호가 올바르지 않습니다. 위의 "Google로 확인"을 사용하거나, 먼저 "비밀번호 재설정 이메일 보내기"로 비밀번호를 설정하세요.'
   },
   vi: {
     tagline:'Ứng Dụng Theo Dõi Học Tiếng Hàn · Đọc Sách · Xin Việc',
@@ -11662,7 +11714,7 @@ const I18N = {
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
     topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
-    settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsDockGlassLabel:'Độ mờ của thanh dưới cùng', settingsDockGlassHint:'Thanh tab nổi ở cuối màn hình điện thoại hơi trong suốt, với trang phía sau được làm mờ. Giảm giá trị này để trông giống kính hơn; ở 100% thanh sẽ đục hoàn toàn.', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
+    settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsDockGlassLabel:'Độ mờ của thanh dưới cùng', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
     settingsPushLabel:'Nhận thông báo đẩy trên thiết bị này', pushIosInstallHint:'Trên iPhone, hãy thêm ứng dụng này vào Màn hình chính trước (Chia sẻ, rồi Thêm vào Màn hình chính) và mở từ đó.', pushUnsupportedHint:'Trình duyệt này không nhận được thông báo đẩy.', pushBlockedHint:'Thông báo đang bị chặn cho trang này. Hãy cho phép trong cài đặt trình duyệt hoặc điện thoại.', pushEnableFailed:'Không bật được thông báo đẩy.', notifChannelPush:'Đẩy', pushNeedsInApp:'Cần bật thông báo trong ứng dụng', pushTestTitle:'Đã bật thông báo đẩy', pushTestBody:'Thiết bị này giờ sẽ nhận nhắc nhở và thông báo của bạn.',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
     lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn sáng lên khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Mọi thứ bấm được hoặc nhập được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.', animAddLabel:'Người đưa thư khi thêm', animAddHint:'Khi một mục được lưu, một người đưa thư bước ra từ sau nút Thêm, lấy chữ đầu tiên trên nút, lật thành cái phễu, rót những gì bạn đã nhập vào, xếp vào vali rồi chạy đi.',
@@ -11755,13 +11807,14 @@ const I18N = {
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
     tabYonsei:'Yonsei', tabTodos:'Việc cần làm', hAddTodo:'Thêm việc cần làm', lblTodoTitle:'Việc cần làm', lblTodoDue:'Hạn (tùy chọn)', lblTodoTime:'Giờ (tùy chọn)', lblTodoRemind:'Nhắc tôi', remindAtTime:'Đúng giờ', remindHourBefore:'Trước 1 giờ', remindMorningOf:'Sáng hôm đó (8:00)', remindDayBefore:'Trước 1 ngày', remindCustom:'Chọn giờ', addTodoBtn:'Thêm việc', hTodoList:'Việc cần làm của bạn', todoToday:'Hôm nay', todoTomorrow:'Ngày mai', todoOverdue:'Quá hạn', todoDone:'Đã xong', todoClearDone:'Xóa việc đã xong', todoClearDoneConfirm:'Xóa {n} việc đã xong?', deleteTodoConfirm:'Xóa việc "{title}"?', todoMarkDone:'Đánh dấu đã xong', todoMarkOpen:'Đánh dấu chưa xong', todoShowOnCalendar:'Hiện trên lịch', todoCalAdd:'Thêm vào lịch', todoCalLeaveOff:'Bỏ khỏi lịch', todoShareCircle:'Chia sẻ với nhóm của bạn', todoNotesLabel:'Ghi chú (tùy chọn)', todoSave:'Lưu', todoCancel:'Hủy', todoEdit:'Sửa', todoDelete:'Xóa', todoAllCourses:'Tất cả khóa học', todoAllProjects:'Tất cả dự án', notifTypeTodoReminder:'Nhắc việc cần làm', notifTodoReminderTitleTpl:'Việc cần làm: {title}', hWorkspaceSetup:'Thiết lập Productivity Tracker', wsWhereLabel:'Bạn sẽ dùng ở đâu?', wsKindYonsei:'Yonsei', wsKindSchool:'Trường khác', wsKindWork:'Công việc', wsNameLabel:'Tên thẻ', wsKoreanLabel:'Thẻ học tiếng Hàn', wsContinue:'Tiếp tục', wsSave:'Lưu', wsSaved:'Đã lưu.', wsSettingsHeading:'Thẻ trường học hoặc công việc', workspaceSchoolDefault:'Trường học', workspaceWorkDefault:'Công việc', tabProjects:'Dự án', hAddProject:'Thêm dự án', projectTitle:'Tên dự án', projectLocation:'Địa điểm', addProjectBtn:'Thêm dự án', projectHint:'Chỉ tên dự án và thời gian là bắt buộc.', deleteProjectConfirm:'Xóa dự án này? Thao tác này cũng xóa các mục lịch và ghi chú của dự án cho tất cả mọi người.', lockInProjectConfirm:'Chốt dự án này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đang thực hiện.', statusActive:'Đang thực hiện', hYourProjects:'Dự án của bạn', hProjectList:'Tất cả dự án', lblNotesProject:'Dự án (tùy chọn)', noProject:'Không có dự án', notesEmptyHintWork:'Hãy thêm dự án trong tab Dự án trước, sau đó tạo ghi chú ở đây.', hNotesWork:'Ghi chú của bạn', kindProject:'Dự án', hProjectsCal:'Dự án', linkCatProjects:'Dự án', linkCatProjectNotes:'Ghi chú dự án', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', lblYonseiBoardsSince:'Khoảng thời gian', lblYonseiBoardsSort:'Sắp xếp', yonseiPeriodAll:'Mọi lúc', yonseiPeriodWeek:'Tuần trước', yonseiPeriodMonth:'Tháng trước', yonseiPeriod6Months:'6 tháng qua', yonseiPeriodYear:'Năm trước', yonseiPeriod2Years:'2 năm qua', yonseiPeriod3Years:'3 năm qua', yonseiPeriod4Years:'4 năm qua', yonseiPeriod5Years:'5 năm qua', yonseiSortNewest:'Mới nhất', yonseiSortOldest:'Cũ nhất', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobsSubJobBoard:'Bảng', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardAiUpdateBtn:'Kiểm tra AI', jobBoardAiFetching:'Đang lấy dữ liệu', jobBoardUpdating:'Đang cập nhật...', jobBoardIndBankingFinance:'Ngân hàng/Tài chính', jobBoardIndConsumerFashion:'Hàng tiêu dùng/Thời trang', jobBoardIndForeignFirms:'Doanh nghiệp nước ngoài', jobBoardIndIntlOrg:'Tổ chức quốc tế', jobBoardIndNGO:'Tổ chức phi chính phủ (NGO)', jobBoardIndOthers:'Khác', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Khu vực công', jobBoardIndResearchInstitute:'Viện nghiên cứu', jobBoardIndTechnology:'Công nghệ', jobBoardIndTopChaebol:'Tập đoàn lớn (Chaebol)', jobBoardIndTrade:'Thương mại', jobBoardNewBadge:'MỚI', cdcLoginWarnTitle:'Đã đăng nhập vào CDC chưa?', cdcLoginWarnBody:'Trang CDC của Yonsei cần đăng nhập riêng. Hãy chắc chắn bạn đã đăng nhập ở đó trước khi mở tin này, nếu không trang có thể không tải đúng.', cdcLoginWarnContinueBtn:'Tiếp tục', cdcLoginWarnLoginBtn:'Đăng nhập', cdcLoginWarnCancelBtn:'Hủy',
     tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào. Tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', expLoadFailedHint:'Không thể tải chuyến đi của bạn. Kiểm tra kết nối và thử lại.', expRetryLoadBtn:'Thử lại', expAmountInvalid:'Nhập một số, có thể kết thúc bằng k hoặc m (vd: 4k, 1.5m).', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', hExpAllExpenses:'Tất cả khoản chi', sortLabel:'Sắp xếp', sortFieldStatus:'Trạng thái', sortFieldCompany:'Công ty', sortFieldRole:'Vị trí', sortFieldIssuer:'Đơn vị cấp', sortFieldDeadline:'Hạn nộp', sortFieldTitle:'Tiêu đề', sortFieldPosted:'Ngày đăng', sortFieldMfa:'Xác thực 2 bước', sortFieldConfirmed:'Đã xác nhận', sortFieldDate:'Ngày', sortFieldAmount:'Số tiền', sortFieldName:'Tên', sortFieldCategory:'Danh mục', sortFieldPaidBy:'Người trả', sortAsc:'Đang sắp tăng dần. Nhấn để sắp giảm dần.', sortDesc:'Đang sắp giảm dần. Nhấn để sắp tăng dần.', sortThen:'rồi', sortMultiple:'Sắp xếp nhiều tiêu chí', expExcluded:'{n} khoản chi bị loại', expShowLabel:'Hiển thị', expShowAll:'Tất cả', expShowCounted:'Chỉ mục được tính', expShowExcluded:'Chỉ mục bị loại', expNoExcluded:'Hiện không có mục nào bị loại.', expNoCounted:'Hiện tất cả các mục đều bị loại.', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCountCategory:'Tính danh mục này', expDontCountCategory:'Không tính danh mục này', expCountAllCategories:'Tính tất cả danh mục', expDontCountDay:'Không tính ngày này', expCountDay:'Tính ngày này', expDontCountExpense:'Không tính khoản chi này', expCountExpense:'Tính khoản chi này', expCountEverything:'Tính tất cả', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên. Một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', hEditVacation:'Sửa chuyến đi', expPickVacationHint:'Chọn một chuyến đi ở trên.', expVacationDeleteConfirm:'Xóa "{name}"? Mọi khoản chi đã ghi cho chuyến đi này sẽ bị xóa theo, với tất cả mọi người trong chuyến.', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expCircleEmpty:'Bạn chưa liên kết với ai. Hãy thêm người vào Nhóm liên kết trong Cài đặt tài khoản.', expCircleAllOnTrip:'Mọi người trong Nhóm liên kết của bạn đã tham gia chuyến đi này.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi', lblExpCustomCategoryName:'Tên tùy chỉnh (không bắt buộc)', optNewVacationCurrencyCustom:'Khác…', lblNewVacationCustomCurrency:'Mã tiền tệ', lblExpDisplayCurrency:'Hiển thị bằng', optExpDisplayCurrencyOriginal:'Ban đầu', lblExpDisplayFull:'Đổi mọi số tiền', expDisplayFullHint:'Hiển thị mọi số tiền bằng loại tiền đã chọn. Số tiền đã nhập vẫn giữ nguyên, nên khi đổi lại sẽ thấy đúng số đã nhập.', hInviteBySearch:'Hoặc mời theo tên', vacationInviteSearchPlaceholder:'Tìm theo tên...', recapLoadingHint:'Đang tải...', shellUpdatedText:'Đã có phiên bản mới.', shellUpdatedBtn:'Tải lại', qlVisit:'Mở liên kết:', qlEnterLink:'Nhập liên kết:', qlEnterVideo:'Nhập video:', qlEdit:'Sửa', qlSave:'Lưu', qlRemove:'Xóa',
-    authEnterEmailPassword:'Hãy nhập email và mật khẩu.', authInvalidLogin:'Email, tên hoặc mật khẩu không đúng.', authEmailNotConfirmed:'Hãy xác nhận email trước. Đường liên kết nằm trong email chúng tôi đã gửi.', authAlreadyRegistered:'Đã có tài khoản dùng email này. Hãy đăng nhập.', authRateLimited:'Bạn đã thử quá nhiều lần. Hãy đợi một lát rồi thử lại.', authEmailInvalid:'Địa chỉ email này không hợp lệ.', authSamePassword:'Hãy chọn mật khẩu khác với mật khẩu hiện tại.', authNetworkError:'Không thể kết nối máy chủ. Hãy kiểm tra kết nối rồi thử lại.', authSignupsClosed:'Hiện chưa mở đăng ký.', authLinkExpired:'Đường liên kết đã hết hạn hoặc đã được dùng. Hãy yêu cầu liên kết mới.', guestUnavailable:'Không khả dụng ở chế độ khách.', tipDelete:'Xóa', tipRemove:'Gỡ bỏ', tipMoveUp:'Chuyển lên', tipMoveDown:'Chuyển xuống', tipDarkMode:'Bật/tắt chế độ tối', tipMyNotes:'Ghi chú của tôi', tipClickToEdit:'Nhấn để sửa', tipJumpToDate:'Đến ngày', tipPagesRead:'Số trang đã đọc', tipJobBoardAiUpdate:'Mở lần lượt từng tin đăng hôm nay và lưu toàn bộ mô tả vào một tệp trên máy', notesLinkShortcutPrompt:'Tên phím tắt:', saveFailedTryAgain:'Không lưu được. Hãy thử lại.', termsLink:'Điều khoản sử dụng', deleteWithGoogleBtn:'Xác nhận bằng Google', deleteOrPassword:'hoặc bằng mật khẩu', deleteNoPasswordHint:'Chưa có mật khẩu? Hãy đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".', deleteGoogleConfirmed:'Đã xác nhận bằng Google. Nhấn "Xóa tài khoản của tôi" để hoàn tất.', deleteGoogleNotFinished:'Đăng nhập Google chưa hoàn tất nên chưa có gì bị xóa.', deleteGoogleWrongAccount:'Tài khoản Google đó thuộc về một tài khoản khác ở đây nên chưa có gì bị xóa. Bạn đang đăng nhập bằng {email}.', deleteGoogleExpired:'Đã hơn 10 phút kể từ khi bạn xác nhận. Hãy xác nhận lại bằng Google.', settingsDeleteWrongPasswordGoogle:'Mật khẩu không đúng. Hãy dùng "Xác nhận bằng Google" ở trên, hoặc đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".'
+    authEnterEmailPassword:'Hãy nhập email và mật khẩu.', authInvalidLogin:'Email, tên hoặc mật khẩu không đúng.', authEmailNotConfirmed:'Hãy xác nhận email trước. Đường liên kết nằm trong email chúng tôi đã gửi.', authAlreadyRegistered:'Đã có tài khoản dùng email này. Hãy đăng nhập.', authRateLimited:'Bạn đã thử quá nhiều lần. Hãy đợi một lát rồi thử lại.', authEmailInvalid:'Địa chỉ email này không hợp lệ.', authSamePassword:'Hãy chọn mật khẩu khác với mật khẩu hiện tại.', authNetworkError:'Không thể kết nối máy chủ. Hãy kiểm tra kết nối rồi thử lại.', authSignupsClosed:'Hiện chưa mở đăng ký.', authLinkExpired:'Đường liên kết đã hết hạn hoặc đã được dùng. Hãy yêu cầu liên kết mới.', guestUnavailable:'Không khả dụng ở chế độ khách.', tipDelete:'Xóa', tipRemove:'Gỡ bỏ', tipMoveUp:'Chuyển lên', tipMoveDown:'Chuyển xuống', tipDarkMode:'Bật/tắt chế độ tối', tipMyNotes:'Ghi chú của tôi', tipClickToEdit:'Nhấn để sửa', tipJumpToDate:'Đến ngày', tipPagesRead:'Số trang đã đọc', tipJobBoardAiUpdate:'Mở lần lượt từng tin đăng hôm nay và lưu toàn bộ mô tả vào một tệp trên máy', notesLinkShortcutPrompt:'Tên phím tắt:', saveFailedTryAgain:'Không lưu được. Hãy thử lại.', termsLink:'Điều khoản sử dụng', installGuideTitle:'Dùng như ứng dụng', installGuideIntro:'Thêm Productivity Tracker vào màn hình chính. Nó mở toàn màn hình như một ứng dụng và có thể gửi thông báo cho bạn.', installInAppNote:'Trang này đang mở bên trong một ứng dụng khác nên không thể thêm vào màn hình chính. Hãy mở bằng Safari hoặc Chrome trước (tìm "Mở trong trình duyệt" ở menu ···).', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'Cài đặt ứng dụng', installIosStep1:'Nhấn nút Chia sẻ {icon} ở cuối Safari. Trên iPhone mới hơn, nút này nằm trong menu ···.', installIosOtherStep1:'Nhấn nút Chia sẻ {icon} của trình duyệt, cạnh thanh địa chỉ hoặc trong menu.', installIosStep2:'Nhấn "Xem thêm" nếu có, rồi nhấn "Thêm vào MH chính".', installIosStep3:'Nhấn "Thêm". Ứng dụng giờ đã ở trên màn hình chính.', installAndroidStep1:'Nhấn menu {icon} ở góc trên bên phải của Chrome.', installAndroidStep2:'Nhấn "Thêm vào màn hình chính" hoặc "Cài đặt ứng dụng".', installAndroidStep3:'Nhấn "Cài đặt". Ứng dụng giờ đã ở trên màn hình chính.', installGuideToast:'Bạn có thể xem lại hướng dẫn này trong Cài đặt bất cứ lúc nào.', settingsInstallGuideBtn:'Thêm ứng dụng vào điện thoại', deleteWithGoogleBtn:'Xác nhận bằng Google', deleteNoPasswordHint:'Chưa có mật khẩu? Hãy đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".', deleteGoogleConfirmed:'Đã xác nhận bằng Google. Nhấn "Xóa tài khoản của tôi" để hoàn tất.', deleteGoogleNotFinished:'Đăng nhập Google chưa hoàn tất nên chưa có gì bị xóa.', deleteGoogleWrongAccount:'Tài khoản Google đó thuộc về một tài khoản khác ở đây nên chưa có gì bị xóa. Bạn đang đăng nhập bằng {email}.', deleteGoogleExpired:'Đã hơn 10 phút kể từ khi bạn xác nhận. Hãy xác nhận lại bằng Google.', settingsDeleteWrongPasswordGoogle:'Mật khẩu không đúng. Hãy dùng "Xác nhận bằng Google" ở trên, hoặc đặt mật khẩu trước bằng "Gửi email đặt lại mật khẩu".'
   }
 };
 const STATIC_MAP = {
   authTagline:'tagline', tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password',
   authAgeNote:'authAgeNote', authPrivacyLink:'privacyPolicyLink', settingsPrivacyLink:'privacyPolicyLink', authTermsLink:'termsLink', settingsTermsLink:'termsLink',
-  deleteWithGoogleLabel:'deleteWithGoogleBtn', lblDeleteOrPassword:'deleteOrPassword', deleteNoPasswordHint:'deleteNoPasswordHint', deleteGoogleConfirmedNote:'deleteGoogleConfirmed',
+  installGuideTitle:'installGuideTitle', installGuideIntro:'installGuideIntro', installInAppNote:'installInAppNote', installOsIos:'installOsIos', installOsAndroid:'installOsAndroid', installNowBtn:'installNowBtn', installGuideToastText:'installGuideToast', settingsInstallGuideBtn:'settingsInstallGuideBtn',
+  deleteWithGoogleLabel:'deleteWithGoogleBtn', lblDeleteOrPassword:'oauthOr', deleteNoPasswordHint:'deleteNoPasswordHint', deleteGoogleConfirmedNote:'deleteGoogleConfirmed',
   lblOauthOr:'oauthOr', lblChooseNameTitle:'chooseNameTitle', lblChooseNameField:'yourName', chooseNameBtn:'chooseNameBtn',
   signOutBtn:'signOut',
   tabBtnStudyLabel:'tabStudy', tabBtnReadingLabel:'tabReading', tabBtnJobsLabel:'tabJobs', tabBtnCalendarLabel:'tabHome', tabBtnYonseiLabel:'tabYonsei',
@@ -11805,7 +11858,7 @@ const STATIC_MAP = {
   hTopik:'topikCountdown', topikTestLabel:'testIn',
   circleMessageSendBtn:'circleSendBtn', chatTitle:'circleTabMessages',
   settingsStickyTopBarLabel:'settingsStickyTopBarLabel', settingsStickyTopBarHint:'settingsStickyTopBarHint',
-  settingsDockGlassLabel:'settingsDockGlassLabel', settingsDockGlassHint:'settingsDockGlassHint',
+  settingsDockGlassLabel:'settingsDockGlassLabel',
   hCalExport:'calExportTitle', lblCalExportInclude:'calExportInclude',
   calExportAllBtn:'calExportAll', calExportNoneBtn:'calExportNone', calExportGoBtn:'calExportGo',
   settingsShowTopikLabel:'settingsShowTopikLabel', settingsShowTopikHint:'settingsShowTopikHint',
@@ -13108,6 +13161,10 @@ function applyLanguage(lang){
   // word, so they follow the language like the visible labels do.
   document.querySelectorAll('[data-title-key]').forEach(el=>{ el.title = t(el.dataset.titleKey); });
   document.querySelectorAll('[data-aria-key]').forEach(el=>{ el.setAttribute('aria-label', t(el.dataset.ariaKey)); });
+  // Only while it is open: this also runs while the page is still loading,
+  // before the guide's own variables exist.
+  const installModal = document.getElementById('installGuideModal');
+  if(installModal && !installModal.classList.contains('hidden')) renderInstallGuide();
   // The privacy policy and the terms open in the language the app is in.
   document.querySelectorAll('a[data-legal]').forEach(a=>{ a.href = '/' + a.dataset.legal + '.html?lang=' + currentLang; });
   const launcher = document.getElementById('chatLauncher');
@@ -13848,6 +13905,7 @@ async function onAuthed(user){
   handleDeepLinkParam();
   syncPushOnSignIn();
   resumeDeleteReauth(user, deleteReauthNote);
+  scheduleInstallGuide();
 }
 // The "Open Productivity Tracker" / "View on Productivity Tracker" email
 // buttons carry a ?go=... query param (see email_deep_links_migration.sql)
@@ -14239,6 +14297,145 @@ document.querySelectorAll('.recap-push-check').forEach(cb=>{
     notifPushPrefs[cb.dataset.type] = cb.checked;
   });
 });
+
+/* ---------- GET THE APP ----------
+   A phone reaching the tracker in a browser is shown, once, how to put it on
+   the home screen (real-user request, 29 Sep, after a friend deleted the app
+   and could not find how to get it back: "if they close this, it should never
+   show again, and there should be a guide in settings. It should say so in a
+   small popup that disappears after 10 seconds, but can be dismissed with an
+   x"). Never inside the installed app itself, where there is nothing to do.
+   Android gets Chrome's own install prompt as a button when Chrome offers
+   one; iOS has no such thing, so the steps are all there is. */
+const INSTALL_GUIDE_SEEN_KEY = 'ptInstallGuideSeen';
+const INSTALL_TOAST_MS = 10000;
+let deferredInstallPrompt = null;
+let installGuideOs = 'ios';
+let installGuideAuto = false;     // opened by itself rather than from Settings
+let installGuideScheduled = false;
+let installToastTimer = null;
+const INSTALL_SHARE_GLYPH = svgIcon('<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line>', 15);
+const INSTALL_MENU_GLYPH = svgIcon('<circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle>', 15);
+function isStandaloneApp(){
+  return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+}
+// Phones only, for showing the guide by itself: a tablet is not "the app on
+// my phone", and a computer has nothing to add to.
+function phoneOs(){
+  const ua = navigator.userAgent || '';
+  if(/iPhone|iPod/.test(ua)) return 'ios';
+  if(/Android/.test(ua) && /Mobile/.test(ua)) return 'android';
+  return null;
+}
+// Which page of the guide to open on, tablets included (an iPad asks for
+// desktop pages, so it is told apart by its touch points).
+function deviceOs(){
+  const ua = navigator.userAgent || '';
+  if(/Android/.test(ua)) return 'android';
+  if(/iPhone|iPod|iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios';
+  return null;
+}
+// A page opened from a chat or a social app is inside that app's own
+// browser, which cannot add anything to the home screen.
+function inAppBrowser(){
+  return /KAKAOTALK|Instagram|FBAN|FBAV|Line\/|NAVER\(inapp|DaumApps|Snapchat|TikTok|musical_ly/i.test(navigator.userAgent || '');
+}
+function iosNotSafari(){ return /CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(navigator.userAgent || ''); }
+function installGuideSeen(){ try { return localStorage.getItem(INSTALL_GUIDE_SEEN_KEY) === '1'; } catch(e){ return false; } }
+function markInstallGuideSeen(){ try { localStorage.setItem(INSTALL_GUIDE_SEEN_KEY, '1'); } catch(e){} }
+function renderInstallGuide(){
+  const list = document.getElementById('installGuideSteps');
+  if(!list) return;
+  document.querySelectorAll('#installOsToggle button').forEach(b=> b.classList.toggle('active', b.dataset.os === installGuideOs));
+  const android = installGuideOs === 'android';
+  const steps = android
+    ? ['installAndroidStep1', 'installAndroidStep2', 'installAndroidStep3']
+    : [deviceOs() === 'ios' && iosNotSafari() ? 'installIosOtherStep1' : 'installIosStep1', 'installIosStep2', 'installIosStep3'];
+  const glyph = `<span class="install-glyph">${android ? INSTALL_MENU_GLYPH : INSTALL_SHARE_GLYPH}</span>`;
+  list.innerHTML = steps.map(k=> `<li><span>${escapeHtml(t(k)).replace('{icon}', glyph)}</span></li>`).join('');
+  document.getElementById('installNowBtn').classList.toggle('hidden', !(android && deferredInstallPrompt));
+  document.getElementById('installInAppNote').classList.toggle('hidden', !inAppBrowser());
+}
+function openInstallGuide(auto){
+  installGuideAuto = !!auto;
+  installGuideOs = deviceOs() || 'ios';
+  renderInstallGuide();
+  document.getElementById('installGuideModal').classList.remove('hidden');
+}
+// Closing the one that came up by itself is the answer to it: it is never
+// shown by itself again, and the popup says where it went.
+function closeInstallGuide(){
+  const modal = document.getElementById('installGuideModal');
+  if(modal.classList.contains('hidden')) return;
+  modal.classList.add('hidden');
+  if(!installGuideAuto) return;
+  installGuideAuto = false;
+  markInstallGuideSeen();
+  showInstallGuideToast();
+}
+function showInstallGuideToast(){
+  const el = document.getElementById('installGuideToast');
+  el.classList.remove('hidden');
+  clearTimeout(installToastTimer);
+  installToastTimer = setTimeout(()=> el.classList.add('hidden'), INSTALL_TOAST_MS);
+}
+function hideInstallGuideToast(){
+  clearTimeout(installToastTimer);
+  document.getElementById('installGuideToast').classList.add('hidden');
+}
+// Waits its turn: a new account's setup, or anything else already open, is
+// finished first, so the guide is never stacked on another dialog.
+function maybeShowInstallGuide(tries){
+  if(!phoneOs() || isStandaloneApp() || installGuideSeen() || !currentUser) return;
+  const busy = [...document.querySelectorAll('.modal-overlay')].some(m=> !m.classList.contains('hidden'))
+    || document.getElementById('appScreen').classList.contains('hidden');
+  if(busy){
+    if((tries || 0) < 60) setTimeout(()=> maybeShowInstallGuide((tries || 0) + 1), 2000);
+    return;
+  }
+  openInstallGuide(true);
+}
+function scheduleInstallGuide(){
+  if(installGuideScheduled) return;
+  installGuideScheduled = true;
+  setTimeout(()=> maybeShowInstallGuide(0), 1500);
+}
+// Chrome's own install offer, kept for the button instead of its banner.
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  renderInstallGuide();
+});
+window.addEventListener('appinstalled', ()=>{
+  deferredInstallPrompt = null;
+  markInstallGuideSeen();
+  installGuideAuto = false;
+  document.getElementById('installGuideModal').classList.add('hidden');
+});
+document.getElementById('installNowBtn').addEventListener('click', async ()=>{
+  const ev = deferredInstallPrompt;
+  if(!ev) return;
+  deferredInstallPrompt = null;
+  ev.prompt();
+  let outcome = null;
+  try { outcome = (await ev.userChoice).outcome; } catch(e){}
+  if(outcome === 'accepted'){
+    markInstallGuideSeen();
+    installGuideAuto = false;
+    document.getElementById('installGuideModal').classList.add('hidden');
+  } else renderInstallGuide();
+});
+document.getElementById('installGuideCloseBtn').addEventListener('click', closeInstallGuide);
+closeOnBackdrop(document.getElementById('installGuideModal'), closeInstallGuide);
+document.querySelectorAll('#installOsToggle button').forEach(b=> b.addEventListener('click', ()=>{
+  installGuideOs = b.dataset.os;
+  renderInstallGuide();
+}));
+document.getElementById('installGuideToastCloseBtn').addEventListener('click', hideInstallGuideToast);
+document.getElementById('settingsInstallGuideBtn').addEventListener('click', ()=> openInstallGuide(false));
+// Only on a phone or tablet in a browser: a computer has no home screen to
+// add to, and inside the installed app there is nothing left to install.
+document.getElementById('settingsInstallGuideRow').classList.toggle('hidden', isStandaloneApp() || !deviceOs());
 
 /* ---------- PUSH NOTIFICATIONS ---------- */
 // Web Push, the third channel beside email and in-app. Every notification
@@ -14651,6 +14848,9 @@ function closeOnBackdrop(overlay, close){
   });
 }
 const MODAL_CLOSE_BTN = {
+  // First: it can be open ON TOP of Account settings, and Escape closes the
+  // top one. The first open modal in this list is the one Escape closes.
+  installGuideModal: 'installGuideCloseBtn',
   calEditModal: 'calModalCloseBtn',
   calQuickViewModal: 'quickViewCloseBtn',
   deleteChoiceModal: 'deleteChoiceCancelBtn',
@@ -15517,6 +15717,7 @@ async function enterGuestMode(){
   reorderMobileTabs();
   handleDeepLinkParam();
   document.getElementById('guestBanner').classList.remove('hidden');
+  scheduleInstallGuide();
 }
 document.getElementById('guestModeBtn').addEventListener('click', enterGuestMode);
 document.getElementById('guestBanner').addEventListener('click', signOutOrExitGuest);
@@ -17264,21 +17465,26 @@ function renderDeleteAccountState(){
   // Only an account that started with Google can be without a password.
   document.getElementById('deleteNoPasswordHint').classList.toggle('hidden', confirmed || !google || currentUser.provider === 'email');
 }
+// No typed email on this way (real-user request, 29 Sep: "it should just base
+// it on the email attached to your account automatically"): Google is handed
+// the account's own address, and signing in with it is the confirmation.
 document.getElementById('deleteWithGoogleBtn').addEventListener('click', async ()=>{
   const btn = document.getElementById('deleteWithGoogleBtn');
-  const emailInput = document.getElementById('settingsDeleteEmailConfirm').value.trim();
-  if(emailInput.toLowerCase() !== (currentUser.email||'').toLowerCase()){
-    showSettingsMsg('settingsDeleteMsg', t('settingsDeleteMismatch'), true); return;
-  }
   btn.disabled = true;
   const { data: { session } } = await supabaseClient.auth.getSession();
-  try { sessionStorage.setItem(DELETE_REAUTH_KEY, JSON.stringify({ uid: currentUser.id, prev: lastOauthSignInSec(session), at: Date.now() })); } catch(e){}
+  // The note and the return address carry the same one-time token, so the
+  // note can only ever be read on the return from THIS trip. A sign-in or
+  // sign-up started anywhere else comes back without it, whatever is left in
+  // this tab (real-user report, twice on 29 Sep: a fresh Google sign-up after
+  // deleting an account was told it was "a different account").
+  const nonce = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()).replace(/-/g, '');
+  try { sessionStorage.setItem(DELETE_REAUTH_KEY, JSON.stringify({ uid: currentUser.id, prev: lastOauthSignInSec(session), at: Date.now(), nonce })); } catch(e){}
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     // Google's account chooser with this account's address already picked,
     // rather than a silent bounce: choosing a different Google account signs
     // in as whoever that is, which resumeDeleteReauth() then refuses.
-    options: { redirectTo: window.location.origin + window.location.pathname, queryParams: { prompt: 'select_account', login_hint: currentUser.email } }
+    options: { redirectTo: window.location.origin + window.location.pathname + '?reauth=' + nonce, queryParams: { prompt: 'select_account', login_hint: currentUser.email } }
   });
   if(error){
     btn.disabled = false;
@@ -17292,8 +17498,19 @@ function takeDeleteReauthNote(){
   let note = null;
   try { note = JSON.parse(sessionStorage.getItem(DELETE_REAUTH_KEY) || 'null'); } catch(e){}
   dropDeleteReauthNote();
-  if(!note || !PAGE_IS_OAUTH_RETURN || !(Date.now() - (note.at || 0) < 30 * 60 * 1000)) return null;
+  stripReauthParam();
+  if(!note || !PAGE_IS_OAUTH_RETURN || !note.nonce || note.nonce !== PAGE_OAUTH_REAUTH) return null;
+  if(!(Date.now() - (note.at || 0) < 30 * 60 * 1000)) return null;
   return note;
+}
+// The token has done its job once read; a reload must not carry it.
+function stripReauthParam(){
+  try {
+    const url = new URL(window.location.href);
+    if(!url.searchParams.has('reauth')) return;
+    url.searchParams.delete('reauth');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+  } catch(e){}
 }
 // Runs at the end of every sign-in; does nothing without a note.
 async function resumeDeleteReauth(user, note){
@@ -42547,7 +42764,7 @@ closeOnBackdrop(document.getElementById('pendingVacationInvitesModal'), ()=> doc
   renderTopikCountdown();
   renderMonthGrid();
   loadOauthProviders();
-  if(!PAGE_IS_OAUTH_RETURN) dropDeleteReauthNote();
+  if(!PAGE_IS_OAUTH_RETURN){ dropDeleteReauthNote(); stripReauthParam(); }
   const { data: { session } } = await supabaseClient.auth.getSession();
   // Read after getSession(), which is what consumes a provider's return
   // address; an error there is the one thing it leaves behind.

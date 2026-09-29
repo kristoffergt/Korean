@@ -5981,6 +5981,124 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## DELETE WITH GOOGLE CARRIES ITS OWN TOKEN, A "GET THE APP" GUIDE, AND NO PHONE-ONLY SETTINGS ON A DESKTOP (29 Sep, ninety-ninth pass)
+
+### A fresh Google sign-up was told "different account" again
+
+Reported a second time, after the ninety-sixth pass's fix was live (the live
+page carried it). The auth log settles the order: "Confirm with Google" for
+the old account, back 5 s later, the account deleted and signed out (the
+sign-out answered 403 "user does not exist", which supabase-js 2.117.2 treats
+as signed out and clears), then three Google starts from the sign-in screen,
+the last one a new sign-up, which was read against a note naming the deleted
+account. **Every path in the code drops that note, and the path that left it
+was still not pinned down** (supabase-js was ruled out by reading its
+signOut; the service worker serving the previous build on an OAuth return, see
+below, was the remaining suspect). So the note can no longer be matched by
+luck:
+
+- **The round trip carries a one-time token in its own return address**:
+  `redirectTo` is `...?reauth=<nonce>` and the note stores the same nonce.
+  `PAGE_OAUTH_REAUTH` is read before the client exists, beside
+  `PAGE_IS_OAUTH_RETURN`, and `takeDeleteReauthNote()` returns the note only
+  when the two match. A sign-in or sign-up started anywhere else comes back
+  without the token, so no leftover note can ever be applied to it.
+  `stripReauthParam()` takes the token out of the address once read (and on
+  any non-return load), so a reload cannot carry it.
+- **Supabase keeps the query**: checked against the live project by starting
+  an authorize with `redirect_to=https://kristoffergt.com/?reauth=abc123` and
+  reading `auth.flow_state.referrer`, which held it intact (a redirect on the
+  Site URL's own host is always allowed). The tracker uses the IMPLICIT flow
+  (`code_challenge` null), so Google's tokens come back in the hash and the
+  token sits untouched in the query.
+- Checked in the pane by faking a return: matching token returns the note and
+  strips `?reauth`; no token returns null; the note is gone either way.
+- **The service worker serves the PREVIOUS cached page on every navigation**
+  (stale-while-revalidate, `sw.js`), so an OAuth return straight after a
+  deploy runs the old build once. Worth remembering before believing that a
+  fix "did not work" minutes after it was pushed.
+
+### No email to type when confirming with Google
+
+"You shouldn't have to put in your email address on the delete your account
+option if continuing with google ... so the google option can be beneath both
+email and password." The Delete section is now email, password, Delete, the
+no-password hint, then "or" and **Confirm with Google**, which checks nothing
+typed: Google is sent the account's own address as `login_hint`. The typed
+email is only the password way's confirmation now. `deleteOrPassword` is gone
+from all three tables (the divider reads `oauthOr`). **This supersedes** the
+ninety-fourth pass's "the email-confirm field stays in front of both ways".
+The two fields were a fixed 320px in a phone dialog about 290px wide and ran
+off its edge; capped to the dialog now.
+
+### "Get the app": the home-screen guide
+
+"On sign in on phone, if from a web browser, add a guide on how to get the app
+(add to home screen) -- if they close this, it should never show again, and
+there should be a guide in settings. It should say so in a small popup that
+disappears after 10 seconds (but can be dismissed with an x)." After a friend
+deleted the app and could not find how to get it back.
+
+- `#installGuideModal`: title, one line, an iPhone / Android switch opening on
+  the device's own, and three numbered steps with the Share mark or Chrome's
+  menu mark drawn inline. iPhone steps follow the iOS 26 share sheet (Share,
+  "View More", "Add to Home Screen", "Add", with the Share button under ···
+  on newer phones); a non-Safari iPhone browser gets "the Share button in your
+  browser" instead. Android gets Chrome's own install prompt as an **Install
+  the app** button whenever Chrome offers one (`beforeinstallprompt`, its own
+  banner suppressed), the manual steps otherwise. Opened inside a chat or
+  social app's own browser it says to open Safari or Chrome first.
+- **Shown by itself** (`scheduleInstallGuide`, at the end of `onAuthed` and of
+  `enterGuestMode`) only on a PHONE (iPhone, Android with "Mobile") in a
+  browser, never in the installed app, and it waits until no other dialog is
+  open (a new account's setup goes first). Closing it sets
+  `ptInstallGuideSeen` (this device), and then **the popup** says "You can find
+  this guide in Settings any time." for 10 s, top centre, with a ✕. Installing
+  also marks it seen. Opened from Settings it is just a guide: no popup, and
+  closing it changes nothing.
+- **In Settings** it is "Get the app on your phone", top of Appearance and
+  layout, on a phone or tablet in a browser only.
+- Escape closes the guide before the Account settings under it
+  (`MODAL_CLOSE_BTN` is searched in order, and it is first).
+- `applyLanguage` re-renders it only while it is open: it runs while the page
+  is still loading, before the guide's own `let`/`const` exist.
+- Checked in the pane at 375px emulating Android and on the desktop: shown by
+  itself on the phone, the Android page from the emulated device (the iPad
+  test used to run first and the emulator reports a Mac platform), closing
+  gives the popup, still up at 9.5 s and gone at 10.5 s; not shown again;
+  Escape from Settings; nothing on the desktop. **Not checked on a real
+  iPhone.**
+
+### Nothing phone-only on a desktop
+
+"Dont have strictly phone options on desktop." `#settingsDockGlassRow` (the
+bottom bar's opacity) is hidden from 641px up, the width at which the dock
+itself goes away, by CSS; "Get the app on your phone" needs a phone or tablet.
+And its explanation line ("The floating tab bar ... at 100% the bar is
+solid.") is removed outright, key and all three translations, on request.
+
+### The repo is public
+
+`kristoffergt/Korean` is public and kristoffergt.com is GitHub Pages from it.
+It does not need to be: the page source is served to every visitor anyway and
+security rests on RLS, not on the code being hidden. But GitHub Pages from a
+PRIVATE repo needs a paid GitHub plan on a personal account, so making it
+private on the free plan takes the site down; the alternative is hosting that
+deploys from a private repo for free (Cloudflare Pages, Netlify, Vercel).
+Because it is public, **CLAUDE.md and every migration are public too**: never
+write an account's email or id into these notes.
+
+### Open: Google says "continue to kbqwitmxpmkueryjsyip.supabase.co"
+
+Google names the domain the sign-in returns to, and the redirect flow returns
+to Supabase. Two ways to show kristoffergt.com, both needing Kristoffer:
+Google's own Sign in with Google button on the page plus
+`signInWithIdToken` (free; needs https://kristoffergt.com added to the OAuth
+client's Authorized JavaScript origins in Google Cloud, and the button is
+Google's rendering), or a Supabase custom domain (paid plan plus add-on). The
+OAuth client id is public and was read off the authorize redirect:
+`982623591357-ibigvi9np8hq4ikqhuvsp0cg5jjc3hmq.apps.googleusercontent.com`.
+
 ## EACH TO-DO CAN BE PUT ON THE CALENDAR OR LEFT OFF IT (29 Sep, ninety-eighth pass)
 
 "For the to-do tab, it's good with an overall checkbox, but we should be able
@@ -6193,7 +6311,8 @@ hours in recap. maybe other places have this issue?"
 - An account with Google among `app_metadata.providers` (now kept on
   `currentUser.providers`) sees **Confirm with Google** first, "or with your
   password" under it, and a no-password hint if it STARTED with Google. The
-  email-confirm field stays in front of both ways.
+  email-confirm field stays in front of both ways. (SUPERSEDED by the
+  ninety-ninth pass: Google now sits under both and asks for nothing typed.)
 - The button stores `{uid, prev, at}` in `sessionStorage['ptDeleteReauth']`,
   where `prev` is the session's latest `oauth` timestamp from the token's
   `amr`, and calls `signInWithOAuth` with `prompt: 'select_account'` and
