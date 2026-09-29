@@ -6000,8 +6000,9 @@ The eye was already there (`.pw-toggle-btn`); what Welcome Korea has and this
 did not is the live checklist under the field (its `PasswordStrengthField`).
 
 - **`#pwRules`, filled by `renderPwRules()`**: Welcome Korea's own four rules
-  (`PW_RULES`, copied from its `lib/passwordStrength.ts`): 8 characters, an
-  uppercase letter, a number, a special character. A ring (`ICON.ring`, new in
+  (`PW_RULES`, copied from its `lib/passwordStrength.ts`): 9 characters
+  (Welcome Korea's is 8; raised the same day, see below), an uppercase letter,
+  a number, a special character. A ring (`ICON.ring`, new in
   `ICON_PATHS`) turns into a tick in `--on` as each is met; no glyphs, per the
   no-emoji rule. Shown only in sign-up mode, and there only while the field
   has the focus or holds something, which is when Welcome Korea shows its own.
@@ -6015,8 +6016,13 @@ did not is the live checklist under the field (its `PasswordStrengthField`).
   sign-in mode; Enter on it submits.
 - **`autocomplete` follows the mode** (`new-password` / `current-password`),
   so a password manager offers to generate one on sign-up.
-- **NOT changed: the reset screen** (`#resetScreen`) still asks for 8
-  characters only, so a reset can set a password the sign-up would refuse.
+- **The minimum is 9, `MIN_PASSWORD_LENGTH`** ("also change to at least 9
+  characters ... pretty sure I set it to 9"). One constant, read by the
+  sign-up rule AND the reset screen, and six strings say the number in words:
+  `pwRuleLength` and `passwordTooShort` in en/ko/vi. Change all of them
+  together.
+- **The reset screen** (`#resetScreen`) checks the length only, not the other
+  three rules, so a reset can still set a password the sign-up would refuse.
   Left for Kristoffer to say; Welcome Korea puts the same checklist there.
 - Seen in the pane (served with `python3 -m http.server 8791 --bind
   127.0.0.1`, stopped after) in light and dark, en/ko/vi, and in sign-in
@@ -6978,7 +6984,8 @@ four senders carry the unsubscribe header and footer, one `send_daily_recap`
 left, cron `purge-orphan-files` at `17 18 * * *`.
 
 **Still Kristoffer's, in the Supabase dashboard**: Auth's minimum password
-length to 8 (the page enforces 8, the server does not yet), and keep "Confirm
+length to 9 (the page enforces 9 since 29 Sep, `MIN_PASSWORD_LENGTH`; he
+believes he set the server to 9, not checked from here), and keep "Confirm
 email" ON (the PIN trigger relies on it; see below).
 
 It was dry-run against the live database in one transaction ending in a raised
