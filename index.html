@@ -1495,6 +1495,15 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
    Both the add form's own select and the edit panel's copy of it. */
 #eventPrivate, .field select.edit-private{width:auto;min-width:150px;max-width:100%;}
 .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
+/* The rest of a suggested note title, drawn in grey after what has been typed
+   (see NOTE TITLE SUGGESTIONS). The typed part is laid out invisibly so the
+   grey starts exactly at the caret; box and font are copied from the input by
+   script. The placeholder is the same suggestion on an empty field, so the two
+   are one colour. */
+.title-suggest-ghost{position:absolute;box-sizing:border-box;border-style:solid;border-color:transparent;align-items:center;white-space:pre;overflow:hidden;pointer-events:none;z-index:1;}
+.title-suggest-ghost .tsg-typed{visibility:hidden;flex:none;}
+.title-suggest-ghost .tsg-rest{color:var(--ink-soft);flex:none;pointer-events:auto;cursor:pointer;}
+#newLectureTitle::placeholder, #newNotebookTitle::placeholder{color:var(--ink-soft);opacity:1;}
 .person-filter-btn{font-family:'Inter',sans-serif;font-weight:500;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:fit-content;min-width:56px;max-width:220px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .person-filter-btn:hover{background:var(--paper-dim);}
 .person-filter-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:50;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper-dim);width:fit-content;min-width:150px;box-shadow:0 4px 16px rgba(0,0,0,0.25);}
@@ -37148,10 +37157,12 @@ function rebuildNotesCourseSelect(){
   });
   document.getElementById('notesEmptyHint').classList.add('hidden');
   if(prev !== undefined) sel.value = prev;
+  refreshTitleSuggestions();
 }
 function renderNotesCourseSelect(){ rebuildNotesCourseSelect(); rebuildNotesPersonFilter(); }
 
 async function addLecture(){
+  takeTitleSuggestion(noteTitleSuggest, document.getElementById('newLectureTitle'));
   const title = document.getElementById('newLectureTitle').value.trim();
   const courseId = document.getElementById('notesCourseSelect').value || null;
   const headerRaw = document.getElementById('newLectureHeader').value.trim();
@@ -37182,10 +37193,229 @@ async function addLecture(){
   acClear(()=>{
     document.getElementById('newLectureTitle').value = '';
     document.getElementById('newLectureHeader').value = '';
+    refreshTitleSuggestions();
   });
   acReveal(renderLectureList, document.getElementById('lectureList'));
 }
 document.getElementById('addLectureBtn').addEventListener('click', addLecture);
+
+/* ---------- NOTE TITLE SUGGESTIONS ----------
+   The notes in a course are nearly always a numbered run (Week 1, Week 2, ...),
+   so the next title is known before it is typed (real-user request: "it should
+   have suggested Week 5"). It is read off the group the new note is going
+   INTO -- the picked course, else the custom header, else the ungrouped notes
+   -- and offered two ways:
+     - on an empty field it is the placeholder, and Add (or Enter) with the
+       field still empty adds it. Written into the field first, so the courier
+       has the title to carry and nothing about the add path changes;
+     - while typing, the rest of it is drawn in grey after the caret, and Tab,
+       the right arrow or a tap on the grey part finishes it.
+   Enter with something typed adds what was typed: a completion is only ever
+   taken on purpose, so "Week 1" is never turned into "Week 10" on the way out.
+   Tab on the empty field fills the whole suggestion, which is how to start
+   from it and edit ("Week 5: Trade policy"). */
+var noteTitleSuggest = null, notebookTitleSuggest = null;
+
+// A numbered title: what comes before its first number, the number, and what
+// follows. Four digits or more is not a place in a run but a year or a course
+// code ("2026 recap", "GLS 5301"), so the match refuses it rather than
+// counting on from it.
+function parseNumberedTitle(title){
+  const m = /^(\D*?)(\d{1,3})(?!\d)([\s\S]*)$/.exec(title);
+  if(!m) return null;
+  return { prefix: m[1], digits: m[2], n: parseInt(m[2], 10), rest: m[3] };
+}
+function titleRunKey(p){ return p.prefix.trim().toLowerCase().replace(/\s+/g, ' '); }
+function ordinalSuffix(n){
+  const t = n % 100;
+  if(t >= 11 && t <= 13) return 'th';
+  return ['th', 'st', 'nd', 'rd'][n % 10] || 'th';
+}
+const TITLE_ORDINAL = /^(st|nd|rd|th)(?![A-Za-z])/i;
+const TITLE_TAIL_PUNCT = /[:\-\u2013\u2014|(\[,;/.]/;
+// The run the NEWEST numbered title belongs to, as every title sharing its
+// prefix -- so a group that went from "Lecture n" to "Week n" half way through
+// carries on with the one it is on now. A single title only counts when it is
+// the START of a run: "Week 1" says what comes next, "COVID-19 and trade" does
+// not, and the loop then falls through to the next newest.
+function titleRun(rows){
+  const parsed = [];
+  (rows || []).forEach((r, i)=>{
+    const p = parseNumberedTitle((r.lecture_title || '').trim());
+    if(p){ p.at = Date.parse(r.created_at) || 0; p.i = i; parsed.push(p); }
+  });
+  if(!parsed.length) return null;
+  const byKey = new Map();
+  parsed.forEach(p=>{
+    const k = titleRunKey(p);
+    if(!byKey.has(k)) byKey.set(k, []);
+    byKey.get(k).push(p);
+  });
+  parsed.sort((a, b)=> (b.at - a.at) || (b.i - a.i));
+  for(const latest of parsed){
+    const run = byKey.get(titleRunKey(latest));
+    const distinct = new Set(run.map(p=> p.n)).size;
+    if(distinct < 2 && latest.n > 1) continue;
+    return { run: run, latest: latest, distinct: distinct };
+  }
+  return null;
+}
+// Number n of a run, spelt the way the newest title spells its own: the same
+// words before the number, the same zero padding, an ordinal if they all have
+// one, and whatever follows the number only where it is the RUN's rather than
+// one note's topic. With two or more titles that is what they all share
+// ("Chapter 3 notes", "Chapter 4 notes"), cut at the first colon or dash
+// ("Week 1: Intro" and "Week 2: Trade" share nothing after the number). With
+// one title it is only a unit glued to the number, like 1주차 -- anything after
+// a space is that one note's own subject.
+function titleFromRun(r, n){
+  const latest = r.latest;
+  let rests = r.run.map(p=> p.rest);
+  let latestRest = latest.rest;
+  let digits = String(n);
+  if(latest.digits.length > 1 && latest.digits[0] === '0') digits = digits.padStart(latest.digits.length, '0');
+  if(rests.every(x=> TITLE_ORDINAL.test(x))){
+    const ord = ordinalSuffix(n);
+    digits += /^[A-Z]/.test(latestRest) ? ord.toUpperCase() : ord;
+    rests = rests.map(x=> x.replace(TITLE_ORDINAL, ''));
+    latestRest = latestRest.replace(TITLE_ORDINAL, '');
+  }
+  let tail;
+  if(r.distinct < 2){
+    tail = /^\s/.test(latestRest) ? '' : latestRest.split(/\s/)[0];
+    const cut = tail.search(TITLE_TAIL_PUNCT);
+    if(cut >= 0) tail = tail.slice(0, cut);
+  } else {
+    let k = latestRest.length;
+    rests.forEach(x=>{
+      let j = 0;
+      while(j < k && j < x.length && x[j].toLowerCase() === latestRest[j].toLowerCase()) j++;
+      k = j;
+    });
+    tail = latestRest.slice(0, k);
+    const cut = tail.search(TITLE_TAIL_PUNCT);
+    if(cut >= 0) tail = tail.slice(0, cut);
+    // Shared letters are not a shared WORD: "notes" and "notebook" agree on
+    // "note", which is not something anybody called a note.
+    if(/[A-Za-z]$/.test(tail) && rests.some(x=> /^[A-Za-z]/.test(x.slice(tail.length)))) tail = tail.replace(/[A-Za-z]+$/, '');
+    tail = tail.replace(/\s+$/, '');
+  }
+  return (latest.prefix + digits + tail).trim();
+}
+function suggestNextTitle(rows){
+  const r = titleRun(rows);
+  return r ? titleFromRun(r, Math.max.apply(null, r.run.map(p=> p.n)) + 1) : null;
+}
+// Where a run begins, for a course with nothing in it yet: taken only from a
+// real run (two or more numbers), since one stray numbered title elsewhere is
+// no reason to name a new course's first note after it.
+function suggestFirstTitle(rows){
+  const r = titleRun(rows);
+  return r && r.distinct >= 2 ? titleFromRun(r, Math.min.apply(null, r.run.map(p=> p.n))) : null;
+}
+function noteTitleSuggestion(){
+  if(!currentUser) return null;
+  const courseId = document.getElementById('notesCourseSelect').value;
+  const header = document.getElementById('newLectureHeader').value.trim();
+  const rows = allNotes[courseId || header || '__none__'] || [];
+  if(rows.length) return suggestNextTitle(rows);
+  // A course with no notes yet starts the way this person's other courses
+  // did ("Week 1"). Only for a course: a header or no group at all is not a
+  // new run of anything, and an empty field there should add nothing.
+  if(!courseId) return null;
+  const mine = [];
+  Object.values(allNotes).forEach(arr=> (arr || []).forEach(n=>{ if(n.user_id === currentUser.id && n.course_id) mine.push(n); }));
+  return suggestFirstTitle(mine);
+}
+function notebookTitleSuggestion(){
+  if(!currentUser) return null;
+  const header = document.getElementById('newNotebookHeader').value.trim();
+  return suggestNextTitle(allNotebookNotes[header || '__none__'] || []);
+}
+function attachTitleSuggest(input, compute){
+  // The grey rest sits over the input, positioned from the input's own box
+  // inside its .field (already position:relative), so the form's layout is
+  // not touched. Only while the field has focus, which is also the only time
+  // an input here is never scaled by the hover rule.
+  const ghost = document.createElement('div');
+  ghost.className = 'title-suggest-ghost';
+  ghost.setAttribute('aria-hidden', 'true');
+  ghost.style.display = 'none';
+  const typedEl = document.createElement('span');
+  typedEl.className = 'tsg-typed';
+  const restEl = document.createElement('span');
+  restEl.className = 'tsg-rest';
+  ghost.append(typedEl, restEl);
+  input.parentNode.appendChild(ghost);
+  let suggestion = null;
+  const remainder = ()=>{
+    const v = input.value;
+    if(!suggestion || !v || suggestion.length <= v.length) return '';
+    return suggestion.slice(0, v.length).toLowerCase() === v.toLowerCase() ? suggestion.slice(v.length) : '';
+  };
+  const paint = ()=>{
+    const rest = remainder();
+    const atEnd = input.selectionStart === input.value.length && input.selectionEnd === input.value.length;
+    if(!rest || document.activeElement !== input || !atEnd || input.scrollWidth > input.clientWidth){
+      ghost.style.display = 'none';
+      return;
+    }
+    const cs = getComputedStyle(input);
+    Object.assign(ghost.style, {
+      display: 'flex',
+      left: input.offsetLeft + 'px', top: input.offsetTop + 'px',
+      width: input.offsetWidth + 'px', height: input.offsetHeight + 'px',
+      paddingLeft: cs.paddingLeft, paddingRight: cs.paddingRight,
+      borderTopWidth: cs.borderTopWidth, borderRightWidth: cs.borderRightWidth,
+      borderBottomWidth: cs.borderBottomWidth, borderLeftWidth: cs.borderLeftWidth,
+      fontFamily: cs.fontFamily, fontSize: cs.fontSize, fontWeight: cs.fontWeight,
+      fontStyle: cs.fontStyle, letterSpacing: cs.letterSpacing
+    });
+    typedEl.textContent = input.value;
+    restEl.textContent = rest;
+  };
+  const accept = ()=>{
+    const rest = input.value ? remainder() : (suggestion || '');
+    if(!rest) return false;
+    input.value += rest;
+    input.setSelectionRange(input.value.length, input.value.length);
+    paint();
+    return true;
+  };
+  input.addEventListener('keydown', e=>{
+    // e.isComposing (and the legacy 229): a Korean syllable still being built.
+    if(e.isComposing || e.keyCode === 229 || e.altKey || e.metaKey || e.ctrlKey) return;
+    if(e.key === 'Tab' && !e.shiftKey){ if(accept()) e.preventDefault(); }
+    else if(e.key === 'ArrowRight' && !e.shiftKey && ghost.style.display !== 'none'){ if(accept()) e.preventDefault(); }
+  });
+  ['input', 'focus', 'blur', 'click', 'keyup', 'select'].forEach(ev=> input.addEventListener(ev, paint));
+  // A tap on the grey part is the phone's Tab. pointerdown with the default
+  // stopped, so the field keeps its focus and its keyboard.
+  restEl.addEventListener('pointerdown', e=>{ e.preventDefault(); accept(); });
+  window.addEventListener('resize', paint);
+  return {
+    refresh(){
+      suggestion = compute() || null;
+      input.placeholder = suggestion || '';
+      paint();
+    },
+    value(){ return suggestion; }
+  };
+}
+// An empty title with a suggestion showing IS the suggestion: it goes into the
+// field before the handler reads it.
+function takeTitleSuggestion(s, input){
+  if(!s || !input || input.value.trim()) return;
+  const v = s.value();
+  if(v) input.value = v;
+}
+function refreshTitleSuggestions(){
+  if(noteTitleSuggest) noteTitleSuggest.refresh();
+  if(notebookTitleSuggest) notebookTitleSuggest.refresh();
+}
+noteTitleSuggest = attachTitleSuggest(document.getElementById('newLectureTitle'), noteTitleSuggestion);
+document.getElementById('notesCourseSelect').addEventListener('change', ()=> noteTitleSuggest.refresh());
+document.getElementById('newLectureHeader').addEventListener('input', ()=> noteTitleSuggest.refresh());
 
 // A note is the one thing in here that can hold hours of writing, and removing
 // one was a single click with nothing in between. The title goes INTO the
@@ -37305,6 +37535,7 @@ document.getElementById('certSearchInput').addEventListener('input', (e)=>{
 function renderLectureList(){
   const list = document.getElementById('lectureList');
   list.innerHTML = '';
+  refreshTitleSuggestions();
   const courseTitleFor = {};
   const courseOwnerFor = {};
   Object.values(allCourses).forEach(arr=> arr.forEach(c=>{ courseTitleFor[c.id] = c.title; courseOwnerFor[c.id] = c.user_id; }));
@@ -39394,6 +39625,7 @@ document.getElementById('closeNoteBtn').addEventListener('click', ()=>{
 // they're stored in their own notebook_notes table so they never mix with
 // course lecture notes.
 async function addNotebookNote(){
+  takeTitleSuggestion(notebookTitleSuggest, document.getElementById('newNotebookTitle'));
   const title = document.getElementById('newNotebookTitle').value.trim();
   const headerRaw = document.getElementById('newNotebookHeader').value.trim();
   if(!title) return;
@@ -39417,10 +39649,13 @@ async function addNotebookNote(){
   acClear(()=>{
     document.getElementById('newNotebookTitle').value = '';
     document.getElementById('newNotebookHeader').value = '';
+    refreshTitleSuggestions();
   });
   acReveal(renderNotebookList, document.getElementById('notebookList'));
 }
 document.getElementById('addNotebookBtn').addEventListener('click', addNotebookNote);
+notebookTitleSuggest = attachTitleSuggest(document.getElementById('newNotebookTitle'), notebookTitleSuggestion);
+document.getElementById('newNotebookHeader').addEventListener('input', ()=> notebookTitleSuggest.refresh());
 
 // "Make a note from this grammar pattern" -- jumps to the Notebook, creates
 // a note titled with the pattern (ungrouped, same as a plain Notebook note),
@@ -39471,6 +39706,7 @@ function renderNotebookList(){
   const list = document.getElementById('notebookList');
   if(!list || !currentUser) return;
   list.innerHTML = '';
+  refreshTitleSuggestions();
 
   const showIds = personFilterShowIds('notebookPersonFilter');
   let groupKeys = Object.keys(allNotebookNotes).filter(k => (allNotebookNotes[k]||[]).length > 0);

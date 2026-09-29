@@ -5981,6 +5981,57 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## A NEW NOTE'S TITLE IS SUGGESTED FROM THE RUN IT JOINS (29 Sep, ninetieth pass)
+
+"Auto-suggest titles based on previous note patterns. Like here it should have
+suggested 'Week 5' as a title" (a course holding Week 1 to Week 4). Both add
+forms have it, the Yonsei Notes one and the Notebook one, through one helper
+(`attachTitleSuggest`, under NOTE TITLE SUGGESTIONS beside `addLecture`).
+
+- **Read off the group the note is going INTO**: the picked course, else the
+  custom header, else the ungrouped notes -- the same key `addLecture` files it
+  under. The course picker's change and the header's input re-read it, and so
+  does every render of either list, so after an add it has already moved on
+  (Week 5 added, the field says Week 6).
+- **Two ways to take it.** On an empty field it is the PLACEHOLDER, and Add or
+  Enter with the field still empty adds it -- `takeTitleSuggestion` writes it
+  into the field first, so the courier has a title to carry and nothing in the
+  add path changed. While typing, the rest is drawn in grey after the caret
+  (`.title-suggest-ghost`, positioned over the input from its own box and font,
+  only while focused, which is also the only time the hover scale is off); Tab,
+  the right arrow or a tap on the grey part finishes it, keeping what was typed
+  ("wee" + Tab is "week 6").
+- **Enter with something typed adds what was typed.** A completion is only
+  taken on purpose, so "Week 1" cannot turn into "Week 10" on the way out.
+- **What counts as a run** (`titleRun`): titles split at their FIRST number,
+  grouped by the words before it, and the newest numbered title's group wins,
+  so a course that went from "Lecture n" to "Week n" carries on with Week. One
+  title is a run only if it is the START of one (0 or 1): "Week 1" suggests
+  Week 2, "COVID-19 and trade" suggests nothing. Four digits or more is a year
+  or a course code and is not counted.
+- **What follows the number** (`titleFromRun`): with two or more titles, only
+  what they all share, cut at the first colon or dash ("Week 1: Intro" and
+  "Week 2: Trade" give Week 3; "Chapter 3 notes" and "Chapter 4 notes" give
+  Chapter 5 notes); with one, only a unit glued to the number (1주차 gives
+  2주차, "Week 1 Intro" gives Week 2). Zero padding and English ordinals carry
+  over (Lecture 03, 3rd lecture). Next is the highest number + 1.
+- **An empty COURSE starts the way the others did**: with no notes in the
+  picked course, the newest run across this person's own course notes (two
+  numbers or more) gives its first number, "Week 1". Not for a header or the
+  ungrouped bucket, where an empty field should keep adding nothing.
+- Checked headlessly over 24 title shapes (the functions lifted out of the
+  file), and in the pane over a local server in guest mode with a seeded course:
+  placeholder Week 5, grey "ek 5" after a typed "We" lined up with the caret
+  (0px off), Add on the empty field adding Week 5 and moving to Week 6, a new
+  empty course offering Week 1, no course offering nothing, the Notebook's
+  1주차/2주차 offering 3주차. Em dashes unchanged at 46 (the regex spells its
+  dashes as \u escapes).
+- **The pane cannot start this project's launch config from this chat**: the
+  session's cwd is the Welcome Korea folder, so `preview_start` only sees that
+  repo's `.claude/launch.json`. A `python3 -m http.server` on the tracker folder
+  plus `preview_start` with a URL does the same job without touching the other
+  repo.
+
 ## THE ACCOUNT BLOCK LIVES IN THE NAME'S POPOVER (27 Sep, eighty-ninth pass)
 
 "Can we add this part to the Kristoffer (i.e., the profile button) instead of
