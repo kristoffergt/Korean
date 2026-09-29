@@ -5981,6 +5981,34 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## GREYED REMINDER PILLS SAY WHY, AND A GIT INDEX EVICTED BY iCLOUD (29 Sep, ninety-sixth pass)
+
+- **"It's not allowing me to click the remind me buttons of to-do"**, with a
+  screenshot of the add form reading due 01/10/2026, 03:28 PM. The pills were
+  working as designed: the browser is month-first (the 12-hour clock gives it
+  away), so 01/10/2026 is 10 JANUARY 2026, already past, and a reminder that
+  would go off in the past is greyed. Nothing said so. `wireTodoRemindPicker`'s
+  `sync` now gives every greyed pill a `title` naming what it lacks
+  (`todoRemindNeedsDate`, `todoRemindNeedsTime`, `todoRemindPassed`) and shows
+  `.todo-remind-why` under the row when the due moment has passed, with the
+  date spelled out in the app's language ("Saturday, January 10, 2026 has
+  already passed, ..."), which is what makes a day/month mix-up visible. Same
+  picker in the add form and every edit panel. Checked in the pane: those
+  exact values give the line and four "Already passed" pills; 1 October
+  enables all five; no date gives "Needs a due date".
+- **The leftover delete-with-Google note** (see the ninety-fourth pass) went
+  in the same commit.
+- **`.git/index` itself was dataless** (evicted by iCloud, which is over
+  quota, so it cannot come back), and git failed with "unable to map index
+  file: Operation timed out". 1,213 files under `.git` were dataless,
+  including loose objects, but the HEAD tree still read (`git ls-tree -r HEAD`
+  under `perl -e 'alarm 40; exec @ARGV'`, since macOS has no `timeout`). The
+  fix: move the index aside and `git read-tree HEAD`, which writes a fresh one
+  from the last commit and touches no working file. The first try failed with
+  a write timeout on `index.lock`; a second one a minute later worked. While
+  the index is missing, `git status` shows every file as both deleted and
+  untracked; nothing is lost, it is only the index being gone.
+
 ## THE "NEW VERSION" BAR CAN BE CLOSED (29 Sep, ninety-fifth pass)
 
 "Can we have a way to close that if we dont want to reload." `#shellUpdateBar`
@@ -6078,6 +6106,17 @@ hours in recap. maybe other places have this issue?"
   back, or no new sign-in (cancelled at Google), opens the same section with
   a message instead. `"oauth"` is the amr method name, read off the live
   `auth.mfa_amr_claims` rather than assumed.
+- **The note must live for exactly one round trip** (real-user report, same
+  day: after deleting an account with Google and signing up again, the fresh
+  account was told "That Google account belongs to a different account here").
+  A note had outlived its trip and the NEXT Google sign-in, a sign-up from the
+  sign-in screen, was read against it. Which path let it survive was not
+  pinned down, so every path is closed: `takeDeleteReauthNote()` reads and
+  drops it at the START of `onAuthed()` (so an error later in loading cannot
+  strand it) and only returns it when `PAGE_IS_OAUTH_RETURN` (the address,
+  read BEFORE `createClient`, which strips a provider's tokens or code); the
+  sign-in screen's own provider buttons, sign-out, a finished deletion and any
+  non-return load (in `init`) all drop it too.
 - **Like the password check it replaces, it is a confirmation on the page**:
   `delete_own_account()` asks only `auth.uid()`. Making the server demand a
   recent sign-in would be a migration; not done.
