@@ -15,11 +15,10 @@
 --   oauth_signup_pin_migration.sql         the provider lock, its pending table,
 --                                          redeem/pending RPCs, the purge cron
 --
--- custom_access_token_hook is NOT dropped: Supabase Auth calls it on every
--- sign-in and refresh because it is switched on in the dashboard (Auth ->
--- Hooks), and a hook that no longer exists stops everybody signing in. It
--- becomes a pass-through; switching the hook off in the dashboard afterwards
--- is safe and makes it dead code.
+-- custom_access_token_hook is dropped too. The lock assumed it was switched on
+-- in the dashboard (Auth -> Hooks); it never was (checked 29 Sep: no hooks
+-- configured), so nothing calls it. Applied live as its own step,
+-- drop_unused_token_hook, after the rest.
 --
 -- The notification text for the old "New site PIN required" announcement
 -- (notifSystemPinTitle/Body in the page) is left alone: those rows are
@@ -38,20 +37,8 @@ drop trigger if exists lock_provider_identity on auth.identities;
 drop function if exists public.lock_provider_signup();
 drop function if exists public.lock_provider_identity();
 
--- 3. The token hook passes every token through unchanged.
-create or replace function public.custom_access_token_hook(event jsonb)
-returns jsonb
-language plpgsql
-stable
-security definer
-set search_path = ''
-as $$
-begin
-  return event;
-end;
-$$;
-revoke all on function public.custom_access_token_hook(jsonb) from public, anon, authenticated;
-grant execute on function public.custom_access_token_hook(jsonb) to supabase_auth_admin;
+-- 3. The token hook: never switched on in the dashboard, so nothing calls it.
+drop function if exists public.custom_access_token_hook(jsonb);
 
 -- 4. Anybody still locked is simply let in (the pending row was the lock),
 --    and the week-long purge of locked accounts stops.

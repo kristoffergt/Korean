@@ -6012,13 +6012,14 @@ limit).
 - **Both migrations applied live 29 Sep** (project `kbqwitmxpmkueryjsyip`, as
   `workspace_tab` then `remove_site_pin`), checked after: no PIN trigger,
   function, table, `site_config` or purge job left (0 accounts were locked);
-  the hook returns a token unchanged and only `supabase_auth_admin` may call
-  it; all 6 existing profiles are `yonsei` with no name; both workspace
+  the hook function is gone (`drop_unused_token_hook`); all 6 existing profiles are `yonsei` with no name; both workspace
   CHECK constraints present.
-- **`custom_access_token_hook` stays, as a pass-through**: it is switched on
-  in the dashboard (Auth -> Hooks) and Auth calls it on every sign-in, so
-  dropping it would stop everybody signing in. Turning the hook off in the
-  dashboard is Kristoffer's, and safe once this migration is in.
+- **`custom_access_token_hook` is dropped too.** The 26 Sep lock was written
+  as though the hook were switched on in the dashboard; it never was (Auth ->
+  Hooks is empty, Kristoffer's screenshot 29 Sep), so the "locked token says
+  anon" half of that design never ran. Nothing referenced the function, so it
+  went as `drop_unused_token_hook`. Before believing a note here that says
+  something is configured in the dashboard, ask or look: SQL cannot see it.
 - privacy.html no longer says wrong PIN guesses are logged; README no longer
   calls the instance invite-only.
 - Checked in the pane: a device holding the old two keys reloads straight onto
@@ -6082,8 +6083,12 @@ existing accounts are Yonsei and are never asked.
   mark and Board back; Yonsei renamed "Korea Uni" -> cap; phone bar at 375
   shows the building next to Jobs' briefcase. NOT driven: a real first sign-in
   (needs a new account and the migration applied).
-- **Not changed, worth deciding**: the Jobs tab's Job board sub tab is Yonsei
-  CDC's postings and still shows for every kind.
+- **The Job board is Yonsei's too** (his answer, 29 Sep): `YONSEI_ONLY_TABS`
+  holds `yonsei.boards` and `jobs.jobboard`, and `workspaceHidesTab` hides both
+  for any other kind. Every tab surface asks `isTabHidden`, so the tab row,
+  fly-out, quick nav, split view and settings list all follow. Checked in the
+  pane: hidden for school and work, back for Yonsei, and switching to work
+  while on it lands on Applications.
 
 ## A NEW NOTE'S TITLE IS SUGGESTED FROM THE RUN IT JOINS (29 Sep, ninetieth pass)
 

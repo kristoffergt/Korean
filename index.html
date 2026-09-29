@@ -23031,9 +23031,11 @@ TAB_STRUCTURE.forEach(top=>{
 });
 document.getElementById('tabFlyout').addEventListener('mouseenter', ()=> clearTimeout(tabFlyoutHideTimer));
 document.getElementById('tabFlyout').addEventListener('mouseleave', scheduleTabFlyoutHide);
-// The Board sub tab is Yonsei GSIS's own notices, so it only exists for a
-// Yonsei tab, whatever hidden_tabs says.
-function workspaceHidesTab(key){ return key === 'yonsei.boards' && workspaceKind !== 'yonsei'; }
+// The Board sub tab is Yonsei GSIS's own notices and the Job board is Yonsei
+// CDC's postings, so both only exist for a Yonsei account, whatever
+// hidden_tabs says.
+const YONSEI_ONLY_TABS = ['yonsei.boards', 'jobs.jobboard'];
+function workspaceHidesTab(key){ return YONSEI_ONLY_TABS.includes(key) && workspaceKind !== 'yonsei'; }
 function isTabHidden(key){ return hiddenTabs.includes(key) || workspaceHidesTab(key); }
 async function saveHiddenTabs(next){
   const { error } = await supabaseClient.from('profiles').update({ hidden_tabs: next }).eq('id', currentUser.id);
