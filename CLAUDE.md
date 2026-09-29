@@ -5981,6 +5981,43 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE SITE PIN IS GONE (29 Sep, ninety-second pass)
+
+"Remove the 4-digit pin from the site completely." Anybody can now sign up,
+by email or through a provider, with nothing to type first. **This
+supersedes** the PIN parts of the provider sign-in pass (26 Sep: "keep the
+site PIN for provider sign-ups too", the locked-account flow, `pinGateMode`,
+`routeSignedInUser`'s redeem step) and of the security audit (the PIN rate
+limit).
+
+- **Page**: `#pinGateScreen`, its digit row, `submitPinGate`/`backToPinGate`/
+  `showPinRedeem`/`finishPinRedeem`, `sessionTokenRole`, the popover's site
+  PIN row and its `get_site_pin` read, the gate's own dark toggle and language
+  switch, and eight i18n keys in each language are gone. Sign-up no longer
+  carries `site_pin` metadata. `routeSignedInUser` is kept as the one door in
+  and is now just the MFA check. The sign-in screen stays hidden until the
+  session has been read (a signed-in reload never flashes it), then shows. The
+  two localStorage keys a device kept (`sitePinVerified`, `sitePin`) are
+  removed at start-up.
+- **Kept on purpose**: `.pin-digit` and `createDigitCodeRow` (the 2FA code
+  screen uses both), and `notifSystemPinTitle/Body`, which render the old
+  "New site PIN required" announcement still sitting in people's bells.
+- **Database**: `sql migrations/remove_site_pin_migration.sql` drops the
+  email check trigger, the provider lock triggers, the pending table and its
+  RPCs, the purge cron, `verify_site_pin`, `get_site_pin`, the guess log and
+  the PIN row (and `site_config` if that leaves it empty). **It must be live
+  BEFORE the page is pushed**: the new page sends no PIN, and until then
+  `check_signup_site_pin` refuses every email sign-up. The other order is
+  harmless.
+- **`custom_access_token_hook` stays, as a pass-through**: it is switched on
+  in the dashboard (Auth -> Hooks) and Auth calls it on every sign-in, so
+  dropping it would stop everybody signing in. Turning the hook off in the
+  dashboard is Kristoffer's, and safe once this migration is in.
+- privacy.html no longer says wrong PIN guesses are logged; README no longer
+  calls the instance invite-only.
+- Checked in the pane: a device holding the old two keys reloads straight onto
+  sign-in with both keys gone; syntax and id cross-check clean; em dashes 46.
+
 ## THE YONSEI TAB IS THE "SCHOOL OR WORK" TAB, AND NEW ACCOUNTS START WITHOUT KOREAN (29 Sep, ninety-first pass)
 
 "Don't show Korean tab by default ... when people log in for the first time,
@@ -6606,7 +6643,7 @@ markup only.
 `enterGuestMode()` runs on a local fake backend (nothing is sent anywhere), and
 it reads its tables from `localStorage[GUEST_STORE_KEY]` (`guestAppData_v1`),
 so writing `{version:1, tables:{books:[...], events:[...], ...}}` there first
-gives every list real rows. Hide `#pinGateScreen`, call `enterGuestMode()`,
+gives every list real rows. Call `enterGuestMode()` (there is no PIN gate to hide any more),
 then `switchTopLevelTab(top)` and the matching `switch...SubTab(view)`.
 `study_entries.activities` is an OBJECT of activity to hours, not an array.
 A second copy of the site on another port has its own localStorage, so it

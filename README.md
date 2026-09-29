@@ -6,8 +6,6 @@ It started as a Korean-study companion for two people to track progress side by 
 
 It's a single self-contained HTML file (`index.html`, named for GitHub Pages), no build step, no framework, no bundler, no server code of its own beyond [Supabase](https://supabase.com) for the database, auth and file storage, plus a handful of Deno edge functions for the things that have to run on a schedule. Deployed as a static site via GitHub Pages.
 
-Signing up needs a 4-digit **site PIN**, so the instance is invite-only in practice rather than open to the web.
-
 ## Features
 
 ### Home
