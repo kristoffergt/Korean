@@ -3298,6 +3298,43 @@ body.ws-work .ws-class-only{display:none !important;}
 .ws-picker .field.wide input{width:320px;max-width:100%;box-sizing:border-box;}
 .ws-korean{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:14px;}
 .ws-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:18px;}
+/* ---- To-do list (see TO-DO LIST) ---- */
+.todo-remind{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-top:2px;max-width:560px;}
+.todo-pill{font-size:12px;font-weight:600;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink-soft);cursor:pointer;}
+.todo-pill:hover:not(:disabled):not(.on){background:rgba(127,127,127,0.18);color:var(--ink);}
+.todo-pill.on{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.todo-pill:disabled{opacity:.4;cursor:not-allowed;}
+.todo-remind input[type=datetime-local]{font-family:'Space Grotesk',monospace;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);}
+.todo-toolbar{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end;margin-bottom:10px;}
+.todo-toolbar .field select{width:200px;}
+.todo-switches{display:flex;flex-wrap:wrap;gap:6px 18px;margin-left:auto;padding-bottom:6px;}
+.todo-switch{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;}
+.todo-row{justify-content:flex-start;gap:10px;align-items:flex-start;}
+.todo-check{flex:none;width:20px;height:20px;margin-top:1px;border:1.5px solid var(--ink-soft);border-radius:6px;background:var(--paper);color:var(--paper);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
+.todo-check:hover:not(:disabled){border-color:var(--on);}
+.todo-check[aria-checked="true"]{background:var(--on);border-color:var(--on);}
+.todo-check:disabled{cursor:default;opacity:.6;}
+.todo-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+.todo-title{cursor:pointer;overflow-wrap:anywhere;}
+.todo-row.theirs .todo-title{cursor:default;}
+.todo-row.done .todo-title{text-decoration:line-through;color:var(--ink-soft);}
+.todo-meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:var(--ink-soft);align-items:center;}
+.todo-due.overdue{color:var(--seal);font-weight:600;}
+.todo-course{border:1px solid var(--line);border-radius:999px;padding:0 7px;}
+.todo-notes{font-size:12.5px;color:var(--ink-soft);white-space:pre-wrap;overflow-wrap:anywhere;}
+.todo-row.flash{animation:todoFlash 1.6s ease-out;}
+@keyframes todoFlash{0%,35%{background:rgba(79,117,99,0.16);}100%{background:transparent;}}
+.todo-edit{padding:10px 0 14px 30px;border-bottom:1px solid var(--line);}
+.todo-edit textarea{width:320px;max-width:100%;min-height:60px;box-sizing:border-box;}
+.todo-edit-actions{display:flex;gap:12px;align-items:center;margin-top:10px;}
+.todo-done-head{margin-top:8px;}
+.todo-cal-chip{display:flex;align-items:center;gap:4px;font-size:11px;line-height:1.3;padding:1px 4px;margin-top:2px;border:1px dashed var(--ink-soft);border-radius:4px;color:var(--ink);cursor:pointer;overflow:hidden;white-space:nowrap;}
+.todo-cal-chip .todo-cal-text{overflow:hidden;text-overflow:ellipsis;}
+.todo-cal-box{flex:none;width:11px;height:11px;border:1.5px solid var(--ink-soft);border-radius:3px;background:none;padding:0;cursor:pointer;}
+.todo-cal-box:hover{background:var(--on);border-color:var(--on);}
+.week-todo-list{display:flex;flex-direction:column;gap:2px;margin-top:4px;text-align:left;}
+.day-dot.todo{background:transparent !important;border:1.5px solid var(--ink-soft);border-radius:2px;box-sizing:border-box;}
+.todo-agenda-row{display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
 .modal-box{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:22px 24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;}
 .modal-box h2{font-family:'Noto Serif KR',serif;font-size:16px;margin:0 0 14px;}
@@ -4049,6 +4086,7 @@ body.ws-work .ws-class-only{display:none !important;}
     <div class="cal-view-toggle" id="yonseiSubToggle">
       <button data-view="courses" class="active" id="yonseiSubCoursesBtn"></button>
       <button data-view="notes" id="yonseiSubNotesBtn"></button>
+      <button data-view="todos" id="yonseiSubTodosBtn"></button>
       <button data-view="boards" id="yonseiSubBoardsBtn"></button>
     </div>
     <div id="yonseiCoursesSection">
@@ -4202,6 +4240,53 @@ body.ws-work .ws-class-only{display:none !important;}
       <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
       <div class="notes-panel hidden" id="versionHistoryPanel"></div>
     </div>
+    </div>
+    </div>
+    <div id="yonseiTodosSection" class="hidden">
+    <div class="card">
+      <h2 id="hAddTodo"></h2>
+      <div class="log-form" data-enter-add="#addTodoBtn">
+        <div class="field wide">
+          <label for="todoTitle" id="lblTodoTitle"></label>
+          <input type="text" id="todoTitle" maxlength="200">
+        </div>
+        <div class="field">
+          <label for="todoDueDate" id="lblTodoDue"></label>
+          <input type="date" id="todoDueDate">
+        </div>
+        <div class="field">
+          <label for="todoDueTime" id="lblTodoTime"></label>
+          <input type="time" id="todoDueTime" disabled>
+        </div>
+        <div class="field wide">
+          <label for="todoCourse" id="lblTodoCourse"></label>
+          <select id="todoCourse"></select>
+        </div>
+        <div class="field wide todo-remind-field" id="todoRemindField">
+          <label id="lblTodoRemind"></label>
+          <div class="todo-remind" id="todoRemindPicker"></div>
+        </div>
+        <button id="addTodoBtn"></button>
+      </div>
+    </div>
+    <div class="card">
+      <h2><span><span id="hTodoList"></span> <span class="note-group-count" id="todoOpenCount"></span></span></h2>
+      <div class="todo-toolbar">
+        <div class="field" id="todoPersonFilterField">
+          <label for="todoPersonFilter" id="lblTodoPersonFilter"></label>
+          <button type="button" class="person-filter-btn" id="todoPersonFilterBtn"></button>
+          <div class="person-filter-panel hidden" id="todoPersonFilterPanel"></div>
+        </div>
+        <div class="field" id="todoCourseFilterField">
+          <label for="todoCourseFilter" id="lblTodoCourseFilter"></label>
+          <select id="todoCourseFilter"></select>
+        </div>
+        <div class="todo-switches">
+          <label class="todo-switch"><input type="checkbox" id="todoOnCalendarToggle" style="width:15px;height:15px;"> <span id="lblTodoOnCalendar"></span></label>
+          <label class="todo-switch" id="todoShareRow"><input type="checkbox" id="todoShareToggle" style="width:15px;height:15px;"> <span id="lblTodoShare"></span></label>
+        </div>
+      </div>
+      <div id="todoList"></div>
     </div>
     </div>
     <div id="yonseiBoardsSection" class="hidden">
@@ -11387,7 +11472,7 @@ const I18N = {
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
-    tabYonsei:'Yonsei', hWorkspaceSetup:'Set up your Productivity Tracker', wsWhereLabel:'Where will you use it?', wsKindYonsei:'Yonsei', wsKindSchool:'Another school', wsKindWork:'Work', wsNameLabel:'Tab name', wsKoreanLabel:'Korean study tab', wsContinue:'Continue', wsSave:'Save', wsSaved:'Saved.', wsSettingsHeading:'School or work tab', workspaceSchoolDefault:'School', workspaceWorkDefault:'Work', tabProjects:'Projects', hAddProject:'Add a project', projectTitle:'Project name', projectLocation:'Location', addProjectBtn:'Add project', projectHint:'Only the project name and time are required.', deleteProjectConfirm:'Delete this project? This also removes its calendar entries and its notes for everyone.', lockInProjectConfirm:"Lock in this project? You won't be able to move it back to Planning or Active afterward.", statusActive:'Active', hYourProjects:'Your projects', hProjectList:'All projects', lblNotesProject:'Project (optional)', noProject:'No project', notesEmptyHintWork:'Add a project in the Projects tab first, then create notes here.', hNotesWork:'Your notes', kindProject:'Project', hProjectsCal:'Projects', linkCatProjects:'Projects', linkCatProjectNotes:'Project notes', tabBoards:'Board', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', lblYonseiBoardsSince:'Period', lblYonseiBoardsSort:'Sort', yonseiPeriodAll:'All time', yonseiPeriodWeek:'Last week', yonseiPeriodMonth:'Last month', yonseiPeriod6Months:'Last 6 months', yonseiPeriodYear:'Last year', yonseiPeriod2Years:'Last 2 years', yonseiPeriod3Years:'Last 3 years', yonseiPeriod4Years:'Last 4 years', yonseiPeriod5Years:'Last 5 years', yonseiSortNewest:'Newest first', yonseiSortOldest:'Oldest first', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobsSubJobBoard:'Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardAiUpdateBtn:'AI Job Fetch', jobBoardAiFetching:'Fetching', jobBoardUpdating:'Updating...', jobBoardIndBankingFinance:'Banking/Finance', jobBoardIndConsumerFashion:'Consumer/Fashion', jobBoardIndForeignFirms:'Foreign firms', jobBoardIndIntlOrg:'International Organization', jobBoardIndNGO:'NGO', jobBoardIndOthers:'Others', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Public', jobBoardIndResearchInstitute:'Research Institute', jobBoardIndTechnology:'Technology', jobBoardIndTopChaebol:'Top Chaebol', jobBoardIndTrade:'Trade', jobBoardNewBadge:'NEW', cdcLoginWarnTitle:'Logged in to CDC?', cdcLoginWarnBody:'The Yonsei CDC site needs its own separate login. Make sure you\'re signed in there before opening this posting, or the page may not load right.', cdcLoginWarnContinueBtn:'Continue', cdcLoginWarnLoginBtn:'Log in', cdcLoginWarnCancelBtn:'Cancel',
+    tabYonsei:'Yonsei', tabTodos:'To-do', hAddTodo:'Add a to-do', lblTodoTitle:'To-do', lblTodoDue:'Due date (optional)', lblTodoTime:'Time (optional)', lblTodoRemind:'Remind me', remindAtTime:'At the time', remindHourBefore:'1 hour before', remindMorningOf:'Morning of (8:00)', remindDayBefore:'Day before', remindCustom:'Pick a time', addTodoBtn:'Add to-do', hTodoList:'Your to-dos', todoToday:'Today', todoTomorrow:'Tomorrow', todoOverdue:'Overdue', todoDone:'Done', todoClearDone:'Clear done', todoClearDoneConfirm:'Delete {n} finished to-dos?', todoClearDoneConfirmOne:'Delete {n} finished to-do?', deleteTodoConfirm:'Delete the to-do "{title}"?', todoMarkDone:'Mark done', todoMarkOpen:'Mark not done', todoShowOnCalendar:'Show on calendar', todoShareCircle:'Share with your circle', todoNotesLabel:'Notes (optional)', todoSave:'Save', todoCancel:'Cancel', todoEdit:'Edit', todoDelete:'Delete', todoAllCourses:'All courses', todoAllProjects:'All projects', notifTypeTodoReminder:'To-do reminders', notifTodoReminderTitleTpl:'To-do: {title}', hWorkspaceSetup:'Set up your Productivity Tracker', wsWhereLabel:'Where will you use it?', wsKindYonsei:'Yonsei', wsKindSchool:'Another school', wsKindWork:'Work', wsNameLabel:'Tab name', wsKoreanLabel:'Korean study tab', wsContinue:'Continue', wsSave:'Save', wsSaved:'Saved.', wsSettingsHeading:'School or work tab', workspaceSchoolDefault:'School', workspaceWorkDefault:'Work', tabProjects:'Projects', hAddProject:'Add a project', projectTitle:'Project name', projectLocation:'Location', addProjectBtn:'Add project', projectHint:'Only the project name and time are required.', deleteProjectConfirm:'Delete this project? This also removes its calendar entries and its notes for everyone.', lockInProjectConfirm:"Lock in this project? You won't be able to move it back to Planning or Active afterward.", statusActive:'Active', hYourProjects:'Your projects', hProjectList:'All projects', lblNotesProject:'Project (optional)', noProject:'No project', notesEmptyHintWork:'Add a project in the Projects tab first, then create notes here.', hNotesWork:'Your notes', kindProject:'Project', hProjectsCal:'Projects', linkCatProjects:'Projects', linkCatProjectNotes:'Project notes', tabBoards:'Board', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', lblYonseiBoardsSince:'Period', lblYonseiBoardsSort:'Sort', yonseiPeriodAll:'All time', yonseiPeriodWeek:'Last week', yonseiPeriodMonth:'Last month', yonseiPeriod6Months:'Last 6 months', yonseiPeriodYear:'Last year', yonseiPeriod2Years:'Last 2 years', yonseiPeriod3Years:'Last 3 years', yonseiPeriod4Years:'Last 4 years', yonseiPeriod5Years:'Last 5 years', yonseiSortNewest:'Newest first', yonseiSortOldest:'Oldest first', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobsSubJobBoard:'Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardAiUpdateBtn:'AI Job Fetch', jobBoardAiFetching:'Fetching', jobBoardUpdating:'Updating...', jobBoardIndBankingFinance:'Banking/Finance', jobBoardIndConsumerFashion:'Consumer/Fashion', jobBoardIndForeignFirms:'Foreign firms', jobBoardIndIntlOrg:'International Organization', jobBoardIndNGO:'NGO', jobBoardIndOthers:'Others', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Public', jobBoardIndResearchInstitute:'Research Institute', jobBoardIndTechnology:'Technology', jobBoardIndTopChaebol:'Top Chaebol', jobBoardIndTrade:'Trade', jobBoardNewBadge:'NEW', cdcLoginWarnTitle:'Logged in to CDC?', cdcLoginWarnBody:'The Yonsei CDC site needs its own separate login. Make sure you\'re signed in there before opening this posting, or the page may not load right.', cdcLoginWarnContinueBtn:'Continue', cdcLoginWarnLoginBtn:'Log in', cdcLoginWarnCancelBtn:'Cancel',
     tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet. Create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', expLoadFailedHint:'Couldn\'t load your vacations. Check your connection and try again.', expRetryLoadBtn:'Retry', expAmountInvalid:'Enter a number, optionally ending in k or m (e.g. 4k, 1.5m).', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', hExpAllExpenses:'All expenses', sortLabel:'Sort', sortFieldStatus:'Status', sortFieldCompany:'Company', sortFieldRole:'Role', sortFieldIssuer:'Issuer', sortFieldDeadline:'Deadline', sortFieldTitle:'Title', sortFieldPosted:'Posted', sortFieldMfa:'2FA', sortFieldConfirmed:'Confirmed', sortFieldDate:'Date', sortFieldAmount:'Amount', sortFieldName:'Name', sortFieldCategory:'Category', sortFieldPaidBy:'Paid by', sortAsc:'Sorting up. Press to sort down.', sortDesc:'Sorting down. Press to sort up.', sortThen:'then', sortMultiple:'Multiple sort', expExcluded:'{n} expenses left out', expExcludedOne:'{n} expense left out', expShowLabel:'Show', expShowAll:'All', expShowCounted:'Counted only', expShowExcluded:'Excluded only', expNoExcluded:'Nothing is excluded right now.', expNoCounted:'Everything here is excluded right now.', expNoExpensesYet:'No expenses logged yet.', expCountCategory:'Count this category', expDontCountCategory:"Don't count this category", expCountAllCategories:'Count all categories', expDontCountDay:"Don't count this day", expCountDay:'Count this day', expDontCountExpense:"Don't count this expense", expCountExpense:'Count this expense', expCountEverything:'Count everything', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default; a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', hEditVacation:'Edit vacation', expPickVacationHint:'Pick a vacation above.', expVacationDeleteConfirm:'Delete "{name}"? Every expense logged on it goes with it, for everyone on the trip.', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expCircleEmpty:'You\'re not linked with anyone yet. Add people to your Linked circle from Account settings.', expCircleAllOnTrip:'Everyone in your Linked circle is already on this trip.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip', lblExpCustomCategoryName:'Custom name (optional)', optNewVacationCurrencyCustom:'Other…', lblNewVacationCustomCurrency:'Currency code', lblExpDisplayCurrency:'Show in', optExpDisplayCurrencyOriginal:'Original', lblExpDisplayFull:'Convert every amount', expDisplayFullHint:'Shows every amount in the chosen currency. What was typed in is kept as it is, so switching back gives the exact amounts again.', hInviteBySearch:'Or invite by name', vacationInviteSearchPlaceholder:'Search by name...', recapLoadingHint:'Loading…', shellUpdatedText:'A new version is ready.', shellUpdatedBtn:'Reload', qlVisit:'Visit link:', qlEnterLink:'Enter link:', qlEnterVideo:'Enter video:', qlEdit:'Edit', qlSave:'Save', qlRemove:'Remove'
   },
   ko: {
@@ -11512,7 +11597,7 @@ const I18N = {
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
-    tabYonsei:'연세', hWorkspaceSetup:'Productivity Tracker 설정하기', wsWhereLabel:'어디에서 사용하시나요?', wsKindYonsei:'연세', wsKindSchool:'다른 학교', wsKindWork:'직장', wsNameLabel:'탭 이름', wsKoreanLabel:'한국어 공부 탭', wsContinue:'계속', wsSave:'저장', wsSaved:'저장했습니다.', wsSettingsHeading:'학교 또는 직장 탭', workspaceSchoolDefault:'학교', workspaceWorkDefault:'직장', tabProjects:'프로젝트', hAddProject:'프로젝트 추가', projectTitle:'프로젝트명', projectLocation:'장소', addProjectBtn:'프로젝트 추가', projectHint:'프로젝트명과 시간만 필수입니다.', deleteProjectConfirm:'이 프로젝트를 삭제할까요? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInProjectConfirm:'이 프로젝트를 확정할까요? 이후에는 계획 중이나 진행 중으로 되돌릴 수 없습니다.', statusActive:'진행 중', hYourProjects:'나의 프로젝트', hProjectList:'전체 프로젝트', lblNotesProject:'프로젝트 (선택)', noProject:'프로젝트 없음', notesEmptyHintWork:'먼저 프로젝트 탭에서 프로젝트를 추가한 후 노트를 작성하세요.', hNotesWork:'내 노트', kindProject:'프로젝트', hProjectsCal:'프로젝트', linkCatProjects:'프로젝트', linkCatProjectNotes:'프로젝트 노트', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', lblYonseiBoardsSince:'기간', lblYonseiBoardsSort:'정렬', yonseiPeriodAll:'전체 기간', yonseiPeriodWeek:'지난 1주', yonseiPeriodMonth:'지난 1개월', yonseiPeriod6Months:'지난 6개월', yonseiPeriodYear:'지난 1년', yonseiPeriod2Years:'지난 2년', yonseiPeriod3Years:'지난 3년', yonseiPeriod4Years:'지난 4년', yonseiPeriod5Years:'지난 5년', yonseiSortNewest:'최신순', yonseiSortOldest:'오래된순', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobsSubJobBoard:'게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardAiUpdateBtn:'AI 확인', jobBoardAiFetching:'가져오는 중', jobBoardUpdating:'업데이트 중...', jobBoardIndBankingFinance:'금융', jobBoardIndConsumerFashion:'소비재/패션', jobBoardIndForeignFirms:'외국계 기업', jobBoardIndIntlOrg:'국제기구', jobBoardIndNGO:'NGO', jobBoardIndOthers:'기타', jobBoardIndPRMarketing:'PR/마케팅', jobBoardIndPublic:'공공기관', jobBoardIndResearchInstitute:'연구소', jobBoardIndTechnology:'기술/IT', jobBoardIndTopChaebol:'대기업(재벌)', jobBoardIndTrade:'무역', jobBoardNewBadge:'신규', cdcLoginWarnTitle:'CDC 사이트에 로그인하셨나요?', cdcLoginWarnBody:'연세 CDC 사이트는 별도의 로그인이 필요합니다. 이 공고를 열기 전에 CDC 사이트에 로그인되어 있는지 확인하세요. 그렇지 않으면 페이지가 제대로 열리지 않을 수 있습니다.', cdcLoginWarnContinueBtn:'계속', cdcLoginWarnLoginBtn:'로그인', cdcLoginWarnCancelBtn:'취소',
+    tabYonsei:'연세', tabTodos:'할 일', hAddTodo:'할 일 추가', lblTodoTitle:'할 일', lblTodoDue:'마감일 (선택)', lblTodoTime:'시간 (선택)', lblTodoRemind:'알림', remindAtTime:'정각', remindHourBefore:'1시간 전', remindMorningOf:'당일 아침 (8:00)', remindDayBefore:'하루 전', remindCustom:'시간 선택', addTodoBtn:'할 일 추가', hTodoList:'나의 할 일', todoToday:'오늘', todoTomorrow:'내일', todoOverdue:'기한 지남', todoDone:'완료', todoClearDone:'완료 항목 지우기', todoClearDoneConfirm:'완료된 할 일 {n}개를 삭제할까요?', deleteTodoConfirm:'할 일 "{title}"을(를) 삭제할까요?', todoMarkDone:'완료로 표시', todoMarkOpen:'미완료로 표시', todoShowOnCalendar:'캘린더에 표시', todoShareCircle:'내 서클과 공유', todoNotesLabel:'메모 (선택)', todoSave:'저장', todoCancel:'취소', todoEdit:'수정', todoDelete:'삭제', todoAllCourses:'전체 수업', todoAllProjects:'전체 프로젝트', notifTypeTodoReminder:'할 일 알림', notifTodoReminderTitleTpl:'할 일: {title}', hWorkspaceSetup:'Productivity Tracker 설정하기', wsWhereLabel:'어디에서 사용하시나요?', wsKindYonsei:'연세', wsKindSchool:'다른 학교', wsKindWork:'직장', wsNameLabel:'탭 이름', wsKoreanLabel:'한국어 공부 탭', wsContinue:'계속', wsSave:'저장', wsSaved:'저장했습니다.', wsSettingsHeading:'학교 또는 직장 탭', workspaceSchoolDefault:'학교', workspaceWorkDefault:'직장', tabProjects:'프로젝트', hAddProject:'프로젝트 추가', projectTitle:'프로젝트명', projectLocation:'장소', addProjectBtn:'프로젝트 추가', projectHint:'프로젝트명과 시간만 필수입니다.', deleteProjectConfirm:'이 프로젝트를 삭제할까요? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInProjectConfirm:'이 프로젝트를 확정할까요? 이후에는 계획 중이나 진행 중으로 되돌릴 수 없습니다.', statusActive:'진행 중', hYourProjects:'나의 프로젝트', hProjectList:'전체 프로젝트', lblNotesProject:'프로젝트 (선택)', noProject:'프로젝트 없음', notesEmptyHintWork:'먼저 프로젝트 탭에서 프로젝트를 추가한 후 노트를 작성하세요.', hNotesWork:'내 노트', kindProject:'프로젝트', hProjectsCal:'프로젝트', linkCatProjects:'프로젝트', linkCatProjectNotes:'프로젝트 노트', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', lblYonseiBoardsSince:'기간', lblYonseiBoardsSort:'정렬', yonseiPeriodAll:'전체 기간', yonseiPeriodWeek:'지난 1주', yonseiPeriodMonth:'지난 1개월', yonseiPeriod6Months:'지난 6개월', yonseiPeriodYear:'지난 1년', yonseiPeriod2Years:'지난 2년', yonseiPeriod3Years:'지난 3년', yonseiPeriod4Years:'지난 4년', yonseiPeriod5Years:'지난 5년', yonseiSortNewest:'최신순', yonseiSortOldest:'오래된순', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobsSubJobBoard:'게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardAiUpdateBtn:'AI 확인', jobBoardAiFetching:'가져오는 중', jobBoardUpdating:'업데이트 중...', jobBoardIndBankingFinance:'금융', jobBoardIndConsumerFashion:'소비재/패션', jobBoardIndForeignFirms:'외국계 기업', jobBoardIndIntlOrg:'국제기구', jobBoardIndNGO:'NGO', jobBoardIndOthers:'기타', jobBoardIndPRMarketing:'PR/마케팅', jobBoardIndPublic:'공공기관', jobBoardIndResearchInstitute:'연구소', jobBoardIndTechnology:'기술/IT', jobBoardIndTopChaebol:'대기업(재벌)', jobBoardIndTrade:'무역', jobBoardNewBadge:'신규', cdcLoginWarnTitle:'CDC 사이트에 로그인하셨나요?', cdcLoginWarnBody:'연세 CDC 사이트는 별도의 로그인이 필요합니다. 이 공고를 열기 전에 CDC 사이트에 로그인되어 있는지 확인하세요. 그렇지 않으면 페이지가 제대로 열리지 않을 수 있습니다.', cdcLoginWarnContinueBtn:'계속', cdcLoginWarnLoginBtn:'로그인', cdcLoginWarnCancelBtn:'취소',
     tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', expLoadFailedHint:'여행 정보를 불러오지 못했습니다. 연결 상태를 확인하고 다시 시도하세요.', expRetryLoadBtn:'다시 시도', expAmountInvalid:'숫자를 입력하세요. 끝에 k 또는 m을 붙일 수 있습니다 (예: 4k, 1.5m).', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', hExpAllExpenses:'전체 지출', sortLabel:'정렬', sortFieldStatus:'상태', sortFieldCompany:'회사', sortFieldRole:'직무', sortFieldIssuer:'발급기관', sortFieldDeadline:'마감일', sortFieldTitle:'제목', sortFieldPosted:'등록일', sortFieldMfa:'2단계 인증', sortFieldConfirmed:'인증 여부', sortFieldDate:'날짜', sortFieldAmount:'금액', sortFieldName:'이름', sortFieldCategory:'카테고리', sortFieldPaidBy:'결제자', sortAsc:'오름차순입니다. 누르면 내림차순으로 바뀝니다.', sortDesc:'내림차순입니다. 누르면 오름차순으로 바뀝니다.', sortThen:'그다음', sortMultiple:'다중 정렬', expExcluded:'{n}개 항목 제외됨', expShowLabel:'표시', expShowAll:'전체', expShowCounted:'포함된 것만', expShowExcluded:'제외된 것만', expNoExcluded:'지금은 제외된 항목이 없습니다.', expNoCounted:'지금은 모든 항목이 제외되어 있습니다.', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCountCategory:'이 카테고리 포함', expDontCountCategory:'이 카테고리 제외', expCountAllCategories:'모든 카테고리 포함', expDontCountDay:'이 날 제외', expCountDay:'이 날 포함', expDontCountExpense:'이 지출 제외', expCountExpense:'이 지출 포함', expCountEverything:'모두 포함', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', hEditVacation:'여행 수정', expPickVacationHint:'위에서 여행을 선택하세요.', expVacationDeleteConfirm:'"{name}" 여행을 삭제할까요? 이 여행에 기록된 모든 지출이 참여자 전원에게서 함께 삭제됩니다.', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expCircleEmpty:'아직 아무와도 연결되어 있지 않습니다. 계정 설정의 연결된 그룹에서 사람을 추가하세요.', expCircleAllOnTrip:'연결된 그룹의 모든 사람이 이미 이 여행에 참여하고 있습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거', lblExpCustomCategoryName:'맞춤 이름 (선택 사항)', optNewVacationCurrencyCustom:'기타…', lblNewVacationCustomCurrency:'통화 코드', lblExpDisplayCurrency:'표시 통화', optExpDisplayCurrencyOriginal:'원래 통화', lblExpDisplayFull:'모든 금액 변환', expDisplayFullHint:'모든 금액을 선택한 통화로 보여줍니다. 입력한 금액은 그대로 남아 있어 다시 바꾸면 정확한 금액이 돌아옵니다.', hInviteBySearch:'또는 이름으로 초대', vacationInviteSearchPlaceholder:'이름으로 검색...', recapLoadingHint:'불러오는 중...', shellUpdatedText:'새 버전이 준비되었습니다.', shellUpdatedBtn:'새로 고침', qlVisit:'링크 열기:', qlEnterLink:'링크 입력:', qlEnterVideo:'동영상 주소:', qlEdit:'수정', qlSave:'저장', qlRemove:'제거'
   },
   vi: {
@@ -11638,7 +11723,7 @@ const I18N = {
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
-    tabYonsei:'Yonsei', hWorkspaceSetup:'Thiết lập Productivity Tracker', wsWhereLabel:'Bạn sẽ dùng ở đâu?', wsKindYonsei:'Yonsei', wsKindSchool:'Trường khác', wsKindWork:'Công việc', wsNameLabel:'Tên thẻ', wsKoreanLabel:'Thẻ học tiếng Hàn', wsContinue:'Tiếp tục', wsSave:'Lưu', wsSaved:'Đã lưu.', wsSettingsHeading:'Thẻ trường học hoặc công việc', workspaceSchoolDefault:'Trường học', workspaceWorkDefault:'Công việc', tabProjects:'Dự án', hAddProject:'Thêm dự án', projectTitle:'Tên dự án', projectLocation:'Địa điểm', addProjectBtn:'Thêm dự án', projectHint:'Chỉ tên dự án và thời gian là bắt buộc.', deleteProjectConfirm:'Xóa dự án này? Thao tác này cũng xóa các mục lịch và ghi chú của dự án cho tất cả mọi người.', lockInProjectConfirm:'Chốt dự án này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đang thực hiện.', statusActive:'Đang thực hiện', hYourProjects:'Dự án của bạn', hProjectList:'Tất cả dự án', lblNotesProject:'Dự án (tùy chọn)', noProject:'Không có dự án', notesEmptyHintWork:'Hãy thêm dự án trong tab Dự án trước, sau đó tạo ghi chú ở đây.', hNotesWork:'Ghi chú của bạn', kindProject:'Dự án', hProjectsCal:'Dự án', linkCatProjects:'Dự án', linkCatProjectNotes:'Ghi chú dự án', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', lblYonseiBoardsSince:'Khoảng thời gian', lblYonseiBoardsSort:'Sắp xếp', yonseiPeriodAll:'Mọi lúc', yonseiPeriodWeek:'Tuần trước', yonseiPeriodMonth:'Tháng trước', yonseiPeriod6Months:'6 tháng qua', yonseiPeriodYear:'Năm trước', yonseiPeriod2Years:'2 năm qua', yonseiPeriod3Years:'3 năm qua', yonseiPeriod4Years:'4 năm qua', yonseiPeriod5Years:'5 năm qua', yonseiSortNewest:'Mới nhất', yonseiSortOldest:'Cũ nhất', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobsSubJobBoard:'Bảng', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardAiUpdateBtn:'Kiểm tra AI', jobBoardAiFetching:'Đang lấy dữ liệu', jobBoardUpdating:'Đang cập nhật...', jobBoardIndBankingFinance:'Ngân hàng/Tài chính', jobBoardIndConsumerFashion:'Hàng tiêu dùng/Thời trang', jobBoardIndForeignFirms:'Doanh nghiệp nước ngoài', jobBoardIndIntlOrg:'Tổ chức quốc tế', jobBoardIndNGO:'Tổ chức phi chính phủ (NGO)', jobBoardIndOthers:'Khác', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Khu vực công', jobBoardIndResearchInstitute:'Viện nghiên cứu', jobBoardIndTechnology:'Công nghệ', jobBoardIndTopChaebol:'Tập đoàn lớn (Chaebol)', jobBoardIndTrade:'Thương mại', jobBoardNewBadge:'MỚI', cdcLoginWarnTitle:'Đã đăng nhập vào CDC chưa?', cdcLoginWarnBody:'Trang CDC của Yonsei cần đăng nhập riêng. Hãy chắc chắn bạn đã đăng nhập ở đó trước khi mở tin này, nếu không trang có thể không tải đúng.', cdcLoginWarnContinueBtn:'Tiếp tục', cdcLoginWarnLoginBtn:'Đăng nhập', cdcLoginWarnCancelBtn:'Hủy',
+    tabYonsei:'Yonsei', tabTodos:'Việc cần làm', hAddTodo:'Thêm việc cần làm', lblTodoTitle:'Việc cần làm', lblTodoDue:'Hạn (tùy chọn)', lblTodoTime:'Giờ (tùy chọn)', lblTodoRemind:'Nhắc tôi', remindAtTime:'Đúng giờ', remindHourBefore:'Trước 1 giờ', remindMorningOf:'Sáng hôm đó (8:00)', remindDayBefore:'Trước 1 ngày', remindCustom:'Chọn giờ', addTodoBtn:'Thêm việc', hTodoList:'Việc cần làm của bạn', todoToday:'Hôm nay', todoTomorrow:'Ngày mai', todoOverdue:'Quá hạn', todoDone:'Đã xong', todoClearDone:'Xóa việc đã xong', todoClearDoneConfirm:'Xóa {n} việc đã xong?', deleteTodoConfirm:'Xóa việc "{title}"?', todoMarkDone:'Đánh dấu đã xong', todoMarkOpen:'Đánh dấu chưa xong', todoShowOnCalendar:'Hiện trên lịch', todoShareCircle:'Chia sẻ với nhóm của bạn', todoNotesLabel:'Ghi chú (tùy chọn)', todoSave:'Lưu', todoCancel:'Hủy', todoEdit:'Sửa', todoDelete:'Xóa', todoAllCourses:'Tất cả khóa học', todoAllProjects:'Tất cả dự án', notifTypeTodoReminder:'Nhắc việc cần làm', notifTodoReminderTitleTpl:'Việc cần làm: {title}', hWorkspaceSetup:'Thiết lập Productivity Tracker', wsWhereLabel:'Bạn sẽ dùng ở đâu?', wsKindYonsei:'Yonsei', wsKindSchool:'Trường khác', wsKindWork:'Công việc', wsNameLabel:'Tên thẻ', wsKoreanLabel:'Thẻ học tiếng Hàn', wsContinue:'Tiếp tục', wsSave:'Lưu', wsSaved:'Đã lưu.', wsSettingsHeading:'Thẻ trường học hoặc công việc', workspaceSchoolDefault:'Trường học', workspaceWorkDefault:'Công việc', tabProjects:'Dự án', hAddProject:'Thêm dự án', projectTitle:'Tên dự án', projectLocation:'Địa điểm', addProjectBtn:'Thêm dự án', projectHint:'Chỉ tên dự án và thời gian là bắt buộc.', deleteProjectConfirm:'Xóa dự án này? Thao tác này cũng xóa các mục lịch và ghi chú của dự án cho tất cả mọi người.', lockInProjectConfirm:'Chốt dự án này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đang thực hiện.', statusActive:'Đang thực hiện', hYourProjects:'Dự án của bạn', hProjectList:'Tất cả dự án', lblNotesProject:'Dự án (tùy chọn)', noProject:'Không có dự án', notesEmptyHintWork:'Hãy thêm dự án trong tab Dự án trước, sau đó tạo ghi chú ở đây.', hNotesWork:'Ghi chú của bạn', kindProject:'Dự án', hProjectsCal:'Dự án', linkCatProjects:'Dự án', linkCatProjectNotes:'Ghi chú dự án', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', lblYonseiBoardsSince:'Khoảng thời gian', lblYonseiBoardsSort:'Sắp xếp', yonseiPeriodAll:'Mọi lúc', yonseiPeriodWeek:'Tuần trước', yonseiPeriodMonth:'Tháng trước', yonseiPeriod6Months:'6 tháng qua', yonseiPeriodYear:'Năm trước', yonseiPeriod2Years:'2 năm qua', yonseiPeriod3Years:'3 năm qua', yonseiPeriod4Years:'4 năm qua', yonseiPeriod5Years:'5 năm qua', yonseiSortNewest:'Mới nhất', yonseiSortOldest:'Cũ nhất', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobsSubJobBoard:'Bảng', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardAiUpdateBtn:'Kiểm tra AI', jobBoardAiFetching:'Đang lấy dữ liệu', jobBoardUpdating:'Đang cập nhật...', jobBoardIndBankingFinance:'Ngân hàng/Tài chính', jobBoardIndConsumerFashion:'Hàng tiêu dùng/Thời trang', jobBoardIndForeignFirms:'Doanh nghiệp nước ngoài', jobBoardIndIntlOrg:'Tổ chức quốc tế', jobBoardIndNGO:'Tổ chức phi chính phủ (NGO)', jobBoardIndOthers:'Khác', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Khu vực công', jobBoardIndResearchInstitute:'Viện nghiên cứu', jobBoardIndTechnology:'Công nghệ', jobBoardIndTopChaebol:'Tập đoàn lớn (Chaebol)', jobBoardIndTrade:'Thương mại', jobBoardNewBadge:'MỚI', cdcLoginWarnTitle:'Đã đăng nhập vào CDC chưa?', cdcLoginWarnBody:'Trang CDC của Yonsei cần đăng nhập riêng. Hãy chắc chắn bạn đã đăng nhập ở đó trước khi mở tin này, nếu không trang có thể không tải đúng.', cdcLoginWarnContinueBtn:'Tiếp tục', cdcLoginWarnLoginBtn:'Đăng nhập', cdcLoginWarnCancelBtn:'Hủy',
     tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào. Tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', expLoadFailedHint:'Không thể tải chuyến đi của bạn. Kiểm tra kết nối và thử lại.', expRetryLoadBtn:'Thử lại', expAmountInvalid:'Nhập một số, có thể kết thúc bằng k hoặc m (vd: 4k, 1.5m).', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', hExpAllExpenses:'Tất cả khoản chi', sortLabel:'Sắp xếp', sortFieldStatus:'Trạng thái', sortFieldCompany:'Công ty', sortFieldRole:'Vị trí', sortFieldIssuer:'Đơn vị cấp', sortFieldDeadline:'Hạn nộp', sortFieldTitle:'Tiêu đề', sortFieldPosted:'Ngày đăng', sortFieldMfa:'Xác thực 2 bước', sortFieldConfirmed:'Đã xác nhận', sortFieldDate:'Ngày', sortFieldAmount:'Số tiền', sortFieldName:'Tên', sortFieldCategory:'Danh mục', sortFieldPaidBy:'Người trả', sortAsc:'Đang sắp tăng dần. Nhấn để sắp giảm dần.', sortDesc:'Đang sắp giảm dần. Nhấn để sắp tăng dần.', sortThen:'rồi', sortMultiple:'Sắp xếp nhiều tiêu chí', expExcluded:'{n} khoản chi bị loại', expShowLabel:'Hiển thị', expShowAll:'Tất cả', expShowCounted:'Chỉ mục được tính', expShowExcluded:'Chỉ mục bị loại', expNoExcluded:'Hiện không có mục nào bị loại.', expNoCounted:'Hiện tất cả các mục đều bị loại.', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCountCategory:'Tính danh mục này', expDontCountCategory:'Không tính danh mục này', expCountAllCategories:'Tính tất cả danh mục', expDontCountDay:'Không tính ngày này', expCountDay:'Tính ngày này', expDontCountExpense:'Không tính khoản chi này', expCountExpense:'Tính khoản chi này', expCountEverything:'Tính tất cả', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên. Một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', hEditVacation:'Sửa chuyến đi', expPickVacationHint:'Chọn một chuyến đi ở trên.', expVacationDeleteConfirm:'Xóa "{name}"? Mọi khoản chi đã ghi cho chuyến đi này sẽ bị xóa theo, với tất cả mọi người trong chuyến.', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expCircleEmpty:'Bạn chưa liên kết với ai. Hãy thêm người vào Nhóm liên kết trong Cài đặt tài khoản.', expCircleAllOnTrip:'Mọi người trong Nhóm liên kết của bạn đã tham gia chuyến đi này.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi', lblExpCustomCategoryName:'Tên tùy chỉnh (không bắt buộc)', optNewVacationCurrencyCustom:'Khác…', lblNewVacationCustomCurrency:'Mã tiền tệ', lblExpDisplayCurrency:'Hiển thị bằng', optExpDisplayCurrencyOriginal:'Ban đầu', lblExpDisplayFull:'Đổi mọi số tiền', expDisplayFullHint:'Hiển thị mọi số tiền bằng loại tiền đã chọn. Số tiền đã nhập vẫn giữ nguyên, nên khi đổi lại sẽ thấy đúng số đã nhập.', hInviteBySearch:'Hoặc mời theo tên', vacationInviteSearchPlaceholder:'Tìm theo tên...', recapLoadingHint:'Đang tải...', shellUpdatedText:'Đã có phiên bản mới.', shellUpdatedBtn:'Tải lại', qlVisit:'Mở liên kết:', qlEnterLink:'Nhập liên kết:', qlEnterVideo:'Nhập video:', qlEdit:'Sửa', qlSave:'Lưu', qlRemove:'Xóa'
   }
 };
@@ -11660,7 +11745,7 @@ const STATIC_MAP = {
   shellUpdateText:'shellUpdatedText', shellUpdateReloadBtn:'shellUpdatedBtn',
   optNewVacationCurrencyCustom:'optNewVacationCurrencyCustom', lblNewVacationCustomCurrency:'lblNewVacationCustomCurrency',
   lblExpDisplayCurrency:'lblExpDisplayCurrency', optExpDisplayCurrencyCustom:'optNewVacationCurrencyCustom', optExpDisplayCurrencyOriginal:'optExpDisplayCurrencyOriginal', lblExpDisplayFull:'lblExpDisplayFull',
-  yonseiSubCoursesBtn:'tabCourses', yonseiSubNotesBtn:'tabNotes', yonseiSubBoardsBtn:'tabBoards', hYonseiBoards:'hYonseiBoards',
+  yonseiSubCoursesBtn:'tabCourses', yonseiSubNotesBtn:'tabNotes', yonseiSubTodosBtn:'tabTodos', yonseiSubBoardsBtn:'tabBoards', hAddTodo:'hAddTodo', lblTodoTitle:'lblTodoTitle', lblTodoDue:'lblTodoDue', lblTodoTime:'lblTodoTime', lblTodoCourse:'lblNotesCourse', lblTodoRemind:'lblTodoRemind', addTodoBtn:'addTodoBtn', hTodoList:'hTodoList', lblTodoPersonFilter:'lblNotesPersonFilter', lblTodoCourseFilter:'tabCourses', lblTodoOnCalendar:'todoShowOnCalendar', lblTodoShare:'todoShareCircle', hYonseiBoards:'hYonseiBoards',
   hLeaderboard:'leaderboard', lbHeadRank:'lbRank', lbHeadName:'lbName', lbHeadStreak:'lbStreak', lbHeadWeek:'lbWeek', lbHeadTotal:'lbTotal',
   hLogStudy:'logStudy', lblDate:'date', lblActivity:'activity', lblHours:'hours', addBtn:'addSession', studyHint:'studyHint',
   hStudyTimer:'hStudyTimer', lblTimerActivity:'lblTimerActivity', timerStartBtn:'timerStartBtn', timerPauseBtn:'timerPauseBtn', timerResetBtn:'timerResetBtn', timerSaveBtn:'timerSaveBtn', timerHint:'timerHint',
@@ -11805,7 +11890,7 @@ function capFirst(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
    a profile, and a `let` read there would be read before it exists. */
 var workspaceKind = 'yonsei';   // 'yonsei' | 'school' | 'work' | null (not chosen yet)
 var workspaceName = null;       // null = the kind's own default name
-var WORK_KEYS = { tabCourses:'tabProjects', hAddCourse:'hAddProject', courseTitle:'projectTitle', courseClassroom:'projectLocation', addCourseBtn:'addProjectBtn', courseHint:'projectHint', deleteCourseConfirm:'deleteProjectConfirm', lockInCourseConfirm:'lockInProjectConfirm', statusSignedUp:'statusActive', hYourCourses:'hYourProjects', hCourseList:'hProjectList', lblNotesCourse:'lblNotesProject', noNote:'noProject', notesEmptyHint:'notesEmptyHintWork', hLectures:'hNotesWork', kindCourse:'kindProject', hCoursesCal:'hProjectsCal', linkCatCourses:'linkCatProjects', linkCatCourseNotes:'linkCatProjectNotes' };
+var WORK_KEYS = { tabCourses:'tabProjects', hAddCourse:'hAddProject', courseTitle:'projectTitle', courseClassroom:'projectLocation', addCourseBtn:'addProjectBtn', courseHint:'projectHint', deleteCourseConfirm:'deleteProjectConfirm', lockInCourseConfirm:'lockInProjectConfirm', statusSignedUp:'statusActive', hYourCourses:'hYourProjects', hCourseList:'hProjectList', lblNotesCourse:'lblNotesProject', noNote:'noProject', notesEmptyHint:'notesEmptyHintWork', hLectures:'hNotesWork', kindCourse:'kindProject', hCoursesCal:'hProjectsCal', linkCatCourses:'linkCatProjects', linkCatCourseNotes:'linkCatProjectNotes', todoAllCourses:'todoAllProjects' };
 function tRaw(key){ return (I18N[currentLang] && I18N[currentLang][key]) || I18N.en[key] || key; }
 function workspaceDefaultKey(kind){ return kind === 'work' ? 'workspaceWorkDefault' : kind === 'school' ? 'workspaceSchoolDefault' : 'tabYonsei'; }
 function workspaceTabName(){
@@ -13695,6 +13780,8 @@ function handleDeepLinkParam(){
   if(go === 'yonsei-boards'){
     switchTopLevelTab('yonsei');
     switchYonseiSubTab('boards');
+  } else if(go === 'todos'){
+    openTodoInList(null, false);
   } else if(go === 'calendar'){
     switchTopLevelTab('calendar');
     switchCalendarSubTab('calendar');
@@ -13988,7 +14075,7 @@ document.getElementById('resumeSyncSaveBtn').addEventListener('click', async ()=
   msg.style.color = 'var(--celadon-4)';
 });
 
-const NOTIF_PREF_TYPES = [['reminder','notifTypeReminder'],['yonsei_board','notifTypeYonseiBoard'],['link_accepted','notifTypeLinkAccepted']];
+const NOTIF_PREF_TYPES = [['reminder','notifTypeReminder'],['todo_reminder','notifTypeTodoReminder'],['yonsei_board','notifTypeYonseiBoard'],['link_accepted','notifTypeLinkAccepted']];
 // Push per type, kept apart from email/in-app because the recaps' own two
 // switches live on the profile rather than here. Default on: the device-level
 // switch is what opts a person in, and this only narrows it.
@@ -14269,6 +14356,9 @@ function renderNotifText(n){
   if(n.type === 'reminder' && p.event_title){
     return { title: t('notifReminderTitleTpl').replace('{title}', p.event_title), body: p.date ? localDateStr(p.date) : (n.body || '') };
   }
+  if(n.type === 'todo_reminder' && p.todo_title){
+    return { title: t('notifTodoReminderTitleTpl').replace('{title}', p.todo_title), body: p.date ? todoDateLabel(p.date) + (p.time ? ' ' + formatTime12h(p.time) : '') : '' };
+  }
   if(n.type === 'yonsei_board' && typeof p.count === 'number'){
     return { title: p.count > 1 ? t('notifYonseiBoardTitleMany') : t('notifYonseiBoardTitleOne'), body: n.body || '' };
   }
@@ -14342,6 +14432,8 @@ function navigateToNotifTarget(n){
   if(n.type === 'yonsei_board'){
     switchTopLevelTab('yonsei');
     switchYonseiSubTab('boards');
+  } else if(n.type === 'todo_reminder'){
+    openTodoInList(p.todo_id, false);
   } else if(n.type === 'reminder' || n.type === 'daily_recap'){
     switchTopLevelTab('calendar');
     switchCalendarSubTab('calendar');
@@ -15340,6 +15432,10 @@ document.getElementById('guestBanner').addEventListener('click', signOutOrExitGu
 // already do the right thing for a guest unmodified, since a freshly seeded
 // guest profile's hidden_tabs is [], so all 5 real tabs show automatically.
 function applyGuestUiRestrictions(){
+  // A guest's to-dos live in this browser only, where nothing is ever sent:
+  // a reminder there is a promise the app cannot keep, and there is no circle.
+  document.getElementById('todoRemindField').classList.toggle('hidden', !!guestMode);
+  document.getElementById('todoShareRow').classList.toggle('hidden', !!guestMode || !currentUser || !visibleCircleMembers().length);
   if(!guestMode) return;
   const hide = id => document.getElementById(id)?.classList.add('hidden');
   hide('notifBellBtn'); hide('notifBellPanel');
@@ -19695,6 +19791,7 @@ async function loadAllData(){
     courses: supabaseClient.from('courses').select('*').order('created_at', {ascending:false}),
     course_notes: supabaseClient.from('course_notes').select('*').order('sort_order', {ascending:true}).order('created_at', {ascending:true}),
     notebook_notes: supabaseClient.from('notebook_notes').select('*').order('sort_order', {ascending:true}).order('created_at', {ascending:true}),
+    todos: supabaseClient.from('todos').select('*').order('created_at', {ascending:true}),
     grammar_notes: supabaseClient.from('grammar_notes').select('*').order('created_at', {ascending:true}),
     grammar_review_overrides: supabaseClient.from('grammar_review_overrides').select('*'),
     grammar_favorites: supabaseClient.from('grammar_favorites').select('*'),
@@ -19717,7 +19814,7 @@ async function loadAllData(){
   coreMembers = {};
   dailyGoals = {};
   hiddenFromLeaderboards = {};
-  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; if(p.workspace_kind !== undefined){ workspaceKind = p.workspace_kind; workspaceName = p.workspace_name || null; } showTopik = !!p.show_topik; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTimeOfDay = (p.daily_recap_time_of_day || '08:00:00').slice(0,5); weeklyRecapTimeOfDay = (p.weekly_recap_time_of_day || '18:00:00').slice(0,5); dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; weeklyRecapRelative = p.weekly_recap_relative || 'coming'; dailyRecapExcludedKinds = p.daily_recap_excluded_kinds || []; weeklyRecapExcludedKinds = p.weekly_recap_excluded_kinds || []; recapIncludedUids = p.recap_included_uids || null; } });
+  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; if(p.workspace_kind !== undefined){ workspaceKind = p.workspace_kind; workspaceName = p.workspace_name || null; } shareTodos = !!p.share_todos; todosOnCalendar = p.todos_on_calendar !== false; showTopik = !!p.show_topik; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTimeOfDay = (p.daily_recap_time_of_day || '08:00:00').slice(0,5); weeklyRecapTimeOfDay = (p.weekly_recap_time_of_day || '18:00:00').slice(0,5); dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; weeklyRecapRelative = p.weekly_recap_relative || 'coming'; dailyRecapExcludedKinds = p.daily_recap_excluded_kinds || []; weeklyRecapExcludedKinds = p.weekly_recap_excluded_kinds || []; recapIncludedUids = p.recap_included_uids || null; } });
   // The shared grammar list takes additions from the core members only (the
   // database refuses anyone else since the security audit), so the button
   // is not offered to anyone else. A guest's list is local and stays theirs.
@@ -19792,6 +19889,10 @@ async function loadAllData(){
     if(!allNotes[key]) allNotes[key] = [];
     allNotes[key].push(n);
   });
+  // Before the migration there is no table: the read errors, data is null,
+  // and the list is simply empty.
+  const { data: todoRows } = await __rows.todos;
+  allTodos = todoRows || [];
   const { data: notebookRows } = await __rows.notebook_notes;
   allNotebookNotes = {};
   (notebookRows||[]).forEach(n=>{
@@ -19900,6 +20001,7 @@ function scheduleSharedDataRefresh(){
 const SHARED_DATA_REALTIME_TABLES = [
   'events','courses','study_entries','job_applications','certifications',
   'writing_samples','books','grammar_notes','event_subscriptions','profiles',
+  'todos',
 ];
 function subscribeSharedDataRealtime(){
   if(sharedDataRealtimeSubscribed || !currentUser) return;
@@ -22274,15 +22376,453 @@ document.getElementById('jobBoardAiUpdateBtn').addEventListener('click', trigger
 // deeper pages on demand -- see ensureYonseiLoadedForPage()).
 function switchYonseiSubTab(view){
   if(splitSwitchGuard('yonsei', view)) return;
-  const btns = { courses: 'yonseiSubCoursesBtn', notes: 'yonseiSubNotesBtn', boards: 'yonseiSubBoardsBtn' };
-  const sections = { courses: 'yonseiCoursesSection', notes: 'yonseiNotesSection', boards: 'yonseiBoardsSection' };
+  const btns = { courses: 'yonseiSubCoursesBtn', notes: 'yonseiSubNotesBtn', todos: 'yonseiSubTodosBtn', boards: 'yonseiSubBoardsBtn' };
+  const sections = { courses: 'yonseiCoursesSection', notes: 'yonseiNotesSection', todos: 'yonseiTodosSection', boards: 'yonseiBoardsSection' };
   Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
   Object.entries(sections).forEach(([v,id])=> document.getElementById(id).classList.toggle('hidden', v!==view));
   if(view === 'boards' && !yonseiBoardsCache) fetchYonseiBoards(YONSEI_BOARD_PAGE_SIZE).then(loadYonseiBoardsInBackground);
 }
 document.getElementById('yonseiSubCoursesBtn').addEventListener('click', ()=> switchYonseiSubTab('courses'));
 document.getElementById('yonseiSubNotesBtn').addEventListener('click', ()=> switchYonseiSubTab('notes'));
+document.getElementById('yonseiSubTodosBtn').addEventListener('click', ()=> switchYonseiSubTab('todos'));
 document.getElementById('yonseiSubBoardsBtn').addEventListener('click', ()=> switchYonseiSubTab('boards'));
+
+
+/* ---------- TO-DO LIST ----------
+   A sub tab of the school/work tab (real-user request: "a fully functional
+   To-do List sub-tab"). His answers: private unless its owner shares it with
+   their circle (profiles.share_todos, off by default); its owner decides
+   whether dated to-dos show on the calendar (profiles.todos_on_calendar, on
+   by default); reminders are picked per to-do from a row of pills. The
+   server side -- the table, the circle's read policy, the reminder job -- is
+   sql migrations/todos_migration.sql.
+
+   A reminder is stored as the MOMENT it goes off ({p, at}), worked out here
+   in the owner's own timezone, plus the preset it came from, so moving the
+   due date moves the reminder with it. The server only compares moments. */
+let allTodos = [];
+var shareTodos = false, todosOnCalendar = true;
+let todoEditOpen = null;       // the to-do whose edit panel is open
+let todoDoneOpen = false;      // the Done fold
+let todoCourseFilter = 'all';  // 'all' | 'none' | a course id
+const TODO_PRESETS = [
+  { p: 'at', key: 'remindAtTime' },
+  { p: 'hour', key: 'remindHourBefore' },
+  { p: 'morning', key: 'remindMorningOf' },
+  { p: 'day', key: 'remindDayBefore' },
+  { p: 'custom', key: 'remindCustom' },
+];
+function todoLocalDate(dateStr, timeStr){
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const [hh, mm] = (timeStr || '00:00').split(':').map(Number);
+  return new Date(y, m - 1, d, hh || 0, mm || 0);
+}
+// When preset p goes off for a to-do due on `due` (at `time`, if any). Null
+// where the preset has nothing to count from: "1 hour before" needs a time.
+function todoPresetAt(p, due, time, custom){
+  if(p === 'custom'){
+    if(!custom) return null;
+    const d = new Date(custom);
+    return isNaN(d) ? null : d;
+  }
+  if(!due) return null;
+  if(p === 'morning') return todoLocalDate(due, '08:00');
+  if(p === 'day'){
+    const d = time ? todoLocalDate(due, time) : todoLocalDate(due, '08:00');
+    d.setDate(d.getDate() - 1);
+    return d;
+  }
+  if(!time) return null;
+  const d = todoLocalDate(due, time);
+  if(p === 'hour') d.setHours(d.getHours() - 1);
+  return d;
+}
+function todoDateLabel(dateStr){
+  if(dateStr === todayStr()) return t('todoToday');
+  const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+  if(dateStr === todayStr(tmr)) return t('todoTomorrow');
+  return localDateStr(dateStr + 'T00:00:00');
+}
+function todoIsOverdue(td){
+  if(td.done || !td.due_date) return false;
+  const today = todayStr();
+  if(td.due_date < today) return true;
+  if(td.due_date > today || !td.due_time) return false;
+  const now = new Date();
+  return td.due_time.slice(0, 5) < `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+function todoCourseTitle(courseId){
+  if(!courseId) return '';
+  for(const arr of Object.values(allCourses)){
+    const c = (arr || []).find(x=> x.id === courseId);
+    if(c) return c.title;
+  }
+  return '';
+}
+function visibleCoursesForTodos(){
+  const all = [];
+  Object.values(allCourses).forEach(arr=> all.push(...(arr || [])));
+  return all;
+}
+
+// ---- The reminder pills. One picker, used by the add form and each edit
+// panel. A pill that cannot go off -- nothing to count from, or already in
+// the past -- is greyed and unpicked, so what is lit is what will happen.
+function todoRemindPickerHtml(reminders){
+  const on = new Set((reminders || []).map(r=> r.p));
+  const custom = ((reminders || []).find(r=> r.p === 'custom') || {}).c || '';
+  return TODO_PRESETS.map(pr=> `<button type="button" class="todo-pill${on.has(pr.p) ? ' on' : ''}" data-p="${pr.p}" aria-pressed="${on.has(pr.p)}">${escapeHtml(t(pr.key))}</button>`).join('')
+    + `<input type="datetime-local" class="todo-custom${on.has('custom') ? '' : ' hidden'}" value="${escapeHtml(custom)}" aria-label="${escapeHtml(t('remindCustom'))}">`;
+}
+function wireTodoRemindPicker(root, getDue){
+  const sync = ()=>{
+    const { due, time } = getDue();
+    const custom = root.querySelector('.todo-custom');
+    root.querySelectorAll('.todo-pill').forEach(b=>{
+      if(b.dataset.p === 'custom') return;
+      const at = todoPresetAt(b.dataset.p, due, time, null);
+      const usable = !!at && at.getTime() > Date.now();
+      b.disabled = !usable;
+      if(!usable){ b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); }
+    });
+    const now = new Date();
+    custom.min = `${todayStr(now)}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  };
+  root.querySelectorAll('.todo-pill').forEach(b=> b.addEventListener('click', ()=>{
+    const on = !b.classList.contains('on');
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if(b.dataset.p === 'custom'){
+      const custom = root.querySelector('.todo-custom');
+      custom.classList.toggle('hidden', !on);
+      if(on && !custom.value){
+        // Starts where most people would start: the due moment, else an hour from now.
+        const { due, time } = getDue();
+        const base = due ? todoLocalDate(due, time || '08:00') : new Date(Date.now() + 3600000);
+        const d = base.getTime() > Date.now() ? base : new Date(Date.now() + 3600000);
+        custom.value = `${todayStr(d)}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      }
+      if(on) custom.focus();
+    }
+  }));
+  sync();
+  return {
+    sync,
+    reminders(){
+      const { due, time } = getDue();
+      const custom = root.querySelector('.todo-custom').value;
+      const out = [];
+      root.querySelectorAll('.todo-pill.on').forEach(b=>{
+        const at = todoPresetAt(b.dataset.p, due, time, custom);
+        if(!at || at.getTime() <= Date.now()) return;
+        const r = { p: b.dataset.p, at: at.toISOString() };
+        if(b.dataset.p === 'custom') r.c = custom;
+        out.push(r);
+      });
+      return out;
+    },
+    reset(){
+      root.innerHTML = todoRemindPickerHtml([]);
+    }
+  };
+}
+
+// ---- The add form
+function todoFormDue(){
+  const due = document.getElementById('todoDueDate').value || null;
+  const time = due ? (document.getElementById('todoDueTime').value || null) : null;
+  return { due, time };
+}
+let todoAddPicker = null;
+function setupTodoAddPicker(){
+  const root = document.getElementById('todoRemindPicker');
+  root.innerHTML = todoRemindPickerHtml([]);
+  todoAddPicker = wireTodoRemindPicker(root, todoFormDue);
+}
+function rebuildTodoCourseSelects(){
+  const courses = visibleCoursesForTodos();
+  const addSel = document.getElementById('todoCourse');
+  const prev = addSel.value;
+  addSel.innerHTML = `<option value="">${escapeHtml(t('noNote'))}</option>` + courses.map(c=>
+    `<option value="${c.id}">${escapeHtml(c.title + (c.user_id !== currentUser.id ? ` (${nameFor(c.user_id)})` : ''))}</option>`).join('');
+  if(courses.some(c=> c.id === prev)) addSel.value = prev;
+  const filt = document.getElementById('todoCourseFilter');
+  document.getElementById('todoCourseFilterField').classList.toggle('hidden', !courses.length);
+  filt.innerHTML = `<option value="all">${escapeHtml(t('todoAllCourses'))}</option>`
+    + courses.map(c=> `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('')
+    + `<option value="none">${escapeHtml(t('noNote'))}</option>`;
+  if(todoCourseFilter !== 'all' && todoCourseFilter !== 'none' && !courses.some(c=> c.id === todoCourseFilter)) todoCourseFilter = 'all';
+  filt.value = todoCourseFilter;
+}
+async function addTodo(){
+  const titleEl = document.getElementById('todoTitle');
+  const title = titleEl.value.trim();
+  if(!title || !currentUser) return;
+  const { due, time } = todoFormDue();
+  const row = {
+    user_id: currentUser.id,
+    title,
+    due_date: due,
+    due_time: time,
+    course_id: document.getElementById('todoCourse').value || null,
+    reminders: guestMode || !todoAddPicker ? [] : todoAddPicker.reminders(),
+    done: false,
+  };
+  const { data, error } = await supabaseClient.from('todos').insert(row).select();
+  if(error){ console.error('To-do refused:', error); alert(t('saveFailed')); return; }
+  if(data && data[0]){
+    addCourier('addTodoBtn');
+    allTodos.push(data[0]);
+  }
+  acClear(()=>{
+    titleEl.value = '';
+    document.getElementById('todoDueDate').value = '';
+    document.getElementById('todoDueTime').value = '';
+    document.getElementById('todoDueTime').disabled = true;
+    setupTodoAddPicker();
+  });
+  acReveal(()=>{ renderTodos(); renderCalendarTab(); }, document.getElementById('todoList'));
+}
+document.getElementById('addTodoBtn').addEventListener('click', addTodo);
+document.getElementById('todoDueDate').addEventListener('input', ()=>{
+  const timeEl = document.getElementById('todoDueTime');
+  timeEl.disabled = !document.getElementById('todoDueDate').value;
+  if(timeEl.disabled) timeEl.value = '';
+  if(todoAddPicker) todoAddPicker.sync();
+});
+document.getElementById('todoDueTime').addEventListener('input', ()=>{ if(todoAddPicker) todoAddPicker.sync(); });
+setupTodoAddPicker();
+
+// ---- The list
+function todoRowHtml(td){
+  const mine = currentUser && td.user_id === currentUser.id;
+  const meta = [];
+  if(td.due_date){
+    const overdue = todoIsOverdue(td);
+    meta.push(`<span class="todo-due${overdue ? ' overdue' : ''}"${overdue ? ` title="${escapeHtml(t('todoOverdue'))}"` : ''}>${escapeHtml(todoDateLabel(td.due_date) + (td.due_time ? ' ' + formatTime12h(td.due_time) : ''))}</span>`);
+  }
+  const course = todoCourseTitle(td.course_id);
+  if(course) meta.push(`<span class="todo-course">${escapeHtml(course)}</span>`);
+  const upcoming = (td.reminders || []).filter(r=> new Date(r.at).getTime() > Date.now());
+  if(!td.done && upcoming.length){
+    const when = upcoming.map(r=> localDateTimeStr(r.at)).join('\n');
+    meta.push(`<span title="${escapeHtml(when)}">${ICON.bellOn(12)}</span>`);
+  }
+  if(!mine) meta.push(`<span><span class="author-dot" style="background:${colorForUser(td.user_id)}"></span> ${escapeHtml(nameFor(td.user_id))}</span>`);
+  return `<div class="lecture-row todo-row${td.done ? ' done' : ''}${mine ? '' : ' theirs'}" data-todo="${td.id}">
+    <button type="button" class="todo-check" role="checkbox" aria-checked="${td.done ? 'true' : 'false'}" data-todo="${td.id}" ${mine ? '' : 'disabled'} title="${escapeHtml(t(td.done ? 'todoMarkOpen' : 'todoMarkDone'))}">${td.done ? ICON.check(13) : ''}</button>
+    <span class="todo-main">
+      <span class="todo-title" data-todo="${td.id}">${escapeHtml(td.title)}</span>
+      ${meta.length ? `<span class="todo-meta">${meta.join('')}</span>` : ''}
+      ${td.notes ? `<span class="todo-notes">${escapeHtml(td.notes)}</span>` : ''}
+    </span>
+    <span class="lecture-actions">
+      ${mine ? `<button class="lecture-edit todo-edit-btn" data-todo="${td.id}" title="${escapeHtml(t('todoEdit'))}">${ICON.pencil()}</button>` : ''}
+      ${mine ? `<button class="lecture-del todo-del-btn" data-todo="${td.id}" title="${escapeHtml(t('todoDelete'))}">✕</button>` : ''}
+    </span>
+  </div>${mine && todoEditOpen === td.id ? todoEditHtml(td) : ''}`;
+}
+function todoEditHtml(td){
+  const courses = visibleCoursesForTodos();
+  return `<div class="todo-edit" data-edit-todo="${td.id}">
+    <div class="log-form">
+      <div class="field wide"><label>${escapeHtml(t('lblTodoTitle'))}</label><input type="text" class="te-title" maxlength="200" value="${escapeHtml(td.title)}"></div>
+      <div class="field"><label>${escapeHtml(t('lblTodoDue'))}</label><input type="date" class="te-due" value="${td.due_date || ''}"></div>
+      <div class="field"><label>${escapeHtml(t('lblTodoTime'))}</label><input type="time" class="te-time" value="${(td.due_time || '').slice(0, 5)}" ${td.due_date ? '' : 'disabled'}></div>
+      <div class="field wide"><label>${escapeHtml(t('lblNotesCourse'))}</label><select class="te-course"><option value="">${escapeHtml(t('noNote'))}</option>${courses.map(c=> `<option value="${c.id}" ${c.id === td.course_id ? 'selected' : ''}>${escapeHtml(c.title)}</option>`).join('')}</select></div>
+      <div class="field wide"><label>${escapeHtml(t('todoNotesLabel'))}</label><textarea class="te-notes" maxlength="2000">${escapeHtml(td.notes || '')}</textarea></div>
+      ${guestMode ? '' : `<div class="field wide"><label>${escapeHtml(t('lblTodoRemind'))}</label><div class="todo-remind te-remind">${todoRemindPickerHtml((td.reminders || []).filter(r=> new Date(r.at).getTime() > Date.now()))}</div></div>`}
+    </div>
+    <div class="todo-edit-actions">
+      <button type="button" class="export-btn act-save te-save">${escapeHtml(t('todoSave'))}</button>
+      <button type="button" class="linkbtn te-cancel">${escapeHtml(t('todoCancel'))}</button>
+    </div>
+  </div>`;
+}
+function renderTodos(){
+  const list = document.getElementById('todoList');
+  if(!list || !currentUser) return;
+  rebuildTodoCourseSelects();
+  rebuildPersonFilter('todoPersonFilter', '__circle__');
+  document.getElementById('todoOnCalendarToggle').checked = !!todosOnCalendar;
+  document.getElementById('todoShareToggle').checked = !!shareTodos;
+  document.getElementById('todoShareRow').classList.toggle('hidden', !!guestMode || !visibleCircleMembers().length);
+  document.getElementById('todoRemindField').classList.toggle('hidden', !!guestMode);
+
+  const showIds = personFilterShowIds('todoPersonFilter');
+  const rows = allTodos.filter(td=> showIds.includes(td.user_id) && (
+    todoCourseFilter === 'all' ? true : todoCourseFilter === 'none' ? !td.course_id : td.course_id === todoCourseFilter));
+  // Open: dated first by when they are due (overdue therefore at the top),
+  // undated after in the order they were added. Done: last finished first.
+  const open = rows.filter(td=> !td.done).sort((a, b)=>{
+    if(!!a.due_date !== !!b.due_date) return a.due_date ? -1 : 1;
+    if(a.due_date && b.due_date){
+      const k = (a.due_date + (a.due_time || '99:99')).localeCompare(b.due_date + (b.due_time || '99:99'));
+      if(k) return k;
+    }
+    return (a.created_at || '').localeCompare(b.created_at || '');
+  });
+  const done = rows.filter(td=> td.done).sort((a, b)=> (b.done_at || '').localeCompare(a.done_at || ''));
+  document.getElementById('todoOpenCount').textContent = open.length ? `(${open.length})` : '';
+  const myDone = done.filter(td=> td.user_id === currentUser.id).length;
+  list.innerHTML = (open.length ? open.map(todoRowHtml).join('') : '<div class="empty">–</div>')
+    + (done.length ? `<div class="note-group-header todo-done-head" id="todoDoneHead"><span>${todoDoneOpen ? '▾' : '▸'}</span> ${escapeHtml(t('todoDone'))} <span class="note-group-count">(${done.length})</span></div>`
+      + (todoDoneOpen ? done.map(todoRowHtml).join('')
+        + (myDone ? `<button type="button" class="linkbtn act-remove" id="todoClearDoneBtn" style="margin-top:8px;">${escapeHtml(t('todoClearDone'))}</button>` : '') : '') : '');
+
+  list.querySelectorAll('.todo-check').forEach(b=> b.addEventListener('click', ()=> toggleTodoDone(b.dataset.todo)));
+  list.querySelectorAll('.todo-title, .todo-edit-btn').forEach(b=> b.addEventListener('click', ()=>{
+    const td = allTodos.find(x=> x.id === b.dataset.todo);
+    if(!td || td.user_id !== currentUser.id) return;
+    todoEditOpen = todoEditOpen === td.id ? null : td.id;
+    renderTodos();
+  }));
+  list.querySelectorAll('.todo-del-btn').forEach(b=> b.addEventListener('click', ()=> deleteTodo(b.dataset.todo)));
+  const head = document.getElementById('todoDoneHead');
+  if(head) head.addEventListener('click', ()=>{ todoDoneOpen = !todoDoneOpen; renderTodos(); });
+  const clearBtn = document.getElementById('todoClearDoneBtn');
+  if(clearBtn) clearBtn.addEventListener('click', clearDoneTodos);
+  const panel = list.querySelector('.todo-edit');
+  if(panel) wireTodoEditPanel(panel);
+}
+function wireTodoEditPanel(panel){
+  const id = panel.dataset.editTodo;
+  const dueEl = panel.querySelector('.te-due'), timeEl = panel.querySelector('.te-time');
+  const getDue = ()=> ({ due: dueEl.value || null, time: dueEl.value ? (timeEl.value || null) : null });
+  const remindRoot = panel.querySelector('.te-remind');
+  const picker = remindRoot ? wireTodoRemindPicker(remindRoot, getDue) : null;
+  dueEl.addEventListener('input', ()=>{
+    timeEl.disabled = !dueEl.value;
+    if(timeEl.disabled) timeEl.value = '';
+    if(picker) picker.sync();
+  });
+  timeEl.addEventListener('input', ()=>{ if(picker) picker.sync(); });
+  panel.querySelector('.te-cancel').addEventListener('click', ()=>{ todoEditOpen = null; renderTodos(); });
+  panel.querySelector('.te-save').addEventListener('click', async ()=>{
+    const td = allTodos.find(x=> x.id === id);
+    if(!td) return;
+    const title = panel.querySelector('.te-title').value.trim();
+    if(!title){ panel.querySelector('.te-title').focus(); return; }
+    const { due, time } = getDue();
+    const patch = {
+      title,
+      notes: panel.querySelector('.te-notes').value.trim() || null,
+      due_date: due,
+      due_time: time,
+      course_id: panel.querySelector('.te-course').value || null,
+      reminders: picker ? picker.reminders() : (td.reminders || []),
+    };
+    const before = { ...td };
+    Object.assign(td, patch);
+    todoEditOpen = null;
+    renderTodos();
+    renderCalendarTab();
+    await saved(supabaseClient.from('todos').update(patch).eq('id', id), ()=>{
+      Object.assign(td, before);
+      renderTodos();
+      renderCalendarTab();
+    });
+  });
+  const titleEl = panel.querySelector('.te-title');
+  titleEl.addEventListener('keydown', e=>{ if(e.key === 'Enter' && !e.isComposing && e.keyCode !== 229){ e.preventDefault(); panel.querySelector('.te-save').click(); } });
+}
+async function toggleTodoDone(id){
+  const td = allTodos.find(x=> x.id === id);
+  if(!td || !currentUser || td.user_id !== currentUser.id) return;
+  const before = { done: td.done, done_at: td.done_at };
+  const done = !td.done;
+  const patch = { done, done_at: done ? new Date().toISOString() : null };
+  Object.assign(td, patch);
+  if(done && todoEditOpen === id) todoEditOpen = null;
+  renderTodos();
+  renderCalendarTab();
+  await saved(supabaseClient.from('todos').update(patch).eq('id', id), ()=>{
+    Object.assign(td, before);
+    renderTodos();
+    renderCalendarTab();
+  });
+}
+async function deleteTodo(id){
+  const td = allTodos.find(x=> x.id === id);
+  if(!td || td.user_id !== currentUser.id) return;
+  if(!confirm(t('deleteTodoConfirm').replace('{title}', td.title))) return;
+  const { error } = await supabaseClient.from('todos').delete().eq('id', id);
+  if(error){ console.error('Delete refused:', error); alert(t('saveFailed')); return; }
+  allTodos = allTodos.filter(x=> x.id !== id);
+  if(todoEditOpen === id) todoEditOpen = null;
+  renderTodos();
+  renderCalendarTab();
+}
+async function clearDoneTodos(){
+  const mine = allTodos.filter(td=> td.done && td.user_id === currentUser.id);
+  if(!mine.length || !confirm(tCount('todoClearDoneConfirm', mine.length))) return;
+  const { error } = await supabaseClient.from('todos').delete().eq('user_id', currentUser.id).eq('done', true);
+  if(error){ console.error('Delete refused:', error); alert(t('saveFailed')); return; }
+  const gone = new Set(mine.map(td=> td.id));
+  allTodos = allTodos.filter(td=> !gone.has(td.id));
+  renderTodos();
+}
+document.getElementById('todoCourseFilter').addEventListener('change', (e)=>{ todoCourseFilter = e.target.value; renderTodos(); });
+wirePersonFilter('todoPersonFilter', '__circle__', renderTodos);
+// The two switches are the owner's, on their own profile row.
+async function setTodoPref(col, val, input){
+  input.disabled = true;
+  const ok = await saved(supabaseClient.from('profiles').update({ [col]: val }).eq('id', currentUser.id), ()=>{ input.checked = !val; });
+  input.disabled = false;
+  return ok;
+}
+document.getElementById('todoOnCalendarToggle').addEventListener('change', async (e)=>{
+  const val = e.target.checked;
+  if(await setTodoPref('todos_on_calendar', val, e.target)){ todosOnCalendar = val; renderCalendarTab(); }
+});
+document.getElementById('todoShareToggle').addEventListener('change', async (e)=>{
+  const val = e.target.checked;
+  if(await setTodoPref('share_todos', val, e.target)) shareTodos = val;
+});
+// From a reminder, a deep link or the calendar: the list, with that to-do
+// flashed (and opened for editing when asked, which the calendar does).
+function openTodoInList(id, edit){
+  switchTopLevelTab('yonsei');
+  switchYonseiSubTab('todos');
+  const td = id ? allTodos.find(x=> x.id === id) : null;
+  if(td && td.done) todoDoneOpen = true;
+  if(td && edit && currentUser && td.user_id === currentUser.id) todoEditOpen = td.id;
+  renderTodos();
+  if(!td) return;
+  const row = document.querySelector(`.todo-row[data-todo="${td.id}"]`);
+  if(row){
+    row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    row.classList.remove('flash');
+    void row.offsetWidth;
+    row.classList.add('flash');
+  }
+}
+// ---- On the calendar: this account's own open, dated to-dos, while the
+// switch is on and the calendar is showing this account at all.
+function calendarTodosByDate(startKey, endKey){
+  const out = {};
+  if(!todosOnCalendar || !currentUser) return out;
+  if(typeof calendarVisibleUserIds === 'function' && !calendarVisibleUserIds().includes(currentUser.id)) return out;
+  allTodos.forEach(td=>{
+    if(td.user_id !== currentUser.id || td.done || !td.due_date) return;
+    if(td.due_date < startKey || td.due_date > endKey) return;
+    (out[td.due_date] = out[td.due_date] || []).push(td);
+  });
+  Object.values(out).forEach(a=> a.sort((x, y)=> (x.due_time || '99:99').localeCompare(y.due_time || '99:99')));
+  return out;
+}
+function todoCalChipHtml(td){
+  const tip = td.title + (td.due_time ? ' · ' + formatTime12h(td.due_time) : '');
+  return `<div class="todo-cal-chip" data-todo="${td.id}" title="${escapeHtml(tip)}"><button type="button" class="todo-cal-box" data-todo="${td.id}" aria-label="${escapeHtml(t('todoMarkDone'))}"></button><span class="todo-cal-text">${escapeHtml(td.title)}</span></div>`;
+}
+function wireTodoCalChips(root){
+  root.querySelectorAll('.todo-cal-box').forEach(b=> b.addEventListener('click', (e)=>{ e.stopPropagation(); toggleTodoDone(b.dataset.todo); }));
+  root.querySelectorAll('.todo-cal-chip').forEach(c=> c.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if(e.target.closest('.todo-cal-box')) return;
+    openTodoInList(c.dataset.todo, true);
+  }));
+}
 
 /* ---------- YONSEI BOARDS ---------- */
 // Best-effort pull of the public Yonsei GSIS "Official Notices" board (no
@@ -22700,6 +23240,7 @@ const TAB_STRUCTURE = [
   { key:'yonsei', labelKey:'tabYonsei', btnId:'tabBtnYonsei', switchFn:()=>switchYonseiSubTab, subs:[
     { key:'yonsei.courses', labelKey:'tabCourses', btnId:'yonseiSubCoursesBtn', view:'courses' },
     { key:'yonsei.notes', labelKey:'tabNotes', btnId:'yonseiSubNotesBtn', view:'notes' },
+    { key:'yonsei.todos', labelKey:'tabTodos', btnId:'yonseiSubTodosBtn', view:'todos' },
     { key:'yonsei.boards', labelKey:'tabBoards', btnId:'yonseiSubBoardsBtn', view:'boards' },
   ]},
   { key:'reading', labelKey:'tabReading', btnId:'tabBtnReading', switchFn:()=>switchReadingSubTab, subs:[
@@ -23372,7 +23913,7 @@ const SPLIT_SWAP_ICON = '<polyline points="8 3 4 7 8 11"></polyline><line x1="4"
 const SPLIT_GROUPS = {
   calendar: { panel:'panelCalendar', row:'calendarSubToggle', sections:{ overview:'calendarOverviewSection', calendar:'calendarCalendarSection', expenditure:'calendarExpensesSection' } },
   study:    { panel:'panelStudy', row:'studySubToggle', sections:{ log:'studyLogSection', grammar:'studyGrammarSection', writing:'studyWritingSection', notebook:'studyNotebookSection' } },
-  yonsei:   { panel:'panelYonsei', row:'yonseiSubToggle', sections:{ courses:'yonseiCoursesSection', notes:'yonseiNotesSection', boards:'yonseiBoardsSection' } },
+  yonsei:   { panel:'panelYonsei', row:'yonseiSubToggle', sections:{ courses:'yonseiCoursesSection', notes:'yonseiNotesSection', todos:'yonseiTodosSection', boards:'yonseiBoardsSection' } },
   reading:  { panel:'panelReading', row:'readingSubToggle', sections:{ books:'readingBooksSection', articles:'readingArticlesSection' } },
   jobs:     { panel:'panelJobs', row:'jobsSubToggle', sections:{ applications:'jobsApplicationsSection', certifications:'jobsCertificationsSection', jobboard:'jobsJobBoardSection' } },
 };
@@ -25804,12 +26345,15 @@ function eventsInRange(startKey, endKey){
 // Drawn for the phone, where a 50px cell cannot hold a legible text chip: the
 // dots say WHETHER and roughly WHAT, and the agenda under the grid says which.
 const MONTH_DOTS_MAX = 4;
-function dayDotsHtml(events){
-  if(!events.length) return '<div class="day-dots"></div>';
+function dayDotsHtml(events, todoCount){
+  // A dated to-do is a hollow square beside the day's dots, one however many
+  // there are: it says "something to do here", the list says what.
+  const todoDot = todoCount ? '<span class="day-dot todo"></span>' : '';
+  if(!events.length) return `<div class="day-dots">${todoDot}</div>`;
   const shown = events.slice(0, events.length > MONTH_DOTS_MAX ? MONTH_DOTS_MAX - 1 : MONTH_DOTS_MAX);
   let html = shown.map(ev=> `<span class="day-dot" style="background:${safeColor(ev.color, '#4F7563')}"></span>`).join('');
   if(events.length > MONTH_DOTS_MAX) html += '<span class="day-dot more"></span>';
-  return `<div class="day-dots">${html}</div>`;
+  return `<div class="day-dots">${html}${todoDot}</div>`;
 }
 function renderMonthGrid(){
   const grid = document.getElementById('monthGrid');
@@ -25835,6 +26379,7 @@ function renderMonthGrid(){
   }
 
   const myEventsByDate = eventsInRange(monthStart, monthEnd);
+  const monthTodos = calendarTodosByDate(monthStart, monthEnd);
   // No hardcoded TOPIK chip injection here any more -- TOPIK dates are
   // real, ordinary events now (ensureTopikEvents), so they arrive through
   // myEventsByDate like everything else, for exactly the accounts that
@@ -25864,11 +26409,14 @@ function renderMonthGrid(){
     });
     const extra = events.length - maxShow;
     if(extra > 0){ chips += `<div class="more-count">+${extra}</div>`; }
+    const dayTodos = monthTodos[dateKey] || [];
+    dayTodos.slice(0, 2).forEach(td=>{ chips += todoCalChipHtml(td); });
+    if(dayTodos.length > 2){ chips += `<div class="more-count">+${dayTodos.length - 2}</div>`; }
     // Both readouts are always in the DOM and CSS picks which one shows: the
     // chips on a desktop, the dots on a phone. That way a rotation or a
     // resize is the browser's problem rather than something this renderer
     // has to be re-run for, which is the same call the tab dock makes.
-    cell.innerHTML = `<div class="dnum">${day}</div><div class="chip-stack">${chips}</div>${dayDotsHtml(events)}`;
+    cell.innerHTML = `<div class="dnum">${day}</div><div class="chip-stack">${chips}</div>${dayDotsHtml(events, dayTodos.length)}`;
     if(dateKey === selectedAgendaDate) cell.classList.add('selected');
     cell.addEventListener('click', ()=>{
       // A second tap on the same day closes the panel on a desktop, where it
@@ -25882,6 +26430,7 @@ function renderMonthGrid(){
     grid.appendChild(cell);
   }
   grid.querySelectorAll('.chip-bell').forEach(btn=> wireChipBellClicks(btn));
+  wireTodoCalChips(grid);
   grid.querySelectorAll('.chip-edit').forEach(btn=>{
     btn.addEventListener('click', (e)=>{
       e.stopPropagation();
@@ -25919,6 +26468,7 @@ function renderMonthAgenda(){
     });
   });
   events.sort((a,b)=> (a.event_time||'99:99').localeCompare(b.event_time||'99:99'));
+  const agendaTodos = calendarTodosByDate(dateKey, dateKey)[dateKey] || [];
   const dateObj = new Date(dateKey+'T00:00:00');
   const label = capFirst(dateObj.toLocaleDateString(appLocale(), {weekday:'long', month:'long', day:'numeric'}));
   const rows = events.length ? events.map(ev=>{
@@ -25930,19 +26480,25 @@ function renderMonthAgenda(){
       <span style="font-size:13px;flex:1;">${escapeHtml(ev.title)}</span>
       <span style="flex-shrink:0;background:var(--paper-dim);border:1px solid var(--line);border-radius:12px;padding:2px 7px;font-size:11px;font-weight:800;color:var(--ink);">${initialsForEvent(ev)}</span>
     </div>`;
-  }).join('') : `<div class="hint">${t('monthAgendaEmpty')}</div>`;
+  }).join('') : (agendaTodos.length ? '' : `<div class="hint">${t('monthAgendaEmpty')}</div>`);
+  const todoRows = agendaTodos.map(td=> `<div class="todo-agenda-row todo-cal-chip" data-todo="${td.id}" style="border:none;padding:5px 0;font-size:13px;">
+      <button type="button" class="todo-cal-box" data-todo="${td.id}" aria-label="${escapeHtml(t('todoMarkDone'))}" style="width:14px;height:14px;"></button>
+      ${td.due_time ? `<span style="font-size:12px;color:var(--ink-soft);width:66px;flex-shrink:0;">${formatTime12h(td.due_time)}</span>` : ''}
+      <span class="todo-cal-text" style="flex:1;">${escapeHtml(td.title)}</span>
+    </div>`).join('');
   panel.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
       <div style="font-weight:700;font-size:13.5px;">${label}</div>
       <button class="icon-btn close-x" id="monthAgendaCloseBtn" title="Close">✕</button>
     </div>
-    ${rows}
+    ${rows}${todoRows}
     <button class="linkbtn" id="monthAgendaOpenDayBtn" style="margin-top:8px;">${t('monthAgendaOpenDay')}</button>
   `;
   panel.classList.remove('hidden');
   panel.querySelectorAll('.agenda-row').forEach(row=>{
     row.addEventListener('click', ()=> openQuickView(row.dataset.ev, row.dataset.date));
   });
+  wireTodoCalChips(panel);
   document.getElementById('monthAgendaCloseBtn').addEventListener('click', ()=>{
     selectedAgendaDate = null;
     document.querySelectorAll('.month-day.selected').forEach(el=>el.classList.remove('selected'));
@@ -26193,14 +26749,20 @@ function renderCalGrid(dates){
   // render as ordinary bars in the day columns for opted-in accounts.
   const headerRow = document.getElementById('weekHeaderRow');
   headerRow.innerHTML = '<div class="week-corner"></div>';
+  const gridTodos = calendarTodosByDate(todayStr(dates[0]), todayStr(dates[dates.length-1]));
   dates.forEach(d=>{
     const key = todayStr(d);
     const div = document.createElement('div');
     div.className = 'week-day-header' + (key===todayKey ? ' today' : '');
     div.innerHTML = `<div>${capFirst(d.toLocaleDateString(appLocale(),{weekday:'short'}))}</div><div style="font-family:'Space Grotesk',monospace;">${d.getDate()}</div>`;
+    // A to-do has a day and maybe a time, but no length, so it sits under the
+    // day's name -- the all-day lane -- rather than as a block in the hours.
+    const headTodos = gridTodos[key] || [];
+    if(headTodos.length) div.insertAdjacentHTML('beforeend', `<div class="week-todo-list">${headTodos.map(todoCalChipHtml).join('')}</div>`);
     headerRow.appendChild(div);
   });
 
+  wireTodoCalChips(headerRow);
   const body = document.getElementById('weekBody');
   body.innerHTML = '';
 
@@ -26455,6 +27017,7 @@ function renderWeekStrip(weekDates){
   const todayKey = todayStr();
   const pickedKey = todayStr(calViewDate);
   const byDate = eventsInRange(todayStr(weekDates[0]), todayStr(weekDates[6]));
+  const stripTodos = calendarTodosByDate(todayStr(weekDates[0]), todayStr(weekDates[6]));
   // The month grid's own initials, indexed by the day of the week -- both
   // grids start their week on Sunday (getWeekStart and the month's own
   // startOffset are both getDay()), so the two rows read identically and
@@ -26469,7 +27032,7 @@ function renderWeekStrip(weekDates){
     btn.className = (key===todayKey ? 'today ' : '') + (key===pickedKey ? 'selected' : '');
     btn.setAttribute('aria-pressed', key===pickedKey ? 'true' : 'false');
     btn.innerHTML = `<span class="wd">${initials[d.getDay()]}</span>`
-      + `<span class="dnum">${d.getDate()}</span>${dayDotsHtml(events)}`;
+      + `<span class="dnum">${d.getDate()}</span>${dayDotsHtml(events, (stripTodos[key] || []).length)}`;
     btn.addEventListener('click', ()=>{
       calViewDate = new Date(key+'T00:00:00');
       // The grid keeps its own scroll only while the range key is unchanged,
@@ -27188,6 +27751,7 @@ function renderAll(){
   renderWritingList();
   rebuildNotebookPersonFilter();
   renderNotebookList();
+  renderTodos();
   renderVideoList();
   rebuildRecapPersonFilter();
   applyTabVisibility();

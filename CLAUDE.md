@@ -5981,6 +5981,63 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE SCHOOL/WORK TAB HAS A TO-DO LIST (29 Sep, ninety-third pass)
+
+"For the yonsei/work tab, can you create a fully functional To-do List
+sub-tab?" His answers, asked first: private to its owner by default, but the
+owner decides whether to share the list with their circle; the owner decides
+whether to-dos show on the calendar; reminders picked per to-do, easily.
+
+- **A fourth sub tab, `yonsei.todos`** (Courses, Notes, To-do, Boards), in
+  TAB_STRUCTURE so it can be hidden, split-viewed and reached from quick nav
+  like the rest. Label "To-do" in every workspace kind.
+- **Add form**: title, optional due date, optional time (disabled until there
+  is a date), optional course/project, and a row of reminder pills: At the
+  time, 1 hour before, Morning of (8:00), Day before, Pick a time. A pill that
+  cannot be worked out (no time for the two that need one) or would already be
+  in the past is disabled. Enter adds (`data-enter-add`). Adding uses the
+  courier animation like every other add.
+- **The list**: open to-dos, dated first by when they are due (overdue on top
+  in the seal red), undated after in the order added. A tick box per row;
+  ticked ones fold into a "Done (n)" group, last finished first, with "Clear
+  done" (own rows only, confirmed with a tCount sentence). The title or the
+  pencil opens an inline editor (title, due, time, course, reminders, notes).
+  Course filter, and the shared person filter when there is a circle.
+- **Reminders are stored as `{p, at}`**: the preset and the moment, worked out
+  in the owner's browser so the server never needs a timezone. The preset is
+  how the moment is re-worked when the due date moves in the editor. `c` holds
+  the custom time for "Pick a time".
+- **Two switches under the list**, both on the profile: `todos_on_calendar`
+  (default ON) puts the owner's open, dated to-dos on the calendar as dashed
+  chips with a tick box (month cells, week headers, the month agenda, a hollow
+  dot in the week strip), and ticking there ticks the to-do; `share_todos`
+  (default OFF) lets circle members read the list. Shown only with a circle.
+  Nobody but the owner can edit or tick a to-do, shared or not (RLS says so).
+- **Guests** get the list, the calendar chips and everything local, but no
+  reminder pills (nothing can send one) and no share switch.
+- **Bell and email**: type `todo_reminder`, in the notification preferences
+  like every other type; the bell text is "To-do: <title>" with the due date,
+  and pressing it opens the to-do in the list. `?go=todos` deep-links there,
+  which is where the email's button goes. unsubscribe.html knows the kind.
+- **Database**: `sql migrations/todos_migration.sql` -- `todos` (RLS: own
+  rows, plus read of a circle member's when they share), a server-only
+  `todo_reminder_log` keyed on (to-do, moment) so a moved due date reminds
+  again and the same moment never twice, the two profile columns, realtime,
+  `send_todo_reminders()` on a 5-minute cron (bell insert, which the push
+  trigger carries to the phone, plus a Resend email; a reminder more than a
+  day late is skipped), `unsubscribe_email` accepting `todo_reminder`, and
+  `_purge_user_data` deleting to-dos. A `todo_reminders_ok` CHECK keeps a bad
+  reminder list from aborting the job for everybody. The page tolerates the
+  table not existing yet (the list is simply empty).
+- **Checked** in the pane as a guest: adding, the sort and overdue colour,
+  ticking in the list and on the calendar, the Done fold, the editor, the
+  course filter, month and week chips, the calendar switch, and the pill maths
+  (for a 14:00 due tomorrow: 1 hour before = 13:00, morning = 08:00, a picked
+  14:00 = 14:00). Syntax and id cross-check clean, every new key in en/ko/vi,
+  em dashes 46. **Not checked**: signed in against the live table, the share
+  switch with a real circle, and a reminder actually arriving by bell, push
+  or email.
+
 ## THE SITE PIN IS GONE (29 Sep, ninety-second pass)
 
 "Remove the 4-digit pin from the site completely." Anybody can now sign up,
