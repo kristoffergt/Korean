@@ -6017,6 +6017,11 @@ kristoffergt.com instead of the Supabase address (hundredth pass). So:
   (306x40, 281x40), the element at the button's centre is Google's, no
   sideways overflow. **Not pressed**: 127.0.0.1 is not an authorised origin
   for the Google client, so the real hand-over can only be seen on the site.
+- **An EMPTY cover takes no presses** (`.gis-slot:empty{pointer-events:none}`,
+  from the Welcome Korea session's version of this): until Google has drawn
+  into the slot, or if it never does, the press reaches our own button and
+  signs in by the redirect. It does not cover the case below, where Google's
+  own placeholder button IS drawn and only its frame is blocked.
 - **If Google's frame fails to draw on the real site** (an ad blocker), the
   button would look fine and do nothing, where Google's visible button would
   at least have looked broken. Not seen; worth knowing if it is ever reported.
