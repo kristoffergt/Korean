@@ -5981,6 +5981,44 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## CHROME OFFERED TO SAVE A PASSWORD ON EVERY SAVE, BECAUSE THE PASSWORD FIELDS WERE IN NO FORM (30 Sep, hundred-and-fifth pass)
+
+"For a lot of things, it asks me if I want to save password (like adding notes
+and stuff) on google chrome."
+
+**Chrome's password manager treats every input on a page that is NOT inside a
+`<form>` as one big form.** This app had no forms at all, so the sign-in
+password field, hidden but still holding the password typed at sign-in (it was
+never cleared), sat in the same "form" as every note title and search box.
+Type a note title, the app saves it over the network, and Chrome reads a text
+field plus a filled password field being submitted: a login to save. On every
+save.
+
+- **Each group of password fields is its own `<form>` now**: `#authForm`
+  (name, email, password, repeat, the submit button), `#resetForm`, and
+  `#settingsEmailChangeWrap`, which was a div and IS the form so that
+  `.log-form > button` still matches its save button. The form is the fence:
+  the other 160 inputs in the app stay loose and no longer share a form with
+  a password.
+- **Nothing submits them.** Every button inside is `type="button"` (a bare
+  `<button>` in a form is a submit button and would reload the page), and each
+  form carries `onsubmit="return false"` inline, so it holds even if the
+  script failed to load. The click handlers do the work, exactly as before.
+- **The passwords are emptied once used**: `clearAuthPasswords()` at the top of
+  `onAuthed`, and `#newPasswordInput` after a successful reset. Chrome has
+  already taken what was typed by then, so its own offer to save the LOGIN at
+  sign-in is unaffected.
+- `#newPasswordInput` gained `autocomplete="new-password"`, which is what lets
+  Chrome offer to update the saved password after a reset.
+- **Layout is untouched, measured rather than assumed**: `.pw-form{margin:0}`,
+  and every element of the sign-in view, the sign-up view (checklist open),
+  the reset screen and the settings form was compared against the previous
+  commit at 1280x900 and 375x812: zero differences in position or size.
+- **Not verified: Chrome's prompt itself.** It needs a real signed-in session
+  in Chrome with the password manager on. What is verified is the cause being
+  removed: all four password inputs report a `form`, and none is loose.
+- **Any password field added later must go in a form too**, or this comes back.
+
 ## THE PASSWORD RULES ARE SUPABASE'S OWN, AND "SEND AGAIN" FOLLOWS A CORRECTED ADDRESS (30 Sep, hundred-and-fourth pass)
 
 A brief to check the Supabase sign-up and password flows. **The visible
