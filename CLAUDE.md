@@ -5981,6 +5981,32 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE WAY OUT OF THE CODE SCREEN IS A BACK ARROW, AND THE GOOGLE BUTTON IS THE CARD'S SECONDARY BUTTON (30 Sep, hundred-and-eighth pass)
+
+Two corrections to the pass below, both off screenshots.
+
+- **"Should be a back button instead ... back arrow, I mean, next to the title
+  (left side)."** The "Back to sign in" text link under the buttons is gone;
+  `#mfaBackBtn.auth-back` is a 16px `arrowL` to the LEFT of the logo and title,
+  muted, going to full ink and 1.2 on hover like every other mark. Its name
+  is the `title` (`data-title-key="mfaBackToSignIn"`).
+  **It stands in the card's 26px left margin, not in the row**: the title
+  already fills the row at every width (it overflows by a few pixels at 375
+  with the fallback font), so an arrow in the flow would push it off the card.
+  `.auth-brand-back` makes the row the positioning box; the arrow is centred
+  with `top:0;bottom:0;margin:auto` rather than a translate, because the hover
+  is a transform. Measured at 375: arrow 26..42, logo from 47, both centred on
+  y 140.3, no sideways overflow. Any other auth card that gains somewhere to
+  go back to takes the same two classes.
+- **"Make the continue with google match our design pattern better."** At
+  full ink it read as a second main action, and beside the fields as one more
+  field; it was also 40px against the submit's 37. It is the card's own
+  SECONDARY button now, which is the unselected tab above it: `--paper`
+  ground, hairline border, `--ink-soft` text and G, up to `--ink` with the
+  tabs' grey wash (`rgba(127,127,127,0.16)`) under the pointer. 37px tall
+  (9px padding + 1px border where the submit has 10 and none; the G is 17px).
+  Measured: same height as Sign in, same colour and ground as the Sign up tab.
+
 ## OUR GOOGLE BUTTON PRESSES GOOGLE'S, THE CODE SCREEN HAS A WAY OUT, AND WORDS GROW FROM THEIR CENTRE (30 Sep, hundred-and-seventh pass)
 
 Three reports in one go.
@@ -6016,9 +6042,9 @@ The first factor (password, Google) already makes a session, which the browser
 keeps, so a half-finished sign-in survived a reload and came straight back to
 the code screen, which had no exit.
 
-- **"Back to sign in"** (`#mfaBackToSignInBtn`, `leaveMfaChallenge()`) under
-  "Use a backup code instead": signs the half session out and shows the
-  sign-in screen.
+- **A way back** (`leaveMfaChallenge()`): signs the half session out and
+  shows the sign-in screen. First a "Back to sign in" link under the buttons;
+  a back arrow beside the title since the pass above.
 - **A page load only resumes the code screen within 2 minutes**
   (`MFA_RESUME_MS`) of first reaching it; after that the half session is
   signed out and the sign-in screen is shown. `checkMfaAndProceed(user,
