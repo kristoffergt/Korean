@@ -5981,6 +5981,27 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## GOOGLE LEADS THE SIGN-IN CARD, AND THE TAGLINE IS GONE (30 Sep, hundred-and-ninth pass)
+
+"The 'Continue with Google' button should be right below the Productivity
+Tracker title. Delete all instances of that sentence 'Korean Study · Reading ·
+Job Hunt Tracker'."
+
+- **`#oauthBlock` sits directly under the title**, before the Sign in / Sign
+  up tabs, and reads button THEN "or" (it was "or" then button, under the
+  form). The "or" now divides the provider way from the email way below it.
+  Same block in sign-in and sign-up mode.
+- **The tagline is deleted everywhere it existed**: `#authTagline`, its
+  STATIC_MAP entry, and the `tagline` key in en, ko and vi. It was only ever
+  on the sign-in card; the app header's own subtitle went long ago and
+  survives only in two CSS comments.
+- **The title keeps its gap** (`#authScreen .brand-mark{margin-bottom:16px}`):
+  the tagline's margin used to supply it, and with no provider switched on
+  the tabs would otherwise sit hard under the title.
+- Measured at 375: title to Google 16px, Google to "or" 14, "or" to tabs 14,
+  no sideways overflow; pressing the moved button still makes Google's code
+  ask for its account window (`window.open` intercepted).
+
 ## THE WAY OUT OF THE CODE SCREEN IS A BACK ARROW, AND THE GOOGLE BUTTON IS THE CARD'S SECONDARY BUTTON (30 Sep, hundred-and-eighth pass)
 
 Two corrections to the pass below, both off screenshots.
