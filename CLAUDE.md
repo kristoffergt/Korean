@@ -5981,11 +5981,80 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## OUR GOOGLE BUTTON PRESSES GOOGLE'S, THE CODE SCREEN HAS A WAY OUT, AND WORDS GROW FROM THEIR CENTRE (30 Sep, hundred-and-seventh pass)
+
+Three reports in one go.
+
+### "Continue with Google button is not functional now"
+
+**The invisible overlay of the pass below did not work on the real site, and
+is gone.** Once Google's frame loads (it does for somebody signed in to
+Google; it stayed 0x0 in the test pane, which is why this was not caught) the
+frame takes the press, and it ignores one made while it cannot be seen.
+**Do not try an invisible cover again.**
+
+- **Google's button is drawn into `#gisSignInSlot.gis-holder`, `display:none`**,
+  and our `.oauth-btn` is the real control again (in the tab order, no
+  wrapper). Its click handler presses Google's own `div[role="button"]`
+  inside the holder. That button is plain HTML in THIS page, drawn before any
+  frame, and its handler opens Google's account window from here; the ID
+  token comes back to `onGoogleCredential()` as before, so Google still names
+  kristoffergt.com.
+- **It has to happen inside the click itself**: a window may only be opened
+  from a press.
+- **No Google button found in the holder** (Google changes what it draws)
+  falls through to the redirect, which still signs in.
+- Measured on kristoffergt.com itself and on a local copy, with `window.open`
+  intercepted so nothing opened: pressing the button made Google's code ask
+  for `accounts.google.com/gsi/select?client_id=...`, the page did not
+  redirect, and our button was not disabled. **Not taken through a real
+  Google sign-in.**
+
+### "I am stuck on authenticator ... there should be a way out of this"
+
+The first factor (password, Google) already makes a session, which the browser
+keeps, so a half-finished sign-in survived a reload and came straight back to
+the code screen, which had no exit.
+
+- **"Back to sign in"** (`#mfaBackToSignInBtn`, `leaveMfaChallenge()`) under
+  "Use a backup code instead": signs the half session out and shows the
+  sign-in screen.
+- **A page load only resumes the code screen within 2 minutes**
+  (`MFA_RESUME_MS`) of first reaching it; after that the half session is
+  signed out and the sign-in screen is shown. `checkMfaAndProceed(user,
+  resumed)`: `resumed` is true from `routeSignedInUser` unless the page load
+  is itself a sign-in arriving (`ARRIVED_WITH_SIGN_IN`, read off the address
+  BEFORE the Supabase client consumes it), which is the redirect's return and
+  must reach the code screen.
+- **The moment is the device's own** (`localStorage.mfaPendingSince`, written
+  when a fresh sign-in reaches the code screen, cleared by `onAuthed` and by
+  leaving), not a server time, so a wrong device clock cannot throw a fresh
+  sign-in out. No marker at all counts as stale, which is what releases a
+  browser already stuck there from before this shipped.
+- Driven with `getAuthenticatorAssuranceLevel`, `listFactors` and `signOut`
+  stubbed: fresh sign-in shows the code screen and sets the marker; a reload
+  inside 2 minutes stays; a reload after 3 minutes, or with no marker, signs
+  out and shows sign-in; the link does the same. **Not seen with a real
+  second factor.**
+
+### Words grow from their centre
+
+`.tap-word`, `.cal-seg` and `.linkbtn` had `transform-origin:left center` ("a
+word grows from where it starts reading"), so a hovered word slid to the
+right, worst on the full-width centred links ("Forgot password?", "Continue as
+guest"), which moved off their own centre line. `center center` now, as the
+boxes' and the marks' already were. A word whose box is much wider than its
+left-aligned text would now drift LEFT instead; none was found (the wide ones
+are all centred), but that is the thing to check if one is reported.
+
 ## THE GOOGLE BUTTON IS OURS TO LOOK AT AND GOOGLE'S TO PRESS (30 Sep, hundred-and-sixth pass)
 
 A screenshot of InfinityFree's sign-in, whose Google button is in that site's
 own style with a one-colour G: "can we do the same for our site following our
 design system?"
+
+**SUPERSEDED the same day: the invisible cover below did not work on the real
+site. See the pass above. The G mark and the look are what survive.**
 
 **Google's own button cannot be restyled** (Google draws it in its own frame),
 and it is the one that has to be pressed: it is what makes Google's screen say
