@@ -5981,6 +5981,46 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE GOOGLE BUTTON IS OURS TO LOOK AT AND GOOGLE'S TO PRESS (30 Sep, hundred-and-sixth pass)
+
+A screenshot of InfinityFree's sign-in, whose Google button is in that site's
+own style with a one-colour G: "can we do the same for our site following our
+design system?"
+
+**Google's own button cannot be restyled** (Google draws it in its own frame),
+and it is the one that has to be pressed: it is what makes Google's screen say
+kristoffergt.com instead of the Supabase address (hundredth pass). So:
+
+- **`.gis-wrap` holds both.** Our `.oauth-btn` is what is SEEN, always, and
+  `#gisSignInSlot` lies over it (`position:absolute; inset:0; opacity:0`) with
+  Google's button drawn into it, so that is what is PRESSED. Same flow as
+  before: ID token, `signInWithIdToken`, then the second factor.
+- **Nothing changes on screen when Google's script arrives.** While it loads
+  (and where it cannot: no network, an iPhone home-screen app) the same
+  button is the redirect fallback. Before, the outlined button was swapped for
+  Google's white one a moment after the screen appeared.
+- **The G is drawn in the app's own icon language**: a 24 box, a 2-unit round
+  stroke, `currentColor` (`M18.5 6.5A8.5 8.5 0 1 0 20.5 12h-8`). One ink, so it
+  turns with the theme. **Google's brand rules ask for the four-colour G**; a
+  one-colour one is common on other sites but is outside them. If Google ever
+  objects (an OAuth verification review is where it would come up), the old
+  four-colour mark is one line back in `OAUTH_PROVIDERS`, from git.
+- **Hover and focus are the WRAP's**: `:hover` and `:focus-within` on an
+  ancestor still fire with the pointer or the focus inside Google's frame, so
+  our border and focus ring answer. Ours is `tabindex="-1" aria-hidden` while
+  covered: Google's frame holds a real, named button, and two is one too many.
+- **The cover is stretched if it would fall short** (`renderGisButton`):
+  Google draws 200 to 400 wide and 40 tall only, and a strip of our button
+  showing through would be a strip that signs in the redirect way. Today both
+  are 40 tall and 281 to 306 wide, so the scale is 1.
+- Seen at 1280 and 375, light and dark: slot and button share one box
+  (306x40, 281x40), the element at the button's centre is Google's, no
+  sideways overflow. **Not pressed**: 127.0.0.1 is not an authorised origin
+  for the Google client, so the real hand-over can only be seen on the site.
+- **If Google's frame fails to draw on the real site** (an ad blocker), the
+  button would look fine and do nothing, where Google's visible button would
+  at least have looked broken. Not seen; worth knowing if it is ever reported.
+
 ## CHROME OFFERED TO SAVE A PASSWORD ON EVERY SAVE, BECAUSE THE PASSWORD FIELDS WERE IN NO FORM (30 Sep, hundred-and-fifth pass)
 
 "For a lot of things, it asks me if I want to save password (like adding notes

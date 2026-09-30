@@ -828,10 +828,18 @@ button.oauth-btn{width:100%;display:flex;align-items:center;justify-content:cent
 button.oauth-btn:hover{background:var(--paper);border-color:var(--ink-soft);}
 button.oauth-btn:disabled{opacity:0.65;cursor:default;}
 button.oauth-btn svg{flex:none;width:18px;height:18px;}
-/* Google draws its own button into this; the slot only centres it and keeps
-   its height while it is drawn, so nothing below jumps. */
-.gis-slot{display:flex;justify-content:center;min-height:44px;}
-.gis-slot.hidden{display:none;}
+/* Google's own button is what has to be PRESSED (it is what makes Google name
+   kristoffergt.com, see GOOGLE'S OWN BUTTON), and Google draws it in its own
+   frame in its own look, which nothing here can restyle. So the button on
+   screen is ours, and Google's lies over it, invisible and exactly covering
+   it: what is seen is the site's button, what is pressed is Google's. The
+   wrap's own :hover and :focus-within still fire with the pointer or the
+   focus inside Google's frame, which is what lets our button answer them. */
+.gis-wrap{position:relative;}
+.gis-wrap .gis-slot{position:absolute;inset:0;overflow:hidden;opacity:0;border-radius:6px;}
+.gis-wrap .gis-slot > div{transform-origin:0 0;}
+.gis-wrap:hover button.oauth-btn{border-color:var(--ink-soft);}
+.gis-wrap:focus-within button.oauth-btn{outline:2px solid var(--celadon-3);outline-offset:2px;}
 /* Delete account: the Google way sits as wide as the fields it replaces, on a
    row of its own, with the password way under its divider. */
 .auth-submit:disabled{opacity:0.65;cursor:default;}
@@ -12051,7 +12059,11 @@ let mfaEnrollFactorId = null;
 // are, so switching one on there is the whole of adding it here. The last
 // answer is kept on the device so the buttons are there on the first frame.
 const OAUTH_PROVIDERS = [
-  { id:'google', labelKey:'oauthGoogle', icon:'<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>' },
+  // Google's G drawn the way every other icon in the app is (svgIcon: a 24 box,
+  // a 2-unit round stroke, the text's own colour): an open ring from the upper
+  // right round to three o'clock, then the bar in to the middle. One ink, so it
+  // sits in the button like the rest of the set and turns with the theme.
+  { id:'google', labelKey:'oauthGoogle', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.5 6.5A8.5 8.5 0 1 0 20.5 12h-8"></path></svg>' },
 ];
 // Hidden for now (real-user request, 29 Sep: "hide kakao, github, linkedin for
 // now. we dont use it"). Kept with their marks, so offering one again is moving
@@ -13352,11 +13364,16 @@ function showAuthMsg(text, type){
 function renderOauthButtons(){
   const shown = OAUTH_PROVIDERS.filter(p => oauthEnabled.includes(p.id));
   document.getElementById('oauthBlock').classList.toggle('hidden', !shown.length);
-  // Google's own button where it has loaded (see GOOGLE'S OWN BUTTON); our
-  // redirect button otherwise, which is also what shows while it loads.
+  // Google's own button where it has loaded (see GOOGLE'S OWN BUTTON), under
+  // the look of ours; our redirect button otherwise, which is also what shows
+  // while it loads. Same button on screen either way, so nothing changes when
+  // Google's arrives.
   const gis = gisReady && shown.some(p => p.id === 'google');
   document.getElementById('oauthList').innerHTML = shown.map(p => p.id === 'google' && gis
-    ? `<div class="gis-slot" id="gisSignInSlot"></div>`
+    // Ours to look at, Google's to press (see .gis-wrap). Ours leaves the tab
+    // order and the accessibility tree while Google's covers it: Google's frame
+    // holds a real button with its own name, and two would be one too many.
+    ? `<div class="gis-wrap"><button type="button" class="oauth-btn" data-provider="${p.id}" tabindex="-1" aria-hidden="true">${p.icon}<span>${escapeHtml(t(p.labelKey))}</span></button><div class="gis-slot" id="gisSignInSlot"></div></div>`
     : `<button type="button" class="oauth-btn" data-provider="${p.id}">${p.icon}<span>${escapeHtml(t(p.labelKey))}</span></button>`
   ).join('');
   if(gis) renderGisButton(document.getElementById('gisSignInSlot'));
@@ -13434,14 +13451,21 @@ async function gisInitialize(){
 async function renderGisButton(slot){
   if(!slot || !gisReady) return;
   await gisInitialize();
-  const w = (slot.parentElement && slot.parentElement.clientWidth) || 320;
+  // The slot is laid over our own button (.gis-wrap), so its box IS that
+  // button's. Google draws at 200 to 400 wide and 40 tall and nothing else;
+  // whatever that leaves uncovered is stretched over, since a strip of our
+  // button showing through would be a strip that signs in the other way.
+  const W = slot.clientWidth || 320, H = slot.clientHeight || 40;
+  const w = Math.round(Math.max(200, Math.min(400, W)));
   slot.innerHTML = '';
   google.accounts.id.renderButton(slot, {
     type: 'standard', size: 'large', shape: 'rectangular', text: 'continue_with', logo_alignment: 'center',
     theme: document.body.classList.contains('dark') ? 'filled_black' : 'outline',
-    width: Math.round(Math.max(200, Math.min(400, w))),
+    width: w,
     locale: currentLang
   });
+  const drawn = slot.firstElementChild;
+  if(drawn) drawn.style.transform = `scale(${Math.max(1, W / w)}, ${Math.max(1, H / 40)})`;
 }
 // Theme and language are drawn into Google's button, so it is drawn again.
 function refreshGisButtons(){
