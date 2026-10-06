@@ -5981,6 +5981,60 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## NO PROFANITY IN A DISPLAY NAME (6 Oct, hundred-and-eleventh pass)
+
+"make sure people can't sign up with an obvious profanity ridden name"
+
+**`isCleanDisplayName(name)`** sits beside `isValidDisplayName` and is asked at
+all five places a name is set, each with its own message
+(`settingsNameNotAllowed`, three languages) rather than the "letters, numbers"
+one, since the characters are fine: sign-up (before `reserve_display_name`, so
+nothing leaves the page), the Google "choose a name" step, the settings rename,
+the admin's rename, and `ensureProfileExists()`, whose fallback now treats a
+refused metadata name like a malformed one (email local part, and `User` if
+that is refused too).
+
+**"Obvious" is the design, not a shortcut.** Refusing a real person's name is
+worse than letting a creative spelling through: the second can be renamed by
+the admin, the first cannot sign up at all. So:
+
+- **ANYWHERE** (matched inside the name with spaces, hyphens and apostrophes
+  taken out, so "f u c k" is caught) holds only words no real name contains.
+- **WORDS** are refused only as a whole word or as the whole name. That is where
+  the Scunthorpe traps live: shit (Yamashita), cock (Hitchcock), ass
+  (Cassandra), nazi (Nazir), fuk (Fukuda), rapist (Therapist), cum (Cumberbatch)
+  -- "dick" is left out entirely, it is a real nickname. `scunthorpe` itself is
+  cut out before the ANYWHERE check, since "cunt" is in that list.
+- Letters may repeat ("fuuuck"), digits standing in for letters are read as
+  letters (`NAME_LEET`: "sh1t", "b1tch"), and accents are dropped for the Latin
+  lists ("fück").
+- **Korean** is matched inside the name; **Vietnamese** as whole words WITH its
+  marks, because stripped, "lồn" is "Lon", which is a name. 보지 and 자지 are in
+  that whole-word list rather than the Korean substring one: as two syllables
+  they turn up inside ordinary full names.
+
+**Tested in the page and in a replay of the SQL**: 49 real names (the traps
+above, Sussex, Essex, Sexton, Peacock, Pornpimol, Titus, Nguyễn Lon, Lồng,
+O'Brien, 김민지, 이시바 and others) all pass, and 46 profane ones in English,
+Korean and Vietnamese (spaced, repeated, leet, accented) are all refused.
+
+### The database backstop, and why it is a trigger
+
+`sql migrations/display_name_profanity_migration.sql`: `display_name_is_clean()`
+plus a trigger on profiles, INSERT and UPDATE OF display_name, that raises
+`display_name_not_allowed` only when the name is actually being written. **Not a
+CHECK constraint**, deliberately: a check runs on every update of the row, so an
+account already holding a refused name could not save its colour or settings
+until somebody renamed it. The SQL does not strip accents (no `unaccent`), so
+"fück" gets past the backstop and not past the page.
+
+**The lists live once, in `scripts/build_name_profanity.py`**, which writes both
+the page's `NAME_PROFANE_*` constants (paste them over the block in index.html)
+and the migration. Change the lists there, never by hand in one of the two.
+
+**The migration is NEW this session and has to be run in Supabase** for the
+backstop to exist; the page's check works without it.
+
 ## A RED * MARKS WHAT IS REQUIRED, EVENTS HAVE A PLACE, AND TODAY SAYS SO (6 Oct, hundred-and-tenth pass)
 
 Three asks off the calendar's add form, with screenshots: "Don't say optional.
