@@ -5981,6 +5981,32 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## WRITING A MESSAGE NO LONGER ZOOMS THE PAGE ON A PHONE (6 Oct, hundred-and-twelfth pass)
+
+"Kind of annoying it zooms in like this each time I try to write a message",
+with a screenshot of iOS zoomed in on the circle message box.
+
+iOS Safari zooms the page whenever a focused text box's font is under 16px.
+The fix for that already existed, but as a LIST of classes (`.auth-field
+input, .field input/select/textarea`), and the message box (`.cm-compose
+textarea`, 13px) was not on it. Neither were thirteen others: the comment and
+note boxes, the chat search and its file dates, the inline selects in the book
+and job rows, the page-jump box, the to-do reminder's date-time.
+
+**One rule now covers every text-type input, select and textarea** under
+`(pointer: coarse)`, with `!important` because several of those rules are more
+specific than a type selector and some sizes are inline. So a box added later
+cannot miss it. The older one-off 16px rules (`.note-pagebar`, `.ql-toolbar
+input.nf-size`, the Quill link box) are now redundant and left alone.
+
+- **Not covered on purpose: the note editors** (Quill, contenteditable). Their
+  text size is the reader's own type-size choice, and forcing 16px there would
+  overrule it. iOS may zoom on tapping into a note whose size is under 16.
+- Checked at 375px with a touch pointer: all 135 controls on the page compute
+  16px, the message box is 16px, the composer, chat search and file-date row
+  stay inside 45..351, and the book and job rows show nothing past the right
+  edge. Desktop is unchanged (no coarse pointer).
+
 ## NO PROFANITY IN A DISPLAY NAME (6 Oct, hundred-and-eleventh pass)
 
 "make sure people can't sign up with an obvious profanity ridden name" -- asked
