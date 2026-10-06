@@ -5981,6 +5981,114 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## A RED * MARKS WHAT IS REQUIRED, EVENTS HAVE A PLACE, AND TODAY SAYS SO (6 Oct, hundred-and-tenth pass)
+
+Three asks off the calendar's add form, with screenshots: "Don't say optional.
+Just have like a red * for required fields. Add the ability to add locations";
+"Could say 'Today' next to it instead of just a green highlight on the day. For
+months and weeks"; and "Can't add notes to birthdays. You can only add them on
+edits for some reason. Check if this is an issue elsewhere too."
+
+### No label says optional, anywhere
+
+- **Every "(optional)" is gone from all three languages**: 18 English values,
+  15 Korean `(선택)` / `(선택 사항)` and 15 Vietnamese `(tùy chọn)` /
+  `(không bắt buộc)`, including the job form's "(PDF, optional)". A field that
+  is not marked is optional; that is the whole convention now.
+- **`label.req` draws the asterisk** (`::after`, `var(--danger)`), and the input
+  beside it carries `aria-required="true"`. A CLASS rather than a character in
+  the text, for two reasons: `applyLanguage()` rewrites every label's
+  textContent and a pseudo-element survives that, and it then needs no entry in
+  three translation tables.
+- **The rule for what gets one: a field the save refuses to go without**, read
+  off each handler's own `if(!x) return`, not guessed. A `<select>` that always
+  has a value never gets one, since it cannot be left empty. So: study log date
+  and hours; writing's custom topic; notebook, note and course titles; to-do;
+  book and article titles; company; certificate name; event title and date;
+  vacation name, start, end and the custom currency code; expense date and
+  amount. The matching EDIT panels (event, course, to-do, book, article, job,
+  certificate) mark their title the same way; the vacation and expense forms
+  are one form for add and edit.
+- **The pill cycle's title is the exception**, toggled in
+  `updateKindFieldVisibility()`: it names itself when left empty, so it is not
+  required and is not marked.
+- **"Only course title and time are required." and its project twin are
+  deleted** (the `courseHint` div, both keys in three languages, the STATIC_MAP
+  and WORK_KEYS entries). The asterisk says it.
+- **Not touched**: settings' one-field forms (display name, e-mail change), the
+  admin moderation editor and the grammar editor. A single field needs no mark
+  and the other two are admin-only.
+
+### Notes on the add form wherever Edit had them
+
+`SIMPLE_KIND_FIELDS` hid `eventNotesField` for Birthday and the pill cycle,
+while `buildEventEditFieldsHtml` has deliberately kept notes for every kind
+since a real-user report ("I can't change the notes here"), because that is
+where a birthday's relation or nickname lives. So a birthday's note could only
+be written by adding it and then editing it. The field is shown for every kind
+now; `addEvent()` already wrote `notes` for every kind.
+
+**The same mismatch was on the to-do form**, which had no notes at all while the
+to-do's edit panel had a Notes box. `#todoNotes` (textarea, 2000 like the edit
+one) after Course; `addTodo()` sends it and clears it with the rest.
+
+Checked against every other add form and its edit panel (books, articles, jobs,
+certificates, courses/projects, vacations, expenses): each edit panel is a
+subset of its add form, so nothing else had it.
+
+**And one found on the way**: Birthday forces "every year, forever" into the
+hidden repeat fields, and switching back to Event or Deadline left it there, so
+an event added after a Birthday slip repeated yearly with nothing on screen to
+say so. `birthdayForcedRecur` takes it back out on the next non-birthday,
+non-pill kind (a flag rather than "the previous kind was Birthday", because
+Birthday then Pill cycle then Event would otherwise keep it).
+
+### Location on calendar entries
+
+- **`events.location` already existed** (`topik_test_location_migration.sql`,
+  the TOPIK venue), so no migration. The TOPIK card's own box and the edit
+  panel now read and write the same column.
+- **Offered for every kind except Birthday and the pill cycle**
+  (`KIND_NO_LOCATION`): a birthday is the same day wherever anybody is, and the
+  pill cycle is not somewhere you go. `addEvent()` and `saveEventEdit()` both
+  read that set, so a hidden field cannot leave a stale place behind. In the
+  edit panel the field follows the kind dropdown live and is hidden rather than
+  cleared, so Birthday-and-back before saving does not lose what was typed.
+- **`wireEventEditFields(wrap)`** holds the edit panel's live rules (recurrence
+  end date, end time, location following the kind). The calendar's edit modal
+  (`openCalendarEditModal`) used to wire only Save, so there the end time never
+  followed the kind; both call it now.
+- **Written out wherever an event is**: the list row (with `ICON.pin`, between
+  time and notes), the month agenda, the quick view (bold, above the notes), the
+  week/day bar (its own line, the same weight a course's room has, so a short
+  bar clips it last after the title) and the chip and bar tooltips.
+- **.ics export writes `LOCATION`, import reads it** (birthdays drop it as the
+  form does), and the deadlines/events CSV gained a `location` column.
+- Plain text, not a maps link: which map app is a choice nobody made.
+
+### "Today" beside today's date
+
+`calTodayTagHtml()`: a small filled pill in `--celadon-4` with white text, after
+the date number in the month cell and the week/day header, plus
+`aria-current="date"` on both. The green ring stays: the request was the word
+"instead of JUST" the highlight. The vacation's month grid on the Expenses tab
+is the same grid with the same ring, so it says the same word. **Hidden in the
+phone's month view**, where the date is a 26px circle and the circle is the
+mark; the phone's week and day views draw the ordinary header and keep it.
+
+### Checked
+
+Every script block parses and every `getElementById` has its element (the
+checker's one "bad script" is an HTML comment that mentions `<script>`, and
+`tabDock` / `splitNotice` are created at runtime). Driven in the pane over a
+local static server in guest mode (`python3 -m http.server`, because the
+preview's launch config is Welcome Korea's and that repo is not this chat's to
+edit): the form's labels per kind, a birthday added through `addEvent()` keeps
+its note, an event after it carries no repeat and does carry its location, the
+list row, the edit panel's asterisks and Location, the agenda, the week bars,
+"6 Today" in the month cell and the week header, the tag `display:none` at
+375px, and a to-do added with a note.
+
 ## GOOGLE LEADS THE SIGN-IN CARD, AND THE TAGLINE IS GONE (30 Sep, hundred-and-ninth pass)
 
 "The 'Continue with Google' button should be right below the Productivity
