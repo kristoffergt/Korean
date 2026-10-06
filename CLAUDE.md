@@ -5983,57 +5983,78 @@ in the bar and the panel reads correctly in en, ko and vi.
 
 ## NO PROFANITY IN A DISPLAY NAME (6 Oct, hundred-and-eleventh pass)
 
-"make sure people can't sign up with an obvious profanity ridden name"
+"make sure people can't sign up with an obvious profanity ridden name" -- asked
+of both sites the same day. The rule is PORTED from Welcome Korea
+(`lib/displayNameFilter.ts` there, tested against 35,550 names in Postgres), with
+the lists kept in step, so the two sites refuse the same words.
 
 **`isCleanDisplayName(name)`** sits beside `isValidDisplayName` and is asked at
 all five places a name is set, each with its own message
-(`settingsNameNotAllowed`, three languages) rather than the "letters, numbers"
-one, since the characters are fine: sign-up (before `reserve_display_name`, so
-nothing leaves the page), the Google "choose a name" step, the settings rename,
-the admin's rename, and `ensureProfileExists()`, whose fallback now treats a
-refused metadata name like a malformed one (email local part, and `User` if
-that is refused too).
+(`settingsNameNotAllowed`, three languages): sign-up (before
+`reserve_display_name`, so nothing leaves the page), the Google "choose a name"
+step, the settings rename, the admin's rename, and `ensureProfileExists()`,
+whose fallback now treats a refused metadata name like a malformed one (email
+local part, and `User` if that is refused too).
 
-**"Obvious" is the design, not a shortcut.** Refusing a real person's name is
-worse than letting a creative spelling through: the second can be renamed by
-the admin, the first cannot sign up at all. So:
+### How it reads a name
 
-- **ANYWHERE** (matched inside the name with spaces, hyphens and apostrophes
-  taken out, so "f u c k" is caught) holds only words no real name contains.
-- **WORDS** are refused only as a whole word or as the whole name. That is where
-  the Scunthorpe traps live: shit (Yamashita), cock (Hitchcock), ass
-  (Cassandra), nazi (Nazir), fuk (Fukuda), rapist (Therapist), cum (Cumberbatch)
-  -- "dick" is left out entirely, it is a real nickname. `scunthorpe` itself is
-  cut out before the ANYWHERE check, since "cunt" is in that list.
-- Letters may repeat ("fuuuck"), digits standing in for letters are read as
-  letters (`NAME_LEET`: "sh1t", "b1tch"), and accents are dropped for the Latin
-  lists ("fück").
-- **Korean** is matched inside the name; **Vietnamese** as whole words WITH its
-  marks, because stripped, "lồn" is "Lon", which is a name. 보지 and 자지 are in
-  that whole-word list rather than the Korean substring one: as two syllables
-  they turn up inside ordinary full names.
+"Obvious" is the design: refusing a real person's name is worse than letting a
+creative spelling through, because the second can be renamed by the admin and
+the first cannot sign up at all.
 
-**Tested in the page and in a replay of the SQL**: 49 real names (the traps
-above, Sussex, Essex, Sexton, Peacock, Pornpimol, Titus, Nguyễn Lon, Lồng,
-O'Brien, 김민지, 이시바 and others) all pass, and 46 profane ones in English,
-Korean and Vietnamese (spaced, repeated, leet, accented) are all refused.
+- **ANYWHERE** words (fuck, cunt, 씨발, 병신, fisse...) are refused wherever they
+  appear inside a word. `ALLOWED` cuts out the real words that contain one
+  (Scunthorpe, Nigeria).
+- **WHOLE** words (ass, dick, cock, shit, cum, nazi...) count only as a whole
+  word or BUILT with the affixes beside them: BigAss, DickHead, MyCock,
+  Pikhoved. That is what lets Cassandra, Dickens, Hancock, Matsushita,
+  Yamashita and Cumberbatch through. Affix traps found by testing (in Welcome
+  Korea): no "the" before ("the"+"rapist" is Therapist), no "ing" or "y" after
+  (Cummings, Cocky).
+- Each name is read four ways: digits dropped, digits as leet ("B1tch"), and
+  each with repeated letters squeezed ("Fuuuck") -- but a squeezed WORD is only
+  used if squeezing left it unchanged or 5+ letters long, or "ass" becomes "as".
+  Before that: NFKD, combining marks dropped, NFC again (which rebuilds Hangul,
+  so a typed ㅅ+ㅣ is 시), Cyrillic and Greek look-alikes read as Latin, lowercase.
+- **Three differences from Welcome Korea, all because a name here may hold
+  spaces, hyphens and apostrophes and is often Vietnamese:**
+  - ANYWHERE is searched in each WORD, not the name joined up. Joined, the very
+    common Vietnamese "Phúc Kim" is "phuckim" (phuck) and "Trần Ny" is "tranny".
+    A run of single letters IS joined ("f u c k"), and a single letter with the
+    word beside it ("f uck"), since that is how a word gets spaced out.
+  - BUILT is tried on the joined name ("Big Ass"), on every word, and on those
+    runs.
+  - Vietnamese is matched as whole words WITH its marks (stripped, "lồn" is
+    "Lon", a name), and "tit" is not in WHOLE ("Tít" is a common Vietnamese
+    nickname); "tits" is. 보지 and 자지 are WHOLE here (ANYWHERE in Welcome Korea):
+    as two syllables they turn up inside ordinary Korean full names (정보지).
+- **Known refusals of real names**: "Dick" on its own, the same call Welcome
+  Korea made (1 of macOS's 1,308 proper names).
 
-### The database backstop, and why it is a trigger
+### One generator, two outputs
 
-`sql migrations/display_name_profanity_migration.sql`: `display_name_is_clean()`
-plus a trigger on profiles, INSERT and UPDATE OF display_name, that raises
-`display_name_not_allowed` only when the name is actually being written. **Not a
+**`node scripts/build_name_filter.mjs`** holds the lists and writes BOTH the
+block in index.html between `// ---- BEGIN generated by
+scripts/build_name_filter.mjs` and `// ---- END generated name filter ----`,
+and `sql migrations/display_name_profanity_migration.sql`. Never edit either
+output by hand.
+
+The migration: `display_name_fold()`, `display_name_blocked()` and a trigger on
+profiles (INSERT, and UPDATE OF display_name) that raises
+`display_name_not_allowed` (23514) only when the name is new or changed. **Not a
 CHECK constraint**, deliberately: a check runs on every update of the row, so an
-account already holding a refused name could not save its colour or settings
-until somebody renamed it. The SQL does not strip accents (no `unaccent`), so
-"fück" gets past the backstop and not past the page.
+account already holding a refused name could not save its colour or settings.
 
-**The lists live once, in `scripts/build_name_profanity.py`**, which writes both
-the page's `NAME_PROFANE_*` constants (paste them over the block in index.html)
-and the migration. Change the lists there, never by hand in one of the two.
+### Checked
 
-**The migration is NEW this session and has to be run in Supabase** for the
-backstop to exist; the page's check works without it.
+Page version in Node against 1,429 real names (macOS propernames, the traps
+above, Vietnamese, Korean and Danish names): only "Dick" refused. 69 of 70
+profane names refused, spaced, leet, squeezed, built, Cyrillic, Korean,
+Vietnamese and Danish; the miss is a capital German ß. The migration run in
+Postgres (pglite, `npm i @electric-sql/pglite` in a scratchpad): **0
+disagreements with the page over 3,798 names**, a profane insert and a profane
+rename refused, a clean rename allowed, and a row already holding a refused
+name can still change its colour.
 
 ## A RED * MARKS WHAT IS REQUIRED, EVENTS HAVE A PLACE, AND TODAY SAYS SO (6 Oct, hundred-and-tenth pass)
 
