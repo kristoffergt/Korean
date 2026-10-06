@@ -6024,6 +6024,14 @@ the first cannot sign up at all.
     word beside it ("f uck"), since that is how a word gets spaced out.
   - BUILT is tried on the joined name ("Big Ass"), on every word, and on those
     runs.
+  - **Names typed WITHOUT the space are the other half** (Welcome Korea's
+    names are always joined, and its 141e217 found these): "PhúcKhang" holds
+    "phuck", so phuck is a WHOLE word in both apps. "TrầnYến" holds "trany",
+    which is "tranny" squeezed; Welcome Korea made tranny WHOLE, but here that
+    refuses the SPACED "Trần Ny", which joins to "tranny" in the whole-name
+    BUILT check. So here tranny stays ANYWHERE (per word) and is in
+    `NO_SQUEEZE`, matched only as written. "TrầnNy" typed joined is refused,
+    and nothing can tell that one apart.
   - Vietnamese is matched as whole words WITH its marks (stripped, "lồn" is
     "Lon", a name), and "tit" is not in WHOLE ("Tít" is a common Vietnamese
     nickname); "tits" is. 보지 and 자지 are WHOLE here (ANYWHERE in Welcome Korea):

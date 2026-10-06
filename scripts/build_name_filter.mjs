@@ -33,7 +33,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 /** Refused wherever they appear inside a word. */
 const ANYWHERE = [
   // English
-  "fuck", "fvck", "fck", "phuck", "cunt", "bitch", "biatch", "whore", "nigger",
+  "fuck", "fvck", "fck", "cunt", "bitch", "biatch", "whore", "nigger",
   "nigga", "faggot", "retard", "dildo", "jizz", "pussy", "bollock", "asshole",
   "arsehole", "blowjob", "handjob", "rimjob", "cocksuck", "wanker", "wanking",
   "slutty", "titty", "titties", "vagina", "scrotum", "testicle", "hitler",
@@ -66,6 +66,9 @@ const WHOLE = [
   "kike", "chink", "spic", "gook", "coon", "dyke", "nazi", "piss", "porn",
   "prick", "rape", "rapist", "pedo", "semen", "sex", "shit", "slut",
   "tits", "penis", "wank", "clit", "douche", "bastard", "twat", "kkk",
+  // A whole word, not ANYWHERE, as in Welcome Korea (its 141e217): the
+  // Vietnamese "PhúcKhang", typed without a space, holds "phuck".
+  "phuck",
   // Danish
   "pik", "røv", "lort", "hore", "luder", "neger", "pis", "kusse",
   // Korean: ㅗ, a raised middle finger on its own, and the two body words
@@ -123,7 +126,17 @@ const fold = (s) => {
 const squeeze = (s) => s.replace(/(.)\1+/gu, "$1");
 const unique = (ws) => [...new Set(ws)];
 const alternation = (ws) => unique(ws).join("|");
-const squeezedList = (ws) => ws.map(squeeze).filter((w, i) => w === ws[i] || [...w].length >= 5);
+/** Never looked for squeezed. Squeezed, "tranny" is "trany", which the
+ *  Vietnamese "TrầnYến" typed without a space contains. Welcome Korea made it
+ *  a WHOLE word instead (141e217); here that would refuse the SPACED "Trần Ny",
+ *  which joins to "tranny" in the whole-name BUILT check, so it stays ANYWHERE
+ *  (searched per word) and is only matched as written. */
+const NO_SQUEEZE = new Set(["tranny"]);
+const squeezedList = (ws) => ws
+  .filter((w) => !NO_SQUEEZE.has(w))
+  .map((w) => [w, squeeze(w)])
+  .filter(([w, q]) => q === w || [...q].length >= 5)
+  .map(([, q]) => q);
 for (const w of [...ANYWHERE, ...WHOLE, ...BEFORE, ...AFTER, ...ALLOWED]) {
   if (!/^[\p{L}]+$/u.test(fold(w))) throw new Error(`not plain letters: ${w}`);
 }
