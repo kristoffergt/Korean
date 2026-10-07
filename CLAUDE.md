@@ -2178,6 +2178,19 @@ dialog on top owns that key.
 
 Verified: with the editor open, meta+S and ctrl+S both reach save and Escape
 reaches close; with it hidden, neither fires.
+
+**The chat dock owns Escape before the editor does** (7 Oct, real-user report:
+"When I have both the chat and the notes open and I press esc, it closes
+both"). The chat's own listener is on the same `document` and only called
+`stopPropagation`, which cannot reach another listener on the node it was
+called on. Now the chat calls `preventDefault` when it uses the press, and the
+editor stands down on `e.defaultPrevented || chatPanelOpen()` -- both, because
+which listener runs first is just registration order. The chat's open test is
+`chatPanelOpen()` (the `.open` class) rather than `.hidden`, so a press during
+its close animation goes to whatever is under it. Order now: chat search, then
+the chat, then the note. Checked by slicing the real listeners out of
+`index.html` into jsdom: HEAD closes chat and note on the first press, the fix
+closes them one press apart.
 ## The fly-out is swallowed from BELOW, and a tick box you can see (8 Sep, eighteenth pass)
 
 ### translateY(-100%) is what sent it over the main tabs

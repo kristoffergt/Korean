@@ -16197,14 +16197,20 @@ document.addEventListener('keydown', (e)=>{
   // A modal sits over the dock, so its own Escape wins; this only ever
   // answers for the chat when the chat is the top thing on screen.
   if(document.querySelector('.modal-overlay:not(.hidden)')) return;
-  const panel = document.getElementById('chatPanel');
-  if(!panel || panel.classList.contains('hidden')) return;
+  // chatPanelOpen, not the hidden class: during the close animation the panel
+  // is still displayed, and a second press then belongs to what is under it.
+  if(!chatPanelOpen()) return;
   // Innermost first: the search closes before the panel does.
   if(!document.getElementById('circleSearchBar').classList.contains('hidden')){
     closeCircleSearch();
   } else {
     closeChatPanel();
   }
+  // preventDefault is what marks the press as used up. The note editors listen
+  // on this same document, and stopPropagation cannot reach a listener on the
+  // node it was called on, so one press used to close the chat AND the note
+  // (real-user report). They stand down on defaultPrevented.
+  e.preventDefault();
   e.stopPropagation();
 });
 let circleSearchTimer = null;
@@ -39336,6 +39342,12 @@ function wireEditorKeys(cardId, saveBtnId, closeBtnId){
     if(e.key === 'Escape'){
       // A dialog over the editor owns Escape first; it has its own way out.
       if(document.querySelector('.modal-overlay:not(.hidden)')) return;
+      // So does the chat dock, which floats over the editor: the first press
+      // closes the chat and only the next one closes the note. Both checks,
+      // because which of the two listeners runs first is registration order:
+      // defaultPrevented covers the chat having already closed itself on this
+      // press, chatPanelOpen the case where this listener got there first.
+      if(e.defaultPrevented || chatPanelOpen()) return;
       e.preventDefault();
       document.getElementById(closeBtnId).click();
     }
