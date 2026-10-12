@@ -1347,19 +1347,19 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
    .has-slider.slider-ready > button, so source order is the whole of what
    lets the pill take the fill over once it has actually been placed. */
 .tab-dock{position:fixed;z-index:70;left:12px;right:12px;margin-inline:auto;max-width:420px;
-  bottom:calc(10px + env(safe-area-inset-bottom));
+  bottom:var(--dock-bottom, calc(10px + env(safe-area-inset-bottom)));
   display:none;align-items:stretch;gap:2px;padding:6px;
   /* --dock-k is 1 at full size and 0 compact, written once a frame by the
      follower in wireDockShrink(). It is ONE eased number and the geometry is
      derived from it here, so height, width, the icons and the corner all
      move together and there is no second thing to keep in step.
      A TRANSFORM, not a height: the bar's layout box has to stay exactly where
-     it is, because --dock-space is what body's padding-bottom, the chat
+     it is, because --dock-bottom and --dock-space are what body's padding-bottom, the chat
      launcher and the update pill all keep clear of -- shrinking the box would
      move all three every frame, and re-laying out the page on a scroll is the
      trap this file already records for the condensing top bar. It is also
      what lets the travelling pill inside come along for nothing.
-     About the BOTTOM edge, so the bar keeps its 10px float and shrinks into
+     About the BOTTOM edge, so the bar keeps its float above the bottom edge and shrinks into
      place rather than drifting down the screen. */
   --dock-k:1;--dock-min:0.82;
   transform:scale(calc(var(--dock-min) + (1 - var(--dock-min)) * var(--dock-k)));
@@ -2988,18 +2988,25 @@ body.dark .ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-3);}
 @media (max-width: 640px){
   /* The dock replaces the top pills outright, rather than sitting under them:
      two rows of the same five choices is one row of them wasted.
-     --dock-space is the whole strip the bar occupies measured from the bottom
-     of the safe area: 44px of button + 12 of padding + 2 of border, plus the
-     10 it floats above. Everything that has to keep clear of it reads THAT
+     --dock-bottom is where the bar's bottom edge sits, measured from the
+     bottom of the SCREEN. Instagram's bar sits 22pt up on an iPhone, which is
+     INSIDE the 34pt the home indicator reserves, not above it: the indicator
+     itself is only the lowest ~13pt (real-user request, with the two bars side
+     by side: "I want it to be at the same height as the instagram one"). So
+     the inset less 12px, which is 22 on every iPhone with a home indicator,
+     and never under the 10px it always floated at, which is what a phone with
+     a home button, or Safari's own toolbar, leaves it at.
+     --dock-space is the bar's own height: 44px of button + 12 of padding + 2
+     of border. Everything that has to keep clear of the bar reads the two
      rather than repeating the arithmetic. */
-  :root{--dock-space:68px;}
+  :root{--dock-space:58px;--dock-bottom:max(10px, calc(env(safe-area-inset-bottom) - 12px));}
   .tab-dock{display:flex;}
   #tabNav{display:none;}
-  body{padding-bottom:calc(var(--dock-space) + 20px + env(safe-area-inset-bottom));}
+  body{padding-bottom:calc(var(--dock-bottom) + var(--dock-space) + 20px);}
   /* The chat launcher is the one other thing anchored to that corner, and at
      its own 10px it would have sat under the bar. */
-  #chatDock{bottom:calc(var(--dock-space) + 10px + env(safe-area-inset-bottom));}
-  #shellUpdateBar{left:10px;right:10px;bottom:calc(var(--dock-space) + 10px + env(safe-area-inset-bottom));}
+  #chatDock{bottom:calc(var(--dock-bottom) + var(--dock-space) + 10px);}
+  #shellUpdateBar{left:10px;right:10px;bottom:calc(var(--dock-bottom) + var(--dock-space) + 10px);}
   /* And with the pills gone the bar was still holding the room they sat in:
      the header's own 14px under the line, PLUS 22 of bar padding that existed
      to separate those tabs from the panel below them. Every panel begins with

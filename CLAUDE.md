@@ -5994,6 +5994,27 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE DOCK SITS WHERE INSTAGRAM'S DOES (12 Oct, hundred-and-fourteenth pass)
+
+"I think the bottom menu bar is a bit too high up. I want it to be at the same
+height as the instagram one", with the two screenshots side by side. Measured
+off them (923x2000 of a 393x852 screen, so 2.35 px a point): ours had its
+bottom edge 44pt above the screen's bottom (10px over the 34pt safe-area
+inset), Instagram's 22pt, the bars themselves the same height to a couple of
+points.
+
+- **Instagram's bar sits INSIDE the safe area**, not above it: the home
+  indicator is only the lowest ~13pt of the 34 that are reserved. So
+  `--dock-bottom` is `max(10px, inset - 12px)`: 22pt on every iPhone with a
+  home indicator, and the old 10px wherever there is no inset (a home-button
+  phone, or Safari with its toolbar showing), so it can never go off screen.
+- **`--dock-space` is now the bar's own height (58)**, without the 10px float
+  it used to include, and body's padding-bottom, the chat launcher and the
+  update pill are all `--dock-bottom + --dock-space + their own gap`. Their
+  clearance above the bar is unchanged (20, 10, 10); they come down with it.
+- Not measurable here: `env(safe-area-inset-bottom)` is 0 in every desktop
+  browser, so only the phone shows the 22pt. The arithmetic is the measurement.
+
 ## AN EVENT CAN END ON ANOTHER DAY (12 Oct, hundred-and-thirteenth pass)
 
 "I want to be able to set the end time of an event to another day", with a
