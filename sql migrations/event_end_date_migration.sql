@@ -1,0 +1,14 @@
+-- The day an event ENDS, when that is not the day it starts (real-user
+-- request: "i want to be able to set the end time of an event to another
+-- day"). event_end_time on its own could only ever mean "later the same day",
+-- so an overnight flight or a three-day trip had no way to be entered.
+--
+-- Null means the same day as event_date, which is every row written before
+-- this. Only an event of kind 'event' ever has one: addEvent() and
+-- saveEventEdit() write it for that kind and drop it for every other, the
+-- same way they treat event_end_time.
+--
+-- Nullable and untouched by RLS: the existing events policies are row-level
+-- and already cover who may read or write a given row, and `authenticated`
+-- holds a table-wide grant, so a new column needs nothing of its own.
+alter table events add column if not exists event_end_date date;

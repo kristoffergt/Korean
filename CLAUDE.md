@@ -5994,6 +5994,75 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## AN EVENT CAN END ON ANOTHER DAY (12 Oct, hundred-and-thirteenth pass)
+
+"I want to be able to set the end time of an event to another day", with a
+screenshot of the add form's Time / End time pair. `event_end_time` alone
+could only ever mean later the same day, so an overnight flight or a trip had
+no way in (the 11:59 PM in the screenshot was the workaround).
+
+- **`events.event_end_date date`**, nullable, null = the day it starts, which
+  is every row written before it. `sql migrations/event_end_date_migration.sql`,
+  **applied to the live database on 12 Oct** (project `kbqwitmxpmkueryjsyip`,
+  "Korean", via apply_migration as `event_end_date`) and checked after: the
+  column is there, `date`, nullable. `authenticated` holds a table-wide grant on
+  `events`, so nothing else was needed.
+- **"End date" sits between Time and End time**, in the add form and the edit
+  panel, so the four read start date, start time, end date, end time. Only for
+  kind `event` (`KIND_HAS_END_DATE`): a deadline and a birthday are a moment
+  and a course is one class repeating weekly. Hidden AND cleared for the other
+  kinds, the end time's own rule. The picker's `min` follows the start date,
+  and moving the start past the end clears the end.
+- **`storedEndDate()` is the one save rule**: kept only when it is LATER than
+  the start. The start day itself means the same as empty, so it is stored as
+  null rather than as a second way of saying one day.
+- **The calendar draws it on every day it covers**, through
+  `eventCoverage(ev, start, end)` -> `[{day, occ, idx}]`, which is
+  `expandOccurrences()` for a one-day event and otherwise also walks the days
+  after each start, including an occurrence that began before the range.
+  `eventsInRange()` and the month agenda use it, so the month chips, the
+  week/day grid, the phone's week strip and the agenda all get it at once.
+  - **A covered day is a COPY of the row** (`eventOnDay()`, carrying `_occ`,
+    the date that occurrence started, and `_dayIdx`). One-day events are
+    pushed as the row itself, so nothing about them changed. The copy keeps
+    the id, which is how every click finds the real row.
+  - **`openQuickView()` and `openCalendarEditModal()` map a day back to its
+    occurrence** (`eventOccurrenceFor()`), because "delete this occurrence"
+    writes a date into `excluded_dates` and only the START date excludes
+    anything. One place, so every caller (chip, bar, agenda row) is covered.
+  - **Week/day bars**: `eventBarMinutes()` is the one placement rule, used by
+    the grid AND by `calGridHourRange()`, so the grid's hours cannot disagree
+    with the bars in it. First day start time to midnight, last day midnight to
+    the end time, days between the whole day. With no time at either end it is
+    drawn as any untimed entry is, pinned at the top of each day.
+  - **An end at 00:00 does not cover that date**: 22:00 Friday to 00:00
+    Saturday is a Friday evening (`eventSpanDays()` from the absolute end
+    minute, not the date difference).
+  - **Month chips** of a day that continues from or into a neighbour get
+    `span-in` / `span-out`: square on that side and run out to the cell edge.
+    A continuing day sorts FIRST in its cell (`calDaySortKey()`), as an
+    all-day entry would. The agenda writes `22:00 →`, `→`, `→ 06:00`.
+  - **The list row and the quick view write the whole span with both dates**
+    ("Mon, Oct 12, 22:00 – Tue, Oct 13, 06:00"), since an end time means
+    nothing without its day. A running one reads "Today", and it counts as
+    past only once it has ENDED (`eventOccurrenceEnd()`), so a trip stays among
+    the upcoming while it is on.
+  - **A repeating one repeats its span**: a weekly Saturday-night-to-Sunday
+    covers each Saturday and Sunday, and `nextOccurrence()` looks back by the
+    span so an occurrence still running is the one shown.
+- **.ics export writes DTEND now** (it wrote none, so even a same-day end time
+  was lost): a timed end at its time, an all-day multi-day end on the day after
+  its last, as DTEND means for a date, and nothing when the end would not come
+  after the start. The events CSV gained `end_date` and `end_time`. Import is
+  unchanged: it never read an end, and an imported row is kind `imported`,
+  which holds neither.
+- Checked: every script block parses, every new id exists, the three label
+  keys are in en/ko/vi, and 22 cases of the date arithmetic run headlessly
+  against the shipped functions (overnight, ending at midnight, a trip seen
+  from a range that starts in its middle, weekly repeats, the one-day
+  regressions). **Not looked at in a browser**: the calendar is behind the
+  sign-in.
+
 ## WRITING A MESSAGE NO LONGER ZOOMS THE PAGE ON A PHONE (6 Oct, hundred-and-twelfth pass)
 
 "Kind of annoying it zooms in like this each time I try to write a message",
