@@ -1278,15 +1278,28 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
    Safe on the button itself: .tabs button carries no transform of its own, so
    nothing is being overwritten -- the trap this file records for the 2FA ring
    and the tab label. And a transform lays nothing out, so four flex:1 tabs
-   beside it do not budge. */
+   beside it do not budge.
+   THE SIDEWAYS GROWTH IS CAPPED SO TWO TABS CAN NEVER MEET. Moving across the
+   row quickly plays the gulp on the tab being left and the spit on the one
+   arrived at, and the two bulges overlap in time; at 1.045 and 1.035 a ~190px
+   tab reaches 4.4px and 3.4px past each side, against a 4px gap, so the two
+   grew over each other (real-user report: "they can grow over each other when
+   they're both enlarged. I don't want that to be possible"). A scale is a
+   share of the width, so no single factor is safe at every width: the cap is
+   written per tab by playTabChomp() as --chomp-x-max, which lets each side
+   grow by at most (gap - 1px) / 2, and min() keeps the designed factor
+   wherever that is already smaller. The timing curve overshoots by 1.25%,
+   which on this cap is under 0.1px a side, so two neighbours at their worst
+   still leave the best part of a pixel between them. The vertical bulge is
+   untouched: nothing in the row sits above or below a tab. */
 @keyframes tab-spit{
   0%{transform:scale(1,1);}
   22%{transform:scale(0.965,0.9);}
-  55%{transform:scale(1.035,1.06);}
+  55%{transform:scale(min(1.035, var(--chomp-x-max, 1.035)),1.06);}
   100%{transform:scale(1,1);}}
 @keyframes tab-gulp{
   0%{transform:scale(1,1);}
-  50%{transform:scale(1.045,1.11);}
+  50%{transform:scale(min(1.045, var(--chomp-x-max, 1.045)),1.11);}
   76%{transform:scale(0.985,0.96);}
   100%{transform:scale(1,1);}}
 .tabs button.tab-spit{animation:tab-spit 0.34s cubic-bezier(.34,1.2,.64,1);}
@@ -24287,6 +24300,13 @@ let tabFlyoutBtn = null;
 // to start an animation from.
 function playTabChomp(btn, cls){
   if(!btn) return;
+  // How wide this tab may bulge: each side by at most half of (gap - 1px), so
+  // the tab it is next to can be at its own peak at the same moment and the
+  // two still do not touch (see the cap above the keyframes). offsetWidth,
+  // not the rect: a tab caught mid-animation reports its scaled width there.
+  const gap = parseFloat(getComputedStyle(btn.parentElement).columnGap) || 0;
+  const w = btn.offsetWidth;
+  if(w) btn.style.setProperty('--chomp-x-max', String(1 + Math.max(0, gap - 1) / w));
   btn.classList.remove('tab-spit', 'tab-gulp');
   void btn.offsetWidth;
   btn.classList.add(cls);

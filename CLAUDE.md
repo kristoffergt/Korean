@@ -5994,6 +5994,31 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## TWO TABS CAN NO LONGER GROW INTO EACH OTHER (13 Oct, hundred-and-fifteenth pass)
+
+"When you quickly hover over the menus, because they grow, they can grow over
+each other when they're both enlarged. I don't want that to be possible."
+Read as the desktop's top-level tabs, the only menus in the app that grow on
+hover: moving to the next tab plays the GULP on the one left (1.045 wide at its
+peak, 60ms late) and the SPIT on the one arrived at (1.035), so for a moment
+both are bulging. On a ~197px tab that is 4.4px and 3.4px past each side,
+against a 4px gap.
+
+- **The sideways growth is capped per tab** (`--chomp-x-max`, written by
+  `playTabChomp()` from the tab's own `offsetWidth` and the row's `column-gap`)
+  so each side grows by at most (gap - 1px) / 2, and the keyframes take
+  `min(designed, cap)`. A proportional scale cannot have one safe factor: the
+  tabs are fluid, so the cap has to be in pixels and turned into a factor per
+  tab. `offsetWidth` rather than the rect, because a tab caught mid-animation
+  reports its scaled width in the rect.
+- **The timing curve overshoots** (cubic-bezier(.34,1.2,.64,1) peaks at
+  1.0125), which the 1px of slack covers.
+- **The vertical bulge is untouched**, so the eat-and-spit still reads.
+- **Measured in headless Chrome** with the shipped rules and the real
+  `playTabChomp()`, gulp on tab 2 and spit on tab 3 frozen every 5ms through
+  both: the closest the two came was **-3.95px before** (overlapping) and
+  **+0.95px after**.
+
 ## THE DOCK SITS WHERE INSTAGRAM'S DOES (12 Oct, hundred-and-fourteenth pass)
 
 "I think the bottom menu bar is a bit too high up. I want it to be at the same
