@@ -5994,6 +5994,50 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## NOTES SAVE THEMSELVES (13 Oct, hundred-and-sixteenth pass)
+
+"Can notes save periodically sort of like google docs? So you don't have to
+keep saving manually?" Both note editors (course notes and the Notebook) now
+go through one `makeNoteAutosaver(cfg)`; Writing is untouched and still saves
+only when asked.
+
+- **When**: 1.5s after the typing stops, and at least every 10s while it
+  carries on (a 500ms tick reads the editor's own dirty flag, so a colour,
+  a font size or a restored version saves too, not only keystrokes). Also on
+  the way out: closing the note, opening another, the page going hidden
+  (switching apps on a phone) and `beforeunload`, whose warning now only shows
+  while a save is unanswered. The "unsaved changes, switch anyway?" confirms
+  on the two editors are gone; there is nothing left to lose.
+- **Save and Cmd+S still work** and save at once. They no longer pop the
+  "Saved!" alert: the line under the editor reads "Saving..." and then the
+  usual "Last saved by ... at ...". That line no longer closes an open version
+  history every time it updates (`keepPanel`).
+- **A version is a SITTING, not a save.** Every save used to push the replaced
+  content into `previous_versions` (two kept), which at a save every few
+  seconds would leave no history at all. Now the note as opened is snapshotted
+  on the sitting's first save, again every 30 minutes of editing, and always
+  before "Use this version" replaces the editor (`forceVersion()`, after saving
+  what is there), so restoring can never lose text. The confirm for notes says
+  so (`versionUseConfirmKept`); Writing keeps its old wording via the new
+  `confirmKey` argument of `renderVersionPanel`.
+- **The payload is captured when a save starts** and requests are chained in
+  order, so switching notes mid-save writes each note its own text and a slow
+  save cannot land after a newer one. The local note is updated at once, which
+  is what lets the next save build on this one's version list.
+- **Failures**: two retries, then the note is marked `_unsaved`, the editor
+  goes dirty again with "Couldn't save..." under it, and it tries again after
+  15s. Reopening a note still marked starts it saving again.
+- **A partner's save no longer resets your cursor**: the realtime refresh of
+  the open note now skips while a save of yours is in flight (theirs is older
+  and would put back a copy without what you just typed) and skips the
+  innerHTML rewrite when the text is already the same, which with the live
+  deltas it nearly always is. Before, saves were rare enough not to matter.
+- Checked: syntax and ids, and 15 cases of the engine driven headlessly with a
+  fake database at 1/100 of the timings (continuous typing, stopping, idle,
+  the version interval, switching notes mid-save, ordering, three refusals and
+  the retry, restoring a version). **Not looked at in a browser**: the editors
+  are behind the sign-in.
+
 ## TWO TABS CAN NO LONGER GROW INTO EACH OTHER (13 Oct, hundred-and-fifteenth pass)
 
 "When you quickly hover over the menus, because they grow, they can grow over
