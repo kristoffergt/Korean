@@ -5994,6 +5994,91 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## REACTIONS, A MENU ON EVERY MESSAGE, DELETE FOR ME OR FOR EVERYONE (14 Oct, hundred-and-eighteenth pass)
+
+"Even messages that have been sent should be able to be turned into checklist.
+For the person who sent it: simple convert on the message. For the person who
+received it: 1. resend it with your own message as a checklist (single button,
+easy path), 2. request the other person to convert it to checklist. Also add
+message reactions with our own cute icons that you design." Then, mid-turn:
+"Both a delete just for me and for all".
+
+`sql migrations/circle_message_actions_migration.sql`, **applied to the live
+database 14 Oct** (project kbqwitmxpmkueryjsyip, migration name
+`circle_message_actions`) and verified in a DO block that raised at the end so
+nothing persisted. **It supersedes round 1 on one point: converting is now the
+SENDER's alone** (`set_circle_message_checklist` refuses anybody else).
+
+| | |
+|---|---|
+| `reactions jsonb` on the message | `{"<user id>": "<key>"}`, one per person, keys heart / thumbs / haha / wow / sad / yay |
+| `kind` + `ref_message` | a row is `text` or a `checklist_request` naming the message it is about (cascade delete) |
+| `set_circle_message_reaction(id, key or null)` | the only way to react; writes the caller's own id; refuses an unknown key and a request row |
+| `request_circle_message_checklist(id) returns uuid` | the receiver asks; one request per asker per message (asking again returns the first); same thread as the message |
+| `circle_message_hidden(user_id, message_id)` | delete FOR ME: your own row, invisible to everybody else, in the realtime publication |
+| insert policy | a client inserts plain `text` rows only, with empty `checks` and `reactions` -- no forged requests, no ticks or reactions in somebody else's name |
+
+Delete FOR EVERYONE is the delete policy that was already there (sender only);
+it takes the ticks, reactions, any request about the message and everybody's
+hidden rows with it, and the client removes the file from the bucket.
+
+**The client** (all in `index.html`, chat section):
+
+- **A menu per message**: a long press (450ms, cancelled by 8px of travel) on
+  a phone, the dots button beside the bubble under the pointer or a
+  right-click (unless text in it is selected) on a computer. Reactions along
+  the top; then Copy text, and for the SENDER "Make it a checklist" (or back,
+  while nothing is ticked), for anybody else "Send as my checklist" and "Ask
+  {name} to make it a checklist" (greyed "Asked {name}" once asked); then
+  Delete, which turns the menu into the one confirm: Delete for me, Delete for
+  everyone (own messages only), Cancel.
+  - The lift after a long press is a click on whatever was under the finger;
+    it is swallowed in the capture phase for 700ms, or the press would also
+    tick an item or open a picture.
+  - **It closes on a scroll BY HAND only** (wheel, or a touch that travels
+    12px). A scroll the app makes -- keeping you at the end while the other
+    person ticks -- only moves it with its message. Closing on every `scroll`
+    event shut a menu the moment anything repainted. It closes once its
+    message leaves the log's window, on an outside press, and on Escape, which
+    is heard in the window's capture phase so it never also closes the panel.
+  - Global `button:hover` paints ink, so every new mark sets its own hover
+    background (`.cm-more`, a disabled menu row, the quote). Same trap as
+    every other bare-looking button in this file.
+- **Reactions are six drawings of our own** (`CM_REACTION_ART`): a heart with
+  a face, a thumbs up, a laugh with tears, a wow, a crying face with ㅠㅠ eyes,
+  a star. Solid colours with a darker edge of the same hue, so they hold on
+  both themes and at 16px. Chips under the bubble with a count when more than
+  one person picked it; yours is in the on-green; a press on a chip toggles
+  yours. One per person: picking another replaces it.
+- **A request is a row in the conversation** (`requestRowHtml`), centred, not
+  anybody's bubble: who asked whom, the message's first line as a quote (a
+  press scrolls the LOG to it and flashes it; a quote of a message older than
+  the 300 held is plain text, since there is nothing to scroll to), and for
+  the sender a "Make it a checklist" button that becomes "Now a checklist" on
+  both phones, because the row is redrawn whenever its message is. A
+  referenced message older than the window is fetched once into
+  `circleRefCache`.
+- **One op engine for ticks, conversions and reactions**
+  (`runCircleMessageOp`): shown at once, sent one at a time per message, read
+  back once at the end; a refusal snaps back. Live UPDATEs now carry
+  `reactions` too, a live DELETE forgets the message (DELETE events carry only
+  the key and are not RLS-filtered, so only ids this device holds act), and a
+  hidden-row INSERT from another of your devices removes it here.
+- Hidden ids are filtered out of the thread, the unread counts, search, a day
+  and files.
+
+Checked in the pane at 393 (light and dark) and 1024 with a stub database (no
+request left the machine): long press opens the menu and the lift's click is
+swallowed; asking adds the "You asked Mina" row and greys the ask; the owner's
+convert from the request row turns the message into a checklist and the row
+into "Now a checklist"; heart, swap to sad, untap; a refused reaction snaps
+back; the jump scrolls the log only (page scroll stayed 0); delete for
+everyone took the request with it; delete for me wrote one hidden row and left
+the message in memory; resend inserted my own checklist copy; right-click
+opens the menu and does not with text selected; Escape closes the menu and not
+the panel. **Not seen with two real accounts**: the live delivery of a
+reaction, a request, a delete and a hide to the other phone.
+
 ## A MESSAGE CAN BE A CHECKLIST, AND THE BOTTOM BAR HAS FOUR SIZES (14 Oct, hundred-and-seventeenth pass)
 
 "I wanna update the settings to allow for different display sizes for the
@@ -6049,7 +6134,7 @@ database on 14 Oct** (project `kbqwitmxpmkueryjsyip`, via apply_migration as
 | `checklist boolean not null default false` | the lines are to be read as items |
 | `checks jsonb not null default '{}'` | `{"<index>": {"by": uuid, "at": ts}}` |
 | `set_circle_message_check(id, item, on)` | the ONLY way to tick; writes the caller's own id |
-| `set_circle_message_checklist(id, on)` | turn any message into a checklist, or back if nothing is ticked |
+| `set_circle_message_checklist(id, on)` | turn any message into a checklist, or back if nothing is ticked (**sender only** since the next pass) |
 
 - **Functions, not an UPDATE policy.** A policy would hand every reader the body
   too, and even scoped to these two columns it would let a client write
