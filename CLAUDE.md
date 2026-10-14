@@ -5994,6 +5994,137 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## A MESSAGE CAN BE A CHECKLIST, AND THE BOTTOM BAR HAS FOUR SIZES (14 Oct, hundred-and-seventeenth pass)
+
+"I wanna update the settings to allow for different display sizes for the
+bottom bar. Also, add the ability to send a checklist in messages. Both people
+should be able to interact and mark it. When marked, whoever marked it, their
+first letter in their personal color is added so you can see it's done. Any
+list (any message) should be able to be a checklist. New items are just a new
+line."
+
+(Pasted into this chat as one message with no project named. The vocabulary --
+messages, a bottom bar -- fits both apps; the chat title is kristoffergt.com, so
+it is the tracker, and Welcome Korea already had bar sizes since the same day.)
+
+### The bottom bar's size
+
+**Compact / Normal / Large / Extra large** in Settings > Appearance and layout,
+under the opacity slider and phone only like it (`#settingsDockSizeRow`, hidden
+from 641px up). `ptDockSize` in localStorage, per device like the opacity;
+absent is Normal, which is the bar exactly as it was (58px).
+
+- **One factor, `--dock-s`** (0.86 / 1 / 1.14 / 1.28), written on `<html>` by
+  `applyDockSizePref()`. The bar's padding, corner radius, button height and
+  radius, the pill's radius and the icons are all `calc(... * var(--dock-s, 1))`,
+  and so is **`--dock-space`** (`calc(56px * s + 2px)`, the border unscaled),
+  which is what body's padding-bottom, the chat launcher and the update pill
+  keep clear of. On `<html>`, not body like the glass vars, because
+  `--dock-space` is declared on `:root` and resolves its var() there.
+- **A layout size, not a transform** -- unlike `--dock-k`, the scroll shrink,
+  which is a transform on purpose so it moves nothing around it. A size the
+  reader chose really is a bigger bar, so everything has to make room for it.
+- The pill is sized off the button it sits under, so `applyDockSizePref()` calls
+  `moveRowSlider(dock, {instant:true})` after a change.
+- The row is the app's own Month/Week/Day control (`.cal-view-toggle`), so it
+  gets the travelling pill through SLIDER_ROWS for nothing.
+- Measured at 393 as a guest: bar 50 / 58 / 66 / 74, buttons 38 / 44 / 50 / 56,
+  icons 20 / 23 / 26 / 29, the pill exactly on its button at each, body padding
+  and the chat launcher following (launcher bottom 70.16 / 78 / 85.84 / 93.68).
+  Hidden at 1024.
+
+### Checklists in messages
+
+**The items ARE the message's own lines**, numbered among the non-blank ones
+(`checklistItems()`), so nothing is stored about an item but whether and by whom
+it is ticked. A message body can never be edited (circle_messages has no UPDATE
+policy and still has none), so an index means the same line for good.
+
+`sql migrations/circle_message_checklist_migration.sql`, **applied to the live
+database on 14 Oct** (project `kbqwitmxpmkueryjsyip`, via apply_migration as
+`circle_message_checklist`) and verified:
+
+| | |
+|---|---|
+| `checklist boolean not null default false` | the lines are to be read as items |
+| `checks jsonb not null default '{}'` | `{"<index>": {"by": uuid, "at": ts}}` |
+| `set_circle_message_check(id, item, on)` | the ONLY way to tick; writes the caller's own id |
+| `set_circle_message_checklist(id, on)` | turn any message into a checklist, or back if nothing is ticked |
+
+- **Functions, not an UPDATE policy.** A policy would hand every reader the body
+  too, and even scoped to these two columns it would let a client write
+  `{"by": somebody else}`. Both are security definer, `search_path = public`,
+  revoked from anon/public and granted to authenticated.
+- **Who may is exactly who may read it**: the select policy's own predicate,
+  repeated rather than paraphrased. Either person in a direct thread; anyone in
+  the sender's circle on a group message. Anyone who can tick can also untick,
+  including somebody else's tick.
+- **Turning a checklist back into text is refused once anything is ticked** (in
+  the function, and the button is not drawn), so a list in progress cannot be
+  hidden from under the other person. Ticks are kept either way.
+- **Proved as real accounts inside a transaction that raises at the end**, so
+  nothing persisted (checked after: 0 checklists, 0 ticks of 31 messages): a
+  tick before it is a checklist is refused, the recipient makes it one and
+  ticks item 0 (stored by = recipient), item 999 is refused, turning it off with
+  a tick is refused, the sender unticks and turns it off, and a stranger is
+  refused outright.
+
+On screen (all in `index.html`, beside `messageBubbleHtml`):
+
+- **Sending one**: a list-check toggle between the paperclip and the box
+  (`#circleChecklistToggle`, on-green when on). On, the placeholder reads "One
+  item per line..." and **Enter is a new line, not send** -- which is also what
+  a phone's return key has to do -- with Cmd/Ctrl+Enter or the button sending
+  it. It switches itself off after every send. A file with no text goes as a
+  plain message.
+- **Any message of two or more lines can become one afterwards** ("any list
+  (any message) should be able to be a checklist"): a small list-check button
+  at the left of its time row, dim until hovered. On a checklist nothing has
+  been ticked on yet the same button (lit) turns it back into text.
+- **A ticked item** is struck through with the ticker's first letter after it
+  (`firstLetterOf`, first CHARACTER via Array.from), in their `colorForUser`
+  colour, tinted the way a bubble is (`colour1f` fill, `colour80` edge), with
+  "Ticked by {name}, {time}" as its title. The whole line is the target (a
+  label), not just the box.
+- **A pasted marker is dropped** ("- ", "* ", "+ ", bullets, "[ ]", "1." or
+  "1)") when something is left after it: the tick box is the marker now.
+- **Ticks show at once and are sent one at a time per message**
+  (`runCircleListOp`), so a fast tick-untick-tick cannot land the wrong way
+  round; when the last is answered the row is read back once and that wins, so
+  a partner's tick made meanwhile and any refusal both come out right. While a
+  message has requests unanswered its live UPDATEs are ignored (they are our
+  own, a step behind the screen).
+- **Live**: the circle_messages channel listens for UPDATE as well as INSERT
+  now, and takes only `checklist` and `checks` from it -- an UPDATE's row can
+  arrive without a large unchanged body. The table was already in the
+  publication.
+- **A tick repaints only that bubble's text and time row**
+  (`repaintCircleMessage`), never the log: a full render jumps the log to the
+  bottom and reloads every image, which would happen to whoever is reading
+  every time the other person ticks something. Every copy of the row (chat,
+  search, day, files) is patched (`circleMessageCopies`).
+
+Checked in the pane at 393 against the real functions with the two database
+functions and the read-back stood in for (nothing sent anywhere; guest mode
+switched off by hand for the test): render (the one-word "ok" gets no button),
+a tick by clicking the item's TEXT (lit at once with "K" in Kristoffer's
+colour), three clicks before the first answer (sent +, -, + in order, one
+read-back, ends ticked), the partner's tick ("R" in Roxy's colour), a refused
+untick snapping back, a plain five-line list converted with its markers
+dropped, the way back disappearing once something is ticked, and the composer
+(Enter adds a line, Cmd+Enter inserts `checklist: true`, the toggle and the
+placeholder reset, Enter sends as before with it off). Light and dark.
+**Not seen with two real accounts** -- the live delivery of a tick to the other
+phone is the one thing the pane could not show.
+
+- **A dark-theme screenshot right after switching theme shows the ticked boxes
+  almost black**: the pane freezes the 0.13s colour transition between paints.
+  The computed fill was `rgb(237, 237, 239)`; a second screenshot shows them
+  right. Same trap this file already records for CSS transitions.
+- The pane refuses service workers, so every load logs "An unknown error
+  occurred when fetching the script" once; the server never even sees a
+  request for `sw.js`. Not an app fault.
+
 ## NOTES SAVE THEMSELVES (13 Oct, hundred-and-sixteenth pass)
 
 "Can notes save periodically sort of like google docs? So you don't have to

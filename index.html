@@ -1361,7 +1361,16 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
    lets the pill take the fill over once it has actually been placed. */
 .tab-dock{position:fixed;z-index:70;left:12px;right:12px;margin-inline:auto;max-width:420px;
   bottom:var(--dock-bottom, calc(10px + env(safe-area-inset-bottom)));
-  display:none;align-items:stretch;gap:2px;padding:6px;
+  display:none;align-items:stretch;gap:2px;
+  /* --dock-s is the SIZE the reader picked in settings (Compact 0.86 /
+     Normal 1 / Large 1.14 / Extra large 1.28), written on <html> by
+     applyDockSizePref(). Every length of the bar is a multiple of it -- the
+     padding, the corner, the buttons, the icons, and --dock-space below -- so
+     there is one number saying how big the bar is and nothing to keep in step.
+     A LAYOUT size rather than a transform, unlike --dock-k: the bar really is
+     taller, so the page, the chat launcher and the update pill have to keep
+     clear of the bigger one, and they read --dock-space to do it. */
+  padding:calc(6px * var(--dock-s, 1));
   /* --dock-k is 1 at full size and 0 compact, written once a frame by the
      follower in wireDockShrink(). It is ONE eased number and the geometry is
      derived from it here, so height, width, the icons and the corner all
@@ -1395,7 +1404,7 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
      paying for behind a surface nothing shows through. */
   background:color-mix(in srgb, var(--paper-dim) var(--dock-alpha, 100%), transparent);
   -webkit-backdrop-filter:var(--dock-glass, none);backdrop-filter:var(--dock-glass, none);
-  border:1px solid var(--line);border-radius:30px;
+  border:1px solid var(--line);border-radius:calc(30px * var(--dock-s, 1));
   box-shadow:0 8px 28px rgba(0,0,0,0.22);
   /* pan-y and nothing else: the bar owns every HORIZONTAL gesture on it, which
      is what the drag-to-pick below needs, and the browser keeps the vertical
@@ -1414,9 +1423,9 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 @media (prefers-reduced-transparency: reduce){
   .tab-dock{background:var(--paper-dim);-webkit-backdrop-filter:none;backdrop-filter:none;}
 }
-.tab-dock > button{position:relative;z-index:2;flex:1;min-width:0;height:44px;padding:0;
+.tab-dock > button{position:relative;z-index:2;flex:1;min-width:0;height:calc(44px * var(--dock-s, 1));padding:0;
   display:flex;align-items:center;justify-content:center;
-  background:transparent;color:var(--ink-soft);border:none;border-radius:24px;
+  background:transparent;color:var(--ink-soft);border:none;border-radius:calc(24px * var(--dock-s, 1));
   -webkit-tap-highlight-color:transparent;}
 /* Its own, or the solid default's hover paints a black/white pill behind the
    icon; see the note on button:hover. */
@@ -1448,10 +1457,10 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
    .tabs carries one: without the pill an active icon is --paper on --paper-dim
    and there is nothing to see. */
 .tab-dock > button.active{background:var(--ink);color:var(--paper);}
-.tab-dock > .tab-slider{border-radius:24px;}
+.tab-dock > .tab-slider{border-radius:calc(24px * var(--dock-s, 1));}
 .tab-dock > button > .tab-icon,
 .tab-dock > button > .tab-icon-korea,
-.tab-dock > button > .tab-icon-yonsei{width:23px;height:23px;flex:none;}
+.tab-dock > button > .tab-icon-yonsei{width:calc(23px * var(--dock-s, 1));height:calc(23px * var(--dock-s, 1));flex:none;}
 /* While a finger is on the bar, what is lit is where the FINGER is, not the
    tab still on screen -- the pill has already travelled there and two lit
    icons would read as two chosen tabs. Declared after .active so a finger
@@ -2229,6 +2238,33 @@ body.dark .cm-msg.mine{background:var(--celadon-2);}
 .cm-compose textarea{flex:1;min-width:0;resize:vertical;font-family:'Inter',sans-serif;
   font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
   background:var(--paper);color:var(--ink);}
+/* ---------- A MESSAGE THAT IS A CHECKLIST ----------
+   The composer's toggle is ON in the app's on-green, the same rule every other
+   switch here follows: green is a state, not an invitation. */
+.cm-list-toggle{padding:0;}
+.cm-list-toggle[aria-pressed="true"]{background:var(--on-soft);color:var(--on);border-color:var(--on);}
+/* The items are the message's own lines, so they keep the body's wrapping
+   rules: a long line wraps inside the bubble rather than pushing it wide. */
+.cm-check{list-style:none;margin:1px 0 0;padding:0;display:flex;flex-direction:column;gap:5px;}
+.cm-item{display:flex;align-items:flex-start;gap:6px;}
+/* The whole line is the target, not a 15px box: on a phone that is the
+   difference between ticking the item and missing it. */
+.cm-item label{display:flex;align-items:flex-start;gap:7px;flex:1;min-width:0;cursor:pointer;}
+.cm-item input[type="checkbox"]{margin:1px 0 0;}
+.cm-item-text{flex:1;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.35;}
+.cm-item.done .cm-item-text{text-decoration:line-through;color:var(--ink-soft);}
+/* Whoever ticked it, as their first letter in their own colour -- the colour
+   their name and their bubbles already wear -- tinted the way a bubble is so
+   it reads in both themes without a paired foreground per person. */
+.cm-check-by{flex:none;display:inline-flex;align-items:center;justify-content:center;
+  width:17px;height:17px;border-radius:50%;border:1px solid;font-size:10px;font-weight:800;
+  line-height:1;margin-top:0;}
+/* Turning a list into a checklist after it was sent. Quiet until it is
+   wanted, since it sits on every multi-line message. */
+.cm-make-list{display:inline-flex;align-items:center;justify-content:center;padding:1px;margin-right:auto;
+  background:none;border:none;border-radius:4px;color:var(--ink-soft);opacity:0.6;cursor:pointer;}
+.cm-make-list:hover,.cm-make-list:focus-visible{opacity:1;background:rgba(127,127,127,0.16);color:var(--ink);}
+.cm-make-list[aria-pressed="true"]{color:var(--on);opacity:1;}
 /* A member who is online. A dot rather than a badge: it sits next to a
    name in a list and has to read at a glance without becoming the loudest
    thing in the row. */
@@ -2996,7 +3032,7 @@ body.dark .ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-3);}
    The bottom bar's opacity follows the bar itself, which exists only below
    this width. */
 @media (min-width: 641px){
-  #settingsDockGlassRow{display:none;}
+  #settingsDockGlassRow, #settingsDockSizeRow{display:none;}
 }
 @media (max-width: 640px){
   /* The dock replaces the top pills outright, rather than sitting under them:
@@ -3010,9 +3046,10 @@ body.dark .ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-3);}
      and never under the 10px it always floated at, which is what a phone with
      a home button, or Safari's own toolbar, leaves it at.
      --dock-space is the bar's own height: 44px of button + 12 of padding + 2
-     of border. Everything that has to keep clear of the bar reads the two
-     rather than repeating the arithmetic. */
-  :root{--dock-space:58px;--dock-bottom:max(10px, calc(env(safe-area-inset-bottom) - 12px));}
+     of border, the first two scaled by the size picked in settings (--dock-s,
+     see .tab-dock) and the border not. Everything that has to keep clear of
+     the bar reads the two rather than repeating the arithmetic. */
+  :root{--dock-space:calc(56px * var(--dock-s, 1) + 2px);--dock-bottom:max(10px, calc(env(safe-area-inset-bottom) - 12px));}
   .tab-dock{display:flex;}
   #tabNav{display:none;}
   body{padding-bottom:calc(var(--dock-bottom) + var(--dock-space) + 20px);}
@@ -5383,6 +5420,15 @@ body.ws-work .ws-class-only{display:none !important;}
         <span id="settingsDockGlassValue" style="font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;"></span>
       </div>
     </div>
+    <div id="settingsDockSizeRow" style="margin-top:16px;">
+      <div id="settingsDockSizeLabel" style="font-size:13px;margin-bottom:6px;"></div>
+      <div class="cal-view-toggle" id="settingsDockSizeToggle" role="group" aria-labelledby="settingsDockSizeLabel" style="margin-bottom:0;flex-wrap:wrap;gap:6px;">
+        <button type="button" data-size="compact" id="dockSizeCompactBtn"></button>
+        <button type="button" data-size="normal" id="dockSizeNormalBtn"></button>
+        <button type="button" data-size="large" id="dockSizeLargeBtn"></button>
+        <button type="button" data-size="xlarge" id="dockSizeXlargeBtn"></button>
+      </div>
+    </div>
     <div id="settingsAnimRow" style="margin-top:16px;">
       <div class="wtc-title" id="lblAnimations"></div>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
@@ -5611,6 +5657,8 @@ body.ws-work .ws-class-only{display:none !important;}
         <span id="cmAttachIcon"></span>
         <input type="file" id="circleAttachInput" class="hidden-file-input">
       </label>
+      <button type="button" class="cm-attach cm-list-toggle" id="circleChecklistToggle" aria-pressed="false"
+              data-title-key="circleChecklistToggle" data-aria-key="circleChecklistToggle"></button>
       <textarea id="circleMessageInput" rows="2" data-ph-key="circleMessagePlaceholder"></textarea>
       <button class="export-btn" id="circleMessageSendBtn"></button>
     </div>
@@ -11591,7 +11639,7 @@ const I18N = {
     actListening:'Listening', actSpeaking:'Speaking', actReading:'Reading', actWriting:'Writing', actGrammar:'Grammar', actVocabulary:'Vocabulary', actTopik:'TOPIK prep', actOther:'Other',
     linkOpen:'Link', exportCsv:'Export CSV', exportIcs:'Export to Calendar', addMyselfBtn:'+ Add myself',
     topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
-    settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsDockGlassLabel:'Bottom bar opacity', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
+    settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsDockGlassLabel:'Bottom bar opacity', settingsDockSizeLabel:'Bottom bar size', dockSizeCompact:'Compact', dockSizeNormal:'Normal', dockSizeLarge:'Large', dockSizeXlarge:'Extra large', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
     settingsPushLabel:'Push notifications on this device', pushIosInstallHint:'On an iPhone, add this app to your Home Screen first (Share, then Add to Home Screen) and open it from there.', pushUnsupportedHint:'This browser cannot receive push notifications.', pushBlockedHint:'Notifications are blocked for this site. Allow them in your browser or phone settings.', pushEnableFailed:'Could not turn on push notifications.', notifChannelPush:'Push', pushNeedsInApp:'Needs In-app on', pushTestTitle:'Push notifications are on', pushTestBody:'This device will now get your reminders and notices.',
     settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
     lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name shines when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over anything you can click or type in, and the squeeze when you press it.', animAddLabel:'The add courier', animAddHint:'When something is saved, a courier comes out from behind the Add button, takes the first letter off it, turns it into a funnel, pours in what you typed, packs it and runs off.',
@@ -11671,7 +11719,7 @@ const I18N = {
     gramRegister:'Register', gramColloquial:'Colloquial', gramWritten:'Written', gramFavorite:'Favorite – Mark as difficult/important', gramSortFavorite:'Favorites first', gramViewSimilar:'View similar grammar forms', gramQuickNote:'+ Note from this pattern', gramAddToggleBtn:'+ Add grammar', gramAddSaveBtn:'Add to grammar bank', gramAddMissingFields:'Enter a pattern and at least one sense (see the paste format hint below).', gramAddSaveFailed:'Could not save. Make sure the grammar_points table exists.', gramAiPromptIntro:'Copy this prompt into any AI chat (ChatGPT, Claude, etc.) and paste its answer back in underneath -- it fills in everything (level, frequency, difficulty, formality, politeness, register, definitions, examples) for every pattern you listed above.', gramCopyAiPromptBtn:'Copy AI prompt', gramCopyAiPromptCopied:'Copied!', gramPasteAiAnswerLabel:'Paste the AI\'s answer here', gramAdvancedAddToggle:'Advanced / custom add', gramSimpleAddToggle:'‹ Back to simple add', gramAddPatternNamesLabel:'Grammar patterns', gramAddPatternNamesHint:'One per line. Add as many as you want -- one prompt/paste covers all of them.',
     gramYourSentences:'Your practice sentences', gramSentencePlaceholder:'Write a sentence using this pattern...', gramAddSentence:'Add', lblGramSort:'Sort', gramSortDefault:'Default order', gramSortFreqDesc:'Most common first', gramSortFreqAsc:'Least common first', gramFrequencyHeader:'Frequency', gramLevelHeader:'Level',
     gramMarkNotReviewed:'Mark as not reviewed', gramMarkReviewedAgain:'Undo – Mark as reviewed', gramResources:'Videos & links', gramResourceUrlPlaceholder:'YouTube or website URL', gramResourceLabelPlaceholder:'Label', gramAddResource:'Add',
-    hRecap:'Recap',recapWeekBtn:'Past 7 days',recapMonthBtn:'Past 30 days',todoRemindPast:'{date} has already passed, so there is nothing to remind you of.', todoRemindNeedsDate:'Needs a due date', todoRemindNeedsTime:'Needs a time', todoRemindPassed:'Already passed', someoneName:'Someone', recapCoursesStarted:'Courses started', recapCoursesFinished:'Courses finished', recapProjectsStarted:'Projects started', recapProjectsFinished:'Projects finished', recapNotesWritten:'Notes written', recapTodosDone:'To-dos done', recapStudyHours:'Study hours',recapGrammarPracticed:'Grammar sentences practiced',recapBooksFinished:'Books finished',recapJobsSent:'Applications sent',hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite.',quizFromCluster:'From comparison group:',quizFillBlank:'Fill in the blank',quizCorrectAnswerLabel:'Correct answer:',quizHistoryHeader:'Your quiz history',quizMaxScoreLabel:'Best score',quizAttemptsCountLabel:'Attempts',quizAverageLabel:'Average',quizNoAttemptsYet:'No attempts yet.',quizDueCount:'{n} patterns due for review', quizDueCountOne:'{n} pattern due for review',quizReviewDueBtn:'Review due patterns',hLinkedCircle:'Linked circle',linkedCircleDesc:'Link up with other people to share what you track with them. Up to 10 people, and you control what you share.',linkInvitedYou:'{name} invited you to link up.',linkAcceptBtn:'Accept',linkDeclineBtn:'Decline',linkLeaveBtn:'Leave circle',linkRosterHeader:'Your circle',linkStatusAccepted:'Linked', circleOnlineNow:'Online', circleTabMessages:'Messages', circleOnlineCount:'{n} online', circleSearchPlaceholder:'Search messages...', circleFilesBtn:'Files', circleNoResults:'No matching messages.', circleNoFiles:'Nothing shared yet.', circleSearching:'Searching...', circleLoadOlder:'Load older messages', circleAttach:'Attach a file', circleUploading:'Uploading...', circleUploadFailed:"Couldn't upload that file.", circleFileTooBig:'That file is over 25 MB.', circleAttachment:'Attachment', circleJumpToDay:'Jump to a day', circleSearchMessages:'Search messages', circleCloseSearch:'Close search', circleBackToChat:'Back to messages', circleSent:'Sent', circleReadBy:'Read by {names}', circleNoMessagesThatDay:'Nothing said that day.', circleTabCircle:'Circle', circleThreadEveryone:'Everyone', circleNoMessages:'No messages yet.', circleMessagePlaceholder:'Write a message...', circleSendBtn:'Send', circleOnlineTitle:'Online now: {names}', linkedCircleTitle:'Linked circle',linkStatusPending:'Invite sent. Awaiting response',linkJustAccepted:'Accepted!',linkRemoveBtn:'Remove from circle',linkRemoveConfirm:'Remove {name} from your circle? They will no longer see or share data with you.',linkCatSearchPlaceholder:'Search what you share…',linkInviteSearchPlaceholder:'Search by name...',linkInviteBtn:'Invite',linkNoResults:'No matching users found.',linkCatStudyEntries:'Study log',linkCatBooks:'Reading list',linkCatJobApplications:'Job applications',linkCatGrammarNotes:'Grammar practice notes',linkCatCourseNotes:'Course notes',linkCatWritingSamples:'Writing samples & feedback',linkCatRecap:'Weekly/monthly recap',linkCatReadiness:'Grammar readiness',linkCatCalendar:'Calendar',linkCatNotebook:'Notebook',linkCatCourses:'Courses',linkSharingHeader:'What you\'re sharing',linkSharingHint:'These are your own settings. Set them before you invite anyone, or change them anytime after. They apply to whoever you\'re linked with.',linkCustomizeFor:'Customize what you share with {name}',linkOverrideHint:'Overrides your defaults just for {name}.',linkResetOverridesBtn:'Reset to your defaults',linkGroupFullMsg:'Your circle is at the 10-person limit.',linkErrorGeneric:'Something went wrong. Please try again.',linkNotLinkedYet:'You\'re not linked with anyone yet. Search for someone below to send an invite.',linkInviteSentMsg:'Invite sent.',linkStatusAlwaysShared:'Always shared',writingFeedbackHeader:'Feedback',writingFeedbackPlaceholder:'Leave feedback on this sample...',writingFeedbackSendBtn:'Send',writingFeedbackEmpty:'No feedback yet.', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently. Leave a line blank to clear that field.',
+    hRecap:'Recap',recapWeekBtn:'Past 7 days',recapMonthBtn:'Past 30 days',todoRemindPast:'{date} has already passed, so there is nothing to remind you of.', todoRemindNeedsDate:'Needs a due date', todoRemindNeedsTime:'Needs a time', todoRemindPassed:'Already passed', someoneName:'Someone', recapCoursesStarted:'Courses started', recapCoursesFinished:'Courses finished', recapProjectsStarted:'Projects started', recapProjectsFinished:'Projects finished', recapNotesWritten:'Notes written', recapTodosDone:'To-dos done', recapStudyHours:'Study hours',recapGrammarPracticed:'Grammar sentences practiced',recapBooksFinished:'Books finished',recapJobsSent:'Applications sent',hGramReadiness:'Grammar readiness', gramReadinessOverall:'Overall', gramReadinessTopik:'TOPIK-tagged only', gramReadinessYou:'You', hGramComparisons:'Similar Grammar Forms',hGramQuiz:'Grammar quiz',quizDesc:'Pick the grammar that correctly fills the blank.',quizStartBtn:'Start quiz',quizQuestionLabel:'Question',quizScoreLabel:'Score',quizNextBtn:'Next',quizSeeResultsBtn:'See results',quizRetakeBtn:'Retake quiz',quizDoneTitle:'Quiz complete!',quizYouScored:'You scored',quizCorrectBadge:'Correct!',quizIncorrectBadge:'Not quite.',quizFromCluster:'From comparison group:',quizFillBlank:'Fill in the blank',quizCorrectAnswerLabel:'Correct answer:',quizHistoryHeader:'Your quiz history',quizMaxScoreLabel:'Best score',quizAttemptsCountLabel:'Attempts',quizAverageLabel:'Average',quizNoAttemptsYet:'No attempts yet.',quizDueCount:'{n} patterns due for review', quizDueCountOne:'{n} pattern due for review',quizReviewDueBtn:'Review due patterns',hLinkedCircle:'Linked circle',linkedCircleDesc:'Link up with other people to share what you track with them. Up to 10 people, and you control what you share.',linkInvitedYou:'{name} invited you to link up.',linkAcceptBtn:'Accept',linkDeclineBtn:'Decline',linkLeaveBtn:'Leave circle',linkRosterHeader:'Your circle',linkStatusAccepted:'Linked', circleOnlineNow:'Online', circleTabMessages:'Messages', circleOnlineCount:'{n} online', circleSearchPlaceholder:'Search messages...', circleFilesBtn:'Files', circleNoResults:'No matching messages.', circleNoFiles:'Nothing shared yet.', circleSearching:'Searching...', circleLoadOlder:'Load older messages', circleAttach:'Attach a file', circleUploading:'Uploading...', circleUploadFailed:"Couldn't upload that file.", circleFileTooBig:'That file is over 25 MB.', circleAttachment:'Attachment', circleJumpToDay:'Jump to a day', circleSearchMessages:'Search messages', circleCloseSearch:'Close search', circleBackToChat:'Back to messages', circleSent:'Sent', circleReadBy:'Read by {names}', circleNoMessagesThatDay:'Nothing said that day.', circleTabCircle:'Circle', circleThreadEveryone:'Everyone', circleNoMessages:'No messages yet.', circleMessagePlaceholder:'Write a message...', circleChecklistPlaceholder:'One item per line...', circleChecklistToggle:'Checklist', circleMakeChecklist:'Make it a checklist', circleUndoChecklist:'Back to a plain message', circleCheckedBy:'Ticked by {name}, {time}', circleSendBtn:'Send', circleOnlineTitle:'Online now: {names}', linkedCircleTitle:'Linked circle',linkStatusPending:'Invite sent. Awaiting response',linkJustAccepted:'Accepted!',linkRemoveBtn:'Remove from circle',linkRemoveConfirm:'Remove {name} from your circle? They will no longer see or share data with you.',linkCatSearchPlaceholder:'Search what you share…',linkInviteSearchPlaceholder:'Search by name...',linkInviteBtn:'Invite',linkNoResults:'No matching users found.',linkCatStudyEntries:'Study log',linkCatBooks:'Reading list',linkCatJobApplications:'Job applications',linkCatGrammarNotes:'Grammar practice notes',linkCatCourseNotes:'Course notes',linkCatWritingSamples:'Writing samples & feedback',linkCatRecap:'Weekly/monthly recap',linkCatReadiness:'Grammar readiness',linkCatCalendar:'Calendar',linkCatNotebook:'Notebook',linkCatCourses:'Courses',linkSharingHeader:'What you\'re sharing',linkSharingHint:'These are your own settings. Set them before you invite anyone, or change them anytime after. They apply to whoever you\'re linked with.',linkCustomizeFor:'Customize what you share with {name}',linkOverrideHint:'Overrides your defaults just for {name}.',linkResetOverridesBtn:'Reset to your defaults',linkGroupFullMsg:'Your circle is at the 10-person limit.',linkErrorGeneric:'Something went wrong. Please try again.',linkNotLinkedYet:'You\'re not linked with anyone yet. Search for someone below to send an invite.',linkInviteSentMsg:'Invite sent.',linkStatusAlwaysShared:'Always shared',writingFeedbackHeader:'Feedback',writingFeedbackPlaceholder:'Leave feedback on this sample...',writingFeedbackSendBtn:'Send',writingFeedbackEmpty:'No feedback yet.', gramEditPattern:'Pattern', gramEditSenses:'Meanings (edit as plain text)', gramEditSensesHint:'One block per meaning, separated by a line with just ---. Each block: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, then EXAMPLES: followed by lines like Korean :: English. Edit any language independently. Leave a line blank to clear that field.',
     hYourCourses:'Your courses', statusPlanning:'Planning', statusSignedUp:'Signed up', statusLockedIn:'Locked in', statusTeachingAssistant:'TA', statusResearchAssistant:'RA',
     hCourseList:'All courses', viewSyllabus:'Syllabus', saveShortLink:'Save link', copyLink:'Copy', shortLinkSaved:'Link saved.', shortLinkTaken:'That link is taken.', shortLinkInvalid:'Letters, numbers and hyphens only.', shortLinkCopied:'Copied!', shortLinkAutoPlaceholder:'auto',
     hNotesPick:'Add a note', lblNotesCourse:'Course', lblNewLecture:'Note title', addLectureBtn:'Add note',
@@ -11716,7 +11764,7 @@ const I18N = {
     actListening:'듣기', actSpeaking:'말하기', actReading:'읽기', actWriting:'쓰기', actGrammar:'문법', actVocabulary:'어휘', actTopik:'TOPIK 준비', actOther:'기타',
     linkOpen:'링크', exportCsv:'CSV 내보내기', exportIcs:'캘린더로 내보내기', addMyselfBtn:'+ 나도 추가',
     topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
-    settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsDockGlassLabel:'하단 바 불투명도', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
+    settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsDockGlassLabel:'하단 바 불투명도', settingsDockSizeLabel:'하단 바 크기', dockSizeCompact:'작게', dockSizeNormal:'보통', dockSizeLarge:'크게', dockSizeXlarge:'아주 크게', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
     settingsPushLabel:'이 기기에서 푸시 알림 받기', pushIosInstallHint:'iPhone에서는 먼저 이 앱을 홈 화면에 추가한 뒤(공유, 홈 화면에 추가) 그곳에서 열어 주세요.', pushUnsupportedHint:'이 브라우저는 푸시 알림을 받을 수 없습니다.', pushBlockedHint:'이 사이트의 알림이 차단되어 있습니다. 브라우저나 휴대폰 설정에서 허용해 주세요.', pushEnableFailed:'푸시 알림을 켜지 못했습니다.', notifChannelPush:'푸시', pushNeedsInApp:'앱 내 알림이 켜져 있어야 합니다', pushTestTitle:'푸시 알림이 켜졌습니다', pushTestBody:'이제 이 기기로 알림과 공지를 받습니다.',
     settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
     lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 반짝입니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누르거나 입력할 수 있는 것 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.', animAddLabel:'추가 배달원', animAddHint:'저장되면 추가 버튼 뒤에서 배달원이 나와 버튼의 첫 글자를 떼어 깔때기로 뒤집고, 입력한 내용을 쏟아 넣은 뒤 가방에 담아 달려갑니다.',
@@ -11796,7 +11844,7 @@ const I18N = {
     gramRegister:'문체', gramColloquial:'구어체', gramWritten:'문어체', gramFavorite:'즐겨찾기 – 어렵거나 중요함으로 표시', gramSortFavorite:'즐겨찾기 우선', gramViewSimilar:'비슷한 문법 형태 보기', gramQuickNote:'+ 이 문법으로 노트 만들기', gramAddToggleBtn:'+ 문법 추가', gramAddSaveBtn:'문법 은행에 추가', gramAddMissingFields:'문형과 최소 하나의 의미를 입력하세요 (아래 붙여넣기 형식 힌트 참고).', gramAddSaveFailed:'저장할 수 없습니다. grammar_points 테이블이 있는지 확인하세요.', gramAiPromptIntro:'이 프롬프트를 복사해 AI 채팅(ChatGPT, Claude 등)에 붙여넣고 답변을 받아 아래에 다시 붙여넣으세요 -- 위에 입력한 모든 문형에 대해 급수, 빈도, 난이도, 격식, 공손함, 문체, 뜻풀이, 예문까지 전부 채워줍니다.', gramCopyAiPromptBtn:'AI 프롬프트 복사', gramCopyAiPromptCopied:'복사됨!', gramPasteAiAnswerLabel:'AI의 답변을 여기에 붙여넣으세요', gramAdvancedAddToggle:'고급 / 직접 입력', gramSimpleAddToggle:'‹ 간편 추가로 돌아가기', gramAddPatternNamesLabel:'문법 표현', gramAddPatternNamesHint:'한 줄에 하나씩 입력하세요. 여러 개를 한 번에 추가할 수 있으며, 프롬프트 하나로 전부 처리됩니다.',
     gramYourSentences:'나의 연습 문장', gramSentencePlaceholder:'이 문법을 사용해 문장을 써 보세요...', gramAddSentence:'추가', lblGramSort:'정렬', gramSortDefault:'기본 순서', gramSortFreqDesc:'가장 흔한 순', gramSortFreqAsc:'가장 드문 순', gramFrequencyHeader:'빈도', gramLevelHeader:'난이도',
     gramMarkNotReviewed:'복습 안 함으로 표시', gramMarkReviewedAgain:'취소 – 복습함으로 표시', gramResources:'영상 및 링크', gramResourceUrlPlaceholder:'유튜브 또는 웹사이트 URL', gramResourceLabelPlaceholder:'라벨', gramAddResource:'추가',
-    hRecap:'요약',recapWeekBtn:'지난 7일',recapMonthBtn:'지난 30일',todoRemindPast:'{date}은(는) 이미 지나서 알림을 보낼 수 없습니다.', todoRemindNeedsDate:'마감일이 필요합니다', todoRemindNeedsTime:'시간이 필요합니다', todoRemindPassed:'이미 지났습니다', someoneName:'누군가', recapCoursesStarted:'시작한 수업', recapCoursesFinished:'끝난 수업', recapProjectsStarted:'시작한 프로젝트', recapProjectsFinished:'끝낸 프로젝트', recapNotesWritten:'작성한 노트', recapTodosDone:'완료한 할 일', recapStudyHours:'공부 시간',recapGrammarPracticed:'연습한 문법 문장',recapBooksFinished:'완독한 책',recapJobsSent:'지원한 곳',hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요.',quizFromCluster:'비교 그룹:',quizFillBlank:'빈칸을 채우세요',quizCorrectAnswerLabel:'정답:',quizHistoryHeader:'나의 퀴즈 기록',quizMaxScoreLabel:'최고 점수',quizAttemptsCountLabel:'시도 횟수',quizAverageLabel:'평균',quizNoAttemptsYet:'아직 기록이 없어요.',quizDueCount:'복습할 문법 {n}개',quizReviewDueBtn:'복습할 문법 풀기',hLinkedCircle:'연결된 그룹',linkedCircleDesc:'다른 사용자와 연결해서 기록한 내용을 공유하세요. 최대 10명까지 가능하며, 무엇을 공유할지는 직접 선택할 수 있습니다.',linkInvitedYou:'{name}님이 연결을 요청했습니다.',linkAcceptBtn:'수락',linkDeclineBtn:'거절',linkLeaveBtn:'그룹 나가기',linkRosterHeader:'내 그룹',linkStatusAccepted:'연결됨', circleOnlineNow:'온라인', circleTabMessages:'메시지', circleOnlineCount:'{n}명 접속 중', circleSearchPlaceholder:'메시지 검색...', circleFilesBtn:'파일', circleNoResults:'일치하는 메시지가 없습니다.', circleNoFiles:'아직 공유된 파일이 없습니다.', circleSearching:'검색 중...', circleLoadOlder:'이전 메시지 더 보기', circleAttach:'파일 첨부', circleUploading:'업로드 중...', circleUploadFailed:'파일을 업로드하지 못했습니다.', circleFileTooBig:'파일이 25MB를 초과합니다.', circleAttachment:'첨부파일', circleJumpToDay:'특정 날짜로 이동', circleSearchMessages:'메시지 검색', circleCloseSearch:'검색 닫기', circleBackToChat:'메시지로 돌아가기', circleSent:'전송됨', circleReadBy:'{names}님이 읽음', circleNoMessagesThatDay:'그날은 대화가 없습니다.', circleTabCircle:'그룹', circleThreadEveryone:'전체', circleNoMessages:'아직 메시지가 없습니다.', circleMessagePlaceholder:'메시지를 입력하세요...', circleSendBtn:'보내기', circleOnlineTitle:'지금 접속 중: {names}', linkedCircleTitle:'연결된 그룹',linkStatusPending:'초대 보냄. 응답 대기 중',linkJustAccepted:'수락함!',linkRemoveBtn:'그룹에서 제거',linkRemoveConfirm:'{name}님을 그룹에서 제거하시겠습니까? 더 이상 서로 데이터를 볼 수 없습니다.',linkCatSearchPlaceholder:'공유 항목 검색…',linkInviteSearchPlaceholder:'이름으로 검색...',linkInviteBtn:'초대',linkNoResults:'일치하는 사용자가 없습니다.',linkCatStudyEntries:'학습 기록',linkCatBooks:'독서 목록',linkCatJobApplications:'구직 지원 내역',linkCatGrammarNotes:'문법 연습 노트',linkCatCourseNotes:'수업 노트',linkCatWritingSamples:'작문 및 피드백',linkCatRecap:'주간/월간 요약',linkCatReadiness:'문법 준비도',linkCatCalendar:'캘린더',linkCatNotebook:'노트북',linkCatCourses:'수업',linkSharingHeader:'공유 중인 항목',linkSharingHint:'이 설정은 본인 계정에만 적용됩니다. 초대를 보내기 전에 미리 설정하거나, 연결된 후 언제든지 바꿀 수 있어요. 연결된 모든 사람에게 동일하게 적용됩니다.',linkCustomizeFor:'{name}님과 공유할 항목 설정',linkOverrideHint:'{name}님에게만 적용되는 개별 설정입니다.',linkResetOverridesBtn:'기본값으로 초기화',linkGroupFullMsg:'그룹이 최대 인원(10명)에 도달했습니다.',linkErrorGeneric:'문제가 발생했습니다. 다시 시도해 주세요.',linkNotLinkedYet:'아직 아무와도 연결되어 있지 않습니다. 아래에서 검색해 초대를 보내보세요.',linkInviteSentMsg:'초대를 보냈습니다.',linkStatusAlwaysShared:'항상 공유됨',writingFeedbackHeader:'피드백',writingFeedbackPlaceholder:'이 작문에 대한 피드백을 남겨보세요...',writingFeedbackSendBtn:'보내기',writingFeedbackEmpty:'아직 피드백이 없습니다.', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다. 비워두면 해당 항목이 지워집니다.',
+    hRecap:'요약',recapWeekBtn:'지난 7일',recapMonthBtn:'지난 30일',todoRemindPast:'{date}은(는) 이미 지나서 알림을 보낼 수 없습니다.', todoRemindNeedsDate:'마감일이 필요합니다', todoRemindNeedsTime:'시간이 필요합니다', todoRemindPassed:'이미 지났습니다', someoneName:'누군가', recapCoursesStarted:'시작한 수업', recapCoursesFinished:'끝난 수업', recapProjectsStarted:'시작한 프로젝트', recapProjectsFinished:'끝낸 프로젝트', recapNotesWritten:'작성한 노트', recapTodosDone:'완료한 할 일', recapStudyHours:'공부 시간',recapGrammarPracticed:'연습한 문법 문장',recapBooksFinished:'완독한 책',recapJobsSent:'지원한 곳',hGramReadiness:'문법 준비도', gramReadinessOverall:'전체', gramReadinessTopik:'TOPIK 표시만', gramReadinessYou:'나', hGramComparisons:'비슷한 문법 형태',hGramQuiz:'문법 퀴즈',quizDesc:'빈칸에 알맞은 문법을 고르세요.',quizStartBtn:'퀴즈 시작',quizQuestionLabel:'문제',quizScoreLabel:'점수',quizNextBtn:'다음',quizSeeResultsBtn:'결과 보기',quizRetakeBtn:'퀴즈 다시 풀기',quizDoneTitle:'퀴즈 완료!',quizYouScored:'점수',quizCorrectBadge:'정답이에요!',quizIncorrectBadge:'아쉬워요.',quizFromCluster:'비교 그룹:',quizFillBlank:'빈칸을 채우세요',quizCorrectAnswerLabel:'정답:',quizHistoryHeader:'나의 퀴즈 기록',quizMaxScoreLabel:'최고 점수',quizAttemptsCountLabel:'시도 횟수',quizAverageLabel:'평균',quizNoAttemptsYet:'아직 기록이 없어요.',quizDueCount:'복습할 문법 {n}개',quizReviewDueBtn:'복습할 문법 풀기',hLinkedCircle:'연결된 그룹',linkedCircleDesc:'다른 사용자와 연결해서 기록한 내용을 공유하세요. 최대 10명까지 가능하며, 무엇을 공유할지는 직접 선택할 수 있습니다.',linkInvitedYou:'{name}님이 연결을 요청했습니다.',linkAcceptBtn:'수락',linkDeclineBtn:'거절',linkLeaveBtn:'그룹 나가기',linkRosterHeader:'내 그룹',linkStatusAccepted:'연결됨', circleOnlineNow:'온라인', circleTabMessages:'메시지', circleOnlineCount:'{n}명 접속 중', circleSearchPlaceholder:'메시지 검색...', circleFilesBtn:'파일', circleNoResults:'일치하는 메시지가 없습니다.', circleNoFiles:'아직 공유된 파일이 없습니다.', circleSearching:'검색 중...', circleLoadOlder:'이전 메시지 더 보기', circleAttach:'파일 첨부', circleUploading:'업로드 중...', circleUploadFailed:'파일을 업로드하지 못했습니다.', circleFileTooBig:'파일이 25MB를 초과합니다.', circleAttachment:'첨부파일', circleJumpToDay:'특정 날짜로 이동', circleSearchMessages:'메시지 검색', circleCloseSearch:'검색 닫기', circleBackToChat:'메시지로 돌아가기', circleSent:'전송됨', circleReadBy:'{names}님이 읽음', circleNoMessagesThatDay:'그날은 대화가 없습니다.', circleTabCircle:'그룹', circleThreadEveryone:'전체', circleNoMessages:'아직 메시지가 없습니다.', circleMessagePlaceholder:'메시지를 입력하세요...', circleChecklistPlaceholder:'한 줄에 항목 하나씩...', circleChecklistToggle:'체크리스트', circleMakeChecklist:'체크리스트로 만들기', circleUndoChecklist:'일반 메시지로 되돌리기', circleCheckedBy:'{name}님이 체크함, {time}', circleSendBtn:'보내기', circleOnlineTitle:'지금 접속 중: {names}', linkedCircleTitle:'연결된 그룹',linkStatusPending:'초대 보냄. 응답 대기 중',linkJustAccepted:'수락함!',linkRemoveBtn:'그룹에서 제거',linkRemoveConfirm:'{name}님을 그룹에서 제거하시겠습니까? 더 이상 서로 데이터를 볼 수 없습니다.',linkCatSearchPlaceholder:'공유 항목 검색…',linkInviteSearchPlaceholder:'이름으로 검색...',linkInviteBtn:'초대',linkNoResults:'일치하는 사용자가 없습니다.',linkCatStudyEntries:'학습 기록',linkCatBooks:'독서 목록',linkCatJobApplications:'구직 지원 내역',linkCatGrammarNotes:'문법 연습 노트',linkCatCourseNotes:'수업 노트',linkCatWritingSamples:'작문 및 피드백',linkCatRecap:'주간/월간 요약',linkCatReadiness:'문법 준비도',linkCatCalendar:'캘린더',linkCatNotebook:'노트북',linkCatCourses:'수업',linkSharingHeader:'공유 중인 항목',linkSharingHint:'이 설정은 본인 계정에만 적용됩니다. 초대를 보내기 전에 미리 설정하거나, 연결된 후 언제든지 바꿀 수 있어요. 연결된 모든 사람에게 동일하게 적용됩니다.',linkCustomizeFor:'{name}님과 공유할 항목 설정',linkOverrideHint:'{name}님에게만 적용되는 개별 설정입니다.',linkResetOverridesBtn:'기본값으로 초기화',linkGroupFullMsg:'그룹이 최대 인원(10명)에 도달했습니다.',linkErrorGeneric:'문제가 발생했습니다. 다시 시도해 주세요.',linkNotLinkedYet:'아직 아무와도 연결되어 있지 않습니다. 아래에서 검색해 초대를 보내보세요.',linkInviteSentMsg:'초대를 보냈습니다.',linkStatusAlwaysShared:'항상 공유됨',writingFeedbackHeader:'피드백',writingFeedbackPlaceholder:'이 작문에 대한 피드백을 남겨보세요...',writingFeedbackSendBtn:'보내기',writingFeedbackEmpty:'아직 피드백이 없습니다.', gramEditPattern:'문법 표현', gramEditSenses:'의미 (텍스트로 수정)', gramEditSensesHint:'--- 줄로 의미별 블록을 구분하세요. 각 블록: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, 그다음 EXAMPLES: 뒤에 한국어 :: 영어 형식의 줄. 각 언어를 독립적으로 수정할 수 있습니다. 비워두면 해당 항목이 지워집니다.',
     hYourCourses:'나의 수업', statusPlanning:'계획 중', statusSignedUp:'신청 완료', statusLockedIn:'확정', statusTeachingAssistant:'조교(TA)', statusResearchAssistant:'연구조교(RA)',
     hCourseList:'전체 수업', viewSyllabus:'강의계획서', saveShortLink:'링크 저장', copyLink:'복사', shortLinkSaved:'링크가 저장되었습니다.', shortLinkTaken:'이미 사용 중인 링크입니다.', shortLinkInvalid:'영문, 숫자, 하이픈만 사용할 수 있습니다.', shortLinkCopied:'복사됨!', shortLinkAutoPlaceholder:'자동',
     hNotesPick:'노트 추가', lblNotesCourse:'수업', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
@@ -11841,7 +11889,7 @@ const I18N = {
     actListening:'Nghe', actSpeaking:'Nói', actReading:'Đọc', actWriting:'Viết', actGrammar:'Ngữ pháp', actVocabulary:'Từ vựng', actTopik:'Luyện TOPIK', actOther:'Khác',
     linkOpen:'Liên kết', exportCsv:'Xuất CSV', exportIcs:'Xuất ra lịch', addMyselfBtn:'+ Thêm tôi',
     topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
-    settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsDockGlassLabel:'Độ mờ của thanh dưới cùng', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
+    settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsDockGlassLabel:'Độ mờ của thanh dưới cùng', settingsDockSizeLabel:'Kích thước thanh dưới cùng', dockSizeCompact:'Nhỏ gọn', dockSizeNormal:'Bình thường', dockSizeLarge:'Lớn', dockSizeXlarge:'Rất lớn', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
     settingsPushLabel:'Nhận thông báo đẩy trên thiết bị này', pushIosInstallHint:'Trên iPhone, hãy thêm ứng dụng này vào Màn hình chính trước (Chia sẻ, rồi Thêm vào Màn hình chính) và mở từ đó.', pushUnsupportedHint:'Trình duyệt này không nhận được thông báo đẩy.', pushBlockedHint:'Thông báo đang bị chặn cho trang này. Hãy cho phép trong cài đặt trình duyệt hoặc điện thoại.', pushEnableFailed:'Không bật được thông báo đẩy.', notifChannelPush:'Đẩy', pushNeedsInApp:'Cần bật thông báo trong ứng dụng', pushTestTitle:'Đã bật thông báo đẩy', pushTestBody:'Thiết bị này giờ sẽ nhận nhắc nhở và thông báo của bạn.',
     settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
     lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn sáng lên khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Mọi thứ bấm được hoặc nhập được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.', animAddLabel:'Người đưa thư khi thêm', animAddHint:'Khi một mục được lưu, một người đưa thư bước ra từ sau nút Thêm, lấy chữ đầu tiên trên nút, lật thành cái phễu, rót những gì bạn đã nhập vào, xếp vào vali rồi chạy đi.',
@@ -11922,7 +11970,7 @@ const I18N = {
     gramRegister:'Văn phong', gramColloquial:'Khẩu ngữ', gramWritten:'Văn viết', gramFavorite:'Yêu thích – Đánh dấu khó/quan trọng', gramSortFavorite:'Yêu thích trước', gramViewSimilar:'Xem các mẫu ngữ pháp tương tự', gramQuickNote:'+ Ghi chú từ mẫu này', gramAddToggleBtn:'+ Thêm ngữ pháp', gramAddSaveBtn:'Thêm vào ngân hàng ngữ pháp', gramAddMissingFields:'Nhập mẫu câu và ít nhất một nghĩa (xem gợi ý định dạng dán bên dưới).', gramAddSaveFailed:'Không thể lưu. Hãy chắc chắn bảng grammar_points tồn tại.', gramAiPromptIntro:'Sao chép prompt này vào bất kỳ AI chat nào (ChatGPT, Claude, v.v.) và dán câu trả lời của nó vào bên dưới -- nó sẽ tự điền mọi thứ (cấp độ, tần suất, độ khó, mức trang trọng, mức lịch sự, văn phong, định nghĩa, ví dụ) cho từng mẫu ngữ pháp bạn đã liệt kê ở trên.', gramCopyAiPromptBtn:'Sao chép prompt AI', gramCopyAiPromptCopied:'Đã sao chép!', gramPasteAiAnswerLabel:'Dán câu trả lời của AI vào đây', gramAdvancedAddToggle:'Nâng cao / nhập thủ công', gramSimpleAddToggle:'‹ Quay lại thêm đơn giản', gramAddPatternNamesLabel:'Mẫu ngữ pháp', gramAddPatternNamesHint:'Mỗi dòng một mẫu. Có thể thêm nhiều mẫu cùng lúc -- một prompt/dán sẽ xử lý tất cả.',
     gramYourSentences:'Câu luyện tập của bạn', gramSentencePlaceholder:'Viết một câu dùng mẫu này...', gramAddSentence:'Thêm', lblGramSort:'Sắp xếp', gramSortDefault:'Mặc định', gramSortFreqDesc:'Phổ biến nhất trước', gramSortFreqAsc:'Ít phổ biến nhất trước', gramFrequencyHeader:'Tần suất', gramLevelHeader:'Cấp độ',
     gramMarkNotReviewed:'Đánh dấu chưa ôn tập', gramMarkReviewedAgain:'Hoàn tác – Đánh dấu đã ôn tập', gramResources:'Video & liên kết', gramResourceUrlPlaceholder:'URL YouTube hoặc trang web', gramResourceLabelPlaceholder:'Nhãn', gramAddResource:'Thêm',
-    hRecap:'Tổng kết',recapWeekBtn:'7 ngày qua',recapMonthBtn:'30 ngày qua',todoRemindPast:'{date} đã qua rồi nên không còn gì để nhắc.', todoRemindNeedsDate:'Cần có hạn', todoRemindNeedsTime:'Cần có giờ', todoRemindPassed:'Đã qua', someoneName:'Ai đó', recapCoursesStarted:'Khóa học đã bắt đầu', recapCoursesFinished:'Khóa học đã kết thúc', recapProjectsStarted:'Dự án đã bắt đầu', recapProjectsFinished:'Dự án đã hoàn thành', recapNotesWritten:'Ghi chú đã viết', recapTodosDone:'Việc đã xong', recapStudyHours:'Giờ học',recapGrammarPracticed:'Câu ngữ pháp đã luyện',recapBooksFinished:'Sách đã đọc xong',recapJobsSent:'Đơn ứng tuyển đã gửi',hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng.',quizFromCluster:'Nhóm so sánh:',quizFillBlank:'Điền vào chỗ trống',quizCorrectAnswerLabel:'Đáp án đúng:',quizHistoryHeader:'Lịch sử trắc nghiệm của bạn',quizMaxScoreLabel:'Điểm cao nhất',quizAttemptsCountLabel:'Số lần làm',quizAverageLabel:'Trung bình',quizNoAttemptsYet:'Chưa có lượt làm nào.',quizDueCount:'{n} mẫu ngữ pháp cần ôn tập',quizReviewDueBtn:'Ôn tập các mẫu cần ôn',hLinkedCircle:'Nhóm liên kết',linkedCircleDesc:'Liên kết với người dùng khác để chia sẻ những gì bạn theo dõi. Tối đa 10 người, và bạn tự quyết định chia sẻ những gì.',linkInvitedYou:'{name} đã mời bạn liên kết.',linkAcceptBtn:'Chấp nhận',linkDeclineBtn:'Từ chối',linkLeaveBtn:'Rời nhóm',linkRosterHeader:'Nhóm của bạn',linkStatusAccepted:'Đã liên kết', circleOnlineNow:'Trực tuyến', circleTabMessages:'Tin nhắn', circleOnlineCount:'{n} trực tuyến', circleSearchPlaceholder:'Tìm tin nhắn...', circleFilesBtn:'Tệp', circleNoResults:'Không có tin nhắn phù hợp.', circleNoFiles:'Chưa có gì được chia sẻ.', circleSearching:'Đang tìm...', circleLoadOlder:'Xem tin nhắn cũ hơn', circleAttach:'Đính kèm tệp', circleUploading:'Đang tải lên...', circleUploadFailed:'Không thể tải tệp lên.', circleFileTooBig:'Tệp vượt quá 25 MB.', circleAttachment:'Tệp đính kèm', circleJumpToDay:'Đi tới một ngày', circleSearchMessages:'Tìm tin nhắn', circleCloseSearch:'Đóng tìm kiếm', circleBackToChat:'Quay lại tin nhắn', circleSent:'Đã gửi', circleReadBy:'{names} đã đọc', circleNoMessagesThatDay:'Ngày đó không có tin nhắn.', circleTabCircle:'Nhóm', circleThreadEveryone:'Mọi người', circleNoMessages:'Chưa có tin nhắn nào.', circleMessagePlaceholder:'Viết tin nhắn...', circleSendBtn:'Gửi', circleOnlineTitle:'Đang trực tuyến: {names}', linkedCircleTitle:'Nhóm liên kết',linkStatusPending:'Đã gửi lời mời. Đang chờ phản hồi',linkJustAccepted:'Đã chấp nhận!',linkRemoveBtn:'Xóa khỏi nhóm',linkRemoveConfirm:'Xóa {name} khỏi nhóm của bạn? Hai bên sẽ không còn thấy hoặc chia sẻ dữ liệu với nhau.',linkCatSearchPlaceholder:'Tìm những gì bạn chia sẻ…',linkInviteSearchPlaceholder:'Tìm theo tên...',linkInviteBtn:'Mời',linkNoResults:'Không tìm thấy người dùng phù hợp.',linkCatStudyEntries:'Nhật ký học tập',linkCatBooks:'Danh sách đọc',linkCatJobApplications:'Đơn ứng tuyển',linkCatGrammarNotes:'Ghi chú luyện ngữ pháp',linkCatCourseNotes:'Ghi chú khóa học',linkCatWritingSamples:'Bài viết & phản hồi',linkCatRecap:'Tổng kết tuần/tháng',linkCatReadiness:'Mức độ sẵn sàng ngữ pháp',linkCatCalendar:'Lịch',linkCatNotebook:'Sổ tay',linkCatCourses:'Khóa học',linkSharingHeader:'Những gì bạn đang chia sẻ',linkSharingHint:'Đây là cài đặt của riêng bạn. Bạn có thể đặt trước khi mời ai đó, hoặc thay đổi bất cứ lúc nào sau khi đã liên kết. Áp dụng cho tất cả những người bạn đang liên kết.',linkCustomizeFor:'Tùy chỉnh những gì bạn chia sẻ với {name}',linkOverrideHint:'Ghi đè cài đặt mặc định chỉ riêng cho {name}.',linkResetOverridesBtn:'Đặt lại về mặc định',linkGroupFullMsg:'Nhóm của bạn đã đạt giới hạn 10 người.',linkErrorGeneric:'Đã có lỗi xảy ra. Vui lòng thử lại.',linkNotLinkedYet:'Bạn chưa liên kết với ai. Hãy tìm kiếm bên dưới để gửi lời mời.',linkInviteSentMsg:'Đã gửi lời mời.',linkStatusAlwaysShared:'Luôn được chia sẻ',writingFeedbackHeader:'Phản hồi',writingFeedbackPlaceholder:'Để lại phản hồi cho bài viết này...',writingFeedbackSendBtn:'Gửi',writingFeedbackEmpty:'Chưa có phản hồi nào.', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập. Để trống dòng nào sẽ xóa trường đó.',
+    hRecap:'Tổng kết',recapWeekBtn:'7 ngày qua',recapMonthBtn:'30 ngày qua',todoRemindPast:'{date} đã qua rồi nên không còn gì để nhắc.', todoRemindNeedsDate:'Cần có hạn', todoRemindNeedsTime:'Cần có giờ', todoRemindPassed:'Đã qua', someoneName:'Ai đó', recapCoursesStarted:'Khóa học đã bắt đầu', recapCoursesFinished:'Khóa học đã kết thúc', recapProjectsStarted:'Dự án đã bắt đầu', recapProjectsFinished:'Dự án đã hoàn thành', recapNotesWritten:'Ghi chú đã viết', recapTodosDone:'Việc đã xong', recapStudyHours:'Giờ học',recapGrammarPracticed:'Câu ngữ pháp đã luyện',recapBooksFinished:'Sách đã đọc xong',recapJobsSent:'Đơn ứng tuyển đã gửi',hGramReadiness:'Mức độ sẵn sàng ngữ pháp', gramReadinessOverall:'Tổng thể', gramReadinessTopik:'Chỉ mục TOPIK', gramReadinessYou:'Bạn', hGramComparisons:'Các mẫu ngữ pháp tương tự',hGramQuiz:'Trắc nghiệm ngữ pháp',quizDesc:'Chọn ngữ pháp đúng để điền vào chỗ trống.',quizStartBtn:'Bắt đầu trắc nghiệm',quizQuestionLabel:'Câu hỏi',quizScoreLabel:'Điểm',quizNextBtn:'Tiếp theo',quizSeeResultsBtn:'Xem kết quả',quizRetakeBtn:'Làm lại trắc nghiệm',quizDoneTitle:'Hoàn thành trắc nghiệm!',quizYouScored:'Bạn đạt',quizCorrectBadge:'Chính xác!',quizIncorrectBadge:'Chưa đúng.',quizFromCluster:'Nhóm so sánh:',quizFillBlank:'Điền vào chỗ trống',quizCorrectAnswerLabel:'Đáp án đúng:',quizHistoryHeader:'Lịch sử trắc nghiệm của bạn',quizMaxScoreLabel:'Điểm cao nhất',quizAttemptsCountLabel:'Số lần làm',quizAverageLabel:'Trung bình',quizNoAttemptsYet:'Chưa có lượt làm nào.',quizDueCount:'{n} mẫu ngữ pháp cần ôn tập',quizReviewDueBtn:'Ôn tập các mẫu cần ôn',hLinkedCircle:'Nhóm liên kết',linkedCircleDesc:'Liên kết với người dùng khác để chia sẻ những gì bạn theo dõi. Tối đa 10 người, và bạn tự quyết định chia sẻ những gì.',linkInvitedYou:'{name} đã mời bạn liên kết.',linkAcceptBtn:'Chấp nhận',linkDeclineBtn:'Từ chối',linkLeaveBtn:'Rời nhóm',linkRosterHeader:'Nhóm của bạn',linkStatusAccepted:'Đã liên kết', circleOnlineNow:'Trực tuyến', circleTabMessages:'Tin nhắn', circleOnlineCount:'{n} trực tuyến', circleSearchPlaceholder:'Tìm tin nhắn...', circleFilesBtn:'Tệp', circleNoResults:'Không có tin nhắn phù hợp.', circleNoFiles:'Chưa có gì được chia sẻ.', circleSearching:'Đang tìm...', circleLoadOlder:'Xem tin nhắn cũ hơn', circleAttach:'Đính kèm tệp', circleUploading:'Đang tải lên...', circleUploadFailed:'Không thể tải tệp lên.', circleFileTooBig:'Tệp vượt quá 25 MB.', circleAttachment:'Tệp đính kèm', circleJumpToDay:'Đi tới một ngày', circleSearchMessages:'Tìm tin nhắn', circleCloseSearch:'Đóng tìm kiếm', circleBackToChat:'Quay lại tin nhắn', circleSent:'Đã gửi', circleReadBy:'{names} đã đọc', circleNoMessagesThatDay:'Ngày đó không có tin nhắn.', circleTabCircle:'Nhóm', circleThreadEveryone:'Mọi người', circleNoMessages:'Chưa có tin nhắn nào.', circleMessagePlaceholder:'Viết tin nhắn...', circleChecklistPlaceholder:'Mỗi dòng một mục...', circleChecklistToggle:'Danh sách kiểm tra', circleMakeChecklist:'Chuyển thành danh sách kiểm tra', circleUndoChecklist:'Trở lại tin nhắn thường', circleCheckedBy:'{name} đã đánh dấu, {time}', circleSendBtn:'Gửi', circleOnlineTitle:'Đang trực tuyến: {names}', linkedCircleTitle:'Nhóm liên kết',linkStatusPending:'Đã gửi lời mời. Đang chờ phản hồi',linkJustAccepted:'Đã chấp nhận!',linkRemoveBtn:'Xóa khỏi nhóm',linkRemoveConfirm:'Xóa {name} khỏi nhóm của bạn? Hai bên sẽ không còn thấy hoặc chia sẻ dữ liệu với nhau.',linkCatSearchPlaceholder:'Tìm những gì bạn chia sẻ…',linkInviteSearchPlaceholder:'Tìm theo tên...',linkInviteBtn:'Mời',linkNoResults:'Không tìm thấy người dùng phù hợp.',linkCatStudyEntries:'Nhật ký học tập',linkCatBooks:'Danh sách đọc',linkCatJobApplications:'Đơn ứng tuyển',linkCatGrammarNotes:'Ghi chú luyện ngữ pháp',linkCatCourseNotes:'Ghi chú khóa học',linkCatWritingSamples:'Bài viết & phản hồi',linkCatRecap:'Tổng kết tuần/tháng',linkCatReadiness:'Mức độ sẵn sàng ngữ pháp',linkCatCalendar:'Lịch',linkCatNotebook:'Sổ tay',linkCatCourses:'Khóa học',linkSharingHeader:'Những gì bạn đang chia sẻ',linkSharingHint:'Đây là cài đặt của riêng bạn. Bạn có thể đặt trước khi mời ai đó, hoặc thay đổi bất cứ lúc nào sau khi đã liên kết. Áp dụng cho tất cả những người bạn đang liên kết.',linkCustomizeFor:'Tùy chỉnh những gì bạn chia sẻ với {name}',linkOverrideHint:'Ghi đè cài đặt mặc định chỉ riêng cho {name}.',linkResetOverridesBtn:'Đặt lại về mặc định',linkGroupFullMsg:'Nhóm của bạn đã đạt giới hạn 10 người.',linkErrorGeneric:'Đã có lỗi xảy ra. Vui lòng thử lại.',linkNotLinkedYet:'Bạn chưa liên kết với ai. Hãy tìm kiếm bên dưới để gửi lời mời.',linkInviteSentMsg:'Đã gửi lời mời.',linkStatusAlwaysShared:'Luôn được chia sẻ',writingFeedbackHeader:'Phản hồi',writingFeedbackPlaceholder:'Để lại phản hồi cho bài viết này...',writingFeedbackSendBtn:'Gửi',writingFeedbackEmpty:'Chưa có phản hồi nào.', gramEditPattern:'Mẫu ngữ pháp', gramEditSenses:'Nghĩa (chỉnh sửa dạng văn bản)', gramEditSensesHint:'Mỗi nghĩa một khối, cách nhau bằng dòng chỉ có ---. Mỗi khối: LABEL_EN/LABEL_KO/LABEL_VI, FORMATION, DEFINITION_EN/KO/VI, NOTES_EN/KO/VI, sau đó EXAMPLES: rồi các dòng Tiếng Hàn :: Tiếng Anh. Có thể chỉnh sửa từng ngôn ngữ độc lập. Để trống dòng nào sẽ xóa trường đó.',
     hYourCourses:'Khóa học của bạn', statusPlanning:'Dự định', statusSignedUp:'Đã đăng ký', statusLockedIn:'Đã chốt', statusTeachingAssistant:'Trợ giảng (TA)', statusResearchAssistant:'Trợ lý nghiên cứu (RA)',
     hCourseList:'Tất cả khóa học', viewSyllabus:'Đề cương', saveShortLink:'Lưu liên kết', copyLink:'Sao chép', shortLinkSaved:'Đã lưu liên kết.', shortLinkTaken:'Liên kết này đã được dùng.', shortLinkInvalid:'Chỉ dùng chữ, số và dấu gạch ngang.', shortLinkCopied:'Đã sao chép!', shortLinkAutoPlaceholder:'tự động',
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
@@ -11986,6 +12034,8 @@ const STATIC_MAP = {
   circleMessageSendBtn:'circleSendBtn', chatTitle:'circleTabMessages',
   settingsStickyTopBarLabel:'settingsStickyTopBarLabel', settingsStickyTopBarHint:'settingsStickyTopBarHint',
   settingsDockGlassLabel:'settingsDockGlassLabel',
+  settingsDockSizeLabel:'settingsDockSizeLabel', dockSizeCompactBtn:'dockSizeCompact', dockSizeNormalBtn:'dockSizeNormal',
+  dockSizeLargeBtn:'dockSizeLarge', dockSizeXlargeBtn:'dockSizeXlarge',
   hCalExport:'calExportTitle', lblCalExportInclude:'calExportInclude',
   calExportAllBtn:'calExportAll', calExportNoneBtn:'calExportNone', calExportGoBtn:'calExportGo',
   settingsShowTopikLabel:'settingsShowTopikLabel', settingsShowTopikHint:'settingsShowTopikHint',
@@ -12628,6 +12678,8 @@ const ICON_PATHS = {
   paperclip: '<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>',
   search: '<circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>',
   check:  '<polyline points="20 6 9 17 4 12"></polyline>',
+  /* Three ticked lines: a message read as a checklist. */
+  listCheck: '<polyline points="3 6 4.8 7.8 8 4.6"></polyline><line x1="11" y1="6" x2="21" y2="6"></line><polyline points="3 12 4.8 13.8 8 10.6"></polyline><line x1="11" y1="12" x2="21" y2="12"></line><polyline points="3 18 4.8 19.8 8 16.6"></polyline><line x1="11" y1="18" x2="21" y2="18"></line>',
   pin:    '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"></path><circle cx="12" cy="10" r="3"></circle>',
   /* An open ring: a condition not met yet, beside `check` for one that is. */
   ring:   '<circle cx="12" cy="12" r="6"></circle>',
@@ -12670,6 +12722,7 @@ const ICON = {
   paperclip: function(sz){ return svgIcon(ICON_PATHS.paperclip, sz); },
   search:  function(sz){ return svgIcon(ICON_PATHS.search, sz); },
   check:   function(sz){ return svgIcon(ICON_PATHS.check, sz); },
+  listCheck: function(sz){ return svgIcon(ICON_PATHS.listCheck, sz); },
   pin:     function(sz){ return svgIcon(ICON_PATHS.pin, sz); },
   ring:    function(sz){ return svgIcon(ICON_PATHS.ring, sz); },
   minus:   function(sz){ return svgIcon(ICON_PATHS.minus, sz); },
@@ -13366,6 +13419,8 @@ function applyLanguage(lang){
   if(ai) ai.innerHTML = ICON.paperclip(15);
   const al = document.getElementById('circleAttachLabel');
   if(al) al.title = t('circleAttach');
+  const clt = document.getElementById('circleChecklistToggle');
+  if(clt) clt.innerHTML = ICON.listCheck(15);
   paintFilesToggle();
   const dl = document.getElementById('calDownloadBtn');
   if(dl){
@@ -14409,6 +14464,7 @@ async function openAccountSettings(){
   document.getElementById('settingsHideCircleTooWrap').classList.toggle('hidden', !hiddenFromLeaderboards[currentUser.id]);
   document.getElementById('settingsStickyTopBarToggle').checked = stickyTopBarEnabled();
   syncDockGlassRow();
+  syncDockSizeRow();
   document.getElementById('settingsMessagingToggle').checked = messagingEnabled();
   document.querySelectorAll('.anim-toggle').forEach(cb=>{ cb.checked = animEnabled(cb.dataset.anim); });
   document.getElementById('settingsShowTopikToggle').checked = showTopik;
@@ -16199,6 +16255,17 @@ function subscribeCircleMessages(){
         if(open) renderCircleMessages();
       }
     })
+    // A tick, or a message turned into a checklist, by anybody in the
+    // conversation. Only the two checklist fields are taken from it: an
+    // UPDATE's row can come without a large unchanged body, and the body
+    // never changes anyway.
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'circle_messages' }, ({ new: row })=>{
+      if(!row || !row.id || circleListOps[row.id]) return;
+      const copies = circleMessageCopies(row.id);
+      if(!copies.length) return;
+      copies.forEach(m=> Object.assign(m, { checklist: !!row.checklist, checks: row.checks || {} }));
+      if(chatPanelOpen()) repaintCircleMessage(row.id);
+    })
     .subscribe();
   // The eye has to turn on when they read it, not when the page is next
   // reloaded. Read markers are upserted, so INSERT alone would only ever
@@ -16323,8 +16390,20 @@ document.getElementById('circleMessageInput').addEventListener('keydown', (e)=>{
   // has, and the reason the field is a textarea rather than an input.
   // keyCode 229 is the other way a browser says "this key is the IME's".
   if(circleComposing || e.isComposing || e.keyCode === 229) return;
-  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendCircleMessage(); }
+  if(e.key === 'Enter' && !e.shiftKey){
+    // Writing a checklist, Enter is the next item ("New items are just a new
+    // line"), which is also what a phone's return key has to do. Cmd/Ctrl+Enter
+    // or the button sends it.
+    if(circleChecklistMode && !(e.metaKey || e.ctrlKey)) return;
+    e.preventDefault(); sendCircleMessage();
+  }
 });
+document.getElementById('circleChecklistToggle').addEventListener('click', ()=>{
+  setCircleChecklistMode(!circleChecklistMode);
+  const input = document.getElementById('circleMessageInput');
+  if(input) input.focus({ preventScroll: true });
+});
+wireChecklistInteractions();
 document.getElementById('closeFriendsBtn').addEventListener('click', ()=>{
   document.getElementById('friendsModal').classList.add('hidden');
 });
@@ -16800,6 +16879,8 @@ async function sendCircleMessage(){
   if((!body && !file) || !currentUser || guestMode) return;
   const row = { sender_id: currentUser.id, body,
                 recipient_id: activeCircleThread === CIRCLE_THREAD ? null : activeCircleThread };
+  // A file with no text has no lines to tick, so it goes as a plain message.
+  if(circleChecklistMode && checklistItems(body).length) row.checklist = true;
   if(file){
     if(file.size > 25 * 1024 * 1024){ showAttachPending(t('circleFileTooBig'), true); return; }
     showAttachPending(t('circleUploading'));
@@ -16825,6 +16906,7 @@ async function sendCircleMessage(){
       return;
     }
     if(data && data[0] && !circleMessages.some(m=>m.id===data[0].id)) circleMessages.push(data[0]);
+    setCircleChecklistMode(false);
     renderCircleMessages();
   } finally {
     circleSendInFlight = false;
@@ -16965,9 +17047,198 @@ function messageBubbleHtml(msg, showTime){
       style="background:${colour}1f;border-color:${colour}59;">
     ${mine ? '' : `<div class="cm-who" style="color:${colour};">${escapeHtml(nameFor(msg.sender_id))}</div>`}
     ${msg.attachment_path ? attachmentHtml(msg) : ''}
-    ${msg.body && msg.body.trim() ? `<div class="cm-body">${escapeHtml(msg.body)}</div>` : ''}
-    ${showTime ? `<div class="cm-time">${escapeHtml(formatMessageTime(msg.created_at))}${receiptHtml(msg)}</div>` : ''}
+    ${messageTextHtml(msg)}
+    ${showTime ? messageTimeHtml(msg) : ''}
   </div>`;
+}
+/* ---------- A MESSAGE CAN BE A CHECKLIST ----------
+   Everyone in the conversation ticks it off, and a ticked item carries the
+   first letter of whoever ticked it, in their own colour (real-user request:
+   "Both people should be able to interact and mark it. When marked, whoever
+   marked it, their first letter in their personal color is added").
+
+   THE ITEMS ARE THE MESSAGE'S OWN LINES ("New items are just a new line"),
+   numbered among the non-blank ones -- the same count the database checks an
+   index against in set_circle_message_check. A body can never be edited, so
+   an index means the same line for the life of the message, and nothing about
+   the items has to be stored but which are ticked and by whom.
+
+   Ticking goes through that function and never through an UPDATE: it writes
+   the caller's own id itself, so nobody can tick something in somebody else's
+   name, and the body stays as unwritable as it always was. */
+function checklistItems(body){
+  return String(body || '').split(/\r?\n/).map(l=> l.trim()).filter(Boolean);
+}
+// A list pasted in as "- milk" or "1. eggs" already HAS a marker, and the tick
+// box is the marker now; leaving both reads as a bullet with a box in front of
+// it. Only taken off when something is left after it.
+const CHECKLIST_MARKER = /^(?:[-*+\u2022\u00b7\u2013\u2014]|\[[ xX]?\]|\d{1,3}[.)])\s+/;
+function checklistItemText(line){
+  const stripped = line.replace(CHECKLIST_MARKER, '');
+  return stripped.trim() ? stripped : line;
+}
+// The first CHARACTER, not the first code unit, so a name that starts with a
+// syllable outside the basic plane is not cut in half.
+function firstLetterOf(userId){
+  const ch = Array.from(String(nameFor(userId) || '').trim())[0];
+  return ch ? ch.toLocaleUpperCase(appLocale()) : '?';
+}
+function isChecklistMessage(msg){ return !!(msg && msg.checklist && checklistItems(msg.body).length); }
+function messageTextHtml(msg){
+  if(!msg.body || !msg.body.trim()) return '';
+  if(!isChecklistMessage(msg)) return `<div class="cm-body" data-msg-text>${escapeHtml(msg.body)}</div>`;
+  const checks = (msg.checks && typeof msg.checks === 'object') ? msg.checks : {};
+  return `<ul class="cm-check" data-msg-text>` + checklistItems(msg.body).map((line, i)=>{
+    const c = checks[String(i)];
+    const by = c && c.by;
+    let mark = '';
+    if(by){
+      const colour = colorForUser(by);
+      const who = c.at
+        ? t('circleCheckedBy').replace('{name}', nameFor(by)).replace('{time}', formatMessageTime(c.at))
+        : nameFor(by);
+      mark = `<span class="cm-check-by" style="color:${colour};border-color:${colour}80;background:${colour}1f;"`
+        + ` title="${escapeHtml(who)}" aria-label="${escapeHtml(who)}">${escapeHtml(firstLetterOf(by))}</span>`;
+    }
+    return `<li class="cm-item${by ? ' done' : ''}"><label>`
+      + `<input type="checkbox" class="cm-item-box" data-i="${i}"${by ? ' checked' : ''}>`
+      + `<span class="cm-item-text">${escapeHtml(checklistItemText(line))}</span></label>${mark}</li>`;
+  }).join('') + `</ul>`;
+}
+// Any list can become a checklist after it was sent ("Any list (any message)
+// should be able to be a checklist"), which is the commonest way one arrives:
+// somebody types the shopping as plain lines. Offered on a message of two or
+// more lines, since a one-line message is not a list. And a checklist nothing
+// has been ticked on yet can go back to plain text; once something is ticked
+// the button goes, because turning it back would hide somebody's progress
+// (the database refuses it too).
+function listToggleHtml(msg){
+  if(!msg.body || !msg.body.trim()) return '';
+  if(msg.checklist){
+    if(msg.checks && Object.keys(msg.checks).length) return '';
+    const label = escapeHtml(t('circleUndoChecklist'));
+    return `<button type="button" class="cm-make-list" aria-pressed="true" title="${label}" aria-label="${label}">${ICON.listCheck(12)}</button>`;
+  }
+  if(checklistItems(msg.body).length < 2) return '';
+  const label = escapeHtml(t('circleMakeChecklist'));
+  return `<button type="button" class="cm-make-list" aria-pressed="false" title="${label}" aria-label="${label}">${ICON.listCheck(12)}</button>`;
+}
+function messageTimeHtml(msg){
+  return `<div class="cm-time">${listToggleHtml(msg)}${escapeHtml(formatMessageTime(msg.created_at))}${receiptHtml(msg)}</div>`;
+}
+// The same message can be on screen in more than one list at once (the chat
+// and a search result), and each holds its own copy of the row.
+function circleMessageCopies(id){
+  const out = [];
+  [circleMessages, circleSearchResults, circleDayResults, circleFileResults].forEach(list=>{
+    (list || []).forEach(m=>{ if(m && m.id === id) out.push(m); });
+  });
+  return out;
+}
+// A tick repaints ONLY the bubble's text and its time row, never the log: a
+// full render puts the log back at the bottom, which would throw somebody
+// reading further up to the end every time the other person ticks something,
+// and it would reload every image in the thread.
+function repaintCircleMessage(id){
+  const log = document.getElementById('circleMessageLog');
+  const msg = circleMessageCopies(id)[0];
+  if(!log || !msg) return;
+  const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 4;
+  log.querySelectorAll('[data-msg="' + CSS.escape(id) + '"]').forEach(el=>{
+    const text = el.querySelector(':scope > [data-msg-text]');
+    if(text) text.outerHTML = messageTextHtml(msg);
+    const time = el.querySelector(':scope > .cm-time');
+    if(time) time.outerHTML = messageTimeHtml(msg);
+  });
+  // Turning a message into a list changes its height; somebody already at the
+  // end of the conversation stays at the end of it.
+  if(atBottom && circleChatView === 'chat') log.scrollTop = log.scrollHeight;
+}
+/* Ticks are shown AT ONCE and sent behind that, one request at a time per
+   message so a quick tick-and-untick cannot land on the server the wrong way
+   round. When the last one is answered the row is read back once and that is
+   what stays: a tick the other person made meanwhile is in it, and so is a
+   refusal (offline, or a list that was turned back to text). While any are
+   unanswered, the live UPDATEs for that message are left alone -- they are
+   our own, a step behind what is already on screen. */
+const circleListOps = {};   // messageId -> { chain, pending, failed, before }
+function runCircleListOp(id, local, remote){
+  const copies = circleMessageCopies(id);
+  if(!copies.length) return;
+  let st = circleListOps[id];
+  if(!st){
+    st = circleListOps[id] = { chain: Promise.resolve(), pending: 0, failed: false,
+      before: { checklist: copies[0].checklist, checks: copies[0].checks || {} } };
+  }
+  st.pending++;
+  const fields = local(copies[0]);
+  copies.forEach(m=> Object.assign(m, fields));
+  repaintCircleMessage(id);
+  st.chain = st.chain.then(async ()=>{
+    try { const { error } = await remote(); if(error) st.failed = true; }
+    catch(e){ st.failed = true; }
+    st.pending--;
+    if(st.pending > 0) return;
+    delete circleListOps[id];
+    let truth = null;
+    try {
+      const { data, error } = await supabaseClient.from('circle_messages')
+        .select('checklist,checks').eq('id', id).maybeSingle();
+      if(!error && data) truth = data;
+    } catch(e){}
+    if(!truth && st.failed) truth = st.before;
+    // A new tick started while this was being read back is newer than it.
+    if(!truth || circleListOps[id]) return;
+    circleMessageCopies(id).forEach(m=> Object.assign(m, { checklist: !!truth.checklist, checks: truth.checks || {} }));
+    repaintCircleMessage(id);
+  });
+}
+function wireChecklistInteractions(){
+  const log = document.getElementById('circleMessageLog');
+  if(!log || log.dataset.checklistWired) return;
+  log.dataset.checklistWired = '1';
+  log.addEventListener('change', (e)=>{
+    const box = e.target.closest && e.target.closest('input.cm-item-box');
+    const bubble = box && box.closest('[data-msg]');
+    if(!bubble || !currentUser || guestMode) return;
+    const id = bubble.dataset.msg, i = Number(box.dataset.i), on = box.checked;
+    const hadFocus = document.activeElement === box;
+    runCircleListOp(id, (m)=>{
+      const checks = Object.assign({}, m.checks || {});
+      if(on) checks[String(i)] = { by: currentUser.id, at: new Date().toISOString() };
+      else delete checks[String(i)];
+      return { checks };
+    }, ()=> supabaseClient.rpc('set_circle_message_check', { p_message: id, p_item: i, p_on: on }));
+    // The repaint replaced the box; a keyboard user keeps their place.
+    if(hadFocus){
+      const again = log.querySelector('[data-msg="' + CSS.escape(id) + '"] input.cm-item-box[data-i="' + i + '"]');
+      if(again) again.focus({ preventScroll: true });
+    }
+  });
+  log.addEventListener('click', (e)=>{
+    const btn = e.target.closest && e.target.closest('.cm-make-list');
+    const bubble = btn && btn.closest('[data-msg]');
+    if(!bubble || !currentUser || guestMode) return;
+    e.preventDefault();
+    const id = bubble.dataset.msg;
+    const on = btn.getAttribute('aria-pressed') !== 'true';
+    runCircleListOp(id, ()=> ({ checklist: on }),
+      ()=> supabaseClient.rpc('set_circle_message_checklist', { p_message: id, p_on: on }));
+  });
+}
+// The composer's toggle. Off after every send: a checklist is something you
+// mean once, and a mode left on would turn the next ordinary message into one.
+let circleChecklistMode = false;
+function setCircleChecklistMode(on){
+  circleChecklistMode = !!on;
+  const b = document.getElementById('circleChecklistToggle');
+  if(b) b.setAttribute('aria-pressed', circleChecklistMode ? 'true' : 'false');
+  const input = document.getElementById('circleMessageInput');
+  if(input){
+    // Through data-ph-key, so a language change carries the right one.
+    input.dataset.phKey = circleChecklistMode ? 'circleChecklistPlaceholder' : 'circleMessagePlaceholder';
+    input.placeholder = t(input.dataset.phKey);
+  }
 }
 // The href is filled in by paintAttachments once the signed URL is back --
 // rendering has to stay synchronous, and a link that briefly points nowhere
@@ -18714,6 +18985,50 @@ function syncDockGlassRow(){
   if(out) out.textContent = dockAlphaLabel(n);
 }
 applyDockGlassPref();
+/* ---------- HOW BIG THE BAR IS, AND THAT IS A SETTING TOO ----------
+   Four named sizes rather than a slider (real-user request: "different display
+   sizes for the bottom bar"). A size is something you pick once and live with,
+   and four answers you can name is easier to come back to than a number on a
+   track. Same home as the opacity: localStorage, per device, since how big a
+   bar has to be is a fact about the phone and the thumb, not the account.
+
+   It is ONE factor, --dock-s, and the CSS multiplies every length of the bar
+   by it (see .tab-dock), --dock-space included, so the page's own bottom
+   padding, the chat launcher and the update pill all keep clear of whichever
+   size is on. Written on <html> rather than <body> because --dock-space is
+   declared on :root and resolves its var() there.
+
+   0.86 / 1 / 1.14 / 1.28 puts the bar at 50 / 58 / 66 / 74 px tall: the
+   compact one still has 38px buttons, which is about the smallest target a
+   thumb hits without looking, and the largest stops before the icons start
+   to read as a second, louder row of content. Absent means Normal, which is
+   the bar exactly as it was. */
+const DOCK_SIZE_KEY = 'ptDockSize';
+const DOCK_SIZES = { compact:0.86, normal:1, large:1.14, xlarge:1.28 };
+function isDockSize(v){ return typeof v === 'string' && Object.prototype.hasOwnProperty.call(DOCK_SIZES, v); }
+function dockSizePref(){
+  let v = null;
+  try{ v = localStorage.getItem(DOCK_SIZE_KEY); }catch(e){}
+  return isDockSize(v) ? v : 'normal';
+}
+function applyDockSizePref(size){
+  const key = isDockSize(size) ? size : dockSizePref();
+  document.documentElement.style.setProperty('--dock-s', String(DOCK_SIZES[key]));
+  // The pill is sized off the button it sits under, so a bar that has just
+  // grown or shrunk would otherwise keep a pill of the old size until the
+  // next tab change.
+  const dock = document.getElementById('tabDock');
+  if(dock){ try{ moveRowSlider(dock, { instant:true }); }catch(e){} }
+}
+function syncDockSizeRow(){
+  const cur = dockSizePref();
+  document.querySelectorAll('#settingsDockSizeToggle > button').forEach(b=>{
+    const on = b.dataset.size === cur;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+applyDockSizePref();
 /* ---------- THE DOCK GIVES WAY AS YOU READ DOWN THE PAGE ----------
    Scroll down and the bar eases to a smaller version of itself; scroll up and
    it eases back to full size. Two resting states with a continuous motion
@@ -20365,6 +20680,15 @@ if(dockGlassSlider){
     applyDockGlassPref(n);
   });
 }
+document.querySelectorAll('#settingsDockSizeToggle > button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const size = b.dataset.size;
+    if(!isDockSize(size)) return;
+    try{ localStorage.setItem(DOCK_SIZE_KEY, size); }catch(e){}
+    applyDockSizePref(size);
+    syncDockSizeRow();
+  });
+});
 document.getElementById('settingsMessagingToggle').addEventListener('change', (e)=>{
   localStorage.setItem(MESSAGING_KEY, e.target.checked ? '1' : '0');
   applyMessagingPref();
