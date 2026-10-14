@@ -5994,6 +5994,36 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE CHAT PANEL CAN BE DRAGGED TO SIZE ON A COMPUTER (14 Oct, hundred-and-twenty-third pass)
+
+"You should be able to drag to resize the chatbox a bit (to a certain limit,
+at least on desktop)."
+
+- **A grip in the panel's TOP-LEFT corner** (`#chatResizeGrip`), because the
+  panel hangs from its bottom-right: dragging up makes the conversation
+  taller, dragging left makes it wider, and the panel does not move. Pointer
+  capture, so a fast drag cannot leave it behind; `body.chat-resizing` keeps
+  the cursor and stops text being selected mid-drag.
+- **Two variables on the panel**, `--chat-w` and `--chat-log-h` (the LOG's
+  height, so the head, tools and composer keep their own sizes). The log rule
+  that reads it is inside `min-width: 641px`, so a phone's
+  `min(42dvh,240px)` is untouched; full screen overrides both.
+- **Limits**: 300 to 720 wide and never past the window less 32px; the log
+  from 160px to whatever leaves the panel's own head, tools and composer on
+  screen (the chrome is measured off the panel as it is, so a wrapped thread
+  row or an open search counts). A window made smaller pulls a saved size back
+  inside it.
+- **Remembered per device** (`ptChatSize`, `{w,h}`), applied when the panel
+  opens (after it is displayed, since the limits are measured off it).
+  **Double-click the grip, or Home, to reset**; the arrow keys move it 20px
+  (60 with Shift), so it is not pointer-only. Hidden on a phone and in full
+  screen.
+
+Checked in the pane at 1024x768 with synthetic pointer events: 340x240 to
+490x300 for a drag of 150 left and 60 up (saved), 720x474 for a drag far past
+both limits with the panel's top still on screen (36px), 300x160 at the other
+end, and the double-click back to 340x240 with the saved size cleared.
+
 ## WHO REACTED, AND WHICH ACCOUNT A TICK'S LETTER IS (14 Oct, hundred-and-twenty-second pass)
 
 "Click to check who put the reactions" and "hover over the 'K' for example in a
