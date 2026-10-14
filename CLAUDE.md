@@ -5994,6 +5994,109 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## GROUP CHATS, AND ONE ANSWER TO "WHO SEES THIS MESSAGE" (15 Oct, hundred-and-twenty-fourth pass)
+
+"Make group chats." A third kind of conversation beside the circle
+("Everyone") and a direct one: a named set of people, chosen by whoever made
+it. `sql migrations/circle_chat_groups_migration.sql`, **applied to the live
+database 15 Oct** as `circle_chat_groups` plus `circle_chat_groups_strict_booleans`
+(the file holds both).
+
+### The model
+
+- `circle_chat_groups` (id, name 1-60 chars, created_by = the manager) and
+  `circle_chat_group_members` (group_id, user_id, added_by, added_at).
+  `circle_messages.group_id`, with a check that a message has a person OR a
+  group, never both. No insert/update/delete policies on the two group tables:
+  everything goes through five security definer functions --
+  `create_chat_group`, `rename_chat_group`, `add_chat_group_members`,
+  `remove_chat_group_member` (manager only), `leave_chat_group`.
+- **You can only put somebody in a group if they are in YOUR circle**, at
+  creation and when adding. A group can still contain two people who are not
+  in each other's circles (Kristoffer's linked friend and Roxy): being put in
+  a group by somebody you know is the consent, the way a WhatsApp group works.
+- **A group message is seen by the group's CURRENT members and nobody else**,
+  the sender included once they have left. Leaving means the group and its
+  history are gone from your side; a member added later sees the whole
+  history (the Slack shape), and the add form says so.
+- The last one out deletes the group and its messages (cascade). A manager
+  leaving hands the role to whoever has been in it longest. **Known gap**: the
+  attachments of a deleted group's messages stay in the storage bucket,
+  unreachable (nothing can sign them), because SQL cannot delete the files.
+
+### "Who sees this message" is one function now
+
+It was the same predicate written out six times (select policy, storage
+policy, four security definer functions). It is `can_see_circle_message(viewer,
+sender, recipient, group)`, and all six call it. Read markers have their own,
+`can_see_read_marker`, because a group member outside your circle has to be
+able to see your marker for the read eye to turn on.
+
+**`shared_circle` returns NULL, not false, for two people with no link at
+all** (`is_linked` compares two null group ids). Every plpgsql caller writes
+`if not (...) then refuse`, and `not NULL` is NULL, which IF treats as false,
+so it did NOT refuse. Caught by the rollback test: a stranger was added to a
+group. It was also already true of the old reaction/tick/request functions,
+which let a stranger holding a circle-wide message's id react to it or tick
+it; the shared function is wrapped in `coalesce(..., false)`, which closes
+that too. **Any new check on `shared_circle` must be `is not true`, never
+`not`.**
+
+Verified as real accounts inside rolled-back transactions (a temporary link
+put a third account in Kristoffer's circle). The new predicate agrees with
+the old one on every existing message for every account (0 differ). A
+stranger cannot be added, cannot send into a group, react, rename, or see a
+group message, its members or its read markers. A member outside Roxy's
+circle sees the group's messages and Roxy's group marker but not her circle
+marker. Only the manager can remove. Removed: the messages are gone and edit
+and send are refused. The heir takes over, and the last leave deletes
+everything. Nothing persisted (all counts back to zero afterwards).
+
+### On screen
+
+- Thread key `'g:' + id`, the same for every member (a direct thread is
+  keyed by the other person). `threadOf`, `circleThreads()` (Everyone,
+  groups, people), `threadAddress()` (what a send or a resend is addressed
+  to) and `scopeToThread()` (search and jump-to-day) all know about it. **The
+  circle is now `recipient is null AND group is null`**: "no recipient"
+  alone would pour every group into Everyone's search.
+- Group tabs carry a two-heads icon; a dashed "+ New group" ends the picker
+  (only when you have somebody to add). With a group open, a strip under the
+  tabs shows its faces (initial in their colour), the other members' names
+  and a gear for its settings.
+- **The form takes the log's place** (it carries `.cm-log`, so it is the
+  same box in the corner, on a phone and in full screen, plus the composer's
+  height, since the composer steps aside). Create: name and who. Settings:
+  rename, members (the manager's tag, a remove ✕ for the manager), add people
+  from your circle, leave (red, with a confirm that says when leaving deletes
+  the group). State lives in `circleGroupForm`, not the inputs, so a live
+  re-render keeps what was typed. Escape closes it before anything else;
+  picking a thread or closing the panel puts it away.
+- Live: a `circle-chat-groups` channel on both tables. INSERT/UPDATE are
+  filtered by RLS; a DELETE is not and carries only the key, so only one
+  naming a group I hold is acted on. Being added fetches that group's history
+  and read markers, since neither was visible at load; being removed drops
+  its messages and moves off its thread.
+- Read receipts in a group expect every CURRENT member but me.
+- **Typing in a direct thread never showed, and that is fixed on the way.**
+  The sender broadcasts the thread from their side (my id) and the receiver
+  compared it with theirs (the sender's id), so it never matched; and a
+  pulse about somebody else's direct thread lit the launcher's dots. The
+  receiver now maps its own id to the sender's thread and drops anything
+  that is not the circle, a direct thread with me, or a group I am in.
+- Korean says 단체방 and Vietnamese "nhóm chat", because both languages
+  already use their word for "group" (그룹 / Nhóm) for the CIRCLE.
+- The dock stays offered to somebody with an empty circle who is still in a
+  group.
+
+Tested in the pane at 1280 and 375, light and dark, with the database and
+`rpc` stubbed: the group tab and its unread count, the strip, settings,
+rename, remove, add (with the empty-pick error), Escape, create by Enter
+(lands in the new group with the composer focused), a send addressed to
+the group, receipts turning on from two members' group markers, scope
+filters, and leave (lands on Everyone). **Not tested**: two real accounts
+live (being added in one tab and seeing it arrive in the other).
+
 ## THE CHAT PANEL CAN BE DRAGGED TO SIZE ON A COMPUTER (14 Oct, hundred-and-twenty-third pass)
 
 "You should be able to drag to resize the chatbox a bit (to a certain limit,
