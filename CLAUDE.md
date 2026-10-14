@@ -5994,6 +5994,42 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## WHO REACTED, AND WHICH ACCOUNT A TICK'S LETTER IS (14 Oct, hundred-and-twenty-second pass)
+
+"Click to check who put the reactions" and "hover over the 'K' for example in a
+checklist to see which account that K is exactly".
+
+- **Pressing a reaction pill now says WHO** instead of toggling yours
+  (`openReactorsMenu`). It renders into the message's own menu element
+  (`#cmMenu`, `dataset.mode = 'who'`; the ordinary menu sets `'actions'`), so
+  it closes on a press elsewhere, a scroll by hand and Escape exactly as the
+  menu does, and a scroll keeps it against the PILL, not the bubble. One row
+  a person: their drawing, their colour, their name, what it is; you first,
+  with a red "Remove" on your own row (`data-act="unreact"`). "{n} reactions"
+  through tCount. Adding or changing your own is the message's menu (long
+  press / dots / right-click), as before. The outside-press handler ignores a
+  press on the same message's `.cm-reacts`, so the pill toggles its own list
+  shut.
+- **A tooltip of our own** (`#cmTip`, `showCmTip` / `hideCmTip`), because the
+  browser's title waits a second and never shows on a phone at all: AT ONCE on
+  hover where the pointer can hover, for keyboard focus (the letter is
+  `tabindex="0"`), and on a TAP for 2.6s. On a checklist letter: the person's
+  colour dot, their name, "(you)" if it is you, "Ticked {time}"
+  (`data-tip-by`, `data-tip-at` on `.cm-check-by`). On a reaction chip, on a
+  computer: the reaction and everyone behind it. z-index 970, above the
+  full-screen chat. The tap on a letter cannot tick the item: the letter is
+  outside the item's label.
+- **`cmTipTimer` / `cmTipFor` are `var`**: `closeChatPanel` hides the tip and
+  can run at start-up (from `updateChatDockVisibility`) before a `let` there is
+  reached. Same trap, same fix, as the edit state.
+
+Checked in the pane: at 393 a tap on the "K" shows "Kristoffer (you), Ticked
+11:52 PM" above it and leaves the item ticked; pressing the pill lists "2
+reactions: Kristoffer (you) In love [Remove], Roxy Fire"; Remove sends one
+`set_circle_message_reaction(null)`, closes the list and leaves Roxy's. At
+desktop width a hover on the "R" shows "Roxy, Ticked 11:51 PM". No hover
+tooltip under the phone emulation, which is right.
+
 ## REACTIONS HANG OFF THE BUBBLE'S CORNER, AND THERE ARE SIXTEEN (14 Oct, hundred-and-twenty-first pass)
 
 "Instead of reactions going here [under the text, above the time], can they
