@@ -5994,6 +5994,57 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## REACTIONS HANG OFF THE BUBBLE'S CORNER, AND THERE ARE SIXTEEN (14 Oct, hundred-and-twenty-first pass)
+
+"Instead of reactions going here [under the text, above the time], can they
+be attached to the corner of the message itself? And can you make them a lot
+cooler and add like 10 more?"
+
+- **One pill on the bubble's bottom corner, on the side facing the middle of
+  the conversation**: bottom-left of your own (right-aligned) bubbles,
+  bottom-right of the other person's. Anchored 30px INSIDE that corner and
+  grown OUTWARD (`left/right: calc(100% - 30px)`, row-reversed on your own),
+  so a second or third reaction grows into the empty middle, never off the
+  log, which clips. `.cm-msg:has(> .cm-reacts:not(:empty))` gives the bubble
+  13px more padding underneath (the pill never sits on the time or the eye)
+  and a 12px margin (never on the next bubble); `:has` because a live
+  reaction only repaints the pill's contents.
+- **Sixteen.** New keys: fire, hundred, clap, party, hearteyes, cool, think,
+  fingerheart (손하트), skull ("I'm dead"), angry. The six old keys stay, so
+  every stored reaction keeps its meaning. `sql migrations/
+  circle_message_reactions_more_migration.sql`, **applied 14 Oct**
+  (`circle_message_reactions_more`): only the allowed list in
+  `set_circle_message_reaction` changed. Checked as Roxy in a DO block that
+  raised: fingerheart taken, swapped to heart, "unicorn" refused.
+- **Shaded, not flat.** Every fill is a gradient lit from the top left with a
+  shine where the light lands. **The gradients are defined ONCE** in a hidden
+  SVG on the body (`#cmrDefs`, `CM_REACTION_DEFS`, made on first use by
+  `ensureReactionDefs`) and referenced by id; a gradient per drawing would need
+  an id per instance. Not display:none, which stops gradients painting in some
+  browsers. **A gradient on a perfectly vertical STROKE needs
+  `gradientUnits="userSpaceOnUse"`** (`cmrTearV`): an objectBoundingBox
+  gradient on a zero-width box paints nothing.
+- **Three drawings were redone after rendering them at 170px**, which is the
+  check that matters: the thinking face's hand pointed a finger UP past the
+  mouth (a very different gesture at chip size; it now lies along the jaw), the
+  finger heart's two fingers merged into one bent one (now a clear X, each
+  finger with its own outline, the thumb over the index), and the anger mark
+  read as a fork (now the standard four corners turned in to a centre).
+- **Each one moves in its own way**: under the pointer in the picker, and once
+  as it lands on a message (`.cm-react-chip.pop[data-r=...] svg`): the heart
+  beats, the thumb nods, the laugh shakes, the star spins, the fire flickers
+  from its base, the hands clap, the popper tips, the skull rattles, angry
+  fumes. A ring goes out from a reaction you have just added. All off under
+  reduced motion.
+- **The picker is two rows of eight** (a grid of `minmax(0,36px)` columns, so a
+  320 phone still fits), each mark arriving 14ms after the one before.
+
+Checked in the pane at 393 with made-up messages and the database stood in
+for, light and dark: pills on the right corners and growing the right way,
+your own ringed in green, counts, the two-row picker, and adding Party sends
+one `set_circle_message_reaction` and pops the chip onto the corner with its
+own animation.
+
 ## A MESSAGE CAN BE EDITED BY WHOEVER SENT IT (14 Oct, hundred-and-twentieth pass)
 
 "There should be an edit button on messages." **Edit** in the message's menu
