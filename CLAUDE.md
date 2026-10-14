@@ -5994,6 +5994,77 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## A MESSAGE CAN BE EDITED BY WHOEVER SENT IT (14 Oct, hundred-and-twentieth pass)
+
+"There should be an edit button on messages." **Edit** in the message's menu
+(after Copy text), on your OWN messages only, a file with no words included
+(it can be given some). Defaults taken without asking, all one line to change:
+no time limit, no edit history kept, "edited" shown in the time row with the
+edit's time as its title.
+
+`sql migrations/circle_message_edit_migration.sql`, **applied to the live
+database 14 Oct** (project kbqwitmxpmkueryjsyip, migration name
+`circle_message_edit`). **This ENDS the rule the checklist notes below lean
+on** ("a body can never be edited, so an index means the same line for good"):
+
+| | |
+|---|---|
+| `edited_at timestamptz` | null until edited; the insert policy now also requires it null, so nobody can send a message already marked "edited" |
+| `edit_circle_message(id, body) returns jsonb` | the ONLY way a body changes: sender only, `kind = 'text'` only, trimmed, max 4000, empty refused unless there is a file; the same text again changes nothing and is not marked edited |
+| `circle_message_item_keys(body)` | what each checklist item SAYS (non-blank lines, a pasted marker taken off), internal, execute revoked from everybody |
+
+- **A tick follows its ITEM, not its position.** Kept at the same index if
+  that item's text is still there, else moved to wherever that text now is
+  (first unused match), else dropped. So a typo fix or an added line keeps
+  everybody's progress, and an item rewritten or removed loses its tick,
+  since it is no longer the thing that was done. A checklist edited down to no
+  lines stops being one. `remapChecks()` is the client's copy of the same
+  rule, so what shows at once is what the server answers.
+- **Proved as Kristoffer and Roxy inside a DO block that raised at the end**
+  (checked afterwards: 0 leftovers, 0 edited rows): Roxy ticks milk and bread,
+  her edit is refused ("not allowed"); Kristoffer's edit to `milk / - eggs
+  (big) / butter / bread` keeps milk at 0 and moves bread 2 to 3; the same text
+  again leaves edited_at alone; blank is refused ("empty"); cutting to
+  `milk / bread` gives 0 and 1; an insert with edited_at set is refused by the
+  policy, a plain one goes in.
+
+**The client** (`index.html`, chat section, beside `sendCircleMessage`):
+
+- **The composer IS the editor**, the way every chat app does it. A bar above
+  it (`#circleEditBar`: pencil, "Editing", the message's first line, a ✕) is
+  the way out; the paperclip and the checklist switch step aside
+  (`.cm-compose.editing .cm-attach`); the Send button reads Save; the bubble
+  being edited is outlined (`.cm-editing`, also set by `messageBubbleHtml` so a
+  full render keeps it). Whatever was half-typed is put aside
+  (`circleEditDraft`, text and checklist mode) and comes back afterwards.
+- **Enter saves, except in a checklist**, where it is a new line exactly as in
+  the composer's checklist mode; Cmd/Ctrl+Enter or Save saves it.
+- **Put down by** the bar's ✕, Escape (before the search and the panel, in the
+  chat's own Escape handler), closing the panel, switching thread, and the
+  message being deleted or hidden.
+- **Saved through `runCircleMessageOp`**, so it shows at once, is sent in order
+  with any tick on the same message, and is read back. The op engine's fields
+  now include `body` and `edited_at`, so a refused edit puts the old words
+  back. The live UPDATE takes `body` and `edited_at` only when the row says it
+  has been edited (an UPDATE that left a large body alone can arrive without
+  it).
+- `repaintCircleMessage` now INSERTS the text element where there was none, for
+  a file that has just been given words.
+- Editing does not broadcast "typing". `paintCircleEditState` runs from
+  applyLanguage so Save keeps its label in a new language; the two state
+  variables are `var` because applyLanguage can run before their line.
+
+Checked in the pane at 393 with made-up messages and the database stood in for
+(nothing left the machine): the menu offers Edit on mine and not on Roxy's;
+Edit loads the text, outlines the bubble, hides the paperclip and reads Save;
+typing and Enter sends one `edit_circle_message` and inserts nothing, shows
+"edited" (title "Edited {time}") and brings the draft back; Enter in a
+checklist edit is a new line, and the edit kept milk and bread ticked around
+an inserted line; Escape cancels and leaves the panel open; a refused save
+snaps back to the old text; a blank edit says so and the note clears on
+typing. **Not seen with two real accounts**: an edit arriving live on the
+other phone.
+
 ## THE CHAT CAN TAKE THE WHOLE WINDOW (14 Oct, hundred-and-nineteenth pass)
 
 "I want to be able to full screen the chatting." A button in the chat panel's
