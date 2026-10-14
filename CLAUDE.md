@@ -5994,6 +5994,48 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE CHAT CAN TAKE THE WHOLE WINDOW (14 Oct, hundred-and-nineteenth pass)
+
+"I want to be able to full screen the chatting." A button in the chat panel's
+head, left of the ✕ (`#chatFullBtn`, four corner marks out, four in when on,
+named "Full screen" / "Exit full screen"). Remembered per device
+(`ptChatFull` in localStorage, like the bar size); absent is the corner panel
+exactly as it was.
+
+- **`.chat-full` goes on `#chatDock` only while the panel is up.**
+  `openChatPanel` applies the preference, and the close timer takes it off
+  AFTER the 240ms shrink -- dropped on the first frame, the panel would jump
+  back into the corner to shrink there. With the class left on a closed chat,
+  the dock would be a full-window box holding only the launcher.
+- **Sized to the VISUAL viewport, not `inset:0`** (`syncChatFullViewport`,
+  `--chat-vv-h` / `--chat-vv-top`, on visualViewport resize and scroll). A
+  phone's keyboard shrinks only the visual viewport (the 22 Sep lesson about
+  `innerHeight`), so a panel sized to the layout viewport would put the
+  composer under the keyboard and let Safari pan the head off the top.
+- **z-index 940**: over the sticky top bar (200) and the bell's panel (900),
+  under every modal (1000) so a picture or a confirm still opens over it.
+  **The message menu went 150 to 950** for this, since it is on `<body>` and
+  would otherwise open behind the full-screen chat.
+- On a wide window the panel's children are one centred column, 880px max:
+  a 1900px composer is a line nobody can follow.
+- The log keeps its place at the end when it grows or shrinks (read before
+  the class change, written after).
+- `html.chat-full-open` locks the page behind it.
+- Escape is unchanged: search first, then the panel. Full screen stays the
+  preference for the next open.
+
+Checked in the pane at 393 and 1280 as a guest with the dock forced visible:
+dock 393x852 and 1280x800, launcher hidden, log 112..771 on the phone, the
+centred 880px column on the desktop, at-end kept both ways, the class off
+after the close animation, and reopening comes back full. **Not seen on a real
+phone with the keyboard up**, which is the case the visual-viewport sizing is
+for.
+
+- **This chat's title is kristoffergt.com, and the request was first answered
+  as if it were Welcome Korea's**, because the title was not checked. The
+  memory note `which-chat-is-which` says to check it before the first tool
+  call; that is the rule.
+
 ## REACTIONS, A MENU ON EVERY MESSAGE, DELETE FOR ME OR FOR EVERYONE (14 Oct, hundred-and-eighteenth pass)
 
 "Even messages that have been sent should be able to be turned into checklist.
