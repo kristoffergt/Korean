@@ -5994,6 +5994,78 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE LOADING SCREEN WAS EVERY STARTUP READ, TWICE (15 Oct, hundred-and-twenty-sixth pass)
+
+"This loading is often here for 2-4 seconds", of the "Loading…" card, right
+after the 6.7 MB fix below shipped. The bytes were gone and the wait was not,
+so it had to be the requests themselves, and the API logs (edge_logs,
+filtered on Kristoffer's uid) showed the shape outright: **the 22 reads
+loadAllData starts in parallel arrive twice**, once all together and then
+again one after another, 35-120 ms apart.
+
+**A Supabase query builder is a lazy THENABLE, and every `then` sends the
+query again.** The September parallelisation built `__rows` as builders,
+handed them to `Promise.all` (which calls `then` on each, sending all 22) and
+then read each one with `await __rows.x` (which calls `then` again, sending it
+a second time, serially). So the "parallel" load was a parallel load followed
+by a serial one: **1.05-1.17 s of the loading screen on a desktop**, more on a
+phone, and every read paid twice. One line fixes it:
+`__rows[k] = Promise.resolve(__rows[k])` calls `then` exactly once and keeps
+the answer. **Any builder awaited in more than one place must be wrapped the
+same way**; this is the same trap Welcome Korea's notes record as "`void` on a
+builder sends nothing", met from the other end.
+
+- **One profile read instead of two before the app opens.** `proceedToApp`
+  asked whether a profile exists (accounts without a name in their metadata)
+  and then `showRestoreIfPending` asked again for `deletion_scheduled_at`, one
+  after the other: about 0.28 s. It is one select of both now, handed down as
+  `onAuthed(user, { row })`; a failed read passes nothing down and the old
+  separate read runs as before.
+- What is left on the way in: session, AAL, that one profile read, then the
+  batch alongside the vacations chain (three reads in a row), then the gate.
+
+### Every loading line has the bouncing dots
+
+"Also make any loading have the ... bounce." The `.wave-dots` markup already
+existed (the cmWave keyframes, reduced motion included); `loadingHtml(text)`
+strips a trailing "…" or "..." off the translated string and appends it, and
+`setLoadingText(el, text)` writes it. So it works in all three languages
+without touching a single translation. Applied to: the panel's "Loading…", the
+sign-in button while busy, the attachment upload line, the circle search, the
+password-updated message, both job/Yonsei board lists and the Yonsei
+pagination, the job board's update and AI buttons while busy, the calendar
+export, the note "Saving…" status, both version panels, the expenditure
+loading state and the recap header. **Only where the string is SHOWN while
+something is running**: a label that merely ends in "…" (a menu item that
+opens something) keeps its static dots.
+
+### Home, Reading and Jobs are drawn like the flag and the crest
+
+"Make the home, jobs, reading ... tab icons more detailed like the yonsei and
+korea ones." The taegeuk and the Yonsei crest are dense emblems; the other
+three were plain Feather outlines beside them. Redrawn, still 24-unit inline
+SVGs at a 1.8 stroke with 1.1-1.2 detail lines:
+
+| tab | now |
+|---|---|
+| Home | a **hanok**: upturned ridge, concave hip slopes, eaves rising to the corners, roof-tile lines, two posts, a lattice door, a stone base |
+| Reading | an open book over its page block, with lines of text on both pages |
+| Jobs | a briefcase with handle, flap seam, clasp and two buckled straps |
+
+- **Home is a hanok on purpose**, so the row reads flag, crest and house as one
+  set. A plain house would have been "more detailed" too; this is the call
+  made, and it is one SVG to swap back.
+- **The dock's lit icon keeps its detail.** The filled version (`.ico-fill`)
+  knocks out the tile lines, the doorway, the text lines, the seam, the clasp
+  and the buckles. The detail strokes are drawn on top in the same ink, so
+  they carry `.ico-line` and switch OFF when the fill switches on (and swap
+  with it mid-drag); left on they painted straight back over their own holes
+  and the lit icon came out a plain silhouette.
+- Five copies in all: the three `#tabNav` buttons and `QUICK_NAV_ICONS`'
+  reading and jobs (the dock clones the nav's icons). Checked rendered at the
+  row's 14px, the dock's 23px and 96px, both themes, lit and unlit, beside the
+  two emblems.
+
 ## OPENING THE APP DOWNLOADED 6.7 MB OF COURSE NOTES, 98% OF IT SIX SCREENSHOTS (15 Oct, hundred-and-twenty-fifth pass)
 
 "Have a look at the loading of our website. It takes A LONG time." Measured,
