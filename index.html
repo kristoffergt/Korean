@@ -19018,20 +19018,51 @@ function applyChatFull(on){
 /* ---------- DRAGGED TO SIZE ----------
    The size is remembered per device (ptChatSize), like full screen. Limits:
    300 to 720 wide (and never past the window less its margins), and a
-   conversation from 160px tall to whatever leaves the panel's own head, tools
-   and composer on the screen. A double-click on the grip puts it back. The
-   arrow keys move it 20px at a time, so it is not a pointer-only control. */
+   conversation from 160px tall to whatever keeps the WHOLE panel, head
+   included, below the pinned header (chatTopLimit). A double-click on the grip
+   puts it back. The arrow keys move it 20px at a time, so it is not a
+   pointer-only control.
+   The header limit is a real-user report (15 Oct: "you need to add a limit to
+   extending this chatbox size. now it goes up under the main tabs"). The bar
+   is z-index 200 and the dock 90, so the panel's head, grip included, went
+   behind the tabs and could not be dragged back down. */
 const CHAT_SIZE_KEY = 'ptChatSize';
 const CHAT_W_MIN = 300, CHAT_W_MAX = 720, CHAT_LOG_MIN = 160, CHAT_W_DEFAULT = 340, CHAT_LOG_DEFAULT = 240;
+const CHAT_TOP_GAP = 12;
+// In a window too short for the panel at its usual minimum below the header,
+// the conversation gives way first, down to this.
+const CHAT_LOG_FLOOR = 80;
+// The lowest the header ever reaches on screen: its bottom edge with the page
+// at the top, since it only gets SHORTER when it condenses on scroll. A limit
+// read off the bar as it happens to be would let a panel sized while scrolled
+// down slide under it again on the way back up. Unpinned, the bar scrolls away
+// but is still there at the top of the page.
+function chatTopLimit(){
+  if(stickyTopBarEnabled() && topBarFullH > 0) return topBarRestTop + topBarFullH;
+  const bar = document.getElementById('topBar');
+  if(!bar) return 0;
+  const r = bar.getBoundingClientRect();
+  return r.height > 0 ? Math.max(0, r.bottom + window.scrollY) : 0;
+}
 function chatSizeLimits(){
   const panel = document.getElementById('chatPanel');
   const log = document.getElementById('circleMessageLog');
   // What the panel needs besides the conversation itself: read off the panel
   // as it is, so a thread row that wrapped or an open search is counted.
   const chrome = panel && log ? Math.max(0, panel.offsetHeight - log.offsetHeight) : 220;
+  // Where the panel's foot is: the launcher's top less the dock's gap. Read
+  // off the launcher rather than the panel, which is mid-transform while it
+  // grows open.
+  const dock = document.getElementById('chatDock');
+  const launcher = document.getElementById('chatLauncher');
+  let foot = window.innerHeight - 74;
+  if(dock && launcher){
+    const lr = launcher.getBoundingClientRect();
+    if(lr.height > 0) foot = lr.top - (parseFloat(getComputedStyle(dock).rowGap) || 0);
+  }
   return {
     wMax: Math.max(CHAT_W_MIN, Math.min(CHAT_W_MAX, window.innerWidth - 32)),
-    hMax: Math.max(CHAT_LOG_MIN, window.innerHeight - chrome - 110)
+    hMax: Math.max(CHAT_LOG_FLOOR, Math.floor(foot - chatTopLimit() - CHAT_TOP_GAP - chrome))
   };
 }
 function readChatSize(){
@@ -19050,10 +19081,15 @@ function applyChatSize(size, save){
     panel.style.removeProperty('--chat-w');
     panel.style.removeProperty('--chat-log-h');
     if(save){ try{ localStorage.removeItem(CHAT_SIZE_KEY); }catch(e){} }
+    // The default size has to fit under the header too. Set, not saved: a
+    // taller window gives the default back.
+    const lim = chatSizeLimits();
+    if(lim.hMax < CHAT_LOG_DEFAULT) panel.style.setProperty('--chat-log-h', lim.hMax + 'px');
   } else {
     const lim = chatSizeLimits();
     const w = Math.round(Math.max(CHAT_W_MIN, Math.min(lim.wMax, size.w)));
-    const h = Math.round(Math.max(CHAT_LOG_MIN, Math.min(lim.hMax, size.h)));
+    // The usual minimum gives way when the window cannot fit it below the header.
+    const h = Math.round(Math.max(Math.min(CHAT_LOG_MIN, lim.hMax), Math.min(lim.hMax, size.h)));
     panel.style.setProperty('--chat-w', w + 'px');
     panel.style.setProperty('--chat-log-h', h + 'px');
     if(save){ try{ localStorage.setItem(CHAT_SIZE_KEY, JSON.stringify({ w, h })); }catch(e){} }
@@ -19105,8 +19141,13 @@ function currentChatSize(){
     e.preventDefault();
     applyChatSize({ w: cur.w + mv[0], h: cur.h + mv[1] }, true);
   });
-  // A window made smaller pulls a saved size back inside it.
-  window.addEventListener('resize', ()=>{ const v = readChatSize(); if(v) applyChatSize(v, false); });
+  // A window made smaller pulls a saved size back inside it. A frame later,
+  // so the header has re-measured itself (its own resize listener is added
+  // after this one) before the limit is read off it.
+  window.addEventListener('resize', ()=> requestAnimationFrame(()=>{
+    const p = document.getElementById('chatPanel');
+    if(p && !p.classList.contains('hidden')) applyChatSize(readChatSize(), false);
+  }));
 })();
 function toggleChatFull(){
   const on = !document.getElementById('chatDock').classList.contains('chat-full');
@@ -19118,9 +19159,9 @@ function openChatPanel(){
   clearTimeout(chatCloseTimer);
   applyChatFull(chatFullPref());
   p.classList.remove('hidden');
-  // After it is displayed: the limits are measured off the panel itself.
-  const savedSize = readChatSize();
-  if(savedSize) applyChatSize(savedSize, false);
+  // After it is displayed: the limits are measured off the panel itself. With
+  // nothing saved, this fits the default size under the header.
+  applyChatSize(readChatSize(), false);
   // Read a layout value so the browser starts the transition from the closed
   // state; without it the class change coalesces and there is no movement.
   void p.offsetWidth;

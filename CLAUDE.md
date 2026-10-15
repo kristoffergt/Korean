@@ -5994,6 +5994,39 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## THE CHAT PANEL STOPS BELOW THE HEADER (15 Oct, hundred-and-twenty-eighth pass)
+
+"You need to add a limit to extending this chatbox size. now it goes up under
+the main tabs", with a screenshot: dragged tall on a desktop, the panel's head
+(the resize grip and the thread buttons) sat behind the tab row. The header is
+z-index 200 and the chat dock 90, so it was hidden, and the grip that would
+have pulled it back down was hidden with it. The old limit only kept the panel
+inside the window (`innerHeight - chrome - 110`).
+
+- **`chatTopLimit()` is the lowest the header ever reaches**: its bottom edge
+  with the page at the top (`topBarRestTop + topBarFullH`), not where it is
+  now. It only gets shorter when it condenses, so a limit read off the bar as
+  it is would let a panel sized while scrolled down slide under it on the way
+  back up. With the bar unpinned it is read off the bar plus the scroll.
+- **The panel's foot is read off the LAUNCHER** (its top less the dock's gap),
+  not the panel, which is mid-transform while it grows open. The log may be as
+  tall as foot - limit - `CHAT_TOP_GAP` (12) - the panel's own chrome.
+- **In a short window the conversation gives way**: the usual 160px minimum
+  drops to what fits, down to `CHAT_LOG_FLOOR` (80). **The default size is
+  fitted too** (`applyChatSize(null)` now also clamps), set but not saved, so
+  a taller window gives the default back. The panel applies its size on every
+  open and on resize while open.
+- The resize handler runs a frame late, because the header's own resize
+  listener is added after it and the limit reads the header's metrics.
+
+Checked in a harness page with the app's stylesheet, the real top bar and
+chat dock markup and the real functions, in headless Chrome: at 1000x800 a
+huge drag stops with the panel's top 12px under the bar, also when sized while
+scrolled 600px and scrolled back; at 1000x560 the default and the smallest
+size both come out 12px under the bar (log 93px). **The panel must have
+`.open` in such a harness**, or its closed state (translateY 12px, scale
+0.94) is what the rects report.
+
 ## A VERSION TAKES A BREAK AND A CHANGE, AND AUTOSAVE CAN BE TURNED OFF (15 Oct, hundred-and-twenty-seventh pass)
 
 "How does version history work? is it a thoughtful design? does it save a new
