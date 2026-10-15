@@ -52,9 +52,3 @@ It's a single self-contained HTML file (`index.html`, named for GitHub Pages), n
 - **Helper scripts** in `scripts/` for the job board sync.
 - `sw.js` caches the app shell so a reload survives a flaky connection; the data itself is always fetched live.
 - Hosted on GitHub Pages, with a `404.html` that matches the app.
-
-## Working on it
-
-`CLAUDE.md` is the running log: every round of work, what was reported, what
-was measured, and the traps that cost time. It is the first thing to read
-before changing anything.
