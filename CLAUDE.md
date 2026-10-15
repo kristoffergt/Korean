@@ -5994,6 +5994,108 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## A VERSION TAKES A BREAK AND A CHANGE, AND AUTOSAVE CAN BE TURNED OFF (15 Oct, hundred-and-twenty-seventh pass)
+
+"How does version history work? is it a thoughtful design? does it save a new
+version based on amount of characters written or time paused? maybe it can be
+a combination (because no reason to save if time paused for a while and it's
+just a word difference or something). Also have an option (well placed) to
+turn off auto-saving if you dont want it."
+
+### What it was, honestly
+
+A version was ONE PER SITTING: the note as opened, snapshotted on the first
+save after opening it, plus one every 30 minutes of editing, and a note kept
+**two**. It looked at neither how much changed nor how long the pause was.
+So opening a note twice to fix a typo pushed both real versions out, and the
+history then held two near-copies of the current note.
+
+### What it is now (`makeNoteAutosaver`, `keepNoteVersion`, `noteChangeSize`)
+
+A version is what the note was BEFORE A STRETCH OF EDITING, and keeping one
+takes both:
+
+| | |
+|---|---|
+| **a break** | opening the note, a save after `NOTE_VERSION_PAUSE_MS` (10 min) with no save at all, or `NOTE_VERSION_EVERY_MS` (30 min) of editing since the last break. With autosave off, a manual save after a while is a break |
+| **a change** | at the break, the note as it stood is measured against the NEWEST VERSION KEPT; `NOTE_VERSION_MIN_CHANGE` (30) or more is a new version |
+
+- **Under the threshold it REPLACES the newest version** rather than being
+  dropped. Dropping it would leave the newest version without the small fixes,
+  so undoing a later rewrite would undo those too; replacing keeps it current
+  and pushes nothing older out. The cost, stated: after many small visits in a
+  row, the version from before the first of them is gone, since each step only
+  differed by a little from the next.
+- **Measured against the newest kept version, not the note as opened**, so
+  small changes over several sittings add up until they count.
+- **"Use this version" always keeps what is in the editor**, however small the
+  difference (`forceVersion`), the one save that throws text away. The force is
+  taken by the very next save whether or not it keeps anything, so restoring
+  something identical cannot hand it on to an unrelated later save.
+- **Five kept now (`NOTE_VERSIONS_KEPT`), was two.** Five is what Writing has
+  always kept, and with breaks a long sitting with pauses makes more than one.
+  The stamps in `NOTE_LIST_SELECT` are generated from it, so the count on the
+  history button follows. One constant to change back.
+
+### How "changed" is measured
+
+`noteChangeSize` counts every word, picture and opening tag on each side and
+weighs what one side has more of: a word by its length, a picture 30, a
+formatting tag 2. The answer is the larger of added and removed. So a typo
+fixed is the word's length, a moved word is 0, bolding a word is 2, a sentence
+added is its length. **No diff and no DOM**: a note can still carry a pasted
+picture as a `data:` address, and parsing that into elements would load it.
+Block tags count as a space, or "first</p><p>second" would read as one word.
+30 characters is about a sentence, a few words in English and more in Korean.
+
+### Autosave can be turned off
+
+A checkbox at the right end of each editor's save-status line ("Last saved
+by..."), because that line is what it changes. `NOTE_AUTOSAVE_KEY` on this
+device, absent means on (the `MESSAGING_KEY` shape); one setting for both
+editors, and the other box follows. Tooltip `noteAutosaveTip`.
+
+Off:
+- nothing saves by itself, and the status line reads `noteUnsaved` once there
+  is something unsaved;
+- **leaving asks** (`leave()`): closing the note, Escape, opening another one.
+  It is the old `unsavedConfirm`, kept in all three tables since autosave
+  replaced it; OK throws the changes away, Cancel stays;
+- the page being hidden saves nothing (`saveIfAuto`), and closing the tab
+  shows the browser's warning while anything is unsaved;
+- **a save that was asked for and failed is still retried** after 15 s: it
+  was asked for. Its failure message stays on the line until then rather than
+  being replaced by "Unsaved changes", which would hide why.
+
+Turned back on with unsaved changes, the next tick saves them.
+
+### Checked
+
+The main script block parses (block 0's one "error" is the HTML comment that
+mentions `<script>`, same as HEAD), the same four dynamic ids as HEAD, the
+three new keys in all three tables, 45 em dashes before and after. The engine
+was driven headlessly with a fake database and a fake clock, 36 cases: the
+measure (typo, moved words, a sentence, a picture, bold, `&nbsp;`, Korean, a
+block boundary), a typo visit replacing the newest version, a real change
+pushing, continuous typing writing the list once, an 11-minute pause pushing
+and a 5-minute one not, a tiny change at a pause replacing, the 30-minute
+ceiling, a forced restore keeping a tiny change, an identical restore not
+leaking its force, the cap at five, a failed list read writing nothing and the
+next save retrying, and the whole of autosave off (nothing saved, status,
+hidden page, leave cancelled and confirmed, Save, a failed save retried,
+turned back on). The status row was screenshotted with the app's real
+stylesheet in both themes at a phone-width card (the switch drops under a long
+status line, right-aligned) and on a desktop (one line).
+
+- **Harness trap**: the first `<style>` match in this file is inside an HTML
+  comment near the top that MENTIONS `<style>`, and taking from there throws
+  away `:root` with every colour token (unstyled buttons, invisible
+  checkboxes). Match `^<style` at the start of a line. And headless Chrome will
+  not make a window narrower than 500 px: put the card in a fixed-width box to
+  see a phone width.
+
+**Not checked**: a real signed-in note (this machine cannot sign in).
+
 ## THE LOADING SCREEN WAS EVERY STARTUP READ, TWICE (15 Oct, hundred-and-twenty-sixth pass)
 
 "This loading is often here for 2-4 seconds", of the "Loading…" card, right

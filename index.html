@@ -2826,6 +2826,12 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
    thing in it, so it sits at the right-hand end of its row (real-user
    request: "align right instead of left as it is currently"). */
 .hint.saved-info{text-align:right;}
+/* The switch that turns autosave off sits on the same line as the save
+   status, because that line is what it changes: off, it reads "Unsaved
+   changes" until Save is pressed. */
+.saved-row{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;column-gap:12px;row-gap:2px;margin-top:10px;}
+.saved-row .hint.saved-info{margin-top:0;flex:1 1 auto;min-width:0;}
+.note-autosave{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;user-select:none;-webkit-user-select:none;}
 /* An earlier version is OPENED from this list rather than only previewed, so
    a row is a button: who and when, as much of it as fits on the line, and the
    word that says it opens. */
@@ -4567,7 +4573,7 @@ body.ws-work .ws-class-only{display:none !important;}
       <div class="card hidden" id="notebookEditorCard">
         <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" data-title-key="tipClickToEdit"></span><span><button class="export-btn act-save" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
         <div class="notes-panel hidden" id="notebookTitleEditPanel"></div>
-        <div class="hint saved-info" id="notebookLastSavedInfo"></div>
+        <div class="saved-row"><div class="hint saved-info" id="notebookLastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="notebookAutosaveLabel"></span></label></div>
         <div id="notebookQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
         <div class="note-pagebar" id="notebookPageBar" style="display:none;"></div>
         <button class="linkbtn" id="notebookVersionHistoryToggle" style="margin-top:10px;"></button>
@@ -4729,7 +4735,7 @@ body.ws-work .ws-class-only{display:none !important;}
     <div class="card hidden" id="editorCard">
       <h2><span id="editorLectureTitle"></span><span><button class="export-btn act-save" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
       <div class="notes-panel hidden" id="editorTitleEditPanel"></div>
-      <div class="hint saved-info" id="lastSavedInfo"></div>
+      <div class="saved-row"><div class="hint saved-info" id="lastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="noteAutosaveLabel"></span></label></div>
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
       <div class="note-pagebar" id="notePageBar" style="display:none;"></div>
       <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
@@ -12023,7 +12029,7 @@ const I18N = {
     hNotesPick:'Add a note', lblNotesCourse:'Course', lblNewLecture:'Note title', addLectureBtn:'Add note',
     generalNotes:'General notes', noNote:'No course', allPeople:'All', lblNotesPersonFilter:'Show', closeNoteBtn:'Close',
     lastSavedBy:'Last saved by {name} at {time}', neverSaved:'Not saved yet',
-    versionHistory:'Version history ({n})', noVersions:'No earlier versions', versionsLoadFailed:'Could not load the earlier versions.', versionOpen:'Open', versionUse:'Use this version', versionUseConfirm:'Replace what is in the editor with this version? Nothing is saved until you press Save.', versionUseConfirmKept:'Replace what is in the editor with this version? What is there now is kept in the version history.', noteSaving:'Saving…', noteSaveFailed:"Couldn't save. Your changes are kept and it will try again.", versionCopy:'Copy', versionCopied:'Copied', versionBack:'Back', noteFontSize:'Font size', noteFontSizeUp:'Bigger', noteFontSizeDown:'Smaller', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', eventForUser:'For',
+    versionHistory:'Version history ({n})', noVersions:'No earlier versions', versionsLoadFailed:'Could not load the earlier versions.', versionOpen:'Open', versionUse:'Use this version', versionUseConfirm:'Replace what is in the editor with this version? Nothing is saved until you press Save.', versionUseConfirmKept:'Replace what is in the editor with this version? What is there now is kept in the version history.', noteSaving:'Saving…', noteSaveFailed:"Couldn't save. Your changes are kept and it will try again.", versionCopy:'Copy', versionCopied:'Copied', versionBack:'Back', noteFontSize:'Font size', noteFontSizeUp:'Bigger', noteFontSizeDown:'Smaller', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', noteAutosave:'Autosave', noteAutosaveTip:'Saves the note while you type. Turn it off to save only with Save or Cmd+S.', noteUnsaved:'Unsaved changes', eventForUser:'For',
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
@@ -12148,7 +12154,7 @@ const I18N = {
     hNotesPick:'노트 추가', lblNotesCourse:'수업', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
     generalNotes:'일반 노트', noNote:'수업 없음', allPeople:'전체', lblNotesPersonFilter:'보기', closeNoteBtn:'닫기',
     lastSavedBy:'{name}님이 {time}에 저장함', neverSaved:'아직 저장되지 않음',
-    versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', versionsLoadFailed:'이전 버전을 불러오지 못했습니다.', versionOpen:'열기', versionUse:'이 버전 사용', versionUseConfirm:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 저장을 누르기 전까지는 저장되지 않습니다.', versionUseConfirmKept:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 지금 내용은 버전 기록에 남습니다.', noteSaving:'저장 중…', noteSaveFailed:'저장하지 못했습니다. 변경 내용은 그대로 있으며 다시 저장을 시도합니다.', versionCopy:'복사', versionCopied:'복사됨', versionBack:'뒤로', noteFontSize:'글자 크기', noteFontSizeUp:'크게', noteFontSizeDown:'작게', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', eventForUser:'대상',
+    versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', versionsLoadFailed:'이전 버전을 불러오지 못했습니다.', versionOpen:'열기', versionUse:'이 버전 사용', versionUseConfirm:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 저장을 누르기 전까지는 저장되지 않습니다.', versionUseConfirmKept:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 지금 내용은 버전 기록에 남습니다.', noteSaving:'저장 중…', noteSaveFailed:'저장하지 못했습니다. 변경 내용은 그대로 있으며 다시 저장을 시도합니다.', versionCopy:'복사', versionCopied:'복사됨', versionBack:'뒤로', noteFontSize:'글자 크기', noteFontSizeUp:'크게', noteFontSizeDown:'작게', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', noteAutosave:'자동 저장', noteAutosaveTip:'입력하는 동안 노트를 저장합니다. 끄면 저장 버튼이나 Cmd+S로만 저장됩니다.', noteUnsaved:'저장되지 않은 변경 사항', eventForUser:'대상',
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
@@ -12274,7 +12280,7 @@ const I18N = {
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
     generalNotes:'Ghi chú chung', noNote:'Không có khóa học', allPeople:'Tất cả', lblNotesPersonFilter:'Hiển thị', closeNoteBtn:'Đóng',
     lastSavedBy:'Lưu lần cuối bởi {name} lúc {time}', neverSaved:'Chưa được lưu',
-    versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', versionsLoadFailed:'Không tải được các phiên bản trước.', versionOpen:'Mở', versionUse:'Dùng phiên bản này', versionUseConfirm:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Sẽ không có gì được lưu cho đến khi bạn nhấn Lưu.', versionUseConfirmKept:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Nội dung hiện tại sẽ được giữ trong lịch sử phiên bản.', noteSaving:'Đang lưu…', noteSaveFailed:'Không lưu được. Thay đổi của bạn vẫn được giữ và sẽ thử lưu lại.', versionCopy:'Sao chép', versionCopied:'Đã sao chép', versionBack:'Quay lại', noteFontSize:'Cỡ chữ', noteFontSizeUp:'Lớn hơn', noteFontSizeDown:'Nhỏ hơn', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', eventForUser:'Cho',
+    versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', versionsLoadFailed:'Không tải được các phiên bản trước.', versionOpen:'Mở', versionUse:'Dùng phiên bản này', versionUseConfirm:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Sẽ không có gì được lưu cho đến khi bạn nhấn Lưu.', versionUseConfirmKept:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Nội dung hiện tại sẽ được giữ trong lịch sử phiên bản.', noteSaving:'Đang lưu…', noteSaveFailed:'Không lưu được. Thay đổi của bạn vẫn được giữ và sẽ thử lưu lại.', versionCopy:'Sao chép', versionCopied:'Đã sao chép', versionBack:'Quay lại', noteFontSize:'Cỡ chữ', noteFontSizeUp:'Lớn hơn', noteFontSizeDown:'Nhỏ hơn', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', noteAutosave:'Tự động lưu', noteAutosaveTip:'Lưu ghi chú trong khi bạn gõ. Tắt để chỉ lưu bằng nút Lưu hoặc Cmd+S.', noteUnsaved:'Có thay đổi chưa lưu', eventForUser:'Cho',
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
@@ -12367,7 +12373,7 @@ const STATIC_MAP = {
   // writes the raw string, which would show a literal {title}.
   deleteThisOnlyBtn:'thisOccurrenceOnly', deleteAllBtn:'allOccurrences', deleteChoiceCancelBtn:'cancelBtn',
   hNotesPick:'hNotesPick', lblNotesCourse:'lblNotesCourse', lblNewLecture:'lblNewLecture', addLectureBtn:'addLectureBtn', lblNewLectureHeader:'lblCustomHeader',
-  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', chooseFileLabelResumeUpload:'chooseFile', lblWritingQ53ImageFile:'chooseFile', lblWritingImageFile:'chooseFile',
+  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', noteAutosaveLabel:'noteAutosave', notebookAutosaveLabel:'noteAutosave', chooseFileLabelResumeUpload:'chooseFile', lblWritingQ53ImageFile:'chooseFile', lblWritingImageFile:'chooseFile',
   studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', studySubNotebookBtn:'studySubNotebook', studySubVideosBtn:'studySubVideos', hGrammar:'hGrammar', gramAddToggleBtn:'gramAddToggleBtn',
   hVideos:'hVideos', lblVideoSearch:'lblVideoSearch', lblVideoSort:'lblVideoSort',
   hNotebookPick:'hNotesPick', lblNewNotebookTitle:'lblNewLecture', lblNewNotebookHeader:'lblCustomHeader', addNotebookBtn:'addLectureBtn',
@@ -22656,9 +22662,11 @@ function levelFor(hours, goal){
 // be added here too or the app never sees it. PostgREST has no "everything
 // but". The two stamps are the version list's own dates, pulled out of the
 // JSON server side: a few bytes that let the history button say how many
-// versions there are before any of them is downloaded. Two, because a note
-// keeps two (the slice in makeNoteAutosaver).
-const NOTE_VERSION_STAMPS = 'prev_v0_at:previous_versions->0->>updated_at,prev_v1_at:previous_versions->1->>updated_at';
+// versions there are before any of them is downloaded. One per version a note
+// keeps (NOTE_VERSIONS_KEPT, which makeNoteAutosaver's keepNoteVersion obeys).
+// It was two until 15 Oct; five is what Writing has always kept.
+const NOTE_VERSIONS_KEPT = 5;
+const NOTE_VERSION_STAMPS = Array.from({ length: NOTE_VERSIONS_KEPT }, (_, i)=> `prev_v${i}_at:previous_versions->${i}->>updated_at`).join(',');
 const NOTE_LIST_SELECT = {
   course_notes: 'id,user_id,course_id,lecture_title,content,created_at,updated_at,sort_order,updated_by,color,header,' + NOTE_VERSION_STAMPS,
   notebook_notes: 'id,user_id,header,lecture_title,content,color,sort_order,created_at,updated_at,updated_by,' + NOTE_VERSION_STAMPS,
@@ -22668,7 +22676,11 @@ function noteVersionsLoaded(note){ return Array.isArray(note.previous_versions);
 // list nor the stamps.
 function noteVersionCount(note){
   if(noteVersionsLoaded(note)) return note.previous_versions.length;
-  if('prev_v0_at' in note) return (note.prev_v0_at ? 1 : 0) + (note.prev_v1_at ? 1 : 0);
+  if('prev_v0_at' in note){
+    let n = 0;
+    for(let i = 0; i < NOTE_VERSIONS_KEPT; i++) if(note['prev_v' + i + '_at']) n++;
+    return n;
+  }
   return null;
 }
 // The list for one note, read once and kept on the note. Resolves to null when
@@ -41768,16 +41780,32 @@ wireEditorKeys('notebookEditorCard', 'saveNotebookBtn', 'closeNotebookBtn');
 // NOTE_AUTOSAVE_MAX_MS while it carries on, so a long unbroken stretch of
 // typing is never further than that from being stored. It also saves on the
 // way out -- closing the note, opening another, the page being hidden or left
-// -- so the "you have unsaved changes, switch anyway?" question these editors
-// used to ask has nothing left to ask about. Save and Cmd+S still work; they
-// save NOW, and the line under the editor is the answer rather than an alert.
+// -- so there is nothing to ask about. Save and Cmd+S still work; they save
+// NOW, and the line under the editor is the answer rather than an alert.
 //
-// A VERSION IS A SITTING, NOT A SAVE. Every save used to push the content it
-// replaced into previous_versions, which keeps two, and saving every few
-// seconds would leave both of those a few seconds old: no history at all. So
-// the note as it was is snapshotted on the first save after it is opened, and
-// again once every NOTE_VERSION_EVERY_MS of editing. Using an old version
-// always snapshots first, since that is the one save that throws text away.
+// AUTOSAVE CAN BE TURNED OFF (real-user request, 15 Oct: "have an option (well
+// placed) to turn off auto-saving if you dont want it"), from the switch on the
+// save-status line of either editor (NOTE_AUTOSAVE_KEY, on this device). Off,
+// a note saves only with Save or Cmd+S, the status line says "Unsaved changes"
+// until it does, and leaving it asks first, the way these editors did before
+// autosave (leave()). A save that fails is still retried by itself: that one
+// was asked for.
+//
+// A VERSION IS WHAT THE NOTE WAS BEFORE A STRETCH OF EDITING, and one is kept
+// only when there was a BREAK and the note had CHANGED (real-user request, 15
+// Oct: "maybe it can be a combination (because no reason to save if time
+// paused for a while and it's just a word difference or something)"). It used
+// to be one per sitting, so opening a note to fix a typo pushed a real version
+// out of a list that kept two.
+// - A break is opening the note, a save after NOTE_VERSION_PAUSE_MS with no
+//   save at all (coming back to it), or NOTE_VERSION_EVERY_MS of editing since
+//   the last break. With autosave off, a manual save after a while is a break.
+// - At a break, the note as it stood is measured against the newest version
+//   kept (noteChangeSize). NOTE_VERSION_MIN_CHANGE or more and it is a new
+//   version. Less, and it REPLACES the newest one: that version stays current,
+//   and nothing older is pushed out for a word or two.
+// - Using an old version always keeps what is in the editor first, however
+//   small the difference, since that is the one save that throws text away.
 //
 // THE PAYLOAD IS CAPTURED WHEN A SAVE STARTS -- the note, its content, the
 // patch -- and the requests run one after another in that order. So opening
@@ -41793,14 +41821,101 @@ wireEditorKeys('notebookEditorCard', 'saveNotebookBtn', 'closeNotebookBtn');
 const NOTE_AUTOSAVE_IDLE_MS = 1500;
 const NOTE_AUTOSAVE_MAX_MS = 10000;
 const NOTE_AUTOSAVE_RETRY_MS = 15000;
+const NOTE_VERSION_PAUSE_MS = 10*60*1000;
 const NOTE_VERSION_EVERY_MS = 30*60*1000;
+// About a sentence: a few words in English, more in Korean, whose words are
+// shorter. Counted in characters of words added or removed, spaces left out.
+const NOTE_VERSION_MIN_CHANGE = 30;
+// A picture coming or going counts as much as a sentence; a change of format
+// (bold, a colour, a heading) a little, per tag.
+const NOTE_VERSION_IMAGE_WEIGHT = 30;
+const NOTE_VERSION_FORMAT_WEIGHT = 2;
+const NOTE_AUTOSAVE_KEY = 'trackerNoteAutosave';
+// Absent means ON, the shape MESSAGING_KEY has.
+function noteAutosaveOn(){
+  try { return localStorage.getItem(NOTE_AUTOSAVE_KEY) !== '0'; } catch(e){ return true; }
+}
+function syncNoteAutosaveToggles(){
+  const on = noteAutosaveOn();
+  document.querySelectorAll('.note-autosave-toggle').forEach(cb=>{ cb.checked = on; });
+}
+document.querySelectorAll('.note-autosave-toggle').forEach(cb=>{
+  cb.addEventListener('change', ()=>{
+    try { localStorage.setItem(NOTE_AUTOSAVE_KEY, cb.checked ? '1' : '0'); } catch(e){}
+    // One setting for both editors, so the other switch follows. Turned back
+    // on with unsaved changes, the next tick saves them.
+    syncNoteAutosaveToggles();
+  });
+});
+syncNoteAutosaveToggles();
+// HOW MUCH A NOTE CHANGED, cheaply and without a diff. Every word, picture
+// and formatting tag is counted on each side, and what one side has more of
+// is weighed (a word by its length). The larger of added and removed is the
+// answer, so a typo fixed is the length of the word, and a word moved is
+// nothing. Pure string work, no DOM: a note can hold a pasted picture as a
+// data: address, and parsing that into elements would start loading it.
+function decodeNoteEntities(s){
+  const named = { nbsp:' ', amp:'&', lt:'<', gt:'>', quot:'"', apos:"'" };
+  return s.replace(/&(#[xX][0-9a-fA-F]+|#\d+|[a-zA-Z]+);/g, (m, e)=>{
+    if(e[0] === '#'){
+      const n = (e[1] === 'x' || e[1] === 'X') ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+      return (Number.isFinite(n) && n >= 0 && n <= 0x10FFFF) ? String.fromCodePoint(n) : m;
+    }
+    const v = named[e.toLowerCase()];
+    return v === undefined ? m : v;
+  });
+}
+const NOTE_BLOCK_TAGS = /^(p|div|li|ul|ol|h[1-6]|blockquote|pre|br|tr|td|th|table)$/;
+function noteTokens(html){
+  const out = new Map();
+  const bump = (k)=> out.set(k, (out.get(k) || 0) + 1);
+  const text = String(html || '').replace(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/g, (m, close, tag, attrs)=>{
+    tag = tag.toLowerCase();
+    if(tag === 'img'){
+      const src = /\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(attrs);
+      bump('\u0000' + (src ? (src[1] !== undefined ? src[1] : src[2]) : ''));
+      return ' ';
+    }
+    if(!close) bump('\u0001' + tag + ' ' + attrs.replace(/\s+/g, ' ').trim());
+    return NOTE_BLOCK_TAGS.test(tag) ? ' ' : '';
+  });
+  decodeNoteEntities(text).split(/\s+/).forEach(w=>{ if(w) bump(w); });
+  return out;
+}
+function noteTokenWeight(k){
+  if(k[0] === '\u0000') return NOTE_VERSION_IMAGE_WEIGHT;
+  if(k[0] === '\u0001') return NOTE_VERSION_FORMAT_WEIGHT;
+  return k.length;
+}
+function noteChangeSize(aHtml, bHtml){
+  if(aHtml === bHtml) return 0;
+  const a = noteTokens(aHtml), b = noteTokens(bHtml);
+  let added = 0, removed = 0;
+  b.forEach((n, k)=>{ const d = n - (a.get(k) || 0); if(d > 0) added += d * noteTokenWeight(k); });
+  a.forEach((n, k)=>{ const d = n - (b.get(k) || 0); if(d > 0) removed += d * noteTokenWeight(k); });
+  return Math.max(added, removed);
+}
+// The version list after a break: the snapshot as a new version, or in place
+// of the newest one when it is hardly different from it. null when the list
+// does not change, so nothing is written.
+function keepNoteVersion(prev, snapshot, forced){
+  const newest = prev[0];
+  if(newest && newest.content === snapshot.content) return null;
+  if(newest && !forced && noteChangeSize(newest.content, snapshot.content) < NOTE_VERSION_MIN_CHANGE){
+    return [snapshot, ...prev.slice(1)].slice(0, NOTE_VERSIONS_KEPT);
+  }
+  return [snapshot, ...prev].slice(0, NOTE_VERSIONS_KEPT);
+}
 function makeNoteAutosaver(cfg){
   let chain = Promise.resolve();
   let pending = 0;      // saves started and not answered yet
   let lastEditAt = 0;   // the last keystroke, which is what "stopped typing" is measured from
   let dirtySince = 0;   // when the editor last went from saved to unsaved
-  let versionAt = 0;    // when this sitting last snapshotted a version
+  let versionAt = 0;    // this sitting's last break; 0 means the next save is one
+  let lastSaveAt = 0;   // this sitting's last save, which a pause is measured from
+  let forceNext = false; // the next save keeps a version however small the change
   let retryAfter = 0;
+  let unsavedShown = false; // "Unsaved changes" is on the status line (autosave off)
   function showStatus(key){
     const el = document.getElementById(cfg.statusId);
     if(!el) return;
@@ -41822,13 +41937,25 @@ function makeNoteAutosaver(cfg){
     if(!editor || !note || !cfg.isDirty()) return chain;
     const content = editor.root.innerHTML;
     const now = Date.now();
+    // Taken by this save whether or not it changes anything: "Use this
+    // version" asks for the save straight after it, and a restore that put
+    // back what was already there must not hand its force to a later one.
+    const forced = forceNext;
+    forceNext = false;
     // The note as it stood, taken NOW: the line after this replaces it.
     let snapshot = null;
-    if(note.content && note.content !== content && now - versionAt >= NOTE_VERSION_EVERY_MS){
-      snapshot = { content: note.content, updated_by: note.updated_by || note.user_id, updated_at: note.updated_at || note.created_at };
-      versionAt = now;
+    if(note.content && note.content !== content){
+      const atBreak = forced || !versionAt
+        || now - versionAt >= NOTE_VERSION_EVERY_MS
+        || (lastSaveAt && now - lastSaveAt >= NOTE_VERSION_PAUSE_MS);
+      if(atBreak){
+        snapshot = { content: note.content, updated_by: note.updated_by || note.user_id, updated_at: note.updated_at || note.created_at };
+        versionAt = now;
+      }
     }
-    // The version list goes in the patch only on the save that adds to it.
+    lastSaveAt = now;
+    unsavedShown = false;
+    // The version list goes in the patch only on the save that changes it.
     // It used to ride along on every save, so a note with a pasted picture in
     // its history sent megabytes every second and a half of typing.
     const patch = { content, updated_at: new Date().toISOString(), updated_by: currentUser.id };
@@ -41840,16 +41967,20 @@ function makeNoteAutosaver(cfg){
     const id = note.id;
     chain = chain.then(async ()=>{
       // The list is not loaded with the note any more (see NOTE_LIST_SELECT),
-      // so it is read here first. If it cannot be read the version is not
-      // written, and the next save tries again rather than writing a list
-      // without the old ones in it.
+      // so it is read here first. If it cannot be read no version is written,
+      // and the next save is a break again rather than writing a list without
+      // the old ones in it.
       if(snapshot){
         const prev = await loadNoteVersions(cfg.table, note);
         if(prev){
-          note.previous_versions = [snapshot, ...prev].slice(0,2);
-          patch.previous_versions = note.previous_versions;
-        } else {
+          const list = keepNoteVersion(prev, snapshot, forced);
+          if(list){
+            note.previous_versions = list;
+            patch.previous_versions = list;
+          }
+        } else if(cfg.noteId() === id){
           versionAt = 0;
+          if(forced) forceNext = true;
         }
       }
       return send(id, patch);
@@ -41859,7 +41990,9 @@ function makeNoteAutosaver(cfg){
       if(!ok){
         note._unsaved = true;
         retryAfter = Date.now() + NOTE_AUTOSAVE_RETRY_MS;
-        if(stillOpen){ cfg.setDirty(true); showStatus('noteSaveFailed'); }
+        // The failure is what the line says until the retry; "Unsaved
+        // changes" would hide why.
+        if(stillOpen){ cfg.setDirty(true); showStatus('noteSaveFailed'); unsavedShown = true; }
         else alert(t('noteSaveFailed'));
         return false;
       }
@@ -41872,6 +42005,16 @@ function makeNoteAutosaver(cfg){
   setInterval(()=>{
     if(!cfg.noteId() || !cfg.isDirty()){ dirtySince = 0; return; }
     const now = Date.now();
+    if(!noteAutosaveOn()){
+      const note = cfg.note();
+      // Off, nothing saves by itself except a save that was asked for and
+      // failed.
+      if(!(note && note._unsaved)){
+        dirtySince = 0;
+        if(!unsavedShown && !pending){ unsavedShown = true; showStatus('noteUnsaved'); }
+        return;
+      }
+    }
     if(now < retryAfter) return;
     // A pasted picture on its way to storage (see storePastedNoteImages) is
     // swapped into the note when it lands; saving before then would send the
@@ -41882,12 +42025,24 @@ function makeNoteAutosaver(cfg){
   }, 500);
   return {
     save,
+    // The page being hidden or left: saved with autosave on, left alone off
+    // (the browser's own warning covers leaving).
+    saveIfAuto(){ if(noteAutosaveOn()) return save(); return chain; },
+    // On the way out of the note -- closing it, opening another. Saves with
+    // autosave on; off, asks before throwing unsaved changes away. False
+    // means stay.
+    leave(){
+      if(noteAutosaveOn() || !cfg.isDirty()){ save(); return true; }
+      if(!confirm(t('unsavedConfirm'))) return false;
+      cfg.setDirty(false);
+      return true;
+    },
     // Called on every keystroke: the save waits for the typing to stop.
     edited(){ lastEditAt = Date.now(); },
-    // Called when a note is opened: a new sitting, so its first save snapshots.
-    startSitting(){ versionAt = 0; lastEditAt = 0; dirtySince = 0; retryAfter = 0; },
+    // Called when a note is opened: a new sitting, so its first save is a break.
+    startSitting(){ versionAt = 0; lastSaveAt = 0; lastEditAt = 0; dirtySince = 0; retryAfter = 0; forceNext = false; unsavedShown = false; },
     // Called before an old version replaces the editor.
-    forceVersion(){ versionAt = 0; },
+    forceVersion(){ forceNext = true; },
     busy(){ return pending > 0; }
   };
 }
@@ -43724,9 +43879,10 @@ function buildCustomColorControls(){
   updateTriggerColors();
 }
 // Leaving the page saves what is there; the browser's own warning only shows
-// while that save, or one before it, has not been answered.
+// while that save, or one before it, has not been answered -- or, with
+// autosave off, while there is something unsaved.
 window.addEventListener('beforeunload', (e)=>{
-  if(editorDirty) courseNoteAutosave.save();
+  if(editorDirty) courseNoteAutosave.saveIfAuto();
   if(editorDirty || courseNoteAutosave.busy()){
     e.preventDefault();
     e.returnValue = '';
@@ -43776,8 +43932,9 @@ document.getElementById('versionHistoryToggle').addEventListener('click', async 
 });
 function openLecture(noteId, groupKey){
   if(selectedLectureId === noteId) return;
-  // Saved on the way to the next one rather than asked about.
-  courseNoteAutosave.save();
+  // Saved on the way to the next one rather than asked about -- unless
+  // autosave is off, and then it asks.
+  if(!courseNoteAutosave.leave()) return;
   editorDirty = false;
   selectedLectureId = noteId;
   selectedNotesCourse = groupKey;
@@ -43823,7 +43980,7 @@ document.getElementById('saveNoteBtn').addEventListener('click', ()=>{
   courseNoteAutosave.save();
 });
 document.getElementById('closeNoteBtn').addEventListener('click', ()=>{
-  courseNoteAutosave.save();
+  if(!courseNoteAutosave.leave()) return;
   editorDirty = false;
   selectedLectureId = null;
   document.getElementById('editorCard').classList.add('hidden');
@@ -44099,7 +44256,7 @@ function ensureNotebookQuillInitialized(){
   setupNotePager('notebook', notebookQuillEditor, 'notebookPageBar');
 }
 window.addEventListener('beforeunload', (e)=>{
-  if(notebookEditorDirty) notebookNoteAutosave.save();
+  if(notebookEditorDirty) notebookNoteAutosave.saveIfAuto();
   if(notebookEditorDirty || notebookNoteAutosave.busy()){
     e.preventDefault();
     e.returnValue = '';
@@ -44143,7 +44300,7 @@ document.getElementById('notebookVersionHistoryToggle').addEventListener('click'
 });
 function openNotebookNote(noteId, groupKey){
   if(selectedNotebookNoteId === noteId) return;
-  notebookNoteAutosave.save();
+  if(!notebookNoteAutosave.leave()) return;
   notebookEditorDirty = false;
   selectedNotebookNoteId = noteId;
   selectedNotebookGroup = groupKey;
@@ -44187,11 +44344,11 @@ document.getElementById('saveNotebookBtn').addEventListener('click', ()=>{
 // saved the moment it goes out of sight rather than waiting for the timer.
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState !== 'hidden') return;
-  courseNoteAutosave.save();
-  notebookNoteAutosave.save();
+  courseNoteAutosave.saveIfAuto();
+  notebookNoteAutosave.saveIfAuto();
 });
 document.getElementById('closeNotebookBtn').addEventListener('click', ()=>{
-  notebookNoteAutosave.save();
+  if(!notebookNoteAutosave.leave()) return;
   notebookEditorDirty = false;
   selectedNotebookNoteId = null;
   document.getElementById('notebookEditorCard').classList.add('hidden');
