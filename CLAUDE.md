@@ -5994,6 +5994,118 @@ replace leaves the editor byte-for-byte and accepting it replaces the editor
 and marks it dirty without saving, Back returns to the list, and every label
 in the bar and the panel reads correctly in en, ko and vi.
 
+## OPENING THE APP DOWNLOADED 6.7 MB OF COURSE NOTES, 98% OF IT SIX SCREENSHOTS (15 Oct, hundred-and-twenty-fifth pass)
+
+"Have a look at the loading of our website. It takes A LONG time." Measured,
+not guessed: the document itself is fine on a computer (805 KB gzipped,
+domInteractive 252 ms, the app script compiles in under 20 ms), and a repeat
+open is served by the service worker. What was slow is what happens AFTER
+sign-in, and it was one table.
+
+| what loadAllData read, live data 15 Oct | bytes (JSON) |
+|---|---|
+| **course_notes, 27 rows** | **6,746,547** |
+| grammar_points | 223,968 |
+| everything else together | about 120,000 |
+
+Of course_notes' 6.7 MB, **3.9 MB was `previous_versions`** and **2.8 MB was
+six PNG screenshots pasted straight into three of Kristoffer's notes** as
+`data:` addresses (the largest alone 1.6 MB). The text of all 27 notes is
+43 KB. Every account in the circle downloaded all of it on every open, and
+again on every realtime refresh (`scheduleSharedDataRefresh` re-runs
+loadAllData whenever anyone changes events, courses and the rest).
+
+### The version lists are read on demand
+
+- `NOTE_LIST_SELECT` lists course_notes' and notebook_notes' columns BY NAME,
+  without `previous_versions`. **A column added to either table later must be
+  added there too, or the app never reads it** (PostgREST has no "all but").
+- Two stamps come with each row instead, `prev_v0_at` / `prev_v1_at`
+  (`previous_versions->N->>updated_at`, pulled out server side), so the
+  history button still says how many versions there are. Checked against the
+  real lengths on all 42 notes. Two because a note keeps two.
+- `loadNoteVersions(table, note)` reads one note's list, once, and keeps it on
+  the note; it resolves to null on failure. `noteVersionCount(note)` is null
+  for a row that arrived by realtime (no list, no stamps), and the label then
+  reads "(…)" and loads the list itself.
+- **The autosave sends `previous_versions` only on the save that adds one.**
+  It used to send the whole list on EVERY save, so the note with a pasted
+  screenshot in its history sent about 2 MB every 1.5 seconds of typing. On a
+  snapshot it loads the list first; if that fails it writes the content
+  without versions and resets `versionAt`, so the next save tries again
+  rather than writing a list that has lost the old entries.
+- The history panel shows "Loading…" while the list arrives, and the new
+  `versionsLoadFailed` string (en/ko/vi) if it cannot. Its handler no longer
+  ends in `panel.classList.toggle('hidden')`: it opens the panel first now.
+
+### Pasted pictures go to storage
+
+The toolbar's image button always uploaded to `note-media`; a PASTED (or
+dropped) picture went through Quill's clipboard and was embedded. Now
+`storePastedNoteImages(quill)` (on both note editors) lets the paste land as
+before, uploads the file beside it, and swaps the editor's `src` to the
+public URL when it arrives. **Setting the attribute is a change Quill sees**:
+it arrives as a 'user' text-change (insert URL, delete the embedded copy), so
+the autosave and the live editors in other tabs get it with no extra code.
+The autosave's TIMER waits while an upload is out
+(`noteImageUploadsInFlight`); closing the note still saves at once.
+
+- Uploads go to `<user id>/<time>_<random>.<ext>` with a one-year
+  `cacheControl` (the path is never reused); the toolbar button got the same
+  cache. SVG and anything else the bucket does not take stays embedded.
+- **`moveEmbeddedNoteImages()`** moves pictures already embedded in THIS
+  account's own notes, once per sign-in, 5 s after onAuthed: content only,
+  never the note open in an editor, and written with
+  `.eq('updated_at', <as read>)` (it does not change updated_at), so a note
+  edited elsewhere meanwhile is left alone and its uploads removed.
+- **A backup of the three notes it will move was taken first**, in
+  `backup.course_notes_inline_images_20261015` (a schema the API does not
+  expose; anon and authenticated have no rights on it). Drop it once the
+  pictures are confirmed in those notes: `drop schema backup cascade;`.
+
+### And one shorter chain
+
+`loadActiveVacationDetails` read the trip's members and then its expenses;
+it reads them together now. That loader (four round trips in a row before)
+runs beside loadAllData and becomes the longest chain once the notes are
+small.
+
+### What the sign-in download comes to
+
+course_notes 6.75 MB, then **2.88 MB as soon as this is deployed**, then
+**57 KB** after Kristoffer's next open has moved the six pictures. The whole
+sign-in read goes from about 7.1 MB to about 0.4 MB.
+
+### Checked
+
+All in the page with Supabase stubbed (nothing signed in, nothing written):
+a paste into a real Quill uploads once and the swap arrives as a 'user'
+text-change with the URL in `getContents()`; the upload decodes to the exact
+bytes (PNG magic, length) into the account's own folder; the autosave reads
+the list once and sends it only on the snapshot save, and on a failed read
+saves content alone and versions on the next save; the move rewrites both
+copies of a repeated picture, skips another account's note, the open note
+and an image that fails to upload, removes uploads when the conditional
+write matches nothing, uses `is null` for a note with no updated_at, and does
+nothing on a second run. The new select string is accepted by the live API
+(notebook_notes 200; course_notes passes column checking and is then stopped
+by its anon policy, as every signed-out read of it is). The project checker
+matches HEAD: same four dynamic ids, every t() key in all three tables, 45
+em dashes before and after.
+
+**Not checked**: a real signed-in open (this machine cannot sign in), and
+the move running on Kristoffer's own device.
+
+### Left, with the numbers
+
+- **42% of the gzipped document is comments** (805 KB to about 460 KB with
+  them stripped and indentation dropped, crude regex estimate). Stripping them
+  needs a build step, which changes how this file is edited and deployed, so
+  it was offered rather than done. Mostly a first-visit and an
+  every-new-version cost, since the service worker serves repeat opens.
+- `grammar_points` (224 KB of JSON) is read on every open and every realtime
+  refresh, beside a `GRAMMAR_SEED` copy of much the same data inside the page.
+
 ## GROUP CHATS, AND ONE ANSWER TO "WHO SEES THIS MESSAGE" (15 Oct, hundred-and-twenty-fourth pass)
 
 "Make group chats." A third kind of conversation beside the circle
