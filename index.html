@@ -2832,6 +2832,74 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
 .saved-row{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;column-gap:12px;row-gap:2px;margin-top:10px;}
 .saved-row .hint.saved-info{margin-top:0;flex:1 1 auto;min-width:0;}
 .note-autosave{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;user-select:none;-webkit-user-select:none;}
+/* THE NOTE TOOLBAR STAYS ON SCREEN (real-user request: "the top menu bar of
+   notes should be fixed as you scroll down while typing"). Pinned under the
+   app's own top bar, which publishes how much of the screen it covers; in a
+   split view the pane is the scroller and its own name bar is what it sits
+   under. Opaque, or the writing scrolls through it. */
+#editorCard > .ql-toolbar.ql-snow, #notebookEditorCard > .ql-toolbar.ql-snow{
+  position:sticky;top:var(--topbar-h, 0px);z-index:6;}
+.tab-panel.split-on > .split-pane #editorCard > .ql-toolbar.ql-snow,
+.tab-panel.split-on > .split-pane #notebookEditorCard > .ql-toolbar.ql-snow{top:38px;}
+/* Words, characters and pages, at the right-hand end of that toolbar. */
+.ql-toolbar .note-stats{float:right;font-family:'Inter',sans-serif;font-size:12px;line-height:24px;
+  color:var(--ink-soft);padding:0 4px;white-space:nowrap;font-variant-numeric:tabular-nums;cursor:default;}
+/* Line spacing: one button beside the lists, opening the same kind of list
+   the font size does. */
+.ql-toolbar .nf-spacing-group{position:relative;}
+.ql-snow.ql-toolbar button.nf-spacing-open{color:var(--ink-soft);display:inline-flex;align-items:center;justify-content:center;}
+.ql-snow.ql-toolbar button.nf-spacing-open:hover{color:#06c;}
+.ql-toolbar button.nf-spacing-open svg{display:block;float:none;width:16px;height:16px;}
+.nf-spacing-panel{min-width:84px;}
+/* A WORD STAYS WHOLE AT THE END OF A LINE (real-user request: "don't cut a
+   word in the middle to go to the next line"). keep-all is what keeps a Korean
+   word in one piece; a word joined by a symbol is held together by the
+   nowrap format the editor puts on it. */
+#quillContainer .ql-editor, #notebookQuillContainer .ql-editor{word-break:keep-all;}
+/* The Undo for an automatic format, by the line it changed. */
+.note-af-chip{position:absolute;z-index:30;display:inline-flex;align-items:center;gap:8px;
+  background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:4px 6px 4px 10px;
+  font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-soft);
+  box-shadow:0 4px 14px rgba(0,0,0,0.16);white-space:nowrap;}
+.note-af-chip button{font:inherit;font-weight:600;border:1px solid var(--line);border-radius:6px;
+  background:var(--paper-dim);color:var(--ink);padding:2px 8px;cursor:pointer;}
+.note-af-chip button:hover{background:var(--paper);}
+.note-af-chip button.note-af-off{border-color:transparent;background:transparent;color:var(--ink-soft);font-weight:500;}
+.note-af-chip button.note-af-off:hover{color:var(--ink);}
+@media (max-width: 640px){
+  .nf-toolbar .nf-spacing-group{grid-area:2 / 7;display:flex !important;align-items:center;justify-content:center;margin:0;min-width:0;height:36px;}
+  .ql-snow.ql-toolbar .nf-spacing-group > button.nf-spacing-open{width:100%;height:36px;padding:0;border-radius:8px;}
+  .ql-toolbar button.nf-spacing-open svg{width:20px;height:20px;}
+  .nf-spacing-group .nf-size-panel{left:auto;right:0;}
+  .nf-toolbar .note-stats{grid-area:3 / 1 / 4 / 9;float:none;text-align:center;line-height:18px;}
+}
+/* THE EDITOR GOES UNDER THE LIST ONCE THE LIST HAS ENDED (real-user request:
+   "when you get a certain distance down, it should no longer be side-by-side
+   ... the typing interface can just move underneath"). Side by side the
+   writing is a column a little over half the page all the way down a long
+   note, beside an empty half. So once the note runs well past the list
+   (setupNotesWrap decides, with some slack each way so the two layouts cannot
+   flip back and forth), the list FLOATS and the note flows round it: beside
+   the list, then the full width under it.
+   The editor card is then one L-shaped card around the list. What draws the
+   inside corner is the list's own shadow: a ring in the page's colour that
+   hides the card underneath it, and two one-pixel lines in the border colour
+   along its right and bottom edges, offset so that neither runs above the top
+   of the cards. The list is lifted (z-index) because Quill's container is
+   positioned, and a positioned box paints over a plain float. Everything in
+   the card that is its own box (the header row, the toolbar) sits beside the
+   list rather than under it; the writing itself is what wraps, so it cannot
+   be a scroll box of its own. */
+@media (min-width: 1100px){
+  .notes-split.notes-wrap{display:flow-root;}
+  .notes-split.notes-wrap > .card:first-child{float:left;width:calc((100% - 18px) / 2.35);
+    margin:0 40px 30px 0;position:relative;z-index:2;
+    box-shadow:0 0 0 18px var(--paper), 10px 9px 0 9px var(--line), 9.5px 9.5px 0 9.5px var(--line);}
+  .notes-split.notes-wrap > #editorCard > .ql-toolbar.ql-snow,
+  .notes-split.notes-wrap > #notebookEditorCard > .ql-toolbar.ql-snow{display:flow-root;}
+  .notes-split.notes-wrap .ql-container > .ql-editor{overflow:visible;}
+  .notes-split.notes-wrap > .card > .notes-panel{display:flow-root;}
+}
 /* An earlier version is OPENED from this list rather than only previewed, so
    a row is a button: who and when, as much of it as fits on the line, and the
    word that says it opens. */
@@ -4573,7 +4641,7 @@ body.ws-work .ws-class-only{display:none !important;}
       <div class="card hidden" id="notebookEditorCard">
         <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" data-title-key="tipClickToEdit"></span><span><button class="export-btn act-save" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
         <div class="notes-panel hidden" id="notebookTitleEditPanel"></div>
-        <div class="saved-row"><div class="hint saved-info" id="notebookLastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="notebookAutosaveLabel"></span></label></div>
+        <div class="saved-row"><div class="hint saved-info" id="notebookLastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutoFormatTip"><input type="checkbox" class="note-autoformat-toggle"><span id="notebookAutoFormatLabel"></span></label><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="notebookAutosaveLabel"></span></label></div>
         <div id="notebookQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
         <div class="note-pagebar" id="notebookPageBar" style="display:none;"></div>
         <button class="linkbtn" id="notebookVersionHistoryToggle" style="margin-top:10px;"></button>
@@ -4735,7 +4803,7 @@ body.ws-work .ws-class-only{display:none !important;}
     <div class="card hidden" id="editorCard">
       <h2><span id="editorLectureTitle"></span><span><button class="export-btn act-save" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
       <div class="notes-panel hidden" id="editorTitleEditPanel"></div>
-      <div class="saved-row"><div class="hint saved-info" id="lastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="noteAutosaveLabel"></span></label></div>
+      <div class="saved-row"><div class="hint saved-info" id="lastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutoFormatTip"><input type="checkbox" class="note-autoformat-toggle"><span id="noteAutoFormatLabel"></span></label><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="noteAutosaveLabel"></span></label></div>
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
       <div class="note-pagebar" id="notePageBar" style="display:none;"></div>
       <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
@@ -12029,7 +12097,7 @@ const I18N = {
     hNotesPick:'Add a note', lblNotesCourse:'Course', lblNewLecture:'Note title', addLectureBtn:'Add note',
     generalNotes:'General notes', noNote:'No course', allPeople:'All', lblNotesPersonFilter:'Show', closeNoteBtn:'Close',
     lastSavedBy:'Last saved by {name} at {time}', neverSaved:'Not saved yet',
-    versionHistory:'Version history ({n})', noVersions:'No earlier versions', versionsLoadFailed:'Could not load the earlier versions.', versionOpen:'Open', versionUse:'Use this version', versionUseConfirm:'Replace what is in the editor with this version? Nothing is saved until you press Save.', versionUseConfirmKept:'Replace what is in the editor with this version? What is there now is kept in the version history.', noteSaving:'Saving…', noteSaveFailed:"Couldn't save. Your changes are kept and it will try again.", versionCopy:'Copy', versionCopied:'Copied', versionBack:'Back', noteFontSize:'Font size', noteFontSizeUp:'Bigger', noteFontSizeDown:'Smaller', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', noteAutosave:'Autosave', noteAutosaveTip:'Saves the note while you type. Turn it off to save only with Save or Cmd+S.', noteUnsaved:'Unsaved changes', eventForUser:'For',
+    versionHistory:'Version history ({n})', noVersions:'No earlier versions', versionsLoadFailed:'Could not load the earlier versions.', versionOpen:'Open', versionUse:'Use this version', versionUseConfirm:'Replace what is in the editor with this version? Nothing is saved until you press Save.', versionUseConfirmKept:'Replace what is in the editor with this version? What is there now is kept in the version history.', noteSaving:'Saving…', noteSaveFailed:"Couldn't save. Your changes are kept and it will try again.", versionCopy:'Copy', versionCopied:'Copied', versionBack:'Back', noteFontSize:'Font size', noteFontSizeUp:'Bigger', noteFontSizeDown:'Smaller', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', noteAutosave:'Autosave', noteAutosaveTip:'Saves the note while you type. Turn it off to save only with Save or Cmd+S.', noteAutoFormat:'Auto-format', noteAutoFormatTip:'Repeats the formatting of the line above when you start a matching line ("2." after a bold "1."), turns -- into a dash and similar shortcuts. Each change can be undone with Cmd+Z.', noteAutoFormatApplied:'Formatted like the line above', noteAutoFormatUndo:'Undo', noteAutoFormatOff:'Turn off', noteAutoFormatOffHint:'Auto-format is off. Turn it back on beside Autosave.', noteLineSpacing:'Line spacing', noteLineSpacingDefault:'Default', noteWordCount:'{n} words', noteWordCountOne:'{n} word', noteCharCount:'{n} characters', noteCharCountOne:'{n} character', noteWordsOf:'{s} of {n} words', noteWordsOfOne:'{s} of {n} word', noteCharsOf:'{s} of {n} characters', noteCharsOfOne:'{s} of {n} character', notePageTotal:'{n} pages', notePageTotalOne:'{n} page', noteCharsNoSpaces:'{n} characters without spaces', noteCharsNoSpacesOne:'{n} character without spaces', notePageAddHint:'Start a new page from where you are in the text', noteUnsaved:'Unsaved changes', eventForUser:'For',
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
@@ -12154,7 +12222,7 @@ const I18N = {
     hNotesPick:'노트 추가', lblNotesCourse:'수업', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
     generalNotes:'일반 노트', noNote:'수업 없음', allPeople:'전체', lblNotesPersonFilter:'보기', closeNoteBtn:'닫기',
     lastSavedBy:'{name}님이 {time}에 저장함', neverSaved:'아직 저장되지 않음',
-    versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', versionsLoadFailed:'이전 버전을 불러오지 못했습니다.', versionOpen:'열기', versionUse:'이 버전 사용', versionUseConfirm:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 저장을 누르기 전까지는 저장되지 않습니다.', versionUseConfirmKept:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 지금 내용은 버전 기록에 남습니다.', noteSaving:'저장 중…', noteSaveFailed:'저장하지 못했습니다. 변경 내용은 그대로 있으며 다시 저장을 시도합니다.', versionCopy:'복사', versionCopied:'복사됨', versionBack:'뒤로', noteFontSize:'글자 크기', noteFontSizeUp:'크게', noteFontSizeDown:'작게', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', noteAutosave:'자동 저장', noteAutosaveTip:'입력하는 동안 노트를 저장합니다. 끄면 저장 버튼이나 Cmd+S로만 저장됩니다.', noteUnsaved:'저장되지 않은 변경 사항', eventForUser:'대상',
+    versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', versionsLoadFailed:'이전 버전을 불러오지 못했습니다.', versionOpen:'열기', versionUse:'이 버전 사용', versionUseConfirm:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 저장을 누르기 전까지는 저장되지 않습니다.', versionUseConfirmKept:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 지금 내용은 버전 기록에 남습니다.', noteSaving:'저장 중…', noteSaveFailed:'저장하지 못했습니다. 변경 내용은 그대로 있으며 다시 저장을 시도합니다.', versionCopy:'복사', versionCopied:'복사됨', versionBack:'뒤로', noteFontSize:'글자 크기', noteFontSizeUp:'크게', noteFontSizeDown:'작게', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', noteAutosave:'자동 저장', noteAutosaveTip:'입력하는 동안 노트를 저장합니다. 끄면 저장 버튼이나 Cmd+S로만 저장됩니다.', noteAutoFormat:'자동 서식', noteAutoFormatTip:'위 줄과 같은 형식의 줄을 시작하면 그 서식을 이어 씁니다(굵은 "1." 다음의 "2."). --를 대시로 바꾸는 등 단축 입력도 처리합니다. 바뀐 것은 모두 Cmd+Z로 되돌릴 수 있습니다.', noteAutoFormatApplied:'위 줄과 같은 서식으로 바꿨습니다', noteAutoFormatUndo:'되돌리기', noteAutoFormatOff:'끄기', noteAutoFormatOffHint:'자동 서식이 꺼졌습니다. 자동 저장 옆에서 다시 켤 수 있습니다.', noteLineSpacing:'줄 간격', noteLineSpacingDefault:'기본', noteWordCount:'{n}단어', noteCharCount:'{n}자', noteWordsOf:'{n}단어 중 {s}단어', noteCharsOf:'{n}자 중 {s}자', notePageTotal:'{n}쪽', noteCharsNoSpaces:'공백 제외 {n}자', notePageAddHint:'글에서 지금 있는 곳부터 새 쪽 시작', noteUnsaved:'저장되지 않은 변경 사항', eventForUser:'대상',
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
@@ -12280,7 +12348,7 @@ const I18N = {
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
     generalNotes:'Ghi chú chung', noNote:'Không có khóa học', allPeople:'Tất cả', lblNotesPersonFilter:'Hiển thị', closeNoteBtn:'Đóng',
     lastSavedBy:'Lưu lần cuối bởi {name} lúc {time}', neverSaved:'Chưa được lưu',
-    versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', versionsLoadFailed:'Không tải được các phiên bản trước.', versionOpen:'Mở', versionUse:'Dùng phiên bản này', versionUseConfirm:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Sẽ không có gì được lưu cho đến khi bạn nhấn Lưu.', versionUseConfirmKept:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Nội dung hiện tại sẽ được giữ trong lịch sử phiên bản.', noteSaving:'Đang lưu…', noteSaveFailed:'Không lưu được. Thay đổi của bạn vẫn được giữ và sẽ thử lưu lại.', versionCopy:'Sao chép', versionCopied:'Đã sao chép', versionBack:'Quay lại', noteFontSize:'Cỡ chữ', noteFontSizeUp:'Lớn hơn', noteFontSizeDown:'Nhỏ hơn', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', noteAutosave:'Tự động lưu', noteAutosaveTip:'Lưu ghi chú trong khi bạn gõ. Tắt để chỉ lưu bằng nút Lưu hoặc Cmd+S.', noteUnsaved:'Có thay đổi chưa lưu', eventForUser:'Cho',
+    versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', versionsLoadFailed:'Không tải được các phiên bản trước.', versionOpen:'Mở', versionUse:'Dùng phiên bản này', versionUseConfirm:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Sẽ không có gì được lưu cho đến khi bạn nhấn Lưu.', versionUseConfirmKept:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Nội dung hiện tại sẽ được giữ trong lịch sử phiên bản.', noteSaving:'Đang lưu…', noteSaveFailed:'Không lưu được. Thay đổi của bạn vẫn được giữ và sẽ thử lưu lại.', versionCopy:'Sao chép', versionCopied:'Đã sao chép', versionBack:'Quay lại', noteFontSize:'Cỡ chữ', noteFontSizeUp:'Lớn hơn', noteFontSizeDown:'Nhỏ hơn', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', noteAutosave:'Tự động lưu', noteAutosaveTip:'Lưu ghi chú trong khi bạn gõ. Tắt để chỉ lưu bằng nút Lưu hoặc Cmd+S.', noteAutoFormat:'Tự định dạng', noteAutoFormatTip:'Lặp lại định dạng của dòng trên khi bạn bắt đầu một dòng giống vậy ("2." sau "1." in đậm), đổi -- thành dấu gạch ngang và các phím tắt tương tự. Mọi thay đổi đều hoàn tác được bằng Cmd+Z.', noteAutoFormatApplied:'Đã định dạng giống dòng trên', noteAutoFormatUndo:'Hoàn tác', noteAutoFormatOff:'Tắt', noteAutoFormatOffHint:'Đã tắt tự định dạng. Bật lại ở cạnh Tự động lưu.', noteLineSpacing:'Giãn dòng', noteLineSpacingDefault:'Mặc định', noteWordCount:'{n} từ', noteCharCount:'{n} ký tự', noteWordsOf:'{s} / {n} từ', noteCharsOf:'{s} / {n} ký tự', notePageTotal:'{n} trang', noteCharsNoSpaces:'{n} ký tự không tính dấu cách', notePageAddHint:'Bắt đầu trang mới từ chỗ bạn đang viết', noteUnsaved:'Có thay đổi chưa lưu', eventForUser:'Cho',
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
@@ -12373,7 +12441,7 @@ const STATIC_MAP = {
   // writes the raw string, which would show a literal {title}.
   deleteThisOnlyBtn:'thisOccurrenceOnly', deleteAllBtn:'allOccurrences', deleteChoiceCancelBtn:'cancelBtn',
   hNotesPick:'hNotesPick', lblNotesCourse:'lblNotesCourse', lblNewLecture:'lblNewLecture', addLectureBtn:'addLectureBtn', lblNewLectureHeader:'lblCustomHeader',
-  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', noteAutosaveLabel:'noteAutosave', notebookAutosaveLabel:'noteAutosave', chooseFileLabelResumeUpload:'chooseFile', lblWritingQ53ImageFile:'chooseFile', lblWritingImageFile:'chooseFile',
+  hLectures:'hLectures', saveNoteBtn:'saveNoteBtn', lblNotesPersonFilter:'lblNotesPersonFilter', closeNoteBtn:'closeNoteBtn', noteAutosaveLabel:'noteAutosave', notebookAutosaveLabel:'noteAutosave', noteAutoFormatLabel:'noteAutoFormat', notebookAutoFormatLabel:'noteAutoFormat', chooseFileLabelResumeUpload:'chooseFile', lblWritingQ53ImageFile:'chooseFile', lblWritingImageFile:'chooseFile',
   studySubLogBtn:'studySubLog', studySubGrammarBtn:'studySubGrammar', studySubWritingBtn:'studySubWriting', studySubNotebookBtn:'studySubNotebook', studySubVideosBtn:'studySubVideos', hGrammar:'hGrammar', gramAddToggleBtn:'gramAddToggleBtn',
   hVideos:'hVideos', lblVideoSearch:'lblVideoSearch', lblVideoSort:'lblVideoSort',
   hNotebookPick:'hNotesPick', lblNewNotebookTitle:'lblNewLecture', lblNewNotebookHeader:'lblCustomHeader', addNotebookBtn:'addLectureBtn',
@@ -13021,6 +13089,17 @@ const ICON_PATHS = {
   /* A sheet with a plus on it: the button ADDS a page, at the end, rather than
      cutting the note where the caret is, so it is drawn as a new page and not
      as a break. */
+  /* Three lines with an up-and-down arrow beside them: the space BETWEEN lines,
+     which is what the control changes, rather than another kind of list. */
+  lineSpacing: '<line x1="11" y1="6" x2="21" y2="6"></line><line x1="11" y1="12" x2="21" y2="12"></line><line x1="11" y1="18" x2="21" y2="18"></line><polyline points="3 8 5.5 5.5 8 8"></polyline><polyline points="3 16 5.5 18.5 8 16"></polyline><line x1="5.5" y1="5.5" x2="5.5" y2="18.5"></line>',
+  /* A curved arrow back to the left: answering a message, beside copying it. */
+  reply:  '<polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path>',
+  /* A clock with its hand turned back: the earlier versions of a message. */
+  history: '<path d="M3 12a9 9 0 1 0 3-6.7"></path><polyline points="3 3 3 8 8 8"></polyline><polyline points="12 7 12 12 15 14"></polyline>',
+  /* Up and down together: put this anywhere in the list, not one step. */
+  reorder: '<polyline points="7 9 12 4 17 9"></polyline><polyline points="7 15 12 20 17 15"></polyline>',
+  toTop:    '<line x1="5" y1="4" x2="19" y2="4"></line><polyline points="7 13 12 8 17 13"></polyline><line x1="12" y1="8" x2="12" y2="20"></line>',
+  toBottom: '<line x1="5" y1="20" x2="19" y2="20"></line><polyline points="7 11 12 16 17 11"></polyline><line x1="12" y1="16" x2="12" y2="4"></line>',
   pageAdd: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><polyline points="14 3 14 8 19 8"></polyline><line x1="12" y1="17" x2="12" y2="11"></line><line x1="9" y1="14" x2="15" y2="14"></line>',
   /* A to-do on the calendar, and one left off it: the same pair the bell has,
      the second struck through rather than drawn differently. */
@@ -13065,6 +13144,12 @@ const ICON = {
   arrowL:  function(sz){ return svgIcon(ICON_PATHS.arrowL, sz); },
   arrowR:  function(sz){ return svgIcon(ICON_PATHS.arrowR, sz); },
   pageAdd: function(sz){ return svgIcon(ICON_PATHS.pageAdd, sz); },
+  lineSpacing: function(sz){ return svgIcon(ICON_PATHS.lineSpacing, sz); },
+  reply:   function(sz){ return svgIcon(ICON_PATHS.reply, sz); },
+  history: function(sz){ return svgIcon(ICON_PATHS.history, sz); },
+  reorder: function(sz){ return svgIcon(ICON_PATHS.reorder, sz); },
+  toTop:   function(sz){ return svgIcon(ICON_PATHS.toTop, sz); },
+  toBottom:function(sz){ return svgIcon(ICON_PATHS.toBottom, sz); },
   calOn:   function(sz){ return svgIcon(ICON_PATHS.calOn, sz); },
   calOff:  function(sz){ return svgIcon(ICON_PATHS.calOff, sz); },
   users:   function(sz){ return svgIcon(ICON_PATHS.users, sz); }
@@ -39927,7 +40012,7 @@ function ensureWritingQuillInitialized(){
   });
   keepPageStillOnPaste(writingQuillEditor);
   enableTouchUndo(writingQuillEditor);
-  enableDashShortcuts(writingQuillEditor);
+  enableTypingShortcuts(writingQuillEditor);
   writingQuillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
       writingEditorDirty = true;
@@ -39944,7 +40029,7 @@ function ensureWritingMockQuillInitialized(){
     });
     keepPageStillOnPaste(writingMockQ53Quill);
     enableTouchUndo(writingMockQ53Quill);
-    enableDashShortcuts(writingMockQ53Quill);
+    enableTypingShortcuts(writingMockQ53Quill);
     writingMockQ53Quill.on('text-change', (delta, oldDelta, source)=>{
       if(source === 'user'){ writingMockQ53Dirty = true; updateWritingMockCharCount('q53'); }
     });
@@ -39957,7 +40042,7 @@ function ensureWritingMockQuillInitialized(){
     });
     keepPageStillOnPaste(writingMockQ54Quill);
     enableTouchUndo(writingMockQ54Quill);
-    enableDashShortcuts(writingMockQ54Quill);
+    enableTypingShortcuts(writingMockQ54Quill);
     writingMockQ54Quill.on('text-change', (delta, oldDelta, source)=>{
       if(source === 'user'){ writingMockQ54Dirty = true; updateWritingMockCharCount('q54'); }
     });
@@ -41814,6 +41899,47 @@ function wireEditorKeys(cardId, saveBtnId, closeBtnId){
 wireEditorKeys('editorCard', 'saveNoteBtn', 'closeNoteBtn');
 wireEditorKeys('notebookEditorCard', 'saveNotebookBtn', 'closeNotebookBtn');
 
+/* ---------- A LONG NOTE FLOWS UNDER THE LIST ----------
+   See .notes-wrap in the stylesheet. Decided by measuring: on once the open
+   note runs NOTES_WRAP_ON px past the bottom of the list, off again only when
+   it comes back within NOTES_WRAP_OFF of it. The slack is what stops the two
+   layouts flipping: wrapped, the part under the list is wider, so the note
+   gets shorter, and at most by the ratio of the two widths (a little over a
+   half), which can never take a note that crossed the first line back under
+   the second. Measured a frame later, because changing the layout from inside
+   a ResizeObserver callback is the loop the browser warns about. */
+const NOTES_WRAP_ON = 240;
+const NOTES_WRAP_OFF = 60;
+function setupNotesWrap(editorId){
+  const editor = document.getElementById(editorId);
+  const split = editor && editor.parentElement;
+  if(!split || !split.classList.contains('notes-split') || typeof ResizeObserver === 'undefined') return;
+  const list = split.firstElementChild;
+  if(!list || list === editor) return;
+  const wide = window.matchMedia('(min-width: 1100px)');
+  let raf = 0;
+  const update = ()=>{
+    raf = 0;
+    const on = split.classList.contains('notes-wrap');
+    if(!wide.matches || editor.classList.contains('hidden') || list.classList.contains('hidden')){
+      if(on) split.classList.remove('notes-wrap');
+      return;
+    }
+    const lh = list.offsetHeight, eh = editor.offsetHeight;
+    if(!on && eh > lh + NOTES_WRAP_ON) split.classList.add('notes-wrap');
+    else if(on && eh < lh + NOTES_WRAP_OFF) split.classList.remove('notes-wrap');
+  };
+  const schedule = ()=>{ if(!raf) raf = requestAnimationFrame(update); };
+  const ro = new ResizeObserver(schedule);
+  ro.observe(list);
+  ro.observe(editor);
+  if(wide.addEventListener) wide.addEventListener('change', schedule);
+  else if(wide.addListener) wide.addListener(schedule);
+  schedule();
+}
+setupNotesWrap('editorCard');
+setupNotesWrap('notebookEditorCard');
+
 /* ---------- NOTES SAVE THEMSELVES ---------- */
 // The way a Google Doc does (real-user request: "Can notes save periodically
 // sort of like google docs? So you don't have to keep saving manually?"): a
@@ -42248,45 +42374,87 @@ function watchTaps(el, onTap){
   }, { passive: false });
   el.addEventListener('touchcancel', ()=>{ g = null; }, { passive: true });
 }
-// TWO HYPHENS BECOME AN EN DASH AND A THIRD MAKES IT AN EM DASH, the way a word
-// processor does it, so a dash can be typed without a character palette.
+// TYPED SHORTCUTS: two hyphens become an en dash and a third makes it an em
+// dash, the way a word processor does it, and a handful of character pairs
+// become the symbol they are drawn as (=/= is not-equal, -> an arrow).
 // Quill editors ONLY, and that is the whole of the scope on purpose: a slug, a
 // short link, a Vietnamese word and a Korean grammar pattern all carry hyphens,
 // and none of them wants one rewritten. Prose does.
 // The characters are written as escapes rather than typed, since this repo's
 // own rule is that no em dash appears in its source.
-function enableDashShortcuts(quill){
-  // Declared in here rather than at the top level: these editors are built
-  // lazily, and a const read before its own line has run is a crash.
-  const EN_DASH = '\u2013', EM_DASH = '\u2014';
+// Longest first, and each rule fires on the character that COMPLETES it, so a
+// chain builds the way it is typed: "<-" is an arrow the moment the hyphen
+// lands, and a ">" after that arrow turns it into the double-headed one.
+// Built on first use rather than as a top-level const: the essay editors can be
+// made before the script has reached this line, and a const read early is a
+// crash where a function declaration is already in place.
+function typingShortcutRules(){
+  if(typingShortcutRules.list) return typingShortcutRules.list;
+  typingShortcutRules.list = [
+    ['=/=', '\u2260'],
+    ['\u2264>', '\u21d4'],   // <=>  (the "<=" has already become a less-or-equal)
+    ['\u2190>', '\u2194'],   // <->  (the "<-" has already become an arrow)
+    ['\u2013>', '\u2192'],   // -->  (the "--" has already become an en dash)
+    ['(tm)', '\u2122'],
+    ['\u2013-', '\u2014'],   // ---  (en dash, then a third hyphen)
+    ['--', '\u2013'],
+    ['->', '\u2192'],
+    ['<-', '\u2190'],
+    ['=>', '\u21d2'],
+    ['>=', '\u2265'],
+    ['<=', '\u2264'],
+    ['+-', '\u00b1'],
+    ['~=', '\u2248']
+  ];
+  typingShortcutRules.longest = Math.max(...typingShortcutRules.list.map(r=>r[0].length));
+  return typingShortcutRules.list;
+}
+function enableTypingShortcuts(quill){
   let rewriting = false;
   const Delta = Quill.import('delta');
   quill.on('text-change', (delta, oldContents, source)=>{
     // Only what was TYPED: a paste carrying "--" is somebody's code or a
     // command line, and 'api' is this function's own replacement coming back.
-    if(source !== 'user' || rewriting) return;
+    if(source !== 'user' || rewriting || !noteAutoFormatPref()) return;
     const ops = delta.ops || [];
     if(ops.length === 0 || ops.length > 2) return;
     const last = ops[ops.length - 1];
-    if(typeof last.insert !== 'string' || last.insert !== '-') return;
+    if(typeof last.insert !== 'string' || last.insert.length !== 1) return;
     const at = ops.length === 2 ? ops[0].retain : 0;
     if(typeof at !== 'number') return;
-    const pos = at + 1;
-    if(pos < 2) return;
-    const before = quill.getText(pos - 2, 2);
-    const repl = before === '--' ? EN_DASH : (before === EN_DASH + '-' ? EM_DASH : null);
-    if(!repl) return;
-    const fmt = quill.getFormat(pos - 2, 2);
+    const end = at + 1;
+    const rules = typingShortcutRules();
+    const from = Math.max(0, end - typingShortcutRules.longest);
+    const tail = quill.getText(from, end - from).toLowerCase();
+    const rule = rules.find(([pat])=> tail.endsWith(pat));
+    if(!rule) return;
+    const [pat, repl] = rule;
+    const start = end - pat.length;
+    const fmt = quill.getFormat(start, pat.length);
+    // Code is code: "->" in a snippet is not an arrow.
+    if(fmt['code-block'] || fmt.code) return;
     rewriting = true;
-    // cutoff() first, so one undo puts the hyphens back rather than swallowing
-    // the word that was being typed with them.
+    // cutoff() first, so one undo puts the typed characters back rather than
+    // swallowing the word that was being typed with them.
     quill.history.cutoff();
     // ONE delta rather than a delete and an insert: it is one edit as far as
     // history, the autosave and the pager are concerned, and the caret cannot
     // be seen in between.
-    quill.updateContents(new Delta().retain(pos - 2).delete(2).insert(repl, fmt), 'user');
-    quill.setSelection(pos - 1, 0, 'silent');
+    quill.updateContents(new Delta().retain(start).delete(pat.length).insert(repl, fmt), 'user');
     rewriting = false;
+    // THE CARET IS PUT BACK AFTER QUILL HAS FINISHED, not here. This runs
+    // inside Quill's own handling of the keystroke, and once it returns Quill
+    // restores the caret it saved before the keystroke -- by node and OFFSET,
+    // and the offset is the old one, so the caret landed past the symbol, one
+    // character into the next word (real-user report: "they skip into text
+    // after"). It also stranded the caret before an en dash at the end of a
+    // line, which is why a third hyphen never made an em dash. A microtask runs
+    // after that restore and before the next keystroke can be handled.
+    const caret = start + repl.length;
+    Promise.resolve().then(()=>{
+      const sel = quill.getSelection();
+      if(sel && sel.length === 0 && Math.abs(sel.index - caret) <= pat.length) quill.setSelection(caret, 0, 'silent');
+    });
   });
 }
 function enableTouchUndo(quill){
@@ -42338,6 +42506,691 @@ if(window.Quill){
   const SizeStyle = Quill.import('attributors/style/size');
   SizeStyle.whitelist = null;
   Quill.register(SizeStyle, true);
+}
+/* ---------- THREE MORE NOTE FORMATS ----------
+   Each is an inline style, for the reason the type size is one: a note is
+   stored as HTML and read well outside this editor -- the export, the version
+   panel, a colleague's copy -- and a class would need this stylesheet there. */
+const NOTE_LINE_SPACINGS = ['1', '1.15', '1.5', '2', '2.5', '3'];
+if(window.Quill){
+  const Parchment = Quill.import('parchment');
+  // LINE SPACING (real-user request: "we should add line spacing"). A BLOCK
+  // format, so it belongs to a paragraph, and Enter carries it on to the next
+  // one -- which is what a spacing chosen for a passage should do.
+  Quill.register(new Parchment.Attributor.Style('lineheight', 'line-height', {
+    scope: Parchment.Scope.BLOCK, whitelist: NOTE_LINE_SPACINGS
+  }), true);
+  // A NUMBERED LIST STARTS AT THE NUMBER THAT WAS TYPED (real-user report, with
+  // a screenshot: "it annoyingly changes to 1. when I write 2. further down").
+  // Quill draws a list's numbers with a CSS counter that every new list starts
+  // again at 1, and a list item further down a page, after a paragraph, is a
+  // new list. So the item remembers its number as `counter-set`, which CSS
+  // applies after the item's own increment: "counter-set: list-0 2" draws 2,
+  // and the items after it go on 3, 4. Only on a list item, and only the top
+  // level -- an indented item's number is its own sub-list's business.
+  class NoteListStart extends Parchment.Attributor.Style {
+    canAdd(node, value){ return node.tagName === 'LI' && /^\d{1,4}$/.test(String(value)); }
+    add(node, value){
+      if(!this.canAdd(node, value)) return false;
+      node.style.counterSet = 'list-0 ' + Number(value);
+      return true;
+    }
+    value(node){
+      const m = /list-0\s+(\d+)/.exec(node.style.counterSet || '');
+      return m ? m[1] : '';
+    }
+  }
+  Quill.register(new NoteListStart('liststart', 'counter-set', { scope: Parchment.Scope.BLOCK }), true);
+  // A WORD JOINED BY A SYMBOL STAYS ON ONE LINE (real-user request: "Don't cut
+  // a word in the middle to go to the next line (even if it has symbols)
+  // 'North<->South' should be on same line"). A browser may break a line
+  // after any hyphen or slash, so "North<-" ends one line and ">South" starts
+  // the next. There is no CSS that says "not at this hyphen", so the word is
+  // given white-space:nowrap of its own (enableNoteWholeWords).
+  Quill.register(new Parchment.Attributor.Style('nowrap', 'white-space', {
+    scope: Parchment.Scope.INLINE, whitelist: ['nowrap']
+  }), true);
+}
+
+// A numbered item's number, as the counters will draw it: one more than the
+// top-level item before it in the same list, or what it was told to start at.
+function noteListItemNumber(li){
+  const list = li && li.parentNode;
+  if(!list) return 0;
+  let n = 0;
+  for(const el of list.children){
+    if(/\bql-indent-\d/.test(el.className || '')) { if(el === li) return 0; continue; }
+    n += 1;
+    const m = /list-0\s+(\d+)/.exec(el.style.counterSet || '');
+    if(m) n = Number(m[1]);
+    if(el === li) return n;
+  }
+  return n;
+}
+// The number a new item would be drawn with if it were left alone: Quill
+// merges it into a numbered list directly above it, and anything else starts
+// a list at 1.
+function noteListNextNumber(line){
+  const prev = line && line.prev;
+  if(!prev || !prev.domNode || prev.domNode.tagName !== 'OL') return 1;
+  const items = Array.from(prev.domNode.children).filter(el=> !/\bql-indent-\d/.test(el.className || ''));
+  return items.length ? noteListItemNumber(items[items.length - 1]) + 1 : 1;
+}
+
+/* ---------- AUTO-FORMAT ----------
+   One switch for everything the editor does to what was just typed, beside
+   Autosave: the dashes and symbols, a list made out of "2.", and a new line
+   formatted like the ones it follows. On unless turned off, per browser, like
+   the other ways of writing here. */
+const NOTE_AUTOFORMAT_KEY = 'ptNoteAutoFormat';
+function noteAutoFormatPref(){
+  // The key written out rather than read from the const above, for the same
+  // reason as typingShortcutRules: the essay editors can ask this early.
+  try{ return localStorage.getItem('ptNoteAutoFormat') !== '0'; }catch(e){ return true; }
+}
+function setNoteAutoFormatPref(on){
+  try{ localStorage.setItem(NOTE_AUTOFORMAT_KEY, on ? '1' : '0'); }catch(e){}
+  document.querySelectorAll('.note-autoformat-toggle').forEach(cb=>{ cb.checked = on; });
+}
+// One switch for both editors, beside Autosave, so turning it off from the
+// Undo chip and turning it back on are the same control.
+document.querySelectorAll('.note-autoformat-toggle').forEach(cb=>{
+  cb.checked = noteAutoFormatPref();
+  cb.addEventListener('change', ()=> setNoteAutoFormatPref(cb.checked));
+});
+
+// ENTER, AND A LIST TYPED AS "2.", IN A NOTE. Handed to Quill as config,
+// because a binding added once the editor exists lands BEHIND Quill's own
+// Enter and never runs. Quill's named bindings for the special cases (an empty
+// list item, a heading) still come first.
+function noteKeyboardBindings(){
+  const Parchment = Quill.import('parchment');
+  const Delta = Quill.import('delta');
+  return {
+    // Quill's own list autofill, with one change: the list keeps the number
+    // that was typed. Off with auto-format, which leaves "2. " as the text it
+    // is -- returning true lets the space through as an ordinary keystroke.
+    'list autofill': {
+      key: ' ', collapsed: true, format: { list: false },
+      prefix: /^\s*?(\d+\.|-|\*|\[ ?\]|\[x\])$/,
+      handler(range, context){
+        if(!noteAutoFormatPref()) return true;
+        const quill = this.quill;
+        const length = context.prefix.length;
+        const [line, offset] = quill.getLine(range.index);
+        if(offset > length) return true;
+        const mark = context.prefix.trim();
+        let value;
+        switch(mark){
+          case '[]': case '[ ]': value = 'unchecked'; break;
+          case '[x]': value = 'checked'; break;
+          case '-': case '*': value = 'bullet'; break;
+          default: value = 'ordered';
+        }
+        const attrs = { list: value };
+        if(value === 'ordered'){
+          const n = parseInt(mark, 10);
+          if(n !== noteListNextNumber(line)) attrs.liststart = String(n);
+        }
+        quill.insertText(range.index, ' ', 'user');
+        quill.history.cutoff();
+        quill.updateContents(new Delta().retain(range.index - offset).delete(length + 1)
+          .retain(line.length() - 2 - offset).retain(1, attrs), 'user');
+        quill.history.cutoff();
+        quill.setSelection(range.index - length, 'silent');
+        noteAutoFormatFor(quill).onNewLine(range.index - length);
+      }
+    },
+    // Quill's own Enter on an EMPTY list item, which ends the list, plus one
+    // thing: the styles waiting at the caret go too. Enter has just put the
+    // item above's head on this one (bold, say), and leaving the list is
+    // starting a plain line, not a bold paragraph.
+    'list empty enter': {
+      key: 13, collapsed: true, format: ['list'], empty: true,
+      handler(range, context){
+        const quill = this.quill;
+        noteAutoFormatFor(quill).cancel();
+        quill.format('list', false, 'user');
+        if(context.format.indent) quill.format('indent', false, 'user');
+        if(context.format.liststart) quill.format('liststart', false, 'user');
+        NOTE_PATTERN_ATTRS.forEach(k=>{
+          if(k !== 'color' && context.format[k] !== undefined && context.format[k] !== false) quill.format(k, false, 'user');
+        });
+      }
+    },
+    // ENTER STARTS THE NEW LINE PLAIN (real-user request: "pressing enter
+    // should obviously reset formatting (bold, underline, etc.)"). Quill's own
+    // Enter is this, plus putting every style at the caret back on afterwards,
+    // which is what carried a bold heading into the paragraph under it. The
+    // LINE's formats still carry over -- a list stays a list and a spacing
+    // stays a spacing -- except a list's start number, which belongs to the
+    // item it was typed on.
+    'note enter': {
+      key: 13, shiftKey: null,
+      handler(range, context){
+        const quill = this.quill;
+        if(range.length > 0) quill.scroll.deleteAt(range.index, range.length);
+        const lineFormats = {};
+        Object.keys(context.format).forEach(name=>{
+          if(name === 'liststart') return;
+          if(Parchment.query(name, Parchment.Scope.BLOCK) && !Array.isArray(context.format[name])) lineFormats[name] = context.format[name];
+        });
+        quill.insertText(range.index, '\n', lineFormats, 'user');
+        // The new newline ends the FIRST half, so the start number has to be
+        // moved back onto it from the half that kept the old one.
+        if(context.format.liststart && !Array.isArray(context.format.liststart)){
+          quill.formatLine(range.index, 1, 'liststart', context.format.liststart, 'user');
+          quill.formatLine(range.index + 1, 1, 'liststart', false, 'user');
+        }
+        quill.setSelection(range.index + 1, 'silent');
+        quill.focus();
+        noteAutoFormatFor(quill).onNewLine(range.index + 1);
+      }
+    }
+  };
+}
+
+/* THE NEW LINE IS FORMATTED LIKE THE ONES IT FOLLOWS (real-user request: "if I
+   have done '1. Category' in bold and write in non bold and then go
+   '2. Category' it should know i want that bold and the part after
+   non-bold ... And for sizing too ... you should be able to easily undo
+   that, just like the undo button in Word").
+   A line STARTS like an earlier one in two ways: a list item after an item of
+   the same list, or a typed marker -- "a)", "(2)", "\uac00.", "Q3.", "Step 2:" --
+   after a line that began with the same kind of marker. The nearest such line
+   above is the template, and what it is read for is its HEAD: the styles of
+   its first word, and where those styles stopped. That stop is learned as a
+   character -- the colon after "Category:", or the first character after the
+   head -- so typing that character is what turns the head's styles off again,
+   the way it went in the line copied. A head that ran the whole line runs
+   until Enter, which starts the next line plain.
+   It only ever sets the styles of the caret and of a marker already typed, so
+   undoing it is taking those back, which the chip under the line offers. */
+const NOTE_PATTERN_ATTRS = ['bold', 'italic', 'underline', 'strike', 'size', 'color', 'background', 'font'];
+const NOTE_PATTERN_SCAN_LINES = 300;
+function notePickAttrs(attrs, defaultColor){
+  const out = {};
+  NOTE_PATTERN_ATTRS.forEach(k=>{
+    const v = attrs && attrs[k];
+    if(v === undefined || v === null || v === false) return;
+    // The note's own ink is put on everything typed (buildCustomColorControls),
+    // so it says nothing about a head; only a colour CHOSEN is a style.
+    if(k === 'color' && defaultColor && String(v).toLowerCase() === String(defaultColor).toLowerCase()) return;
+    out[k] = v;
+  });
+  return out;
+}
+function noteSameAttrs(a, b){
+  const ka = Object.keys(a), kb = Object.keys(b);
+  return ka.length === kb.length && ka.every(k=> a[k] === b[k]);
+}
+// What a marker typed at the start of a line looks like with its particulars
+// taken out, so "3." matches "12." and "b)" matches "a)". Null for anything
+// that is not a marker: a line's first word followed by a space is not one.
+function noteMarkerSig(prefix){
+  if(!/\s$/.test(prefix) || prefix.length > 16) return null;
+  const core = prefix.trim();
+  if(!core) return null;
+  if(/^[\u2022\u00b7\u25aa\u25e6\u2023\u2192\u21d2\u2013\u2014>]$/.test(core)) return 'b' + core;
+  const m = /^(\(?)([A-Za-z]{1,8} ?)?(\d{1,3}|[ivxlcdm]{2,6}|[IVXLCDM]{2,6}|[a-z]|[A-Z]|[\uac00-\ud7a3])([.):\]])$/.exec(core);
+  if(!m) return null;
+  const [, open, word, id, close] = m;
+  if(open && close !== ')') return null;
+  let cls;
+  if(/^\d/.test(id)) cls = '9';
+  else if(/^[\uac00-\ud7a3]$/.test(id)) cls = 'k';
+  else if(id.length > 1) cls = id === id.toLowerCase() ? 'i' : 'I';
+  else cls = id === id.toLowerCase() ? 'a' : 'A';
+  return open + (word ? word.trim().toLowerCase() + ' ' : '') + cls + close;
+}
+// A line's own marker, if it has one: its first word (or "Step 2:", two).
+function noteLineMarker(text){
+  const one = /^\s*\S+\s/.exec(text);
+  if(one && noteMarkerSig(one[0])) return one[0];
+  const two = /^\s*\S+ \S+\s/.exec(text);
+  if(two && noteMarkerSig(two[0])) return two[0];
+  return null;
+}
+function noteAutoFormatFor(quill){
+  return (quill && quill.__noteAuto) || { onNewLine(){}, cancel(){} };
+}
+function enableNoteAutoFormat(quill, opts){
+  if(!quill || quill.__noteAuto) return;
+  const defaultColor = (opts && opts.defaultColor) || (()=> null);
+  let active = null;     // the line being formatted like an earlier one
+  let applied = null;    // what the chip's Undo takes back
+  let chip = null, chipTimer = null;
+
+  const lineIndexOf = (line)=> quill.getIndex(line);
+  const lineText = (line)=> quill.getText(lineIndexOf(line), Math.max(0, line.length() - 1));
+  const charsOf = (line, limit)=>{
+    const start = lineIndexOf(line);
+    const len = Math.min(Math.max(0, line.length() - 1), limit);
+    const out = [];
+    quill.getContents(start, len).ops.forEach(op=>{
+      if(typeof op.insert !== 'string'){ out.push({ ch: '\ufffc', a: {} }); return; }
+      const a = notePickAttrs(op.attributes, defaultColor());
+      for(let i = 0; i < op.insert.length; i++) out.push({ ch: op.insert[i], a });
+    });
+    return out;
+  };
+  // Read a template line: the styles of its head, and the rule for where they
+  // stop. markerLen is how much of the line is its marker.
+  const readHead = (line, markerLen)=>{
+    const chars = charsOf(line, 400);
+    const firstMark = chars.slice(0, markerLen).find(c=> c.ch.trim());
+    const markerAttrs = firstMark ? firstMark.a : {};
+    const body = chars.slice(markerLen);
+    while(body.length && body[0].ch === ' ') body.shift();
+    if(!body.length) return null;
+    const head = body[0].a;
+    let run = 0;
+    while(run < body.length && noteSameAttrs(body[run].a, head)) run++;
+    let endRule = null;
+    if(Object.keys(head).length && run < body.length){
+      const last = body[run - 1].ch, next = body[run].ch;
+      const punct = /[:.,;\-\u2013\u2014)>\u2192\u00bb\]]/;
+      if(punct.test(last)) endRule = { after: last };
+      else if(next !== ' ' && punct.test(next)) endRule = { before: next };
+      else if(next === ' ') endRule = { words: body.slice(0, run).map(c=> c.ch).join('').trim().split(/\s+/).length };
+      else return { markerAttrs, head: {}, endRule: null };
+    }
+    return { markerAttrs, head, endRule };
+  };
+  const findTemplate = (line, test)=>{
+    const lines = quill.getLines(0, quill.getLength());
+    let i = lines.indexOf(line);
+    for(let seen = 0; --i >= 0 && seen < NOTE_PATTERN_SCAN_LINES; seen++){
+      const l = lines[i];
+      if(!l || typeof l.length !== 'function' || l.length() <= 1) continue;
+      if(l.domNode && l.domNode.classList && l.domNode.classList.contains('note-page-break')) continue;
+      const hit = test(l);
+      if(hit) return { line: l, markerLen: hit.markerLen || 0 };
+    }
+    return null;
+  };
+
+  const hideChip = ()=>{
+    clearTimeout(chipTimer);
+    if(chip){ chip.remove(); chip = null; }
+  };
+  const showChip = (index)=>{
+    hideChip();
+    chip = document.createElement('div');
+    chip.className = 'note-af-chip';
+    chip.setAttribute('role', 'status');
+    const label = document.createElement('span');
+    label.textContent = t('noteAutoFormatApplied');
+    const undo = document.createElement('button');
+    undo.type = 'button';
+    undo.textContent = t('noteAutoFormatUndo');
+    const off = document.createElement('button');
+    off.type = 'button';
+    off.className = 'note-af-off';
+    off.textContent = t('noteAutoFormatOff');
+    off.title = t('noteAutoFormatOffHint');
+    [undo, off].forEach(b=> b.addEventListener('mousedown', (e)=> e.preventDefault()));
+    undo.addEventListener('click', (e)=>{ e.preventDefault(); undoApplied(); });
+    off.addEventListener('click', (e)=>{ e.preventDefault(); undoApplied(); setNoteAutoFormatPref(false); });
+    chip.append(label, undo, off);
+    quill.container.appendChild(chip);
+    try{
+      const b = quill.getBounds(index);
+      chip.style.top = Math.round(b.top + b.height + 4) + 'px';
+      chip.style.left = Math.max(4, Math.round(b.left) - 4) + 'px';
+    }catch(e){}
+    chipTimer = setTimeout(hideChip, 7000);
+  };
+  const setCaret = (attrs, keys)=>{
+    keys.forEach(k=>{ quill.format(k, attrs[k] !== undefined ? attrs[k] : false, 'user'); });
+  };
+  const undoApplied = ()=>{
+    const a = applied;
+    applied = null;
+    active = null;
+    hideChip();
+    if(!a) return;
+    const sel = quill.getSelection(true);
+    const end = a.headEnd !== null ? a.headEnd : (sel ? sel.index : a.bodyStart);
+    const off = {};
+    Object.keys(a.head).forEach(k=>{ off[k] = false; });
+    if(end > a.bodyStart && Object.keys(off).length) quill.formatText(a.bodyStart, end - a.bodyStart, off, 'user');
+    if(a.markerLen && Object.keys(a.markerAttrs).length){
+      const moff = {};
+      Object.keys(a.markerAttrs).forEach(k=>{ moff[k] = false; });
+      quill.formatText(a.lineStart, a.markerLen, moff, 'user');
+    }
+    if(sel && sel.length === 0) setCaret({}, Object.keys(a.head));
+  };
+  const apply = (line, lineStart, markerLen, tpl)=>{
+    const got = readHead(tpl.line, tpl.markerLen);
+    if(!got) return;
+    const { markerAttrs, head, endRule } = got;
+    const markerKeys = Object.keys(markerAttrs);
+    if(!Object.keys(head).length && !(markerLen && markerKeys.length)) return;
+    if(markerLen && markerKeys.length) quill.formatText(lineStart, markerLen - 1, markerAttrs, 'user');
+    // Every style the head HAS goes on, and every style the marker carried
+    // that the head does NOT is taken off, or typing after a bold "2." would
+    // run the bold on into a plain head.
+    const keys = Array.from(new Set(Object.keys(head).concat(markerKeys)));
+    setCaret(head, keys);
+    const bodyStart = lineStart + markerLen;
+    applied = { lineStart, markerLen, markerAttrs: markerLen ? markerAttrs : {}, head, bodyStart, headEnd: null };
+    active = Object.keys(head).length ? { line, head, endRule, words: 0 } : null;
+    showChip(bodyStart);
+  };
+
+  quill.__noteAuto = {
+    // Forget what was applied, and the chip offering to take it back: the
+    // line it was about has been left (an empty list item ended the list).
+    cancel(){ active = null; applied = null; hideChip(); },
+    // A new list item: the template is the nearest earlier item of the same
+    // kind of list at the same depth.
+    onNewLine(index){
+      active = null;
+      if(!noteAutoFormatPref()) return;
+      try{
+        const [line] = quill.getLine(index);
+        if(!line) return;
+        const f = quill.getFormat(index);
+        if(!f.list || Array.isArray(f.list)) return;
+        const indent = f.indent || 0;
+        const tpl = findTemplate(line, (l)=>{
+          const lf = quill.getFormat(lineIndexOf(l), 0);
+          return (lf.list === f.list && (lf.indent || 0) === indent) ? { markerLen: 0 } : null;
+        });
+        if(tpl) apply(line, index, 0, tpl);
+      }catch(e){}
+    }
+  };
+
+  quill.on('text-change', (delta, oldContents, source)=>{
+    if(source !== 'user') return;
+    const ops = delta.ops || [];
+    const last = ops[ops.length - 1];
+    const single = ops.length >= 1 && ops.length <= 2 && last && typeof last.insert === 'string' && last.insert.length === 1;
+    if(!single){ if(ops.some(op=> op.insert !== undefined || op.delete)) active = null; return; }
+    const at = ops.length === 2 ? ops[0].retain : 0;
+    if(typeof at !== 'number') return;
+    const c = last.insert;
+    if(c === '\n'){ active = null; return; }
+    // The work happens after Quill has finished with this keystroke, for the
+    // reason enableTypingShortcuts gives: Quill puts the caret back by node
+    // and offset once its handlers return, and restyling the line under it
+    // first would move the caret.
+    if(active){
+      const a = active;
+      Promise.resolve().then(()=>{
+        if(active !== a) return;
+        const [line] = quill.getLine(at);
+        if(line !== a.line){ active = null; return; }
+        const r = a.endRule;
+        if(!r) return;
+        const offKeys = Object.keys(a.head);
+        if(r.after && c === r.after){
+          setCaret({}, offKeys);
+          if(applied) applied.headEnd = at + 1;
+          active = null;
+        } else if((r.before && c === r.before) || (r.words && c === ' ' && ++a.words >= r.words)){
+          const off = {};
+          offKeys.forEach(k=>{ off[k] = false; });
+          quill.formatText(at, 1, off, 'user');
+          quill.setSelection(at + 1, 0, 'silent');
+          setCaret({}, offKeys);
+          if(applied) applied.headEnd = at;
+          active = null;
+        }
+      });
+      return;
+    }
+    if(c !== ' ' || !noteAutoFormatPref()) return;
+    Promise.resolve().then(()=>{
+      try{
+        const [line, offset] = quill.getLine(at);
+        if(!line) return;
+        if(quill.getFormat(at - offset, 0).list) return;
+        const lineStart = at - offset;
+        const prefix = quill.getText(lineStart, offset + 1);
+        const sig = noteMarkerSig(prefix);
+        if(!sig) return;
+        const tpl = findTemplate(line, (l)=>{
+          if(quill.getFormat(lineIndexOf(l), 0).list) return null;
+          const m = noteLineMarker(lineText(l));
+          return (m && noteMarkerSig(m) === sig) ? { markerLen: m.length } : null;
+        });
+        if(tpl) apply(line, lineStart, prefix.length, tpl);
+      }catch(e){}
+    });
+  });
+  quill.on('selection-change', (range, oldRange, source)=>{
+    if(!active) return;
+    if(!range){ active = null; return; }
+    if(source === 'user' && quill.getLine(range.index)[0] !== active.line) active = null;
+  });
+  quill.root.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && chip){ hideChip(); }
+  });
+}
+
+/* ---------- LINE SPACING CONTROL ----------
+   A button and a list, built like the size control beside it, and put on the
+   lines the selection touches (or the caret's line). */
+function buildNoteLineSpacingControl(quill, markDirty){
+  const toolbar = quill.getModule('toolbar').container;
+  if(!toolbar || toolbar.querySelector('.nf-spacing-group')) return;
+  const group = document.createElement('span');
+  group.className = 'ql-formats nf-spacing-group';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'nf-spacing-open';
+  btn.innerHTML = ICON.lineSpacing(16);
+  const panel = document.createElement('div');
+  panel.className = 'nf-size-panel nf-spacing-panel';
+  const noSteal = (el)=> el.addEventListener('mousedown', (e)=> e.preventDefault());
+  noSteal(btn);
+  const close = ()=>{ panel.style.display = 'none'; };
+  const current = ()=>{
+    const range = quill.getSelection();
+    const v = range ? quill.getFormat(range).lineheight : null;
+    return typeof v === 'string' ? v : '';
+  };
+  const options = [''].concat(NOTE_LINE_SPACINGS);
+  options.forEach(v=>{
+    const o = document.createElement('button');
+    o.type = 'button';
+    o.dataset.value = v;
+    noSteal(o);
+    o.addEventListener('click', (e)=>{
+      e.preventDefault();
+      close();
+      const range = quill.getSelection(true);
+      if(!range) return;
+      quill.formatLine(range.index, range.length, 'lineheight', v || false, 'user');
+      if(markDirty) markDirty();
+    });
+    panel.appendChild(o);
+  });
+  const label = ()=>{
+    panel.querySelectorAll('button').forEach(o=>{
+      o.textContent = o.dataset.value ? noteNum(Number(o.dataset.value)) : t('noteLineSpacingDefault');
+    });
+    btn.title = t('noteLineSpacing');
+    btn.setAttribute('aria-label', t('noteLineSpacing'));
+  };
+  btn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    if(panel.style.display === 'block'){ close(); return; }
+    label();
+    const at = current();
+    panel.querySelectorAll('button').forEach(o=> o.classList.toggle('on', o.dataset.value === at));
+    panel.style.display = 'block';
+  });
+  toolbar.addEventListener('click', (e)=>{ if(!group.contains(e.target)) close(); }, true);
+  document.addEventListener('click', (e)=>{ if(!group.contains(e.target)) close(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') close(); });
+  group.append(btn, panel);
+  const listGroup = toolbar.querySelector('.ql-list') && toolbar.querySelector('.ql-list').parentNode;
+  if(listGroup && listGroup.nextSibling) toolbar.insertBefore(group, listGroup.nextSibling);
+  else toolbar.appendChild(group);
+  label();
+  quill._relabelLineSpacing = label;
+}
+
+/* ---------- WORDS, CHARACTERS AND PAGES ----------
+   At the right-hand end of the toolbar, which is pinned, so it is in view
+   wherever the writing is (real-user request: "there should be a place for
+   word + character count + pages"). A selection is counted against the whole,
+   the way a word processor does it. Recounted on the next frame rather than on
+   every keystroke of a fast typist. */
+const noteWordSegmenter = (typeof Intl !== 'undefined' && Intl.Segmenter)
+  ? new Intl.Segmenter(undefined, { granularity: 'word' }) : null;
+function countNoteWords(text){
+  if(noteWordSegmenter){
+    let n = 0;
+    for(const s of noteWordSegmenter.segment(text)) if(s.isWordLike) n++;
+    return n;
+  }
+  const m = text.match(/\S+/g);
+  return m ? m.length : 0;
+}
+// What a reader would call a character: a space counts, a line break and an
+// embedded picture do not, and a character outside the basic plane is one.
+function countNoteChars(text, spaces){
+  let n = 0;
+  for(const ch of text){
+    if(ch === '\n' || ch === '\ufffc') continue;
+    if(!spaces && /\s/.test(ch)) continue;
+    n++;
+  }
+  return n;
+}
+function noteNum(n){ return Number(n).toLocaleString(currentLang === 'ko' ? 'ko-KR' : currentLang === 'vi' ? 'vi-VN' : 'en-US'); }
+function buildNoteStats(quill, key){
+  const toolbar = quill.getModule('toolbar').container;
+  if(!toolbar || toolbar.querySelector('.note-stats')) return;
+  const el = document.createElement('span');
+  el.className = 'note-stats';
+  toolbar.appendChild(el);
+  let raf = 0;
+  const update = ()=>{
+    raf = 0;
+    if(!el.isConnected) return;
+    const all = quill.getText();
+    const words = countNoteWords(all), chars = countNoteChars(all, true);
+    const sel = quill.getSelection();
+    const parts = [];
+    if(sel && sel.length > 0){
+      const part = quill.getText(sel.index, sel.length);
+      parts.push(tForm('noteWordsOf', words).replace('{s}', noteNum(countNoteWords(part))).replace('{n}', noteNum(words)));
+      parts.push(tForm('noteCharsOf', chars).replace('{s}', noteNum(countNoteChars(part, true))).replace('{n}', noteNum(chars)));
+    } else {
+      parts.push(tForm('noteWordCount', words).replace('{n}', noteNum(words)));
+      parts.push(tForm('noteCharCount', chars).replace('{n}', noteNum(chars)));
+    }
+    const p = notePagers[key];
+    if(p && notePagedPref()){
+      const total = notePageGroups(quill).length;
+      parts.push(total > 1
+        ? t('notePageOf').replace('{n}', p.page + 1).replace('{total}', total)
+        : tCount('notePageTotal', total).replace('{n}', total));
+    }
+    el.textContent = parts.join(' \u00b7 ');
+    const noSpace = countNoteChars(all, false);
+    el.title = tForm('noteCharsNoSpaces', noSpace).replace('{n}', noteNum(noSpace));
+  };
+  const schedule = ()=>{ if(!raf) raf = requestAnimationFrame(update); };
+  quill.on('text-change', schedule);
+  quill.on('selection-change', schedule);
+  quill._updateNoteStats = schedule;
+  schedule();
+}
+
+/* ---------- A WORD JOINED BY A SYMBOL STAYS WHOLE ----------
+   The other half of the nowrap format above: every run of non-space text with
+   a joining symbol inside it ("North-South", "a/b", "x<->y") is marked
+   nowrap, and a run that has lost its symbol is unmarked. Korean is handled in
+   the stylesheet (word-break: keep-all), which keeps a Korean word whole
+   without marking anything.
+   Done once typing has paused, on the lines that changed, and never while a
+   Korean or Vietnamese syllable is still being composed: restyling the line
+   under a composition breaks it. A run longer than NOTE_NOWRAP_MAX is left to
+   wrap, since a line that cannot break would run off the page, and so is an
+   address, which the link styling already wraps. */
+const NOTE_NOWRAP_MAX = 32;
+const NOTE_NOWRAP_JOIN = /[^\s][\-\u2010-\u2015\/\\<>=+~|&*^%_\u2190-\u21ff\u2260\u2264\u2265\u00b1\u2248][^\s]/;
+function enableNoteWholeWords(quill){
+  if(!quill || quill.__wholeWords) return;
+  quill.__wholeWords = true;
+  let composing = false, timer = null, dirtyFrom = null, dirtyTo = null;
+  quill.root.addEventListener('compositionstart', ()=>{ composing = true; });
+  quill.root.addEventListener('compositionend', ()=>{ composing = false; schedule(); });
+  const schedule = ()=>{
+    clearTimeout(timer);
+    timer = setTimeout(run, 600);
+  };
+  const run = ()=>{
+    if(composing){ schedule(); return; }
+    if(dirtyFrom === null) return;
+    const len = quill.getLength();
+    const from = Math.max(0, Math.min(dirtyFrom, len - 1)), to = Math.min(len - 1, dirtyTo);
+    dirtyFrom = dirtyTo = null;
+    let lines;
+    try{ lines = quill.getLines(from, Math.max(1, to - from)); }catch(e){ return; }
+    lines.slice(0, 400).forEach(line=>{
+      if(!line || typeof line.length !== 'function') return;
+      const start = quill.getIndex(line);
+      const text = quill.getText(start, Math.max(0, line.length() - 1));
+      if(!text) return;
+      const want = new Array(text.length).fill(false);
+      const re = /\S+/g;
+      let m;
+      while((m = re.exec(text))){
+        const w = m[0];
+        if(w.length > NOTE_NOWRAP_MAX || /:\/\/|^www\./i.test(w) || !NOTE_NOWRAP_JOIN.test(w)) continue;
+        for(let i = m.index; i < m.index + w.length; i++) want[i] = true;
+      }
+      // Only what differs is written, as runs, so a line that is already
+      // right costs nothing and the history sees no change at all.
+      let i = 0;
+      const ops = quill.getContents(start, text.length).ops;
+      const have = [];
+      ops.forEach(op=>{
+        const n = typeof op.insert === 'string' ? op.insert.length : 1;
+        const on = !!(op.attributes && op.attributes.nowrap);
+        for(let k = 0; k < n; k++) have.push(on);
+      });
+      while(i < text.length){
+        if(want[i] === !!have[i]){ i++; continue; }
+        let j = i;
+        while(j < text.length && want[j] === want[i] && want[j] !== !!have[j]) j++;
+        quill.formatText(start + i, j - i, 'nowrap', want[i] ? 'nowrap' : false, 'silent');
+        i = j;
+      }
+    });
+  };
+  quill.on('text-change', (delta, oldContents, source)=>{
+    if(source !== 'user') return;
+    let index = 0, lo = null, hi = null;
+    (delta.ops || []).forEach(op=>{
+      if(op.retain){ index += op.retain; return; }
+      if(lo === null) lo = index;
+      if(op.insert !== undefined){ index += typeof op.insert === 'string' ? op.insert.length : 1; }
+      hi = Math.max(hi === null ? 0 : hi, index + 1);
+    });
+    if(lo === null) return;
+    dirtyFrom = dirtyFrom === null ? lo : Math.min(dirtyFrom, lo);
+    dirtyTo = dirtyTo === null ? hi : Math.max(dirtyTo, hi);
+    schedule();
+  });
+}
+
+// EVERYTHING A NOTE EDITOR GETS ON TOP OF QUILL, in one call, so the course
+// notes and the Notebook cannot drift apart. `key` is the pager's.
+function enhanceNoteEditor(quill, key, opts){
+  enableNoteAutoFormat(quill, { defaultColor: opts && opts.defaultColor });
+  enableNoteWholeWords(quill);
+  buildNoteLineSpacingControl(quill, opts && opts.markDirty);
+  buildNoteStats(quill, key);
 }
 /* ---------- LINKS IN A NOTE ----------
    A URL in a note was dead text: the toolbar had no link button and nothing
@@ -43045,7 +43898,41 @@ function notePageOfNode(groups, node){
 function setupNotePager(key, quill, barId){
   const bar = document.getElementById(barId);
   if(!bar || notePagers[key]) return;
-  notePagers[key] = { quill: quill, bar: bar, page: 0, reflowTimer: null };
+  notePagers[key] = { quill: quill, bar: bar, page: 0, reflowTimer: null, caret: null };
+  // WHERE THE CARET WAS, for "New page": pressing the button takes the focus
+  // off the editor on a phone, so the place it has to split at is remembered
+  // here rather than asked for once the press has landed.
+  quill.on('selection-change', (range)=>{ if(range) notePagers[key].caret = range.index; });
+  quill.on('text-change', ()=>{
+    if(!quill.hasFocus()) return;
+    const range = quill.getSelection();
+    if(range) notePagers[key].caret = range.index;
+  });
+  // A PASTE THAT LEAVES YOU UNABLE TO TYPE (real-user report: "copy pasting
+  // sometimes doesn't work across pages, and it stops you from typing").
+  // Quill pastes by moving the focus into a hidden box of its own, reading
+  // what lands there, and focusing the editor again a moment later. Anything
+  // that goes wrong in between leaves the focus in that hidden box, where
+  // every key after it goes; and a paste that brings a page break with it
+  // can leave the caret on a page that is not the one on screen. So once the
+  // paste has had its moment: the focus is put back if it is still in the
+  // box, and the page on screen is the one the caret is on.
+  quill.root.addEventListener('paste', ()=>{
+    setTimeout(()=>{
+      const clip = quill.clipboard && quill.clipboard.container;
+      if(clip && document.activeElement === clip){
+        clip.innerHTML = '';
+        quill.focus();
+      }
+      if(quill.hasFocus()) renderNotePager(key, true);
+    }, 40);
+  });
+  // A caret left on a page that is no longer on screen (the page was changed
+  // from the bar, then the editor focused again) types into text nobody can
+  // see. Focusing the editor brings it to the page on screen.
+  quill.root.addEventListener('focus', ()=>{
+    setTimeout(()=> keepNoteCaretOnPage(key), 0);
+  });
   // Re-applied after every text change, so an edit that makes Quill rebuild a
   // block heals the hidden ones on the next keystroke rather than leaving a
   // page half shown.
@@ -43097,7 +43984,10 @@ function buildNotePagerBar(key){
   // document, which is a fair argument and one control too many on a row that
   // now has to carry the type size as well.
   const add = button('np-insert', ICON.pageAdd(13) + '<span class="np-add-label"></span>',
-    ()=> addNotePageAtEnd(key));
+    ()=> addNotePageAtCaret(key));
+  // Kept from taking the focus, so on a computer the caret is still where it
+  // was when the press lands.
+  add.addEventListener('mousedown', (e)=> e.preventDefault());
   // Moving the page on screen (real-user request): one step either way, or
   // straight to a number. The field shows where the page IS, so typing over
   // it is how you say where it goes; Enter, or leaving the field, moves it.
@@ -43159,9 +44049,20 @@ function renderNotePager(key, follow){
   // starts under you is the page you land on, and deleting one cannot leave
   // you looking at a page that is no longer there.
   if(follow && p.quill.hasFocus()){
-    const sel = document.getSelection();
-    const node = sel && sel.anchorNode;
-    const at = node ? notePageOfNode(groups, node.nodeType === 1 ? node : node.parentElement) : -1;
+    // Quill's own idea of where the caret is first: just after a paste the
+    // browser's selection can still be in Quill's hidden clipboard box, which
+    // is on no page at all. The browser's is the fallback.
+    let at = -1;
+    try{
+      const range = p.quill.selection.getRange()[0];
+      const [line] = range ? p.quill.getLine(range.index) : [null];
+      if(line && line.domNode) at = notePageOfNode(groups, line.domNode);
+    }catch(e){}
+    if(at < 0){
+      const sel = document.getSelection();
+      const node = sel && sel.anchorNode;
+      at = node ? notePageOfNode(groups, node.nodeType === 1 ? node : node.parentElement) : -1;
+    }
     if(at >= 0) p.page = at;
   }
   p.page = Math.max(0, Math.min(p.page, total - 1));
@@ -43241,9 +44142,11 @@ function renderNotePager(key, follow){
   const add = q('.np-insert');
   add.style.display = (editable && pagesOn) ? '' : 'none';
   add.querySelector('.np-add-label').textContent = t('notePageAddBtn');
+  add.title = t('notePageAddHint');
   const del = q('.np-del');
   del.textContent = t('notePageDelete');
   del.style.display = own ? '' : 'none';
+  if(p.quill._updateNoteStats) p.quill._updateNoteStats();
 }
 // A note, read as the things pages are made of: whole LINES, each ending in
 // its own newline so its list or heading formatting travels with it, and the
@@ -43415,6 +44318,96 @@ function deleteNotePage(key){
 // the caret, and with the editor unfocused the caret sits at the very start,
 // so the "new" page came out as a new page 1). The break is a hard one, so
 // auto pages never folds it away again.
+// The block before a line, across the list it may sit in: a list item's own
+// prev is only the item above it in the SAME list.
+function noteBlockPrev(line){
+  if(!line) return null;
+  if(line.prev) return line.prev;
+  const parent = line.parent;
+  return parent && parent.domNode && /^(OL|UL)$/.test(parent.domNode.tagName) ? parent.prev : null;
+}
+function keepNoteCaretOnPage(key){
+  const p = notePagers[key];
+  if(!p || !notePagedPref()) return;
+  const q = p.quill;
+  const range = q.getSelection();
+  if(!range) return;
+  const groups = notePageGroups(q);
+  if(groups.length <= 1) return;
+  const [line] = q.getLine(range.index);
+  const at = line && line.domNode ? notePageOfNode(groups, line.domNode) : -1;
+  if(at < 0 || at === p.page) return;
+  const first = (groups[p.page] || []).find(el => !(el.classList && el.classList.contains('note-page-break')));
+  const blot = first && Quill.find(first);
+  if(blot && blot !== q) q.setSelection(q.getIndex(blot), 0, 'silent');
+}
+// NEW PAGE STARTS WHERE YOU ARE (real-user request: "new page should make
+// page where you've put yourself in the text"). What is after the caret goes
+// onto the new page and the caret goes with it, the way a page break works in
+// Word. With no caret in the note yet, the new page is added at the end, as it
+// always was.
+function addNotePageAtCaret(key){
+  const p = notePagers[key];
+  if(!p || !p.quill.isEnabled()) return;
+  const q = p.quill;
+  const live = q.hasFocus() ? q.getSelection() : null;
+  let at = live ? live.index : p.caret;
+  if(at == null || at < 0 || at >= q.getLength()){ addNotePageAtEnd(key); return; }
+  const isBreak = (b)=> !!(b && b.domNode && b.domNode.classList && b.domNode.classList.contains('note-page-break'));
+  const [line, offset] = q.getLine(at);
+  if(!line || isBreak(line)){ addNotePageAtEnd(key); return; }
+  notePageRewriting = true;
+  let splitLine = false;
+  try{
+    q.history.cutoff();
+    const lineStart = q.getIndex(line);
+    const lineEnd = lineStart + line.length() - 1;   // where its own newline is
+    if(offset > 0 && at < lineEnd){
+      // In the middle of a line: it is split, and the second half starts the
+      // new page.
+      q.insertText(at, '\n', 'user');
+      at += 1;
+      splitLine = true;
+    } else if(offset > 0){
+      // At the end of a line: the new page starts with the next line, or with
+      // a fresh one where there is nothing after it on this page.
+      at = lineEnd + 1;
+      const after = line.next || (line.parent && line.parent.domNode && /^(OL|UL)$/.test(line.parent.domNode.tagName) ? line.parent.next : null);
+      if(!after || isBreak(after)){ q.insertText(lineEnd, '\n', 'user'); splitLine = true; }
+    } else if(!noteBlockPrev(line) || isBreak(noteBlockPrev(line))){
+      // At the very start of a page: the page being left keeps a line of its
+      // own to type on, or it would be a page with nothing in it. A plain one:
+      // an empty numbered item left behind would read as a "1." with nothing
+      // after it.
+      q.insertText(at, '\n', 'user');
+      try{ q.formatLine(at, 1, { list: false, header: false, blockquote: false, 'code-block': false, liststart: false }, 'user'); }catch(e){}
+      at += 1;
+    }
+    q.insertEmbed(at, 'notePageBreak', true, 'user');
+    // A numbered list cut by the break carries on counting on the new page
+    // rather than starting at 1 again, and a line split in two does not keep
+    // the start number both halves were cloned with.
+    try{
+      const [first] = q.getLine(at + 1);
+      const list = first && first.parent;
+      if(first && list && list.domNode && list.domNode.tagName === 'OL' && !first.prev){
+        const brk = list.prev, before = brk && brk.prev;
+        let n = 0;
+        if(isBreak(brk) && before && before.domNode && before.domNode.tagName === 'OL'){
+          const items = Array.from(before.domNode.children).filter(el=> !/\bql-indent-\d/.test(el.className || ''));
+          if(items.length) n = noteListItemNumber(items[items.length - 1]) + 1;
+        }
+        if(n > 1) q.formatLine(at + 1, 1, 'liststart', String(n), 'user');
+        else if(splitLine) q.formatLine(at + 1, 1, 'liststart', false, 'user');
+      }
+    }catch(e){}
+    q.history.cutoff();
+  }finally{ notePageRewriting = false; }
+  const caret = at + 1;
+  p.caret = caret;
+  q.setSelection(caret, 0, 'user');
+  renderNotePager(key, true);
+}
 function addNotePageAtEnd(key){
   const p = notePagers[key];
   if(!p || !p.quill.isEnabled()) return;
@@ -43767,13 +44760,14 @@ function ensureQuillInitialized(){
         ],
         handlers: { image: quillImageUploadHandler, link: noteLinkToolbarHandler }
       },
+      keyboard: { bindings: noteKeyboardBindings() },
       imageResize: {}
     }
   });
   keepPageStillOnPaste(quillEditor);
   storePastedNoteImages(quillEditor);
   enableTouchUndo(quillEditor);
-  enableDashShortcuts(quillEditor);
+  enableTypingShortcuts(quillEditor);
   enableNoteLinks(quillEditor);
   quillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
@@ -43787,6 +44781,7 @@ function ensureQuillInitialized(){
   buildCustomColorControls();
   buildNoteFontSizeControl(quillEditor, ()=>{ editorDirty = true; });
   setupNotePager('course', quillEditor, 'notePageBar');
+  enhanceNoteEditor(quillEditor, 'course', { defaultColor: ()=> currentNoteColor, markDirty: ()=>{ editorDirty = true; } });
 }
 function buildCustomColorControls(){
   const toolbar = quillEditor.getModule('toolbar').container;
@@ -44275,13 +45270,14 @@ function ensureNotebookQuillInitialized(){
         container: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link','image','video'], ['clean']],
         handlers: { image: quillImageUploadHandler, link: noteLinkToolbarHandler }
       },
+      keyboard: { bindings: noteKeyboardBindings() },
       imageResize: {}
     }
   });
   keepPageStillOnPaste(notebookQuillEditor);
   storePastedNoteImages(notebookQuillEditor);
   enableTouchUndo(notebookQuillEditor);
-  enableDashShortcuts(notebookQuillEditor);
+  enableTypingShortcuts(notebookQuillEditor);
   enableNoteLinks(notebookQuillEditor);
   notebookQuillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
@@ -44295,6 +45291,7 @@ function ensureNotebookQuillInitialized(){
   buildQuillColorPicker(notebookQuillEditor, ()=>currentNotebookColor, ()=>{ notebookEditorDirty = true; });
   buildNoteFontSizeControl(notebookQuillEditor, ()=>{ notebookEditorDirty = true; });
   setupNotePager('notebook', notebookQuillEditor, 'notebookPageBar');
+  enhanceNoteEditor(notebookQuillEditor, 'notebook', { defaultColor: ()=> currentNotebookColor, markDirty: ()=>{ notebookEditorDirty = true; } });
 }
 window.addEventListener('beforeunload', (e)=>{
   if(notebookEditorDirty) notebookNoteAutosave.saveIfAuto();
