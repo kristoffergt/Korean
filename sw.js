@@ -182,6 +182,15 @@ function pushText(n, i18n) {
   if (n.type === 'yonsei_board' && typeof p.count === 'number' && s.yonseiOne) {
     return { title: p.count > 1 ? s.yonseiMany : s.yonseiOne, body: n.body || '' };
   }
+  // A reminder written to the app: what it said, then the time it was for.
+  // localeTag mirrors LOCALE_TAGS in index.html.
+  if (n.type === 'pt_reminder') {
+    const localeTag = lang === 'ko' ? 'ko-KR' : lang === 'vi' ? 'vi-VN' : 'en-US';
+    let time = '';
+    try { if (p.at) time = new Date(p.at).toLocaleTimeString(localeTag, { hour: '2-digit', minute: '2-digit' }); } catch (_) {}
+    const word = s.ptReminderTitle || 'Reminder';
+    return p.text ? { title: p.text, body: [word, time].filter(Boolean).join(' \u00b7 ') } : { title: word, body: time };
+  }
   if (n.type === 'link_accepted' && p.name && s.linkAcceptedTpl) {
     return { title: s.linkAcceptedTpl.replace('{name}', p.name), body: n.body || '' };
   }
