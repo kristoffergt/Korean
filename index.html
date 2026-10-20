@@ -3393,9 +3393,14 @@ body.dark .ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-3);}
 .writing-mock-pane-head .writing-task-box{flex:1 1 auto;margin-top:0;}
 .writing-mock-grid{display:flex;gap:16px;margin-top:16px;align-items:flex-start;}
 .writing-mock-pane{min-width:0;flex:1 1 0;}
+/* Stacked, a pane is as tall as what is in it and as wide as the card. Left
+   with the side-by-side flex:1 1 0, a column of them measured 228px wide and
+   327px tall on a phone, so Q53's count and Save button sat underneath the
+   Q54 editor. */
 @media (max-width: 900px){
   .writing-mock-head-row{flex-direction:column;}
-  .writing-mock-grid{flex-direction:column;}
+  .writing-mock-grid{flex-direction:column;align-items:stretch;}
+  .writing-mock-pane{flex:none;}
 }
 /* A plain narrowed desktop window hits this well before the phone
    breakpoint below -- "English" sitting fully spelled out in the language
@@ -3675,6 +3680,47 @@ body.dark .ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-3);}
 .wtc-note-label{font-weight:600;font-size:12px;margin-top:4px;}
 .writing-source-group{border-top:1px solid var(--line);padding-top:16px;margin-top:16px;}
 .writing-source-group:first-child{border-top:none;padding-top:0;margin-top:0;}
+/* ---------- TOPIK WRITING TEMPLATES ----------
+   The same panel in three places: a card of its own under the writing list,
+   and beside each editor. Beside only where there is room for both: a
+   narrow screen puts it under the editor rather than squeezing the editor
+   down to a column nobody can write in. The chips pick one filter at a time,
+   so they look like the other segmented controls here; the Templates toggle
+   is on or off, so it wears --on when it is on. */
+.tpl-panel{display:flex;flex-direction:column;gap:8px;min-width:0;}
+.tpl-search{font-family:'Inter',sans-serif;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:100%;box-sizing:border-box;}
+.tpl-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.tpl-chips button{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:4px 11px;font-size:12px;font-weight:600;border-radius:999px;}
+.tpl-chips button:hover:not(.active){background:rgba(127,127,127,0.22);}
+.tpl-chips button.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.tpl-note{font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+.tpl-count{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.4px;}
+.tpl-list{overflow-y:auto;max-height:min(60vh,640px);overscroll-behavior:contain;}
+.tpl-group-title{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.4px;font-weight:700;margin:14px 0 2px;}
+.tpl-group-title:first-child{margin-top:2px;}
+.tpl-item{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);}
+.tpl-item:last-child{border-bottom:none;}
+.tpl-body{flex:1 1 auto;min-width:0;}
+.tpl-frame{font-size:15px;font-weight:600;color:var(--ink);line-height:1.45;word-break:keep-all;overflow-wrap:anywhere;}
+.tpl-blank{color:var(--celadon-4);font-weight:700;}
+body.dark .tpl-blank{color:var(--celadon-3);}
+.tpl-ex{font-size:13px;color:var(--ink);opacity:0.78;line-height:1.5;margin-top:2px;word-break:keep-all;overflow-wrap:anywhere;}
+.tpl-use{font-size:12px;color:var(--ink-soft);line-height:1.45;margin-top:2px;}
+button.tpl-act{flex:none;background:var(--paper);color:var(--ink);border:1px solid var(--line);padding:5px 10px;font-size:12px;font-weight:600;border-radius:6px;}
+button.tpl-act:hover{background:rgba(127,127,127,0.16);}
+.tpl-side{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0;}
+.tpl-side .tpl-list{max-height:min(52vh,520px);}
+.export-btn.tpl-toggle[aria-pressed="true"]{background:var(--on-soft);color:var(--on);border-color:var(--on);}
+.writing-edit-row.with-tpl,.writing-mock-body.with-tpl{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,320px);gap:16px;align-items:start;}
+.writing-mock-body{margin-top:16px;}
+.writing-mock-body > .writing-mock-grid{margin-top:0;}
+@media (max-width: 860px){
+  .writing-edit-row.with-tpl{display:flex;flex-direction:column;align-items:stretch;}
+  .tpl-side .tpl-list{max-height:45vh;}
+}
+@media (max-width: 980px){
+  .writing-mock-body.with-tpl{display:flex;flex-direction:column;align-items:stretch;}
+}
 .writing-timer-bar{display:flex;align-items:center;gap:12px;background:var(--celadon-1);border:1px solid var(--celadon-3);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;}
 .writing-timer-display{font-family:'Space Grotesk',monospace;font-weight:700;font-size:17px;margin-left:auto;}
 .writing-sample-timer{display:flex;align-items:center;gap:6px;background:var(--paper-dim);border:1px solid var(--line);border-radius:7px;padding:5px 7px;margin:8px 0;width:fit-content;}
@@ -4606,7 +4652,7 @@ body.ws-work .ws-class-only{display:none !important;}
         <div id="writingSampleList"></div>
       </div>
       <div class="card hidden" id="writingEditorCard">
-        <h2><span id="writingEditorTopic"></span><span><button class="export-btn act-save" id="saveWritingBtn"></button> <button class="export-btn" id="closeWritingBtn"></button></span></h2>
+        <h2><span id="writingEditorTopic"></span><span><button class="export-btn tpl-toggle" id="writingTplToggleBtn" aria-pressed="false" aria-controls="writingTplSide"></button> <button class="export-btn act-save" id="saveWritingBtn"></button> <button class="export-btn" id="closeWritingBtn"></button></span></h2>
         <div class="hint saved-info" id="writingLastSavedInfo"></div>
         <div class="writing-sample-timer" id="writingSampleTimer">
           <span class="writing-sample-timer-display" id="writingSampleTimerDisplay">00:00</span>
@@ -4616,7 +4662,12 @@ body.ws-work .ws-class-only{display:none !important;}
           <button class="export-btn act-save" id="writingSampleTimerSaveBtn"></button>
         </div>
         <div class="writing-task-box hidden" id="writingEditorTaskPrompt"></div>
-        <div id="writingQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
+        <div class="writing-edit-row" id="writingEditRow">
+          <div class="writing-edit-main" style="min-width:0;">
+            <div id="writingQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
+          </div>
+          <aside class="tpl-side hidden" id="writingTplSide"></aside>
+        </div>
         <div class="hint" id="writingWordCount"></div>
         <button class="linkbtn" id="writingVersionHistoryToggle" style="margin-top:10px;"></button>
         <div class="notes-panel hidden" id="writingVersionHistoryPanel"></div>
@@ -4630,7 +4681,7 @@ body.ws-work .ws-class-only{display:none !important;}
         </div>
       </div>
       <div class="card hidden" id="writingMockCard">
-        <h2><span id="hWritingMock"></span><span><button class="export-btn" id="writingMockExitBtn"></button></span></h2>
+        <h2><span id="hWritingMock"></span><span><button class="export-btn tpl-toggle" id="writingMockTplToggleBtn" aria-pressed="false" aria-controls="writingMockTplSide"></button> <button class="export-btn" id="writingMockExitBtn"></button></span></h2>
         <div class="writing-sample-timer" id="writingMockTimer">
           <span class="writing-sample-timer-display" id="writingMockTimerDisplay">00:00</span>
           <button class="export-btn" id="writingMockTimerStartBtn"></button>
@@ -4648,6 +4699,7 @@ body.ws-work .ws-class-only{display:none !important;}
             <div class="writing-task-box" id="writingMockQ54TaskBox"></div>
           </div>
         </div>
+        <div class="writing-mock-body" id="writingMockBody">
         <div class="writing-mock-grid">
           <div class="writing-mock-pane">
             <div id="writingMockQ53QuillContainer" style="background:var(--paper);border-radius:8px;"></div>
@@ -4660,6 +4712,13 @@ body.ws-work .ws-class-only{display:none !important;}
             <button class="export-btn act-save" id="writingMockQ54SaveBtn" style="margin-top:6px;"></button>
           </div>
         </div>
+        <aside class="tpl-side hidden" id="writingMockTplSide"></aside>
+        </div>
+      </div>
+      <div class="card" id="writingTemplatesCard">
+        <h2 id="hTopikTemplates"></h2>
+        <div class="hint" id="topikTplIntro" style="margin:-6px 0 12px;"></div>
+        <div id="writingTplBrowse"></div>
       </div>
     </div>
     <div id="studyVideosSection" class="hidden">
@@ -12157,7 +12216,7 @@ const I18N = {
     deleteEventConfirm:'Delete the entry "{title}"? Its reminders go with it, and it disappears for everyone it is shared with.',
     editEventModalTitle:'Edit', editRemindersModalTitle:'Edit reminders', deleteEventBtn:'Delete',
     addCourseBtn:'Add course', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries, its notes and its syllabus for everyone.', deleteNoteConfirm:'Delete the note "{title}"? Everything written in it goes too, for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', saveFailed:'That change could not be saved, so it has been put back. Check your connection and try again.', studySubVideos:'Videos', hVideos:'Videos', lblVideoSearch:'Search', lblVideoSort:'Sort', videoSearchPlaceholder:'Search videos...', videoEmpty:'No video links yet. YouTube links on grammar points show up here.', videoNoMatches:'No video matches that search.', videoPlay:'Play', videoOpenOnYouTube:'Open on YouTube', sortFieldAdded:'Added',  hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header',
-    hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordCountLabelOne:'{n} word', deleteSampleConfirm:'Delete this writing sample?', deleteJobConfirm:'Delete this application?', deleteJobConfirmCv:'Delete this application? The attached CV will be removed too.', deleteJobConfirmCover:'Delete this application? The attached cover letter will be removed too.', deleteJobConfirmBoth:'Delete this application? The attached CV and cover letter will be removed too.', deleteCertConfirm:'Delete this certification?', deleteBookConfirm:'Delete this book? Its notes go with it.', deleteArticleConfirm:'Delete this article? Its notes go with it.', charCountLabel:'{n} characters', charCountLabelOne:'{n} character', charCountTarget:'{n} characters (target: {min}~{max})', charCountTargetOne:'{n} character (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'Random', lblWritingQ53Image:'Attach an image', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'Start a Q54 mock exam (35 min)', writingMockStartBtn:'Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm1One:'Delete your one writing sample? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
+    hTopikTemplates:'TOPIK writing templates', topikTplIntro:'Sentence frames for questions 51 to 54, each with an example. ~ marks the part you fill in.', topikTplToggle:'Templates', topikTplSearch:'Search templates', topikTplAll:'All', topikTplStyle:'Written style', topikTplQuestion:'Question {n}', topikTplInsert:'Insert', topikTplCopy:'Copy', topikTplCopied:'Copied', topikTplNone:'No templates match.', topikTplCount:'{n} templates', topikTplCountOne:'{n} template', hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordCountLabelOne:'{n} word', deleteSampleConfirm:'Delete this writing sample?', deleteJobConfirm:'Delete this application?', deleteJobConfirmCv:'Delete this application? The attached CV will be removed too.', deleteJobConfirmCover:'Delete this application? The attached cover letter will be removed too.', deleteJobConfirmBoth:'Delete this application? The attached CV and cover letter will be removed too.', deleteCertConfirm:'Delete this certification?', deleteBookConfirm:'Delete this book? Its notes go with it.', deleteArticleConfirm:'Delete this article? Its notes go with it.', charCountLabel:'{n} characters', charCountLabelOne:'{n} character', charCountTarget:'{n} characters (target: {min}~{max})', charCountTargetOne:'{n} character (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'Random', lblWritingQ53Image:'Attach an image', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'Start a Q54 mock exam (35 min)', writingMockStartBtn:'Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm1One:'Delete your one writing sample? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
     lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
     gramJumpPlaceholder:'- Select -', gramAllLevels:'All', gramIntermediateGroup:'Intermediate', gramAdvancedGroup:'Advanced',
@@ -12282,7 +12341,7 @@ const I18N = {
     deleteEventConfirm:'"{title}" 항목을 삭제하시겠습니까? 알림도 함께 삭제되고, 공유된 모든 사람에게서 사라집니다.',
     editEventModalTitle:'수정', editRemindersModalTitle:'알림 수정', deleteEventBtn:'삭제',
     addCourseBtn:'수업 추가', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목, 노트, 강의계획서도 함께 삭제됩니다.', deleteNoteConfirm:'"{title}" 노트를 삭제하시겠습니까? 안에 작성한 내용도 모든 사람에게서 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', saveFailed:'변경 내용을 저장할 수 없어 이전 상태로 되돌렸습니다. 연결 상태를 확인하고 다시 시도하세요.', studySubVideos:'영상', hVideos:'영상', lblVideoSearch:'검색', lblVideoSort:'정렬', videoSearchPlaceholder:'영상 검색...', videoEmpty:'아직 영상 링크가 없습니다. 문법 항목의 유튜브 링크가 여기에 나타납니다.', videoNoMatches:'검색 결과가 없습니다.', videoPlay:'재생', videoOpenOnYouTube:'유튜브에서 열기', sortFieldAdded:'추가일',  hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더',
-    hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', deleteJobConfirm:'이 지원 기록을 삭제하시겠습니까?', deleteJobConfirmCv:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서도 함께 삭제됩니다.', deleteJobConfirmCover:'이 지원 기록을 삭제하시겠습니까? 첨부한 자기소개서도 함께 삭제됩니다.', deleteJobConfirmBoth:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서와 자기소개서도 함께 삭제됩니다.', deleteCertConfirm:'이 자격증을 삭제하시겠습니까?', deleteBookConfirm:'이 책을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', deleteArticleConfirm:'이 논문을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'무작위', lblWritingQ53Image:'이미지 첨부', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'54번 모의고사 시작 (35분)', writingMockStartBtn:'실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
+    hTopikTemplates:'TOPIK 쓰기 표현', topikTplIntro:'51~54번에 쓰는 문장 틀과 예문입니다. ~ 부분을 채워 쓰세요.', topikTplToggle:'쓰기 표현', topikTplSearch:'표현 검색', topikTplAll:'전체', topikTplStyle:'문어체', topikTplQuestion:'{n}번', topikTplInsert:'넣기', topikTplCopy:'복사', topikTplCopied:'복사됨', topikTplNone:'맞는 표현이 없습니다.', topikTplCount:'{n}개', hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', deleteJobConfirm:'이 지원 기록을 삭제하시겠습니까?', deleteJobConfirmCv:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서도 함께 삭제됩니다.', deleteJobConfirmCover:'이 지원 기록을 삭제하시겠습니까? 첨부한 자기소개서도 함께 삭제됩니다.', deleteJobConfirmBoth:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서와 자기소개서도 함께 삭제됩니다.', deleteCertConfirm:'이 자격증을 삭제하시겠습니까?', deleteBookConfirm:'이 책을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', deleteArticleConfirm:'이 논문을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'무작위', lblWritingQ53Image:'이미지 첨부', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'54번 모의고사 시작 (35분)', writingMockStartBtn:'실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
     lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
     gramJumpPlaceholder:'- 선택 -', gramAllLevels:'전체', gramIntermediateGroup:'중급', gramAdvancedGroup:'고급',
@@ -12408,7 +12467,7 @@ const I18N = {
     deleteEventConfirm:'Xóa mục "{title}"? Lời nhắc của nó cũng bị xóa và nó biến mất với mọi người được chia sẻ.',
     editEventModalTitle:'Sửa', editRemindersModalTitle:'Sửa nhắc nhở', deleteEventBtn:'Xóa',
     addCourseBtn:'Thêm khóa học', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch, ghi chú và đề cương cho tất cả mọi người.', deleteNoteConfirm:'Xóa ghi chú "{title}"? Mọi thứ đã viết trong đó cũng bị xóa với tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', saveFailed:'Không thể lưu thay đổi đó nên đã hoàn lại. Kiểm tra kết nối và thử lại.', studySubVideos:'Video', hVideos:'Video', lblVideoSearch:'Tìm kiếm', lblVideoSort:'Sắp xếp', videoSearchPlaceholder:'Tìm video...', videoEmpty:'Chưa có liên kết video nào. Liên kết YouTube trên các điểm ngữ pháp sẽ hiện ở đây.', videoNoMatches:'Không có video nào khớp với tìm kiếm đó.', videoPlay:'Phát', videoOpenOnYouTube:'Mở trên YouTube', sortFieldAdded:'Đã thêm',  hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh',
-    hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', deleteSampleConfirm:'Xóa bài viết này?', deleteJobConfirm:'Xóa đơn ứng tuyển này?', deleteJobConfirmCv:'Xóa đơn ứng tuyển này? CV đã tải lên cũng sẽ bị xóa.', deleteJobConfirmCover:'Xóa đơn ứng tuyển này? Thư xin việc đã tải lên cũng sẽ bị xóa.', deleteJobConfirmBoth:'Xóa đơn ứng tuyển này? CV và thư xin việc đã tải lên cũng sẽ bị xóa.', deleteCertConfirm:'Xóa chứng chỉ này?', deleteBookConfirm:'Xóa cuốn sách này? Các ghi chú sẽ bị xóa theo.', deleteArticleConfirm:'Xóa bài báo này? Các ghi chú sẽ bị xóa theo.', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
+    hTopikTemplates:'Mẫu câu viết TOPIK', topikTplIntro:'Khung câu cho câu 51 đến 54, mỗi khung kèm ví dụ. Dấu ~ là phần bạn điền vào.', topikTplToggle:'Mẫu câu', topikTplSearch:'Tìm mẫu câu', topikTplAll:'Tất cả', topikTplStyle:'Văn viết', topikTplQuestion:'Câu {n}', topikTplInsert:'Chèn', topikTplCopy:'Sao chép', topikTplCopied:'Đã chép', topikTplNone:'Không có mẫu câu phù hợp.', topikTplCount:'{n} mẫu', hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', deleteSampleConfirm:'Xóa bài viết này?', deleteJobConfirm:'Xóa đơn ứng tuyển này?', deleteJobConfirmCv:'Xóa đơn ứng tuyển này? CV đã tải lên cũng sẽ bị xóa.', deleteJobConfirmCover:'Xóa đơn ứng tuyển này? Thư xin việc đã tải lên cũng sẽ bị xóa.', deleteJobConfirmBoth:'Xóa đơn ứng tuyển này? CV và thư xin việc đã tải lên cũng sẽ bị xóa.', deleteCertConfirm:'Xóa chứng chỉ này?', deleteBookConfirm:'Xóa cuốn sách này? Các ghi chú sẽ bị xóa theo.', deleteArticleConfirm:'Xóa bài báo này? Các ghi chú sẽ bị xóa theo.', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
     lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
     gramJumpPlaceholder:'- Chọn -', gramAllLevels:'Tất cả', gramIntermediateGroup:'Trung cấp', gramAdvancedGroup:'Cao cấp',
@@ -12538,6 +12597,7 @@ const STATIC_MAP = {
   lblMfaPromptHint:'mfaPromptHint', mfaVerifyBtn:'mfaVerifyBtn', mfaUseBackupBtn:'mfaUseBackupBtn',
   guestModeBtn:'guestModeBtn', guestBannerText:'guestBannerText',
   hNotebookList:'hNotebookList', lblNotebookPersonFilter:'lblNotesPersonFilter', saveNotebookBtn:'saveNoteBtn', closeNotebookBtn:'closeNoteBtn',
+  hTopikTemplates:'hTopikTemplates', topikTplIntro:'topikTplIntro', writingTplToggleBtn:'topikTplToggle', writingMockTplToggleBtn:'topikTplToggle',
   hNewWriting:'hNewWriting', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', deleteAllWritingBtn:'deleteAllWritingBtn', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
   lblWritingCustomTaskType:'lblWritingCustomTaskType', writingTaskTypeEssayOpt:'writingTaskTypeEssay', writingTaskTypeDataOpt:'writingTaskTypeData', lblWritingCustomDescription:'lblWritingCustomDescription', lblWritingImage:'lblWritingImage', writingImageHint:'writingImageHint',
   lblWritingEssayGroup:'lblWritingEssayGroup', lblWritingQ53Group:'lblWritingQ53Group', lblWritingCustomGroup:'lblWritingCustomGroup', writingEssayRandomBtn:'writingRandomBtn', writingQ53RandomBtn:'writingRandomBtn', writingEssayStartBtn:'startWritingBtn', writingQ53StartBtn:'startWritingBtn', lblWritingQ53Image:'lblWritingQ53Image', writingQ53ImageHint:'writingQ53ImageHint', lblWritingMockGroup:'lblWritingMockGroup', writingMockDataStartBtn:'writingMockDataStartBtn', writingMockEssayStartBtn:'writingMockEssayStartBtn', writingMockStartBtn:'writingMockStartBtn', writingMockHint:'writingMockHint',
@@ -13891,6 +13951,7 @@ function applyLanguage(lang){
   document.getElementById('writingQ53Search').placeholder = t('writingSearchPlaceholder');
   document.getElementById('vacationInviteSearchInput').placeholder = t('vacationInviteSearchPlaceholder');
   document.querySelectorAll('[data-ph-key]').forEach(el=>{ el.placeholder = t(el.dataset.phKey); });
+  renderTopikTplPanels();
   // Tooltips and accessible names written in the markup name a key, not a
   // word, so they follow the language like the visible labels do.
   document.querySelectorAll('[data-title-key]').forEach(el=>{ el.title = t(el.dataset.titleKey); });
@@ -39991,6 +40052,480 @@ document.getElementById('studySubWritingBtn').addEventListener('click', ()=> swi
 document.getElementById('studySubNotebookBtn').addEventListener('click', ()=> switchStudySubTab('notebook'));
 document.getElementById('studySubVideosBtn').addEventListener('click', ()=> switchStudySubTab('videos'));
 
+/* ---------- TOPIK WRITING TEMPLATES ----------
+   Sentence frames for the four TOPIK II writing questions, gathered from how
+   they are taught (real-user request: "add writing templates for the TOPIK
+   ... add a lot of them (all of them)", then: all of Q51-54, a frame with an
+   example, and a panel beside the editor). A ~ in a frame is the blank the
+   writer fills in; (으), 이/가, 은/는 and the like are the usual alternations
+   and are left for the writer to pick. One entry is
+   { f: frame, ex: example sentence, en, ko, vi: what it is for }.
+   `ref` marks a group that is a list of swaps to know rather than a frame to
+   put in an essay, so it has no Insert. Content, so it lives here with its
+   three languages side by side the way the grammar notes do, not in I18N. */
+const TOPIK_TPL_NOTES = {
+  '51': { en: 'A notice, email or message with blanks. Match the politeness of the text around the blank (-습니다 or -아요).',
+          ko: '빈칸이 있는 안내문, 이메일, 메시지입니다. 앞뒤 문장의 높임 정도(-습니다/-아요)에 맞추세요.',
+          vi: 'Thông báo, email hoặc tin nhắn có chỗ trống. Hãy dùng mức lịch sự giống câu xung quanh (-습니다 hoặc -아요).' },
+  '52': { en: 'An explanatory paragraph with blanks. Write in the plain written style (-다) and follow the logic of the words around the blank.',
+          ko: '빈칸이 있는 설명문입니다. -다 체로 쓰고 빈칸 앞뒤의 논리 관계를 따르세요.',
+          vi: 'Đoạn văn giải thích có chỗ trống. Viết theo văn phong viết (-다) và theo logic của câu xung quanh.' },
+  '53': { en: 'Describe the graph or table in 200 to 300 characters: the survey, the main figures, then causes or outlook. No title, no opinion.',
+          ko: '그래프나 표를 200~300자로 설명합니다. 조사 소개, 주요 수치, 원인이나 전망 순서로 쓰고 제목이나 자기 의견은 쓰지 않습니다.',
+          vi: 'Mô tả biểu đồ hoặc bảng trong 200 đến 300 ký tự: khảo sát, số liệu chính, rồi nguyên nhân hoặc dự báo. Không viết tiêu đề, không nêu ý kiến.' },
+  '54': { en: 'An argumentative essay of 600 to 700 characters: introduction, your position with reasons, the other side, a conclusion.',
+          ko: '600~700자 논술문입니다. 서론, 근거를 든 주장, 반대 의견에 대한 답, 결론 순서로 씁니다.',
+          vi: 'Bài nghị luận 600 đến 700 ký tự: mở bài, quan điểm kèm lý do, phản biện, kết luận.' },
+  'style': { en: 'Questions 52 to 54 are written in the plain written style. These are the endings to use and the spoken forms to swap out.',
+             ko: '52~54번은 문어체로 씁니다. 써야 할 어미와 바꿔 써야 할 구어 표현입니다.',
+             vi: 'Câu 52 đến 54 viết theo văn phong viết. Đây là các đuôi câu nên dùng và các dạng văn nói cần thay.' },
+};
+const TOPIK_TEMPLATE_GROUPS = [
+  { q: '51', name: { en: 'Asking and requesting', ko: '부탁하기와 요청하기', vi: 'Nhờ vả và yêu cầu' }, items: [
+    { f: '~아/어 주시겠습니까?', ex: '회의 자료를 미리 보내 주시겠습니까?', en: 'Politely asking someone to do something.', ko: '상대에게 정중하게 무엇을 해 달라고 할 때', vi: 'Nhờ ai đó làm gì một cách lịch sự.' },
+    { f: '~아/어 주시면 감사하겠습니다', ex: '내일까지 답장해 주시면 감사하겠습니다.', en: 'A very polite request: "I would be grateful if you ..."', ko: '아주 정중하게 부탁할 때 쓰는 마무리', vi: 'Nhờ vả rất lịch sự: "Tôi sẽ rất biết ơn nếu ..."' },
+    { f: '~아/어 주시기 바랍니다', ex: '신청서는 이메일로 보내 주시기 바랍니다.', en: 'A formal instruction in a notice: "Please ..."', ko: '안내문에서 정중하게 지시할 때', vi: 'Yêu cầu trang trọng trong thông báo: "Xin vui lòng ..."' },
+    { f: '혹시 ~(으)ㄹ 수 있을까요?', ex: '혹시 수업 시간을 바꿀 수 있을까요?', en: 'Carefully asking whether something is possible.', ko: '가능한지 조심스럽게 물어볼 때', vi: 'Hỏi dè dặt xem có thể ... không.' },
+    { f: '~아/어도 될까요?', ex: '이번 주 금요일에 찾아가도 될까요?', en: 'Asking for permission.', ko: '허락을 구할 때', vi: 'Xin phép.' },
+    { f: '~(으)ㄹ 수 있는지 알고 싶습니다', ex: '환불을 받을 수 있는지 알고 싶습니다.', en: 'A formal enquiry: "I would like to know whether ..."', ko: '격식 있게 문의할 때', vi: 'Hỏi thông tin trang trọng: "Tôi muốn biết liệu ..."' },
+    { f: '~(으)면 좋겠습니다', ex: '다음 모임은 토요일에 하면 좋겠습니다.', en: 'Putting a wish or a suggestion softly.', ko: '바라는 점이나 제안을 부드럽게 말할 때', vi: 'Nói mong muốn hoặc đề xuất nhẹ nhàng.' },
+    { f: '~에 대해 문의드리고 싶습니다', ex: '기숙사 신청 방법에 대해 문의드리고 싶습니다.', en: 'Opening an email that asks for information.', ko: '문의 메일을 시작할 때', vi: 'Mở đầu email hỏi thông tin.' },
+  ]},
+  { q: '51', name: { en: 'Notices and announcements', ko: '안내와 공지', vi: 'Thông báo' }, items: [
+    { f: '~(으)ㄹ 예정입니다', ex: '다음 주 월요일부터 도서관 공사를 할 예정입니다.', en: 'Announcing something that is planned.', ko: '계획된 일을 알릴 때', vi: 'Thông báo việc đã lên kế hoạch.' },
+    { f: '~(으)니 참고하시기 바랍니다', ex: '주말에는 문을 열지 않으니 참고하시기 바랍니다.', en: '"Please note that ..."', ko: '알아 두어야 할 사항을 안내할 때', vi: '"Xin lưu ý rằng ..."' },
+    { f: '~(으)ㄹ 수 없게 되었습니다', ex: '사정이 생겨서 행사에 참석할 수 없게 되었습니다.', en: 'Something is no longer possible: a change of plans.', ko: '사정이 생겨 할 수 없게 되었음을 알릴 때', vi: 'Báo rằng không thể ... nữa: thay đổi kế hoạch.' },
+    { f: '~(으)로 인해 ~이/가 ~되었습니다', ex: '폭우로 인해 행사가 취소되었습니다.', en: 'Giving the cause of a change formally.', ko: '변경의 원인을 격식 있게 밝힐 때', vi: 'Nêu nguyên nhân thay đổi một cách trang trọng.' },
+    { f: '~(으)시려면 ~(으)면 됩니다', ex: '신청하시려면 사무실로 오시면 됩니다.', en: 'Telling people how to do something.', ko: '방법을 안내할 때', vi: 'Hướng dẫn cách làm.' },
+    { f: '~기 전에 ~아/어 주십시오', ex: '수업에 오기 전에 교재를 준비해 주십시오.', en: 'Something to do beforehand.', ko: '미리 해야 할 일을 안내할 때', vi: 'Dặn việc cần làm trước.' },
+    { f: '~(으)ㄴ 분은 ~(으)로 연락해 주십시오', ex: '참가를 원하시는 분은 사무실로 연락해 주십시오.', en: 'Asking the people concerned to get in touch.', ko: '해당하는 사람에게 연락을 요청할 때', vi: 'Mời người liên quan liên hệ.' },
+    { f: '~부터 ~까지 ~(으)ㄹ 수 있습니다', ex: '오전 9시부터 오후 6시까지 이용할 수 있습니다.', en: 'Stating when something is available.', ko: '이용 가능한 시간을 안내할 때', vi: 'Nêu thời gian có thể sử dụng.' },
+  ]},
+  { q: '51', name: { en: 'Invitations, thanks and apologies', ko: '초대, 감사, 사과', vi: 'Mời, cảm ơn và xin lỗi' }, items: [
+    { f: '~에 초대하고 싶습니다', ex: '이번 주말 제 생일 파티에 초대하고 싶습니다.', en: 'Inviting someone.', ko: '초대할 때', vi: 'Mời ai đó.' },
+    { f: '바쁘시겠지만 꼭 와 주시기 바랍니다', ex: '바쁘시겠지만 꼭 와 주시기 바랍니다.', en: 'The polite close of an invitation.', ko: '초대하는 글의 정중한 마무리', vi: 'Câu kết lịch sự của lời mời.' },
+    { f: '~아/어 주셔서 감사합니다', ex: '지난번에 도와주셔서 정말 감사합니다.', en: 'Thanking someone for what they did.', ko: '상대가 해 준 일에 감사할 때', vi: 'Cảm ơn vì việc người ta đã làm.' },
+    { f: '~(으)신 덕분에 ~(으)ㄹ 수 있었습니다', ex: '선생님께서 도와주신 덕분에 시험에 합격할 수 있었습니다.', en: 'Crediting someone for a good result.', ko: '좋은 결과를 상대의 덕으로 돌릴 때', vi: 'Nhờ có ai đó mà được kết quả tốt.' },
+    { f: '~지 못해서 죄송합니다', ex: '약속을 지키지 못해서 죄송합니다.', en: 'Apologising for not doing something.', ko: '하지 못한 일에 대해 사과할 때', vi: 'Xin lỗi vì đã không làm được.' },
+    { f: '~아/어서 정말 죄송합니다', ex: '늦게 연락드려서 정말 죄송합니다.', en: 'Apologising for something you did.', ko: '한 일에 대해 사과할 때', vi: 'Xin lỗi vì việc mình đã làm.' },
+    { f: '시간이 괜찮으시면 ~(으)ㄹ까요?', ex: '시간이 괜찮으시면 같이 식사할까요?', en: 'Suggesting doing something together.', ko: '함께 하자고 제안할 때', vi: 'Rủ làm gì cùng.' },
+    { f: '~(으)면 연락 주세요', ex: '일정이 정해지면 연락 주세요.', en: '"Let me know when ..."', ko: '나중에 연락해 달라고 할 때', vi: '"Hãy liên lạc khi ..."' },
+  ]},
+  { q: '51', name: { en: 'Selling, lost and found, looking for', ko: '판매, 분실, 구하기', vi: 'Rao bán, thất lạc, tìm kiếm' }, items: [
+    { f: '~아/어서 ~을/를 팔려고 합니다', ex: '이사를 가게 되어서 책상을 팔려고 합니다.', en: 'Advertising something for sale, with the reason.', ko: '이유와 함께 물건을 판다고 알릴 때', vi: 'Rao bán đồ kèm lý do.' },
+    { f: '~밖에 사용하지 않아서 ~', ex: '두 번밖에 사용하지 않아서 거의 새것입니다.', en: 'Describing the condition of an item.', ko: '물건의 상태를 설명할 때', vi: 'Mô tả tình trạng đồ.' },
+    { f: '~에서 ~을/를 잃어버렸습니다', ex: '어제 도서관에서 검은색 가방을 잃어버렸습니다.', en: 'Reporting something lost.', ko: '잃어버린 물건을 알릴 때', vi: 'Báo mất đồ.' },
+    { f: '보신 분은 ~(으)로 연락해 주십시오', ex: '보신 분은 아래 번호로 연락해 주십시오.', en: 'Asking anyone who saw it to call.', ko: '본 사람에게 연락을 부탁할 때', vi: 'Nhờ ai nhìn thấy thì liên lạc.' },
+    { f: '~을/를 구합니다', ex: '함께 공부할 친구를 구합니다.', en: '"Looking for ..." (a person, a room).', ko: '사람이나 방 등을 구할 때', vi: '"Cần tìm ..." (người, phòng).' },
+    { f: '관심 있는 분은 ~', ex: '관심 있는 분은 언제든지 문자 주세요.', en: 'Asking anyone interested to get in touch.', ko: '관심 있는 사람에게 연락을 요청할 때', vi: 'Mời người quan tâm liên hệ.' },
+  ]},
+  { q: '52', name: { en: 'Contrast and concession', ko: '대조와 양보', vi: 'Đối lập và nhượng bộ' }, items: [
+    { f: '그러나 ~(으)ㄴ/는 것은 아니다', ex: '그러나 모든 스트레스가 나쁜 것은 아니다.', en: 'Correcting a common belief: "But it is not that ..."', ko: '일반적인 생각을 바로잡을 때', vi: 'Đính chính: "Nhưng không phải là ..."' },
+    { f: '~(으)ㄴ/는 반면에 ~', ex: '도시는 편리한 반면에 공기가 좋지 않다.', en: 'Contrasting two sides of one thing.', ko: '한 대상의 두 면을 대조할 때', vi: 'Đối lập hai mặt của một sự vật.' },
+    { f: '~다고 생각하기 쉽지만 사실은 ~', ex: '운동은 많이 할수록 좋다고 생각하기 쉽지만 사실은 그렇지 않다.', en: 'A misconception, then the fact.', ko: '흔한 오해를 제시한 뒤 사실을 말할 때', vi: 'Nêu ngộ nhận rồi đến sự thật.' },
+    { f: '~에도 불구하고 ~', ex: '비가 많이 왔음에도 불구하고 행사는 성공적이었다.', en: '"Despite ..."', ko: '앞의 상황과 다른 결과를 말할 때', vi: '"Mặc dù ..."' },
+    { f: '~(으)ㄹ 뿐만 아니라 ~도 ~', ex: '걷기는 건강에 좋을 뿐만 아니라 기분도 좋게 한다.', en: '"Not only ... but also ..."', ko: '내용을 더할 때', vi: '"Không chỉ ... mà còn ..."' },
+  ]},
+  { q: '52', name: { en: 'Cause and result', ko: '원인과 결과', vi: 'Nguyên nhân và kết quả' }, items: [
+    { f: '왜냐하면 ~기 때문이다', ex: '아침을 꼭 먹어야 한다. 왜냐하면 뇌가 에너지를 필요로 하기 때문이다.', en: 'Giving the reason for the sentence before.', ko: '앞 문장의 이유를 밝힐 때', vi: 'Nêu lý do cho câu trước.' },
+    { f: '그 결과 ~게 되었다', ex: '그 결과 많은 사람들이 대중교통을 이용하게 되었다.', en: 'Stating the result.', ko: '결과를 말할 때', vi: 'Nêu kết quả.' },
+    { f: '따라서 ~아/어야 한다', ex: '따라서 잠을 충분히 자야 한다.', en: 'Drawing a conclusion as advice.', ko: '결론으로 해야 할 일을 말할 때', vi: 'Rút ra kết luận dạng lời khuyên.' },
+    { f: '~(으)므로 ~', ex: '날씨가 건조하므로 불조심을 해야 한다.', en: 'A formal "because" in writing.', ko: '글에서 쓰는 격식 있는 이유 표현', vi: '"Vì ... nên ..." trang trọng trong văn viết.' },
+    { f: '~(으)ㄴ/는 탓에 ~', ex: '준비가 부족한 탓에 실수가 많았다.', en: 'The cause of a bad result.', ko: '나쁜 결과의 원인을 말할 때', vi: 'Nguyên nhân của kết quả xấu.' },
+    { f: '이로 인해 ~', ex: '이로 인해 환경 오염이 심해지고 있다.', en: '"Because of this, ..." (linking to the sentence before).', ko: '앞 문장의 내용을 원인으로 받을 때', vi: '"Do điều này, ..." (nối với câu trước).' },
+  ]},
+  { q: '52', name: { en: 'Defining and restating', ko: '정의와 다시 말하기', vi: 'Định nghĩa và diễn đạt lại' }, items: [
+    { f: '~(이)란 ~을/를 말한다', ex: '기부란 남을 돕기 위해 돈이나 물건을 주는 것을 말한다.', en: 'Defining a term.', ko: '용어를 정의할 때', vi: 'Định nghĩa thuật ngữ.' },
+    { f: '즉, ~다는 것이다', ex: '즉, 습관이 성격을 만든다는 것이다.', en: '"That is to say, ..."', ko: '앞 내용을 다시 정리할 때', vi: '"Tức là ..."' },
+    { f: '다시 말해 ~', ex: '다시 말해 작은 실천이 큰 변화를 만든다.', en: 'Restating more simply.', ko: '쉽게 바꿔 말할 때', vi: '"Nói cách khác ..."' },
+    { f: '예를 들어 ~', ex: '예를 들어 하루에 물을 두 잔 더 마시는 것부터 시작할 수 있다.', en: 'Giving an example.', ko: '예를 들 때', vi: 'Đưa ví dụ.' },
+    { f: '이처럼 ~', ex: '이처럼 작은 습관 하나가 삶을 바꿀 수 있다.', en: 'Summing up the examples: "In this way, ..."', ko: '앞의 예를 정리할 때', vi: 'Tổng kết các ví dụ: "Như vậy, ..."' },
+  ]},
+  { q: '52', name: { en: 'Conditions and degree', ko: '조건과 정도', vi: 'Điều kiện và mức độ' }, items: [
+    { f: '만약 ~(으)면 ~(으)ㄹ 것이다', ex: '만약 계획을 세우지 않으면 시간을 낭비하게 될 것이다.', en: 'A supposition and its result.', ko: '가정과 그 결과를 말할 때', vi: 'Giả định và hệ quả.' },
+    { f: '~(으)ㄹ수록 ~', ex: '연습을 많이 할수록 실력이 늘어난다.', en: '"The more ..., the more ..."', ko: '비례 관계를 말할 때', vi: '"Càng ... càng ..."' },
+    { f: '~기 위해서는 ~아/어야 한다', ex: '목표를 이루기 위해서는 꾸준히 노력해야 한다.', en: 'What it takes to achieve something.', ko: '목적을 이루기 위한 조건을 말할 때', vi: 'Điều kiện để đạt mục đích.' },
+    { f: '~지 않으면 안 된다', ex: '건강을 위해서는 운동을 하지 않으면 안 된다.', en: 'Strong necessity: "must".', ko: '반드시 해야 함을 강조할 때', vi: 'Nhấn mạnh "nhất định phải".' },
+    { f: '~(으)ㄹ 필요가 있다', ex: '자신에게 맞는 방법을 찾을 필요가 있다.', en: '"It is necessary to ..."', ko: '필요성을 말할 때', vi: '"Cần phải ..."' },
+  ]},
+  { q: '53', name: { en: 'Introducing the survey', ko: '조사 소개하기', vi: 'Giới thiệu khảo sát' }, items: [
+    { f: "~에서 ~을/를 대상으로 '~'에 대해 조사하였다", ex: "한국연구소에서 20대 1,000명을 대상으로 '여가 활동'에 대해 조사하였다.", en: 'The first sentence: who asked whom about what.', ko: '첫 문장: 누가 누구를 대상으로 무엇을 조사했는지', vi: 'Câu đầu: ai khảo sát ai về điều gì.' },
+    { f: '~을/를 대상으로 ~에 대한 설문 조사를 실시하였다', ex: '대학생을 대상으로 아르바이트 경험에 대한 설문 조사를 실시하였다.', en: '"... conducted a survey on ..."', ko: '설문 조사를 했다고 쓸 때', vi: '"... đã tiến hành khảo sát về ..."' },
+    { f: '조사 결과, ~(으)ㄴ/는 것으로 나타났다', ex: '조사 결과, 응답자의 60%가 운동을 하는 것으로 나타났다.', en: 'Reporting the main finding.', ko: '조사 결과를 보고할 때', vi: 'Báo cáo kết quả chính.' },
+    { f: '~에 따르면 ~', ex: '통계청 자료에 따르면 1인 가구가 꾸준히 늘고 있다.', en: '"According to ..." (naming the source).', ko: '자료의 출처를 밝힐 때', vi: '"Theo ..." (nêu nguồn).' },
+    { f: "~에게 '~'에 대해 질문한 결과 ~", ex: "직장인에게 '퇴근 후 하는 일'에 대해 질문한 결과 '휴식'이 가장 많았다.", en: 'Reporting the answers to a question.', ko: '질문에 대한 응답을 보고할 때', vi: 'Báo cáo câu trả lời cho một câu hỏi.' },
+    { f: '응답자의 ~%가 ~다고 응답하였다', ex: '응답자의 70%가 현재 생활에 만족한다고 응답하였다.', en: 'What share of people gave an answer.', ko: '응답 비율을 쓸 때', vi: 'Tỉ lệ người trả lời như thế nào.' },
+  ]},
+  { q: '53', name: { en: 'Rising and falling', ko: '증가와 감소', vi: 'Tăng và giảm' }, items: [
+    { f: '~은/는 ~년 ~에서 ~년 ~(으)로 증가하였다', ex: '자전거 이용자 수는 2010년 4만 명에서 2020년 21만 명으로 증가하였다.', en: 'A change between two years, with the figures.', ko: '두 시점의 수치 변화를 쓸 때', vi: 'Thay đổi giữa hai năm, kèm số liệu.' },
+    { f: '~ 동안 약 ~배 증가하였다', ex: '10년 동안 약 5배 증가하였다.', en: 'Growth by a multiple.', ko: '몇 배 늘었는지 쓸 때', vi: 'Tăng gấp mấy lần.' },
+    { f: '꾸준히 증가하는 추세를 보이고 있다', ex: '1인 가구는 꾸준히 증가하는 추세를 보이고 있다.', en: 'A steady upward trend.', ko: '꾸준한 증가 추세', vi: 'Xu hướng tăng đều.' },
+    { f: '~부터 급격히 감소하였다', ex: '2015년부터 출생아 수가 급격히 감소하였다.', en: 'A sharp fall from a certain point.', ko: '어느 시점부터 크게 줄었을 때', vi: 'Giảm mạnh từ một thời điểm.' },
+    { f: '~에는 ~을/를 기록하였다', ex: '2020년에는 최고치인 85%를 기록하였다.', en: 'Hitting a figure, such as a peak.', ko: '최고치 같은 특정 수치를 기록했을 때', vi: 'Đạt một mức, chẳng hạn mức cao nhất.' },
+    { f: '~에 달하였다', ex: '이용자 수는 100만 명에 달하였다.', en: 'Reaching a large number.', ko: '큰 수치에 이르렀을 때', vi: 'Đạt tới con số lớn.' },
+    { f: '~(으)로 소폭 감소하였다', ex: '2019년에는 30%로 소폭 감소하였다.', en: 'A slight decrease.', ko: '조금 줄었을 때', vi: 'Giảm nhẹ.' },
+    { f: '큰 변화 없이 비슷한 수준을 유지하였다', ex: '2015년 이후에는 큰 변화 없이 비슷한 수준을 유지하였다.', en: 'Staying about the same.', ko: '큰 변화가 없을 때', vi: 'Giữ mức gần như không đổi.' },
+    { f: '~까지 증가하다가 ~부터 감소하기 시작하였다', ex: '2018년까지 증가하다가 2019년부터 감소하기 시작하였다.', en: 'A rise and then a fall: the turning point.', ko: '증가하다가 감소로 바뀌었을 때', vi: 'Tăng rồi bắt đầu giảm: điểm chuyển.' },
+    { f: '~ 동안 두 배 이상 늘어났다', ex: '10년 동안 두 배 이상 늘어났다.', en: 'More than doubled.', ko: '두 배 넘게 늘었을 때', vi: 'Tăng hơn gấp đôi.' },
+    { f: '매년 ~씩 늘어났다', ex: '매년 1만 명씩 늘어났다.', en: 'A fixed amount every year.', ko: '해마다 일정하게 늘었을 때', vi: 'Tăng đều một lượng mỗi năm.' },
+    { f: '~부터 감소세로 돌아섰다', ex: '2019년부터 감소세로 돌아섰다.', en: 'Turning downwards.', ko: '증가에서 감소로 돌아섰을 때', vi: 'Chuyển sang xu hướng giảm.' },
+    { f: '~ 이후 증가 폭이 커졌다', ex: '2015년 이후 증가 폭이 커졌다.', en: 'The increase got bigger.', ko: '늘어나는 정도가 커졌을 때', vi: 'Mức tăng lớn hơn.' },
+    { f: '~에 그쳤다', ex: '반면 50대는 10%에 그쳤다.', en: 'Only reached a low figure.', ko: '수치가 낮은 데 머물렀을 때', vi: 'Chỉ dừng ở mức thấp.' },
+  ]},
+  { q: '53', name: { en: 'Comparing and ranking', ko: '비교와 순위', vi: 'So sánh và xếp hạng' }, items: [
+    { f: '~이/가 ~%로 가장 높았고, 그다음으로 ~이/가 ~%로 뒤를 이었다', ex: "'건강'이 45%로 가장 높았고, 그다음으로 '취미'가 30%로 뒤를 이었다.", en: 'Ranking the top answers.', ko: '가장 높은 항목과 그다음 항목을 쓸 때', vi: 'Xếp hạng các câu trả lời cao nhất.' },
+    { f: '~은/는 ~이/가 가장 많은 반면, ~은/는 ~이/가 가장 많은 것으로 나타났다', ex: "20대는 '휴식'이 가장 많은 반면, 40대는 '운동'이 가장 많은 것으로 나타났다.", en: 'Contrasting two groups.', ko: '두 집단을 대조할 때', vi: 'Đối chiếu hai nhóm.' },
+    { f: '~의 경우 ~, ~의 경우 ~', ex: "남자의 경우 '운동'이 많았고, 여자의 경우 '쇼핑'이 많았다.", en: '"For A ..., for B ..."', ko: '집단별로 나누어 설명할 때', vi: 'Trình bày theo từng nhóm.' },
+    { f: '~이/가 ~보다 ~배 높았다', ex: '20대의 이용률이 50대보다 3배 높았다.', en: 'Comparing by a multiple.', ko: '몇 배 차이인지 비교할 때', vi: 'So sánh theo số lần.' },
+    { f: '~이/가 ~%로 가장 낮았다', ex: "'기타'가 5%로 가장 낮았다.", en: 'The lowest item.', ko: '가장 낮은 항목을 쓸 때', vi: 'Mục thấp nhất.' },
+    { f: '~와/과 ~은/는 비슷한 비율을 보였다', ex: "'독서'와 '영화 감상'은 비슷한 비율을 보였다.", en: 'Two items at about the same rate.', ko: '두 항목이 비슷할 때', vi: 'Hai mục có tỉ lệ tương tự.' },
+    { f: '~에 비해 ~', ex: '2010년에 비해 두 배 가까이 늘었다.', en: '"Compared with ..."', ko: '기준과 비교할 때', vi: '"So với ..."' },
+    { f: '~이/가 전체의 ~%를 차지하였다', ex: '20대가 전체의 40%를 차지하였다.', en: 'A share of the whole.', ko: '전체에서 차지하는 비율을 쓸 때', vi: 'Chiếm bao nhiêu phần trăm tổng thể.' },
+    { f: '응답자의 절반 이상이 ~', ex: "응답자의 절반 이상이 '그렇다'고 답하였다.", en: 'More than half of the people asked.', ko: '절반이 넘을 때', vi: 'Hơn một nửa số người được hỏi.' },
+    { f: '남녀 모두 ~을/를 가장 많이 선택하였다', ex: "남녀 모두 '휴식'을 가장 많이 선택하였다.", en: 'Both groups gave the same top answer.', ko: '두 집단의 1위가 같을 때', vi: 'Cả hai nhóm cùng chọn nhiều nhất một mục.' },
+  ]},
+  { q: '53', name: { en: 'Causes and outlook', ko: '원인과 전망', vi: 'Nguyên nhân và dự báo' }, items: [
+    { f: '이러한 변화의 원인으로는 ~을/를 들 수 있다', ex: '이러한 변화의 원인으로는 자전거 전용 도로의 확대를 들 수 있다.', en: 'Introducing the causes.', ko: '변화의 원인을 제시할 때', vi: 'Nêu nguyên nhân của sự thay đổi.' },
+    { f: '이는 ~기 때문인 것으로 보인다', ex: '이는 건강에 대한 관심이 높아졌기 때문인 것으로 보인다.', en: 'Interpreting the cause cautiously.', ko: '원인을 조심스럽게 해석할 때', vi: 'Diễn giải nguyên nhân một cách thận trọng.' },
+    { f: '첫째, ~고 둘째, ~', ex: '첫째, 공공 자전거가 늘었고 둘째, 전용 도로가 생겼다.', en: 'Listing two causes.', ko: '원인 두 가지를 나열할 때', vi: 'Liệt kê hai nguyên nhân.' },
+    { f: '~(으)로 인해 ~고 있다', ex: '저출산으로 인해 학생 수가 줄고 있다.', en: 'A cause in one phrase.', ko: '원인을 짧게 밝힐 때', vi: 'Nêu nguyên nhân ngắn gọn.' },
+    { f: '앞으로 ~(으)ㄹ 것으로 전망된다', ex: '앞으로 이용자 수는 더 늘어날 것으로 전망된다.', en: 'The outlook, as the last sentence.', ko: '마지막 문장: 앞으로의 전망', vi: 'Câu cuối: dự báo.' },
+    { f: '이러한 추세가 계속된다면 ~(으)ㄹ 것이다', ex: '이러한 추세가 계속된다면 2030년에는 50%를 넘을 것이다.', en: 'A projection if the trend continues.', ko: '추세가 이어질 경우를 예상할 때', vi: 'Dự đoán nếu xu hướng tiếp tục.' },
+    { f: '~(으)ㄹ 것으로 기대된다', ex: '환경 오염을 줄이는 데 도움이 될 것으로 기대된다.', en: 'An expected good effect.', ko: '기대되는 효과를 쓸 때', vi: 'Hiệu quả được kỳ vọng.' },
+  ]},
+  { q: '53', name: { en: 'Processes, pros and cons', ko: '과정과 장단점', vi: 'Quy trình, ưu và nhược điểm' }, items: [
+    { f: '먼저 ~, 다음으로 ~, 마지막으로 ~', ex: '먼저 재료를 씻고, 다음으로 썰고, 마지막으로 볶는다.', en: 'Steps in order.', ko: '과정을 순서대로 쓸 때', vi: 'Các bước theo thứ tự.' },
+    { f: '~의 장점으로는 ~다는 점이 있다', ex: '온라인 수업의 장점으로는 시간을 자유롭게 쓸 수 있다는 점이 있다.', en: 'Introducing advantages.', ko: '장점을 쓸 때', vi: 'Nêu ưu điểm.' },
+    { f: '반면 단점으로는 ~다는 점을 들 수 있다', ex: '반면 단점으로는 집중하기 어렵다는 점을 들 수 있다.', en: 'Introducing disadvantages.', ko: '단점을 쓸 때', vi: 'Nêu nhược điểm.' },
+    { f: '~ 과정을 거쳐 ~', ex: '여러 번의 검사 과정을 거쳐 제품이 완성된다.', en: '"... goes through the process of ..."', ko: '과정을 거쳐 결과가 나올 때', vi: '"Trải qua quá trình ..."' },
+  ]},
+  { q: '54', name: { en: 'Introduction', ko: '서론', vi: 'Mở bài' }, items: [
+    { f: '최근 ~에 대한 관심이 높아지고 있다', ex: '최근 환경 보호에 대한 관심이 높아지고 있다.', en: 'Opening with a current trend.', ko: '최근의 흐름으로 글을 시작할 때', vi: 'Mở bài bằng xu hướng gần đây.' },
+    { f: '현대 사회에서 ~은/는 매우 중요한 문제이다', ex: '현대 사회에서 개인 정보 보호는 매우 중요한 문제이다.', en: 'Saying why the topic matters.', ko: '주제의 중요성을 밝힐 때', vi: 'Nêu tầm quan trọng của chủ đề.' },
+    { f: '~에 대해서는 찬성과 반대 의견이 엇갈리고 있다', ex: '동물 실험에 대해서는 찬성과 반대 의견이 엇갈리고 있다.', en: 'Presenting a debated issue.', ko: '찬반이 나뉘는 쟁점을 소개할 때', vi: 'Giới thiệu vấn đề còn tranh cãi.' },
+    { f: '~이/가 사회적 문제로 떠오르고 있다', ex: '청소년의 스마트폰 중독이 사회적 문제로 떠오르고 있다.', en: 'A growing social problem.', ko: '새로운 사회 문제를 소개할 때', vi: 'Một vấn đề xã hội đang nổi lên.' },
+    { f: '~(으)면서 ~', ex: '1인 가구가 늘어나면서 혼자 밥을 먹는 사람도 많아졌다.', en: 'A social change as the background.', ko: '사회 변화를 배경으로 제시할 때', vi: 'Nêu thay đổi xã hội làm bối cảnh.' },
+    { f: '우리는 살면서 누구나 ~게 된다', ex: '우리는 살면서 누구나 실수를 하게 된다.', en: 'Opening with an experience everyone shares.', ko: '누구나 겪는 경험으로 시작할 때', vi: 'Mở bài bằng trải nghiệm chung.' },
+    { f: '그렇다면 ~은/는 왜 필요한가?', ex: '그렇다면 나눔은 왜 필요한가?', en: 'Raising the question the essay answers.', ko: '글에서 답할 질문을 던질 때', vi: 'Đặt câu hỏi mà bài viết sẽ trả lời.' },
+    { f: '이 글에서는 ~에 대해 살펴보고자 한다', ex: '이 글에서는 올바른 사과의 방법에 대해 살펴보고자 한다.', en: 'Announcing what the essay will do.', ko: '글에서 다룰 내용을 예고할 때', vi: 'Báo trước nội dung bài viết.' },
+    { f: '~는 것은 결코 쉬운 일이 아니다', ex: '좋은 지도자가 되는 것은 결코 쉬운 일이 아니다.', en: 'Stressing how hard something is.', ko: '어려움을 강조할 때', vi: 'Nhấn mạnh độ khó.' },
+  ]},
+  { q: '54', name: { en: 'Your position', ko: '주장 밝히기', vi: 'Nêu quan điểm' }, items: [
+    { f: '나는 ~아/어야 한다고 생각한다', ex: '나는 감시 카메라 설치를 확대해야 한다고 생각한다.', en: 'Stating your opinion (나, never 저).', ko: '자신의 의견을 밝힐 때 (저 대신 나)', vi: 'Nêu ý kiến (dùng 나, không dùng 저).' },
+    { f: '나는 ~에 찬성한다', ex: '나는 동물 실험을 줄이자는 의견에 찬성한다.', en: 'Taking a side (or 반대한다 to oppose).', ko: '찬성 입장을 밝힐 때 (반대하면 반대한다)', vi: 'Chọn phe tán thành (phản đối thì 반대한다).' },
+    { f: '~는 것이 바람직하다고 본다', ex: '학생 스스로 선택하게 하는 것이 바람직하다고 본다.', en: '"I believe it is right to ..."', ko: '바람직한 방향을 제시할 때', vi: '"Tôi cho rằng ... là đúng đắn."' },
+    { f: '~다는 점에서 ~이/가 필요하다', ex: '모두가 함께 살아간다는 점에서 나눔이 필요하다.', en: 'Justifying why something is needed.', ko: '필요성의 근거를 밝힐 때', vi: 'Lý giải vì sao cần.' },
+    { f: '~는 것이 무엇보다 중요하다', ex: '상대의 마음을 먼저 생각하는 것이 무엇보다 중요하다.', en: 'Naming what matters most.', ko: '가장 중요한 것을 말할 때', vi: 'Nêu điều quan trọng nhất.' },
+    { f: '그 이유는 다음과 같다', ex: '그 이유는 다음과 같다.', en: '"The reasons are as follows."', ko: '이유를 나열하기 전에', vi: '"Lý do như sau."' },
+  ]},
+  { q: '54', name: { en: 'Reasons and examples', ko: '근거와 예시', vi: 'Lý do và ví dụ' }, items: [
+    { f: '첫째, ~기 때문이다', ex: '첫째, 범죄를 예방할 수 있기 때문이다.', en: 'The first reason.', ko: '첫 번째 근거', vi: 'Lý do thứ nhất.' },
+    { f: '둘째, ~(으)ㄹ 수 있다는 점이다', ex: '둘째, 사고가 났을 때 원인을 빨리 밝힐 수 있다는 점이다.', en: 'The second reason, as a point.', ko: '두 번째 근거', vi: 'Lý do thứ hai.' },
+    { f: '마지막으로 ~', ex: '마지막으로 시민들이 더 안심하고 생활할 수 있다.', en: 'The last reason.', ko: '마지막 근거', vi: 'Lý do cuối cùng.' },
+    { f: '예를 들어 ~는 경우 ~', ex: '예를 들어 길을 잃은 아이를 찾는 경우 큰 도움이 된다.', en: 'Supporting a point with an example.', ko: '예로 근거를 뒷받침할 때', vi: 'Dùng ví dụ để minh họa.' },
+    { f: '실제로 ~(으)ㄴ 것으로 나타났다', ex: '실제로 감시 카메라를 설치한 지역에서 범죄가 줄어든 것으로 나타났다.', en: 'Citing real evidence.', ko: '실제 사례나 자료를 들 때', vi: 'Dẫn chứng thực tế.' },
+    { f: '이는 ~는 것과 같다', ex: '이는 아픈 사람에게 약을 주지 않는 것과 같다.', en: 'Making an analogy.', ko: '비유로 설명할 때', vi: 'So sánh, ví von.' },
+    { f: '게다가 ~', ex: '게다가 비용도 많이 들지 않는다.', en: 'Adding one more point.', ko: '근거를 덧붙일 때', vi: 'Thêm một luận điểm.' },
+    { f: '~(으)ㄹ 뿐만 아니라 사회 전체에도 ~', ex: '개인에게 도움이 될 뿐만 아니라 사회 전체에도 이익이 된다.', en: 'Good for the individual and for society.', ko: '개인과 사회 모두에 좋다고 할 때', vi: 'Có lợi cho cá nhân và cả xã hội.' },
+    { f: '~기 때문에 ~(으)ㄹ 수밖에 없다', ex: '자원은 한정되어 있기 때문에 아껴 쓸 수밖에 없다.', en: '"Because ..., there is no choice but to ..."', ko: '다른 방법이 없음을 말할 때', vi: '"Vì ... nên không còn cách nào khác ngoài ..."' },
+    { f: '~는 데 도움이 된다', ex: '독서는 생각하는 힘을 기르는 데 도움이 된다.', en: '"It helps to ..."', ko: '도움이 되는 점을 말할 때', vi: '"Giúp ích cho việc ..."' },
+  ]},
+  { q: '54', name: { en: 'Answering the other side', ko: '반대 의견에 답하기', vi: 'Phản biện ý kiến trái chiều' }, items: [
+    { f: '물론 ~(으)ㄹ 수도 있다. 그러나 ~', ex: '물론 사생활이 침해될 수도 있다. 그러나 안전이 더 중요하다.', en: 'Conceding, then standing your ground.', ko: '반대 의견을 인정한 뒤 반박할 때', vi: 'Thừa nhận rồi phản bác.' },
+    { f: '~다는 의견도 있지만 ~', ex: '동물 실험이 꼭 필요하다는 의견도 있지만 대체할 방법도 있다.', en: 'Acknowledging an opposing view.', ko: '다른 의견을 소개할 때', vi: 'Thừa nhận ý kiến khác.' },
+    { f: '여러 문제점에도 불구하고 ~', ex: '여러 문제점에도 불구하고 장점이 더 크다.', en: 'Keeping your view despite the problems.', ko: '문제점이 있어도 주장을 유지할 때', vi: 'Vẫn giữ quan điểm dù có vấn đề.' },
+    { f: '그렇다고 해서 ~(으)ㄴ/는 것은 아니다', ex: '그렇다고 해서 모든 경쟁이 나쁜 것은 아니다.', en: '"That does not mean that ..."', ko: '지나친 일반화를 막을 때', vi: '"Không có nghĩa là ..."' },
+    { f: '~(으)ㄹ 수 있다는 우려가 있다', ex: '개인 정보가 유출될 수 있다는 우려가 있다.', en: 'Raising a concern.', ko: '우려되는 점을 말할 때', vi: 'Nêu mối lo ngại.' },
+  ]},
+  { q: '54', name: { en: 'Solutions', ko: '해결 방안', vi: 'Giải pháp' }, items: [
+    { f: '~기 위해서는 무엇보다 ~이/가 필요하다', ex: '문제를 해결하기 위해서는 무엇보다 시민들의 참여가 필요하다.', en: 'The most important condition.', ko: '가장 중요한 조건을 말할 때', vi: 'Điều kiện quan trọng nhất.' },
+    { f: '이를 위한 방안으로는 ~이/가 있다', ex: '이를 위한 방안으로는 관련 법을 만드는 것이 있다.', en: 'Proposing a solution.', ko: '해결 방안을 제시할 때', vi: 'Đưa ra giải pháp.' },
+    { f: '개인적인 차원에서는 ~, 사회적인 차원에서는 ~', ex: '개인적인 차원에서는 일회용품을 줄이고, 사회적인 차원에서는 재활용 제도를 마련해야 한다.', en: 'Solutions at two levels.', ko: '개인과 사회 두 차원의 방안', vi: 'Giải pháp ở cấp cá nhân và xã hội.' },
+    { f: '정부는 ~(으)ㄹ 수 있도록 ~아/어야 한다', ex: '정부는 누구나 교육을 받을 수 있도록 지원해야 한다.', en: 'What the government should do.', ko: '정부의 역할을 말할 때', vi: 'Vai trò của chính phủ.' },
+    { f: '~(으)려는 노력이 필요하다', ex: '서로의 입장을 이해하려는 노력이 필요하다.', en: 'Calling for effort.', ko: '노력의 필요성을 말할 때', vi: 'Kêu gọi nỗ lực.' },
+  ]},
+  { q: '54', name: { en: 'Conclusion', ko: '결론', vi: 'Kết bài' }, items: [
+    { f: '지금까지 ~에 대해 살펴보았다', ex: '지금까지 올바른 인터넷 사용 태도에 대해 살펴보았다.', en: 'Opening the conclusion.', ko: '결론을 시작할 때', vi: 'Mở đầu kết bài.' },
+    { f: '결론적으로 ~', ex: '결론적으로 감시 카메라는 우리 사회에 필요하다.', en: '"In conclusion, ..."', ko: '결론을 정리할 때', vi: '"Tóm lại, ..."' },
+    { f: '이처럼 ~', ex: '이처럼 나눔은 사회를 건강하게 만든다.', en: 'Summing up the argument.', ko: '앞의 내용을 요약할 때', vi: 'Tổng kết lập luận.' },
+    { f: '따라서 우리는 ~아/어야 할 것이다', ex: '따라서 우리는 환경을 지키기 위해 노력해야 할 것이다.', en: 'A final call to action.', ko: '마지막으로 해야 할 일을 강조할 때', vi: 'Lời kêu gọi cuối bài.' },
+    { f: '~(으)ㄹ 때 비로소 ~(으)ㄹ 수 있을 것이다', ex: '모두가 함께 노력할 때 비로소 문제를 해결할 수 있을 것이다.', en: '"Only when ... can ..."', ko: '조건이 갖춰져야 가능하다고 강조할 때', vi: '"Chỉ khi ... mới có thể ..."' },
+    { f: '앞으로 ~에 더 관심을 가질 필요가 있다', ex: '앞으로 이 문제에 더 관심을 가질 필요가 있다.', en: 'Calling for more attention from now on.', ko: '앞으로의 관심을 촉구할 때', vi: 'Kêu gọi quan tâm hơn từ nay.' },
+    { f: '~기를 바란다', ex: '모든 사람이 서로를 배려하는 사회가 되기를 바란다.', en: 'Closing with a wish.', ko: '바람으로 글을 마칠 때', vi: 'Kết bài bằng mong muốn.' },
+  ]},
+  { q: '54', name: { en: 'Linking words', ko: '연결 표현', vi: 'Từ nối' }, items: [
+    { f: '또한 ~', ex: '또한 경제적인 효과도 있다.', en: '"Also" (formal).', ko: '내용을 더할 때', vi: '"Ngoài ra" (trang trọng).' },
+    { f: '반면에 ~', ex: '반면에 단점도 적지 않다.', en: '"On the other hand"', ko: '반대되는 내용을 말할 때', vi: '"Ngược lại"' },
+    { f: '그럼에도 불구하고 ~', ex: '그럼에도 불구하고 우리는 포기하지 않아야 한다.', en: '"Nevertheless"', ko: '앞의 내용과 상관없이 말할 때', vi: '"Tuy vậy"' },
+    { f: '그러므로 ~', ex: '그러므로 제도를 바꿔야 한다.', en: '"Therefore" (formal).', ko: '결론을 이끌 때', vi: '"Vì vậy" (trang trọng).' },
+    { f: '결국 ~', ex: '결국 중요한 것은 사람의 태도이다.', en: '"In the end"', ko: '최종적인 결과를 말할 때', vi: '"Rốt cuộc"' },
+    { f: '무엇보다 ~', ex: '무엇보다 건강이 가장 중요하다.', en: '"Above all"', ko: '가장 중요한 것을 강조할 때', vi: '"Trên hết"' },
+    { f: '이와 같이 ~', ex: '이와 같이 여러 장점이 있다.', en: '"In this way" (summing up).', ko: '앞 내용을 정리할 때', vi: '"Như vậy" (tổng kết).' },
+    { f: '한편 ~', ex: '한편 다른 문제도 생각해 볼 필요가 있다.', en: '"Meanwhile" (turning to another point).', ko: '화제를 바꿀 때', vi: '"Mặt khác" (chuyển ý).' },
+  ]},
+  { q: 'style', name: { en: 'Written-style endings', ko: '문어체 종결 표현', vi: 'Đuôi câu văn viết' }, items: [
+    { f: '~(ㄴ/는)다', ex: '나는 매일 운동을 한다. 날씨가 춥다.', en: 'The plain written ending. Never -아요 or -습니다 in questions 52 to 54.', ko: '52~54번은 -아요/-습니다 대신 이 어미로 쓴다', vi: 'Đuôi câu văn viết. Không dùng -아요 hay -습니다 ở câu 52 đến 54.' },
+    { f: '~이다', ex: '건강은 가장 소중한 재산이다.', en: 'A noun as the predicate.', ko: '명사 서술어의 문어체', vi: 'Danh từ làm vị ngữ.' },
+    { f: '~았/었다', ex: '이용자 수가 크게 늘었다.', en: 'The past tense.', ko: '과거의 문어체', vi: 'Thì quá khứ.' },
+    { f: '~(으)ㄹ 것이다', ex: '앞으로 더 늘어날 것이다.', en: 'The future or a prediction.', ko: '미래나 추측의 문어체', vi: 'Tương lai hoặc dự đoán.' },
+    { f: '~아/어야 한다', ex: '우리는 서로를 존중해야 한다.', en: 'An obligation.', ko: '의무의 문어체', vi: 'Nghĩa vụ.' },
+    { f: '~고 있다', ex: '관심이 점점 커지고 있다.', en: 'A change under way.', ko: '진행 중인 변화', vi: 'Thay đổi đang diễn ra.' },
+    { f: '~(으)ㄴ가?', ex: '그렇다면 무엇이 문제인가?', en: 'A question in the written style (-는가? after a verb).', ko: '문어체 의문문 (동사는 -는가?)', vi: 'Câu hỏi văn viết (động từ dùng -는가?).' },
+    { f: '~기 마련이다', ex: '누구나 실수를 하기 마련이다.', en: '"It is only natural that ..."', ko: '당연히 그렇게 됨을 말할 때', vi: '"Lẽ đương nhiên là ..."' },
+  ]},
+  { q: 'style', ref: true, name: { en: 'Spoken forms to swap out', ko: '바꿔 써야 할 구어 표현', vi: 'Dạng văn nói cần thay' }, items: [
+    { f: '저 → 나', ex: '저는 생각해요 → 나는 생각한다', en: 'Use 나 (or 우리) in an essay, never 저.', ko: '논술문에서는 저 대신 나(우리)', vi: 'Dùng 나 (hoặc 우리) trong bài luận, không dùng 저.' },
+    { f: '그래서 → 따라서, 그러므로', ex: '그래서 운동해야 한다 → 따라서 운동해야 한다', en: 'A formal "so".', ko: '격식 있는 \'그래서\'', vi: '"Vì vậy" trang trọng.' },
+    { f: '하지만 → 그러나', ex: '하지만 문제도 있다 → 그러나 문제도 있다', en: 'A formal "but".', ko: '격식 있는 \'하지만\'', vi: '"Nhưng" trang trọng.' },
+    { f: '그리고 → 또한', ex: '그리고 돈도 아낀다 → 또한 비용도 줄일 수 있다', en: 'A formal "and also".', ko: '문장을 잇는 격식 표현', vi: '"Và" trang trọng.' },
+    { f: '너무, 정말 → 매우, 상당히', ex: '정말 중요해요 → 매우 중요하다', en: 'Formal words for "very".', ko: '격식 있는 정도 부사', vi: 'Từ "rất" trang trọng.' },
+    { f: '많이 → 크게', ex: '많이 늘었다 → 크게 늘었다', en: 'Describing the size of a change.', ko: '변화의 정도를 쓸 때', vi: 'Mô tả mức độ thay đổi.' },
+    { f: '~(이)랑, ~하고 → ~와/과', ex: '친구랑 → 친구와', en: 'The written "and, with".', ko: '문어체 \'와/과\'', vi: '"Và, với" trong văn viết.' },
+    { f: '이런, 그런 → 이러한, 그러한', ex: '이런 문제 → 이러한 문제', en: 'Formal "this kind of".', ko: '격식 있는 지시어', vi: 'Từ chỉ định trang trọng.' },
+    { f: '안 ~ → ~지 않다', ex: '안 좋다 → 좋지 않다', en: 'The written negative.', ko: '문어체 부정', vi: 'Phủ định văn viết.' },
+    { f: '~거든요, ~잖아요 → ✕', ex: '바쁘거든요 → 바쁘기 때문이다', en: 'Spoken endings have no place in questions 52 to 54.', ko: '구어 어미는 52~54번에 쓰지 않는다', vi: 'Không dùng đuôi văn nói ở câu 52 đến 54.' },
+  ]},
+];
+
+/* ---------- TOPIK TEMPLATE PANELS ----------
+   One drawing in three places: a card of its own under the writing list,
+   where a template is read and copied, and beside each of the two editors,
+   where Insert puts it in at the cursor. Each place is its own panel with its
+   own search and chips, so narrowing one does not move another.
+   A var, not a const: applyLanguage repaints these and can run before this
+   line has, and a const read that early is a TDZ error rather than empty. */
+var TOPIK_TPL_PANELS = [];
+const TOPIK_TPL_FILTERS = ['all', '51', '52', '53', '54', 'style'];
+function topikTplLang(){ return (currentLang === 'ko' || currentLang === 'vi') ? currentLang : 'en'; }
+function topikTplFrameHtml(f){ return escapeHtml(f).replace(/~/g, '<span class="tpl-blank">~</span>'); }
+function makeTopikTplPanel(host, opts){
+  const state = { filter: opts.filter || 'all', query: '', picked: false };
+  host.innerHTML = '<div class="tpl-panel">'
+    + '<input type="search" class="tpl-search" autocomplete="off" spellcheck="false">'
+    + '<div class="tpl-chips" role="group"></div>'
+    + '<div class="tpl-note hidden"></div>'
+    + '<div class="tpl-count"></div>'
+    + '<div class="tpl-list"></div></div>';
+  const search = host.querySelector('.tpl-search');
+  const chips = host.querySelector('.tpl-chips');
+  const noteEl = host.querySelector('.tpl-note');
+  const countEl = host.querySelector('.tpl-count');
+  const list = host.querySelector('.tpl-list');
+  function renderChips(){
+    const lang = topikTplLang();
+    search.placeholder = t('topikTplSearch');
+    search.setAttribute('aria-label', t('topikTplSearch'));
+    chips.innerHTML = TOPIK_TPL_FILTERS.map(f=>{
+      const on = state.filter === f;
+      const label = f === 'all' ? t('topikTplAll') : f === 'style' ? t('topikTplStyle') : f;
+      const title = (f === 'all' || f === 'style') ? '' : ` title="${escapeHtml(t('topikTplQuestion').replace('{n}', f))}"`;
+      return `<button type="button" data-tpl-filter="${f}" class="${on ? 'active' : ''}" aria-pressed="${on}"${title}>${escapeHtml(label)}</button>`;
+    }).join('');
+    const note = TOPIK_TPL_NOTES[state.filter];
+    noteEl.textContent = note ? (note[lang] || note.en) : '';
+    noteEl.classList.toggle('hidden', !note);
+  }
+  function renderList(){
+    const lang = topikTplLang();
+    const q = state.query.trim().toLowerCase();
+    const canInsert = !!(opts.canInsert && opts.canInsert());
+    let total = 0;
+    const parts = [];
+    TOPIK_TEMPLATE_GROUPS.forEach((g, gi)=>{
+      if(state.filter !== 'all' && g.q !== state.filter) return;
+      const names = [g.name.en, g.name.ko, g.name.vi];
+      const items = [];
+      g.items.forEach((it, ii)=>{
+        if(q && ![it.f, it.ex, it.en, it.ko, it.vi, ...names].some(s=> String(s).toLowerCase().includes(q))) return;
+        items.push([it, ii]);
+      });
+      if(!items.length) return;
+      total += items.length;
+      const gname = g.name[lang] || g.name.en;
+      // With every question showing, the group says which one it belongs to.
+      const head = (state.filter === 'all' && g.q !== 'style') ? t('topikTplQuestion').replace('{n}', g.q) + ' · ' + gname : gname;
+      parts.push(`<div class="tpl-group-title">${escapeHtml(head)}</div>` + items.map(([it, ii])=>{
+        const act = g.ref ? '' : canInsert
+          ? `<button type="button" class="tpl-act" data-tpl="${gi}:${ii}" data-act="insert">${escapeHtml(t('topikTplInsert'))}</button>`
+          : `<button type="button" class="tpl-act" data-tpl="${gi}:${ii}" data-act="copy">${escapeHtml(t('topikTplCopy'))}</button>`;
+        return `<div class="tpl-item"><div class="tpl-body">`
+          + `<div class="tpl-frame" lang="ko">${topikTplFrameHtml(it.f)}</div>`
+          + `<div class="tpl-ex" lang="ko">${escapeHtml(it.ex)}</div>`
+          + `<div class="tpl-use">${escapeHtml(it[lang] || it.en)}</div>`
+          + `</div>${act}</div>`;
+      }).join(''));
+    });
+    countEl.textContent = tCount('topikTplCount', total);
+    list.innerHTML = parts.length ? parts.join('') : `<div class="hint">${escapeHtml(t('topikTplNone'))}</div>`;
+  }
+  function render(){ renderChips(); renderList(); }
+  search.addEventListener('input', ()=>{ state.query = search.value; renderList(); });
+  host.addEventListener('click', async (e)=>{
+    const chip = e.target.closest('[data-tpl-filter]');
+    if(chip){
+      state.filter = chip.dataset.tplFilter;
+      state.picked = true;
+      if(opts.onFilter) opts.onFilter(state.filter);
+      render();
+      list.scrollTop = 0;
+      return;
+    }
+    const btn = e.target.closest('[data-tpl]');
+    if(!btn) return;
+    const [gi, ii] = btn.dataset.tpl.split(':').map(Number);
+    const g = TOPIK_TEMPLATE_GROUPS[gi];
+    const it = g && g.items[ii];
+    if(!it) return;
+    if(btn.dataset.act === 'insert'){
+      if(opts.onInsert) opts.onInsert(it, g);
+      return;
+    }
+    try { await navigator.clipboard.writeText(it.f); } catch(err){ return; }
+    btn.textContent = t('topikTplCopied');
+    clearTimeout(btn._tplTimer);
+    btn._tplTimer = setTimeout(()=>{ btn.textContent = t('topikTplCopy'); }, 1200);
+  });
+  // The panel beside an editor follows what is being written (a data task
+  // opens on 53, an essay on 54) until somebody picks a chip themselves.
+  // Picking is a decision about this sitting, so a new one asks again.
+  const panel = {
+    render, renderList,
+    setAutoFilter(f){ if(state.picked || state.filter === f) return; state.filter = f; render(); },
+    reset(f){ state.picked = false; state.filter = f; state.query = ''; search.value = ''; render(); list.scrollTop = 0; },
+  };
+  render();
+  TOPIK_TPL_PANELS.push(panel);
+  return panel;
+}
+function renderTopikTplPanels(){ (TOPIK_TPL_PANELS || []).forEach(p=> p.render()); }
+// Where the cursor was when the writer looked away to the panel. Quill's own
+// saved range starts at the top of the text, so an editor nobody has clicked
+// into yet would take the template at its very start; this is null until
+// they have, and then the insert lands at the end instead. editor-change
+// rather than selection-change, because typing moves the selection silently.
+function trackTopikTplRange(quill, onFocus){
+  quill.on('editor-change', (type, range)=>{
+    if(type !== 'selection-change' || !range) return;
+    quill.__tplRange = range;
+    if(onFocus) onFocus();
+  });
+}
+// Puts the frame in at the cursor, replacing anything selected, with a space
+// either side where it would otherwise run into the words around it. The first ~
+// is left selected, so typing goes straight into the blank. Source 'user' is
+// what marks the sample unsaved and moves its character count, through the
+// editors' own text-change handlers.
+function insertTopikTemplate(quill, frame){
+  if(!quill || !quill.isEnabled()) return false;
+  const end = quill.getLength() - 1;
+  let r = quill.__tplRange;
+  if(!r || r.index > end) r = { index: end, length: 0 };
+  const at = r.index;
+  if(r.length > 0) quill.deleteText(at, Math.min(r.length, end - at), 'user');
+  const prev = at > 0 ? quill.getText(at - 1, 1) : '';
+  const next = quill.getText(at, 1);
+  const lead = prev && !/\s/.test(prev) ? ' ' : '';
+  const text = lead + frame + (next && !/\s/.test(next) ? ' ' : '');
+  quill.insertText(at, text, 'user');
+  const blank = text.indexOf('~');
+  quill.focus();
+  if(blank >= 0) quill.setSelection(at + blank, 1, 'user');
+  else quill.setSelection(at + lead.length + frame.length, 0, 'user');
+  return true;
+}
+function readTopikTplOpen(){ try { return localStorage.getItem('topikTplOpen') === '1'; } catch(e){ return false; } }
+function saveTopikTplOpen(on){ try { localStorage.setItem('topikTplOpen', on ? '1' : '0'); } catch(e){} }
+let topikTplBrowsePanel = null;
+let topikTplEditorPanel = null;
+let topikTplMockPanel = null;
+let writingMockFocusPane = null;
+function topikTplFilterForSample(w){ return w && w.task_type === 'data' ? '53' : '54'; }
+function paintTopikTplToggle(btnId, on){
+  const b = document.getElementById(btnId);
+  if(b) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+function setWritingTplOpen(on){
+  const side = document.getElementById('writingTplSide');
+  const row = document.getElementById('writingEditRow');
+  if(on && !topikTplEditorPanel){
+    topikTplEditorPanel = makeTopikTplPanel(side, {
+      filter: topikTplFilterForSample(currentWritingSampleForTpl()),
+      canInsert: ()=> !!(writingQuillEditor && writingQuillEditor.isEnabled()),
+      onInsert: (it)=> insertTopikTemplate(writingQuillEditor, it.f),
+    });
+  } else if(on){
+    topikTplEditorPanel.renderList();
+  }
+  side.classList.toggle('hidden', !on);
+  row.classList.toggle('with-tpl', on);
+  paintTopikTplToggle('writingTplToggleBtn', on);
+}
+function setWritingMockTplOpen(on){
+  const side = document.getElementById('writingMockTplSide');
+  const body = document.getElementById('writingMockBody');
+  if(on && !topikTplMockPanel){
+    topikTplMockPanel = makeTopikTplPanel(side, {
+      filter: writingMockFocusPane === 'q54' ? '54' : '53',
+      canInsert: ()=> true,
+      onInsert: (it, g)=>{
+        // Into the box last written in; before either has been touched, into
+        // the one the template is for.
+        const pane = writingMockFocusPane || (g.q === '53' ? 'q53' : 'q54');
+        insertTopikTemplate(pane === 'q53' ? writingMockQ53Quill : writingMockQ54Quill, it.f);
+      },
+    });
+  }
+  side.classList.toggle('hidden', !on);
+  body.classList.toggle('with-tpl', on);
+  paintTopikTplToggle('writingMockTplToggleBtn', on);
+}
+function currentWritingSampleForTpl(){
+  return (allWritingSamples[selectedWritingSampleOwner]||[]).find(x=>x.id===selectedWritingSampleId) || null;
+}
+function onWritingSampleOpenedForTpl(w){
+  if(writingQuillEditor) writingQuillEditor.__tplRange = null;
+  if(topikTplEditorPanel) topikTplEditorPanel.reset(topikTplFilterForSample(w));
+  setWritingTplOpen(readTopikTplOpen());
+}
+function onWritingMockOpenedForTpl(){
+  writingMockFocusPane = null;
+  if(writingMockQ53Quill) writingMockQ53Quill.__tplRange = null;
+  if(writingMockQ54Quill) writingMockQ54Quill.__tplRange = null;
+  if(topikTplMockPanel) topikTplMockPanel.reset('53');
+  setWritingMockTplOpen(readTopikTplOpen());
+  document.getElementById('writingTemplatesCard').classList.add('hidden');
+}
+function onWritingMockPaneFocus(pane){
+  if(writingMockFocusPane === pane) return;
+  writingMockFocusPane = pane;
+  if(topikTplMockPanel) topikTplMockPanel.setAutoFilter(pane === 'q53' ? '53' : '54');
+}
+document.getElementById('writingTplToggleBtn').addEventListener('click', ()=>{
+  const on = document.getElementById('writingTplSide').classList.contains('hidden');
+  saveTopikTplOpen(on);
+  setWritingTplOpen(on);
+  if(on && window.matchMedia('(max-width: 860px)').matches){
+    document.getElementById('writingTplSide').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+});
+document.getElementById('writingMockTplToggleBtn').addEventListener('click', ()=>{
+  const on = document.getElementById('writingMockTplSide').classList.contains('hidden');
+  saveTopikTplOpen(on);
+  setWritingMockTplOpen(on);
+  if(on && window.matchMedia('(max-width: 980px)').matches){
+    document.getElementById('writingMockTplSide').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+});
+(function initTopikTplBrowse(){
+  let saved = 'all';
+  try { saved = localStorage.getItem('topikTplFilter') || 'all'; } catch(e){}
+  if(!TOPIK_TPL_FILTERS.includes(saved)) saved = 'all';
+  topikTplBrowsePanel = makeTopikTplPanel(document.getElementById('writingTplBrowse'), {
+    filter: saved,
+    onFilter: (f)=>{ try { localStorage.setItem('topikTplFilter', f); } catch(e){} },
+  });
+})();
+
 /* ---------- WRITING PRACTICE ---------- */
 // Q54-style essay tasks (600~700자 argumentative essays), each with the real
 // TOPIK framing: a short context paragraph ending in the standard instruction,
@@ -40885,6 +41420,7 @@ function ensureWritingQuillInitialized(){
   keepPageStillOnPaste(writingQuillEditor);
   enableTouchUndo(writingQuillEditor);
   enableTypingShortcuts(writingQuillEditor);
+  trackTopikTplRange(writingQuillEditor);
   writingQuillEditor.on('text-change', (delta, oldDelta, source)=>{
     if(source === 'user'){
       writingEditorDirty = true;
@@ -40902,6 +41438,7 @@ function ensureWritingMockQuillInitialized(){
     keepPageStillOnPaste(writingMockQ53Quill);
     enableTouchUndo(writingMockQ53Quill);
     enableTypingShortcuts(writingMockQ53Quill);
+    trackTopikTplRange(writingMockQ53Quill, ()=> onWritingMockPaneFocus('q53'));
     writingMockQ53Quill.on('text-change', (delta, oldDelta, source)=>{
       if(source === 'user'){ writingMockQ53Dirty = true; updateWritingMockCharCount('q53'); }
     });
@@ -40915,6 +41452,7 @@ function ensureWritingMockQuillInitialized(){
     keepPageStillOnPaste(writingMockQ54Quill);
     enableTouchUndo(writingMockQ54Quill);
     enableTypingShortcuts(writingMockQ54Quill);
+    trackTopikTplRange(writingMockQ54Quill, ()=> onWritingMockPaneFocus('q54'));
     writingMockQ54Quill.on('text-change', (delta, oldDelta, source)=>{
       if(source === 'user'){ writingMockQ54Dirty = true; updateWritingMockCharCount('q54'); }
     });
@@ -40990,6 +41528,7 @@ function openWritingMockSession(s53, s54){
   document.getElementById('writingMockQ54TaskBox').textContent = s54.task_prompt || '';
   updateWritingMockCharCount('q53');
   updateWritingMockCharCount('q54');
+  onWritingMockOpenedForTpl();
   // Real exam scenario: the 50-minute clock starts the instant both tasks
   // are on screen, no confirmation popup.
   resetWritingSampleTimerState(50, 'writingMockTimer');
@@ -41004,6 +41543,7 @@ function exitWritingMockSession(){
   document.getElementById('writingMockCard').classList.add('hidden');
   document.getElementById('writingStartCard').classList.remove('hidden');
   document.getElementById('writingSamplesCard').classList.remove('hidden');
+  document.getElementById('writingTemplatesCard').classList.remove('hidden');
   renderWritingList();
 }
 document.getElementById('writingMockQ53SaveBtn').addEventListener('click', async ()=>{
@@ -41076,6 +41616,7 @@ function openWritingSample(id, ownerUid){
   updateWritingCharCount();
   document.getElementById('writingFeedbackInput').value = '';
   renderWritingFeedback(id, ownerUid);
+  onWritingSampleOpenedForTpl(w);
 }
 /* ---------- WRITING FEEDBACK (linked-circle comments on a sample) ---------- */
 function renderWritingFeedback(sampleId, ownerUid){
