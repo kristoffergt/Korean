@@ -45827,6 +45827,40 @@ function sanitizeNoteLinks(root){
   });
 }
 
+// The link and video boxes open from a toolbar button, so they open UNDER that
+// button, left edges together the way the colour lists open (real-user
+// request: "it should just be directly beneath the button when clicking it",
+// then "Same with the link one"). Quill puts them under the caret, and with the
+// caret at the start of a line that is half off the left of the editor, over
+// the list of notes beside it. A box opened from a link IN the text is still
+// Quill's, under that link. The box lives in .ql-container, so it is placed
+// against that and kept inside its width; the sticky toolbar it hangs under is
+// z-index 6 against the box's 40, so the toolbar never covers it.
+function placeNoteTipUnderButton(toolbar, format){
+  const quill = toolbar && toolbar.quill;
+  const tip = quill && quill.theme && quill.theme.tooltip;
+  const btn = toolbar && toolbar.container && toolbar.container.querySelector('button.ql-' + format);
+  if(!tip || !btn) return;
+  const root = tip.root;
+  const host = root.offsetParent || quill.container;
+  const b = btn.getBoundingClientRect(), h = host.getBoundingClientRect();
+  const left = Math.max(0, Math.min(b.left - h.left, h.width - root.offsetWidth));
+  root.classList.remove('ql-flip');
+  root.style.marginTop = '0px';
+  // Quill's own stylesheet nudges the box 10px down off the caret with a
+  // transform, which would come on top of the gap set here.
+  let nudge = 0;
+  try { nudge = new DOMMatrixReadOnly(getComputedStyle(root).transform).m42 || 0; } catch(e){}
+  root.style.left = left + 'px';
+  root.style.top = (b.bottom - h.top + 6 - nudge) + 'px';
+}
+function noteVideoToolbarHandler(){
+  const tip = this.quill.theme && this.quill.theme.tooltip;
+  if(!tip) return;
+  tip.edit('video');
+  placeNoteTipUnderButton(this, 'video');
+}
+
 // The toolbar's link button. Quill's own does nothing at all with nothing
 // selected, which reads as a button that is broken, so:
 //   - a selection opens the link box on it, pre-filled when the selection is
@@ -45848,16 +45882,19 @@ function noteLinkToolbarHandler(value){
     const sel = q.getText(range.index, range.length).trim();
     tip.linkRange = { index: range.index, length: range.length };
     tip.edit('link', isNoteUrl(sel) ? noteLinkHref(sel) : '');
+    placeNoteTipUnderButton(this, 'link');
     return;
   }
   const [link, offset] = q.scroll.descendant(b => b instanceof NoteLink, range.index);
   if(link){
     tip.linkRange = { index: range.index - offset, length: link.length() };
     tip.edit('link', link.domNode.getAttribute('href'));
+    placeNoteTipUnderButton(this, 'link');
     return;
   }
   tip.noteInsertAt = range.index;
   tip.edit('link', '');
+  placeNoteTipUnderButton(this, 'link');
 }
 
 function enableNoteLinks(quill){
@@ -47278,7 +47315,7 @@ function ensureQuillInitialized(){
           ['link','image','video'],
           ['clean']
         ],
-        handlers: { image: quillImageUploadHandler, link: noteLinkToolbarHandler }
+        handlers: { image: quillImageUploadHandler, link: noteLinkToolbarHandler, video: noteVideoToolbarHandler }
       },
       keyboard: { bindings: noteKeyboardBindings() },
       imageResize: {}
@@ -47631,7 +47668,7 @@ function ensureNotebookQuillInitialized(){
     modules: {
       toolbar: {
         container: [['bold','italic','underline','strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link','image','video'], ['clean']],
-        handlers: { image: quillImageUploadHandler, link: noteLinkToolbarHandler }
+        handlers: { image: quillImageUploadHandler, link: noteLinkToolbarHandler, video: noteVideoToolbarHandler }
       },
       keyboard: { bindings: noteKeyboardBindings() },
       imageResize: {}
