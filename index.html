@@ -3045,6 +3045,7 @@ button.ver-btn.ver-use{color:var(--edit);border-color:var(--edit);}
    space"). Side by side above 1100px, and the ordinary stack below it -- one
    flex row, so with the editor closed the list simply takes the width back
    rather than needing a rule of its own for that state. */
+.notes-layout-toggle{display:none;}
 @media (min-width: 1100px){
   .notes-split{display:flex;align-items:flex-start;gap:18px;}
   .notes-split > .card{flex:1 1 0;min-width:0;}
@@ -3054,7 +3055,26 @@ button.ver-btn.ver-use{color:var(--edit);border-color:var(--edit);}
      other notebook"). */
   .notes-split > #editorCard,
   .notes-split > #notebookEditorCard{flex:1.35 1 0;}
+  /* UNDER THE LIST, when that is what was picked (real-user request: "should
+     be able to decide the layout"): the stack a narrow screen always has, the
+     note the full width from its first line. Beats the flex row above on
+     specificity, so the order of the two rules does not matter. */
+  .notes-split.notes-under{display:block;}
+  .notes-layout-toggle{display:inline-flex;vertical-align:middle;margin-right:6px;}
 }
+/* The choice itself, in the note's own header: two marks, the one in use
+   filled the way the view toggles fill theirs. Not drawn below 1100px, where
+   the note is under the list whatever is picked and the control would do
+   nothing (display:none is set ABOVE the 1100px block, which turns it on). */
+.notes-layout-toggle button{display:inline-flex;align-items:center;justify-content:center;
+  background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);
+  padding:4px 7px;border-radius:0;line-height:0;}
+.notes-layout-toggle button:first-child{border-radius:6px 0 0 6px;}
+.notes-layout-toggle button:last-child{border-radius:0 6px 6px 0;border-left:none;}
+.notes-layout-toggle button .ui-icon{vertical-align:0;}
+.notes-layout-toggle button:hover:not(.active){background:rgba(127,127,127,0.22);color:var(--ink);}
+.notes-layout-toggle button.active,
+.notes-layout-toggle button.active:hover{background:var(--ink);color:var(--paper);}
 /* Renaming in place: the field stands where the heading stood, so nothing
    moves as it opens. */
 .lecture-title-input{font-family:'Noto Serif KR',serif;font-weight:700;font-size:16px;
@@ -4861,7 +4881,7 @@ body.ws-work .ws-class-only{display:none !important;}
         <div id="notebookList"></div>
       </div>
       <div class="card hidden" id="notebookEditorCard">
-        <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" data-title-key="tipClickToEdit"></span><span><button class="export-btn act-save" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
+        <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" data-title-key="tipClickToEdit"></span><span><span class="notes-layout-toggle" role="group" data-aria-key="notesLayout"><button type="button" data-layout="beside" data-title-key="notesLayoutBeside" data-aria-key="notesLayoutBeside"></button><button type="button" data-layout="under" data-title-key="notesLayoutUnder" data-aria-key="notesLayoutUnder"></button></span><button class="export-btn act-save" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
         <div class="notes-panel hidden" id="notebookTitleEditPanel"></div>
         <div id="notebookQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
         <div class="note-pagebar" id="notebookPageBar" style="display:none;"></div>
@@ -5027,7 +5047,7 @@ body.ws-work .ws-class-only{display:none !important;}
       <div id="lectureList"></div>
     </div>
     <div class="card hidden" id="editorCard">
-      <h2><span id="editorLectureTitle"></span><span><button class="export-btn act-save" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
+      <h2><span id="editorLectureTitle"></span><span><span class="notes-layout-toggle" role="group" data-aria-key="notesLayout"><button type="button" data-layout="beside" data-title-key="notesLayoutBeside" data-aria-key="notesLayoutBeside"></button><button type="button" data-layout="under" data-title-key="notesLayoutUnder" data-aria-key="notesLayoutUnder"></button></span><button class="export-btn act-save" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
       <div class="notes-panel hidden" id="editorTitleEditPanel"></div>
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
       <div class="note-pagebar" id="notePageBar" style="display:none;"></div>
@@ -12322,7 +12342,7 @@ const I18N = {
     hNotesPick:'Add a note', lblNotesCourse:'Course', lblNewLecture:'Note title', addLectureBtn:'Add note',
     generalNotes:'General notes', noNote:'No course', allPeople:'All', lblNotesPersonFilter:'Show', closeNoteBtn:'Close',
     lastSavedBy:'Last saved by {name} at {time}', neverSaved:'Not saved yet',
-    versionHistory:'Version history ({n})', noVersions:'No earlier versions', versionsLoadFailed:'Could not load the earlier versions.', versionOpen:'Open', versionUse:'Use this version', versionUseConfirm:'Replace what is in the editor with this version? Nothing is saved until you press Save.', versionUseConfirmKept:'Replace what is in the editor with this version? What is there now is kept in the version history.', noteSaving:'Saving…', noteSaveFailed:"Couldn't save. Your changes are kept and it will try again.", versionCopy:'Copy', versionCopied:'Copied', versionBack:'Back', noteFontSize:'Font size', noteFontSizeUp:'Bigger', noteFontSizeDown:'Smaller', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', noteAutosave:'Autosave', noteAutosaveTip:'Saves the note while you type. Turn it off to save only with Save or Cmd+S.', noteAutoFormat:'Auto-format', noteAutoFormatTip:'Repeats the formatting of the line above when you start a matching line ("2." after a bold "1."), turns -- into a dash and similar shortcuts. Each change can be undone with Cmd+Z.', noteAutoFormatApplied:'Formatted like the line above', noteAutoFormatUndo:'Undo', noteAutoFormatOff:'Turn off', noteAutoFormatOffHint:'Auto-format is off. Turn it back on beside Autosave.', noteLineSpacing:'Line spacing', noteLineSpacingDefault:'Default', noteWordCount:'{n} words', noteWordCountOne:'{n} word', noteCharCount:'{n} characters', noteCharCountOne:'{n} character', noteWordsOf:'{s} of {n} words', noteWordsOfOne:'{s} of {n} word', noteCharsOf:'{s} of {n} characters', noteCharsOfOne:'{s} of {n} character', notePageTotal:'{n} pages', notePageTotalOne:'{n} page', noteCharsNoSpaces:'{n} characters without spaces', noteCharsNoSpacesOne:'{n} character without spaces', notePageAddHint:'Start a new page from where you are in the text', noteUnsaved:'Unsaved changes', eventForUser:'For',
+    versionHistory:'Version history ({n})', noVersions:'No earlier versions', versionsLoadFailed:'Could not load the earlier versions.', versionOpen:'Open', versionUse:'Use this version', versionUseConfirm:'Replace what is in the editor with this version? Nothing is saved until you press Save.', versionUseConfirmKept:'Replace what is in the editor with this version? What is there now is kept in the version history.', noteSaving:'Saving…', noteSaveFailed:"Couldn't save. Your changes are kept and it will try again.", versionCopy:'Copy', versionCopied:'Copied', versionBack:'Back', noteFontSize:'Font size', noteFontSizeUp:'Bigger', noteFontSizeDown:'Smaller', unsavedConfirm:'You have unsaved changes. Switch anyway and lose them?', noteAutosave:'Autosave', noteAutosaveTip:'Saves the note while you type. Turn it off to save only with Save or Cmd+S.', noteAutoFormat:'Auto-format', noteAutoFormatTip:'Repeats the formatting of the line above when you start a matching line ("2." after a bold "1."), turns -- into a dash and similar shortcuts. Each change can be undone with Cmd+Z.', noteAutoFormatApplied:'Formatted like the line above', noteAutoFormatUndo:'Undo', noteAutoFormatOff:'Turn off', noteAutoFormatOffHint:'Auto-format is off. Turn it back on beside Autosave.', noteLineSpacing:'Line spacing', noteLineSpacingDefault:'Default', noteWordCount:'{n} words', noteWordCountOne:'{n} word', noteCharCount:'{n} characters', noteCharCountOne:'{n} character', noteWordsOf:'{s} of {n} words', noteWordsOfOne:'{s} of {n} word', noteCharsOf:'{s} of {n} characters', noteCharsOfOne:'{s} of {n} character', notePageTotal:'{n} pages', notePageTotalOne:'{n} page', noteCharsNoSpaces:'{n} characters without spaces', noteCharsNoSpacesOne:'{n} character without spaces', notePageAddHint:'Start a new page from where you are in the text', noteUnsaved:'Unsaved changes', notesLayout:'Note layout', notesLayoutBeside:'Note beside the list', notesLayoutUnder:'Note under the list', eventForUser:'For',
     notesEmptyHint:'Add a course in the Courses tab first, then create lecture notes here.',
     hLectures:'Your notes and lectures', saveNoteBtn:'Save note', noteSaved:'Saved!', hNotebookList:'Your notes',
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
@@ -12447,7 +12467,7 @@ const I18N = {
     hNotesPick:'노트 추가', lblNotesCourse:'수업', lblNewLecture:'노트 제목', addLectureBtn:'노트 추가',
     generalNotes:'일반 노트', noNote:'수업 없음', allPeople:'전체', lblNotesPersonFilter:'보기', closeNoteBtn:'닫기',
     lastSavedBy:'{name}님이 {time}에 저장함', neverSaved:'아직 저장되지 않음',
-    versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', versionsLoadFailed:'이전 버전을 불러오지 못했습니다.', versionOpen:'열기', versionUse:'이 버전 사용', versionUseConfirm:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 저장을 누르기 전까지는 저장되지 않습니다.', versionUseConfirmKept:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 지금 내용은 버전 기록에 남습니다.', noteSaving:'저장 중…', noteSaveFailed:'저장하지 못했습니다. 변경 내용은 그대로 있으며 다시 저장을 시도합니다.', versionCopy:'복사', versionCopied:'복사됨', versionBack:'뒤로', noteFontSize:'글자 크기', noteFontSizeUp:'크게', noteFontSizeDown:'작게', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', noteAutosave:'자동 저장', noteAutosaveTip:'입력하는 동안 노트를 저장합니다. 끄면 저장 버튼이나 Cmd+S로만 저장됩니다.', noteAutoFormat:'자동 서식', noteAutoFormatTip:'위 줄과 같은 형식의 줄을 시작하면 그 서식을 이어 씁니다(굵은 "1." 다음의 "2."). --를 대시로 바꾸는 등 단축 입력도 처리합니다. 바뀐 것은 모두 Cmd+Z로 되돌릴 수 있습니다.', noteAutoFormatApplied:'위 줄과 같은 서식으로 바꿨습니다', noteAutoFormatUndo:'되돌리기', noteAutoFormatOff:'끄기', noteAutoFormatOffHint:'자동 서식이 꺼졌습니다. 자동 저장 옆에서 다시 켤 수 있습니다.', noteLineSpacing:'줄 간격', noteLineSpacingDefault:'기본', noteWordCount:'{n}단어', noteCharCount:'{n}자', noteWordsOf:'{n}단어 중 {s}단어', noteCharsOf:'{n}자 중 {s}자', notePageTotal:'{n}쪽', noteCharsNoSpaces:'공백 제외 {n}자', notePageAddHint:'글에서 지금 있는 곳부터 새 쪽 시작', noteUnsaved:'저장되지 않은 변경 사항', eventForUser:'대상',
+    versionHistory:'버전 기록 ({n})', noVersions:'이전 버전 없음', versionsLoadFailed:'이전 버전을 불러오지 못했습니다.', versionOpen:'열기', versionUse:'이 버전 사용', versionUseConfirm:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 저장을 누르기 전까지는 저장되지 않습니다.', versionUseConfirmKept:'편집기의 내용을 이 버전으로 바꾸시겠습니까? 지금 내용은 버전 기록에 남습니다.', noteSaving:'저장 중…', noteSaveFailed:'저장하지 못했습니다. 변경 내용은 그대로 있으며 다시 저장을 시도합니다.', versionCopy:'복사', versionCopied:'복사됨', versionBack:'뒤로', noteFontSize:'글자 크기', noteFontSizeUp:'크게', noteFontSizeDown:'작게', unsavedConfirm:'저장하지 않은 변경사항이 있습니다. 그래도 이동하시겠습니까?', noteAutosave:'자동 저장', noteAutosaveTip:'입력하는 동안 노트를 저장합니다. 끄면 저장 버튼이나 Cmd+S로만 저장됩니다.', noteAutoFormat:'자동 서식', noteAutoFormatTip:'위 줄과 같은 형식의 줄을 시작하면 그 서식을 이어 씁니다(굵은 "1." 다음의 "2."). --를 대시로 바꾸는 등 단축 입력도 처리합니다. 바뀐 것은 모두 Cmd+Z로 되돌릴 수 있습니다.', noteAutoFormatApplied:'위 줄과 같은 서식으로 바꿨습니다', noteAutoFormatUndo:'되돌리기', noteAutoFormatOff:'끄기', noteAutoFormatOffHint:'자동 서식이 꺼졌습니다. 자동 저장 옆에서 다시 켤 수 있습니다.', noteLineSpacing:'줄 간격', noteLineSpacingDefault:'기본', noteWordCount:'{n}단어', noteCharCount:'{n}자', noteWordsOf:'{n}단어 중 {s}단어', noteCharsOf:'{n}자 중 {s}자', notePageTotal:'{n}쪽', noteCharsNoSpaces:'공백 제외 {n}자', notePageAddHint:'글에서 지금 있는 곳부터 새 쪽 시작', noteUnsaved:'저장되지 않은 변경 사항', notesLayout:'노트 배치', notesLayoutBeside:'노트를 목록 옆에', notesLayoutUnder:'노트를 목록 아래에', eventForUser:'대상',
     notesEmptyHint:'먼저 수업 탭에서 수업을 추가한 후 강의 노트를 작성하세요.',
     hLectures:'내 노트와 강의', saveNoteBtn:'노트 저장', noteSaved:'저장됨!', hNotebookList:'내 노트',
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
@@ -12573,7 +12593,7 @@ const I18N = {
     hNotesPick:'Thêm ghi chú', lblNotesCourse:'Khóa học', lblNewLecture:'Tiêu đề ghi chú', addLectureBtn:'Thêm ghi chú',
     generalNotes:'Ghi chú chung', noNote:'Không có khóa học', allPeople:'Tất cả', lblNotesPersonFilter:'Hiển thị', closeNoteBtn:'Đóng',
     lastSavedBy:'Lưu lần cuối bởi {name} lúc {time}', neverSaved:'Chưa được lưu',
-    versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', versionsLoadFailed:'Không tải được các phiên bản trước.', versionOpen:'Mở', versionUse:'Dùng phiên bản này', versionUseConfirm:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Sẽ không có gì được lưu cho đến khi bạn nhấn Lưu.', versionUseConfirmKept:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Nội dung hiện tại sẽ được giữ trong lịch sử phiên bản.', noteSaving:'Đang lưu…', noteSaveFailed:'Không lưu được. Thay đổi của bạn vẫn được giữ và sẽ thử lưu lại.', versionCopy:'Sao chép', versionCopied:'Đã sao chép', versionBack:'Quay lại', noteFontSize:'Cỡ chữ', noteFontSizeUp:'Lớn hơn', noteFontSizeDown:'Nhỏ hơn', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', noteAutosave:'Tự động lưu', noteAutosaveTip:'Lưu ghi chú trong khi bạn gõ. Tắt để chỉ lưu bằng nút Lưu hoặc Cmd+S.', noteAutoFormat:'Tự định dạng', noteAutoFormatTip:'Lặp lại định dạng của dòng trên khi bạn bắt đầu một dòng giống vậy ("2." sau "1." in đậm), đổi -- thành dấu gạch ngang và các phím tắt tương tự. Mọi thay đổi đều hoàn tác được bằng Cmd+Z.', noteAutoFormatApplied:'Đã định dạng giống dòng trên', noteAutoFormatUndo:'Hoàn tác', noteAutoFormatOff:'Tắt', noteAutoFormatOffHint:'Đã tắt tự định dạng. Bật lại ở cạnh Tự động lưu.', noteLineSpacing:'Giãn dòng', noteLineSpacingDefault:'Mặc định', noteWordCount:'{n} từ', noteCharCount:'{n} ký tự', noteWordsOf:'{s} / {n} từ', noteCharsOf:'{s} / {n} ký tự', notePageTotal:'{n} trang', noteCharsNoSpaces:'{n} ký tự không tính dấu cách', notePageAddHint:'Bắt đầu trang mới từ chỗ bạn đang viết', noteUnsaved:'Có thay đổi chưa lưu', eventForUser:'Cho',
+    versionHistory:'Lịch sử phiên bản ({n})', noVersions:'Không có phiên bản trước', versionsLoadFailed:'Không tải được các phiên bản trước.', versionOpen:'Mở', versionUse:'Dùng phiên bản này', versionUseConfirm:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Sẽ không có gì được lưu cho đến khi bạn nhấn Lưu.', versionUseConfirmKept:'Thay nội dung trong trình soạn thảo bằng phiên bản này? Nội dung hiện tại sẽ được giữ trong lịch sử phiên bản.', noteSaving:'Đang lưu…', noteSaveFailed:'Không lưu được. Thay đổi của bạn vẫn được giữ và sẽ thử lưu lại.', versionCopy:'Sao chép', versionCopied:'Đã sao chép', versionBack:'Quay lại', noteFontSize:'Cỡ chữ', noteFontSizeUp:'Lớn hơn', noteFontSizeDown:'Nhỏ hơn', unsavedConfirm:'Bạn có thay đổi chưa lưu. Vẫn chuyển và mất chúng?', noteAutosave:'Tự động lưu', noteAutosaveTip:'Lưu ghi chú trong khi bạn gõ. Tắt để chỉ lưu bằng nút Lưu hoặc Cmd+S.', noteAutoFormat:'Tự định dạng', noteAutoFormatTip:'Lặp lại định dạng của dòng trên khi bạn bắt đầu một dòng giống vậy ("2." sau "1." in đậm), đổi -- thành dấu gạch ngang và các phím tắt tương tự. Mọi thay đổi đều hoàn tác được bằng Cmd+Z.', noteAutoFormatApplied:'Đã định dạng giống dòng trên', noteAutoFormatUndo:'Hoàn tác', noteAutoFormatOff:'Tắt', noteAutoFormatOffHint:'Đã tắt tự định dạng. Bật lại ở cạnh Tự động lưu.', noteLineSpacing:'Giãn dòng', noteLineSpacingDefault:'Mặc định', noteWordCount:'{n} từ', noteCharCount:'{n} ký tự', noteWordsOf:'{s} / {n} từ', noteCharsOf:'{s} / {n} ký tự', notePageTotal:'{n} trang', noteCharsNoSpaces:'{n} ký tự không tính dấu cách', notePageAddHint:'Bắt đầu trang mới từ chỗ bạn đang viết', noteUnsaved:'Có thay đổi chưa lưu', notesLayout:'Bố cục ghi chú', notesLayoutBeside:'Ghi chú bên cạnh danh sách', notesLayoutUnder:'Ghi chú bên dưới danh sách', eventForUser:'Cho',
     notesEmptyHint:'Hãy thêm khóa học trong tab Khóa học trước, sau đó tạo ghi chú bài giảng ở đây.',
     hLectures:'Ghi chú và bài giảng của bạn', saveNoteBtn:'Lưu ghi chú', noteSaved:'Đã lưu!', hNotebookList:'Ghi chú của bạn',
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
@@ -13335,6 +13355,11 @@ const ICON_PATHS = {
   calOff: '<path d="M4.2 4.2A2 2 0 0 0 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 1.82-1.18"></path><path d="M21 15.5V6a2 2 0 0 0-2-2H9.5"></path><line x1="16" y1="2" x2="16" y2="6"></line><line x1="3" y1="10" x2="10" y2="10"></line><line x1="21" y1="10" x2="15.5" y2="10"></line><line x1="2" y1="2" x2="22" y2="22"></line>',
   /* An eyedropper: the browser's own colour picker, which can take a colour
      from anywhere on the screen. */
+  /* Where a note sits against the list of notes: the list a panel in the
+     corner with the note round it and under it, or the list a band across the
+     top with the note below. Drawn as the page, so the two read as a pair. */
+  layoutBeside: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><polyline points="10 4 10 12 3 12"></polyline>',
+  layoutUnder:  '<rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line>',
   pipette: '<path d="m2 22 1-1h3l9-9"></path><path d="M3 21v-3l9-9"></path><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"></path>'
 };
 const ICON = {
@@ -13385,7 +13410,9 @@ const ICON = {
   calOn:   function(sz){ return svgIcon(ICON_PATHS.calOn, sz); },
   calOff:  function(sz){ return svgIcon(ICON_PATHS.calOff, sz); },
   pipette: function(sz){ return svgIcon(ICON_PATHS.pipette, sz); },
-  users:   function(sz){ return svgIcon(ICON_PATHS.users, sz); }
+  users:   function(sz){ return svgIcon(ICON_PATHS.users, sz); },
+  layoutBeside: function(sz){ return svgIcon(ICON_PATHS.layoutBeside, sz); },
+  layoutUnder:  function(sz){ return svgIcon(ICON_PATHS.layoutUnder, sz); }
 };
 // ---- Every list's remembered ordering ----
 // UP HERE, not beside the control it belongs to, because the lists initialise
@@ -44425,7 +44452,9 @@ function setupNotesWrap(editorId){
   const update = ()=>{
     raf = 0;
     const on = split.classList.contains('notes-wrap');
-    if(!wide.matches || editor.classList.contains('hidden') || list.classList.contains('hidden')){
+    // Under the list by choice (applyNotesLayout) there is nothing to wrap.
+    if(!wide.matches || split.classList.contains('notes-under')
+       || editor.classList.contains('hidden') || list.classList.contains('hidden')){
       if(on) split.classList.remove('notes-wrap');
       return;
     }
@@ -44439,10 +44468,62 @@ function setupNotesWrap(editorId){
   ro.observe(editor);
   if(wide.addEventListener) wide.addEventListener('change', schedule);
   else if(wide.addListener) wide.addListener(schedule);
+  notesWrapSchedulers.push(schedule);
   schedule();
 }
+const notesWrapSchedulers = [];
 setupNotesWrap('editorCard');
 setupNotesWrap('notebookEditorCard');
+
+/* ---------- THE NOTE BESIDE THE LIST, OR UNDER IT ----------
+   A choice (real-user request, 22 Oct: "should be able to decide the layout
+   (whether to have this or to have the text box just merge to sit under all
+   the note tabs)"). BESIDE is the layout as it was: side by side, and once a
+   note runs well past the list, flowing round and under it (setupNotesWrap).
+   UNDER is the stack a narrow screen always gets, from the first line: the
+   list across the top, the note the full width below it.
+   One answer for both note editors, kept on this device like Autosave,
+   because it is a question about the screen in front of you. The control is
+   two marks in each editor's header, drawn only from 1100px up (see
+   .notes-layout-toggle), where there is a choice to make.
+   Switching keeps the editor's header where it was on the screen -- it is
+   where the press just happened -- by scrolling the page by however far the
+   card moved; otherwise picking Under would carry the note off down the page,
+   a whole list's height, from under the pointer. */
+const NOTES_LAYOUT_KEY = 'trackerNotesLayout';
+function notesLayoutUnder(){
+  try { return localStorage.getItem(NOTES_LAYOUT_KEY) === 'under'; } catch(e){ return false; }
+}
+function applyNotesLayout(){
+  const under = notesLayoutUnder();
+  document.querySelectorAll('.notes-split').forEach(split=>{
+    split.classList.toggle('notes-under', under);
+    if(under) split.classList.remove('notes-wrap');
+  });
+  document.querySelectorAll('.notes-layout-toggle button').forEach(b=>{
+    const on = (b.dataset.layout === 'under') === under;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  // Back to Beside, a long note may want to wrap again at once.
+  notesWrapSchedulers.forEach(fn=> fn());
+}
+document.querySelectorAll('.notes-layout-toggle button').forEach(b=>{
+  b.innerHTML = b.dataset.layout === 'under' ? ICON.layoutUnder(15) : ICON.layoutBeside(15);
+  b.addEventListener('click', ()=>{
+    const want = b.dataset.layout === 'under';
+    if(want === notesLayoutUnder()) return;
+    const card = b.closest('.card');
+    const before = card ? card.getBoundingClientRect().top : 0;
+    try { localStorage.setItem(NOTES_LAYOUT_KEY, want ? 'under' : 'beside'); } catch(e){}
+    applyNotesLayout();
+    if(card){
+      const moved = card.getBoundingClientRect().top - before;
+      if(moved) window.scrollBy({ top: moved, behavior: 'instant' });
+    }
+  });
+});
+applyNotesLayout();
 
 /* ---------- NOTES SAVE THEMSELVES ---------- */
 // The way a Google Doc does (real-user request: "Can notes save periodically
