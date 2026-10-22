@@ -45854,9 +45854,31 @@ function placeNoteTipUnderButton(toolbar, format){
   root.style.left = left + 'px';
   root.style.top = (b.bottom - h.top + 6 - nudge) + 'px';
 }
+// Pressing the button again while its own box is open closes the box
+// (real-user request: "when i click it again, it should close it instead of
+// leaving it open"). The handler cannot see that for itself: Quill's toolbar
+// puts the focus back in the editor BEFORE it calls a handler, and the focus
+// coming back is what makes Quill hide the box, so the box is always shut by
+// then. Whether it was open is noted by the toolbar's own capture listener
+// (enableNoteLinks), which hears the click first.
+function noteTipOpenMode(tip){
+  return tip && !tip.root.classList.contains('ql-hidden') && tip.root.classList.contains('ql-editing')
+    ? tip.root.getAttribute('data-mode') : null;
+}
+function noteTipOpenAs(tip, mode){
+  if(!tip) return false;
+  const was = tip.noteOpenBefore;
+  tip.noteOpenBefore = null;
+  return was === mode || noteTipOpenMode(tip) === mode;
+}
+function closeNoteTip(quill, tip){
+  tip.hide();
+  quill.focus();
+}
 function noteVideoToolbarHandler(){
   const tip = this.quill.theme && this.quill.theme.tooltip;
   if(!tip) return;
+  if(noteTipOpenAs(tip, 'video')){ closeNoteTip(this.quill, tip); return; }
   tip.edit('video');
   placeNoteTipUnderButton(this, 'video');
 }
@@ -45873,6 +45895,7 @@ function noteVideoToolbarHandler(){
 function noteLinkToolbarHandler(value){
   const q = this.quill;
   const tip = q.theme && q.theme.tooltip;
+  if(noteTipOpenAs(tip, 'link')){ closeNoteTip(q, tip); return; }
   const range = q.getSelection(true);
   if(!range || !tip) return;
   delete tip.linkRange;
@@ -45975,7 +45998,25 @@ function enableNoteLinks(quill){
     quill.formatText(start, url.length, 'link', noteLinkHref(url), 'user');
   });
 
-  // (4) Saving from the link box with nothing selected INSERTS the address as
+  // (4) Anything ELSE in the toolbar closes the link or video box (real-user
+  // request: "if i have that opened and then open something like the coloring
+  // tool, then it should obviously close those"). Quill's own buttons already
+  // do, by taking the selection back; the colour, size and spacing lists are
+  // the app's and never touch it. In the CAPTURE phase, because the colour
+  // lists stop their own clicks from going any further. The link and video
+  // buttons are left to their handlers, which toggle or switch the box.
+  const bar = quill.getModule('toolbar') && quill.getModule('toolbar').container;
+  if(bar && tip){
+    bar.addEventListener('click', (e)=>{
+      if(e.target.closest && e.target.closest('button.ql-link, button.ql-video')){
+        tip.noteOpenBefore = noteTipOpenMode(tip);
+        return;
+      }
+      if(!tip.root.classList.contains('ql-hidden')) tip.hide();
+    }, true);
+  }
+
+  // (5) Saving from the link box with nothing selected INSERTS the address as
   // linked text (see noteLinkToolbarHandler). Every other save is Quill's own.
   if(tip && !tip.__noteLinkSave){
     tip.__noteLinkSave = true;
