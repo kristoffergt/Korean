@@ -2717,7 +2717,12 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
 /* Deleting the page sits at the far end of the bar, away from the arrows a
    thumb is going back and forth on, and in the delete red: it is the one
    control here that throws something away. */
-.note-pagebar button.np-del{margin-left:auto;color:var(--danger);}
+.note-pagebar button.np-del{color:var(--danger);}
+/* Everything after the spacer sits at the right: delete, then the count. */
+.note-pagebar .np-spacer{flex:1 1 0;min-width:0;}
+.note-pagebar button.np-stats{font-weight:500;}
+.note-pagebar button.np-stats.shown{border-color:transparent;background:none;white-space:nowrap;font-variant-numeric:tabular-nums;padding-left:4px;padding-right:4px;}
+.note-pagebar button.np-stats.shown:hover{border-color:var(--line);}
 .note-pagebar button.np-del:hover{color:var(--danger);border-color:var(--danger);}
 /* Moving the page on screen: one step either way, or straight to a number
    typed over the one it is at now. */
@@ -2807,6 +2812,46 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
 .ql-snow.ql-toolbar button.nf-size-step,
 .ql-snow.ql-toolbar button.nf-size-open,
 .ql-snow.ql-toolbar .cc-color-wrap > button{border-radius:0;}
+/* A colour of your own under the grid in the text-colour and highlight lists:
+   hue round the wheel, saturation out from its middle, brightness on the
+   slider, a code in the field, and the browser's own picker behind the
+   pipette. Sized to the grid's own 124px. */
+.cc-custom{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:6px;padding-top:6px;border-top:1px solid var(--line);}
+.cc-custom-label{font-size:10.5px;font-weight:600;color:var(--ink-soft);}
+.cc-wheel{position:relative;align-self:center;width:104px;height:104px;border-radius:50%;cursor:crosshair;touch-action:none;
+  background:radial-gradient(circle closest-side,#fff,rgba(255,255,255,0)),conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.12);}
+.cc-wheel:focus-visible{outline:2px solid var(--celadon-4);outline-offset:2px;}
+.cc-wheel-shade{position:absolute;inset:0;border-radius:50%;background:#000;pointer-events:none;}
+.cc-wheel-mark{position:absolute;width:12px;height:12px;border-radius:50%;border:2px solid #fff;
+  box-shadow:0 0 0 1px rgba(0,0,0,0.5);transform:translate(-50%,-50%);pointer-events:none;}
+.cc-bright{-webkit-appearance:none;appearance:none;display:block;width:100%;height:10px;margin:2px 0;padding:0;
+  border:1px solid var(--line);border-radius:5px;background:#000;cursor:pointer;}
+.cc-bright::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;
+  background:#fff;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,0.45),0 1px 3px rgba(0,0,0,0.3);}
+.cc-bright::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #fff;
+  box-shadow:0 0 0 1px rgba(0,0,0,0.45);}
+.cc-bright::-moz-range-track{background:transparent;}
+.cc-bright:focus-visible{outline:2px solid var(--celadon-4);outline-offset:2px;}
+.cc-hexrow{display:flex;align-items:center;gap:4px;}
+.cc-hex{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:3px;height:24px;padding:0 4px;
+  border:1px solid var(--line);border-radius:4px;background:var(--paper);}
+.cc-hex:focus-within{border-color:var(--ink-soft);}
+.cc-hex-dot{flex:none;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.25);}
+.cc-hex-hash{flex:none;font:11px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink-soft);}
+.cc-hex input.cc-hex-input{flex:1 1 auto;min-width:0;width:100%;height:auto;border:0;outline:0;padding:0;margin:0;
+  background:transparent;color:var(--ink);font:11px ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;}
+.cc-pick{position:relative;flex:none;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ink-soft);}
+.cc-pick:hover, .cc-pick:focus-within{color:var(--ink);border-color:var(--ink-soft);}
+.cc-pick input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0;}
+@media (pointer: coarse){
+  .cc-bright{height:14px;border-radius:7px;}
+  .cc-bright::-webkit-slider-thumb{width:22px;height:22px;}
+  .cc-bright::-moz-range-thumb{width:18px;height:18px;}
+  .cc-hex, .cc-pick{height:30px;}
+  .cc-pick{width:30px;}
+}
 /* THE TOOLBAR ON A PHONE IS A GRID (real-user report, with a screenshot: "this
    layout looks kind of weird on app"). Left to wrap, Quill's groups break
    wherever they happen to run out of room, each keeps the 15px margin that
@@ -2886,6 +2931,16 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
    changes" until Save is pressed. */
 .saved-row{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;column-gap:12px;row-gap:2px;margin-top:10px;}
 .saved-row .hint.saved-info{margin-top:0;flex:1 1 auto;min-width:0;}
+/* Under a note, Version history on the left and the save line on the right
+   share ONE line however narrow the window gets (real-user request: "on the
+   same line as version history (bottom right) without ever taking up two
+   lines for both things combined"). Nothing wraps: what gives is the
+   "Last saved by" text, which is cut short with an ellipsis and keeps the
+   whole sentence in its title. */
+.note-foot{display:flex;align-items:center;gap:12px;margin-top:10px;min-width:0;}
+.note-foot > .linkbtn{flex:none;margin:0;white-space:nowrap;}
+.note-foot .saved-row{flex:1 1 auto;min-width:0;margin-top:0;flex-wrap:nowrap;}
+.note-foot .saved-row .hint.saved-info{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .note-autosave{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;user-select:none;-webkit-user-select:none;}
 /* THE NOTE TOOLBAR STAYS ON SCREEN (real-user request: "the top menu bar of
    notes should be fixed as you scroll down while typing"). Pinned under the
@@ -2896,9 +2951,6 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
   position:sticky;top:var(--topbar-h, 0px);z-index:6;}
 .tab-panel.split-on > .split-pane #editorCard > .ql-toolbar.ql-snow,
 .tab-panel.split-on > .split-pane #notebookEditorCard > .ql-toolbar.ql-snow{top:38px;}
-/* Words, characters and pages, at the right-hand end of that toolbar. */
-.ql-toolbar .note-stats{float:right;font-family:'Inter',sans-serif;font-size:12px;line-height:24px;
-  color:var(--ink-soft);padding:0 4px;white-space:nowrap;font-variant-numeric:tabular-nums;cursor:default;}
 /* Line spacing: one button beside the lists, opening the same kind of list
    the font size does. */
 .ql-toolbar .nf-spacing-group{position:relative;}
@@ -2926,7 +2978,6 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
   .ql-snow.ql-toolbar .nf-spacing-group > button.nf-spacing-open{width:100%;height:36px;padding:0;border-radius:8px;}
   .ql-toolbar button.nf-spacing-open svg{width:20px;height:20px;}
   .nf-spacing-group .nf-size-panel{left:auto;right:0;}
-  .nf-toolbar .note-stats{grid-area:3 / 1 / 4 / 9;float:none;text-align:center;line-height:18px;}
 }
 /* THE EDITOR GOES UNDER THE LIST ONCE THE LIST HAS ENDED (real-user request:
    "when you get a certain distance down, it should no longer be side-by-side
@@ -3746,10 +3797,43 @@ button.tpl-act:hover{background:rgba(127,127,127,0.16);}
 .note-sub-header{display:flex;align-items:center;gap:6px;padding:8px 0 6px;font-weight:600;font-size:12.5px;color:var(--ink-soft);cursor:pointer;border-bottom:1px dashed var(--line);}
 .note-sub-header:hover{color:var(--ink);}
 .note-sub-body{padding-left:12px;}
-.lecture-row.moving{background:var(--paper);box-shadow:inset 3px 0 0 var(--on);padding-left:8px;border-radius:6px;}
-.note-pos{flex-shrink:0;min-width:24px;height:24px;margin-right:8px;padding:0 6px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:600 11.5px 'Space Grotesk',monospace;cursor:pointer;line-height:22px;}
+.note-sub-body .note-sub-header{font-size:12px;}
+/* The one box at the left of a row: the grip, or the position number while
+   placing, or nothing for a note somebody else owns. Fixed in size, so
+   swapping one for another changes neither the row's height nor where
+   anything in it sits (real-user report: the ^/v button "moves a bit, so I
+   cant just click it again to collapse"). */
+.note-slot{flex-shrink:0;box-sizing:border-box;width:22px;height:20px;margin-right:6px;display:inline-flex;align-items:center;justify-content:center;}
+.note-group-header .note-slot, .note-sub-header .note-slot{margin-right:0;}
+.note-grip{position:relative;padding:0;border:none;background:none;color:var(--ink-soft);cursor:grab;touch-action:none;border-radius:5px;opacity:.55;}
+/* A finger-sized target round a small mark. */
+.note-grip::before{content:'';position:absolute;inset:-9px -4px;}
+.note-grip:hover, .note-grip:focus-visible{opacity:1;color:var(--ink);}
+.note-grip:focus-visible{outline:2px solid var(--celadon-4);outline-offset:1px;}
+.lecture-row.moving{background:var(--paper);box-shadow:inset 3px 0 0 var(--on);border-radius:6px;}
+.note-pos{padding:0;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:600 11px 'Space Grotesk',monospace;cursor:pointer;line-height:18px;}
 .note-pos:hover{background:var(--ink);color:var(--paper);border-color:var(--ink);}
 .note-pos.current{background:var(--on);color:#fff;border-color:var(--on);cursor:default;}
+.note-head-name{min-width:0;overflow-wrap:anywhere;}
+.note-head-actions{margin-left:auto;display:inline-flex;align-items:center;gap:2px;flex-shrink:0;}
+.note-sub-add, .note-sub-remove{background:none;border:none;color:var(--ink-soft);cursor:pointer;padding:3px 6px;line-height:1;border-radius:5px;font-size:13px;}
+.note-sub-add:hover{color:var(--ink);background:var(--paper);}
+.note-sub-remove{color:var(--danger);}
+.note-sub-remove:hover{filter:brightness(1.15);background:var(--paper);}
+.note-sub-new{padding:6px 0 4px;}
+.note-sub-new input{width:100%;max-width:280px;box-sizing:border-box;font-size:12.5px;}
+.note-drop-empty{padding:6px 0 6px 28px;}
+.note-sub.note-flash > .note-sub-header{animation:noteFlash 1.2s ease-out;}
+@keyframes noteFlash{0%{background:color-mix(in srgb, var(--on) 28%, transparent);}100%{background:transparent;}}
+/* Dragging: the item follows the pointer, a line shows where it lands, and a
+   heading it would go into is tinted. */
+.drag-src{opacity:.35;}
+.note-drop-into{background:color-mix(in srgb, var(--on) 16%, transparent);border-radius:6px;}
+.note-drag-ghost{position:fixed;z-index:1000;pointer-events:none;margin:0;box-sizing:border-box;background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 26px rgba(0,0,0,.22);padding-left:8px;padding-right:8px;opacity:.96;}
+.note-drag-ghost.nowhere{opacity:.6;}
+.note-drop-line{position:fixed;z-index:999;height:2px;background:var(--on);border-radius:1px;pointer-events:none;}
+body.note-dragging, body.note-dragging *{cursor:grabbing !important;user-select:none;-webkit-user-select:none;}
+@media (prefers-reduced-motion: reduce){ .note-sub.note-flash > .note-sub-header{animation:none;} }
 .lecture-row .lecture-actions .lecture-move.on{color:var(--on);}
 .note-move-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;}
 .note-move-hint{font-size:11.5px;color:var(--ink-soft);margin-right:2px;}
@@ -4751,7 +4835,7 @@ body.ws-work .ws-class-only{display:none !important;}
           </div>
           <div class="field wide">
             <label for="newNotebookSub" id="lblNewNotebookSub"></label>
-            <input type="text" id="newNotebookSub" list="notebookSubSuggest" maxlength="60">
+            <input type="text" id="newNotebookSub" list="notebookSubSuggest" maxlength="320">
             <datalist id="notebookSubSuggest"></datalist>
           </div>
           <button id="addNotebookBtn"></button>
@@ -4771,10 +4855,9 @@ body.ws-work .ws-class-only{display:none !important;}
       <div class="card hidden" id="notebookEditorCard">
         <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" data-title-key="tipClickToEdit"></span><span><button class="export-btn act-save" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
         <div class="notes-panel hidden" id="notebookTitleEditPanel"></div>
-        <div class="saved-row"><div class="hint saved-info" id="notebookLastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutoFormatTip"><input type="checkbox" class="note-autoformat-toggle"><span id="notebookAutoFormatLabel"></span></label><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="notebookAutosaveLabel"></span></label></div>
         <div id="notebookQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
         <div class="note-pagebar" id="notebookPageBar" style="display:none;"></div>
-        <button class="linkbtn" id="notebookVersionHistoryToggle" style="margin-top:10px;"></button>
+        <div class="note-foot"><button class="linkbtn" id="notebookVersionHistoryToggle"></button><div class="saved-row"><div class="hint saved-info" id="notebookLastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutoFormatTip"><input type="checkbox" class="note-autoformat-toggle"><span id="notebookAutoFormatLabel"></span></label><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="notebookAutosaveLabel"></span></label></div></div>
         <div class="notes-panel hidden" id="notebookVersionHistoryPanel"></div>
       </div>
       </div>
@@ -4917,7 +5000,7 @@ body.ws-work .ws-class-only{display:none !important;}
         </div>
         <div class="field wide">
           <label for="newLectureSub" id="lblNewLectureSub"></label>
-          <input type="text" id="newLectureSub" list="noteSubSuggest" maxlength="60">
+          <input type="text" id="newLectureSub" list="noteSubSuggest" maxlength="320">
           <datalist id="noteSubSuggest"></datalist>
         </div>
         <button id="addLectureBtn"></button>
@@ -4938,10 +5021,9 @@ body.ws-work .ws-class-only{display:none !important;}
     <div class="card hidden" id="editorCard">
       <h2><span id="editorLectureTitle"></span><span><button class="export-btn act-save" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
       <div class="notes-panel hidden" id="editorTitleEditPanel"></div>
-      <div class="saved-row"><div class="hint saved-info" id="lastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutoFormatTip"><input type="checkbox" class="note-autoformat-toggle"><span id="noteAutoFormatLabel"></span></label><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="noteAutosaveLabel"></span></label></div>
       <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
       <div class="note-pagebar" id="notePageBar" style="display:none;"></div>
-      <button class="linkbtn" id="versionHistoryToggle" style="margin-top:10px;"></button>
+      <div class="note-foot"><button class="linkbtn" id="versionHistoryToggle"></button><div class="saved-row"><div class="hint saved-info" id="lastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutoFormatTip"><input type="checkbox" class="note-autoformat-toggle"><span id="noteAutoFormatLabel"></span></label><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="noteAutosaveLabel"></span></label></div></div>
       <div class="notes-panel hidden" id="versionHistoryPanel"></div>
     </div>
     </div>
@@ -12215,7 +12297,7 @@ const I18N = {
     deleteRecurringQ:'"{title}" is a repeating entry. What would you like to remove?',
     deleteEventConfirm:'Delete the entry "{title}"? Its reminders go with it, and it disappears for everyone it is shared with.',
     editEventModalTitle:'Edit', editRemindersModalTitle:'Edit reminders', deleteEventBtn:'Delete',
-    addCourseBtn:'Add course', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries, its notes and its syllabus for everyone.', deleteNoteConfirm:'Delete the note "{title}"? Everything written in it goes too, for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', saveFailed:'That change could not be saved, so it has been put back. Check your connection and try again.', studySubVideos:'Videos', hVideos:'Videos', lblVideoSearch:'Search', lblVideoSort:'Sort', videoSearchPlaceholder:'Search videos...', videoEmpty:'No video links yet. YouTube links on grammar points show up here.', videoNoMatches:'No video matches that search.', videoPlay:'Play', videoOpenOnYouTube:'Open on YouTube', sortFieldAdded:'Added',  hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header',
+    addCourseBtn:'Add course', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', colorCustom:'Custom', colorWheel:'Color wheel', colorBrightness:'Brightness', colorHex:'Color code', colorPicker:'Open the color picker', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries, its notes and its syllabus for everyone.', deleteNoteConfirm:'Delete the note "{title}"? Everything written in it goes too, for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', saveFailed:'That change could not be saved, so it has been put back. Check your connection and try again.', studySubVideos:'Videos', hVideos:'Videos', lblVideoSearch:'Search', lblVideoSort:'Sort', videoSearchPlaceholder:'Search videos...', videoEmpty:'No video links yet. YouTube links on grammar points show up here.', videoNoMatches:'No video matches that search.', videoPlay:'Play', videoOpenOnYouTube:'Open on YouTube', sortFieldAdded:'Added',  hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header',
     hTopikTemplates:'TOPIK writing templates', topikTplIntro:'Sentence frames for questions 51 to 54, each with an example. ~ marks the part you fill in.', topikTplToggle:'Templates', topikTplSearch:'Search templates', topikTplAll:'All', topikTplStyle:'Written style', topikTplQuestion:'Question {n}', topikTplInsert:'Insert', topikTplCopy:'Copy', topikTplCopied:'Copied', topikTplNone:'No templates match.', topikTplCount:'{n} templates', topikTplCountOne:'{n} template', hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordCountLabelOne:'{n} word', deleteSampleConfirm:'Delete this writing sample?', deleteJobConfirm:'Delete this application?', deleteJobConfirmCv:'Delete this application? The attached CV will be removed too.', deleteJobConfirmCover:'Delete this application? The attached cover letter will be removed too.', deleteJobConfirmBoth:'Delete this application? The attached CV and cover letter will be removed too.', deleteCertConfirm:'Delete this certification?', deleteBookConfirm:'Delete this book? Its notes go with it.', deleteArticleConfirm:'Delete this article? Its notes go with it.', charCountLabel:'{n} characters', charCountLabelOne:'{n} character', charCountTarget:'{n} characters (target: {min}~{max})', charCountTargetOne:'{n} character (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'Random', lblWritingQ53Image:'Attach an image', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'Start a Q54 mock exam (35 min)', writingMockStartBtn:'Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm1One:'Delete your one writing sample? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
     lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
@@ -12238,7 +12320,7 @@ const I18N = {
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
     tabYonsei:'Yonsei', tabTodos:'To-do', hAddTodo:'Add a to-do', lblTodoTitle:'To-do', lblTodoDue:'Due date', lblTodoTime:'Time', lblTodoRemind:'Remind me', remindAtTime:'At the time', remindHourBefore:'1 hour before', remindMorningOf:'Morning of (8:00)', remindDayBefore:'Day before', remindCustom:'Pick a time', addTodoBtn:'Add to-do', hTodoList:'Your to-dos', todoToday:'Today', todoTomorrow:'Tomorrow', todoOverdue:'Overdue', todoDone:'Done', todoClearDone:'Clear done', todoClearDoneConfirm:'Delete {n} finished to-dos?', todoClearDoneConfirmOne:'Delete {n} finished to-do?', deleteTodoConfirm:'Delete the to-do "{title}"?', todoMarkDone:'Mark done', todoMarkOpen:'Mark not done', todoShowOnCalendar:'Show on calendar', todoCalAdd:'Add to the calendar', todoCalLeaveOff:'Leave off the calendar', todoShareCircle:'Share with your circle', todoNotesLabel:'Notes', todoSave:'Save', todoCancel:'Cancel', todoEdit:'Edit', todoDelete:'Delete', todoAllCourses:'All courses', todoAllProjects:'All projects', notifTypeTodoReminder:'To-do reminders', notifTodoReminderTitleTpl:'To-do: {title}', hWorkspaceSetup:'Set up your Productivity Tracker', wsWhereLabel:'Where will you use it?', wsKindYonsei:'Yonsei', wsKindSchool:'Another school', wsKindWork:'Work', wsNameLabel:'Tab name', wsKoreanLabel:'Korean study tab', wsContinue:'Continue', wsSave:'Save', wsSaved:'Saved.', wsSettingsHeading:'School or work tab', workspaceSchoolDefault:'School', workspaceWorkDefault:'Work', tabProjects:'Projects', hAddProject:'Add a project', projectTitle:'Project name', projectLocation:'Location', addProjectBtn:'Add project', deleteProjectConfirm:'Delete this project? This also removes its calendar entries and its notes for everyone.', lockInProjectConfirm:"Lock in this project? You won't be able to move it back to Planning or Active afterward.", statusActive:'Active', hYourProjects:'Your projects', hProjectList:'All projects', lblNotesProject:'Project', noProject:'No project', notesEmptyHintWork:'Add a project in the Projects tab first, then create notes here.', hNotesWork:'Your notes', kindProject:'Project', hProjectsCal:'Projects', linkCatProjects:'Projects', linkCatProjectNotes:'Project notes', tabBoards:'Board', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', lblYonseiBoardsSince:'Period', lblYonseiBoardsSort:'Sort', yonseiPeriodAll:'All time', yonseiPeriodWeek:'Last week', yonseiPeriodMonth:'Last month', yonseiPeriod6Months:'Last 6 months', yonseiPeriodYear:'Last year', yonseiPeriod2Years:'Last 2 years', yonseiPeriod3Years:'Last 3 years', yonseiPeriod4Years:'Last 4 years', yonseiPeriod5Years:'Last 5 years', yonseiSortNewest:'Newest first', yonseiSortOldest:'Oldest first', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobsSubJobBoard:'Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardAiUpdateBtn:'AI Job Fetch', jobBoardAiFetching:'Fetching', jobBoardUpdating:'Updating...', jobBoardIndBankingFinance:'Banking/Finance', jobBoardIndConsumerFashion:'Consumer/Fashion', jobBoardIndForeignFirms:'Foreign firms', jobBoardIndIntlOrg:'International Organization', jobBoardIndNGO:'NGO', jobBoardIndOthers:'Others', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Public', jobBoardIndResearchInstitute:'Research Institute', jobBoardIndTechnology:'Technology', jobBoardIndTopChaebol:'Top Chaebol', jobBoardIndTrade:'Trade', jobBoardNewBadge:'NEW', cdcLoginWarnTitle:'Logged in to CDC?', cdcLoginWarnBody:'The Yonsei CDC site needs its own separate login. Make sure you\'re signed in there before opening this posting, or the page may not load right.', cdcLoginWarnContinueBtn:'Continue', cdcLoginWarnLoginBtn:'Log in', cdcLoginWarnCancelBtn:'Cancel',
     tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet. Create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', expLoadFailedHint:'Couldn\'t load your vacations. Check your connection and try again.', expRetryLoadBtn:'Retry', expAmountInvalid:'Enter a number, optionally ending in k or m (e.g. 4k, 1.5m).', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', hExpAllExpenses:'All expenses', sortLabel:'Sort', sortFieldStatus:'Status', sortFieldCompany:'Company', sortFieldRole:'Role', sortFieldIssuer:'Issuer', sortFieldDeadline:'Deadline', sortFieldTitle:'Title', sortFieldPosted:'Posted', sortFieldMfa:'2FA', sortFieldConfirmed:'Confirmed', sortFieldDate:'Date', sortFieldAmount:'Amount', sortFieldName:'Name', sortFieldCategory:'Category', sortFieldPaidBy:'Paid by', sortAsc:'Sorting up. Press to sort down.', sortDesc:'Sorting down. Press to sort up.', sortThen:'then', sortMultiple:'Multiple sort', expExcluded:'{n} expenses left out', expExcludedOne:'{n} expense left out', expShowLabel:'Show', expShowAll:'All', expShowCounted:'Counted only', expShowExcluded:'Excluded only', expNoExcluded:'Nothing is excluded right now.', expNoCounted:'Everything here is excluded right now.', expNoExpensesYet:'No expenses logged yet.', expCountCategory:'Count this category', expDontCountCategory:"Don't count this category", expCountAllCategories:'Count all categories', expDontCountDay:"Don't count this day", expCountDay:'Count this day', expDontCountExpense:"Don't count this expense", expCountExpense:'Count this expense', expCountEverything:'Count everything', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default; a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', hEditVacation:'Edit vacation', expPickVacationHint:'Pick a vacation above.', expVacationDeleteConfirm:'Delete "{name}"? Every expense logged on it goes with it, for everyone on the trip.', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expCircleEmpty:'You\'re not linked with anyone yet. Add people to your Linked circle from Account settings.', expCircleAllOnTrip:'Everyone in your Linked circle is already on this trip.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip', lblExpCustomCategoryName:'Custom name', optNewVacationCurrencyCustom:'Other…', lblNewVacationCustomCurrency:'Currency code', lblExpDisplayCurrency:'Show in', optExpDisplayCurrencyOriginal:'Original', lblExpDisplayFull:'Convert every amount', expDisplayFullHint:'Shows every amount in the chosen currency. What was typed in is kept as it is, so switching back gives the exact amounts again.', hInviteBySearch:'Or invite by name', vacationInviteSearchPlaceholder:'Search by name...', recapLoadingHint:'Loading…', shellUpdatedText:'A new version is ready.', shellUpdatedBtn:'Reload', qlVisit:'Visit link:', qlEnterLink:'Enter link:', qlEnterVideo:'Enter video:', qlEdit:'Edit', qlSave:'Save', qlRemove:'Remove',
-    authEnterEmailPassword:'Enter your email and password.', authInvalidLogin:'Wrong email, name or password.', authEmailNotConfirmed:'Confirm your email first. The link is in the email we sent you.', authAlreadyRegistered:'An account with this email already exists. Sign in instead.', authRateLimited:'Too many attempts. Wait a minute and try again.', authEmailInvalid:'That email address does not look right.', authSamePassword:'Pick a password different from your current one.', authNetworkError:'Could not reach the server. Check your connection and try again.', authSignupsClosed:'Sign-ups are closed right now.', authLinkExpired:'That link has expired or was already used. Ask for a new one.', guestUnavailable:'Not available in guest mode.', tipDelete:'Delete', tipRemove:'Remove', tipMoveUp:'Move up', tipMoveDown:'Move down', lblSubcategory:'Sub-category', noteMoveTo:'Move to a position', noteMovePick:'Pick a position', noteMoveTop:'To top', noteMoveBottom:'To bottom', noteMoveDone:'Done', tipDarkMode:'Toggle dark mode', tipMyNotes:'My notes', tipClickToEdit:'Click to edit', tipJumpToDate:'Jump to date', tipPagesRead:'Pages read', tipJobBoardAiUpdate:'Walks each of today\'s postings individually and saves full descriptions to a local file', notesLinkShortcutPrompt:'Shortcut name:', saveFailedTryAgain:'Could not save. Try again.', termsLink:'Terms of use', installGuideTitle:'Get the app', installGuideIntro:'Add Productivity Tracker to your home screen. It opens full screen like an app and can send you notifications.', installInAppNote:'This page is open inside another app, which cannot add it to your home screen. Open it in Safari or Chrome first (look for "Open in browser" in its ··· menu).', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'Install the app', installIosStep1:'Tap the Share button {icon} at the bottom of Safari. On newer iPhones it is inside the ··· menu.', installIosOtherStep1:'Tap the Share button {icon} in your browser, next to the address bar or in its menu.', installIosStep2:'Tap "View More" if you see it, then "Add to Home Screen".', installIosStep3:'Tap "Add". The app is now on your home screen.', installAndroidStep1:'Tap the menu {icon} at the top right of Chrome.', installAndroidStep2:'Tap "Add to home screen" or "Install app".', installAndroidStep3:'Tap "Install". The app is now on your home screen.', installGuideToast:'You can find this guide in Settings any time.', settingsInstallGuideBtn:'Get the app on your phone'
+    authEnterEmailPassword:'Enter your email and password.', authInvalidLogin:'Wrong email, name or password.', authEmailNotConfirmed:'Confirm your email first. The link is in the email we sent you.', authAlreadyRegistered:'An account with this email already exists. Sign in instead.', authRateLimited:'Too many attempts. Wait a minute and try again.', authEmailInvalid:'That email address does not look right.', authSamePassword:'Pick a password different from your current one.', authNetworkError:'Could not reach the server. Check your connection and try again.', authSignupsClosed:'Sign-ups are closed right now.', authLinkExpired:'That link has expired or was already used. Ask for a new one.', guestUnavailable:'Not available in guest mode.', tipDelete:'Delete', tipRemove:'Remove', tipMoveUp:'Move up', tipMoveDown:'Move down', lblSubcategory:'Sub-category', noteMoveTo:'Move to a position', noteMovePick:'Pick a position', noteMoveTop:'To top', noteMoveBottom:'To bottom', noteMoveDone:'Done', noteStatsShow:'Word count', noteStatsShowHint:'Show words and characters', noteStatsHide:'press to hide', noteDragTip:'Drag to move', noteSubAdd:'Add a sub-category', noteSubNewPh:'Sub-category name', tipDarkMode:'Toggle dark mode', tipMyNotes:'My notes', tipClickToEdit:'Click to edit', tipJumpToDate:'Jump to date', tipPagesRead:'Pages read', tipJobBoardAiUpdate:'Walks each of today\'s postings individually and saves full descriptions to a local file', notesLinkShortcutPrompt:'Shortcut name:', saveFailedTryAgain:'Could not save. Try again.', termsLink:'Terms of use', installGuideTitle:'Get the app', installGuideIntro:'Add Productivity Tracker to your home screen. It opens full screen like an app and can send you notifications.', installInAppNote:'This page is open inside another app, which cannot add it to your home screen. Open it in Safari or Chrome first (look for "Open in browser" in its ··· menu).', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'Install the app', installIosStep1:'Tap the Share button {icon} at the bottom of Safari. On newer iPhones it is inside the ··· menu.', installIosOtherStep1:'Tap the Share button {icon} in your browser, next to the address bar or in its menu.', installIosStep2:'Tap "View More" if you see it, then "Add to Home Screen".', installIosStep3:'Tap "Add". The app is now on your home screen.', installAndroidStep1:'Tap the menu {icon} at the top right of Chrome.', installAndroidStep2:'Tap "Add to home screen" or "Install app".', installAndroidStep3:'Tap "Install". The app is now on your home screen.', installGuideToast:'You can find this guide in Settings any time.', settingsInstallGuideBtn:'Get the app on your phone'
   },
   ko: {
     signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
@@ -12340,7 +12422,7 @@ const I18N = {
     deleteRecurringQ:'"{title}" 항목은 반복 일정입니다. 무엇을 삭제하시겠습니까?',
     deleteEventConfirm:'"{title}" 항목을 삭제하시겠습니까? 알림도 함께 삭제되고, 공유된 모든 사람에게서 사라집니다.',
     editEventModalTitle:'수정', editRemindersModalTitle:'알림 수정', deleteEventBtn:'삭제',
-    addCourseBtn:'수업 추가', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목, 노트, 강의계획서도 함께 삭제됩니다.', deleteNoteConfirm:'"{title}" 노트를 삭제하시겠습니까? 안에 작성한 내용도 모든 사람에게서 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', saveFailed:'변경 내용을 저장할 수 없어 이전 상태로 되돌렸습니다. 연결 상태를 확인하고 다시 시도하세요.', studySubVideos:'영상', hVideos:'영상', lblVideoSearch:'검색', lblVideoSort:'정렬', videoSearchPlaceholder:'영상 검색...', videoEmpty:'아직 영상 링크가 없습니다. 문법 항목의 유튜브 링크가 여기에 나타납니다.', videoNoMatches:'검색 결과가 없습니다.', videoPlay:'재생', videoOpenOnYouTube:'유튜브에서 열기', sortFieldAdded:'추가일',  hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더',
+    addCourseBtn:'수업 추가', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', colorCustom:'직접 고르기', colorWheel:'색상환', colorBrightness:'밝기', colorHex:'색상 코드', colorPicker:'색상 선택기 열기', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목, 노트, 강의계획서도 함께 삭제됩니다.', deleteNoteConfirm:'"{title}" 노트를 삭제하시겠습니까? 안에 작성한 내용도 모든 사람에게서 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', saveFailed:'변경 내용을 저장할 수 없어 이전 상태로 되돌렸습니다. 연결 상태를 확인하고 다시 시도하세요.', studySubVideos:'영상', hVideos:'영상', lblVideoSearch:'검색', lblVideoSort:'정렬', videoSearchPlaceholder:'영상 검색...', videoEmpty:'아직 영상 링크가 없습니다. 문법 항목의 유튜브 링크가 여기에 나타납니다.', videoNoMatches:'검색 결과가 없습니다.', videoPlay:'재생', videoOpenOnYouTube:'유튜브에서 열기', sortFieldAdded:'추가일',  hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더',
     hTopikTemplates:'TOPIK 쓰기 표현', topikTplIntro:'51~54번에 쓰는 문장 틀과 예문입니다. ~ 부분을 채워 쓰세요.', topikTplToggle:'쓰기 표현', topikTplSearch:'표현 검색', topikTplAll:'전체', topikTplStyle:'문어체', topikTplQuestion:'{n}번', topikTplInsert:'넣기', topikTplCopy:'복사', topikTplCopied:'복사됨', topikTplNone:'맞는 표현이 없습니다.', topikTplCount:'{n}개', hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', deleteJobConfirm:'이 지원 기록을 삭제하시겠습니까?', deleteJobConfirmCv:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서도 함께 삭제됩니다.', deleteJobConfirmCover:'이 지원 기록을 삭제하시겠습니까? 첨부한 자기소개서도 함께 삭제됩니다.', deleteJobConfirmBoth:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서와 자기소개서도 함께 삭제됩니다.', deleteCertConfirm:'이 자격증을 삭제하시겠습니까?', deleteBookConfirm:'이 책을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', deleteArticleConfirm:'이 논문을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'무작위', lblWritingQ53Image:'이미지 첨부', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'54번 모의고사 시작 (35분)', writingMockStartBtn:'실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
     lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
@@ -12363,7 +12445,7 @@ const I18N = {
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
     tabYonsei:'연세', tabTodos:'할 일', hAddTodo:'할 일 추가', lblTodoTitle:'할 일', lblTodoDue:'마감일', lblTodoTime:'시간', lblTodoRemind:'알림', remindAtTime:'정각', remindHourBefore:'1시간 전', remindMorningOf:'당일 아침 (8:00)', remindDayBefore:'하루 전', remindCustom:'시간 선택', addTodoBtn:'할 일 추가', hTodoList:'나의 할 일', todoToday:'오늘', todoTomorrow:'내일', todoOverdue:'기한 지남', todoDone:'완료', todoClearDone:'완료 항목 지우기', todoClearDoneConfirm:'완료된 할 일 {n}개를 삭제할까요?', deleteTodoConfirm:'할 일 "{title}"을(를) 삭제할까요?', todoMarkDone:'완료로 표시', todoMarkOpen:'미완료로 표시', todoShowOnCalendar:'캘린더에 표시', todoCalAdd:'캘린더에 추가', todoCalLeaveOff:'캘린더에서 빼기', todoShareCircle:'내 서클과 공유', todoNotesLabel:'메모', todoSave:'저장', todoCancel:'취소', todoEdit:'수정', todoDelete:'삭제', todoAllCourses:'전체 수업', todoAllProjects:'전체 프로젝트', notifTypeTodoReminder:'할 일 알림', notifTodoReminderTitleTpl:'할 일: {title}', hWorkspaceSetup:'Productivity Tracker 설정하기', wsWhereLabel:'어디에서 사용하시나요?', wsKindYonsei:'연세', wsKindSchool:'다른 학교', wsKindWork:'직장', wsNameLabel:'탭 이름', wsKoreanLabel:'한국어 공부 탭', wsContinue:'계속', wsSave:'저장', wsSaved:'저장했습니다.', wsSettingsHeading:'학교 또는 직장 탭', workspaceSchoolDefault:'학교', workspaceWorkDefault:'직장', tabProjects:'프로젝트', hAddProject:'프로젝트 추가', projectTitle:'프로젝트명', projectLocation:'장소', addProjectBtn:'프로젝트 추가', deleteProjectConfirm:'이 프로젝트를 삭제할까요? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInProjectConfirm:'이 프로젝트를 확정할까요? 이후에는 계획 중이나 진행 중으로 되돌릴 수 없습니다.', statusActive:'진행 중', hYourProjects:'나의 프로젝트', hProjectList:'전체 프로젝트', lblNotesProject:'프로젝트', noProject:'프로젝트 없음', notesEmptyHintWork:'먼저 프로젝트 탭에서 프로젝트를 추가한 후 노트를 작성하세요.', hNotesWork:'내 노트', kindProject:'프로젝트', hProjectsCal:'프로젝트', linkCatProjects:'프로젝트', linkCatProjectNotes:'프로젝트 노트', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', lblYonseiBoardsSince:'기간', lblYonseiBoardsSort:'정렬', yonseiPeriodAll:'전체 기간', yonseiPeriodWeek:'지난 1주', yonseiPeriodMonth:'지난 1개월', yonseiPeriod6Months:'지난 6개월', yonseiPeriodYear:'지난 1년', yonseiPeriod2Years:'지난 2년', yonseiPeriod3Years:'지난 3년', yonseiPeriod4Years:'지난 4년', yonseiPeriod5Years:'지난 5년', yonseiSortNewest:'최신순', yonseiSortOldest:'오래된순', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobsSubJobBoard:'게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardAiUpdateBtn:'AI 확인', jobBoardAiFetching:'가져오는 중', jobBoardUpdating:'업데이트 중...', jobBoardIndBankingFinance:'금융', jobBoardIndConsumerFashion:'소비재/패션', jobBoardIndForeignFirms:'외국계 기업', jobBoardIndIntlOrg:'국제기구', jobBoardIndNGO:'NGO', jobBoardIndOthers:'기타', jobBoardIndPRMarketing:'PR/마케팅', jobBoardIndPublic:'공공기관', jobBoardIndResearchInstitute:'연구소', jobBoardIndTechnology:'기술/IT', jobBoardIndTopChaebol:'대기업(재벌)', jobBoardIndTrade:'무역', jobBoardNewBadge:'신규', cdcLoginWarnTitle:'CDC 사이트에 로그인하셨나요?', cdcLoginWarnBody:'연세 CDC 사이트는 별도의 로그인이 필요합니다. 이 공고를 열기 전에 CDC 사이트에 로그인되어 있는지 확인하세요. 그렇지 않으면 페이지가 제대로 열리지 않을 수 있습니다.', cdcLoginWarnContinueBtn:'계속', cdcLoginWarnLoginBtn:'로그인', cdcLoginWarnCancelBtn:'취소',
     tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', expLoadFailedHint:'여행 정보를 불러오지 못했습니다. 연결 상태를 확인하고 다시 시도하세요.', expRetryLoadBtn:'다시 시도', expAmountInvalid:'숫자를 입력하세요. 끝에 k 또는 m을 붙일 수 있습니다 (예: 4k, 1.5m).', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', hExpAllExpenses:'전체 지출', sortLabel:'정렬', sortFieldStatus:'상태', sortFieldCompany:'회사', sortFieldRole:'직무', sortFieldIssuer:'발급기관', sortFieldDeadline:'마감일', sortFieldTitle:'제목', sortFieldPosted:'등록일', sortFieldMfa:'2단계 인증', sortFieldConfirmed:'인증 여부', sortFieldDate:'날짜', sortFieldAmount:'금액', sortFieldName:'이름', sortFieldCategory:'카테고리', sortFieldPaidBy:'결제자', sortAsc:'오름차순입니다. 누르면 내림차순으로 바뀝니다.', sortDesc:'내림차순입니다. 누르면 오름차순으로 바뀝니다.', sortThen:'그다음', sortMultiple:'다중 정렬', expExcluded:'{n}개 항목 제외됨', expShowLabel:'표시', expShowAll:'전체', expShowCounted:'포함된 것만', expShowExcluded:'제외된 것만', expNoExcluded:'지금은 제외된 항목이 없습니다.', expNoCounted:'지금은 모든 항목이 제외되어 있습니다.', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCountCategory:'이 카테고리 포함', expDontCountCategory:'이 카테고리 제외', expCountAllCategories:'모든 카테고리 포함', expDontCountDay:'이 날 제외', expCountDay:'이 날 포함', expDontCountExpense:'이 지출 제외', expCountExpense:'이 지출 포함', expCountEverything:'모두 포함', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', hEditVacation:'여행 수정', expPickVacationHint:'위에서 여행을 선택하세요.', expVacationDeleteConfirm:'"{name}" 여행을 삭제할까요? 이 여행에 기록된 모든 지출이 참여자 전원에게서 함께 삭제됩니다.', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expCircleEmpty:'아직 아무와도 연결되어 있지 않습니다. 계정 설정의 연결된 그룹에서 사람을 추가하세요.', expCircleAllOnTrip:'연결된 그룹의 모든 사람이 이미 이 여행에 참여하고 있습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거', lblExpCustomCategoryName:'맞춤 이름', optNewVacationCurrencyCustom:'기타…', lblNewVacationCustomCurrency:'통화 코드', lblExpDisplayCurrency:'표시 통화', optExpDisplayCurrencyOriginal:'원래 통화', lblExpDisplayFull:'모든 금액 변환', expDisplayFullHint:'모든 금액을 선택한 통화로 보여줍니다. 입력한 금액은 그대로 남아 있어 다시 바꾸면 정확한 금액이 돌아옵니다.', hInviteBySearch:'또는 이름으로 초대', vacationInviteSearchPlaceholder:'이름으로 검색...', recapLoadingHint:'불러오는 중...', shellUpdatedText:'새 버전이 준비되었습니다.', shellUpdatedBtn:'새로 고침', qlVisit:'링크 열기:', qlEnterLink:'링크 입력:', qlEnterVideo:'동영상 주소:', qlEdit:'수정', qlSave:'저장', qlRemove:'제거',
-    authEnterEmailPassword:'이메일과 비밀번호를 입력하세요.', authInvalidLogin:'이메일, 이름 또는 비밀번호가 올바르지 않습니다.', authEmailNotConfirmed:'먼저 이메일 인증을 완료하세요. 보내 드린 이메일에 링크가 있습니다.', authAlreadyRegistered:'이 이메일로 만든 계정이 이미 있습니다. 로그인하세요.', authRateLimited:'시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.', authEmailInvalid:'이메일 주소가 올바르지 않습니다.', authSamePassword:'현재 비밀번호와 다른 비밀번호를 선택하세요.', authNetworkError:'서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.', authSignupsClosed:'지금은 가입을 받지 않습니다.', authLinkExpired:'링크가 만료되었거나 이미 사용되었습니다. 새 링크를 요청하세요.', guestUnavailable:'게스트 모드에서는 사용할 수 없습니다.', tipDelete:'삭제', tipRemove:'제거', tipMoveUp:'위로 이동', tipMoveDown:'아래로 이동', lblSubcategory:'하위 분류', noteMoveTo:'원하는 위치로 이동', noteMovePick:'위치를 고르세요', noteMoveTop:'맨 위로', noteMoveBottom:'맨 아래로', noteMoveDone:'완료', tipDarkMode:'다크 모드 전환', tipMyNotes:'내 노트', tipClickToEdit:'클릭하여 수정', tipJumpToDate:'날짜로 이동', tipPagesRead:'읽은 페이지', tipJobBoardAiUpdate:'오늘 올라온 공고를 하나씩 열어 전체 설명을 기기의 파일로 저장합니다', notesLinkShortcutPrompt:'단축어 이름:', saveFailedTryAgain:'저장하지 못했습니다. 다시 시도하세요.', termsLink:'이용약관', installGuideTitle:'앱으로 사용하기', installGuideIntro:'Productivity Tracker를 홈 화면에 추가하세요. 앱처럼 전체 화면으로 열리고 알림도 받을 수 있어요.', installInAppNote:'지금 다른 앱 안에서 열려 있어서 홈 화면에 추가할 수 없어요. 먼저 Safari나 Chrome에서 여세요(··· 메뉴의 "다른 브라우저로 열기").', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'앱 설치', installIosStep1:'Safari 하단의 공유 버튼 {icon}을 누르세요. 최신 iPhone에서는 ··· 메뉴 안에 있어요.', installIosOtherStep1:'브라우저의 공유 버튼 {icon}을 누르세요. 주소창 옆이나 메뉴 안에 있어요.', installIosStep2:'"더 보기"가 보이면 누른 다음 "홈 화면에 추가"를 누르세요.', installIosStep3:'"추가"를 누르면 홈 화면에 앱이 생겨요.', installAndroidStep1:'Chrome 오른쪽 위의 메뉴 {icon}를 누르세요.', installAndroidStep2:'"홈 화면에 추가" 또는 "앱 설치"를 누르세요.', installAndroidStep3:'"설치"를 누르면 홈 화면에 앱이 생겨요.', installGuideToast:'이 안내는 언제든 설정에서 다시 볼 수 있어요.', settingsInstallGuideBtn:'휴대폰에 앱 추가하기'
+    authEnterEmailPassword:'이메일과 비밀번호를 입력하세요.', authInvalidLogin:'이메일, 이름 또는 비밀번호가 올바르지 않습니다.', authEmailNotConfirmed:'먼저 이메일 인증을 완료하세요. 보내 드린 이메일에 링크가 있습니다.', authAlreadyRegistered:'이 이메일로 만든 계정이 이미 있습니다. 로그인하세요.', authRateLimited:'시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.', authEmailInvalid:'이메일 주소가 올바르지 않습니다.', authSamePassword:'현재 비밀번호와 다른 비밀번호를 선택하세요.', authNetworkError:'서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.', authSignupsClosed:'지금은 가입을 받지 않습니다.', authLinkExpired:'링크가 만료되었거나 이미 사용되었습니다. 새 링크를 요청하세요.', guestUnavailable:'게스트 모드에서는 사용할 수 없습니다.', tipDelete:'삭제', tipRemove:'제거', tipMoveUp:'위로 이동', tipMoveDown:'아래로 이동', lblSubcategory:'하위 분류', noteMoveTo:'원하는 위치로 이동', noteMovePick:'위치를 고르세요', noteMoveTop:'맨 위로', noteMoveBottom:'맨 아래로', noteMoveDone:'완료', noteStatsShow:'글자 수', noteStatsShowHint:'단어와 글자 수 보기', noteStatsHide:'누르면 숨겨집니다', noteDragTip:'끌어서 옮기기', noteSubAdd:'하위 분류 추가', noteSubNewPh:'하위 분류 이름', tipDarkMode:'다크 모드 전환', tipMyNotes:'내 노트', tipClickToEdit:'클릭하여 수정', tipJumpToDate:'날짜로 이동', tipPagesRead:'읽은 페이지', tipJobBoardAiUpdate:'오늘 올라온 공고를 하나씩 열어 전체 설명을 기기의 파일로 저장합니다', notesLinkShortcutPrompt:'단축어 이름:', saveFailedTryAgain:'저장하지 못했습니다. 다시 시도하세요.', termsLink:'이용약관', installGuideTitle:'앱으로 사용하기', installGuideIntro:'Productivity Tracker를 홈 화면에 추가하세요. 앱처럼 전체 화면으로 열리고 알림도 받을 수 있어요.', installInAppNote:'지금 다른 앱 안에서 열려 있어서 홈 화면에 추가할 수 없어요. 먼저 Safari나 Chrome에서 여세요(··· 메뉴의 "다른 브라우저로 열기").', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'앱 설치', installIosStep1:'Safari 하단의 공유 버튼 {icon}을 누르세요. 최신 iPhone에서는 ··· 메뉴 안에 있어요.', installIosOtherStep1:'브라우저의 공유 버튼 {icon}을 누르세요. 주소창 옆이나 메뉴 안에 있어요.', installIosStep2:'"더 보기"가 보이면 누른 다음 "홈 화면에 추가"를 누르세요.', installIosStep3:'"추가"를 누르면 홈 화면에 앱이 생겨요.', installAndroidStep1:'Chrome 오른쪽 위의 메뉴 {icon}를 누르세요.', installAndroidStep2:'"홈 화면에 추가" 또는 "앱 설치"를 누르세요.', installAndroidStep3:'"설치"를 누르면 홈 화면에 앱이 생겨요.', installGuideToast:'이 안내는 언제든 설정에서 다시 볼 수 있어요.', settingsInstallGuideBtn:'휴대폰에 앱 추가하기'
   },
   vi: {
     signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
@@ -12466,7 +12548,7 @@ const I18N = {
     deleteRecurringQ:'"{title}" là mục lặp lại. Bạn muốn xóa gì?',
     deleteEventConfirm:'Xóa mục "{title}"? Lời nhắc của nó cũng bị xóa và nó biến mất với mọi người được chia sẻ.',
     editEventModalTitle:'Sửa', editRemindersModalTitle:'Sửa nhắc nhở', deleteEventBtn:'Xóa',
-    addCourseBtn:'Thêm khóa học', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch, ghi chú và đề cương cho tất cả mọi người.', deleteNoteConfirm:'Xóa ghi chú "{title}"? Mọi thứ đã viết trong đó cũng bị xóa với tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', saveFailed:'Không thể lưu thay đổi đó nên đã hoàn lại. Kiểm tra kết nối và thử lại.', studySubVideos:'Video', hVideos:'Video', lblVideoSearch:'Tìm kiếm', lblVideoSort:'Sắp xếp', videoSearchPlaceholder:'Tìm video...', videoEmpty:'Chưa có liên kết video nào. Liên kết YouTube trên các điểm ngữ pháp sẽ hiện ở đây.', videoNoMatches:'Không có video nào khớp với tìm kiếm đó.', videoPlay:'Phát', videoOpenOnYouTube:'Mở trên YouTube', sortFieldAdded:'Đã thêm',  hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh',
+    addCourseBtn:'Thêm khóa học', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', colorCustom:'Tùy chỉnh', colorWheel:'Bánh xe màu', colorBrightness:'Độ sáng', colorHex:'Mã màu', colorPicker:'Mở bộ chọn màu', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch, ghi chú và đề cương cho tất cả mọi người.', deleteNoteConfirm:'Xóa ghi chú "{title}"? Mọi thứ đã viết trong đó cũng bị xóa với tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', saveFailed:'Không thể lưu thay đổi đó nên đã hoàn lại. Kiểm tra kết nối và thử lại.', studySubVideos:'Video', hVideos:'Video', lblVideoSearch:'Tìm kiếm', lblVideoSort:'Sắp xếp', videoSearchPlaceholder:'Tìm video...', videoEmpty:'Chưa có liên kết video nào. Liên kết YouTube trên các điểm ngữ pháp sẽ hiện ở đây.', videoNoMatches:'Không có video nào khớp với tìm kiếm đó.', videoPlay:'Phát', videoOpenOnYouTube:'Mở trên YouTube', sortFieldAdded:'Đã thêm',  hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh',
     hTopikTemplates:'Mẫu câu viết TOPIK', topikTplIntro:'Khung câu cho câu 51 đến 54, mỗi khung kèm ví dụ. Dấu ~ là phần bạn điền vào.', topikTplToggle:'Mẫu câu', topikTplSearch:'Tìm mẫu câu', topikTplAll:'Tất cả', topikTplStyle:'Văn viết', topikTplQuestion:'Câu {n}', topikTplInsert:'Chèn', topikTplCopy:'Sao chép', topikTplCopied:'Đã chép', topikTplNone:'Không có mẫu câu phù hợp.', topikTplCount:'{n} mẫu', hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', deleteSampleConfirm:'Xóa bài viết này?', deleteJobConfirm:'Xóa đơn ứng tuyển này?', deleteJobConfirmCv:'Xóa đơn ứng tuyển này? CV đã tải lên cũng sẽ bị xóa.', deleteJobConfirmCover:'Xóa đơn ứng tuyển này? Thư xin việc đã tải lên cũng sẽ bị xóa.', deleteJobConfirmBoth:'Xóa đơn ứng tuyển này? CV và thư xin việc đã tải lên cũng sẽ bị xóa.', deleteCertConfirm:'Xóa chứng chỉ này?', deleteBookConfirm:'Xóa cuốn sách này? Các ghi chú sẽ bị xóa theo.', deleteArticleConfirm:'Xóa bài báo này? Các ghi chú sẽ bị xóa theo.', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
     lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
@@ -12489,7 +12571,7 @@ const I18N = {
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
     tabYonsei:'Yonsei', tabTodos:'Việc cần làm', hAddTodo:'Thêm việc cần làm', lblTodoTitle:'Việc cần làm', lblTodoDue:'Hạn', lblTodoTime:'Giờ', lblTodoRemind:'Nhắc tôi', remindAtTime:'Đúng giờ', remindHourBefore:'Trước 1 giờ', remindMorningOf:'Sáng hôm đó (8:00)', remindDayBefore:'Trước 1 ngày', remindCustom:'Chọn giờ', addTodoBtn:'Thêm việc', hTodoList:'Việc cần làm của bạn', todoToday:'Hôm nay', todoTomorrow:'Ngày mai', todoOverdue:'Quá hạn', todoDone:'Đã xong', todoClearDone:'Xóa việc đã xong', todoClearDoneConfirm:'Xóa {n} việc đã xong?', deleteTodoConfirm:'Xóa việc "{title}"?', todoMarkDone:'Đánh dấu đã xong', todoMarkOpen:'Đánh dấu chưa xong', todoShowOnCalendar:'Hiện trên lịch', todoCalAdd:'Thêm vào lịch', todoCalLeaveOff:'Bỏ khỏi lịch', todoShareCircle:'Chia sẻ với nhóm của bạn', todoNotesLabel:'Ghi chú', todoSave:'Lưu', todoCancel:'Hủy', todoEdit:'Sửa', todoDelete:'Xóa', todoAllCourses:'Tất cả khóa học', todoAllProjects:'Tất cả dự án', notifTypeTodoReminder:'Nhắc việc cần làm', notifTodoReminderTitleTpl:'Việc cần làm: {title}', hWorkspaceSetup:'Thiết lập Productivity Tracker', wsWhereLabel:'Bạn sẽ dùng ở đâu?', wsKindYonsei:'Yonsei', wsKindSchool:'Trường khác', wsKindWork:'Công việc', wsNameLabel:'Tên thẻ', wsKoreanLabel:'Thẻ học tiếng Hàn', wsContinue:'Tiếp tục', wsSave:'Lưu', wsSaved:'Đã lưu.', wsSettingsHeading:'Thẻ trường học hoặc công việc', workspaceSchoolDefault:'Trường học', workspaceWorkDefault:'Công việc', tabProjects:'Dự án', hAddProject:'Thêm dự án', projectTitle:'Tên dự án', projectLocation:'Địa điểm', addProjectBtn:'Thêm dự án', deleteProjectConfirm:'Xóa dự án này? Thao tác này cũng xóa các mục lịch và ghi chú của dự án cho tất cả mọi người.', lockInProjectConfirm:'Chốt dự án này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đang thực hiện.', statusActive:'Đang thực hiện', hYourProjects:'Dự án của bạn', hProjectList:'Tất cả dự án', lblNotesProject:'Dự án', noProject:'Không có dự án', notesEmptyHintWork:'Hãy thêm dự án trong tab Dự án trước, sau đó tạo ghi chú ở đây.', hNotesWork:'Ghi chú của bạn', kindProject:'Dự án', hProjectsCal:'Dự án', linkCatProjects:'Dự án', linkCatProjectNotes:'Ghi chú dự án', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', lblYonseiBoardsSince:'Khoảng thời gian', lblYonseiBoardsSort:'Sắp xếp', yonseiPeriodAll:'Mọi lúc', yonseiPeriodWeek:'Tuần trước', yonseiPeriodMonth:'Tháng trước', yonseiPeriod6Months:'6 tháng qua', yonseiPeriodYear:'Năm trước', yonseiPeriod2Years:'2 năm qua', yonseiPeriod3Years:'3 năm qua', yonseiPeriod4Years:'4 năm qua', yonseiPeriod5Years:'5 năm qua', yonseiSortNewest:'Mới nhất', yonseiSortOldest:'Cũ nhất', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobsSubJobBoard:'Bảng', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardAiUpdateBtn:'Kiểm tra AI', jobBoardAiFetching:'Đang lấy dữ liệu', jobBoardUpdating:'Đang cập nhật...', jobBoardIndBankingFinance:'Ngân hàng/Tài chính', jobBoardIndConsumerFashion:'Hàng tiêu dùng/Thời trang', jobBoardIndForeignFirms:'Doanh nghiệp nước ngoài', jobBoardIndIntlOrg:'Tổ chức quốc tế', jobBoardIndNGO:'Tổ chức phi chính phủ (NGO)', jobBoardIndOthers:'Khác', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Khu vực công', jobBoardIndResearchInstitute:'Viện nghiên cứu', jobBoardIndTechnology:'Công nghệ', jobBoardIndTopChaebol:'Tập đoàn lớn (Chaebol)', jobBoardIndTrade:'Thương mại', jobBoardNewBadge:'MỚI', cdcLoginWarnTitle:'Đã đăng nhập vào CDC chưa?', cdcLoginWarnBody:'Trang CDC của Yonsei cần đăng nhập riêng. Hãy chắc chắn bạn đã đăng nhập ở đó trước khi mở tin này, nếu không trang có thể không tải đúng.', cdcLoginWarnContinueBtn:'Tiếp tục', cdcLoginWarnLoginBtn:'Đăng nhập', cdcLoginWarnCancelBtn:'Hủy',
     tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào. Tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', expLoadFailedHint:'Không thể tải chuyến đi của bạn. Kiểm tra kết nối và thử lại.', expRetryLoadBtn:'Thử lại', expAmountInvalid:'Nhập một số, có thể kết thúc bằng k hoặc m (vd: 4k, 1.5m).', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', hExpAllExpenses:'Tất cả khoản chi', sortLabel:'Sắp xếp', sortFieldStatus:'Trạng thái', sortFieldCompany:'Công ty', sortFieldRole:'Vị trí', sortFieldIssuer:'Đơn vị cấp', sortFieldDeadline:'Hạn nộp', sortFieldTitle:'Tiêu đề', sortFieldPosted:'Ngày đăng', sortFieldMfa:'Xác thực 2 bước', sortFieldConfirmed:'Đã xác nhận', sortFieldDate:'Ngày', sortFieldAmount:'Số tiền', sortFieldName:'Tên', sortFieldCategory:'Danh mục', sortFieldPaidBy:'Người trả', sortAsc:'Đang sắp tăng dần. Nhấn để sắp giảm dần.', sortDesc:'Đang sắp giảm dần. Nhấn để sắp tăng dần.', sortThen:'rồi', sortMultiple:'Sắp xếp nhiều tiêu chí', expExcluded:'{n} khoản chi bị loại', expShowLabel:'Hiển thị', expShowAll:'Tất cả', expShowCounted:'Chỉ mục được tính', expShowExcluded:'Chỉ mục bị loại', expNoExcluded:'Hiện không có mục nào bị loại.', expNoCounted:'Hiện tất cả các mục đều bị loại.', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCountCategory:'Tính danh mục này', expDontCountCategory:'Không tính danh mục này', expCountAllCategories:'Tính tất cả danh mục', expDontCountDay:'Không tính ngày này', expCountDay:'Tính ngày này', expDontCountExpense:'Không tính khoản chi này', expCountExpense:'Tính khoản chi này', expCountEverything:'Tính tất cả', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên. Một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', hEditVacation:'Sửa chuyến đi', expPickVacationHint:'Chọn một chuyến đi ở trên.', expVacationDeleteConfirm:'Xóa "{name}"? Mọi khoản chi đã ghi cho chuyến đi này sẽ bị xóa theo, với tất cả mọi người trong chuyến.', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expCircleEmpty:'Bạn chưa liên kết với ai. Hãy thêm người vào Nhóm liên kết trong Cài đặt tài khoản.', expCircleAllOnTrip:'Mọi người trong Nhóm liên kết của bạn đã tham gia chuyến đi này.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi', lblExpCustomCategoryName:'Tên tùy chỉnh', optNewVacationCurrencyCustom:'Khác…', lblNewVacationCustomCurrency:'Mã tiền tệ', lblExpDisplayCurrency:'Hiển thị bằng', optExpDisplayCurrencyOriginal:'Ban đầu', lblExpDisplayFull:'Đổi mọi số tiền', expDisplayFullHint:'Hiển thị mọi số tiền bằng loại tiền đã chọn. Số tiền đã nhập vẫn giữ nguyên, nên khi đổi lại sẽ thấy đúng số đã nhập.', hInviteBySearch:'Hoặc mời theo tên', vacationInviteSearchPlaceholder:'Tìm theo tên...', recapLoadingHint:'Đang tải...', shellUpdatedText:'Đã có phiên bản mới.', shellUpdatedBtn:'Tải lại', qlVisit:'Mở liên kết:', qlEnterLink:'Nhập liên kết:', qlEnterVideo:'Nhập video:', qlEdit:'Sửa', qlSave:'Lưu', qlRemove:'Xóa',
-    authEnterEmailPassword:'Hãy nhập email và mật khẩu.', authInvalidLogin:'Email, tên hoặc mật khẩu không đúng.', authEmailNotConfirmed:'Hãy xác nhận email trước. Đường liên kết nằm trong email chúng tôi đã gửi.', authAlreadyRegistered:'Đã có tài khoản dùng email này. Hãy đăng nhập.', authRateLimited:'Bạn đã thử quá nhiều lần. Hãy đợi một lát rồi thử lại.', authEmailInvalid:'Địa chỉ email này không hợp lệ.', authSamePassword:'Hãy chọn mật khẩu khác với mật khẩu hiện tại.', authNetworkError:'Không thể kết nối máy chủ. Hãy kiểm tra kết nối rồi thử lại.', authSignupsClosed:'Hiện chưa mở đăng ký.', authLinkExpired:'Đường liên kết đã hết hạn hoặc đã được dùng. Hãy yêu cầu liên kết mới.', guestUnavailable:'Không khả dụng ở chế độ khách.', tipDelete:'Xóa', tipRemove:'Gỡ bỏ', tipMoveUp:'Chuyển lên', tipMoveDown:'Chuyển xuống', lblSubcategory:'Danh mục con', noteMoveTo:'Chuyển đến vị trí', noteMovePick:'Chọn vị trí', noteMoveTop:'Lên đầu', noteMoveBottom:'Xuống cuối', noteMoveDone:'Xong', tipDarkMode:'Bật/tắt chế độ tối', tipMyNotes:'Ghi chú của tôi', tipClickToEdit:'Nhấn để sửa', tipJumpToDate:'Đến ngày', tipPagesRead:'Số trang đã đọc', tipJobBoardAiUpdate:'Mở lần lượt từng tin đăng hôm nay và lưu toàn bộ mô tả vào một tệp trên máy', notesLinkShortcutPrompt:'Tên phím tắt:', saveFailedTryAgain:'Không lưu được. Hãy thử lại.', termsLink:'Điều khoản sử dụng', installGuideTitle:'Dùng như ứng dụng', installGuideIntro:'Thêm Productivity Tracker vào màn hình chính. Nó mở toàn màn hình như một ứng dụng và có thể gửi thông báo cho bạn.', installInAppNote:'Trang này đang mở bên trong một ứng dụng khác nên không thể thêm vào màn hình chính. Hãy mở bằng Safari hoặc Chrome trước (tìm "Mở trong trình duyệt" ở menu ···).', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'Cài đặt ứng dụng', installIosStep1:'Nhấn nút Chia sẻ {icon} ở cuối Safari. Trên iPhone mới hơn, nút này nằm trong menu ···.', installIosOtherStep1:'Nhấn nút Chia sẻ {icon} của trình duyệt, cạnh thanh địa chỉ hoặc trong menu.', installIosStep2:'Nhấn "Xem thêm" nếu có, rồi nhấn "Thêm vào MH chính".', installIosStep3:'Nhấn "Thêm". Ứng dụng giờ đã ở trên màn hình chính.', installAndroidStep1:'Nhấn menu {icon} ở góc trên bên phải của Chrome.', installAndroidStep2:'Nhấn "Thêm vào màn hình chính" hoặc "Cài đặt ứng dụng".', installAndroidStep3:'Nhấn "Cài đặt". Ứng dụng giờ đã ở trên màn hình chính.', installGuideToast:'Bạn có thể xem lại hướng dẫn này trong Cài đặt bất cứ lúc nào.', settingsInstallGuideBtn:'Thêm ứng dụng vào điện thoại'
+    authEnterEmailPassword:'Hãy nhập email và mật khẩu.', authInvalidLogin:'Email, tên hoặc mật khẩu không đúng.', authEmailNotConfirmed:'Hãy xác nhận email trước. Đường liên kết nằm trong email chúng tôi đã gửi.', authAlreadyRegistered:'Đã có tài khoản dùng email này. Hãy đăng nhập.', authRateLimited:'Bạn đã thử quá nhiều lần. Hãy đợi một lát rồi thử lại.', authEmailInvalid:'Địa chỉ email này không hợp lệ.', authSamePassword:'Hãy chọn mật khẩu khác với mật khẩu hiện tại.', authNetworkError:'Không thể kết nối máy chủ. Hãy kiểm tra kết nối rồi thử lại.', authSignupsClosed:'Hiện chưa mở đăng ký.', authLinkExpired:'Đường liên kết đã hết hạn hoặc đã được dùng. Hãy yêu cầu liên kết mới.', guestUnavailable:'Không khả dụng ở chế độ khách.', tipDelete:'Xóa', tipRemove:'Gỡ bỏ', tipMoveUp:'Chuyển lên', tipMoveDown:'Chuyển xuống', lblSubcategory:'Danh mục con', noteMoveTo:'Chuyển đến vị trí', noteMovePick:'Chọn vị trí', noteMoveTop:'Lên đầu', noteMoveBottom:'Xuống cuối', noteMoveDone:'Xong', noteStatsShow:'Đếm chữ', noteStatsShowHint:'Hiện số từ và ký tự', noteStatsHide:'nhấn để ẩn', noteDragTip:'Kéo để di chuyển', noteSubAdd:'Thêm danh mục con', noteSubNewPh:'Tên danh mục con', tipDarkMode:'Bật/tắt chế độ tối', tipMyNotes:'Ghi chú của tôi', tipClickToEdit:'Nhấn để sửa', tipJumpToDate:'Đến ngày', tipPagesRead:'Số trang đã đọc', tipJobBoardAiUpdate:'Mở lần lượt từng tin đăng hôm nay và lưu toàn bộ mô tả vào một tệp trên máy', notesLinkShortcutPrompt:'Tên phím tắt:', saveFailedTryAgain:'Không lưu được. Hãy thử lại.', termsLink:'Điều khoản sử dụng', installGuideTitle:'Dùng như ứng dụng', installGuideIntro:'Thêm Productivity Tracker vào màn hình chính. Nó mở toàn màn hình như một ứng dụng và có thể gửi thông báo cho bạn.', installInAppNote:'Trang này đang mở bên trong một ứng dụng khác nên không thể thêm vào màn hình chính. Hãy mở bằng Safari hoặc Chrome trước (tìm "Mở trong trình duyệt" ở menu ···).', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'Cài đặt ứng dụng', installIosStep1:'Nhấn nút Chia sẻ {icon} ở cuối Safari. Trên iPhone mới hơn, nút này nằm trong menu ···.', installIosOtherStep1:'Nhấn nút Chia sẻ {icon} của trình duyệt, cạnh thanh địa chỉ hoặc trong menu.', installIosStep2:'Nhấn "Xem thêm" nếu có, rồi nhấn "Thêm vào MH chính".', installIosStep3:'Nhấn "Thêm". Ứng dụng giờ đã ở trên màn hình chính.', installAndroidStep1:'Nhấn menu {icon} ở góc trên bên phải của Chrome.', installAndroidStep2:'Nhấn "Thêm vào màn hình chính" hoặc "Cài đặt ứng dụng".', installAndroidStep3:'Nhấn "Cài đặt". Ứng dụng giờ đã ở trên màn hình chính.', installGuideToast:'Bạn có thể xem lại hướng dẫn này trong Cài đặt bất cứ lúc nào.', settingsInstallGuideBtn:'Thêm ứng dụng vào điện thoại'
   }
 };
 const STATIC_MAP = {
@@ -13234,13 +13316,18 @@ const ICON_PATHS = {
   history: '<path d="M3 12a9 9 0 1 0 3-6.7"></path><polyline points="3 3 3 8 8 8"></polyline><polyline points="12 7 12 12 15 14"></polyline>',
   /* Up and down together: put this anywhere in the list, not one step. */
   reorder: '<polyline points="7 9 12 4 17 9"></polyline><polyline points="7 15 12 20 17 15"></polyline>',
+  /* Six dots: something to take hold of and drag. */
+  grip:    '<circle cx="9" cy="6" r="1"></circle><circle cx="15" cy="6" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="9" cy="18" r="1"></circle><circle cx="15" cy="18" r="1"></circle>',
   toTop:    '<line x1="5" y1="4" x2="19" y2="4"></line><polyline points="7 13 12 8 17 13"></polyline><line x1="12" y1="8" x2="12" y2="20"></line>',
   toBottom: '<line x1="5" y1="20" x2="19" y2="20"></line><polyline points="7 11 12 16 17 11"></polyline><line x1="12" y1="16" x2="12" y2="4"></line>',
   pageAdd: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><polyline points="14 3 14 8 19 8"></polyline><line x1="12" y1="17" x2="12" y2="11"></line><line x1="9" y1="14" x2="15" y2="14"></line>',
   /* A to-do on the calendar, and one left off it: the same pair the bell has,
      the second struck through rather than drawn differently. */
   calOn:  '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>',
-  calOff: '<path d="M4.2 4.2A2 2 0 0 0 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 1.82-1.18"></path><path d="M21 15.5V6a2 2 0 0 0-2-2H9.5"></path><line x1="16" y1="2" x2="16" y2="6"></line><line x1="3" y1="10" x2="10" y2="10"></line><line x1="21" y1="10" x2="15.5" y2="10"></line><line x1="2" y1="2" x2="22" y2="22"></line>'
+  calOff: '<path d="M4.2 4.2A2 2 0 0 0 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 1.82-1.18"></path><path d="M21 15.5V6a2 2 0 0 0-2-2H9.5"></path><line x1="16" y1="2" x2="16" y2="6"></line><line x1="3" y1="10" x2="10" y2="10"></line><line x1="21" y1="10" x2="15.5" y2="10"></line><line x1="2" y1="2" x2="22" y2="22"></line>',
+  /* An eyedropper: the browser's own colour picker, which can take a colour
+     from anywhere on the screen. */
+  pipette: '<path d="m2 22 1-1h3l9-9"></path><path d="M3 21v-3l9-9"></path><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"></path>'
 };
 const ICON = {
   // The one SOLID mark in the set, and it has to be: it sits on a
@@ -13284,10 +13371,12 @@ const ICON = {
   reply:   function(sz){ return svgIcon(ICON_PATHS.reply, sz); },
   history: function(sz){ return svgIcon(ICON_PATHS.history, sz); },
   reorder: function(sz){ return svgIcon(ICON_PATHS.reorder, sz); },
+  grip:    function(sz){ return svgIcon(ICON_PATHS.grip, sz); },
   toTop:   function(sz){ return svgIcon(ICON_PATHS.toTop, sz); },
   toBottom:function(sz){ return svgIcon(ICON_PATHS.toBottom, sz); },
   calOn:   function(sz){ return svgIcon(ICON_PATHS.calOn, sz); },
   calOff:  function(sz){ return svgIcon(ICON_PATHS.calOff, sz); },
+  pipette: function(sz){ return svgIcon(ICON_PATHS.pipette, sz); },
   users:   function(sz){ return svgIcon(ICON_PATHS.users, sz); }
 };
 // ---- Every list's remembered ordering ----
@@ -23818,7 +23907,7 @@ async function loadAllData(){
   coreMembers = {};
   dailyGoals = {};
   hiddenFromLeaderboards = {};
-  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ hiddenTabs = p.hidden_tabs || []; if(p.workspace_kind !== undefined){ workspaceKind = p.workspace_kind; workspaceName = p.workspace_name || null; } shareTodos = !!p.share_todos; todosOnCalendar = p.todos_on_calendar !== false; showTopik = !!p.show_topik; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTimeOfDay = (p.daily_recap_time_of_day || '08:00:00').slice(0,5); weeklyRecapTimeOfDay = (p.weekly_recap_time_of_day || '18:00:00').slice(0,5); dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; weeklyRecapRelative = p.weekly_recap_relative || 'coming'; dailyRecapExcludedKinds = p.daily_recap_excluded_kinds || []; weeklyRecapExcludedKinds = p.weekly_recap_excluded_kinds || []; recapIncludedUids = p.recap_included_uids || null; } });
+  (profileRows||[]).forEach(p => { profiles[p.id] = p.display_name; if(p.color) profileColors[p.id] = p.color; coreMembers[p.id] = !!p.is_core_member; dailyGoals[p.id] = Number(p.daily_goal_hours) || DEFAULT_GOAL; hiddenFromLeaderboards[p.id] = !!p.hide_from_leaderboards; hiddenFromCircleToo[p.id] = !!p.hide_from_circle_too; if(p.id === currentUser.id){ adoptNoteLayout(p.note_layout); hiddenTabs = p.hidden_tabs || []; if(p.workspace_kind !== undefined){ workspaceKind = p.workspace_kind; workspaceName = p.workspace_name || null; } shareTodos = !!p.share_todos; todosOnCalendar = p.todos_on_calendar !== false; showTopik = !!p.show_topik; notifyYonseiBoard = !!p.notify_yonsei_board; yonseiHiddenSubtags = p.yonsei_hidden_subtags || []; notifyYonseiCategories = p.notify_yonsei_categories || null; notifyDailyRecapEmail = !!p.notify_daily_recap_email; notifyDailyRecapInapp = !!p.notify_daily_recap_inapp; notifyWeeklyRecapEmail = !!p.notify_weekly_recap_email; notifyWeeklyRecapInapp = !!p.notify_weekly_recap_inapp; dailyRecapTimeOfDay = (p.daily_recap_time_of_day || '08:00:00').slice(0,5); weeklyRecapTimeOfDay = (p.weekly_recap_time_of_day || '18:00:00').slice(0,5); dailyRecapRelative = p.daily_recap_relative || 'on_day'; dailyRecapDays = p.daily_recap_days || [0,1,2,3,4,5,6]; weeklyRecapDay = (typeof p.weekly_recap_day === 'number') ? p.weekly_recap_day : 1; weeklyRecapRelative = p.weekly_recap_relative || 'coming'; dailyRecapExcludedKinds = p.daily_recap_excluded_kinds || []; weeklyRecapExcludedKinds = p.weekly_recap_excluded_kinds || []; recapIncludedUids = p.recap_included_uids || null; } });
   // The shared grammar list takes additions from the core members only (the
   // database refuses anyone else since the security audit), so the button
   // is not offered to anyone else. A guest's list is local and stays theirs.
@@ -41274,6 +41363,185 @@ let writingMockQ54Quill = null;
 let writingMockQ53Dirty = false;
 let writingMockQ54Dirty = false;
 
+/* ---------- A COLOUR OF YOUR OWN ----------
+   The rest of the colours, past the 35 in the grid (real-user request: "color
+   wheel availability + color picker for highlight and text colors"). Hue goes
+   round the wheel and saturation out from its middle, the slider is
+   brightness, and the field takes a code, typed or pasted. Nothing is applied
+   while the wheel or the slider is being dragged -- the dot in the field shows
+   where it has got to -- and letting go applies it with the list left open, so
+   the brightness can be set after the hue. The pipette is the browser's own
+   colour picker, which carries an eyedropper on a desktop; its input is laid
+   over the button rather than opened with .click(), which does nothing on
+   iOS. */
+var ccLastCustom = {};
+function ccHsvToHex(h, s, v){
+  const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
+  return '#' + [f(5), f(3), f(1)].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('');
+}
+function ccHexToHsv(hex){
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+  const max = Math.max(r, g, b), d = max - Math.min(r, g, b);
+  let h = 0;
+  if(d){
+    if(max === r) h = ((g - b) / d) % 6;
+    else if(max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if(h < 0) h += 360;
+  }
+  return { h, s: max ? d / max : 0, v: max };
+}
+// "#a1b2c3", "a1b2c3", "#abc" or "rgb(…)", whatever a colour arrives as, to
+// "#a1b2c3"; anything else is null.
+function ccParseColor(raw){
+  const str = String(raw == null ? '' : raw).trim().toLowerCase();
+  let m = str.match(/^#?([0-9a-f]{6})$/);
+  if(m) return '#' + m[1];
+  m = str.match(/^#?([0-9a-f])([0-9a-f])([0-9a-f])$/);
+  if(m) return '#' + m[1] + m[1] + m[2] + m[2] + m[3] + m[3];
+  m = str.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/);
+  if(m) return '#' + [m[1], m[2], m[3]].map(x => Math.min(255, +x).toString(16).padStart(2, '0')).join('');
+  return null;
+}
+// The control under the grid. `commit(hex)` applies a colour; `seed(hex)` puts
+// one in front of the reader as the list opens.
+function ccCustomColorEl(formatName, commit){
+  let h = 0, sat = 0, val = 0, hex = '#000000', dragging = false;
+  const root = document.createElement('div');
+  root.className = 'cc-custom';
+
+  const label = document.createElement('div');
+  label.className = 'cc-custom-label';
+  label.textContent = t('colorCustom');
+
+  const wheel = document.createElement('div');
+  wheel.className = 'cc-wheel';
+  wheel.tabIndex = 0;
+  wheel.title = t('colorWheel');
+  wheel.setAttribute('aria-label', t('colorWheel'));
+  const shade = document.createElement('div');
+  shade.className = 'cc-wheel-shade';
+  const mark = document.createElement('div');
+  mark.className = 'cc-wheel-mark';
+  wheel.append(shade, mark);
+
+  const bright = document.createElement('input');
+  bright.type = 'range';
+  bright.min = '0'; bright.max = '100'; bright.step = '1';
+  bright.className = 'cc-bright';
+  bright.title = t('colorBrightness');
+  bright.setAttribute('aria-label', t('colorBrightness'));
+
+  const row = document.createElement('div');
+  row.className = 'cc-hexrow';
+  const box = document.createElement('label');
+  box.className = 'cc-hex';
+  box.title = t('colorHex');
+  const dot = document.createElement('span');
+  dot.className = 'cc-hex-dot';
+  const hash = document.createElement('span');
+  hash.className = 'cc-hex-hash';
+  hash.textContent = '#';
+  const field = document.createElement('input');
+  field.type = 'text';
+  field.className = 'cc-hex-input';
+  field.maxLength = 7;
+  field.spellcheck = false;
+  field.autocomplete = 'off';
+  field.setAttribute('autocapitalize', 'off');
+  field.setAttribute('aria-label', t('colorHex'));
+  box.append(dot, hash, field);
+
+  const pickWrap = document.createElement('span');
+  pickWrap.className = 'cc-pick';
+  pickWrap.title = t('colorPicker');
+  pickWrap.innerHTML = ICON.pipette(13);
+  const pick = document.createElement('input');
+  pick.type = 'color';
+  pick.setAttribute('aria-label', t('colorPicker'));
+  pickWrap.appendChild(pick);
+  row.append(box, pickWrap);
+
+  root.append(label, wheel, bright, row);
+
+  // The wheel shows the brightness it will give, but never all the way to
+  // black: a black disc is no wheel at all, and black text is where it starts.
+  function render(fromField){
+    const a = h * Math.PI / 180;
+    mark.style.left = (50 + sat * 50 * Math.sin(a)) + '%';
+    mark.style.top = (50 - sat * 50 * Math.cos(a)) + '%';
+    mark.style.background = hex;
+    shade.style.opacity = String((1 - val) * 0.6);
+    bright.value = String(Math.round(val * 100));
+    bright.style.background = 'linear-gradient(to right,#000,' + ccHsvToHex(h, sat, 1) + ')';
+    dot.style.background = hex;
+    if(!fromField) field.value = hex.slice(1).toUpperCase();
+    pick.value = hex;
+  }
+  function setFrom(color, fromField){
+    const hsv = ccHexToHsv(color);
+    // A grey has no hue; keep the one the wheel had rather than jump to red.
+    if(hsv.s > 0 && hsv.v > 0) h = hsv.h;
+    sat = hsv.s; val = hsv.v; hex = color;
+    render(fromField);
+  }
+  function setHsv(){ hex = ccHsvToHex(h, sat, val); render(); }
+  function done(){ ccLastCustom[formatName] = hex; commit(hex); }
+
+  function fromPoint(e){
+    const r = wheel.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    h = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
+    sat = Math.min(1, Math.hypot(dx, dy) / (r.width / 2));
+    setHsv();
+  }
+  wheel.addEventListener('pointerdown', (e)=>{
+    if(e.button !== 0) return;
+    e.preventDefault();
+    // Picking a hue on a near-black colour would change nothing you can see.
+    if(val < 0.25) val = 1;
+    try { wheel.setPointerCapture(e.pointerId); } catch(err){}
+    dragging = true;
+    fromPoint(e);
+  });
+  wheel.addEventListener('pointermove', (e)=>{ if(dragging) fromPoint(e); });
+  wheel.addEventListener('pointerup', ()=>{ if(!dragging) return; dragging = false; done(); });
+  wheel.addEventListener('pointercancel', ()=>{ dragging = false; });
+  wheel.addEventListener('keydown', (e)=>{
+    const step = e.shiftKey ? 15 : 5;
+    if(e.key === 'ArrowLeft'){ h = (h - step + 360) % 360; }
+    else if(e.key === 'ArrowRight'){ h = (h + step) % 360; }
+    else if(e.key === 'ArrowUp'){ sat = Math.min(1, sat + 0.05); }
+    else if(e.key === 'ArrowDown'){ sat = Math.max(0, sat - 0.05); }
+    else if(e.key === 'Enter'){ e.preventDefault(); done(); return; }
+    else return;
+    e.preventDefault();
+    if(val < 0.25) val = 1;
+    setHsv();
+  });
+
+  bright.addEventListener('input', ()=>{ val = Number(bright.value) / 100; setHsv(); });
+  bright.addEventListener('change', done);
+
+  field.addEventListener('input', ()=>{
+    const clean = field.value.replace(/[^0-9a-f]/gi, '').slice(0, 6);
+    if(clean !== field.value) field.value = clean;
+    if(clean.length === 6) setFrom('#' + clean.toLowerCase(), true);
+  });
+  field.addEventListener('keydown', (e)=>{
+    if(e.key !== 'Enter') return;
+    e.preventDefault();
+    const c = ccParseColor(field.value);
+    if(c){ setFrom(c); done(); }
+  });
+
+  pick.addEventListener('input', ()=>{ const c = ccParseColor(pick.value); if(c) setFrom(c); });
+  pick.addEventListener('change', ()=>{ const c = ccParseColor(pick.value); if(c){ setFrom(c); done(); } });
+
+  return { el: root, seed: (color)=> setFrom(color) };
+}
 // Shared by the Notes editor, the single writing editor, and both mock-exam
 // panes so every Quill instance on the page gets the exact same text-color
 // ("A") and highlight swatch toolbar pickers. Scoped to whichever editor/
@@ -41372,30 +41640,43 @@ function buildQuillColorPicker(editor, getActiveColor, markDirty){
     trigger.title = t(labelKey);
 
     const panel = document.createElement('div');
-    panel.style.cssText = 'display:none;flex-direction:column;position:absolute;top:100%;left:0;z-index:10;background:var(--paper-dim);border:1px solid var(--line);border-radius:6px;padding:6px;margin-top:2px;box-shadow:0 4px 12px rgba(0,0,0,0.2);width:132px;';
+    panel.style.cssText = 'display:none;flex-direction:column;position:absolute;top:100%;left:0;z-index:10;background:var(--paper-dim);border:1px solid var(--line);border-radius:6px;padding:6px;margin-top:2px;box-shadow:0 4px 12px rgba(0,0,0,0.2);width:138px;';
 
     const defaultBtn = document.createElement('button');
     defaultBtn.type = 'button';
     defaultBtn.textContent = t(formatName === 'color' ? 'defaultColor' : 'noHighlight');
     defaultBtn.style.cssText = 'display:block;width:100%;margin-bottom:6px;padding:5px;font-size:11px;font-weight:600;background:var(--paper);border:1px solid var(--line);border-radius:4px;cursor:pointer;color:var(--ink);';
 
-    function apply(value){
-      const range = editor.getSelection(true);
+    // keepOpen is the custom colour's: a selection is formatted where it was
+    // left without taking the focus back from the control being used, so the
+    // slider and the field go on answering the keyboard. A bare cursor still
+    // needs the editor focused, since what it formats is what is typed next.
+    function apply(value, keepOpen){
+      const range = keepOpen ? (editor.getSelection() || editor.selection.savedRange) : editor.getSelection(true);
       if(range && range.length > 0) editor.formatText(range.index, range.length, formatName, value);
       else editor.format(formatName, value);
       markDirty();
-      closeOpenPanel();
+      if(!keepOpen) closeOpenPanel();
       updateTriggerColors();
     }
 
     defaultBtn.addEventListener('click', (e)=>{ e.stopPropagation(); apply(false); });
     panel.appendChild(defaultBtn);
     panel.appendChild(makeSwatchGrid(apply));
+    const custom = ccCustomColorEl(formatName, (hex)=> apply(hex, true));
+    panel.appendChild(custom.el);
 
     trigger.addEventListener('click', (e)=>{
       e.stopPropagation();
       if(openPanel === panel){ closeOpenPanel(); return; }
       closeOpenPanel();
+      // The wheel opens on the colour already there, else the last one made
+      // here, else the note's own ink (text) or a pale yellow (highlight).
+      const range = editor.getSelection() || editor.selection.savedRange;
+      let here = null;
+      try { here = range ? editor.getFormat(range)[formatName] : null; } catch(err){}
+      custom.seed(ccParseColor(here) || ccLastCustom[formatName]
+        || (formatName === 'color' ? (ccParseColor(getActiveColor()) || '#000000') : '#ffff66'));
       panel.style.display = 'flex';
       openPanel = panel;
     });
@@ -42667,11 +42948,11 @@ async function addLecture(){
   // just a stand-in for the old fixed "General notes" bucket when there's
   // no course, so it's ignored (and not stored) once a course is chosen.
   const header = courseId ? null : (headerRaw || null);
-  const subcategory = document.getElementById('newLectureSub').value.trim().slice(0, 60) || null;
+  const subcategory = normalizeNoteSub(document.getElementById('newLectureSub').value) || null;
   const groupKey = courseId || header || '__none__';
   const existing = allNotes[groupKey] || [];
   const maxOrder = existing.reduce((m,n)=> Math.max(m, n.sort_order||0), 0);
-  const row = { user_id: currentUser.id, course_id: courseId, header, subcategory, lecture_title: title, content: '', sort_order: maxOrder+1 };
+  const row = { user_id: currentUser.id, course_id: courseId, header, subcategory, lecture_title: title, content: '', sort_order: maxOrder+10 };
   const { data, error } = await supabaseClient.from('course_notes').insert(row).select();
   if(!error && data && data[0]){
     addCourier('addLectureBtn');
@@ -42941,44 +43222,227 @@ async function deleteNote(noteId, groupKey){
   renderLectureList();
 }
 /* ---------- A NOTE'S PLACE IN ITS LIST, AND SUB-CATEGORIES ----------
-   (real-user request: "you can currently only move it one up or one down.
-   Should be able to pick position (if you do, it temporarily shows all the
-   numbers of positions, you can easily figure out where you want it) and easy
-   way to move all the way up all the way bottom. And add sub categories.")
-   A group (a course, or a custom header) can hold sub-categories, a second
-   level typed like the header. Notes with none come first, then each
-   sub-category under a small heading of its own, alphabetical like the groups.
-   A note moves WITHIN its sub-category; which one it is in is the pencil's.
-   Move turns that section into a numbered list: every row shows its position
-   as a button, and pressing one puts the note there and ends the move. Orders
-   are written in tens, so a later move usually rewrites one row, not all. */
-var noteMoveState = null;            // { kind, id } while a note is being placed
-var collapsedNoteSubs = new Set();   // 'kind|group|sub' shut by hand
-function noteSubOf(n){ return (n && typeof n.subcategory === 'string') ? n.subcategory.trim() : ''; }
-function noteSections(notes){
-  const plain = [], subs = new Map();
-  notes.forEach(n=>{
-    const sub = noteSubOf(n);
-    if(!sub){ plain.push(n); return; }
-    if(!subs.has(sub)) subs.set(sub, []);
-    subs.get(sub).push(n);
-  });
-  const out = plain.length ? [{ sub: '', notes: plain }] : [];
-  Array.from(subs.keys()).sort((a,b)=> a.localeCompare(b)).forEach(sub=> out.push({ sub, notes: subs.get(sub) }));
-  return out;
+   (real-user requests, 20 Oct: "pick position ... easy way to move all the
+   way up all the way bottom. And add sub categories"; 22 Oct: "move around
+   notes freely instead of those arrows by dragging ... add subcategories ...
+   from the bigger part of note or subcategory (since subcats can have
+   subcats) ... freely drag around the subcats and the bigger overall
+   categories to move their positions".)
+   A group (a course, or a custom header) holds sub-categories, which hold
+   sub-categories of their own, up to NOTE_SUB_MAX_DEPTH. A note stores its
+   place as a PATH, the names joined by "/" ("Week 1/Grammar"). Inside a
+   section its own notes come first, then its sub-categories.
+   - A note is DRAGGED by the grip at its left, to any place in any section of
+     the same list: another sub-category, another course or header. Only by
+     its owner, since only the owner can write the row.
+   - ^/v still turns a section into a numbered list, for a long one. The
+     numbers take the grip's slot, which is the same box, so nothing in the
+     row grows and the same button is still under the pointer to close it
+     (real-user report: "it moves a bit, so I cant just click it again").
+   - A heading is dragged by its own grip, among its siblings: a group among
+     the groups, a sub-category among the ones beside it. That ORDER, and a
+     sub-category made before any note is in it (the + on a heading), belong
+     to the person arranging them: the notes are shared in the circle, the
+     layout of each person's view of them is not (profiles.note_layout).
+   - With the keyboard, a grip moves its item with the arrow keys, and Home
+     and End take a note to the top or bottom.
+   Note orders are written in tens, so a move usually rewrites one row. */
+var noteMoveState = null;            // { kind, id } while a note is being placed by number
+var collapsedNoteSubs = new Set();   // 'kind|group|path' shut by hand
+var noteSubAdding = null;            // { kind, group, parent, value } while a new sub-category is named
+var noteSubFlash = null;             // { kind, group, sub } just made, to be shown once
+var noteDrag = null;                 // the drag in progress (startNoteDrag)
+const NOTE_SUB_SEP = '/';
+const NOTE_SUB_MAX_DEPTH = 5;
+const NOTE_SUB_NAME_MAX = 60;
+const NOTE_LAYOUT_KINDS = ['course', 'notebook'];
+const byNoteOrder = (a, b)=> (a.sort_order||0) - (b.sort_order||0);
+
+// A typed or stored path, tidied: each name trimmed and capped, empty names
+// dropped, at most NOTE_SUB_MAX_DEPTH levels. '' is "no sub-category".
+function normalizeNoteSub(raw){
+  if(typeof raw !== 'string') return '';
+  return raw.split(NOTE_SUB_SEP)
+    .map(s=> s.trim().slice(0, NOTE_SUB_NAME_MAX).trim())
+    .filter(Boolean)
+    .slice(0, NOTE_SUB_MAX_DEPTH)
+    .join(NOTE_SUB_SEP);
 }
+function noteSubOf(n){ return n ? normalizeNoteSub(n.subcategory) : ''; }
+function noteSubParts(path){ return path ? path.split(NOTE_SUB_SEP) : []; }
+function noteSubParent(path){ return noteSubParts(path).slice(0, -1).join(NOTE_SUB_SEP); }
+// How a path reads in a field: spaced, so "Week 1 / Grammar" is easy to edit.
+function noteSubLabel(path){ return noteSubParts(path).join(' ' + NOTE_SUB_SEP + ' '); }
+function noteSubWithin(path, root){ return path === root || path.startsWith(root + NOTE_SUB_SEP); }
 function noteKindCfg(kind){
   return kind === 'notebook'
-    ? { table: 'notebook_notes', store: allNotebookNotes, render: renderNotebookList, suggest: 'notebookSubSuggest' }
-    : { table: 'course_notes', store: allNotes, render: renderLectureList, suggest: 'noteSubSuggest' };
+    ? { table: 'notebook_notes', store: allNotebookNotes, render: renderNotebookList, suggest: 'notebookSubSuggest', expanded: expandedNotebookGroups, listId: 'notebookList' }
+    : { table: 'course_notes', store: allNotes, render: renderLectureList, suggest: 'noteSubSuggest', expanded: expandedNoteGroups, listId: 'lectureList' };
 }
+
+/* --- This person's layout: the order of the headings, and the empty
+   sub-categories. { groups: [key...], subs: { group: [path...] } } per kind. */
+function emptyNoteLayout(){ return { course: { groups: [], subs: {} }, notebook: { groups: [], subs: {} } }; }
+var noteLayout = emptyNoteLayout();
+var noteLayoutSaveTimer = null;
+var noteLayoutTouchedAt = 0;
+function sanitizeNoteLayout(raw){
+  const out = emptyNoteLayout();
+  if(!raw || typeof raw !== 'object') return out;
+  NOTE_LAYOUT_KINDS.forEach(kind=>{
+    const src = raw[kind];
+    if(!src || typeof src !== 'object') return;
+    if(Array.isArray(src.groups)) out[kind].groups = Array.from(new Set(src.groups.filter(k=> typeof k === 'string' && k))).slice(0, 500);
+    if(src.subs && typeof src.subs === 'object' && !Array.isArray(src.subs)){
+      Object.keys(src.subs).slice(0, 500).forEach(g=>{
+        const arr = src.subs[g];
+        if(!Array.isArray(arr)) return;
+        const paths = Array.from(new Set(arr.map(normalizeNoteSub).filter(Boolean))).slice(0, 400);
+        if(paths.length) out[kind].subs[g] = paths;
+      });
+    }
+  });
+  return out;
+}
+// Called with the profile row on every load. A layout changed here in the last
+// few seconds wins over the server's: the save waits half a second, and a
+// reload landing in between would put the old order straight back.
+function adoptNoteLayout(raw){
+  if(noteLayoutSaveTimer || Date.now() - noteLayoutTouchedAt < 4000) return;
+  noteLayout = sanitizeNoteLayout(raw);
+}
+function saveNoteLayoutSoon(){
+  noteLayoutTouchedAt = Date.now();
+  clearTimeout(noteLayoutSaveTimer);
+  noteLayoutSaveTimer = setTimeout(async ()=>{
+    noteLayoutSaveTimer = null;
+    if(!currentUser) return;
+    const { error } = await supabaseClient.from('profiles').update({ note_layout: noteLayout }).eq('id', currentUser.id);
+    noteLayoutTouchedAt = Date.now();
+    if(error) console.error('Note layout not saved:', error);
+  }, 500);
+}
+
+/* --- The tree of one group: its notes filed by path, plus the empty
+   sub-categories on this person's layout. */
+function noteSubTree(kind, groupKey, notes){
+  const root = { path: '', name: '', notes: [], kids: new Map(), total: 0 };
+  const nodeAt = (path)=>{
+    let nd = root, acc = '';
+    noteSubParts(path).forEach(part=>{
+      acc = acc ? acc + NOTE_SUB_SEP + part : part;
+      if(!nd.kids.has(part)) nd.kids.set(part, { path: acc, name: part, notes: [], kids: new Map(), total: 0 });
+      nd = nd.kids.get(part);
+    });
+    return nd;
+  };
+  (noteLayout[kind].subs[groupKey] || []).forEach(p=> nodeAt(p));
+  notes.forEach(n=> nodeAt(noteSubOf(n)).notes.push(n));
+  const count = (nd)=>{ nd.total = nd.notes.length; nd.kids.forEach(k=>{ nd.total += count(k); }); return nd.total; };
+  count(root);
+  return root;
+}
+// A node's sub-categories in the order shown: as this person placed them, then
+// any not placed yet, by name.
+function noteSubKids(kind, groupKey, nd){
+  const order = noteLayout[kind].subs[groupKey] || [];
+  const rank = (p)=>{ const i = order.indexOf(p); return i < 0 ? Infinity : i; };
+  return Array.from(nd.kids.values()).sort((a, b)=>{
+    const ra = rank(a.path), rb = rank(b.path);
+    if(ra !== rb) return ra < rb ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+}
+// Every sub-category of a group, in the order shown. Written back whole before
+// any change, so placing one never reshuffles the ones nobody placed.
+function noteSubOrderNow(kind, groupKey){
+  const tree = noteSubTree(kind, groupKey, noteKindCfg(kind).store[groupKey] || []);
+  const out = [];
+  const walk = (nd)=> noteSubKids(kind, groupKey, nd).forEach(k=>{ out.push(k.path); walk(k); });
+  walk(tree);
+  return out;
+}
+function pinNoteSubLayout(kind, groupKey){
+  noteLayout[kind].subs[groupKey] = noteSubOrderNow(kind, groupKey);
+  saveNoteLayoutSoon();
+}
+// A new sub-category under `parent` (a path, '' for the group itself), last
+// among its siblings. A name typed with "/" in it makes the levels in one go.
+function addNoteSub(kind, groupKey, parent, rawName){
+  const path = normalizeNoteSub((parent ? parent + NOTE_SUB_SEP : '') + rawName);
+  if(!path || noteSubParts(path).length <= noteSubParts(parent).length) return null;
+  const list = noteSubOrderNow(kind, groupKey);
+  noteSubParts(path).forEach((_, i, parts)=>{
+    const p = parts.slice(0, i + 1).join(NOTE_SUB_SEP);
+    if(!list.includes(p)) list.push(p);
+  });
+  noteLayout[kind].subs[groupKey] = list;
+  saveNoteLayoutSoon();
+  return path;
+}
+// Only ever offered for one with no notes anywhere in it.
+function removeNoteSub(kind, groupKey, path){
+  noteLayout[kind].subs[groupKey] = noteSubOrderNow(kind, groupKey).filter(p=> !noteSubWithin(p, path));
+  saveNoteLayoutSoon();
+}
+// Puts `path` in front of its sibling `beforePath`, or last when that is null.
+// Only siblings are ever compared, so last is anywhere after the last sibling.
+function placeNoteSub(kind, groupKey, path, beforePath){
+  const list = noteSubOrderNow(kind, groupKey).filter(p=> p !== path);
+  let at = beforePath ? list.indexOf(beforePath) : -1;
+  if(at < 0){
+    const parent = noteSubParent(path);
+    let last = -1;
+    list.forEach((p, i)=>{ if(noteSubParent(p) === parent) last = i; });
+    at = last + 1;
+  }
+  list.splice(at, 0, path);
+  noteLayout[kind].subs[groupKey] = list;
+  saveNoteLayoutSoon();
+}
+// Groups in the order shown: as placed, then the rest in the list's own order.
+function orderNoteGroups(kind, keys, fallback){
+  const order = noteLayout[kind].groups;
+  const rank = (k)=>{ const i = order.indexOf(k); return i < 0 ? Infinity : i; };
+  return keys.slice().sort((a, b)=>{
+    const ra = rank(a), rb = rank(b);
+    if(ra !== rb) return ra < rb ? -1 : 1;
+    return fallback(a, b);
+  });
+}
+// `shown` is the groups on screen in order. Ones placed earlier but not on
+// screen now (filtered to another person) keep their entry after them.
+function placeNoteGroup(kind, shown, key, beforeKey){
+  const layout = noteLayout[kind];
+  const rest = shown.filter(k=> k !== key);
+  const list = rest.concat(layout.groups.filter(k=> !shown.includes(k)));
+  const at = beforeKey ? list.indexOf(beforeKey) : rest.length;
+  list.splice(at < 0 ? rest.length : at, 0, key);
+  layout.groups = list.slice(0, 500);
+  saveNoteLayoutSoon();
+}
+
+/* --- Moving a note. */
 function noteSectionOf(kind, groupKey, noteId){
   const cfg = noteKindCfg(kind);
-  const group = (cfg.store[groupKey]||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+  const group = (cfg.store[groupKey]||[]).slice().sort(byNoteOrder);
   const note = group.find(n=> n.id === noteId);
   if(!note) return null;
   const sub = noteSubOf(note);
   return { cfg, note, list: group.filter(n=> noteSubOf(n) === sub) };
+}
+// The sort_order writes that put `note` at `to` in `rest` (its section without
+// it, in order): one write into a gap where there is one, the section
+// renumbered in tens where there is not. The note itself is always written.
+function noteOrderWrites(rest, note, to){
+  const arr = rest.slice();
+  arr.splice(to, 0, note);
+  const prev = arr[to - 1], next = arr[to + 1];
+  const p = prev ? (prev.sort_order||0) : null, q = next ? (next.sort_order||0) : null;
+  if(p === null && q !== null) return [[note, q - 10]];
+  if(q === null && p !== null) return [[note, p + 10]];
+  if(p !== null && q !== null && q - p >= 2) return [[note, Math.floor((p + q) / 2)]];
+  return arr.map((n, i)=> [n, (i + 1) * 10]).filter(([n, v])=> n === note || (n.sort_order||0) !== v);
 }
 function moveNoteBy(kind, groupKey, noteId, dir){
   const sec = noteSectionOf(kind, groupKey, noteId);
@@ -42988,100 +43452,281 @@ function moveNoteBy(kind, groupKey, noteId, dir){
 async function moveNoteTo(kind, groupKey, noteId, to){
   const sec = noteSectionOf(kind, groupKey, noteId);
   if(!sec) return;
-  const { cfg, note, list } = sec;
+  const { note, list } = sec;
   const from = list.indexOf(note);
   to = Math.max(0, Math.min(list.length - 1, to));
   if(from === to) return;
-  const rest = list.filter(n=> n !== note);
-  rest.splice(to, 0, note);
-  const prev = rest[to - 1], next = rest[to + 1];
-  const p = prev ? (prev.sort_order||0) : null, q = next ? (next.sort_order||0) : null;
-  let writes;
-  if(p === null && q !== null) writes = [[note, q - 10]];
-  else if(q === null && p !== null) writes = [[note, p + 10]];
-  else if(p !== null && q !== null && q - p >= 2) writes = [[note, Math.floor((p + q) / 2)]];
-  else writes = rest.map((n, i)=> [n, (i + 1) * 10]).filter(([n, v])=> (n.sort_order||0) !== v);
+  await writeNotePlacement(kind, noteOrderWrites(list.filter(n=> n !== note), note, to), null);
+}
+// Where a group's key puts a note: a course, a custom header, or neither.
+function noteGroupPatch(kind, groupKey){
+  if(groupKey === '__none__') return kind === 'notebook' ? { header: null } : { course_id: null, header: null };
+  if(kind === 'notebook') return { header: groupKey };
+  const isCourse = Object.values(allCourses).some(arr=> (arr||[]).some(c=> c.id === groupKey));
+  return isCourse ? { course_id: groupKey, header: null } : { course_id: null, header: groupKey };
+}
+function refileNote(store, note, fromGroup, toGroup){
+  store[fromGroup] = (store[fromGroup]||[]).filter(n=> n.id !== note.id);
+  if(!store[toGroup]) store[toGroup] = [];
+  store[toGroup].push(note);
+}
+// The open note follows its row into another group.
+function followOpenNote(kind, noteId, groupKey){
+  if(kind === 'notebook'){ if(selectedNotebookNoteId === noteId) selectedNotebookGroup = groupKey; }
+  else if(selectedLectureId === noteId) selectedNotesCourse = groupKey;
+}
+// New orders (and, for a dragged note, its group and sub-category) shown at
+// once and written; put back, all of it, if any write is refused.
+async function writeNotePlacement(kind, writes, move){
+  const cfg = noteKindCfg(kind);
   const before = writes.map(([n])=> [n, n.sort_order]);
+  let undo = null;
+  if(move){
+    const { note, patch, fromGroup, toGroup } = move;
+    const old = {};
+    Object.keys(patch).forEach(k=>{ old[k] = note[k]; });
+    Object.assign(note, patch);
+    if(fromGroup !== toGroup){ refileNote(cfg.store, note, fromGroup, toGroup); followOpenNote(kind, note.id, toGroup); }
+    undo = ()=>{
+      Object.assign(note, old);
+      if(fromGroup !== toGroup){ refileNote(cfg.store, note, toGroup, fromGroup); followOpenNote(kind, note.id, fromGroup); }
+    };
+  }
   writes.forEach(([n, v])=>{ n.sort_order = v; });
   cfg.render();
-  const results = await Promise.all(writes.map(([n, v])=> supabaseClient.from(cfg.table).update({ sort_order: v }).eq('id', n.id)));
+  const rows = new Map();
+  writes.forEach(([n, v])=> rows.set(n, { sort_order: v }));
+  if(move) rows.set(move.note, Object.assign(rows.get(move.note) || {}, move.patch));
+  const results = await Promise.all(Array.from(rows, ([n, p])=> supabaseClient.from(cfg.table).update(p).eq('id', n.id)));
   const failed = results.find(r=> r && r.error);
   if(failed){
     console.error('Move refused:', failed.error);
     before.forEach(([n, v])=>{ n.sort_order = v; });
+    if(undo) undo();
     cfg.render();
     alert(t('saveFailed'));
   }
 }
-// The sub-categories already used, offered as the field's suggestions.
+// Opens the group and every sub-category down to `sub`, so a note or a new
+// sub-category is seen where it landed.
+function revealNoteSection(kind, groupKey, sub){
+  noteKindCfg(kind).expanded.add(groupKey);
+  const parts = noteSubParts(sub);
+  parts.forEach((_, i)=> collapsedNoteSubs.delete(kind + '|' + groupKey + '|' + parts.slice(0, i + 1).join(NOTE_SUB_SEP)));
+}
+// A dragged note dropped in front of or behind `refId`, or at the end of the
+// section when there is none.
+async function dropNoteAt(kind, noteId, toGroup, toSub, refId, before){
+  const cfg = noteKindCfg(kind);
+  let note = null, fromGroup = null;
+  for(const k of Object.keys(cfg.store)){
+    const f = (cfg.store[k]||[]).find(n=> n.id === noteId);
+    if(f){ note = f; fromGroup = k; break; }
+  }
+  if(!note || !currentUser || note.user_id !== currentUser.id) return;
+  const fromSub = noteSubOf(note);
+  const inTarget = (n)=> noteSubOf(n) === toSub;
+  const rest = (cfg.store[toGroup]||[]).filter(n=> n !== note && inTarget(n)).sort(byNoteOrder);
+  let to = rest.length;
+  if(refId){
+    const i = rest.findIndex(n=> n.id === refId);
+    if(i >= 0) to = before ? i : i + 1;
+  }
+  if(fromGroup === toGroup && fromSub === toSub){
+    if((cfg.store[toGroup]||[]).filter(inTarget).sort(byNoteOrder).indexOf(note) === to) return;
+  } else if(fromSub){
+    // The sub-category it leaves stays on this person's layout: emptying it
+    // must not make it vanish from under the pointer.
+    pinNoteSubLayout(kind, fromGroup);
+  }
+  const patch = {};
+  if(fromSub !== toSub) patch.subcategory = toSub || null;
+  if(fromGroup !== toGroup) Object.assign(patch, noteGroupPatch(kind, toGroup));
+  revealNoteSection(kind, toGroup, toSub);
+  if(noteMoveState && noteMoveState.id === noteId) noteMoveState = null;
+  await writeNotePlacement(kind, noteOrderWrites(rest, note, to), Object.keys(patch).length ? { note, patch, fromGroup, toGroup } : null);
+}
+
+// The sub-categories already in use or made, offered as the field's
+// suggestions, each with the levels above it.
 function fillNoteSubSuggest(kind){
   const cfg = noteKindCfg(kind);
   const list = document.getElementById(cfg.suggest);
   if(!list) return;
   const subs = new Set();
-  Object.values(cfg.store).forEach(arr=> (arr||[]).forEach(n=>{ const sub = noteSubOf(n); if(sub) subs.add(sub); }));
-  list.innerHTML = Array.from(subs).sort((a,b)=> a.localeCompare(b)).map(sub=> `<option value="${escapeHtml(sub)}"></option>`).join('');
+  const add = (path)=> noteSubParts(path).forEach((_, i, parts)=> subs.add(parts.slice(0, i + 1).join(NOTE_SUB_SEP)));
+  Object.values(cfg.store).forEach(arr=> (arr||[]).forEach(n=> add(noteSubOf(n))));
+  Object.values(noteLayout[kind].subs).forEach(arr=> arr.forEach(add));
+  list.innerHTML = Array.from(subs).sort((a,b)=> a.localeCompare(b)).map(sub=> `<option value="${escapeHtml(noteSubLabel(sub))}"></option>`).join('');
 }
-// The rows of one group, sectioned by sub-category, into `body`.
-function appendNoteSections(body, kind, groupKey, notes, o){
+
+/* --- Drawing. */
+function isNoteDragSource(kind, type, groupKey, idOrPath){
+  const d = noteDrag;
+  if(!d || !d.started || d.kind !== kind || d.type !== type) return false;
+  if(type === 'note') return d.id === idOrPath;
+  if(type === 'sub') return d.group === groupKey && d.sub === idOrPath;
+  return d.group === groupKey;
+}
+// The grip a row or heading is dragged by. It sits in a fixed slot, which the
+// position number takes while placing, so swapping one for the other moves
+// nothing; a row that cannot be moved keeps the slot empty and stays in line.
+function noteGripHtml(attrs){
+  const tip = escapeHtml(t('noteDragTip'));
+  return `<button type="button" class="note-slot note-grip" ${attrs} aria-label="${tip}" title="${tip}">${ICON.grip(14)}</button>`;
+}
+function noteAddSubBtnHtml(g, p){
+  const tip = escapeHtml(t('noteSubAdd'));
+  return `<button type="button" class="note-sub-add" data-group="${g}" data-sub="${p}" title="${tip}" aria-label="${tip}">${ICON.plus(13)}</button>`;
+}
+// A group: its heading, and its body when open (the caller fills the body).
+function noteGroupEl(kind, groupKey, label, total, expanded){
   const g = escapeHtml(groupKey);
-  noteSections(notes).forEach(sec=>{
-    let host = body;
-    if(sec.sub){
-      const key = kind + '|' + groupKey + '|' + sec.sub;
-      const shut = collapsedNoteSubs.has(key);
-      const h = document.createElement('div');
-      h.className = 'note-sub-header';
-      h.dataset.subKey = key;
-      h.innerHTML = `<span>${shut?'▸':'▾'}</span> ${escapeHtml(sec.sub)} <span class="note-group-count">(${sec.notes.length})</span>`;
-      body.appendChild(h);
-      if(shut) return;
-      host = document.createElement('div');
-      host.className = 'note-sub-body';
-      body.appendChild(host);
-    }
-    const placing = !!(noteMoveState && noteMoveState.kind === kind && sec.notes.some(n=> n.id === noteMoveState.id));
-    const count = sec.notes.length;
-    sec.notes.forEach((n, idx)=>{
-      const isMine = n.user_id === currentUser.id;
-      const isMover = placing && n.id === noteMoveState.id;
-      const row = document.createElement('div');
-      row.className = 'lecture-row' + (n.id === o.selectedId ? ' active' : '') + (isMover ? ' moving' : '');
-      const pos = placing
-        ? `<button type="button" class="note-pos${isMover ? ' current' : ''}" data-pos="${idx}" data-id="${noteMoveState.id}" data-group="${g}" aria-label="${escapeHtml(t('noteMoveTo'))}: ${idx+1}">${idx+1}</button>`
-        : '';
-      const bar = isMover ? `
-          <div class="note-move-bar">
-            <span class="note-move-hint">${escapeHtml(t('noteMovePick'))}</span>
-            <button type="button" class="export-btn note-move-top" data-id="${n.id}" data-group="${g}" ${idx===0?'disabled':''}>${ICON.toTop(12)} ${escapeHtml(t('noteMoveTop'))}</button>
-            <button type="button" class="export-btn note-move-bottom" data-id="${n.id}" data-group="${g}" ${idx===count-1?'disabled':''}>${ICON.toBottom(12)} ${escapeHtml(t('noteMoveBottom'))}</button>
-            <button type="button" class="export-btn act-save note-move-done">${escapeHtml(t('noteMoveDone'))}</button>
-          </div>` : '';
-      row.innerHTML = `
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            ${pos}
-            <span class="lecture-title-btn" data-id="${n.id}" data-group="${g}">
-              <span class="author-dot" style="background:${colorForNote(n)}" title="${nameFor(n.user_id)}"></span>
-              ${escapeHtml(n.lecture_title)}
-            </span>
-            <span class="lecture-actions">
-              ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${g}" title="${escapeHtml(t('editBtn'))}">${ICON.pencil()}</button>` : ''}
-              ${isMine ? `<button class="lecture-up" data-id="${n.id}" data-group="${g}" ${idx===0?'disabled':''} title="${escapeHtml(t('tipMoveUp'))}">↑</button>` : ''}
-              ${isMine ? `<button class="lecture-down" data-id="${n.id}" data-group="${g}" ${idx===count-1?'disabled':''} title="${escapeHtml(t('tipMoveDown'))}">↓</button>` : ''}
-              ${isMine && count > 2 ? `<button class="lecture-move${isMover ? ' on' : ''}" data-id="${n.id}" data-group="${g}" title="${escapeHtml(t('noteMoveTo'))}" aria-pressed="${isMover}">${ICON.reorder()}</button>` : ''}
-              ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${g}" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
-            </span>
-          </div>${bar}
-          ${isMine && o.metaOpen(n.id) ? `
-          <div class="notes-panel" data-note-edit-for="${n.id}" style="margin-top:6px;">
-            ${o.metaHtml(n, groupKey)}
-          </div>` : ''}
-        </div>`;
-      host.appendChild(row);
-    });
-  });
+  const wrap = document.createElement('div');
+  wrap.className = 'note-group' + (isNoteDragSource(kind, 'group', groupKey, groupKey) ? ' drag-src' : '');
+  wrap.dataset.group = groupKey;
+  const header = document.createElement('div');
+  header.className = 'note-group-header';
+  header.dataset.dropInto = '1';
+  header.dataset.group = groupKey;
+  header.dataset.sub = '';
+  if(!expanded) header.dataset.collapsed = '1';
+  header.innerHTML = `${noteGripHtml(`data-drag="group" data-group="${g}"`)}<span class="note-fold">${expanded?'▾':'▸'}</span> <span class="note-head-name">${escapeHtml(label)}</span> <span class="note-group-count">(${total})</span>
+    <span class="note-head-actions">${noteAddSubBtnHtml(g, '')}</span>`;
+  wrap.appendChild(header);
+  return { wrap, header };
 }
+// The rows of one group, sectioned and nested by sub-category, into `body`.
+function appendNoteSections(body, kind, groupKey, notes, o){
+  const tree = noteSubTree(kind, groupKey, notes);
+  const adding = noteSubAdding && noteSubAdding.kind === kind && noteSubAdding.group === groupKey && noteSubAdding.parent === '';
+  if(!tree.notes.length && !tree.kids.size && !adding){
+    body.innerHTML = `<div class="empty note-drop-empty" data-drop-into="1" data-group="${escapeHtml(groupKey)}" data-sub="">–</div>`;
+    return;
+  }
+  renderNoteNode(body, kind, groupKey, tree, o);
+}
+function renderNoteNode(host, kind, groupKey, nd, o){
+  if(noteSubAdding && noteSubAdding.kind === kind && noteSubAdding.group === groupKey && noteSubAdding.parent === nd.path){
+    host.appendChild(noteSubNewEl(kind, groupKey, nd.path));
+  }
+  const box = document.createElement('div');
+  box.className = 'note-sec-notes';
+  box.dataset.group = groupKey;
+  box.dataset.sub = nd.path;
+  const placing = !!(noteMoveState && noteMoveState.kind === kind && nd.notes.some(n=> n.id === noteMoveState.id));
+  nd.notes.forEach((n, idx)=> box.appendChild(noteRowEl(kind, groupKey, n, idx, nd.notes.length, placing, o)));
+  const kids = noteSubKids(kind, groupKey, nd);
+  if(nd.path && !nd.notes.length && !kids.length){
+    // An empty sub-category is somewhere to drop a note.
+    box.innerHTML = `<div class="empty note-drop-empty" data-drop-into="1" data-group="${escapeHtml(groupKey)}" data-sub="${escapeHtml(nd.path)}">–</div>`;
+  }
+  host.appendChild(box);
+  kids.forEach(k=> host.appendChild(noteSubEl(kind, groupKey, k, o)));
+}
+function noteSubEl(kind, groupKey, nd, o){
+  const key = kind + '|' + groupKey + '|' + nd.path;
+  const shut = collapsedNoteSubs.has(key);
+  const g = escapeHtml(groupKey), p = escapeHtml(nd.path);
+  const wrap = document.createElement('div');
+  wrap.className = 'note-sub' + (isNoteDragSource(kind, 'sub', groupKey, nd.path) ? ' drag-src' : '')
+    + (noteSubFlash && noteSubFlash.kind === kind && noteSubFlash.group === groupKey && noteSubFlash.sub === nd.path ? ' note-flash' : '');
+  wrap.dataset.group = groupKey;
+  wrap.dataset.sub = nd.path;
+  wrap.dataset.parent = noteSubParent(nd.path);
+  const canAdd = noteSubParts(nd.path).length < NOTE_SUB_MAX_DEPTH;
+  const rm = escapeHtml(t('tipRemove'));
+  wrap.innerHTML = `
+    <div class="note-sub-header" data-sub-key="${escapeHtml(key)}" data-drop-into="1" data-group="${g}" data-sub="${p}"${shut ? ' data-collapsed="1"' : ''}>
+      ${noteGripHtml(`data-drag="sub" data-group="${g}" data-sub="${p}"`)}
+      <span class="note-fold">${shut?'▸':'▾'}</span>
+      <span class="note-head-name">${escapeHtml(nd.name)}</span>
+      <span class="note-group-count">(${nd.total})</span>
+      <span class="note-head-actions">
+        ${canAdd ? noteAddSubBtnHtml(g, p) : ''}
+        ${nd.total === 0 ? `<button type="button" class="note-sub-remove" data-group="${g}" data-sub="${p}" title="${rm}" aria-label="${rm}">✕</button>` : ''}
+      </span>
+    </div>`;
+  if(!shut){
+    const body = document.createElement('div');
+    body.className = 'note-sub-body';
+    renderNoteNode(body, kind, groupKey, nd, o);
+    wrap.appendChild(body);
+  }
+  return wrap;
+}
+function noteRowEl(kind, groupKey, n, idx, count, placing, o){
+  const g = escapeHtml(groupKey);
+  const isMine = n.user_id === currentUser.id;
+  const isMover = placing && n.id === noteMoveState.id;
+  const row = document.createElement('div');
+  row.className = 'lecture-row' + (n.id === o.selectedId ? ' active' : '') + (isMover ? ' moving' : '') + (isNoteDragSource(kind, 'note', groupKey, n.id) ? ' drag-src' : '');
+  row.dataset.noteId = n.id;
+  const slot = placing
+    ? `<button type="button" class="note-slot note-pos${isMover ? ' current' : ''}" data-pos="${idx}" data-id="${noteMoveState.id}" data-group="${g}" aria-label="${escapeHtml(t('noteMoveTo'))}: ${idx+1}">${idx+1}</button>`
+    : isMine ? noteGripHtml(`data-drag="note" data-id="${n.id}" data-group="${g}"`) : '<span class="note-slot" aria-hidden="true"></span>';
+  const bar = isMover ? `
+      <div class="note-move-bar">
+        <span class="note-move-hint">${escapeHtml(t('noteMovePick'))}</span>
+        <button type="button" class="export-btn note-move-top" data-id="${n.id}" data-group="${g}" ${idx===0?'disabled':''}>${ICON.toTop(12)} ${escapeHtml(t('noteMoveTop'))}</button>
+        <button type="button" class="export-btn note-move-bottom" data-id="${n.id}" data-group="${g}" ${idx===count-1?'disabled':''}>${ICON.toBottom(12)} ${escapeHtml(t('noteMoveBottom'))}</button>
+        <button type="button" class="export-btn act-save note-move-done">${escapeHtml(t('noteMoveDone'))}</button>
+      </div>` : '';
+  row.innerHTML = `
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        ${slot}
+        <span class="lecture-title-btn" data-id="${n.id}" data-group="${g}">
+          <span class="author-dot" style="background:${colorForNote(n)}" title="${nameFor(n.user_id)}"></span>
+          ${escapeHtml(n.lecture_title)}
+        </span>
+        <span class="lecture-actions">
+          ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${g}" title="${escapeHtml(t('editBtn'))}">${ICON.pencil()}</button>` : ''}
+          ${isMine && count > 2 ? `<button class="lecture-move${isMover ? ' on' : ''}" data-id="${n.id}" data-group="${g}" title="${escapeHtml(t('noteMoveTo'))}" aria-pressed="${isMover}">${ICON.reorder()}</button>` : ''}
+          ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${g}" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
+        </span>
+      </div>${bar}
+      ${isMine && o.metaOpen(n.id) ? `
+      <div class="notes-panel" data-note-edit-for="${n.id}" style="margin-top:6px;">
+        ${o.metaHtml(n, groupKey)}
+      </div>` : ''}
+    </div>`;
+  return row;
+}
+// The field a new sub-category is named in, straight under the heading whose
+// + opened it. What is typed is kept on noteSubAdding, so a list redrawn by a
+// partner's save mid-word puts it back.
+function noteSubNewEl(kind, groupKey, parent){
+  const row = document.createElement('div');
+  row.className = 'note-sub-new';
+  row.innerHTML = `<input type="text" class="note-sub-new-input" maxlength="${NOTE_SUB_NAME_MAX}" placeholder="${escapeHtml(t('noteSubNewPh'))}" aria-label="${escapeHtml(t('noteSubAdd'))}">`;
+  const input = row.querySelector('input');
+  input.value = (noteSubAdding && noteSubAdding.value) || '';
+  let done = false;
+  const finish = (keep)=>{
+    if(done) return;
+    done = true;
+    const name = input.value;
+    noteSubAdding = null;
+    if(keep){
+      const path = addNoteSub(kind, groupKey, parent, name);
+      if(path){ revealNoteSection(kind, groupKey, path); noteSubFlash = { kind, group: groupKey, sub: path }; }
+    }
+    noteKindCfg(kind).render();
+  };
+  input.addEventListener('input', ()=>{ if(noteSubAdding) noteSubAdding.value = input.value; });
+  input.addEventListener('keydown', (e)=>{
+    if(e.isComposing || e.keyCode === 229) return;
+    if(e.key === 'Enter'){ e.preventDefault(); finish(true); }
+    else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); finish(false); }
+  });
+  // Leaving the field keeps what was typed. A blur because the list was
+  // redrawn is not leaving: the field is no longer in the page by then.
+  input.addEventListener('blur', ()=> setTimeout(()=>{ if(row.isConnected) finish(true); }, 0));
+  return row;
+}
+
+/* --- The list's controls. */
 function wireNoteListPlacing(list, kind){
   const render = ()=> noteKindCfg(kind).render();
   list.querySelectorAll('.note-sub-header').forEach(h=>{
@@ -43090,6 +43735,29 @@ function wireNoteListPlacing(list, kind){
       if(collapsedNoteSubs.has(key)) collapsedNoteSubs.delete(key); else collapsedNoteSubs.add(key);
       render();
     });
+  });
+  list.querySelectorAll('.note-sub-add').forEach(b=>{
+    b.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const group = b.dataset.group, parent = b.dataset.sub || '';
+      const same = noteSubAdding && noteSubAdding.kind === kind && noteSubAdding.group === group && noteSubAdding.parent === parent;
+      noteSubAdding = same ? null : { kind, group, parent, value: '' };
+      if(!same) revealNoteSection(kind, group, parent);
+      render();
+    });
+  });
+  list.querySelectorAll('.note-sub-remove').forEach(b=>{
+    b.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      removeNoteSub(kind, b.dataset.group, b.dataset.sub);
+      render();
+    });
+  });
+  list.querySelectorAll('.note-grip').forEach(g=>{
+    g.addEventListener('pointerdown', (e)=> startNoteDrag(e, g, kind));
+    // The grip sits inside headings that fold on a click.
+    g.addEventListener('click', (e)=> e.stopPropagation());
+    g.addEventListener('keydown', (e)=> noteGripKey(e, g, kind));
   });
   list.querySelectorAll('.lecture-move').forEach(b=>{
     b.addEventListener('click', (e)=>{
@@ -43114,11 +43782,269 @@ function wireNoteListPlacing(list, kind){
   list.querySelectorAll('.note-move-done').forEach(b=>{
     b.addEventListener('click', (e)=>{ e.stopPropagation(); noteMoveState = null; render(); });
   });
+  const named = list.querySelector('.note-sub-new-input');
+  if(named && document.activeElement !== named){
+    named.focus({ preventScroll: true });
+    named.setSelectionRange(named.value.length, named.value.length);
+  }
+  const flashed = list.querySelector('.note-sub.note-flash');
+  if(flashed){
+    noteSubFlash = null;
+    const h = flashed.querySelector(':scope > .note-sub-header');
+    if(h) h.scrollIntoView({ block: 'nearest' });
+  }
 }
-// Escape puts a move down before anything else hears it (the editor's own
-// Escape closes the note).
+function findNoteEl(list, selector, test){
+  return Array.from(list.querySelectorAll(selector)).find(test) || null;
+}
+// Arrow keys move the grip's item one place, Home and End to the ends, and
+// the grip is focused again in the redrawn list so the next press works.
+function noteGripKey(e, grip, kind){
+  const step = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0;
+  const edge = e.key === 'Home' ? -1 : e.key === 'End' ? 1 : 0;
+  if(!step && !edge) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const cfg = noteKindCfg(kind);
+  const list = document.getElementById(cfg.listId);
+  const type = grip.dataset.drag, group = grip.dataset.group;
+  let refocus;
+  if(type === 'note'){
+    const id = grip.dataset.id;
+    if(edge) moveNoteTo(kind, group, id, edge < 0 ? 0 : Number.MAX_SAFE_INTEGER);
+    else moveNoteBy(kind, group, id, step);
+    refocus = ()=> findNoteEl(list, '.note-grip[data-drag="note"]', b=> b.dataset.id === id);
+  } else {
+    const isSub = type === 'sub';
+    const path = grip.dataset.sub || '';
+    const items = isSub
+      ? Array.from(list.querySelectorAll('.note-sub')).filter(w=> w.dataset.group === group && w.dataset.parent === noteSubParent(path)).map(w=> w.dataset.sub)
+      : Array.from(list.querySelectorAll('.note-group')).map(w=> w.dataset.group);
+    const self = isSub ? path : group;
+    const from = items.indexOf(self);
+    const to = edge ? (edge < 0 ? 0 : items.length - 1) : Math.max(0, Math.min(items.length - 1, from + step));
+    if(from < 0 || to === from) return;
+    const others = items.filter(x=> x !== self);
+    if(isSub) placeNoteSub(kind, group, path, others[to] || null);
+    else placeNoteGroup(kind, items, group, others[to] || null);
+    cfg.render();
+    refocus = isSub
+      ? ()=> findNoteEl(list, '.note-grip[data-drag="sub"]', b=> b.dataset.group === group && b.dataset.sub === path)
+      : ()=> findNoteEl(list, '.note-grip[data-drag="group"]', b=> b.dataset.group === group);
+  }
+  const g = refocus();
+  if(g) g.focus({ preventScroll: true });
+}
+
+/* --- Dragging. Pointer events, so a mouse, a pen and a finger are one path.
+   The grip has touch-action:none, so on a phone a drag from it is a drag and
+   a swipe anywhere else is still a scroll. Listeners sit on the window: the
+   grip may be redrawn away mid-drag (a partner's save re-renders the list),
+   and events go on arriving there either way. */
+function startNoteDrag(e, grip, kind){
+  if(noteDrag || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  e.preventDefault();
+  e.stopPropagation();
+  noteDrag = {
+    kind, type: grip.dataset.drag, id: grip.dataset.id || null, group: grip.dataset.group, sub: grip.dataset.sub || '',
+    pointerId: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY,
+    started: false, target: null, ghost: null, line: null, lit: null, hoverKey: null, hoverTimer: 0, raf: 0
+  };
+  try{ grip.setPointerCapture(e.pointerId); }catch(err){}
+  window.addEventListener('pointermove', onNoteDragMove);
+  window.addEventListener('pointerup', onNoteDragEnd);
+  window.addEventListener('pointercancel', cancelNoteDrag);
+}
+function noteDragList(d){ return document.getElementById(noteKindCfg(d.kind).listId); }
+function noteDragSourceEl(d, list){
+  if(d.type === 'note') return findNoteEl(list, '.lecture-row', r=> r.dataset.noteId === d.id);
+  if(d.type === 'sub'){
+    const w = findNoteEl(list, '.note-sub', x=> x.dataset.group === d.group && x.dataset.sub === d.sub);
+    return w && w.querySelector(':scope > .note-sub-header');
+  }
+  const w = findNoteEl(list, '.note-group', x=> x.dataset.group === d.group);
+  return w && w.querySelector(':scope > .note-group-header');
+}
+function beginNoteDrag(d){
+  const list = noteDragList(d);
+  const src = list && noteDragSourceEl(d, list);
+  if(!src) return false;
+  const r = src.getBoundingClientRect();
+  const ghost = src.cloneNode(true);
+  ghost.querySelectorAll('.notes-panel, .note-move-bar, .note-head-actions, .lecture-actions').forEach(x=> x.remove());
+  ghost.classList.remove('active', 'moving', 'drag-src');
+  ghost.classList.add('note-drag-ghost');
+  ghost.removeAttribute('data-drop-into');
+  ghost.setAttribute('aria-hidden', 'true');
+  ghost.style.width = r.width + 'px';
+  d.offX = d.x0 - r.left;
+  d.offY = d.y0 - r.top;
+  document.body.appendChild(ghost);
+  const line = document.createElement('div');
+  line.className = 'note-drop-line';
+  line.hidden = true;
+  document.body.appendChild(line);
+  d.ghost = ghost;
+  d.line = line;
+  d.started = true;
+  noteMoveState = null;
+  document.body.classList.add('note-dragging');
+  noteKindCfg(d.kind).render();   // dims the source, and takes any numbers down
+  d.raf = requestAnimationFrame(noteDragTick);
+  return true;
+}
+function onNoteDragMove(e){
+  const d = noteDrag;
+  if(!d || e.pointerId !== d.pointerId) return;
+  d.x = e.clientX;
+  d.y = e.clientY;
+  if(!d.started){
+    if(Math.hypot(d.x - d.x0, d.y - d.y0) < 4) return;
+    if(!beginNoteDrag(d)){ cancelNoteDrag(); return; }
+  }
+  e.preventDefault();
+  d.ghost.style.left = (d.x - d.offX) + 'px';
+  d.ghost.style.top = (d.y - d.offY) + 'px';
+  updateNoteDrop(d);
+}
+// Scrolls the page while the pointer is near its top or bottom edge (the top
+// edge is the bottom of the header, which is pinned over the page), so a note
+// can be taken anywhere in a long list.
+function noteDragTick(){
+  const d = noteDrag;
+  if(!d || !d.started) return;
+  const bar = document.getElementById('topBar');
+  const top = Math.max(0, bar ? bar.getBoundingClientRect().bottom : 0);
+  const zone = 60;
+  let dy = 0;
+  if(d.y < top + zone) dy = -Math.ceil((top + zone - d.y) / 3);
+  else if(d.y > window.innerHeight - zone) dy = Math.ceil((d.y - (window.innerHeight - zone)) / 3);
+  if(dy){
+    const was = window.scrollY;
+    window.scrollBy(0, Math.max(-22, Math.min(22, dy)));
+    if(window.scrollY !== was) updateNoteDrop(d);
+  }
+  d.raf = requestAnimationFrame(noteDragTick);
+}
+function updateNoteDrop(d){
+  const list = noteDragList(d);
+  if(!list) return;
+  d.target = d.type === 'note' ? noteDropForNote(d, list) : noteDropForHeading(d, list);
+  const tg = d.target;
+  if(d.lit && (!tg || tg.lit !== d.lit)){ d.lit.classList.remove('note-drop-into'); d.lit = null; }
+  if(tg && tg.lit && d.lit !== tg.lit){ tg.lit.classList.add('note-drop-into'); d.lit = tg.lit; }
+  if(tg && tg.line){
+    d.line.hidden = false;
+    d.line.style.top = (tg.line.y - 1) + 'px';
+    d.line.style.left = tg.line.left + 'px';
+    d.line.style.width = tg.line.width + 'px';
+  } else d.line.hidden = true;
+  d.ghost.classList.toggle('nowhere', !tg || !!tg.self);
+  // Held over a folded heading, it opens, so the note can go further in.
+  const key = tg && tg.collapsed ? tg.group + '|' + tg.sub : null;
+  if(key !== d.hoverKey){
+    clearTimeout(d.hoverTimer);
+    d.hoverKey = key;
+    if(key) d.hoverTimer = setTimeout(()=>{
+      if(noteDrag !== d || d.hoverKey !== key) return;
+      revealNoteSection(d.kind, tg.group, tg.sub);
+      d.hoverKey = null;
+      noteKindCfg(d.kind).render();
+      updateNoteDrop(d);
+    }, 650);
+  }
+}
+// A note goes in front of or behind the row under the pointer, or at the end
+// of a heading's section when it is over the heading. Between rows it keeps
+// the last answer rather than flicker; off the list there is none.
+function noteDropForNote(d, list){
+  const el = document.elementFromPoint(d.x, d.y);
+  if(!el || !list.contains(el)) return null;
+  const row = el.closest('.lecture-row');
+  if(row && row.dataset.noteId){
+    if(row.dataset.noteId === d.id) return { self: true };
+    const box = row.closest('.note-sec-notes');
+    if(!box) return d.target;
+    const r = row.getBoundingClientRect();
+    const before = d.y < r.top + r.height / 2;
+    return { group: box.dataset.group, sub: box.dataset.sub || '', refId: row.dataset.noteId, before, line: { y: before ? r.top : r.bottom, left: r.left, width: r.width } };
+  }
+  const into = el.closest('[data-drop-into]');
+  if(into && list.contains(into)) return { group: into.dataset.group, sub: into.dataset.sub || '', into: true, collapsed: into.dataset.collapsed === '1', lit: into };
+  return d.target;
+}
+// A heading moves among its siblings only, so the answer is a place in that
+// one row of siblings wherever the pointer is: in front of the first sibling
+// whose heading's middle is below it, else last.
+function noteDropForHeading(d, list){
+  const isSub = d.type === 'sub';
+  const parent = noteSubParent(d.sub);
+  const sibs = isSub
+    ? Array.from(list.querySelectorAll('.note-sub')).filter(w=> w.dataset.group === d.group && w.dataset.parent === parent)
+    : Array.from(list.querySelectorAll('.note-group'));
+  const others = sibs.filter(w=> isSub ? w.dataset.sub !== d.sub : w.dataset.group !== d.group);
+  if(!others.length) return null;
+  let before = null;
+  for(const w of others){
+    const h = w.querySelector(isSub ? ':scope > .note-sub-header' : ':scope > .note-group-header');
+    const r = (h || w).getBoundingClientRect();
+    if(d.y < r.top + r.height / 2){ before = w; break; }
+  }
+  const ref = before || others[others.length - 1];
+  const rr = ref.getBoundingClientRect();
+  return { before: before ? (isSub ? before.dataset.sub : before.dataset.group) : null, line: { y: before ? rr.top : rr.bottom, left: rr.left, width: rr.width } };
+}
+function stopNoteDrag(){
+  const d = noteDrag;
+  if(!d) return null;
+  noteDrag = null;
+  window.removeEventListener('pointermove', onNoteDragMove);
+  window.removeEventListener('pointerup', onNoteDragEnd);
+  window.removeEventListener('pointercancel', cancelNoteDrag);
+  cancelAnimationFrame(d.raf);
+  clearTimeout(d.hoverTimer);
+  if(d.ghost) d.ghost.remove();
+  if(d.line) d.line.remove();
+  if(d.lit) d.lit.classList.remove('note-drop-into');
+  document.body.classList.remove('note-dragging');
+  return d;
+}
+function cancelNoteDrag(){
+  const d = stopNoteDrag();
+  if(d && d.started) noteKindCfg(d.kind).render();
+}
+function onNoteDragEnd(e){
+  const d0 = noteDrag;
+  if(!d0 || e.pointerId !== d0.pointerId) return;
+  const d = stopNoteDrag();
+  if(!d.started) return;
+  // A release over a heading would otherwise fold it, or over a title open
+  // that note: the click that ends a drag is the drag's.
+  const swallow = (ev)=>{ ev.stopPropagation(); ev.preventDefault(); };
+  window.addEventListener('click', swallow, true);
+  setTimeout(()=> window.removeEventListener('click', swallow, true), 300);
+  const cfg = noteKindCfg(d.kind);
+  cfg.render();
+  const tg = d.target;
+  if(!tg || tg.self) return;
+  if(d.type === 'note'){
+    dropNoteAt(d.kind, d.id, tg.group, tg.sub, tg.into ? null : tg.refId, !!tg.before);
+  } else if(d.type === 'sub'){
+    placeNoteSub(d.kind, d.group, d.sub, tg.before);
+    cfg.render();
+  } else {
+    const list = noteDragList(d);
+    const shown = list ? Array.from(list.querySelectorAll('.note-group')).map(w=> w.dataset.group) : [];
+    placeNoteGroup(d.kind, shown, d.group, tg.before);
+    cfg.render();
+  }
+}
+// Escape puts a drag or a move down before anything else hears it (the
+// editor's own Escape closes the note).
 document.addEventListener('keydown', (e)=>{
-  if(e.key !== 'Escape' || !noteMoveState) return;
+  if(e.key !== 'Escape') return;
+  if(noteDrag){ e.stopPropagation(); cancelNoteDrag(); return; }
+  if(!noteMoveState) return;
   const kind = noteMoveState.kind;
   noteMoveState = null;
   e.stopPropagation();
@@ -43230,7 +44156,7 @@ function renderLectureList(){
   if(groupKeys.length === 0){ list.innerHTML = '<div class="empty">–</div>'; return; }
 
   const labelFor = k => k === '__none__' ? '' : (courseTitleFor[k] || k);
-  groupKeys.sort((a,b)=>{
+  groupKeys = orderNoteGroups('course', groupKeys, (a,b)=>{
     if(a === '__none__') return 1;
     if(b === '__none__') return -1;
     return labelFor(a).localeCompare(labelFor(b));
@@ -43244,23 +44170,18 @@ function renderLectureList(){
     const groupLabel = groupKey === '__none__' ? t('generalNotes') : (courseTitleFor[groupKey] || groupKey);
     const isExpanded = expandedNoteGroups.has(groupKey);
 
-    const header = document.createElement('div');
-    header.className = 'note-group-header';
-    header.innerHTML = `<span>${isExpanded?'▾':'▸'}</span> ${escapeHtml(groupLabel)} <span class="note-group-count">(${notes.length})</span>`;
+    const { wrap, header } = noteGroupEl('course', groupKey, groupLabel, notes.length, isExpanded);
     header.addEventListener('click', ()=>{
       if(expandedNoteGroups.has(groupKey)) expandedNoteGroups.delete(groupKey); else expandedNoteGroups.add(groupKey);
       renderLectureList();
     });
-    list.appendChild(header);
+    list.appendChild(wrap);
 
     if(!isExpanded) return;
     const body = document.createElement('div');
     body.className = 'note-group-body';
-    if(notes.length === 0){
-      body.innerHTML = '<div class="empty">–</div>';
-    }
     appendNoteSections(body, 'course', groupKey, notes, { selectedId: selectedLectureId, metaOpen: (id)=> expandedNoteEdit.has(id), metaHtml: buildNoteMetaFieldsHtml });
-    list.appendChild(body);
+    wrap.appendChild(body);
   });
 
   wireNoteListPlacing(list, 'course');
@@ -43270,12 +44191,6 @@ function renderLectureList(){
   });
   list.querySelectorAll('.lecture-del').forEach(btn=>{
     btn.addEventListener('click', (e)=>{ e.stopPropagation(); deleteNote(btn.dataset.id, btn.dataset.group); });
-  });
-  list.querySelectorAll('.lecture-up').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{ e.stopPropagation(); moveNote(btn.dataset.id, btn.dataset.group, -1); });
-  });
-  list.querySelectorAll('.lecture-down').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{ e.stopPropagation(); moveNote(btn.dataset.id, btn.dataset.group, 1); });
   });
   list.querySelectorAll('.lecture-edit').forEach(btn=>{
     btn.addEventListener('click', (e)=>{
@@ -43307,7 +44222,7 @@ function buildNoteMetaFieldsHtml(n, groupKey){
     </div>
     <div class="field">
       <label>${t('lblSubcategory')}</label>
-      <input type="text" class="ne-sub" maxlength="60" list="noteSubSuggest" value="${escapeHtml(noteSubOf(n))}">
+      <input type="text" class="ne-sub" maxlength="320" list="noteSubSuggest" value="${escapeHtml(noteSubLabel(noteSubOf(n)))}">
     </div>
     <div class="field">
       <label>${t('noteColorLabel')}</label>
@@ -43322,7 +44237,7 @@ async function saveNoteMeta(noteId, groupKey, container){
   const title = container.querySelector('.ne-title').value.trim();
   const color = container.querySelector('.ne-color').value;
   const subEl = container.querySelector('.ne-sub');
-  const subcategory = subEl ? (subEl.value.trim().slice(0, 60) || null) : undefined;
+  const subcategory = subEl ? (normalizeNoteSub(subEl.value) || null) : undefined;
   if(!title) return;
   const patch = { lecture_title: title, color };
   const note = (allNotes[groupKey]||[]).find(n=>n.id===noteId);
@@ -43669,6 +44584,7 @@ function makeNoteAutosaver(cfg){
     if(!el) return;
     if(key === 'noteSaving') setLoadingText(el, t(key));
     else el.textContent = t(key);
+    el.title = t(key);
   }
   async function send(id, patch){
     for(let attempt = 1; attempt <= 3; attempt++){
@@ -44294,7 +45210,7 @@ function notePickAttrs(attrs, defaultColor){
   NOTE_PATTERN_ATTRS.forEach(k=>{
     const v = attrs && attrs[k];
     if(v === undefined || v === null || v === false) return;
-    // The note's own ink is put on everything typed (buildCustomColorControls),
+    // The note's own ink is put on everything typed (buildQuillColorPicker),
     // so it says nothing about a head; only a colour CHOSEN is a style.
     if(k === 'color' && defaultColor && String(v).toLowerCase() === String(defaultColor).toLowerCase()) return;
     out[k] = v;
@@ -44617,12 +45533,13 @@ function buildNoteLineSpacingControl(quill, markDirty){
   quill._relabelLineSpacing = label;
 }
 
-/* ---------- WORDS, CHARACTERS AND PAGES ----------
-   At the right-hand end of the toolbar, which is pinned, so it is in view
-   wherever the writing is (real-user request: "there should be a place for
-   word + character count + pages"). A selection is counted against the whole,
-   the way a word processor does it. Recounted on the next frame rather than on
-   every keystroke of a fast typist. */
+/* ---------- WORDS AND CHARACTERS ----------
+   At the right-hand end of the bar under the note, on the row with "Use
+   pages" (real-user requests: "there should be a place for word + character
+   count + pages", then "move this to below the text box ... it should be
+   easily togglable to show ... in same line as 'use pages', on the right").
+   A selection is counted against the whole, the way a word processor does it.
+   Recounted on the next frame rather than on every keystroke. */
 const noteWordSegmenter = (typeof Intl !== 'undefined' && Intl.Segmenter)
   ? new Intl.Segmenter(undefined, { granularity: 'word' }) : null;
 function countNoteWords(text){
@@ -44646,16 +45563,31 @@ function countNoteChars(text, spaces){
   return n;
 }
 function noteNum(n){ return Number(n).toLocaleString(currentLang === 'ko' ? 'ko-KR' : currentLang === 'vi' ? 'vi-VN' : 'en-US'); }
+// Shown unless turned off, on this device; one setting for both editors, like
+// autosave. The button IS the count: pressing it hides the count and leaves a
+// small "Word count" to bring it back.
+const NOTE_STATS_KEY = 'trackerNoteStats';
+function noteStatsShown(){ try{ return localStorage.getItem(NOTE_STATS_KEY) !== 'off'; }catch(e){ return true; } }
+function setNoteStatsShown(on){ try{ localStorage.setItem(NOTE_STATS_KEY, on ? 'on' : 'off'); }catch(e){} }
+function refreshAllNoteStats(){ Object.keys(notePagers).forEach(k=>{ const q = notePagers[k].quill; if(q && q._updateNoteStats) q._updateNoteStats(); }); }
 function buildNoteStats(quill, key){
-  const toolbar = quill.getModule('toolbar').container;
-  if(!toolbar || toolbar.querySelector('.note-stats')) return;
-  const el = document.createElement('span');
-  el.className = 'note-stats';
-  toolbar.appendChild(el);
+  if(quill._updateNoteStats) return;
   let raf = 0;
   const update = ()=>{
     raf = 0;
-    if(!el.isConnected) return;
+    // The pager bar is built after the editor, and redrawn on its own; the
+    // count is painted into whatever is there when it runs.
+    const p = notePagers[key];
+    const el = p && p.bar.querySelector('.np-stats');
+    if(!el) return;
+    const shown = noteStatsShown();
+    el.classList.toggle('shown', shown);
+    el.setAttribute('aria-pressed', String(shown));
+    if(!shown){
+      el.textContent = t('noteStatsShow');
+      el.title = t('noteStatsShowHint');
+      return;
+    }
     const all = quill.getText();
     const words = countNoteWords(all), chars = countNoteChars(all, true);
     const sel = quill.getSelection();
@@ -44668,16 +45600,10 @@ function buildNoteStats(quill, key){
       parts.push(tForm('noteWordCount', words).replace('{n}', noteNum(words)));
       parts.push(tForm('noteCharCount', chars).replace('{n}', noteNum(chars)));
     }
-    const p = notePagers[key];
-    if(p && notePagedPref()){
-      const total = notePageGroups(quill).length;
-      parts.push(total > 1
-        ? t('notePageOf').replace('{n}', p.page + 1).replace('{total}', total)
-        : tCount('notePageTotal', total).replace('{n}', total));
-    }
+    // No page count here: it shares a row with the bar's own "Page 2 / 3".
     el.textContent = parts.join(' \u00b7 ');
     const noSpace = countNoteChars(all, false);
-    el.title = tForm('noteCharsNoSpaces', noSpace).replace('{n}', noteNum(noSpace));
+    el.title = tForm('noteCharsNoSpaces', noSpace).replace('{n}', noteNum(noSpace)) + ' \u00b7 ' + t('noteStatsHide');
   };
   const schedule = ()=>{ if(!raf) raf = requestAnimationFrame(update); };
   quill.on('text-change', schedule);
@@ -45619,7 +46545,14 @@ function buildNotePagerBar(key){
   });
   auto.append(autoLabel, len, lenOut);
   const del = button('np-del', '', ()=> deleteNotePage(key));
-  p.bar.append(prev, count, next, mode, add, move, auto, del);
+  const gap = document.createElement('span');
+  gap.className = 'np-spacer';
+  const stats = button('np-stats', '', ()=>{
+    setNoteStatsShown(!noteStatsShown());
+    refreshAllNoteStats();
+  });
+  stats.addEventListener('mousedown', (e)=> e.preventDefault());
+  p.bar.append(prev, count, next, mode, add, move, auto, gap, del, stats);
 }
 function renderNotePager(key, follow){
   const p = notePagers[key];
@@ -45669,9 +46602,15 @@ function renderNotePager(key, follow){
   // auto-pages switch -- which has to be there BEFORE a note has pages,
   // since making them is what it does -- and is gone where the note cannot be
   // written in at all.
-  if(total <= 1 && !editable){ p.bar.style.display = 'none'; return; }
+  // The count is still worth having on a note somebody else wrote, so the
+  // bar stays for it alone there.
   buildNotePagerBar(key);
   p.bar.style.display = '';
+  if(total <= 1 && !editable){
+    Array.from(p.bar.children).forEach(c=>{ c.style.display = c.classList.contains('np-stats') || c.classList.contains('np-spacer') ? '' : 'none'; });
+    if(p.quill._updateNoteStats) p.quill._updateNoteStats();
+    return;
+  }
   const q = (sel)=> p.bar.querySelector(sel);
   // Counting pages is only true while there ARE pages: "Page 1 / 3" over a
   // note being read as one long page is the app contradicting itself, which is
@@ -46359,141 +47298,10 @@ function ensureQuillInitialized(){
       broadcastNoteDelta('course-notes', delta);
     }
   });
-  buildCustomColorControls();
+  buildQuillColorPicker(quillEditor, ()=> currentNoteColor, ()=>{ editorDirty = true; });
   buildNoteFontSizeControl(quillEditor, ()=>{ editorDirty = true; });
   setupNotePager('course', quillEditor, 'notePageBar');
   enhanceNoteEditor(quillEditor, 'course', { defaultColor: ()=> currentNoteColor, markDirty: ()=>{ editorDirty = true; } });
-}
-function buildCustomColorControls(){
-  const toolbar = quillEditor.getModule('toolbar').container;
-  if(!toolbar || toolbar.querySelector('.cc-color-wrap')) return;
-
-  let openPanel = null;
-  function closeOpenPanel(){
-    if(openPanel){ openPanel.style.display = 'none'; openPanel = null; }
-  }
-  document.addEventListener('click', ()=> closeOpenPanel());
-
-  function makeSwatchGrid(applyFn){
-    const grid = document.createElement('div');
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(7,16px);gap:2px;';
-    QUILL_PALETTE.forEach(hex=>{
-      const sw = document.createElement('button');
-      sw.type = 'button';
-      sw.title = hex;
-      sw.style.cssText = `width:16px;height:16px;padding:0;border:1px solid rgba(0,0,0,0.15);background:${hex};cursor:pointer;`;
-      sw.addEventListener('click', (e)=>{ e.stopPropagation(); applyFn(hex); });
-      grid.appendChild(sw);
-    });
-    return grid;
-  }
-
-  let colorTrigger = null, bgTrigger = null;
-  function updateTriggerColors(){
-    if(!quillEditor) return;
-    const range = quillEditor.getSelection();
-    const format = range ? quillEditor.getFormat(range) : {};
-    const activeColor = format.color || currentNoteColor || 'var(--ink)';
-    if(colorTrigger){
-      colorTrigger.style.color = activeColor;
-      colorTrigger.style.borderBottom = `2px solid ${activeColor}`;
-    }
-    if(bgTrigger){
-      if(format.background){
-        bgTrigger.style.background = format.background;
-        bgTrigger.style.borderColor = 'rgba(0,0,0,0.3)';
-      } else {
-        bgTrigger.style.background = 'transparent';
-        bgTrigger.style.borderColor = 'var(--ink-soft)';
-      }
-    }
-  }
-  quillEditor.on('selection-change', updateTriggerColors);
-  quillEditor.on('text-change', updateTriggerColors);
-  // Same fix as buildQuillColorPicker() above (this function is a
-  // separate copy for the course-notes editor specifically): the "A"
-  // button's swatch was only ever a preview, never actually applied to
-  // typed text. Auto-applies the note's default color to any newly
-  // typed/pasted text that doesn't already carry an explicit color.
-  let applyingDefaultColorCC = false;
-  quillEditor.on('text-change', (delta, oldDelta, source)=>{
-    if(source !== 'user' || applyingDefaultColorCC || notePageRewriting) return;
-    const defaultColor = currentNoteColor;
-    if(!defaultColor) return;
-    const ops = delta.ops || [];
-    if(!ops.some(op=> op.insert !== undefined)) return;
-    applyingDefaultColorCC = true;
-    let index = 0;
-    ops.forEach(op=>{
-      if(op.retain !== undefined){ index += op.retain; return; }
-      if(op.insert !== undefined){
-        const len = typeof op.insert === 'string' ? op.insert.length : 1;
-        if(!(op.attributes && op.attributes.color)){
-          quillEditor.formatText(index, len, 'color', defaultColor, 'silent');
-        }
-        index += len;
-      }
-    });
-    applyingDefaultColorCC = false;
-  });
-
-  function makePicker(labelKey, formatName){
-    const wrap = document.createElement('span');
-    wrap.className = 'cc-' + formatName + '-wrap ql-formats';
-    wrap.style.cssText = 'position:relative;display:inline-block;';
-
-    const trigger = document.createElement('button');
-    trigger.type = 'button';
-    if(formatName === 'color'){
-      trigger.textContent = 'A';
-      trigger.style.cssText = 'font-weight:700;padding-bottom:3px;';
-      colorTrigger = trigger;
-    } else {
-      trigger.textContent = '';
-      trigger.style.cssText = 'width:16px;height:16px;padding:0;border:2px solid var(--ink-soft);border-radius:2px;background:transparent;box-sizing:border-box;';
-      bgTrigger = trigger;
-    }
-    trigger.title = t(labelKey);
-
-    const panel = document.createElement('div');
-    panel.style.cssText = 'display:none;flex-direction:column;position:absolute;top:100%;left:0;z-index:10;background:var(--paper-dim);border:1px solid var(--line);border-radius:6px;padding:6px;margin-top:2px;box-shadow:0 4px 12px rgba(0,0,0,0.2);width:132px;';
-
-    const defaultBtn = document.createElement('button');
-    defaultBtn.type = 'button';
-    defaultBtn.textContent = t(formatName === 'color' ? 'defaultColor' : 'noHighlight');
-    defaultBtn.style.cssText = 'display:block;width:100%;margin-bottom:6px;padding:5px;font-size:11px;font-weight:600;background:var(--paper);border:1px solid var(--line);border-radius:4px;cursor:pointer;color:var(--ink);';
-
-    function apply(value){
-      const range = quillEditor.getSelection(true);
-      if(range && range.length > 0) quillEditor.formatText(range.index, range.length, formatName, value);
-      else quillEditor.format(formatName, value);
-      editorDirty = true;
-      closeOpenPanel();
-      updateTriggerColors();
-    }
-
-    defaultBtn.addEventListener('click', (e)=>{ e.stopPropagation(); apply(false); });
-    panel.appendChild(defaultBtn);
-    panel.appendChild(makeSwatchGrid(apply));
-
-    trigger.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      if(openPanel === panel){ closeOpenPanel(); return; }
-      closeOpenPanel();
-      panel.style.display = 'flex';
-      openPanel = panel;
-    });
-    panel.addEventListener('click', (e)=> e.stopPropagation());
-
-    wrap.appendChild(trigger);
-    wrap.appendChild(panel);
-    return wrap;
-  }
-
-  toolbar.appendChild(makePicker('defaultColor', 'color'));
-  toolbar.appendChild(makePicker('noHighlight', 'background'));
-  quillEditor._updateColorTriggers = updateTriggerColors;
-  updateTriggerColors();
 }
 // Leaving the page saves what is there; the browser's own warning only shows
 // while that save, or one before it, has not been answered -- or, with
@@ -46512,6 +47320,7 @@ function updateLastSavedInfo(note, keepPanel){
   } else {
     el.textContent = t('neverSaved');
   }
+  el.title = el.textContent;
   // The count comes from the stamps read with the note (NOTE_LIST_SELECT); a
   // row that arrived by realtime has neither, and its list is read for it.
   const count = noteVersionCount(note);
@@ -46618,11 +47427,11 @@ async function addNotebookNote(){
   const headerRaw = document.getElementById('newNotebookHeader').value.trim();
   if(!title) return;
   const header = headerRaw || null;
-  const subcategory = document.getElementById('newNotebookSub').value.trim().slice(0, 60) || null;
+  const subcategory = normalizeNoteSub(document.getElementById('newNotebookSub').value) || null;
   const groupKey = header || '__none__';
   const existing = allNotebookNotes[groupKey] || [];
   const maxOrder = existing.reduce((m,n)=> Math.max(m, n.sort_order||0), 0);
-  const row = { user_id: currentUser.id, header, subcategory, lecture_title: title, content: '', sort_order: maxOrder+1 };
+  const row = { user_id: currentUser.id, header, subcategory, lecture_title: title, content: '', sort_order: maxOrder+10 };
   const { data, error } = await supabaseClient.from('notebook_notes').insert(row).select();
   if(!error && data && data[0]){
     addCourier('addNotebookBtn');
@@ -46655,7 +47464,7 @@ async function quickNoteFromGrammar(pattern){
   const groupKey = '__none__';
   const existing = allNotebookNotes[groupKey] || [];
   const maxOrder = existing.reduce((m,n)=> Math.max(m, n.sort_order||0), 0);
-  const row = { user_id: currentUser.id, header: null, lecture_title: pattern, content: '', sort_order: maxOrder+1 };
+  const row = { user_id: currentUser.id, header: null, lecture_title: pattern, content: '', sort_order: maxOrder+10 };
   const { data, error } = await supabaseClient.from('notebook_notes').insert(row).select();
   if(!error && data && data[0]){
     if(!allNotebookNotes[groupKey]) allNotebookNotes[groupKey] = [];
@@ -46692,7 +47501,7 @@ function renderNotebookList(){
   groupKeys = groupKeys.filter(k => (allNotebookNotes[k]||[]).some(n=>showIds.includes(n.user_id)));
   if(groupKeys.length === 0){ list.innerHTML = '<div class="empty">–</div>'; return; }
 
-  groupKeys.sort((a,b)=>{
+  groupKeys = orderNoteGroups('notebook', groupKeys, (a,b)=>{
     if(a === '__none__') return 1;
     if(b === '__none__') return -1;
     return a.localeCompare(b);
@@ -46704,23 +47513,18 @@ function renderNotebookList(){
     const groupLabel = groupKey === '__none__' ? t('generalNotes') : groupKey;
     const isExpanded = expandedNotebookGroups.has(groupKey);
 
-    const header = document.createElement('div');
-    header.className = 'note-group-header';
-    header.innerHTML = `<span>${isExpanded?'▾':'▸'}</span> ${escapeHtml(groupLabel)} <span class="note-group-count">(${notes.length})</span>`;
+    const { wrap, header } = noteGroupEl('notebook', groupKey, groupLabel, notes.length, isExpanded);
     header.addEventListener('click', ()=>{
       if(expandedNotebookGroups.has(groupKey)) expandedNotebookGroups.delete(groupKey); else expandedNotebookGroups.add(groupKey);
       renderNotebookList();
     });
-    list.appendChild(header);
+    list.appendChild(wrap);
 
     if(!isExpanded) return;
     const body = document.createElement('div');
     body.className = 'note-group-body';
-    if(notes.length === 0){
-      body.innerHTML = '<div class="empty">–</div>';
-    }
     appendNoteSections(body, 'notebook', groupKey, notes, { selectedId: selectedNotebookNoteId, metaOpen: (id)=> expandedNotebookEdit.has(id), metaHtml: buildNotebookMetaFieldsHtml });
-    list.appendChild(body);
+    wrap.appendChild(body);
   });
 
   wireNoteListPlacing(list, 'notebook');
@@ -46730,12 +47534,6 @@ function renderNotebookList(){
   });
   list.querySelectorAll('.lecture-del').forEach(btn=>{
     btn.addEventListener('click', (e)=>{ e.stopPropagation(); deleteNotebookNote(btn.dataset.id, btn.dataset.group); });
-  });
-  list.querySelectorAll('.lecture-up').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{ e.stopPropagation(); moveNotebookNote(btn.dataset.id, btn.dataset.group, -1); });
-  });
-  list.querySelectorAll('.lecture-down').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{ e.stopPropagation(); moveNotebookNote(btn.dataset.id, btn.dataset.group, 1); });
   });
   list.querySelectorAll('.lecture-edit').forEach(btn=>{
     btn.addEventListener('click', (e)=>{
@@ -46767,7 +47565,7 @@ function buildNotebookMetaFieldsHtml(n, groupKey){
     </div>
     <div class="field">
       <label>${t('lblSubcategory')}</label>
-      <input type="text" class="ne-sub" maxlength="60" list="notebookSubSuggest" value="${escapeHtml(noteSubOf(n))}">
+      <input type="text" class="ne-sub" maxlength="320" list="notebookSubSuggest" value="${escapeHtml(noteSubLabel(noteSubOf(n)))}">
     </div>
     <div class="field">
       <label>${t('noteColorLabel')}</label>
@@ -46782,7 +47580,7 @@ async function saveNotebookNoteMeta(noteId, groupKey, container){
   const title = container.querySelector('.ne-title').value.trim();
   const color = container.querySelector('.ne-color').value;
   const subEl = container.querySelector('.ne-sub');
-  const subcategory = subEl ? (subEl.value.trim().slice(0, 60) || null) : undefined;
+  const subcategory = subEl ? (normalizeNoteSub(subEl.value) || null) : undefined;
   if(!title) return;
   const patch = { lecture_title: title, color };
   const note = (allNotebookNotes[groupKey]||[]).find(n=>n.id===noteId);
@@ -46872,6 +47670,7 @@ function updateNotebookLastSavedInfo(note, keepPanel){
   } else {
     el.textContent = t('neverSaved');
   }
+  el.title = el.textContent;
   // Same as the course notes' (updateLastSavedInfo).
   const count = noteVersionCount(note);
   document.getElementById('notebookVersionHistoryToggle').textContent = t('versionHistory').replace('{n}', count === null ? '…' : count);
