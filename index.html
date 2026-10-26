@@ -20557,6 +20557,113 @@ if(window.visualViewport){
   window.visualViewport.addEventListener('resize', syncChatFullViewport);
   window.visualViewport.addEventListener('scroll', syncChatFullViewport);
 }
+// iOS opens the keyboard OVER a full-window panel and then pans the whole
+// visual viewport up to reveal the composer at its foot. The pan animates,
+// but visualViewport only reports where it ends, so for a frame or two the
+// dock is drawn at the final offset while the screen is still mid-pan and
+// the page behind it shows above "Messages" (real-user report, with a
+// recording; the same jump in reverse when the keyboard closes). So the
+// pan is never allowed to happen: the first tap focuses a hidden field at
+// the very TOP of the screen, which needs no revealing, the keyboard comes
+// up with the dock still at offset 0, the dock shrinks to what is left, and
+// only then does focus move to the composer -- by now above the keyboard,
+// so there is nothing to scroll to either. iOS keeps the keyboard up when
+// focus moves between fields programmatically, which is what makes the
+// hand-over invisible. iOS only: Android resizes for the keyboard instead
+// of panning, and a second focus there would flicker it.
+const CHAT_KB_IOS = /iP(hone|ad|od)/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let chatKbProxy = null;
+function chatKbProxyEl(){
+  if(chatKbProxy) return chatKbProxy;
+  const el = document.createElement('input');
+  el.type = 'text';
+  el.tabIndex = -1;
+  el.setAttribute('aria-hidden', 'true');
+  el.setAttribute('autocomplete', 'off');
+  // 16px or iOS zooms the page to it; on screen and opaque-0 or it cannot
+  // take focus at all.
+  el.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;'
+    + 'font-size:16px;border:0;padding:0;margin:0;pointer-events:none;z-index:-1;';
+  document.body.appendChild(el);
+  chatKbProxy = el;
+  return el;
+}
+function focusComposerWithoutPan(input){
+  const vv = window.visualViewport;
+  const proxy = chatKbProxyEl();
+  proxy.value = '';
+  proxy.focus({ preventScroll: true });
+  const startH = vv.height;
+  let settleTimer = null, done = false;
+  const handOver = ()=>{
+    if(done) return;
+    done = true;
+    vv.removeEventListener('resize', onResize);
+    clearTimeout(settleTimer); clearTimeout(giveUp);
+    syncChatFullViewport();
+    // Anything typed into the stand-in during the few hundred ms it held
+    // the keyboard belongs to the message.
+    if(proxy.value){
+      input.setRangeText(proxy.value, input.value.length, input.value.length, 'end');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      proxy.value = '';
+    }
+    requestAnimationFrame(()=>{
+      input.focus({ preventScroll: true });
+      const end = input.value.length;
+      try { input.setSelectionRange(end, end); } catch(e){}
+      // Never leave the keyboard attached to a field nobody can see.
+      if(document.activeElement === proxy) proxy.blur();
+    });
+  };
+  // The keyboard's own animation reports several resizes; hand over once
+  // they have stopped, not on the first.
+  const onResize = ()=>{
+    if(vv.height >= startH - 40) return;
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(handOver, 90);
+  };
+  vv.addEventListener('resize', onResize);
+  const giveUp = setTimeout(handOver, 900);
+}
+(function(){
+  const input = document.getElementById('circleMessageInput');
+  const dock = document.getElementById('chatDock');
+  if(!input || !dock || !CHAT_KB_IOS || !window.visualViewport) return;
+  let tx = 0, ty = 0;
+  input.addEventListener('touchstart', (e)=>{
+    const t0 = e.touches[0];
+    if(t0){ tx = t0.clientX; ty = t0.clientY; }
+  }, { passive: true });
+  input.addEventListener('touchend', (e)=>{
+    if(!dock.classList.contains('chat-full')) return;
+    if(document.activeElement === input || document.activeElement === chatKbProxy) return;
+    // A press that turned into a drag is not a tap.
+    const t1 = e.changedTouches[0];
+    if(e.changedTouches.length !== 1 || !t1) return;
+    if(Math.abs(t1.clientX - tx) > 10 || Math.abs(t1.clientY - ty) > 10) return;
+    e.preventDefault();
+    focusComposerWithoutPan(input);
+  }, { passive: false });
+  // Closing is the same pan backwards. Give the dock its full height back the
+  // moment the composer lets go, so the keyboard slides down over the panel
+  // rather than revealing the page under a dock still sized for it.
+  // Not when focus has only moved to another field in the panel (a search,
+  // an edit box), where the keyboard stays up and no resize is coming.
+  input.addEventListener('blur', ()=>{
+    setTimeout(()=>{
+      if(!dock.classList.contains('chat-full')) return;
+      const a = document.activeElement;
+      if(a && a !== document.body && a.matches('input,textarea,select,[contenteditable="true"]')){
+        syncChatFullViewport();
+        return;
+      }
+      dock.style.removeProperty('--chat-vv-h');
+      dock.style.setProperty('--chat-vv-top', '0px');
+    }, 0);
+  });
+})();
 function applyChatFull(on){
   const dock = document.getElementById('chatDock');
   const btn = document.getElementById('chatFullBtn');
