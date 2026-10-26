@@ -3846,6 +3846,21 @@ button.tpl-act:hover{background:rgba(127,127,127,0.16);}
    percentages line up down the list. */
 .q54-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);}
 .q54-row:last-child{border-bottom:none;}
+/* The TOPIK guide: one fold per section, a hairline between them. */
+.tg-sec{border-top:1px solid var(--line);}
+.tg-sec:first-child{border-top:none;}
+.tg-sec > summary{cursor:pointer;padding:10px 0;font-weight:700;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px;}
+.tg-sec > summary::-webkit-details-marker{display:none;}
+.tg-sec > summary::before{content:'';width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform 150ms ease;flex:none;}
+.tg-sec[open] > summary::before{transform:rotate(45deg);}
+.tg-body{padding:0 0 12px 15px;font-size:13.5px;line-height:1.6;}
+.tg-body p{margin:0 0 8px;}
+.tg-body ul,.tg-body ol{margin:0 0 8px;padding-left:20px;}
+.tg-body li{margin:2px 0;}
+.tg-table{border-collapse:collapse;margin:4px 0 10px;font-size:13px;width:100%;}
+.tg-table th,.tg-table td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top;}
+.tg-table th{background:var(--paper);font-weight:700;}
+@media (prefers-reduced-motion: reduce){ .tg-sec > summary::before{transition:none;} }
 .q54-rank{flex:none;width:18px;font-size:12px;font-weight:700;color:var(--ink-soft);text-align:right;}
 .q54-body{flex:1 1 auto;min-width:0;}
 .q54-topic{font-size:15px;font-weight:600;color:var(--ink);line-height:1.4;word-break:keep-all;overflow-wrap:anywhere;}
@@ -4584,6 +4599,7 @@ body.ws-work .ws-class-only{display:none !important;}
       <button data-view="log" class="active" id="studySubLogBtn"></button>
       <button data-view="grammar" id="studySubGrammarBtn"></button>
       <button data-view="writing" id="studySubWritingBtn"></button>
+      <button data-view="topik" id="studySubTopikBtn"></button>
       <button data-view="notebook" id="studySubNotebookBtn"></button>
       <button data-view="videos" id="studySubVideosBtn"></button>
     </div>
@@ -4746,11 +4762,6 @@ body.ws-work .ws-class-only{display:none !important;}
       </div>
     </div>
     <div id="studyWritingSection" class="hidden">
-      <div class="card" id="q54ForecastCard">
-        <h2 id="hTopikForecast"></h2>
-        <div class="hint" id="q54ForecastNote"></div>
-        <div id="q54ForecastList"></div>
-      </div>
       <div class="card" id="writingStartCard">
         <h2 id="hNewWriting"></h2>
 
@@ -4906,6 +4917,18 @@ body.ws-work .ws-class-only{display:none !important;}
         </div>
         <aside class="tpl-side hidden" id="writingMockTplSide"></aside>
         </div>
+      </div>
+    </div>
+    <div id="studyTopikSection" class="hidden">
+      <div class="card" id="q54ForecastCard">
+        <h2 id="hTopikForecast"></h2>
+        <div class="hint" id="q54ForecastNote"></div>
+        <div id="q54ForecastList"></div>
+      </div>
+      <div class="card" id="topikGuideCard">
+        <h2 id="hTopikGuide"></h2>
+        <div class="hint" id="topikGuideIntro"></div>
+        <div id="topikGuideBody"></div>
       </div>
       <div class="card" id="writingTemplatesCard">
         <h2 id="hTopikTemplates"></h2>
@@ -12431,7 +12454,7 @@ const I18N = {
     deleteEventConfirm:'Delete the entry "{title}"? Its reminders go with it, and it disappears for everyone it is shared with.',
     editEventModalTitle:'Edit', editRemindersModalTitle:'Edit reminders', deleteEventBtn:'Delete',
     addCourseBtn:'Add course', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', colorCustom:'Custom', colorWheel:'Color wheel', colorBrightness:'Brightness', colorHex:'Color code', colorPicker:'Open the color picker', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries, its notes and its syllabus for everyone.', deleteNoteConfirm:'Delete the note "{title}"? Everything written in it goes too, for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', saveFailed:'That change could not be saved, so it has been put back. Check your connection and try again.', studySubVideos:'Videos', hVideos:'Videos', lblVideoSearch:'Search', lblVideoSort:'Sort', videoSearchPlaceholder:'Search videos...', videoEmpty:'No video links yet. YouTube links on grammar points show up here.', videoNoMatches:'No video matches that search.', videoPlay:'Play', videoOpenOnYouTube:'Open on YouTube', sortFieldAdded:'Added',  hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header',
-    hTopikTemplates:'TOPIK writing templates', topikTplIntro:'Sentence frames for questions 51 to 54, each with an example. ~ marks the part you fill in.', topikTplToggle:'Templates', topikTplSearch:'Search templates', topikTplAll:'All', topikTplStyle:'Written style', topikTplQuestion:'Question {n}', topikTplInsert:'Insert', topikTplCopy:'Copy', topikTplCopied:'Copied', topikTplNone:'No templates match.', topikTplCount:'{n} templates', topikTplCountOne:'{n} template', hTopikForecast:'Question 54 forecast', topikForecastLoading:'Ranked from past exams. Loading the news…', topikForecastWrite:'Write', topikForecastNews:'News: {n} articles a week, usually {m}', topikForecastNewsOne:'News: {n} article a week, usually {m}', topikForecastOthers:'Other listed topics', topikForecastUnforeseen:'A topic not on the list', topikForecastUpdated:'Next topic, ranked from past exams and current news. News as of {time}.', topikForecastNoNews:'Next topic, ranked from past exams. News could not be loaded, so current issues are not weighted by it.', hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordCountLabelOne:'{n} word', deleteSampleConfirm:'Delete this writing sample?', deleteJobConfirm:'Delete this application?', deleteJobConfirmCv:'Delete this application? The attached CV will be removed too.', deleteJobConfirmCover:'Delete this application? The attached cover letter will be removed too.', deleteJobConfirmBoth:'Delete this application? The attached CV and cover letter will be removed too.', deleteCertConfirm:'Delete this certification?', deleteBookConfirm:'Delete this book? Its notes go with it.', deleteArticleConfirm:'Delete this article? Its notes go with it.', charCountLabel:'{n} characters', charCountLabelOne:'{n} character', charCountTarget:'{n} characters (target: {min}~{max})', charCountTargetOne:'{n} character (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'Random', lblWritingQ53Image:'Attach an image', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'Start a Q54 mock exam (35 min)', writingMockStartBtn:'Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm1One:'Delete your one writing sample? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
+    hTopikTemplates:'TOPIK writing templates', topikTplIntro:'Sentence frames for questions 51 to 54, each with an example. ~ marks the part you fill in.', topikTplToggle:'Templates', topikTplSearch:'Search templates', topikTplAll:'All', topikTplStyle:'Written style', topikTplQuestion:'Question {n}', topikTplInsert:'Insert', topikTplCopy:'Copy', topikTplCopied:'Copied', topikTplNone:'No templates match.', topikTplCount:'{n} templates', topikTplCountOne:'{n} template', hTopikForecast:'Question 54 forecast', studySubTopik:'TOPIK', hTopikGuide:'TOPIK guide', topikGuideIntro:'How the exam works and what each writing question asks for, from the 83rd to the 107th papers.', topikForecastLoading:'Ranked from past exams. Loading the news…', topikForecastWrite:'Write', topikForecastNews:'News: {n} articles a week, usually {m}', topikForecastNewsOne:'News: {n} article a week, usually {m}', topikForecastOthers:'Other listed topics', topikForecastUnforeseen:'A topic not on the list', topikForecastUpdated:'Next topic, ranked from past exams and current news. News as of {time}.', topikForecastNoNews:'Next topic, ranked from past exams. News could not be loaded, so current issues are not weighted by it.', hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordCountLabelOne:'{n} word', deleteSampleConfirm:'Delete this writing sample?', deleteJobConfirm:'Delete this application?', deleteJobConfirmCv:'Delete this application? The attached CV will be removed too.', deleteJobConfirmCover:'Delete this application? The attached cover letter will be removed too.', deleteJobConfirmBoth:'Delete this application? The attached CV and cover letter will be removed too.', deleteCertConfirm:'Delete this certification?', deleteBookConfirm:'Delete this book? Its notes go with it.', deleteArticleConfirm:'Delete this article? Its notes go with it.', charCountLabel:'{n} characters', charCountLabelOne:'{n} character', charCountTarget:'{n} characters (target: {min}~{max})', charCountTargetOne:'{n} character (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'Random', lblWritingQ53Image:'Attach an image', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'Start a Q54 mock exam (35 min)', writingMockStartBtn:'Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm1One:'Delete your one writing sample? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
     lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
     gramJumpPlaceholder:'- Select -', gramAllLevels:'All', gramIntermediateGroup:'Intermediate', gramAdvancedGroup:'Advanced',
@@ -12556,7 +12579,7 @@ const I18N = {
     deleteEventConfirm:'"{title}" 항목을 삭제하시겠습니까? 알림도 함께 삭제되고, 공유된 모든 사람에게서 사라집니다.',
     editEventModalTitle:'수정', editRemindersModalTitle:'알림 수정', deleteEventBtn:'삭제',
     addCourseBtn:'수업 추가', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', colorCustom:'직접 고르기', colorWheel:'색상환', colorBrightness:'밝기', colorHex:'색상 코드', colorPicker:'색상 선택기 열기', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목, 노트, 강의계획서도 함께 삭제됩니다.', deleteNoteConfirm:'"{title}" 노트를 삭제하시겠습니까? 안에 작성한 내용도 모든 사람에게서 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', saveFailed:'변경 내용을 저장할 수 없어 이전 상태로 되돌렸습니다. 연결 상태를 확인하고 다시 시도하세요.', studySubVideos:'영상', hVideos:'영상', lblVideoSearch:'검색', lblVideoSort:'정렬', videoSearchPlaceholder:'영상 검색...', videoEmpty:'아직 영상 링크가 없습니다. 문법 항목의 유튜브 링크가 여기에 나타납니다.', videoNoMatches:'검색 결과가 없습니다.', videoPlay:'재생', videoOpenOnYouTube:'유튜브에서 열기', sortFieldAdded:'추가일',  hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더',
-    hTopikTemplates:'TOPIK 쓰기 표현', topikTplIntro:'51~54번에 쓰는 문장 틀과 예문입니다. ~ 부분을 채워 쓰세요.', topikTplToggle:'쓰기 표현', topikTplSearch:'표현 검색', topikTplAll:'전체', topikTplStyle:'문어체', topikTplQuestion:'{n}번', topikTplInsert:'넣기', topikTplCopy:'복사', topikTplCopied:'복사됨', topikTplNone:'맞는 표현이 없습니다.', topikTplCount:'{n}개', hTopikForecast:'54번 주제 예측', topikForecastLoading:'역대 기출로 매긴 순위입니다. 뉴스를 불러오는 중…', topikForecastWrite:'쓰기', topikForecastNews:'뉴스: 주 {n}건 (평소 {m}건)', topikForecastOthers:'그 밖의 후보 주제', topikForecastUnforeseen:'목록에 없는 주제', topikForecastUpdated:'역대 기출과 최근 뉴스로 매긴 다음 주제 순위입니다. 뉴스 기준: {time}.', topikForecastNoNews:'역대 기출로 매긴 다음 주제 순위입니다. 뉴스를 불러오지 못해 시사 주제에 반영하지 않았습니다.', hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', deleteJobConfirm:'이 지원 기록을 삭제하시겠습니까?', deleteJobConfirmCv:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서도 함께 삭제됩니다.', deleteJobConfirmCover:'이 지원 기록을 삭제하시겠습니까? 첨부한 자기소개서도 함께 삭제됩니다.', deleteJobConfirmBoth:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서와 자기소개서도 함께 삭제됩니다.', deleteCertConfirm:'이 자격증을 삭제하시겠습니까?', deleteBookConfirm:'이 책을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', deleteArticleConfirm:'이 논문을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'무작위', lblWritingQ53Image:'이미지 첨부', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'54번 모의고사 시작 (35분)', writingMockStartBtn:'실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
+    hTopikTemplates:'TOPIK 쓰기 표현', topikTplIntro:'51~54번에 쓰는 문장 틀과 예문입니다. ~ 부분을 채워 쓰세요.', topikTplToggle:'쓰기 표현', topikTplSearch:'표현 검색', topikTplAll:'전체', topikTplStyle:'문어체', topikTplQuestion:'{n}번', topikTplInsert:'넣기', topikTplCopy:'복사', topikTplCopied:'복사됨', topikTplNone:'맞는 표현이 없습니다.', topikTplCount:'{n}개', hTopikForecast:'54번 주제 예측', studySubTopik:'TOPIK', hTopikGuide:'TOPIK 가이드', topikGuideIntro:'시험 구성과 쓰기 문항별 출제 경향입니다. 83회~107회 기출을 바탕으로 정리했습니다.', topikForecastLoading:'역대 기출로 매긴 순위입니다. 뉴스를 불러오는 중…', topikForecastWrite:'쓰기', topikForecastNews:'뉴스: 주 {n}건 (평소 {m}건)', topikForecastOthers:'그 밖의 후보 주제', topikForecastUnforeseen:'목록에 없는 주제', topikForecastUpdated:'역대 기출과 최근 뉴스로 매긴 다음 주제 순위입니다. 뉴스 기준: {time}.', topikForecastNoNews:'역대 기출로 매긴 다음 주제 순위입니다. 뉴스를 불러오지 못해 시사 주제에 반영하지 않았습니다.', hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', deleteJobConfirm:'이 지원 기록을 삭제하시겠습니까?', deleteJobConfirmCv:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서도 함께 삭제됩니다.', deleteJobConfirmCover:'이 지원 기록을 삭제하시겠습니까? 첨부한 자기소개서도 함께 삭제됩니다.', deleteJobConfirmBoth:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서와 자기소개서도 함께 삭제됩니다.', deleteCertConfirm:'이 자격증을 삭제하시겠습니까?', deleteBookConfirm:'이 책을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', deleteArticleConfirm:'이 논문을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'무작위', lblWritingQ53Image:'이미지 첨부', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'54번 모의고사 시작 (35분)', writingMockStartBtn:'실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
     lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
     gramJumpPlaceholder:'- 선택 -', gramAllLevels:'전체', gramIntermediateGroup:'중급', gramAdvancedGroup:'고급',
@@ -12682,7 +12705,7 @@ const I18N = {
     deleteEventConfirm:'Xóa mục "{title}"? Lời nhắc của nó cũng bị xóa và nó biến mất với mọi người được chia sẻ.',
     editEventModalTitle:'Sửa', editRemindersModalTitle:'Sửa nhắc nhở', deleteEventBtn:'Xóa',
     addCourseBtn:'Thêm khóa học', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', colorCustom:'Tùy chỉnh', colorWheel:'Bánh xe màu', colorBrightness:'Độ sáng', colorHex:'Mã màu', colorPicker:'Mở bộ chọn màu', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch, ghi chú và đề cương cho tất cả mọi người.', deleteNoteConfirm:'Xóa ghi chú "{title}"? Mọi thứ đã viết trong đó cũng bị xóa với tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', saveFailed:'Không thể lưu thay đổi đó nên đã hoàn lại. Kiểm tra kết nối và thử lại.', studySubVideos:'Video', hVideos:'Video', lblVideoSearch:'Tìm kiếm', lblVideoSort:'Sắp xếp', videoSearchPlaceholder:'Tìm video...', videoEmpty:'Chưa có liên kết video nào. Liên kết YouTube trên các điểm ngữ pháp sẽ hiện ở đây.', videoNoMatches:'Không có video nào khớp với tìm kiếm đó.', videoPlay:'Phát', videoOpenOnYouTube:'Mở trên YouTube', sortFieldAdded:'Đã thêm',  hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh',
-    hTopikTemplates:'Mẫu câu viết TOPIK', topikTplIntro:'Khung câu cho câu 51 đến 54, mỗi khung kèm ví dụ. Dấu ~ là phần bạn điền vào.', topikTplToggle:'Mẫu câu', topikTplSearch:'Tìm mẫu câu', topikTplAll:'Tất cả', topikTplStyle:'Văn viết', topikTplQuestion:'Câu {n}', topikTplInsert:'Chèn', topikTplCopy:'Sao chép', topikTplCopied:'Đã chép', topikTplNone:'Không có mẫu câu phù hợp.', topikTplCount:'{n} mẫu', hTopikForecast:'Dự đoán đề câu 54', topikForecastLoading:'Xếp hạng dựa trên đề cũ. Đang tải tin tức…', topikForecastWrite:'Viết', topikForecastNews:'Tin tức: {n} bài mỗi tuần, thường {m}', topikForecastOthers:'Các chủ đề khác trong danh sách', topikForecastUnforeseen:'Một chủ đề ngoài danh sách', topikForecastUpdated:'Xếp hạng đề tiếp theo dựa trên đề cũ và tin tức gần đây. Tin tức cập nhật lúc {time}.', topikForecastNoNews:'Xếp hạng đề tiếp theo dựa trên đề cũ. Không tải được tin tức nên chủ đề thời sự chưa được tính theo tin tức.', hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', deleteSampleConfirm:'Xóa bài viết này?', deleteJobConfirm:'Xóa đơn ứng tuyển này?', deleteJobConfirmCv:'Xóa đơn ứng tuyển này? CV đã tải lên cũng sẽ bị xóa.', deleteJobConfirmCover:'Xóa đơn ứng tuyển này? Thư xin việc đã tải lên cũng sẽ bị xóa.', deleteJobConfirmBoth:'Xóa đơn ứng tuyển này? CV và thư xin việc đã tải lên cũng sẽ bị xóa.', deleteCertConfirm:'Xóa chứng chỉ này?', deleteBookConfirm:'Xóa cuốn sách này? Các ghi chú sẽ bị xóa theo.', deleteArticleConfirm:'Xóa bài báo này? Các ghi chú sẽ bị xóa theo.', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
+    hTopikTemplates:'Mẫu câu viết TOPIK', topikTplIntro:'Khung câu cho câu 51 đến 54, mỗi khung kèm ví dụ. Dấu ~ là phần bạn điền vào.', topikTplToggle:'Mẫu câu', topikTplSearch:'Tìm mẫu câu', topikTplAll:'Tất cả', topikTplStyle:'Văn viết', topikTplQuestion:'Câu {n}', topikTplInsert:'Chèn', topikTplCopy:'Sao chép', topikTplCopied:'Đã chép', topikTplNone:'Không có mẫu câu phù hợp.', topikTplCount:'{n} mẫu', hTopikForecast:'Dự đoán đề câu 54', studySubTopik:'TOPIK', hTopikGuide:'Hướng dẫn TOPIK', topikGuideIntro:'Cấu trúc kỳ thi và yêu cầu của từng câu viết, tổng hợp từ đề thi kỳ 83 đến kỳ 107.', topikForecastLoading:'Xếp hạng dựa trên đề cũ. Đang tải tin tức…', topikForecastWrite:'Viết', topikForecastNews:'Tin tức: {n} bài mỗi tuần, thường {m}', topikForecastOthers:'Các chủ đề khác trong danh sách', topikForecastUnforeseen:'Một chủ đề ngoài danh sách', topikForecastUpdated:'Xếp hạng đề tiếp theo dựa trên đề cũ và tin tức gần đây. Tin tức cập nhật lúc {time}.', topikForecastNoNews:'Xếp hạng đề tiếp theo dựa trên đề cũ. Không tải được tin tức nên chủ đề thời sự chưa được tính theo tin tức.', hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', deleteSampleConfirm:'Xóa bài viết này?', deleteJobConfirm:'Xóa đơn ứng tuyển này?', deleteJobConfirmCv:'Xóa đơn ứng tuyển này? CV đã tải lên cũng sẽ bị xóa.', deleteJobConfirmCover:'Xóa đơn ứng tuyển này? Thư xin việc đã tải lên cũng sẽ bị xóa.', deleteJobConfirmBoth:'Xóa đơn ứng tuyển này? CV và thư xin việc đã tải lên cũng sẽ bị xóa.', deleteCertConfirm:'Xóa chứng chỉ này?', deleteBookConfirm:'Xóa cuốn sách này? Các ghi chú sẽ bị xóa theo.', deleteArticleConfirm:'Xóa bài báo này? Các ghi chú sẽ bị xóa theo.', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
     lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
     gramJumpPlaceholder:'- Chọn -', gramAllLevels:'Tất cả', gramIntermediateGroup:'Trung cấp', gramAdvancedGroup:'Cao cấp',
@@ -12814,7 +12837,7 @@ const STATIC_MAP = {
   guestModeBtn:'guestModeBtn', guestBannerText:'guestBannerText',
   hNotebookList:'hNotebookList', lblNotebookPersonFilter:'lblNotesPersonFilter', saveNotebookBtn:'saveNoteBtn', closeNotebookBtn:'closeNoteBtn',
   hTopikTemplates:'hTopikTemplates', topikTplIntro:'topikTplIntro', writingTplToggleBtn:'topikTplToggle', writingMockTplToggleBtn:'topikTplToggle',
-  hNewWriting:'hNewWriting', hTopikForecast:'hTopikForecast', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', deleteAllWritingBtn:'deleteAllWritingBtn', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
+  hNewWriting:'hNewWriting', hTopikForecast:'hTopikForecast', studySubTopikBtn:'studySubTopik', hTopikGuide:'hTopikGuide', topikGuideIntro:'topikGuideIntro', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', deleteAllWritingBtn:'deleteAllWritingBtn', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
   lblWritingCustomTaskType:'lblWritingCustomTaskType', writingTaskTypeEssayOpt:'writingTaskTypeEssay', writingTaskTypeDataOpt:'writingTaskTypeData', lblWritingCustomDescription:'lblWritingCustomDescription', lblWritingImage:'lblWritingImage', writingImageHint:'writingImageHint',
   lblWritingEssayGroup:'lblWritingEssayGroup', lblWritingQ53Group:'lblWritingQ53Group', lblWritingCustomGroup:'lblWritingCustomGroup', writingEssayRandomBtn:'writingRandomBtn', writingQ53RandomBtn:'writingRandomBtn', writingEssayStartBtn:'startWritingBtn', writingQ53StartBtn:'startWritingBtn', lblWritingQ53Image:'lblWritingQ53Image', writingQ53ImageHint:'writingQ53ImageHint', lblWritingMockGroup:'lblWritingMockGroup', writingMockDataStartBtn:'writingMockDataStartBtn', writingMockEssayStartBtn:'writingMockEssayStartBtn', writingMockStartBtn:'writingMockStartBtn', writingMockHint:'writingMockHint',
   writingSampleTimerStartBtn:'timerStartBtn', writingSampleTimerPauseBtn:'timerPauseBtn', writingSampleTimerResetBtn:'timerResetBtn', writingSampleTimerSaveBtn:'timerSaveBtn',
@@ -14139,7 +14162,12 @@ function rebuildRecurFreqSelect(){
 }
 function applyLanguage(lang){
   currentLang = lang;
-  if(typeof q54NewsCache !== 'undefined' && document.getElementById('q54ForecastList')) renderQ54Forecast(q54NewsCache);
+  // Flags, not typeof: applyLanguage can run before these blocks have, and
+  // the forecast's own consts would then be read in their TDZ. The old test
+  // (typeof q54NewsCache) also skipped the repaint while the news loaded, so
+  // the card stayed in the previous language.
+  if(q54Ready) renderQ54Forecast(q54NewsCache);
+  if(topikGuideReady) renderTopikGuide();
   localStorage.setItem('trackerLang', lang);
   // The note editors' link box takes its labels from CSS content (see
   // .ql-snow .ql-tooltip), so they are handed over as custom properties.
@@ -28009,6 +28037,7 @@ const TAB_STRUCTURE = [
     { key:'study.log', labelKey:'studySubLog', btnId:'studySubLogBtn', view:'log' },
     { key:'study.grammar', labelKey:'studySubGrammar', btnId:'studySubGrammarBtn', view:'grammar' },
     { key:'study.writing', labelKey:'studySubWriting', btnId:'studySubWritingBtn', view:'writing' },
+    { key:'study.topik', labelKey:'studySubTopik', btnId:'studySubTopikBtn', view:'topik' },
     { key:'study.notebook', labelKey:'studySubNotebook', btnId:'studySubNotebookBtn', view:'notebook' },
     { key:'study.videos', labelKey:'studySubVideos', btnId:'studySubVideosBtn', view:'videos' },
   ]},
@@ -28716,7 +28745,7 @@ const SPLIT_PANE_MIN_H = 320;
 const SPLIT_SWAP_ICON = '<polyline points="8 3 4 7 8 11"></polyline><line x1="4" y1="7" x2="20" y2="7"></line><polyline points="16 13 20 17 16 21"></polyline><line x1="20" y1="17" x2="4" y2="17"></line>';
 const SPLIT_GROUPS = {
   calendar: { panel:'panelCalendar', row:'calendarSubToggle', sections:{ overview:'calendarOverviewSection', calendar:'calendarCalendarSection', expenditure:'calendarExpensesSection' } },
-  study:    { panel:'panelStudy', row:'studySubToggle', sections:{ log:'studyLogSection', grammar:'studyGrammarSection', writing:'studyWritingSection', notebook:'studyNotebookSection' } },
+  study:    { panel:'panelStudy', row:'studySubToggle', sections:{ log:'studyLogSection', grammar:'studyGrammarSection', writing:'studyWritingSection', topik:'studyTopikSection', notebook:'studyNotebookSection' } },
   yonsei:   { panel:'panelYonsei', row:'yonseiSubToggle', sections:{ courses:'yonseiCoursesSection', notes:'yonseiNotesSection', todos:'yonseiTodosSection', boards:'yonseiBoardsSection' } },
   reading:  { panel:'panelReading', row:'readingSubToggle', sections:{ books:'readingBooksSection', articles:'readingArticlesSection' } },
   jobs:     { panel:'panelJobs', row:'jobsSubToggle', sections:{ applications:'jobsApplicationsSection', certifications:'jobsCertificationsSection', jobboard:'jobsJobBoardSection' } },
@@ -40714,8 +40743,8 @@ document.getElementById('videoSearchInput').addEventListener('input', (e)=>{
 });
 function switchStudySubTab(view){
   if(splitSwitchGuard('study', view)) return;
-  const btns = { log: 'studySubLogBtn', grammar: 'studySubGrammarBtn', writing: 'studySubWritingBtn', notebook: 'studySubNotebookBtn', videos: 'studySubVideosBtn' };
-  const sections = { log: 'studyLogSection', grammar: 'studyGrammarSection', writing: 'studyWritingSection', notebook: 'studyNotebookSection', videos: 'studyVideosSection' };
+  const btns = { log: 'studySubLogBtn', grammar: 'studySubGrammarBtn', writing: 'studySubWritingBtn', topik: 'studySubTopikBtn', notebook: 'studySubNotebookBtn', videos: 'studySubVideosBtn' };
+  const sections = { log: 'studyLogSection', grammar: 'studyGrammarSection', writing: 'studyWritingSection', topik: 'studyTopikSection', notebook: 'studyNotebookSection', videos: 'studyVideosSection' };
   Object.entries(btns).forEach(([v,id])=> document.getElementById(id).classList.toggle('active', v===view));
   Object.entries(sections).forEach(([v,id])=> document.getElementById(id).classList.toggle('hidden', v!==view));
   if(view === 'grammar') rebuildGramJumpSelect();
@@ -40726,6 +40755,7 @@ function switchStudySubTab(view){
 document.getElementById('studySubLogBtn').addEventListener('click', ()=> switchStudySubTab('log'));
 document.getElementById('studySubGrammarBtn').addEventListener('click', ()=> switchStudySubTab('grammar'));
 document.getElementById('studySubWritingBtn').addEventListener('click', ()=> switchStudySubTab('writing'));
+document.getElementById('studySubTopikBtn').addEventListener('click', ()=> switchStudySubTab('topik'));
 document.getElementById('studySubNotebookBtn').addEventListener('click', ()=> switchStudySubTab('notebook'));
 document.getElementById('studySubVideosBtn').addEventListener('click', ()=> switchStudySubTab('videos'));
 
@@ -41756,6 +41786,8 @@ document.getElementById('q54ForecastList').addEventListener('click', async (e)=>
   if(!btn) return;
   const sample = await createWritingSample(btn.dataset.q54, 'essay', 600, 700, null);
   if(!sample) return;
+  // The forecast sits on the TOPIK tab; the sample opens where it is written.
+  switchStudySubTab('writing');
   renderWritingList();
   openWritingSample(sample.id, currentUser.id);
 });
@@ -41763,7 +41795,9 @@ document.getElementById('q54ForecastList').addEventListener('click', async (e)=>
 // The model alone is instant; the news is fetched only once the card is on
 // screen, so opening the app does not call out to the news every time.
 var q54NewsCache; // undefined while loading, null if the news failed
+var q54Ready;
 renderQ54Forecast(undefined);
+q54Ready = true;
 (function watchQ54(){
   const card = document.getElementById('q54ForecastCard');
   if(!card || !('IntersectionObserver' in window)) return;
@@ -41775,6 +41809,263 @@ renderQ54Forecast(undefined);
   });
   io.observe(card);
 })();
+
+/* ---------- TOPIK GUIDE ----------
+   The TOPIK tab's guide: what the exam looks like and what each writing
+   question asks for. The Q51-Q54 sections are read off the 83rd to 107th
+   papers (27 Oct): Q54's three guiding questions came in the same order in
+   23 of 25, and Q53 has had one shape throughout. Content lives here in all
+   three languages, like the writing templates, not in I18N. Each section is
+   a fold; which ones are open survives a language change. */
+var topikGuideReady;
+const TOPIK_GUIDE = [
+  { id:'overview',
+    t:{ en:'The test at a glance', ko:'시험 한눈에 보기', vi:'Tổng quan kỳ thi' },
+    b:{
+      en:`<table class="tg-table"><tr><th></th><th>Sections</th><th>Points</th><th>Levels</th></tr>
+<tr><td>TOPIK I</td><td>Listening 30 questions (40 min)<br>Reading 40 questions (60 min)</td><td>200</td><td>1: 80+<br>2: 140+</td></tr>
+<tr><td>TOPIK II</td><td>Period 1: Listening 50 questions (60 min) + Writing 4 questions (50 min)<br>Period 2: Reading 50 questions (70 min)</td><td>300</td><td>3: 120+<br>4: 150+<br>5: 190+<br>6: 230+</td></tr></table>
+<ul><li>There is no minimum per section. The level comes from the total.</li>
+<li>A wrong multiple-choice answer costs nothing, so never leave one blank.</li>
+<li>Writing is 100 of TOPIK II's 300 points, and question 54 alone is 50 of them.</li></ul>`,
+      ko:`<table class="tg-table"><tr><th></th><th>영역</th><th>총점</th><th>등급</th></tr>
+<tr><td>TOPIK I</td><td>듣기 30문항 (40분)<br>읽기 40문항 (60분)</td><td>200</td><td>1급: 80점 이상<br>2급: 140점 이상</td></tr>
+<tr><td>TOPIK II</td><td>1교시: 듣기 50문항 (60분) + 쓰기 4문항 (50분)<br>2교시: 읽기 50문항 (70분)</td><td>300</td><td>3급: 120점 이상<br>4급: 150점 이상<br>5급: 190점 이상<br>6급: 230점 이상</td></tr></table>
+<ul><li>영역별 과락은 없습니다. 등급은 총점으로 정해집니다.</li>
+<li>객관식은 틀려도 감점이 없으니 빈칸으로 두지 마세요.</li>
+<li>쓰기는 TOPIK II 300점 중 100점이고, 그중 54번 하나가 50점입니다.</li></ul>`,
+      vi:`<table class="tg-table"><tr><th></th><th>Phần thi</th><th>Tổng điểm</th><th>Cấp</th></tr>
+<tr><td>TOPIK I</td><td>Nghe 30 câu (40 phút)<br>Đọc 40 câu (60 phút)</td><td>200</td><td>Cấp 1: từ 80<br>Cấp 2: từ 140</td></tr>
+<tr><td>TOPIK II</td><td>Tiết 1: Nghe 50 câu (60 phút) + Viết 4 câu (50 phút)<br>Tiết 2: Đọc 50 câu (70 phút)</td><td>300</td><td>Cấp 3: từ 120<br>Cấp 4: từ 150<br>Cấp 5: từ 190<br>Cấp 6: từ 230</td></tr></table>
+<ul><li>Không có điểm liệt cho từng phần. Cấp được tính theo tổng điểm.</li>
+<li>Trả lời sai câu trắc nghiệm không bị trừ điểm, nên đừng bỏ trống câu nào.</li>
+<li>Phần viết chiếm 100 trên 300 điểm của TOPIK II, riêng câu 54 đã là 50 điểm.</li></ul>`
+    }},
+  { id:'writing',
+    t:{ en:'Writing: where the points are', ko:'쓰기: 배점과 시간 배분', vi:'Viết: điểm nằm ở đâu' },
+    b:{
+      en:`<table class="tg-table"><tr><th>Q</th><th>Task</th><th>Points</th><th>Time</th></tr>
+<tr><td>51</td><td>Two blanks in a practical message</td><td>10</td><td>about 5 min</td></tr>
+<tr><td>52</td><td>Two blanks in an explanation</td><td>10</td><td>about 5 min</td></tr>
+<tr><td>53</td><td>Describe a chart, 200 to 300 characters</td><td>30</td><td>12 to 15 min</td></tr>
+<tr><td>54</td><td>Opinion essay, 600 to 700 characters</td><td>50</td><td>25 to 30 min</td></tr></table>
+<ul><li>53 and 54 are written in the written style: -다, -ㄴ다/-는다, -(으)ㄹ 것이다. Not -아요/-어요, and not -습니다.</li>
+<li>51 follows the style of the text it sits in, which is usually -습니다/-ㅂ니다.</li>
+<li>Do not let 51 to 53 eat 54's time. Half the writing score is in it.</li>
+<li>53 and 54 are marked on three things: whether the task is done, how the text is organised, and how varied and accurate the language is.</li></ul>`,
+      ko:`<table class="tg-table"><tr><th>번호</th><th>과제</th><th>배점</th><th>시간</th></tr>
+<tr><td>51</td><td>실용문 빈칸 두 개</td><td>10</td><td>약 5분</td></tr>
+<tr><td>52</td><td>설명문 빈칸 두 개</td><td>10</td><td>약 5분</td></tr>
+<tr><td>53</td><td>도표 설명 200~300자</td><td>30</td><td>12~15분</td></tr>
+<tr><td>54</td><td>의견 쓰기 600~700자</td><td>50</td><td>25~30분</td></tr></table>
+<ul><li>53번과 54번은 문어체로 씁니다: -다, -ㄴ다/-는다, -(으)ㄹ 것이다. -아요/-어요와 -습니다는 쓰지 않습니다.</li>
+<li>51번은 글의 문체를 따르며, 대개 -습니다/-ㅂ니다입니다.</li>
+<li>51~53번에 시간을 너무 쓰지 마세요. 쓰기 점수의 절반이 54번에 있습니다.</li>
+<li>53번과 54번은 과제 수행, 글의 전개 구조, 언어 사용(다양성과 정확성)으로 채점됩니다.</li></ul>`,
+      vi:`<table class="tg-table"><tr><th>Câu</th><th>Nhiệm vụ</th><th>Điểm</th><th>Thời gian</th></tr>
+<tr><td>51</td><td>Hai chỗ trống trong một văn bản thực dụng</td><td>10</td><td>khoảng 5 phút</td></tr>
+<tr><td>52</td><td>Hai chỗ trống trong một đoạn giải thích</td><td>10</td><td>khoảng 5 phút</td></tr>
+<tr><td>53</td><td>Mô tả biểu đồ, 200 đến 300 ký tự</td><td>30</td><td>12 đến 15 phút</td></tr>
+<tr><td>54</td><td>Bài luận nêu ý kiến, 600 đến 700 ký tự</td><td>50</td><td>25 đến 30 phút</td></tr></table>
+<ul><li>Câu 53 và 54 viết bằng văn viết: -다, -ㄴ다/-는다, -(으)ㄹ 것이다. Không dùng -아요/-어요, cũng không dùng -습니다.</li>
+<li>Câu 51 theo văn phong của văn bản, thường là -습니다/-ㅂ니다.</li>
+<li>Đừng để câu 51 đến 53 lấy mất thời gian của câu 54. Một nửa điểm viết nằm ở đó.</li>
+<li>Câu 53 và 54 được chấm theo ba tiêu chí: hoàn thành nhiệm vụ, bố cục bài viết, và sự đa dạng, chính xác của ngôn ngữ.</li></ul>`
+    }},
+  { id:'q51',
+    t:{ en:'Question 51: a practical message', ko:'51번: 실용문', vi:'Câu 51: văn bản thực dụng' },
+    b:{
+      en:`<ul><li>Almost always a request, inquiry or notice: an e-mail to a professor, a dorm request, a club post, a booking change, a group order.</li>
+<li>Each blank is ONE sentence that has to fit what comes before it AND after it. Read past the blank first.</li>
+<li>A blank before a question mark wants a question. A blank after 그래서 wants the result, and one before 왜냐하면 or a reason wants the request.</li>
+<li>Useful polite endings: -(으)ㄹ 수 있을까요?, -아/어 주시겠습니까?, -(으)면 좋겠습니다, -(으)려고 합니다, -기 바랍니다.</li></ul>`,
+      ko:`<ul><li>거의 항상 요청, 문의, 안내 글입니다: 교수님께 보내는 메일, 기숙사 요청, 동아리 게시글, 예약 변경, 단체 주문.</li>
+<li>빈칸 하나에 한 문장을 쓰며, 앞과 뒤에 모두 이어져야 합니다. 빈칸 뒤까지 먼저 읽으세요.</li>
+<li>빈칸 뒤에 물음표가 있으면 질문을, 그래서 뒤라면 결과를 씁니다.</li>
+<li>자주 쓰는 공손한 표현: -(으)ㄹ 수 있을까요?, -아/어 주시겠습니까?, -(으)면 좋겠습니다, -(으)려고 합니다, -기 바랍니다.</li></ul>`,
+      vi:`<ul><li>Hầu như luôn là thư yêu cầu, hỏi đáp hoặc thông báo: email gửi giáo sư, đơn xin ở ký túc xá, bài đăng câu lạc bộ, đổi lịch đặt chỗ, đặt hàng theo nhóm.</li>
+<li>Mỗi chỗ trống là MỘT câu, phải khớp với cả phần trước VÀ phần sau. Hãy đọc qua chỗ trống trước.</li>
+<li>Chỗ trống đứng trước dấu hỏi thì cần một câu hỏi. Chỗ trống sau 그래서 thì cần kết quả.</li>
+<li>Đuôi câu lịch sự hay dùng: -(으)ㄹ 수 있을까요?, -아/어 주시겠습니까?, -(으)면 좋겠습니다, -(으)려고 합니다, -기 바랍니다.</li></ul>`
+    }},
+  { id:'q52',
+    t:{ en:'Question 52: why something happens', ko:'52번: 현상의 이유', vi:'Câu 52: vì sao một hiện tượng xảy ra' },
+    b:{
+      en:`<ul><li>An everyday explanation about the body, food, nature or an object: why clouds are white, why we cry when laughing, why salt makes watermelon sweeter.</li>
+<li>Written style (-다). The words around the blank tell you what it is: 그러나/반면에 a contrast, 따라서/그러므로 a conclusion, 왜냐하면 ~기 때문이다 a reason.</li>
+<li>Reuse the passage's own words. The blank usually restates the point or draws the conclusion.</li></ul>`,
+      ko:`<ul><li>몸, 음식, 자연, 물건에 관한 생활 속 설명입니다: 구름이 흰 이유, 웃을 때 눈물이 나는 이유, 수박에 소금을 넣으면 단 이유.</li>
+<li>문어체(-다)로 씁니다. 빈칸 앞뒤의 말이 힌트입니다: 그러나/반면에는 대조, 따라서/그러므로는 결론, 왜냐하면 ~기 때문이다는 이유.</li>
+<li>지문의 단어를 다시 쓰세요. 빈칸은 대개 앞의 내용을 다시 말하거나 결론을 냅니다.</li></ul>`,
+      vi:`<ul><li>Một lời giải thích đời thường về cơ thể, đồ ăn, thiên nhiên hoặc đồ vật: vì sao mây màu trắng, vì sao cười lại chảy nước mắt, vì sao thêm muối làm dưa hấu ngọt hơn.</li>
+<li>Viết bằng văn viết (-다). Từ ngữ quanh chỗ trống cho biết cần gì: 그러나/반면에 là đối lập, 따라서/그러므로 là kết luận, 왜냐하면 ~기 때문이다 là lý do.</li>
+<li>Dùng lại từ của đoạn văn. Chỗ trống thường nhắc lại ý hoặc rút ra kết luận.</li></ul>`
+    }},
+  { id:'q53',
+    t:{ en:'Question 53: the one template', ko:'53번: 하나의 틀', vi:'Câu 53: một khuôn duy nhất' },
+    b:{
+      en:`<p>Every Q53 since the 83rd has had the same shape: a made-up city or institute (often 인주시), a change between two years (usually a decade, ending the year before the exam), a breakdown by subgroup, two causes, and sometimes an outlook. The subject is nearly always sales, consumption or participation. The old opinion survey ("who answered what") has all but gone.</p>
+<ol><li><b>Source</b>: ~에서 ~을/를 대상으로 ~에 대해 조사하였다.</li>
+<li><b>Overall change</b>: ~년 X에서 ~년 Y로 N배 증가하였다/감소하였다.</li>
+<li><b>Breakdown</b>: ~은/는 ~에서 ~(으)로 늘어난 반면, ~은/는 ~(으)로 줄었다.</li>
+<li><b>Causes and outlook</b>: 이러한 변화의 원인으로는 먼저 ~고, 다음으로 ~ 때문인 것으로 보인다. 앞으로 ~ 것으로 전망된다.</li></ol>
+<ul><li>No title, no opinion, and every number in the chart somewhere in the text.</li></ul>`,
+      ko:`<p>83회 이후 53번은 모두 같은 틀입니다: 가상의 도시나 연구소(주로 인주시), 두 시점 사이의 변화(대개 10년, 시험 전년도까지), 항목별 비교, 원인 두 가지, 때로는 전망. 주제는 거의 항상 판매, 소비, 참여입니다. 예전의 응답 비율 설문은 거의 나오지 않습니다.</p>
+<ol><li><b>조사 출처</b>: ~에서 ~을/를 대상으로 ~에 대해 조사하였다.</li>
+<li><b>전체 변화</b>: ~년 X에서 ~년 Y로 N배 증가하였다/감소하였다.</li>
+<li><b>항목별 비교</b>: ~은/는 ~에서 ~(으)로 늘어난 반면, ~은/는 ~(으)로 줄었다.</li>
+<li><b>원인과 전망</b>: 이러한 변화의 원인으로는 먼저 ~고, 다음으로 ~ 때문인 것으로 보인다. 앞으로 ~ 것으로 전망된다.</li></ol>
+<ul><li>제목을 쓰지 말고, 자기 의견을 넣지 말고, 도표의 숫자는 모두 글에 넣으세요.</li></ul>`,
+      vi:`<p>Từ kỳ 83 đến nay, câu 53 luôn có cùng một dạng: một thành phố hoặc viện nghiên cứu giả định (thường là 인주시), sự thay đổi giữa hai năm (thường cách nhau mười năm, kết thúc vào năm trước kỳ thi), phần so sánh theo nhóm, hai nguyên nhân, và đôi khi là dự báo. Chủ đề hầu như luôn là doanh số, tiêu dùng hoặc mức độ tham gia. Dạng khảo sát ý kiến cũ ("ai trả lời gì") gần như không còn.</p>
+<ol><li><b>Nguồn</b>: ~에서 ~을/를 대상으로 ~에 대해 조사하였다.</li>
+<li><b>Thay đổi chung</b>: ~년 X에서 ~년 Y로 N배 증가하였다/감소하였다.</li>
+<li><b>So sánh theo nhóm</b>: ~은/는 ~에서 ~(으)로 늘어난 반면, ~은/는 ~(으)로 줄었다.</li>
+<li><b>Nguyên nhân và dự báo</b>: 이러한 변화의 원인으로는 먼저 ~고, 다음으로 ~ 때문인 것으로 보인다. 앞으로 ~ 것으로 전망된다.</li></ol>
+<ul><li>Không viết tiêu đề, không nêu ý kiến, và đưa mọi con số trong biểu đồ vào bài.</li></ul>`
+    }},
+  { id:'q54',
+    t:{ en:'Question 54: the three-question template', ko:'54번: 세 질문의 틀', vi:'Câu 54: khuôn ba câu hỏi' },
+    b:{
+      en:`<p>In 23 of the 25 papers from the 83rd to the 107th, the three guiding questions came in the same order:</p>
+<ol><li>Why it matters, what it is, or what causes it</li>
+<li>What problems or side effects come with it</li>
+<li>What effort or solution is needed (어떤 노력이 필요한가 / 어떻게 해야 하는가)</li></ol>
+<p>Only the 88th ended with 자신의 생각 instead of a solution. So one structure fits almost any topic:</p>
+<table class="tg-table"><tr><th>Part</th><th>Characters</th><th>Content</th></tr>
+<tr><td>Introduction</td><td>100 to 120</td><td>Background, then the topic</td></tr>
+<tr><td>Paragraph 1</td><td>about 150</td><td>Answers question 1</td></tr>
+<tr><td>Paragraph 2</td><td>about 150</td><td>Answers question 2</td></tr>
+<tr><td>Paragraph 3</td><td>about 150</td><td>Answers question 3</td></tr>
+<tr><td>Conclusion</td><td>80 to 100</td><td>Sum up, then your view</td></tr></table>
+<ul><li>최근 ~이/가 사회적으로 주목을 받고 있다.</li>
+<li>~은/는 다음과 같은 이유로 중요하다. 첫째, ~. 둘째, ~.</li>
+<li>그러나 ~에는 문제점도 있다. / ~(으)ㄹ 경우 ~ 문제가 생길 수 있다.</li>
+<li>이러한 문제를 해결하기 위해서는 개인과 사회가 함께 노력해야 한다. 먼저 개인은 ~. 또한 사회는 ~.</li>
+<li>결론적으로 ~ 것이 무엇보다 중요하다고 생각한다.</li></ul>
+<p>Answer every guiding question, each in its own paragraph. Sentences copied from the prompt do not count.</p>`,
+      ko:`<p>83회부터 107회까지 25회 중 23회에서 세 개의 질문이 같은 순서로 나왔습니다:</p>
+<ol><li>왜 중요한가, 무엇인가, 또는 원인은 무엇인가</li>
+<li>어떤 문제점이나 부작용이 있는가</li>
+<li>어떤 노력이나 해결 방안이 필요한가 (어떤 노력이 필요한가 / 어떻게 해야 하는가)</li></ol>
+<p>88회만 해결 방안 대신 자신의 생각을 물었습니다. 그래서 하나의 구조로 거의 모든 주제를 쓸 수 있습니다:</p>
+<table class="tg-table"><tr><th>부분</th><th>글자 수</th><th>내용</th></tr>
+<tr><td>서론</td><td>100~120자</td><td>배경과 주제 제시</td></tr>
+<tr><td>본론 1</td><td>약 150자</td><td>질문 1에 답하기</td></tr>
+<tr><td>본론 2</td><td>약 150자</td><td>질문 2에 답하기</td></tr>
+<tr><td>본론 3</td><td>약 150자</td><td>질문 3에 답하기</td></tr>
+<tr><td>결론</td><td>80~100자</td><td>요약과 자신의 견해</td></tr></table>
+<ul><li>최근 ~이/가 사회적으로 주목을 받고 있다.</li>
+<li>~은/는 다음과 같은 이유로 중요하다. 첫째, ~. 둘째, ~.</li>
+<li>그러나 ~에는 문제점도 있다. / ~(으)ㄹ 경우 ~ 문제가 생길 수 있다.</li>
+<li>이러한 문제를 해결하기 위해서는 개인과 사회가 함께 노력해야 한다. 먼저 개인은 ~. 또한 사회는 ~.</li>
+<li>결론적으로 ~ 것이 무엇보다 중요하다고 생각한다.</li></ul>
+<p>모든 질문에 답하고, 질문마다 한 단락씩 쓰세요. 문제의 문장을 그대로 옮기면 점수가 되지 않습니다.</p>`,
+      vi:`<p>Trong 23 trên 25 đề từ kỳ 83 đến kỳ 107, ba câu hỏi gợi ý xuất hiện theo cùng một thứ tự:</p>
+<ol><li>Vì sao điều đó quan trọng, nó là gì, hoặc nguyên nhân là gì</li>
+<li>Nó kéo theo vấn đề hoặc tác dụng phụ nào</li>
+<li>Cần nỗ lực hay giải pháp gì (어떤 노력이 필요한가 / 어떻게 해야 하는가)</li></ol>
+<p>Chỉ có kỳ 88 kết thúc bằng 자신의 생각 thay cho giải pháp. Vì vậy một bố cục dùng được cho gần như mọi chủ đề:</p>
+<table class="tg-table"><tr><th>Phần</th><th>Ký tự</th><th>Nội dung</th></tr>
+<tr><td>Mở bài</td><td>100 đến 120</td><td>Bối cảnh, rồi nêu chủ đề</td></tr>
+<tr><td>Đoạn 1</td><td>khoảng 150</td><td>Trả lời câu hỏi 1</td></tr>
+<tr><td>Đoạn 2</td><td>khoảng 150</td><td>Trả lời câu hỏi 2</td></tr>
+<tr><td>Đoạn 3</td><td>khoảng 150</td><td>Trả lời câu hỏi 3</td></tr>
+<tr><td>Kết bài</td><td>80 đến 100</td><td>Tóm tắt, rồi nêu quan điểm</td></tr></table>
+<ul><li>최근 ~이/가 사회적으로 주목을 받고 있다.</li>
+<li>~은/는 다음과 같은 이유로 중요하다. 첫째, ~. 둘째, ~.</li>
+<li>그러나 ~에는 문제점도 있다. / ~(으)ㄹ 경우 ~ 문제가 생길 수 있다.</li>
+<li>이러한 문제를 해결하기 위해서는 개인과 사회가 함께 노력해야 한다. 먼저 개인은 ~. 또한 사회는 ~.</li>
+<li>결론적으로 ~ 것이 무엇보다 중요하다고 생각한다.</li></ul>
+<p>Trả lời mọi câu hỏi gợi ý, mỗi câu một đoạn. Câu chép lại từ đề bài không được tính điểm.</p>`
+    }},
+  { id:'topics',
+    t:{ en:'What question 54 asks about', ko:'54번에 나오는 주제', vi:'Câu 54 hỏi về những gì' },
+    b:{
+      en:`<p>There is no fixed rotation, but the topics fall into four families (83rd to 107th):</p>
+<ul><li><b>Personal life and the mind</b>: 창의력, 진정한 휴식, 재능 개발, 마음의 상처 회복, 직접 경험과 간접 경험</li>
+<li><b>Communication</b>: 바람직한 토론, 농담, 격려와 응원</li>
+<li><b>Technology and media</b>: CCTV, 로봇과 직업, 가짜 뉴스, 디지털 기기, 인공지능, 디지털 소외, 대중 매체</li>
+<li><b>Work, economy and society</b>: 인구 구조 변화, 기업의 사회적 책임, 직장 자율성, 차별, 재택근무, 공공위생, 성과 보상 제도, 진로 체험 교육</li></ul>
+<p>Since about the 90th the topics lean towards social, technology and work issues, and the solution question often asks what society, the government or schools should do. Have a few such sentences ready: 정부는 ~ 정책을 마련해야 한다. 학교에서는 ~ 교육을 실시할 필요가 있다. 기업은 ~.</p>`,
+      ko:`<p>정해진 순환은 없지만 주제는 네 가지로 나뉩니다 (83회~107회):</p>
+<ul><li><b>개인의 삶과 마음</b>: 창의력, 진정한 휴식, 재능 개발, 마음의 상처 회복, 직접 경험과 간접 경험</li>
+<li><b>소통</b>: 바람직한 토론, 농담, 격려와 응원</li>
+<li><b>기술과 매체</b>: CCTV, 로봇과 직업, 가짜 뉴스, 디지털 기기, 인공지능, 디지털 소외, 대중 매체</li>
+<li><b>일, 경제, 사회</b>: 인구 구조 변화, 기업의 사회적 책임, 직장 자율성, 차별, 재택근무, 공공위생, 성과 보상 제도, 진로 체험 교육</li></ul>
+<p>90회 무렵부터 사회, 기술, 일에 관한 주제가 많아졌고, 해결 방안을 묻는 질문은 사회, 정부, 학교의 역할을 묻는 경우가 많습니다. 이런 문장을 준비해 두세요: 정부는 ~ 정책을 마련해야 한다. 학교에서는 ~ 교육을 실시할 필요가 있다. 기업은 ~.</p>`,
+      vi:`<p>Không có vòng lặp cố định, nhưng chủ đề chia thành bốn nhóm (kỳ 83 đến 107):</p>
+<ul><li><b>Đời sống cá nhân và tâm lý</b>: 창의력, 진정한 휴식, 재능 개발, 마음의 상처 회복, 직접 경험과 간접 경험</li>
+<li><b>Giao tiếp</b>: 바람직한 토론, 농담, 격려와 응원</li>
+<li><b>Công nghệ và truyền thông</b>: CCTV, 로봇과 직업, 가짜 뉴스, 디지털 기기, 인공지능, 디지털 소외, 대중 매체</li>
+<li><b>Công việc, kinh tế và xã hội</b>: 인구 구조 변화, 기업의 사회적 책임, 직장 자율성, 차별, 재택근무, 공공위생, 성과 보상 제도, 진로 체험 교육</li></ul>
+<p>Từ khoảng kỳ 90, chủ đề nghiêng về xã hội, công nghệ và công việc, và câu hỏi giải pháp thường hỏi xã hội, chính phủ hay nhà trường nên làm gì. Hãy chuẩn bị sẵn vài câu: 정부는 ~ 정책을 마련해야 한다. 학교에서는 ~ 교육을 실시할 필요가 있다. 기업은 ~.</p>`
+    }},
+  { id:'mistakes',
+    t:{ en:'Common ways to lose writing points', ko:'쓰기에서 자주 깎이는 점', vi:'Những lỗi hay bị trừ điểm khi viết' },
+    b:{
+      en:`<ul><li>Mixing -아요/-습니다 with -다 in 53 and 54.</li>
+<li>Spoken words: 너무, 진짜, 근데, 그래서 at the start of a sentence. Write 매우, 정말, 그런데, 따라서.</li>
+<li>A title in 53 or 54, or your own opinion in 53.</li>
+<li>Leaving out one of 54's guiding questions.</li>
+<li>Too short: under 200 characters in 53 or 600 in 54 loses points. Past 700, the extra is not marked.</li>
+<li>Copying the prompt's own sentences.</li>
+<li>Answer sheet: one character per square, punctuation in its own square, a new paragraph starts one square in, and two digits share a square.</li></ul>`,
+      ko:`<ul><li>53번과 54번에서 -아요/-습니다와 -다를 섞어 쓰기.</li>
+<li>구어 표현: 너무, 진짜, 근데, 문장 처음의 그래서. 매우, 정말, 그런데, 따라서로 쓰세요.</li>
+<li>53번이나 54번에 제목 쓰기, 53번에 자기 의견 쓰기.</li>
+<li>54번의 질문 중 하나를 빠뜨리기.</li>
+<li>분량 부족: 53번 200자, 54번 600자보다 적으면 감점됩니다. 700자를 넘는 부분은 채점되지 않습니다.</li>
+<li>문제의 문장을 그대로 옮겨 쓰기.</li>
+<li>원고지: 한 칸에 한 글자, 문장 부호도 한 칸, 새 단락은 한 칸 들여 쓰기, 숫자는 두 자리를 한 칸에.</li></ul>`,
+      vi:`<ul><li>Trộn -아요/-습니다 với -다 trong câu 53 và 54.</li>
+<li>Từ văn nói: 너무, 진짜, 근데, 그래서 ở đầu câu. Hãy viết 매우, 정말, 그런데, 따라서.</li>
+<li>Viết tiêu đề ở câu 53 hoặc 54, hoặc nêu ý kiến riêng ở câu 53.</li>
+<li>Bỏ sót một câu hỏi gợi ý của câu 54.</li>
+<li>Quá ngắn: dưới 200 ký tự ở câu 53 hoặc dưới 600 ở câu 54 sẽ bị trừ điểm. Phần vượt quá 700 không được chấm.</li>
+<li>Chép lại câu của đề bài.</li>
+<li>Giấy ô vuông: mỗi ô một chữ, dấu câu một ô riêng, đoạn mới lùi vào một ô, và hai chữ số chung một ô.</li></ul>`
+    }},
+  { id:'reading',
+    t:{ en:'Listening and reading', ko:'듣기와 읽기', vi:'Nghe và đọc' },
+    b:{
+      en:`<ul><li>Listening cannot be replayed. Read the question and the four options before the audio starts.</li>
+<li>From the middle of both sections the questions come in pairs: one text, two questions. Read both questions before the text.</li>
+<li>Reading is 70 minutes for 50 questions, about 80 seconds each, and the last ten take longest. Keep a steady pace early, and skip a question that stalls you.</li>
+<li>Main-idea questions (중심 생각, 주제): the answer usually rephrases the last sentence, or the one after 따라서/그러므로.</li>
+<li>Ordering questions: a sentence starting with 그래서, 이, 그 or 하지만 cannot come first. Rule those out.</li>
+<li>Mark the answer sheet as you go. There is no extra time to copy answers over.</li>
+<li>On the day, bring your admission ticket and a valid ID, and check the official notice for what else you may bring. Latecomers are not let in.</li></ul>`,
+      ko:`<ul><li>듣기는 다시 들을 수 없습니다. 음성이 나오기 전에 질문과 선택지 네 개를 먼저 읽으세요.</li>
+<li>두 영역 모두 중반부터는 지문 하나에 두 문제가 나옵니다. 지문보다 두 질문을 먼저 읽으세요.</li>
+<li>읽기는 70분에 50문항, 한 문항에 약 80초이며 마지막 10문항이 가장 오래 걸립니다. 앞부분을 일정한 속도로 풀고, 막히는 문제는 넘어가세요.</li>
+<li>중심 생각, 주제 문제: 답은 대개 마지막 문장이나 따라서/그러므로 뒤의 문장을 바꿔 말한 것입니다.</li>
+<li>순서 배열 문제: 그래서, 이, 그, 하지만으로 시작하는 문장은 첫 문장이 될 수 없습니다. 먼저 지우세요.</li>
+<li>답안지는 풀면서 바로 표시하세요. 옮겨 적을 시간은 따로 없습니다.</li>
+<li>시험 당일에는 수험표와 신분증을 챙기고, 그 밖의 준비물은 공식 안내를 확인하세요. 입실 시간이 지나면 들어갈 수 없습니다.</li></ul>`,
+      vi:`<ul><li>Phần nghe không được nghe lại. Đọc câu hỏi và bốn lựa chọn trước khi âm thanh bắt đầu.</li>
+<li>Từ giữa cả hai phần, câu hỏi đi theo cặp: một bài, hai câu hỏi. Đọc cả hai câu hỏi trước khi đọc bài.</li>
+<li>Phần đọc có 70 phút cho 50 câu, khoảng 80 giây mỗi câu, và mười câu cuối tốn thời gian nhất. Giữ nhịp đều ở đầu và bỏ qua câu làm bạn bị kẹt.</li>
+<li>Câu hỏi ý chính (중심 생각, 주제): đáp án thường diễn đạt lại câu cuối, hoặc câu sau 따라서/그러므로.</li>
+<li>Câu sắp xếp thứ tự: câu bắt đầu bằng 그래서, 이, 그 hoặc 하지만 không thể đứng đầu. Hãy loại chúng trước.</li>
+<li>Tô phiếu trả lời ngay khi làm. Không có thêm thời gian để chép đáp án.</li>
+<li>Ngày thi, mang phiếu dự thi và giấy tờ tùy thân hợp lệ, và xem thông báo chính thức về những vật dụng khác được mang theo. Đến muộn sẽ không được vào phòng thi.</li></ul>`
+    }},
+];
+function topikGuideText(o){ return (o && (o[currentLang] || o.en)) || ''; }
+function renderTopikGuide(){
+  const host = document.getElementById('topikGuideBody');
+  if(!host) return;
+  // Keep what the reader had open across a repaint (a language change).
+  const open = new Set([...host.querySelectorAll('details[open]')].map(d=>d.dataset.tg));
+  const first = !host.children.length;
+  host.innerHTML = TOPIK_GUIDE.map((s, i)=>`
+    <details class="tg-sec" data-tg="${s.id}"${(first ? i === 0 : open.has(s.id)) ? ' open' : ''}>
+      <summary>${escapeHtml(topikGuideText(s.t))}</summary>
+      <div class="tg-body">${topikGuideText(s.b)}</div>
+    </details>`).join('');
+}
+renderTopikGuide();
+topikGuideReady = true;
 
 
 function formatNum(n){ return typeof n === 'number' ? n.toLocaleString() : n; }
