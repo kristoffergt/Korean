@@ -1,14 +1,19 @@
-// Edge Function: how much the Korean news is talking about each phrase.
+// Edge Function: weekly Korean news counts for phrases.
 //
-// The Q54 forecast weights current-affairs topics by news coverage, since a
-// topic like 전동 킥보드 turns up after months of accidents in the papers.
-// For each phrase this reads Google News' Korean RSS for the last 90 days and
-// answers with ARTICLES PER DAY.
+// The Q54 forecast weights current-affairs topics by a news SPIKE: what
+// predicted 전동 킥보드 was that its coverage jumped to ~40 articles a week in
+// the six weeks before the exam against its usual ~13, after a run of
+// accidents -- not how much it was covered overall. The spike is computed in
+// the browser from weekly counts; this function only counts.
 //
-// The feed caps at 100 items, newest first, so a plain count saturates for
-// anything widely covered. Density does not: when 100 come back, how far back
-// the 100th one reaches is what says how busy the topic is (100 in 3 days is
-// a story, 100 in 80 days is background). Fewer than 100 is simply n / 90.
+// It has to be WEEKLY. Google News' Korean RSS samples each search and caps
+// it at 100 items, so one search over six weeks returns far fewer articles
+// than six one-week searches added up, and that undercount flattened the very
+// spike being looked for (measured: x1.55 for 킥보드 one way, x2.78 the other).
+//
+// ?q=phrase|phrase&w=YYYY-MM-DD,YYYY-MM-DD  (w = week starts; each week is 7
+// days from that date). Answers { counts: { phrase: { week: n } } }, n capped
+// at 100 by the feed. A failed count is left out so the caller asks again.
 //
 // No auth and no writes: it proxies a public feed. Deployed with verify_jwt
 // off, and only this site may call it from a browser.
@@ -27,28 +32,21 @@ function corsFor(req: Request): Record<string, string> {
     : { "Vary": "Origin" };
 }
 
-const WINDOW_DAYS = 90;
-const MAX_PHRASES = 80;
-const CONCURRENCY = 6;
+const MAX_PAIRS = 120;
+const CONCURRENCY = 8;
 const DAY_MS = 86_400_000;
+const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
 
-async function density(phrase: string): Promise<{ perDay: number; n: number } | null> {
-  const q = encodeURIComponent(`"${phrase}" when:${WINDOW_DAYS}d`);
+async function weekCount(phrase: string, week: string): Promise<number | null> {
+  const from = Date.parse(week + "T00:00:00Z");
+  const q = encodeURIComponent(`"${phrase}" after:${week} before:${iso(from + 7 * DAY_MS)}`);
   const res = await fetch(`https://news.google.com/rss/search?q=${q}&hl=ko&gl=KR&ceid=KR:ko`, {
     headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36" },
   });
   if (!res.ok) return null;
   const xml = await res.text();
-  const dates = [...xml.matchAll(/<pubDate>([^<]+)<\/pubDate>/g)]
-    .map((m) => Date.parse(m[1]))
-    .filter((t) => Number.isFinite(t))
-    .sort((a, b) => b - a);
-  const n = dates.length;
-  if (n < 100) return { perDay: n / WINDOW_DAYS, n };
-  // Saturated: the span the newest 100 cover. Never less than a day, so one
-  // burst of syndicated copies cannot read as infinitely busy.
-  const spanDays = Math.max(1, (Date.now() - dates[n - 1]) / DAY_MS);
-  return { perDay: n / spanDays, n };
+  if (!xml.includes("<rss")) return null;
+  return (xml.match(/<item>/g) || []).length;
 }
 
 Deno.serve(async (req: Request) => {
@@ -57,22 +55,27 @@ Deno.serve(async (req: Request) => {
   try {
     const url = new URL(req.url);
     const phrases = (url.searchParams.get("q") || "")
-      .split("|").map((s) => s.trim()).filter(Boolean)
-      .filter((s, i, a) => a.indexOf(s) === i)
-      .slice(0, MAX_PHRASES)
-      .filter((s) => s.length <= 40);
-    const out: Record<string, { perDay: number; n: number } | null> = {};
-    for (let i = 0; i < phrases.length; i += CONCURRENCY) {
-      const batch = phrases.slice(i, i + CONCURRENCY);
-      const got = await Promise.all(batch.map((p) => density(p).catch(() => null)));
-      batch.forEach((p, k) => (out[p] = got[k]));
+      .split("|").map((s) => s.trim()).filter((s) => s && s.length <= 40)
+      .filter((s, i, a) => a.indexOf(s) === i);
+    const weeks = (url.searchParams.get("w") || "")
+      .split(",").map((s) => s.trim()).filter((s) => /^\d{4}-\d{2}-\d{2}$/.test(s))
+      .filter((s, i, a) => a.indexOf(s) === i);
+    const pairs = phrases.flatMap((p) => weeks.map((w) => [p, w] as const)).slice(0, MAX_PAIRS);
+    const counts: Record<string, Record<string, number>> = {};
+    for (let i = 0; i < pairs.length; i += CONCURRENCY) {
+      const batch = pairs.slice(i, i + CONCURRENCY);
+      const got = await Promise.all(batch.map(([p, w]) => weekCount(p, w).catch(() => null)));
+      batch.forEach(([p, w], k) => {
+        if (got[k] === null) return;
+        (counts[p] = counts[p] || {})[w] = got[k] as number;
+      });
     }
-    return new Response(JSON.stringify({ signals: out, at: new Date().toISOString() }), {
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json", "Cache-Control": "public, max-age=21600" },
+    return new Response(JSON.stringify({ counts, at: new Date().toISOString() }), {
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("topik-news-signal", err);
-    return new Response(JSON.stringify({ signals: {}, error: true }), {
+    return new Response(JSON.stringify({ counts: {}, error: true }), {
       status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   }
