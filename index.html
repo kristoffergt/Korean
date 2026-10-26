@@ -2484,15 +2484,18 @@ body.dark .cm-pt-logo.brand-icon-light{display:inline-block;}
   font-size:10.5px;font-weight:800;line-height:1;cursor:pointer;justify-content:center;}
 .cm-react-chip > span{padding-right:2px;}
 .cm-react-chip:hover{background:rgba(127,127,127,0.16);}
-/* Your own is the one that is ON, in the app's own green. */
-.cm-react-chip[aria-pressed="true"]{background:var(--on-soft);color:var(--on);box-shadow:inset 0 0 0 1.5px var(--on);}
+/* Your own is the one that is ON, in YOUR colour (real-user request: "the
+   color should be your own color (right now it's always just green)"). Only
+   others' reactions stay in the plain ink. */
+.cm-react-chip[aria-pressed="true"]{background:color-mix(in srgb, var(--my-color, var(--on)) 16%, transparent);
+  color:var(--my-color, var(--on));box-shadow:inset 0 0 0 1.5px var(--my-color, var(--on));}
 .cm-react-art{display:block;flex:none;overflow:visible;}
 @keyframes cmReactPop{0%{transform:scale(0.2) rotate(-25deg);}55%{transform:scale(1.35) rotate(8deg);}80%{transform:scale(0.92);}100%{transform:none;}}
 .cm-react-chip.pop{animation:cmReactPop 420ms cubic-bezier(0.18,0.9,0.28,1.22);}
 /* A ring goes out from a reaction you have just added. */
 @keyframes cmReactRing{0%{opacity:.9;transform:scale(0.6);}100%{opacity:0;transform:scale(2.1);}}
 .cm-react-chip.pop::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid var(--on);
-  pointer-events:none;animation:cmReactRing 520ms ease-out forwards;}
+  pointer-events:none;animation:cmReactRing 520ms ease-out forwards;border-color:var(--my-color, var(--on));}
 /* EACH ONE MOVES IN ITS OWN WAY: under the pointer in the picker, and once as
    it lands on a message. Transforms on the drawing only, about its centre. */
 .cm-react-art{transform-box:fill-box;transform-origin:50% 50%;}
@@ -2585,6 +2588,64 @@ body.dark .cm-pt-logo.brand-icon-light{display:inline-block;}
   display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 12px;
   border-radius:10px;background:rgba(127,127,127,0.09);font-size:11.5px;color:var(--ink-soft);}
 .cm-sys > .cm-more{right:-27px;}
+/* @mentions: the name in the text, and the picker above the box. */
+.cm-mention{font-weight:700;color:var(--on);}
+.cm-mention.me{color:var(--seal);background:color-mix(in srgb, var(--seal) 14%, transparent);border-radius:4px;padding:0 3px;}
+.cm-mention-pop{display:flex;flex-direction:column;gap:2px;margin-top:8px;padding:4px;max-height:180px;overflow-y:auto;
+  border:1px solid var(--line);border-radius:10px;background:var(--paper);box-shadow:0 6px 18px rgba(0,0,0,0.14);}
+.cm-mention-opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border:none;border-radius:7px;background:none;
+  color:var(--ink);font-size:13px;text-align:left;cursor:pointer;}
+.cm-mention-opt[aria-selected="true"],.cm-mention-opt:hover{background:rgba(127,127,127,0.14);}
+/* Banners: one host at the top centre. A pill over the middle of the top bar
+   on a computer, a card sliding down from the top edge on a phone. */
+#ptBannerHost{position:fixed;left:50%;top:calc(env(safe-area-inset-top, 0px) + 8px);transform:translateX(-50%);
+  z-index:3000;display:flex;flex-direction:column;align-items:center;gap:8px;width:min(440px, calc(100vw - 20px));
+  pointer-events:none;}
+.pt-banner{pointer-events:auto;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:10px;
+  padding:10px 10px 10px 12px;border-radius:16px;background:var(--paper);color:var(--ink);
+  border:1px solid var(--line);box-shadow:0 12px 32px rgba(0,0,0,0.22);cursor:pointer;
+  animation:ptBannerIn 360ms cubic-bezier(0.2,0.9,0.3,1.12);}
+.pt-banner.leaving{animation:ptBannerOut 240ms ease-in forwards;}
+@keyframes ptBannerIn{from{transform:translateY(-130%);opacity:0;}to{transform:none;opacity:1;}}
+@keyframes ptBannerOut{to{transform:translateY(-130%);opacity:0;}}
+.pt-banner-face{width:30px;height:30px;font-size:13px;flex:none;}
+.pt-banner-bell{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:none;
+  border-radius:50%;background:var(--on-soft);color:var(--on);}
+.pt-banner-text{flex:1;min-width:0;}
+.pt-banner-title{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pt-banner-body{font-size:12.5px;color:var(--ink-soft);margin-top:1px;overflow:hidden;display:-webkit-box;
+  -webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.pt-banner-close{flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+  border:none;border-radius:50%;background:none;color:var(--ink-soft);cursor:pointer;}
+.pt-banner-close:hover{background:rgba(127,127,127,0.16);}
+/* A mention of you is the loud one: bigger, in the sender's colour, pulsing. */
+.pt-banner.mention{padding:14px 12px 14px 14px;border:2px solid var(--banner-accent, var(--seal));
+  box-shadow:0 14px 38px rgba(0,0,0,0.28), 0 0 0 4px color-mix(in srgb, var(--banner-accent, var(--seal)) 22%, transparent);
+  animation:ptBannerIn 360ms cubic-bezier(0.2,0.9,0.3,1.12), ptBannerPulse 1.6s ease-in-out 380ms 3;}
+.pt-banner.mention.leaving{animation:ptBannerOut 240ms ease-in forwards;}
+@keyframes ptBannerPulse{50%{box-shadow:0 14px 38px rgba(0,0,0,0.28), 0 0 0 9px color-mix(in srgb, var(--banner-accent, var(--seal)) 10%, transparent);}}
+.pt-banner.mention .pt-banner-face{width:40px;height:40px;font-size:16px;}
+.pt-banner.mention .pt-banner-title{font-size:15px;}
+.pt-banner.mention .pt-banner-body{font-size:13.5px;color:var(--ink);}
+.pt-banner-kicker{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--banner-accent, var(--seal));}
+@media (min-width: 900px) and (pointer: fine){
+  #ptBannerHost{top:10px;width:auto;max-width:520px;}
+  .pt-banner{width:auto;min-width:300px;max-width:520px;border-radius:999px;padding:5px 6px 5px 6px;gap:9px;}
+  .pt-banner .pt-banner-body{-webkit-line-clamp:1;}
+  .pt-banner.mention{border-radius:20px;padding:10px 10px 10px 12px;}
+}
+@media (prefers-reduced-motion: reduce){ .pt-banner,.pt-banner.mention,.pt-banner.leaving{animation:none;} }
+/* Read once, a request folds down to a single small line (real-user request:
+   "Don't need the big 'you asked Roxy...' message constantly. it should
+   collapse ~15 seconds after viewing it"). A press opens it again. */
+.cm-sys-short{display:none;}
+.cm-sys.collapsed{flex-direction:row;gap:6px;padding:2px 10px;background:none;font-size:10.5px;cursor:pointer;
+  transition:padding 220ms ease, background 220ms ease;}
+.cm-sys.collapsed:hover{background:rgba(127,127,127,0.09);}
+.cm-sys.collapsed .cm-sys-line > span:not(.cm-sys-short),
+.cm-sys.collapsed .cm-sys-quote,.cm-sys.collapsed .cm-sys-act,.cm-sys.collapsed .cm-sys-time{display:none;}
+.cm-sys.collapsed .cm-sys-short{display:inline;}
+.cm-sys.collapsed .cm-sys-done{font-size:10.5px;}
 .cm-sys-line{display:inline-flex;align-items:center;gap:5px;font-weight:600;}
 .cm-sys-line svg{flex:none;}
 .cm-sys-quote{background:none;border:none;padding:0;color:var(--ink);font-size:12px;font-style:italic;
@@ -3761,6 +3822,8 @@ body.dark .ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-3);}
 .tpl-panel{display:flex;flex-direction:column;gap:8px;min-width:0;}
 .tpl-search{font-family:'Inter',sans-serif;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:100%;box-sizing:border-box;}
 .tpl-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.tpl-chips button.split-chip{min-width:34px;}
+.tpl-chips button.split-chip[aria-pressed="true"]{background:var(--on-soft);color:var(--on);border-color:var(--on);}
 .tpl-chips button{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:4px 11px;font-size:12px;font-weight:600;border-radius:999px;}
 .tpl-chips button:hover:not(.active){background:rgba(127,127,127,0.22);}
 .tpl-chips button.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
@@ -6093,6 +6156,27 @@ body.ws-work .ws-class-only{display:none !important;}
       </label>
       <div class="hint" id="settingsMessagingHint" style="margin-top:4px;"></div>
     </div>
+    <div id="settingsBannerRows" style="margin-top:14px;display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="settingsMsgBannerToggle" style="width:15px;height:15px;">
+          <span id="settingsMsgBannerLabel"></span>
+        </label>
+        <div class="hint" id="settingsMsgBannerHint" style="margin-top:4px;"></div>
+      </div>
+      <div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="settingsNotifBannerToggle" style="width:15px;height:15px;">
+          <span id="settingsNotifBannerLabel"></span>
+        </label>
+        <div class="hint" id="settingsNotifBannerHint" style="margin-top:4px;"></div>
+      </div>
+      <div>
+        <div style="font-size:13px;" id="settingsChecklistSplitLabel"></div>
+        <div class="tpl-chips" id="settingsChecklistSplitChips" style="margin-top:6px;"></div>
+        <div class="hint" id="settingsChecklistSplitHint" style="margin-top:4px;"></div>
+      </div>
+    </div>
     <div id="settingsPushRow" style="margin-top:14px;">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
         <input type="checkbox" id="settingsPushToggle" style="width:15px;height:15px;">
@@ -6247,6 +6331,9 @@ body.ws-work .ws-class-only{display:none !important;}
   <button id="shellUpdateReloadBtn"></button>
   <button type="button" class="icon-btn close-x" id="shellUpdateCloseBtn" data-title-key="closeNoteBtn" data-aria-key="closeNoteBtn">✕</button>
 </div>
+<!-- Outside the chat dock, which is hidden when messaging is off: the
+     notification banners still have to show. -->
+<div id="ptBannerHost" aria-live="polite"></div>
 <div id="chatDock" class="hidden">
   <div id="chatPanel" class="hidden">
     <button type="button" class="chat-resize" id="chatResizeGrip" data-title-key="chatResize" data-aria-key="chatResize">
@@ -6286,6 +6373,7 @@ body.ws-work .ws-class-only{display:none !important;}
       <span class="cm-editbar-text"><b id="circleEditLabel"></b><span id="circleEditQuote"></span></span>
       <button type="button" class="cm-search-close" id="circleEditCancel"></button>
     </div>
+    <div class="cm-mention-pop hidden" id="circleMentionPop" role="listbox"></div>
     <div class="cm-compose">
       <label class="cm-attach" id="circleAttachLabel" title="">
         <span id="cmAttachIcon"></span>
@@ -12275,7 +12363,7 @@ const I18N = {
     topikCountdown:'TOPIK countdown', topikLocationPlaceholder:'Add test location', regOpensIn:'Registration opens in', testIn:'Test day in', regIsOpen:'Registration open', examPassed:'Exam has passed', topikRegShort:'TOPIK reg.', topikTestShort:'TOPIK test',
     settingsStickyTopBarLabel:'Keep the header and tabs on screen', settingsStickyTopBarHint:'The title bar and the tab row stay pinned to the top as you scroll, so the tabs are always one tap away. Turn this off to let them scroll away with the page.', settingsDockGlassLabel:'Bottom bar opacity', settingsDockSizeLabel:'Bottom bar size', dockSizeCompact:'Compact', dockSizeNormal:'Normal', dockSizeLarge:'Large', dockSizeXlarge:'Extra large', settingsShowTopikLabel:'Show TOPIK exam dates', settingsShowTopikHint:'Adds the TOPIK registration and test days to your calendar, with a reminder 1 day ahead. They show up in your recaps too.', setGroupAppearanceLabel:'Appearance and layout', setGroupNotifyLabel:'Notifications and messaging', setGroupSecurityLabel:'Account and Security', setGroupDangerLabel:'Delete account', settingsInfoBtn:'What this does',
     settingsPushLabel:'Push notifications on this device', pushIosInstallHint:'On an iPhone, add this app to your Home Screen first (Share, then Add to Home Screen) and open it from there.', pushUnsupportedHint:'This browser cannot receive push notifications.', pushBlockedHint:'Notifications are blocked for this site. Allow them in your browser or phone settings.', pushEnableFailed:'Could not turn on push notifications.', notifChannelPush:'Push', pushNeedsInApp:'Needs In-app on', pushTestTitle:'Push notifications are on', pushTestBody:'This device will now get your reminders and notices.',
-    settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
+    settingsMsgBannerLabel:'Show new messages at the top', settingsMsgBannerHint:'A message that arrives while you are somewhere else pops up in the middle of the top bar on a computer, or slides down from the top on a phone. Not for the conversation you have open. A message that @mentions you is bigger and stays longer.', settingsNotifBannerLabel:'Show notifications at the top', settingsNotifBannerHint:'Reminders and other notifications slide down from the top as they arrive, as well as landing in the bell.', settingsChecklistSplitLabel:'Checklist points are split by', settingsChecklistSplitHint:'A new line always starts a new point. Pick what else does when a message is made a checklist.', checklistSplitAnd:'"and"', circleReqShort:'Checklist request', bannerMentionedYou:'Mentioned you', bannerClose:'Close', notifTypeChatMention:'@mentions in messages', notifChatMentionTitleTpl:'{name} mentioned you', settingsMessagingLabel:'Messaging', settingsMessagingHint:'The chat dock in the bottom corner, and the unread count on the circle button. Turn this off to take messaging off the screen entirely. Nothing is deleted, and turning it back on brings your messages with it.',
     lblAnimations:'Animations', animHeaderLabel:'Header icons', animHeaderHint:'The globe turns as a sphere, the gear turns, the bell rings, the sun spins under drifting clouds, someone fishes off the moon, three people join hands and your name shines when you hold over them.', animTitleLabel:'Title letters', animTitleHint:'Hold over the title and it tracks itself: the letters tick over one at a time, a meter fills underneath at the same rate, and a check lands when it reaches the end.', animUiLabel:'Interface motion', animUiHint:'The small grow when you hold over anything you can click or type in, and the squeeze when you press it.', animAddLabel:'The add courier', animAddHint:'When something is saved, a courier comes out from behind the Add button, takes the first letter off it, turns it into a funnel, pours in what you typed, packs it and runs off.',
     addDeadline:'Add to calendar', eventTitle:'Title', eventTitleBirthday:'Name', eventDate:'Date', eventTime:'Time', eventEndTime:'End time', eventEndDate:'End date', eventNotes:'Notes', eventLocation:'Location', calToday:'Today', addDeadlineBtn:'Add', eventColor:'Color', eventColorUseMyDefaultBtn:'Use my color', eventColorUseTheirBtn:"Use {name}'s color", splitTooNarrow:"Split view needs a wider window: at least {n} px, twice the app's width. Widen the window to open two tabs side by side.", splitClosedNarrow:'The window got too narrow for two tabs, so it went back to one.', splitClosePane:'Close {name}', splitDropHere:'Let go to open side by side', splitResizeLabel:'Resize the two halves', splitResizeHint:'Drag to resize. Double-click to make them even again.', splitSwap:'Swap sides', colorPopTitle:'Your color', colorFavSave:'Save', colorFavSaveHint:'Save this color to your favorites', colorFavSaved:'Saved', colorFavUnsave:'Remove from favorites', colorFavs:'Favorites', colorFavsEmpty:'None yet. Save a color to keep it for later.', colorPickNew:'Pick a new color', colorFavRemove:'Remove',
     viewMonth:'Month', viewWeek:'Week', viewDay:'Day', weekViewLabel:'Personal Calendar – Week view', dayViewLabel:'Personal Calendar – Day view', monthAgendaEmpty:'Nothing on the calendar this day.', monthAgendaOpenDay:'Open day view →',
@@ -12400,7 +12488,7 @@ const I18N = {
     topikCountdown:'TOPIK 카운트다운', topikLocationPlaceholder:'시험 장소 추가', regOpensIn:'접수 시작까지', testIn:'시험일까지', regIsOpen:'접수 진행 중', examPassed:'시험이 종료되었습니다', topikRegShort:'TOPIK 접수', topikTestShort:'TOPIK 시험',
     settingsStickyTopBarLabel:'헤더와 탭 고정하기', settingsStickyTopBarHint:'스크롤해도 제목 표시줄과 탭이 화면 위쪽에 고정되어 탭을 항상 바로 누를 수 있습니다. 끄면 페이지와 함께 위로 사라집니다.', settingsDockGlassLabel:'하단 바 불투명도', settingsDockSizeLabel:'하단 바 크기', dockSizeCompact:'작게', dockSizeNormal:'보통', dockSizeLarge:'크게', dockSizeXlarge:'아주 크게', settingsShowTopikLabel:'TOPIK 시험 일정 표시', settingsShowTopikHint:'TOPIK 접수일과 시험일을 캘린더에 추가하고 하루 전에 알림을 보냅니다. 요약에도 포함됩니다.', setGroupAppearanceLabel:'화면과 배치', setGroupNotifyLabel:'알림과 메시지', setGroupSecurityLabel:'계정과 보안', setGroupDangerLabel:'계정 삭제', settingsInfoBtn:'무엇을 하는 설정인가요',
     settingsPushLabel:'이 기기에서 푸시 알림 받기', pushIosInstallHint:'iPhone에서는 먼저 이 앱을 홈 화면에 추가한 뒤(공유, 홈 화면에 추가) 그곳에서 열어 주세요.', pushUnsupportedHint:'이 브라우저는 푸시 알림을 받을 수 없습니다.', pushBlockedHint:'이 사이트의 알림이 차단되어 있습니다. 브라우저나 휴대폰 설정에서 허용해 주세요.', pushEnableFailed:'푸시 알림을 켜지 못했습니다.', notifChannelPush:'푸시', pushNeedsInApp:'앱 내 알림이 켜져 있어야 합니다', pushTestTitle:'푸시 알림이 켜졌습니다', pushTestBody:'이제 이 기기로 알림과 공지를 받습니다.',
-    settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
+    settingsMsgBannerLabel:'새 메시지를 위쪽에 표시', settingsMsgBannerHint:'다른 화면에 있을 때 도착한 메시지가 컴퓨터에서는 상단 바 가운데에, 휴대폰에서는 화면 위에서 내려와 표시됩니다. 열어 둔 대화는 제외됩니다. 나를 @멘션한 메시지는 더 크게, 더 오래 표시됩니다.', settingsNotifBannerLabel:'알림을 위쪽에 표시', settingsNotifBannerHint:'리마인더와 다른 알림이 도착하면 알림함에 들어가는 것과 함께 화면 위에서 내려와 표시됩니다.', settingsChecklistSplitLabel:'체크리스트 항목 구분 기준', settingsChecklistSplitHint:'줄바꿈은 항상 새 항목이 됩니다. 메시지를 체크리스트로 바꿀 때 그 밖에 무엇으로 나눌지 고르세요.', checklistSplitAnd:'"그리고"', circleReqShort:'체크리스트 요청', bannerMentionedYou:'나를 멘션함', bannerClose:'닫기', notifTypeChatMention:'메시지의 @멘션', notifChatMentionTitleTpl:'{name}님이 나를 멘션했습니다', settingsMessagingLabel:'메시지', settingsMessagingHint:'오른쪽 아래 채팅창과 서클 버튼의 읽지 않은 개수입니다. 끄면 메시지 기능이 화면에서 완전히 사라집니다. 내용은 지워지지 않으며 다시 켜면 그대로 돌아옵니다.',
     lblAnimations:'애니메이션', animHeaderLabel:'헤더 아이콘', animHeaderHint:'마우스를 올리면 지구본이 구체처럼 돌고 톱니바퀴가 돌며, 종이 울리고, 구름 사이로 해가 돌고, 달 위에서 낚시를 하고, 세 사람이 손을 잡고, 이름이 반짝입니다.', animTitleLabel:'제목 글자', animTitleHint:'제목 위에 마우스를 올리면 제목이 스스로를 기록합니다. 글자가 하나씩 차례로 켜지고, 아래의 막대가 같은 속도로 채워지며, 끝에 도달하면 체크 표시가 나타납니다.', animUiLabel:'인터페이스 움직임', animUiHint:'누르거나 입력할 수 있는 것 위에 올렸을 때 살짝 커지고, 누르면 작아지는 움직임입니다.', animAddLabel:'추가 배달원', animAddHint:'저장되면 추가 버튼 뒤에서 배달원이 나와 버튼의 첫 글자를 떼어 깔때기로 뒤집고, 입력한 내용을 쏟아 넣은 뒤 가방에 담아 달려갑니다.',
     addDeadline:'캘린더에 추가', eventTitle:'제목', eventTitleBirthday:'이름', eventDate:'날짜', eventTime:'시각', eventEndTime:'종료 시각', eventEndDate:'종료 날짜', eventNotes:'메모', eventLocation:'장소', calToday:'오늘', addDeadlineBtn:'추가', eventColor:'색상', eventColorUseMyDefaultBtn:'내 색상 사용', eventColorUseTheirBtn:'{name}의 색상 사용', splitTooNarrow:'화면 분할에는 더 넓은 창이 필요합니다. 앱 너비의 두 배인 {n}px 이상이어야 합니다. 두 탭을 나란히 열려면 창을 넓혀 주세요.', splitClosedNarrow:'창이 두 탭을 담기에는 좁아져서 한 탭으로 돌아갔습니다.', splitClosePane:'{name} 닫기', splitDropHere:'놓으면 나란히 열립니다', splitResizeLabel:'두 화면 크기 조절', splitResizeHint:'끌어서 크기를 조절합니다. 두 번 클릭하면 다시 반반이 됩니다.', splitSwap:'좌우 바꾸기', colorPopTitle:'내 색상', colorFavSave:'저장', colorFavSaveHint:'이 색상을 즐겨찾기에 저장', colorFavSaved:'저장됨', colorFavUnsave:'즐겨찾기에서 삭제', colorFavs:'즐겨찾는 색상', colorFavsEmpty:'아직 없습니다. 색상을 저장해 두면 나중에 다시 쓸 수 있어요.', colorPickNew:'새 색상 고르기', colorFavRemove:'삭제',
     viewMonth:'월간', viewWeek:'주간', viewDay:'일간', weekViewLabel:'개인 캘린더 – 주간 보기', dayViewLabel:'개인 캘린더 – 일간 보기', monthAgendaEmpty:'이 날짜에는 일정이 없습니다.', monthAgendaOpenDay:'일간 보기 열기 →',
@@ -12525,7 +12613,7 @@ const I18N = {
     topikCountdown:'Đếm ngược TOPIK', topikLocationPlaceholder:'Thêm địa điểm thi', regOpensIn:'Mở đăng ký sau', testIn:'Ngày thi sau', regIsOpen:'Đang mở đăng ký', examPassed:'Kỳ thi đã kết thúc', topikRegShort:'Đăng ký TOPIK', topikTestShort:'Thi TOPIK',
     settingsStickyTopBarLabel:'Giữ tiêu đề và tab trên màn hình', settingsStickyTopBarHint:'Thanh tiêu đề và hàng tab luôn được ghim ở trên cùng khi bạn cuộn, nên các tab luôn chỉ cách một lần chạm. Tắt để chúng cuộn đi cùng trang.', settingsDockGlassLabel:'Độ mờ của thanh dưới cùng', settingsDockSizeLabel:'Kích thước thanh dưới cùng', dockSizeCompact:'Nhỏ gọn', dockSizeNormal:'Bình thường', dockSizeLarge:'Lớn', dockSizeXlarge:'Rất lớn', settingsShowTopikLabel:'Hiện lịch thi TOPIK', settingsShowTopikHint:'Thêm ngày đăng ký và ngày thi TOPIK vào lịch của bạn, kèm nhắc nhở trước 1 ngày. Chúng cũng xuất hiện trong tổng kết.', setGroupAppearanceLabel:'Giao diện và bố cục', setGroupNotifyLabel:'Thông báo và tin nhắn', setGroupSecurityLabel:'Tài khoản và bảo mật', setGroupDangerLabel:'Xóa tài khoản', settingsInfoBtn:'Cài đặt này làm gì',
     settingsPushLabel:'Nhận thông báo đẩy trên thiết bị này', pushIosInstallHint:'Trên iPhone, hãy thêm ứng dụng này vào Màn hình chính trước (Chia sẻ, rồi Thêm vào Màn hình chính) và mở từ đó.', pushUnsupportedHint:'Trình duyệt này không nhận được thông báo đẩy.', pushBlockedHint:'Thông báo đang bị chặn cho trang này. Hãy cho phép trong cài đặt trình duyệt hoặc điện thoại.', pushEnableFailed:'Không bật được thông báo đẩy.', notifChannelPush:'Đẩy', pushNeedsInApp:'Cần bật thông báo trong ứng dụng', pushTestTitle:'Đã bật thông báo đẩy', pushTestBody:'Thiết bị này giờ sẽ nhận nhắc nhở và thông báo của bạn.',
-    settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
+    settingsMsgBannerLabel:'Hiện tin nhắn mới ở phía trên', settingsMsgBannerHint:'Tin nhắn đến khi bạn đang ở chỗ khác sẽ hiện ở giữa thanh trên cùng trên máy tính, hoặc trượt xuống từ trên cùng trên điện thoại. Không áp dụng cho cuộc trò chuyện đang mở. Tin nhắn @nhắc đến bạn sẽ lớn hơn và hiện lâu hơn.', settingsNotifBannerLabel:'Hiện thông báo ở phía trên', settingsNotifBannerHint:'Lời nhắc và các thông báo khác trượt xuống từ trên cùng khi đến, đồng thời vẫn có trong chuông thông báo.', settingsChecklistSplitLabel:'Các mục danh sách được tách bởi', settingsChecklistSplitHint:'Xuống dòng luôn tạo mục mới. Chọn thêm ký tự tách khi biến một tin nhắn thành danh sách.', checklistSplitAnd:'"và"', circleReqShort:'Yêu cầu danh sách', bannerMentionedYou:'Đã nhắc đến bạn', bannerClose:'Đóng', notifTypeChatMention:'@nhắc đến trong tin nhắn', notifChatMentionTitleTpl:'{name} đã nhắc đến bạn', settingsMessagingLabel:'Tin nhắn', settingsMessagingHint:'Khung chat ở góc dưới và số tin chưa đọc trên nút vòng kết nối. Tắt để bỏ hẳn tin nhắn khỏi màn hình. Không có gì bị xóa, và bật lại sẽ có đủ tin nhắn của bạn.',
     lblAnimations:'Hiệu ứng chuyển động', animHeaderLabel:'Biểu tượng trên đầu trang', animHeaderHint:'Quả địa cầu quay như một khối cầu, bánh răng quay, chuông rung, mặt trời xoay sau những đám mây trôi, một người câu cá trên mặt trăng, ba người nắm tay nhau và tên bạn sáng lên khi bạn rê chuột lên.', animTitleLabel:'Chữ trong tiêu đề', animTitleHint:'Rê chuột lên tiêu đề và nó tự theo dõi chính mình: từng chữ sáng lên lần lượt, một thanh đo bên dưới đầy lên cùng nhịp, và một dấu tích xuất hiện khi tới cuối.', animUiLabel:'Chuyển động giao diện', animUiHint:'Mọi thứ bấm được hoặc nhập được sẽ to lên một chút khi rê chuột, và thu lại khi bấm.', animAddLabel:'Người đưa thư khi thêm', animAddHint:'Khi một mục được lưu, một người đưa thư bước ra từ sau nút Thêm, lấy chữ đầu tiên trên nút, lật thành cái phễu, rót những gì bạn đã nhập vào, xếp vào vali rồi chạy đi.',
     addDeadline:'Thêm vào lịch', eventTitle:'Tiêu đề', eventTitleBirthday:'Tên', eventDate:'Ngày', eventTime:'Giờ', eventEndTime:'Giờ kết thúc', eventEndDate:'Ngày kết thúc', eventNotes:'Ghi chú', eventLocation:'Địa điểm', calToday:'Hôm nay', addDeadlineBtn:'Thêm', eventColor:'Màu', eventColorUseMyDefaultBtn:'Dùng màu của tôi', eventColorUseTheirBtn:'Dùng màu của {name}', splitTooNarrow:'Chia đôi màn hình cần cửa sổ rộng hơn: ít nhất {n} px, gấp đôi độ rộng của ứng dụng. Hãy mở rộng cửa sổ để mở hai thẻ cạnh nhau.', splitClosedNarrow:'Cửa sổ quá hẹp cho hai thẻ nên đã trở lại một thẻ.', splitClosePane:'Đóng {name}', splitDropHere:'Thả ra để mở cạnh nhau', splitResizeLabel:'Đổi kích thước hai bên', splitResizeHint:'Kéo để đổi kích thước. Nhấp đúp để chia đều lại.', splitSwap:'Đổi bên', colorPopTitle:'Màu của tôi', colorFavSave:'Lưu', colorFavSaveHint:'Lưu màu này vào mục yêu thích', colorFavSaved:'Đã lưu', colorFavUnsave:'Xóa khỏi mục yêu thích', colorFavs:'Màu yêu thích', colorFavsEmpty:'Chưa có. Hãy lưu một màu để dùng lại sau.', colorPickNew:'Chọn màu mới', colorFavRemove:'Xóa',
     viewMonth:'Tháng', viewWeek:'Tuần', viewDay:'Ngày', weekViewLabel:'Lịch cá nhân – Xem theo tuần', dayViewLabel:'Lịch cá nhân – Xem theo ngày', monthAgendaEmpty:'Không có sự kiện nào trong ngày này.', monthAgendaOpenDay:'Mở chế độ xem ngày →',
@@ -12674,6 +12762,7 @@ const STATIC_MAP = {
   calExportAllBtn:'calExportAll', calExportNoneBtn:'calExportNone', calExportGoBtn:'calExportGo',
   settingsShowTopikLabel:'settingsShowTopikLabel', settingsShowTopikHint:'settingsShowTopikHint',
   settingsMessagingLabel:'settingsMessagingLabel', settingsMessagingHint:'settingsMessagingHint',
+  settingsMsgBannerLabel:'settingsMsgBannerLabel', settingsMsgBannerHint:'settingsMsgBannerHint', settingsNotifBannerLabel:'settingsNotifBannerLabel', settingsNotifBannerHint:'settingsNotifBannerHint', settingsChecklistSplitLabel:'settingsChecklistSplitLabel', settingsChecklistSplitHint:'settingsChecklistSplitHint',
   settingsPushLabel:'settingsPushLabel',
   lblAnimations:'lblAnimations',
   animHeaderLabel:'animHeaderLabel', animHeaderHint:'animHeaderHint',
@@ -15171,6 +15260,9 @@ async function openAccountSettings(){
   syncDockGlassRow();
   syncDockSizeRow();
   document.getElementById('settingsMessagingToggle').checked = messagingEnabled();
+  document.getElementById('settingsMsgBannerToggle').checked = bannerOn(BANNER_MSG_KEY);
+  document.getElementById('settingsNotifBannerToggle').checked = bannerOn(BANNER_NOTIF_KEY);
+  renderChecklistSplitChips();
   document.querySelectorAll('.anim-toggle').forEach(cb=>{ cb.checked = animEnabled(cb.dataset.anim); });
   document.getElementById('settingsShowTopikToggle').checked = showTopik;
   renderRecapPrefsRows();
@@ -15415,7 +15507,7 @@ document.getElementById('resumeSyncSaveBtn').addEventListener('click', async ()=
 
 // A third entry says the type has no e-mail: a reminder written to the app is
 // only ever a notification and a push.
-const NOTIF_PREF_TYPES = [['reminder','notifTypeReminder'],['todo_reminder','notifTypeTodoReminder'],['pt_reminder','notifTypePtReminder',{ noEmail: true }],['yonsei_board','notifTypeYonseiBoard'],['link_accepted','notifTypeLinkAccepted']];
+const NOTIF_PREF_TYPES = [['reminder','notifTypeReminder'],['todo_reminder','notifTypeTodoReminder'],['pt_reminder','notifTypePtReminder',{ noEmail: true }],['yonsei_board','notifTypeYonseiBoard'],['link_accepted','notifTypeLinkAccepted'],['chat_mention','notifTypeChatMention',{ noEmail: true }]];
 // Push per type, kept apart from email/in-app because the recaps' own two
 // switches live on the profile rather than here. Default on: the device-level
 // switch is what opts a person in, and this only narrows it.
@@ -15855,6 +15947,9 @@ function renderNotifText(n){
       ? { title: p.text, body: [t('ptReminderTitle'), time].filter(Boolean).join(' · ') }
       : { title: t('ptReminderTitle'), body: time };
   }
+  if(n.type === 'chat_mention'){
+    return { title: t('notifChatMentionTitleTpl').replace('{name}', p.name || nameFor(p.sender_id)), body: n.body || '' };
+  }
   if(n.type === 'link_accepted' && p.name){
     return { title: t('notifLinkAcceptedTitleTpl').replace('{name}', p.name), body: n.body || '' };
   }
@@ -15954,6 +16049,8 @@ function navigateToNotifTarget(n){
     calViewMode = 'week';
     setActiveCalViewBtn();
     renderCalendarTab();
+  } else if(n.type === 'chat_mention'){
+    if(messagingEnabled() && p.message_id) openCircleMessage(p.message_id);
   } else if(n.type === 'link_accepted'){
     const btn = document.getElementById('friendsBtn');
     if(btn) btn.click();
@@ -16029,6 +16126,7 @@ function subscribeNotifRealtime(){
       const row = payload.new;
       if(notifCache.some(n=>n.id===row.id)) return;
       notifCache.unshift(row);
+      bannerForNotification(row);
       const unread = notifCache.filter(n=>!n.read_at).length;
       const countEl = document.getElementById('notifBellCount');
       countEl.textContent = unread > 9 ? '9+' : String(unread);
@@ -16993,6 +17091,7 @@ function subscribeCircleMessages(){
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'circle_messages' }, ({ new: row })=>{
       if(!row || circleMessages.some(m=>m.id===row.id)) return;
       circleMessages.push(row);
+      bannerForMessage(row);
       const open = chatPanelOpen();
       if(open && threadOf(row) === activeCircleThread){
         markThreadRead(activeCircleThread);
@@ -18278,11 +18377,11 @@ var circleEditDraft = null;   // { text, checklist } that was in the composer
 var circleReplyingId = null;
 function replyingMessage(){ return circleReplyingId ? circleMessageCopies(circleReplyingId)[0] || null : null; }
 function editingMessage(){ return circleEditingId ? circleMessageCopies(circleEditingId)[0] || null : null; }
-function circleItemKeys(body){ return checklistItems(body).map(checklistItemText); }
+function circleItemKeys(body, split){ return checklistItems(body, split).map(checklistItemText); }
 // The client's copy of the rule in edit_circle_message, so what is shown at
 // once is what the server will answer; the read-back settles it either way.
-function remapChecks(oldBody, newBody, checks){
-  const before = circleItemKeys(oldBody), after = circleItemKeys(newBody);
+function remapChecks(oldBody, newBody, checks, split){
+  const before = circleItemKeys(oldBody, split), after = circleItemKeys(newBody, split);
   const out = {};
   Object.keys(checks || {}).map(Number).filter(i=> Number.isInteger(i)).sort((a, b)=> a - b).forEach(i=>{
     if(i < 0 || i >= before.length) return;
@@ -18395,13 +18494,13 @@ function saveCircleEdit(){
   cancelCircleEdit();
   if(body === (msg.body || '')) return;
   runCircleMessageOp(id, (m)=>{
-    const checks = remapChecks(m.body, body, m.checks);
+    const checks = remapChecks(m.body, body, m.checks, m.checklist_split);
     // The client's copy of edit_circle_message's history rule, so the
     // "edited" mark opens on the right versions at once.
     const edit_history = (Array.isArray(m.edit_history) ? m.edit_history : [])
       .concat([{ body: m.body, at: m.edited_at || m.created_at }]).slice(-20);
     return { body, edited_at: new Date().toISOString(), checks, edit_history,
-             checklist: !!m.checklist && checklistItems(body).length > 0 };
+             checklist: !!m.checklist && checklistItems(body, m.checklist_split).length > 0 };
   }, ()=> supabaseClient.rpc('edit_circle_message', { p_message: id, p_body: body }));
 }
 async function sendCircleMessage(){
@@ -18418,7 +18517,13 @@ async function sendCircleMessage(){
   const reply = replyingMessage();
   if(reply && threadOf(reply) === activeCircleThread) row.reply_to = reply.id;
   // A file with no text has no lines to tick, so it goes as a plain message.
-  if(circleChecklistMode && checklistItems(body).length) row.checklist = true;
+  const mentioned = mentionsIn(body, activeCircleThread);
+  if(mentioned.length) row.mentions = mentioned;
+  if(circleChecklistMode && checklistItems(body).length){
+    row.checklist = true;
+    const split = checklistSplitPref();
+    if(split.length && checklistItems(body, split).length > checklistItems(body).length) row.checklist_split = split;
+  }
   if(file){
     if(file.size > 25 * 1024 * 1024){ showAttachPending(t('circleFileTooBig'), true); return; }
     showAttachPending(t('circleUploading'), false, true);
@@ -18752,6 +18857,7 @@ function renderCircleMessages(){
   }
   wireMessageLog(log);
   fetchMissingRequestRefs(log);
+  noteRequestsSeen(log);
   // A redraw replaces the bubble a menu was opened on: the menu follows the
   // new one, or goes if that message is not on show any more.
   if(cmMenuFor){
@@ -18872,8 +18978,41 @@ function replyQuoteHtml(msg){
    Ticking goes through that function and never through an UPDATE: it writes
    the caller's own id itself, so nobody can tick something in somebody else's
    name, and the body stays as unwritable as it always was. */
-function checklistItems(body){
-  return String(body || '').split(/\r?\n/).map(l=> l.trim()).filter(Boolean);
+// What else besides a new line separates the points (real-user request: "+",
+// ",", "&" and "and" too, with an option to choose). The SAME patterns as
+// circle_message_split_pattern in the database, which counts the items a tick
+// may land on, so the two cannot disagree about where item 3 is. A message
+// carries the set it was made a checklist with (checklist_split); the setting
+// below only decides that set for the next one.
+const CHECKLIST_SPLIT_RE = {
+  plus: '\\s*\\+\\s*', comma: '\\s*,\\s*', amp: '\\s*&\\s*',
+  and: '\\s+(?:and|og|v\u00e0|\uadf8\ub9ac\uace0)\\s+',
+  semicolon: '\\s*;\\s*', slash: '\\s*/\\s*'
+};
+const CHECKLIST_SPLIT_KEYS = Object.keys(CHECKLIST_SPLIT_RE);
+const CHECKLIST_SPLIT_DEFAULT = ['plus','comma','amp','and'];
+const CHECKLIST_SPLIT_PREF_KEY = 'trackerChecklistSplit';
+const checklistSplitReCache = {};
+function checklistSplitRe(split){
+  const keys = (Array.isArray(split) ? split : []).filter(k=> CHECKLIST_SPLIT_RE[k]);
+  if(!keys.length) return null;
+  const id = keys.slice().sort().join(',');
+  return checklistSplitReCache[id] || (checklistSplitReCache[id] = new RegExp(keys.map(k=> CHECKLIST_SPLIT_RE[k]).join('|'), 'i'));
+}
+function checklistSplitPref(){
+  try {
+    const v = JSON.parse(localStorage.getItem(CHECKLIST_SPLIT_PREF_KEY));
+    if(Array.isArray(v)) return v.filter(k=> CHECKLIST_SPLIT_RE[k]);
+  } catch(e){}
+  return CHECKLIST_SPLIT_DEFAULT.slice();
+}
+function setChecklistSplitPref(keys){
+  try { localStorage.setItem(CHECKLIST_SPLIT_PREF_KEY, JSON.stringify(keys)); } catch(e){}
+}
+function checklistItems(body, split){
+  const lines = String(body || '').split(/\r?\n/);
+  const re = checklistSplitRe(split);
+  return (re ? lines.flatMap(l=> l.split(re)) : lines).map(l=> l.trim()).filter(Boolean);
 }
 // A list pasted in as "- milk" or "1. eggs" already HAS a marker, and the tick
 // box is the marker now; leaving both reads as a bullet with a box in front of
@@ -18889,7 +19028,7 @@ function firstLetterOf(userId){
   const ch = Array.from(String(nameFor(userId) || '').trim())[0];
   return ch ? ch.toLocaleUpperCase(appLocale()) : '?';
 }
-function isChecklistMessage(msg){ return !!(msg && msg.checklist && checklistItems(msg.body).length); }
+function isChecklistMessage(msg){ return !!(msg && msg.checklist && checklistItems(msg.body, msg.checklist_split).length); }
 /* ---------- FORMATTING IN A MESSAGE ----------
    The marks people already type in every chat app (real-user request: "Add
    various formatting to messaging ... (*hi*, **hi** etc.)"): **bold**,
@@ -18920,7 +19059,7 @@ function linkHtmlEscaped(url){
   }
   return { html: `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`, tail };
 }
-function formatMessageHtml(text){
+function formatMessageHtml(text, mentions){
   const held = [];
   const hold = (html)=> CM_HOLD_OPEN + (held.push(html) - 1) + CM_HOLD_CLOSE;
   let s = escapeHtml(String(text || '').replace(CM_HOLD_STRIP, ''));
@@ -18943,6 +19082,15 @@ function formatMessageHtml(text){
     .replace(/~~(?=\S)([^\n]*?\S)~~/g, '<del>$1</del>')
     .replace(/(^|[^\w*])\*(?=[^\s*])([^*\n]*?[^\s*])\*(?![\w*])/g, '$1<em>$2</em>')
     .replace(/(^|[^\w])_(?=[^\s_])([^_\n]*?[^\s_])_(?!\w)/g, '$1<em>$2</em>');
+  // @Name for each person the message names, picked out; the reader's own
+  // name stands out more. Done on the escaped text, so a name is matched the
+  // way it was escaped, and inside a held link or code it is left alone.
+  (Array.isArray(mentions) ? mentions : []).forEach(id=>{
+    const name = profiles[id];
+    if(!name) return;
+    const at = escapeHtml('@' + name);
+    s = s.split(at).join(`<span class="cm-mention${currentUser && id === currentUser.id ? ' me' : ''}">${at}</span>`);
+  });
   // A code block is a block of its own, so the line breaks either side of
   // its fences are already said by it; kept, they read as blank lines.
   return s.replace(CM_HOLD_BACK, (all, n)=> held[Number(n)] || '')
@@ -18961,9 +19109,9 @@ function stripMessageMarks(text){
 }
 function messageTextHtml(msg){
   if(!msg.body || !msg.body.trim()) return '';
-  if(!isChecklistMessage(msg)) return `<div class="cm-body" data-msg-text>${formatMessageHtml(msg.body)}</div>`;
+  if(!isChecklistMessage(msg)) return `<div class="cm-body" data-msg-text>${formatMessageHtml(msg.body, msg.mentions)}</div>`;
   const checks = (msg.checks && typeof msg.checks === 'object') ? msg.checks : {};
-  return `<ul class="cm-check" data-msg-text>` + checklistItems(msg.body).map((line, i)=>{
+  return `<ul class="cm-check" data-msg-text>` + checklistItems(msg.body, msg.checklist_split).map((line, i)=>{
     const c = checks[String(i)];
     const by = c && c.by;
     let mark = '';
@@ -18982,7 +19130,7 @@ function messageTextHtml(msg){
     }
     return `<li class="cm-item${by ? ' done' : ''}"><label>`
       + `<input type="checkbox" class="cm-item-box" data-i="${i}"${by ? ' checked' : ''}>`
-      + `<span class="cm-item-text">${formatMessageHtml(checklistItemText(line))}</span></label>${mark}</li>`;
+      + `<span class="cm-item-text">${formatMessageHtml(checklistItemText(line), msg.mentions)}</span></label>${mark}</li>`;
   }).join('') + `</ul>`;
 }
 // A message that is already sent can still become a checklist ("Even messages
@@ -19006,7 +19154,9 @@ function listToggleHtml(msg){
     const label = escapeHtml(t('circleUndoChecklist'));
     return `<button type="button" class="cm-make-list" data-list-act="off" aria-pressed="true" title="${label}" aria-label="${label}">${ICON.listCheck(12)}</button>`;
   }
-  if(checklistItems(msg.body).length < 2) return '';
+  // Two lines are a list. Split on commas and "and" as well, two is just a
+  // sentence ("Hi, how are you"), so the button waits for three.
+  if(checklistItems(msg.body).length < 2 && checklistItems(msg.body, checklistSplitPref()).length < 3) return '';
   const label = escapeHtml(t(mine ? 'circleMakeChecklist' : 'circleChecklistOptions'));
   return `<button type="button" class="cm-make-list" data-list-act="${mine ? 'on' : 'menu'}" aria-pressed="false" title="${label}" aria-label="${label}">${ICON.listCheck(12)}</button>`;
 }
@@ -19098,9 +19248,9 @@ function repaintCircleMessage(id){
    (offline, or a list that was turned back to text). While any are
    unanswered, the live UPDATEs for that message are left alone -- they are
    our own, a step behind what is already on screen. */
-const CIRCLE_MUTABLE_FIELDS = 'checklist,checks,reactions,body,edited_at,edit_history';
+const CIRCLE_MUTABLE_FIELDS = 'checklist,checklist_split,checks,reactions,body,edited_at,edit_history';
 function mutableFieldsOf(row){
-  const out = { checklist: !!row.checklist, checks: row.checks || {}, reactions: row.reactions || {} };
+  const out = { checklist: !!row.checklist, checklist_split: row.checklist_split || null, checks: row.checks || {}, reactions: row.reactions || {} };
   // An edit is the one op that changes the words, so it is the one that has
   // to be able to put them back.
   if(typeof row.body === 'string') out.body = row.body;
@@ -19140,9 +19290,18 @@ function runCircleMessageOp(id, local, remote){
     repaintCircleMessage(id);
   });
 }
+// Turning one on takes the separators from the setting, but only when they
+// actually split this message further, so a plain multi-line list stays one
+// that splits on lines alone and a later edit with a comma in it does not
+// suddenly break an item in two.
 function setCircleChecklist(id, on){
-  runCircleMessageOp(id, ()=> ({ checklist: on }),
-    ()=> supabaseClient.rpc('set_circle_message_checklist', { p_message: id, p_on: on }));
+  const msg = circleMessageCopies(id)[0];
+  const pref = checklistSplitPref();
+  const split = on && msg && pref.length
+    && checklistItems(msg.body, pref).length > checklistItems(msg.body).length ? pref : null;
+  runCircleMessageOp(id, ()=> ({ checklist: on, checklist_split: split }),
+    ()=> supabaseClient.rpc('set_circle_message_checklist', split
+      ? { p_message: id, p_on: on, p_split: split } : { p_message: id, p_on: on }));
 }
 function wireMessageInteractions(){
   const log = document.getElementById('circleMessageLog');
@@ -19200,6 +19359,8 @@ function wireMessageInteractions(){
     }
     const convert = e.target.closest('[data-req-convert]');
     if(convert){ e.preventDefault(); setCircleChecklist(convert.dataset.reqConvert, true); return; }
+    const folded = e.target.closest('.cm-sys.collapsed');
+    if(folded){ e.preventDefault(); cmReqExpanded.add(folded.dataset.msg); folded.classList.remove('collapsed'); return; }
     const quote = e.target.closest('.cm-sys-quote, .cm-quote[data-jump]');
     if(quote){ e.preventDefault(); jumpToCircleMessage(quote.dataset.jump); return; }
     const edited = e.target.closest('.cm-edited-btn');
@@ -19433,7 +19594,7 @@ function refMessageOf(req){
   return circleMessages.find(m=> m.id === req.ref_message) || circleRefCache[req.ref_message] || null;
 }
 function firstLineOf(msg){
-  const first = checklistItems(msg && msg.body)[0];
+  const first = checklistItems(msg && msg.body, msg && msg.checklist_split)[0];
   const line = first ? stripMessageMarks(first) : (msg && msg.attachment_name) || '';
   const chars = Array.from(checklistItemText(line));
   return chars.length > 48 ? chars.slice(0, 47).join('') + '…' : chars.join('');
@@ -19445,6 +19606,48 @@ function requestSentence(req, ref){
   if(owner === currentUser.id) return t('circleReqAskedYou').replace('{name}', nameFor(req.sender_id));
   return t('circleReqAsked').replace('{name}', nameFor(req.sender_id)).replace('{owner}', ownerName);
 }
+// When each request was first SEEN on this device: the panel open on it and
+// the row on screen. Per device and per person by construction, so the one
+// who asked sees theirs fold away and the other side keeps the full card
+// until they have looked at it themselves.
+const CM_REQ_SEEN_KEY = 'trackerReqSeen';
+const CM_REQ_COLLAPSE_MS = 15000;
+const cmReqExpanded = new Set();
+let cmReqObserver = null;
+function cmReqSeenMap(){
+  try { return JSON.parse(localStorage.getItem(CM_REQ_SEEN_KEY)) || {}; } catch(e){ return {}; }
+}
+function cmReqCollapsed(id){
+  const at = cmReqSeenMap()[id];
+  return !!at && Date.now() - at >= CM_REQ_COLLAPSE_MS && !cmReqExpanded.has(id);
+}
+function collapseRequestRow(id){
+  if(cmReqExpanded.has(id)) return;
+  document.querySelectorAll(`.cm-sys[data-msg="${CSS.escape(id)}"]`).forEach(el=> el.classList.add('collapsed'));
+}
+function noteRequestsSeen(log){
+  if(cmReqObserver) cmReqObserver.disconnect();
+  const rows = [...log.querySelectorAll('.cm-sys[data-req-ref]:not(.collapsed)')];
+  if(!rows.length || !('IntersectionObserver' in window)) return;
+  cmReqObserver = new IntersectionObserver((entries)=>{
+    if(!chatPanelOpen() || document.hidden) return;
+    const map = cmReqSeenMap();
+    let changed = false;
+    entries.forEach(en=>{
+      if(!en.isIntersecting) return;
+      const id = en.target.dataset.msg;
+      if(!map[id]){ map[id] = Date.now(); changed = true; }
+      cmReqObserver.unobserve(en.target);
+      setTimeout(()=> collapseRequestRow(id), Math.max(0, map[id] + CM_REQ_COLLAPSE_MS - Date.now()));
+    });
+    if(!changed) return;
+    // Old entries go, newest kept: these are only ever needed while the
+    // request is still among the loaded messages.
+    const keep = Object.entries(map).sort((a, b)=> b[1] - a[1]).slice(0, 300);
+    try { localStorage.setItem(CM_REQ_SEEN_KEY, JSON.stringify(Object.fromEntries(keep))); } catch(e){}
+  }, { root: log, threshold: 0.6 });
+  rows.forEach(el=> cmReqObserver.observe(el));
+}
 function requestRowHtml(req, showTime){
   const ref = refMessageOf(req);
   const quote = ref ? firstLineOf(ref) : '';
@@ -19454,9 +19657,9 @@ function requestRowHtml(req, showTime){
   } else if(ref && ref.sender_id === currentUser.id){
     state = `<button type="button" class="export-btn cm-sys-act" data-req-convert="${escapeHtml(ref.id)}">${ICON.listCheck(13)}<span>${escapeHtml(t('circleMakeChecklist'))}</span></button>`;
   }
-  return `<div class="cm-sys" data-msg="${escapeHtml(req.id)}" data-req-ref="${escapeHtml(req.ref_message || '')}">
+  return `<div class="cm-sys${cmReqCollapsed(req.id) ? ' collapsed' : ''}" data-msg="${escapeHtml(req.id)}" data-req-ref="${escapeHtml(req.ref_message || '')}">
     ${messageMoreButtonHtml()}
-    <span class="cm-sys-line">${ICON.listCheck(12)}<span>${escapeHtml(requestSentence(req, ref))}</span></span>
+    <span class="cm-sys-line">${ICON.listCheck(12)}<span>${escapeHtml(requestSentence(req, ref))}</span><span class="cm-sys-short">${escapeHtml(t('circleReqShort'))}</span></span>
     ${!quote ? '' : circleMessages.some(m=> m.id === ref.id)
       ? `<button type="button" class="cm-sys-quote" data-jump="${escapeHtml(ref.id)}">“${escapeHtml(quote)}”</button>`
       // Older than what the panel holds, so there is nothing on screen to
@@ -19495,6 +19698,201 @@ function jumpToCircleMessage(id){
   const lr = log.getBoundingClientRect(), er = el.getBoundingClientRect();
   log.scrollTop += (er.top - lr.top) - (log.clientHeight - er.height) / 2;
   el.classList.remove('cm-flash'); void el.offsetWidth; el.classList.add('cm-flash');
+}
+/* ---------- @MENTIONS ----------
+   Real-user request: "Should be able to @mention the other person. Should be
+   a bigger type of notification, more noticable". Typing "@" in the box
+   offers the people in this conversation; the text keeps "@Name", and the
+   message carries WHO as ids (circle_messages.mentions), because names are
+   neither unique nor fixed. Picking from the list is optional: on send, any
+   "@Name" of somebody in the conversation counts. The database turns each
+   into a 'chat_mention' notification, which pushes to their devices. */
+function mentionCandidates(thread){
+  if(!currentUser || !thread || thread === PT_THREAD) return [];
+  const g = groupOfThread(thread);
+  const ids = g ? (g.members || []) : thread === CIRCLE_THREAD ? visibleCircleMembers() : [thread];
+  return [...new Set(ids)].filter(id=> id && id !== currentUser.id && profiles[id])
+    .map(id=> ({ id, name: profiles[id] }))
+    .sort((a, b)=> a.name.localeCompare(b.name, appLocale()));
+}
+function mentionsIn(body, thread){
+  const text = String(body || '');
+  return mentionCandidates(thread).filter(p=> text.includes('@' + p.name)).map(p=> p.id);
+}
+let cmMention = null;   // { start, end, items, sel } while the list is up
+function hideMentionPop(){
+  cmMention = null;
+  const pop = document.getElementById('circleMentionPop');
+  if(pop){ pop.classList.add('hidden'); pop.innerHTML = ''; }
+}
+function updateMentionPop(){
+  const input = document.getElementById('circleMessageInput');
+  const pop = document.getElementById('circleMentionPop');
+  if(!input || !pop) return;
+  const caret = input.selectionStart;
+  if(caret !== input.selectionEnd){ hideMentionPop(); return; }
+  const m = input.value.slice(0, caret).match(/(^|\s)@([^\s@]{0,30})$/);
+  if(!m){ hideMentionPop(); return; }
+  const q = m[2].toLocaleLowerCase(appLocale());
+  const items = mentionCandidates(activeCircleThread)
+    .filter(p=> p.name.toLocaleLowerCase(appLocale()).replace(/\s+/g, '').startsWith(q)
+             || p.name.toLocaleLowerCase(appLocale()).split(/\s+/).some(w=> w.startsWith(q)));
+  if(!items.length){ hideMentionPop(); return; }
+  const sel = cmMention ? Math.min(cmMention.sel, items.length - 1) : 0;
+  cmMention = { start: caret - m[2].length - 1, end: caret, items, sel };
+  pop.innerHTML = items.map((p, i)=>{
+    const c = colorForUser(p.id);
+    return `<button type="button" class="cm-mention-opt" role="option" data-i="${i}" aria-selected="${i === sel}">`
+      + `<span class="cm-face" style="color:${c};border-color:${c};background:${c}1f;">${escapeHtml(firstLetterOf(p.id))}</span>`
+      + `<span>${escapeHtml(p.name)}</span></button>`;
+  }).join('');
+  pop.classList.remove('hidden');
+}
+function pickMention(i){
+  const input = document.getElementById('circleMessageInput');
+  if(!cmMention || !input || !cmMention.items[i]) return;
+  const { start, end } = cmMention;
+  const text = '@' + cmMention.items[i].name + ' ';
+  input.focus();
+  input.setSelectionRange(start, end);
+  let done = false;
+  try { done = document.execCommand('insertText', false, text); } catch(err){}
+  if(!done){
+    input.setRangeText(text, start, end, 'end');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  hideMentionPop();
+}
+(function wireMentions(){
+  const input = document.getElementById('circleMessageInput');
+  const pop = document.getElementById('circleMentionPop');
+  if(!input || !pop) return;
+  input.addEventListener('input', updateMentionPop);
+  input.addEventListener('click', updateMentionPop);
+  input.addEventListener('blur', ()=> setTimeout(()=>{ if(document.activeElement !== input) hideMentionPop(); }, 150));
+  // Pressed without taking the focus off the box, so the caret stays put.
+  pop.addEventListener('pointerdown', (e)=> e.preventDefault());
+  pop.addEventListener('click', (e)=>{
+    const b = e.target.closest('.cm-mention-opt');
+    if(b) pickMention(Number(b.dataset.i));
+  });
+  // Ahead of the box's own keys (capture on the document runs first), so
+  // Enter picks a name instead of sending, and Escape closes the list
+  // instead of the chat.
+  document.addEventListener('keydown', (e)=>{
+    if(!cmMention || e.target !== input || e.isComposing) return;
+    const n = cmMention.items.length;
+    if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+      cmMention.sel = (cmMention.sel + (e.key === 'ArrowDown' ? 1 : n - 1)) % n;
+      pop.querySelectorAll('.cm-mention-opt').forEach((b, i)=> b.setAttribute('aria-selected', String(i === cmMention.sel)));
+    } else if(e.key === 'Enter' || e.key === 'Tab'){
+      pickMention(cmMention.sel);
+    } else if(e.key === 'Escape'){
+      hideMentionPop();
+    } else return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
+})();
+
+/* ---------- BANNERS ----------
+   Real-user request: "messages, on desktop, can show up in the top bar in
+   the middle. In-app notifications from the top in the app. Add notification
+   settings for both." One host, fixed at the top centre: on a computer a
+   pill over the middle of the top bar, on a phone a card sliding down from
+   the top edge. A mention of you is the loud one: bigger, in the sender's
+   colour, and it stays until it is pressed or closed (for a while, at least).
+   Each is a device setting, absent means ON. */
+const BANNER_MSG_KEY = 'trackerBannerMessages';
+const BANNER_NOTIF_KEY = 'trackerBannerNotifs';
+function bannerOn(key){ return localStorage.getItem(key) !== '0'; }
+function showTopBanner({ face, title, body, mention, onOpen, ms }){
+  const host = document.getElementById('ptBannerHost');
+  if(!host) return;
+  // Never a tower of them: the newest three.
+  while(host.children.length >= 3) host.firstElementChild.remove();
+  const el = document.createElement('div');
+  el.className = 'pt-banner' + (mention ? ' mention' : '');
+  el.setAttribute('role', 'status');
+  if(mention && mention.color) el.style.setProperty('--banner-accent', mention.color);
+  el.innerHTML = (face || '')
+    + `<div class="pt-banner-text">${mention ? `<div class="pt-banner-kicker">${escapeHtml(t('bannerMentionedYou'))}</div>` : ''}`
+    + `<div class="pt-banner-title">${escapeHtml(title || '')}</div>`
+    + (body ? `<div class="pt-banner-body">${escapeHtml(body)}</div>` : '') + `</div>`
+    + `<button type="button" class="pt-banner-close" aria-label="${escapeHtml(t('bannerClose'))}" title="${escapeHtml(t('bannerClose'))}">${ICON.close(13)}</button>`;
+  let timer = null;
+  const dismiss = ()=>{
+    clearTimeout(timer);
+    if(!el.isConnected || el.classList.contains('leaving')) return;
+    el.classList.add('leaving');
+    setTimeout(()=> el.remove(), 260);
+  };
+  el.addEventListener('click', (e)=>{
+    if(e.target.closest('.pt-banner-close')){ dismiss(); return; }
+    dismiss();
+    if(onOpen) onOpen();
+  });
+  // Held while the pointer is on it, so it cannot leave while being read.
+  const arm = ()=>{ clearTimeout(timer); timer = setTimeout(dismiss, ms || (mention ? 12000 : 5500)); };
+  el.addEventListener('pointerenter', ()=> clearTimeout(timer));
+  el.addEventListener('pointerleave', arm);
+  host.appendChild(el);
+  arm();
+}
+function bannerForMessage(row){
+  if(!currentUser || guestMode || !row || row.sender_id === currentUser.id) return;
+  if(!messagingEnabled() || !bannerOn(BANNER_MSG_KEY) || document.hidden) return;
+  if(row.kind && row.kind !== 'text') return;
+  const thread = threadOf(row);
+  if(chatPanelOpen() && thread === activeCircleThread) return;
+  const mentionsMe = Array.isArray(row.mentions) && row.mentions.includes(currentUser.id);
+  const c = colorForUser(row.sender_id);
+  const face = `<span class="cm-face pt-banner-face" style="color:${c};border-color:${c};background:${c}1f;">${escapeHtml(firstLetterOf(row.sender_id))}</span>`;
+  const who = nameFor(row.sender_id);
+  const where = isGroupThread(thread) || thread === CIRCLE_THREAD ? circleThreadLabel(thread) : '';
+  const text = stripMessageMarks(row.body || '').replace(/\s+/g, ' ').trim() || row.attachment_name || '';
+  const cut = Array.from(text);
+  showTopBanner({
+    face,
+    title: where ? `${who} · ${where}` : who,
+    body: cut.length > 140 ? cut.slice(0, 139).join('') + '…' : cut.join(''),
+    mention: mentionsMe ? { color: c } : null,
+    onOpen: ()=> openCircleMessage(row.id)
+  });
+}
+function bannerForNotification(n){
+  if(!currentUser || guestMode || !n || !bannerOn(BANNER_NOTIF_KEY) || document.hidden) return;
+  // A mention is already announced by the message's own banner.
+  if(n.type === 'chat_mention') return;
+  const text = renderNotifText(n);
+  const firstLine = String(text.body || '').split('\n').find(Boolean) || '';
+  showTopBanner({
+    face: `<span class="pt-banner-bell">${ICON.bellOn(15)}</span>`,
+    title: text.title, body: firstLine,
+    onOpen: async ()=>{
+      if(!n.read_at){
+        n.read_at = new Date().toISOString();
+        await supabaseClient.rpc('mark_notification_read', { notification_id: n.id });
+        refreshNotifBell();
+      }
+      navigateToNotifTarget(n);
+    }
+  });
+}
+// Opens the chat on a message wherever it is: loads the messages if they are
+// not in yet, and fetches the one asked for if it is older than what is held.
+async function openCircleMessage(id){
+  if(!currentUser || guestMode || !id || !messagingEnabled()) return;
+  if(!circleMessagesLoaded) await loadCircleMessages();
+  let msg = circleMessages.find(m=> m.id === id);
+  if(!msg){
+    const { data } = await supabaseClient.from('circle_messages').select('*').eq('id', id).maybeSingle();
+    if(!data) return;
+    msg = data;
+  }
+  switchCircleThread(threadOf(msg));
+  if(!chatPanelOpen()) openChatPanel(); else renderCircleMessages();
+  requestAnimationFrame(()=> jumpToCircleMessage(id));
 }
 async function requestCircleChecklist(id){
   const { data, error } = await supabaseClient.rpc('request_circle_message_checklist', { p_message: id });
@@ -20096,7 +20494,12 @@ function updateCircleUnreadBadge(){
     badge.textContent = n > 9 ? '9+' : String(n);
   }
   const dot = document.getElementById('circleUnreadDot');
-  if(dot){ dot.classList.toggle('hidden', n === 0 || !messagingEnabled()); dot.textContent = n > 9 ? '9+' : String(n); }
+  // Not on the people button any more: that button opens the circle and its
+  // invitations, so a message count on it led there instead of to the
+  // messages (real-user report: "When you click the notifications at the top,
+  // it just brings you to the join group stuff"). The chat button and the
+  // banners say there is something to read.
+  if(dot) dot.classList.add('hidden');
   renderChatOnlineSummary();
 }
 // The dock is offered to everybody signed in: with nobody to text there is
@@ -23690,6 +24093,31 @@ document.querySelectorAll('#settingsDockSizeToggle > button').forEach(b=>{
 document.getElementById('settingsMessagingToggle').addEventListener('change', (e)=>{
   localStorage.setItem(MESSAGING_KEY, e.target.checked ? '1' : '0');
   applyMessagingPref();
+});
+document.getElementById('settingsMsgBannerToggle').addEventListener('change', (e)=>{
+  localStorage.setItem(BANNER_MSG_KEY, e.target.checked ? '1' : '0');
+});
+document.getElementById('settingsNotifBannerToggle').addEventListener('change', (e)=>{
+  localStorage.setItem(BANNER_NOTIF_KEY, e.target.checked ? '1' : '0');
+});
+// Pressed on and off one at a time; a new line always splits, so none at all
+// is a real answer and means "lines only".
+function renderChecklistSplitChips(){
+  const wrap = document.getElementById('settingsChecklistSplitChips');
+  if(!wrap) return;
+  const on = new Set(checklistSplitPref());
+  const label = { plus:'+', comma:',', amp:'&', and: t('checklistSplitAnd'), semicolon:';', slash:'/' };
+  wrap.innerHTML = CHECKLIST_SPLIT_KEYS.map(k=>
+    `<button type="button" class="tpl-chip split-chip" data-split="${k}" aria-pressed="${on.has(k)}">${escapeHtml(label[k])}</button>`).join('');
+}
+document.getElementById('settingsChecklistSplitChips').addEventListener('click', (e)=>{
+  const b = e.target.closest('[data-split]');
+  if(!b) return;
+  const on = new Set(checklistSplitPref());
+  if(on.has(b.dataset.split)) on.delete(b.dataset.split); else on.add(b.dataset.split);
+  setChecklistSplitPref(CHECKLIST_SPLIT_KEYS.filter(k=> on.has(k)));
+  renderChecklistSplitChips();
+  if(chatPanelOpen()) renderCircleMessages();
 });
 document.querySelectorAll('.anim-toggle').forEach(cb=>{
   cb.addEventListener('change', ()=>{
