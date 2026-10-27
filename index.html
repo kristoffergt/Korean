@@ -4527,9 +4527,10 @@ body.ws-work .ws-class-only{display:none !important;}
 .tq-show-btn{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:13px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink-soft);cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .tq-show-btn[aria-expanded="true"]{color:var(--ink);border-color:var(--ink-soft);}
 .tq-show-menu .tq-scopes{flex-wrap:nowrap;}
-.todo-grip{display:none;}
 @media (hover: none){
-  #yonseiTodosSection .todo-row .lecture-actions .todo-grip{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;margin:-5px -4px -5px 2px;font-size:18px;color:var(--ink-soft);touch-action:none;}
+  #yonseiTodosSection .todo-row[data-drag] .todo-check{touch-action:none;position:relative;}
+  /* A 20px circle is a small target for a thumb that wants to carry it. */
+  #yonseiTodosSection .todo-row[data-drag] .todo-check::before{content:"";position:absolute;inset:-10px;}
 }
 .todo-check-blank{border-style:dashed !important;opacity:.55;cursor:default;}
 .todo-draft-input{width:100%;border:none !important;background:none !important;box-shadow:none !important;outline:none;padding:0 !important;font:inherit;font-size:14.5px;line-height:20px;color:var(--ink);}
@@ -4591,8 +4592,6 @@ body.todo-drag-on, body.todo-drag-on *{cursor:grabbing !important;user-select:no
    delete should not be only inside Edit); the rest stays in Edit. */
 @media (hover: none){
   #yonseiTodosSection .todo-row .lecture-actions{opacity:.75;}
-  #yonseiTodosSection .todo-row .lecture-actions .todo-cal-toggle,
-  #yonseiTodosSection .todo-row .lecture-actions .todo-move-btn{display:none;}
 }
 .todo-group-head{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin:12px 0 2px;}
 .todo-group-head:first-child{margin-top:2px;}
@@ -28547,7 +28546,9 @@ function todoColumnRows(scope){
     else if(start === now && !td.done && at.start < now) carried.push(td);
   });
   carried.sort((a, b)=> (todoScopeOf(a).start.localeCompare(todoScopeOf(b).start)) || todoOrderCmp(a, b));
-  return [...carried, ...inIt.filter(td=> !td.done).sort(todoOrderCmp), ...inIt.filter(td=> td.done).sort(todoOrderCmp)];
+  // Ticking one off leaves it where it is (real-user request: "stop switching
+  // them around in the list when you mark them done").
+  return [...carried, ...inIt.sort(todoOrderCmp)];
 }
 // "day|2026-10-27", "week|2026-10-25", or "none": the group a to-do is in.
 function todoPeriodKey(at){ return at ? `${at.scope}|${at.start}` : 'none'; }
@@ -28609,9 +28610,8 @@ function renderTodoColumns(){
     todoFlatRendering = true;
     list.innerHTML = todoGroupedHtml(carried, s, true)
       + (carried.length ? `<div class="todo-group-head" data-g="${list.dataset.todoDrop}">${escapeHtml(todoPeriodLabel(s, todoPeriods[s]))}</div>` : '')
-      + own.filter(td=> !td.done).map(td=> todoRowHtml(td, s)).join('')
-      + todoDraftsHtml(list.dataset.todoDrop)
-      + own.filter(td=> td.done).map(td=> todoRowHtml(td, s)).join('');
+      + own.slice().sort(todoOrderCmp).map(td=> todoRowHtml(td, s)).join('')
+      + todoDraftsHtml(list.dataset.todoDrop);
     todoFlatRendering = false;
     wireTodoRows(list, s);
     wireTodoDrafts(list);
@@ -28652,7 +28652,7 @@ function todoRowHtml(td, where = 'list', showDate = false){
   }
   if(td.repeat && TODO_REPEAT_LABEL[td.repeat]) meta.push(`<span class="todo-repeat-tag" title="${escapeHtml(t(TODO_REPEAT_LABEL[td.repeat]))}">${ICON.repeat(11)} ${escapeHtml(t(TODO_REPEAT_LABEL[td.repeat]))}</span>`);
   if(!mine) meta.push(`<span><span class="author-dot" style="background:${colorForUser(td.user_id)}"></span> ${escapeHtml(nameFor(td.user_id))}</span>`);
-  return `<div class="lecture-row todo-row${td.done ? ' done' : ''}${mine ? '' : ' theirs'}" data-todo="${td.id}"${mine && !td.done ? ' data-drag="1"' : ''}>
+  return `<div class="lecture-row todo-row${td.done ? ' done' : ''}${mine ? '' : ' theirs'}" data-todo="${td.id}"${mine ? ' data-drag="1"' : ''}>
     <button type="button" class="todo-check" role="checkbox" aria-checked="${td.done ? 'true' : 'false'}" data-todo="${td.id}" ${mine ? '' : 'disabled'} title="${escapeHtml(t(td.done ? 'todoMarkOpen' : 'todoMarkDone'))}">${td.done ? ICON.check(13) : ''}</button>
     <span class="todo-main">
       <span class="todo-title" data-todo="${td.id}">${escapeHtml(td.title)}</span>
@@ -28663,7 +28663,6 @@ function todoRowHtml(td, where = 'list', showDate = false){
       ${todoCanBeOnCal(td) ? todoCalToggleHtml(td) : ''}
       ${mine && !td.done ? `<button class="lecture-edit todo-move-btn" data-todo="${td.id}" aria-expanded="${todoMoveOpen === td.id && todoMoveWhere === where}" title="${escapeHtml(t('todoMoveTo'))}">${ICON.moveTo()}</button>` : ''}
       ${mine ? `<button class="lecture-edit todo-edit-btn" data-todo="${td.id}" title="${escapeHtml(t('todoEdit'))}">${ICON.pencil()}</button>` : ''}
-      ${mine && !td.done ? `<span class="todo-grip" aria-hidden="true">⠿</span>` : ''}
       ${mine ? `<button class="lecture-del todo-del-btn" data-todo="${td.id}" title="${escapeHtml(t('todoDelete'))}">✕</button>` : ''}
     </span>
   </div>${mine && todoMoveOpen === td.id && todoMoveWhere === where && todoEditOpen !== td.id ? `<div class="todo-move-row">${todoMoveHtml(td)}</div>` : ''}${mine && todoEditOpen === td.id && todoEditWhere === where ? todoEditHtml(td) : ''}`;
@@ -28845,18 +28844,18 @@ function todoDragPlace(){
     (el.classList.contains('todo-row') && el.dataset.drag) || (el.classList.contains('todo-group-head') && el.dataset.g)));
   const before = marks.find(el=>{ const r = el.getBoundingClientRect(); return y < r.top + r.height / 2; });
   if(before){ if(before.previousElementSibling !== row) list.insertBefore(row, before); return; }
-  // Below everything open: after the last one, ahead of the finished ones.
+  // Below everything: after the last row, ahead of the blank lines and the
+  // add line.
   const lastMark = marks[marks.length - 1];
-  const doneRow = [...list.children].find(el=> el !== row && el.classList.contains('todo-row') && el.classList.contains('done'));
-  if(lastMark && (!doneRow || (lastMark.compareDocumentPosition(doneRow) & Node.DOCUMENT_POSITION_FOLLOWING))) { if(lastMark.nextElementSibling !== row) lastMark.after(row); }
-  else if(doneRow){ if(doneRow.previousElementSibling !== row) list.insertBefore(row, doneRow); }
-  else if(list.lastElementChild !== row) list.appendChild(row);
+  if(lastMark){ if(lastMark.nextElementSibling !== row) lastMark.after(row); }
+  else if(list.firstElementChild !== row) list.prepend(row);
 }
 async function todoDragEnd(cancel){
   if(!todoDrag) return;
   const { row, list, ghost, raf, startList, startNext, bin, overBin } = todoDrag;
   cancelAnimationFrame(raf);
   todoDrag = null;
+  todoRenderAfterDrag = false;
   ghost.remove();
   bin.remove();
   row.classList.remove('todo-dragging');
@@ -28898,7 +28897,6 @@ async function todoDragEnd(cancel){
 }
 function todoDragCandidate(target){
   if(!target || !target.closest) return null;
-  if(target.closest('.todo-grip')) return target.closest('.todo-row[data-drag]');
   if(target.closest('button, input, select, textarea, a, label, .todo-edit, .todo-move-row')) {
     // The title is a button-like span, not a button, so it still picks up.
     return null;
@@ -28906,6 +28904,7 @@ function todoDragCandidate(target){
   const row = target.closest('.todo-row[data-drag]');
   return row && row.closest('[data-todo-drop]') ? row : null;
 }
+let todoRenderAfterDrag = false;
 function wireTodoDrag(){
   // Mouse and pen.
   let pending = null;
@@ -28932,14 +28931,55 @@ function wireTodoDrag(){
   // Touch: hold, then drag. The non-passive touchmove is what stops the page
   // scrolling under a finger that is carrying a to-do.
   let hold = null;
+  let touchNode = null;
+  const onNodeMove = e=>{ if(todoDrag && !document.contains(e.currentTarget)){ e.preventDefault(); todoDragMove(e.touches[0].clientX, e.touches[0].clientY); } };
+  const onNodeEnd = e=>{ if(!document.contains(e.currentTarget)) endTouch(e.type === 'touchcancel'); };
+  const watch = node=>{
+    if(touchNode === node) return;
+    unwatch();
+    touchNode = node;
+    node.addEventListener('touchmove', onNodeMove, { passive: false });
+    node.addEventListener('touchend', onNodeEnd);
+    node.addEventListener('touchcancel', onNodeEnd);
+  };
+  const unwatch = ()=>{
+    if(!touchNode) return;
+    touchNode.removeEventListener('touchmove', onNodeMove);
+    touchNode.removeEventListener('touchend', onNodeEnd);
+    touchNode.removeEventListener('touchcancel', onNodeEnd);
+    touchNode = null;
+  };
+  // The circle is the handle on touch (real-user request: "the circle part
+  // should be draggable"): it carries touch-action:none, so sliding a finger
+  // off it starts a drag at once with no hold, and a tap still ticks it.
+  let circle = null;
   document.addEventListener('touchstart', e=>{
+    if(todoDrag || e.touches.length !== 1) return;
+    const c = e.target.closest && e.target.closest('.todo-check');
+    const row = c && c.closest('.todo-row[data-drag]');
+    if(!row || !row.closest('[data-todo-drop]')) return;
+    circle = { row, x: e.touches[0].clientX, y: e.touches[0].clientY };
+    watch(e.target);
+  }, { passive: true });
+  document.addEventListener('touchmove', e=>{
+    if(!circle || todoDrag) return;
+    const t0 = e.touches[0];
+    if(Math.hypot(t0.clientX - circle.x, t0.clientY - circle.y) > 6){
+      e.preventDefault();
+      todoDragStart(circle.row, circle.x, circle.y);
+      circle = null;
+      todoDragMove(t0.clientX, t0.clientY);
+    }
+  }, { passive: false });
+  document.addEventListener('touchstart', e=>{
+    // A drag still up when a new touch lands lost its end somewhere: drop it
+    // where it is rather than leave it stuck.
+    if(todoDrag && e.touches.length === 1){ todoDragEnd(false); return; }
     if(e.touches.length !== 1) return;
     const row = todoDragCandidate(e.target);
     if(!row) return;
     const t0 = e.touches[0];
-    // The grip needs no hold: it carries touch-action:none, so the page never
-    // starts scrolling under it.
-    if(e.target.closest('.todo-grip')){ todoDragStart(row, t0.clientX, t0.clientY); return; }
+    watch(e.target);
     hold = { x: t0.clientX, y: t0.clientY, timer: setTimeout(()=>{
       if(!hold) return;
       todoDragStart(row, hold.x, hold.y);
@@ -28951,10 +28991,12 @@ function wireTodoDrag(){
     if(todoDrag){ e.preventDefault(); todoDragMove(t0.clientX, t0.clientY); return; }
     if(hold && Math.hypot(t0.clientX - hold.x, t0.clientY - hold.y) > 12){ clearTimeout(hold.timer); hold = null; }
   }, { passive: false });
-  const endTouch = cancel=>{
+  function endTouch(cancel){
     if(hold){ clearTimeout(hold.timer); hold = null; }
+    circle = null;
+    unwatch();
     if(todoDrag) todoDragEnd(cancel);
-  };
+  }
   document.addEventListener('touchend', ()=> endTouch(false));
   document.addEventListener('touchcancel', ()=> endTouch(true));
   document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && todoDrag) todoDragEnd(true); });
@@ -29155,12 +29197,12 @@ function renderTodoFlat(){
   todoFlatRendering = true;
   list.innerHTML = groups.map(g=>{
     const label = g.at ? (g.at.scope === 'day' ? todoDateLabel(g.at.start) : todoPeriodLabel(g.at.scope, g.at.start)) : t('todoScopeNone');
-    const open = g.rows.filter(td=> !td.done), done = g.rows.filter(td=> td.done);
+    const open = g.rows.filter(td=> !td.done);
     const folded = todoFlatFolded(g) && g.key !== keepKey;
     const overdue = open.some(td=> todoIsOverdue(td));
     const head = `<div class="todo-group-head tq-fold${overdue ? ' overdue' : ''}" data-g="${g.key}" role="button" tabindex="0" aria-expanded="${!folded}"><span class="tq-fold-arrow">${folded ? '▸' : '▾'}</span> ${escapeHtml(label)}${folded && g.rows.length ? ` <span class="note-group-count">(${open.length ? open.length : g.rows.length})</span>` : ''}</div>`;
     if(folded) return head;
-    return head + open.sort(todoOrderCmp).map(td=> todoRowHtml(td, 'flat')).join('') + todoDraftsHtml(g.key) + done.sort(todoOrderCmp).map(td=> todoRowHtml(td, 'flat')).join('') + todoAddLineHtml(g.key);
+    return head + g.rows.slice().sort(todoOrderCmp).map(td=> todoRowHtml(td, 'flat')).join('') + todoDraftsHtml(g.key) + todoAddLineHtml(g.key);
   }).join('');
   todoFlatRendering = false;
   list.querySelectorAll('.tq-add').forEach(line=> wireTodoAddLine(line, title=>{
@@ -29365,6 +29407,11 @@ function todoEditHtml(td){
   </div>`;
 }
 function renderTodos(){
+  // Never redraw under a to-do being dragged: the row in the finger would be
+  // replaced, its touchend would go to a detached node and the drag would
+  // hang on screen (real-user report: "it gets stuck ... and then i cant move
+  // it"). The drag's own end redraws.
+  if(todoDrag){ todoRenderAfterDrag = true; return; }
   const list = document.getElementById('todoList');
   if(!list || !currentUser) return;
   rebuildTodoCourseSelects();
