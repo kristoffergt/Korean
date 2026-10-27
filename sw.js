@@ -103,8 +103,10 @@ self.addEventListener('fetch', (e) => {
           const fresh = fetch(key + url.search, { cache: 'no-cache', credentials: 'same-origin' })
             .then((res) => {
               if (res && res.ok) {
-                c.put(new Request(key), res.clone());
-                if (cached && !sameDoc(cached, res)) tellClients({ type: 'wk-shell-updated' });
+                // Stored BEFORE the page hears of it, or a reload pressed at
+                // once is served the old copy again.
+                const stored = c.put(new Request(key), res.clone());
+                if (cached && !sameDoc(cached, res)) stored.then(() => tellClients({ type: 'wk-shell-updated' }));
               }
               return res;
             })
@@ -190,6 +192,23 @@ async function checkShell(client, path) {
 self.addEventListener('message', (e) => {
   const d = e.data;
   if (d && d.type === 'pt-check-shell' && e.source) { e.waitUntil(checkShell(e.source, d.path || './')); return; }
+  // Reload pressed: fetch the live document, store it, THEN answer, so the
+  // reload that follows is served the new copy.
+  if (d && d.type === 'pt-refresh-shell') {
+    const port = e.ports && e.ports[0];
+    const path = d.path || './';
+    e.waitUntil((async () => {
+      try {
+        const res = await fetch(path, { cache: 'reload', credentials: 'same-origin' });
+        if (res && res.ok) {
+          const shell = await caches.open(CACHE);
+          await shell.put(new Request(new URL(path, self.location).href), res);
+        }
+      } catch (_) { /* offline: the reload still happens */ }
+      if (port) port.postMessage({ done: true });
+    })());
+    return;
+  }
   if (!d || d.type !== 'pt-notif-i18n') return;
   const body = JSON.stringify({ lang: d.lang || 'en', strings: d.strings || {} });
   e.waitUntil(caches.open(NOTIF_I18N_CACHE).then((c) =>

@@ -2123,11 +2123,20 @@ body.no-anim-ui .gram-sentence-row .gram-sentence-edit-btn:active{transform:none
    panel floating over it. */
 /* Bottom LEFT, so it never lands on the chat launcher (bottom right) or,
    on a phone, on the tab dock (bottom centre, see --dock-space). */
-#shellUpdateBar{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom));
-  z-index:90;display:flex;align-items:center;gap:10px;
-  padding:8px 10px 8px 14px;border-radius:24px;
+/* A slim pill hung just under the top bar (27 Oct, real-user request: "it'd
+   probably fit better near the top (right under the top bar) in a slimmer
+   version"). Bottom left put its close behind the chat launcher. --upd-top is
+   the bar's measured bottom; the safe-area top until it is measured. */
+#shellUpdateBar{position:fixed;left:50%;transform:translateX(-50%);
+  top:var(--upd-top, calc(env(safe-area-inset-top) + 8px));
+  z-index:930;display:flex;align-items:center;gap:4px;max-width:calc(100vw - 24px);box-sizing:border-box;
+  padding:2px 2px 2px 12px;border-radius:999px;
   background:var(--paper-dim);border:1px solid var(--line);color:var(--ink);
-  font-size:13px;box-shadow:0 8px 28px rgba(0,0,0,0.22);}
+  font-size:12px;line-height:1.2;box-shadow:0 4px 14px rgba(0,0,0,0.16);}
+#shellUpdateBar #shellUpdateText{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#shellUpdateBar #shellUpdateReloadBtn{flex:none;background:none;border:none;color:var(--on);font:inherit;font-weight:700;padding:4px 8px;border-radius:999px;cursor:pointer;}
+#shellUpdateBar #shellUpdateReloadBtn:disabled{opacity:.6;cursor:default;}
+#shellUpdateBar #shellUpdateCloseBtn{flex:none;width:26px;height:26px;padding:0;font-size:12px;}
 #shellUpdateBar.hidden{display:none;}
 /* ---- Get the app (see GET THE APP) ---- */
 .install-steps{margin:0;padding:0;list-style:none;counter-reset:ig;display:flex;flex-direction:column;gap:12px;}
@@ -2534,7 +2543,6 @@ button.cm-quote:hover,button.cm-quote:focus-visible{background:rgba(127,127,127,
 .cm-ava{position:relative;flex:none;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:18px;font-weight:800;border:1.5px solid;}
 .chat-thread-title .cm-ava{width:32px;height:32px;font-size:13px;}
-.cm-ava .cm-pt-logo{width:58%;height:58%;vertical-align:0;}
 .cm-ava .online-dot{position:absolute;right:0;bottom:0;width:11px;height:11px;margin:0;border:2px solid var(--paper-dim);}
 .cm-ava-plain{border-color:var(--line);background:var(--paper);color:var(--ink-soft);}
 .cm-convo-new{color:var(--ink-soft);}
@@ -2543,6 +2551,23 @@ button.cm-quote:hover,button.cm-quote:focus-visible{background:rgba(127,127,127,
 /* The conversation itself, the way a messenger draws one: no box round it,
    round bubbles, the composer flush with the bottom. */
 #chatPanel.cm-phone.cm-dm .cm-msg > .cm-who{display:none;}
+/* In a group, whose message it is: their face beside the bubble and their
+   name very small at its top (real-user request, 27 Oct). */
+.cm-msg-ava{display:none;}
+#chatPanel.cm-grp .cm-msg:not(.mine){margin-left:30px;}
+#chatPanel.cm-grp .cm-msg-ava{display:flex;position:absolute;left:-30px;bottom:0;width:24px;height:24px;
+  box-sizing:border-box;border-radius:50%;border:1.5px solid;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;line-height:1;}
+#chatPanel.cm-grp .cm-msg:not(.mine) > .cm-who{font-size:9.5px;font-weight:700;margin-bottom:1px;}
+/* The app's own logo fills its circle, as a face does (27 Oct). */
+.cm-ava .cm-pt-logo{width:100%;height:100%;border-radius:50%;}
+/* Bigger search and files marks on a phone. */
+#chatPanel.cm-phone .cm-tool{padding:6px;}
+#chatPanel.cm-phone .cm-tool svg,#chatPanel.cm-phone .cm-search-close svg{width:21px;height:21px;}
+/* iOS draws its own fade over whatever sits just under the status bar, which
+   took the top of the close mark with it (real-user report). The full-window
+   panel starts a little lower on a phone. */
+#chatDock.chat-full #chatPanel.cm-phone{padding-top:calc(24px + env(safe-area-inset-top));}
 #chatPanel.cm-phone .cm-log{border:none;background:none;padding:8px 2px;border-radius:0;}
 #chatPanel.cm-phone .cm-msg{border-radius:18px;padding:7px 12px;max-width:80%;font-size:14px;}
 #chatPanel.cm-phone .cm-msg.mine{border-bottom-right-radius:6px;}
@@ -2637,8 +2662,13 @@ body.dark .cm-pt-logo.brand-icon-light{display:inline-block;}
    so the pill never sits on the time or the eye, and a margin so it never
    sits on the next bubble. :has, so a reaction arriving live (which only
    repaints the pill's contents) moves things without a re-render. */
-.cm-msg:has(> .cm-reacts:not(:empty)){padding-bottom:13px;margin-bottom:12px;}
-.cm-reacts{position:absolute;bottom:-13px;z-index:1;display:flex;align-items:center;gap:1px;
+.cm-msg:has(> .cm-reacts:not(:empty)){padding-bottom:13px;margin-bottom:20px;}
+/* The phone's own bubble padding is an id rule, which beat the one above, so
+   the pill sat on the time there (real-user report, 27 Oct). The pill is 28px
+   and hangs 18 below, so 10 of it is inside the bubble: 12 of padding keeps
+   it under the time line. */
+#chatPanel.cm-phone .cm-msg:has(> .cm-reacts:not(:empty)){padding-bottom:12px;margin-bottom:20px;}
+.cm-reacts{position:absolute;bottom:-18px;z-index:1;display:flex;align-items:center;gap:1px;
   padding:2px;border-radius:999px;background:var(--paper);border:1px solid var(--line);
   box-shadow:0 2px 7px rgba(0,0,0,0.18);white-space:nowrap;
   left:calc(100% - 30px);}
@@ -3770,7 +3800,6 @@ body.dark .ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-3);}
   /* The chat launcher is the one other thing anchored to that corner, and at
      its own 10px it would have sat under the bar. */
   #chatDock{bottom:calc(var(--dock-bottom) + var(--dock-space) + var(--subdock-space, 0px) + 10px);}
-  #shellUpdateBar{left:10px;right:10px;bottom:calc(var(--dock-bottom) + var(--dock-space) + var(--subdock-space, 0px) + 10px);}
   /* THE SUB-TABS RIDE ON THE BAR. A panel's own row (Log, Grammar, Writing...)
      is moved out of the top of the panel into a glass strip sitting just
      above the floating bar, where the thumb already is (real-user request:
@@ -17467,6 +17496,16 @@ function closeCircleSearch(){
   }
 }
 document.getElementById('circleSearchToggle').addEventListener('click', openCircleSearch);
+// A press back in the conversation puts an unused search away (real-user
+// request, 27 Oct). Not while results are showing: pressing one of those is
+// what the search was for.
+document.addEventListener('pointerdown', (e)=>{
+  const bar = document.getElementById('circleSearchBar');
+  if(!bar || bar.classList.contains('hidden') || circleChatView !== 'chat') return;
+  if(e.target.closest && e.target.closest('#circleSearchBar, #circleSearchToggle')) return;
+  if(!(e.target.closest && e.target.closest('#chatPanel'))) return;
+  closeCircleSearch();
+}, true);
 document.getElementById('circleSearchClose').addEventListener('click', closeCircleSearch);
 document.getElementById('circleFilesBtn').addEventListener('click', ()=>{
   const dates = document.getElementById('circleFileDates');
@@ -19175,6 +19214,7 @@ function renderPhoneChat(threads){
   // Between two people the name on every bubble says nothing.
   panel.classList.toggle('cm-dm', view === 'chat' && activeCircleThread !== CIRCLE_THREAD
     && activeCircleThread !== PT_THREAD && !isGroupThread(activeCircleThread));
+  panel.classList.toggle('cm-grp', activeCircleThread === CIRCLE_THREAD || isGroupThread(activeCircleThread));
   if(view === 'chat') requestAnimationFrame(sizeComposer);
   const back = document.getElementById('chatBackBtn');
   if(back && !back.firstChild) back.innerHTML = ICON.chevL(22);
@@ -19374,6 +19414,7 @@ function messageBubbleHtml(msg, showTime){
   return `<div class="cm-msg${mine?' mine':''}${circleEditingId === msg.id ? ' cm-editing' : ''}" data-msg="${escapeHtml(msg.id)}"
       style="background:${colour}1f;border-color:${colour}59;">
     ${messageMoreButtonHtml()}
+    ${mine ? '' : `<span class="cm-msg-ava" aria-hidden="true" style="color:${colour};border-color:${colour};background:var(--paper-dim);background-image:linear-gradient(${colour}1f,${colour}1f);">${escapeHtml(firstLetterOf(msg.sender_id))}</span>`}
     ${mine ? '' : `<div class="cm-who" style="color:${colour};">${escapeHtml(nameFor(msg.sender_id))}</div>`}
     ${replyQuoteHtml(msg)}
     ${msg.attachment_path ? attachmentHtml(msg) : ''}
@@ -20783,6 +20824,7 @@ function wireMessageMenuGestures(log){
   };
   log.addEventListener('pointerdown', (e)=>{
     if(e.pointerType === 'mouse' || !currentUser || guestMode) return;
+    if(e.clientX <= EDGE_BACK_PX) return; // the edge is the back swipe's
     const bubble = e.target.closest && e.target.closest('.cm-msg');
     const msg = bubble && circleMessageCopies(bubble.dataset.msg)[0];
     if(!msg || (msg.kind && msg.kind !== 'text') || circleChatView === 'files') return;
@@ -21398,6 +21440,93 @@ function closeChatPanel(){
   updateCircleUnreadBadge();
 }
 function toggleChatPanel(){ chatPanelOpen() ? closeChatPanel() : openChatPanel(); }
+// ---------- SWIPE FROM THE LEFT EDGE TO GO BACK ----------
+// The phone's own back gesture (real-user request, 27 Oct: "You need to be
+// able to swipe right to go back (and exit tabs like messages). That's the
+// standard gesture on phone"). A touch that starts within EDGE_BACK_PX of the
+// left edge and travels right drags whatever is on top with the finger: a
+// conversation goes back to the list, the list closes the chat, and an open
+// dialog closes. Past a third of the width, or flicked, it goes; short of that
+// it springs back. The app has no history of its own to pop, so with nothing
+// open the gesture does nothing.
+var EDGE_BACK_PX = 24;
+function edgeBackTarget(){
+  const modals = Array.from(document.querySelectorAll('.modal-overlay:not(.hidden)'));
+  const m = modals[modals.length - 1];
+  if(m){
+    const x = m.querySelector('.close-x, .modal-close, [data-close]');
+    return x ? { el: m.firstElementChild || m, run: ()=> x.click() } : null;
+  }
+  if(chatPanelOpen()){
+    const p = document.getElementById('chatPanel');
+    if(p.classList.contains('cm-pv-chat'))
+      return { el: p, stay: true, run: ()=> document.getElementById('chatBackBtn').click() };
+    return { el: p, run: closeChatPanel };
+  }
+  return null;
+}
+(function wireEdgeBack(){
+  let g = null;
+  document.addEventListener('touchstart', (e)=>{
+    g = null;
+    if(e.touches.length !== 1 || !isMobileDevice()) return;
+    const t0 = e.touches[0];
+    if(t0.clientX > EDGE_BACK_PX) return;
+    const target = edgeBackTarget();
+    if(!target) return;
+    g = { x: t0.clientX, y: t0.clientY, at: Date.now(), dx: 0, active: false, target };
+  }, { passive: true, capture: true });
+  document.addEventListener('touchmove', (e)=>{
+    if(!g) return;
+    const t0 = e.touches[0];
+    const dx = t0.clientX - g.x, dy = t0.clientY - g.y;
+    if(!g.active){
+      if(Math.abs(dy) > 12 && Math.abs(dy) > dx){ g = null; return; }
+      if(dx < 8) return;
+      g.active = true;
+      g.target.el.style.transition = 'none';
+    }
+    e.preventDefault();
+    g.dx = Math.max(0, dx);
+    g.target.el.style.transform = `translateX(${g.dx}px)`;
+  }, { passive: false, capture: true });
+  const end = ()=>{
+    if(!g) return;
+    const s = g; g = null;
+    if(!s.active) return;
+    const el = s.target.el;
+    const w = window.innerWidth;
+    const fast = s.dx / Math.max(1, Date.now() - s.at) > 0.5;
+    if(s.dx > w / 3 || (fast && s.dx > 40)){
+      el.style.transition = 'transform 170ms ease-out';
+      el.style.transform = `translateX(${w}px)`;
+      setTimeout(()=>{
+        s.target.run();
+        if(s.target.stay){
+          // The list comes up from just behind, as the screen underneath.
+          el.style.transition = 'none';
+          el.style.transform = 'translateX(-28px)';
+          el.style.opacity = '0.6';
+          requestAnimationFrame(()=>{
+            el.style.transition = 'transform 200ms ease-out, opacity 200ms ease-out';
+            el.style.transform = '';
+            el.style.opacity = '';
+            setTimeout(()=>{ el.style.transition = ''; }, 220);
+          });
+        } else {
+          // Hidden by its own close; let go of the drag once it is.
+          setTimeout(()=>{ el.style.transition = ''; el.style.transform = ''; }, 300);
+        }
+      }, 170);
+    } else {
+      el.style.transition = 'transform 220ms cubic-bezier(0.2,0.9,0.3,1)';
+      el.style.transform = '';
+      setTimeout(()=>{ el.style.transition = ''; }, 240);
+    }
+  };
+  document.addEventListener('touchend', end, { capture: true });
+  document.addEventListener('touchcancel', end, { capture: true });
+})();
 function updateLinkNotifyDot(){
   const dot = document.getElementById('linkNotifyDot');
   if(!dot) return;
@@ -51397,8 +51526,26 @@ closeOnBackdrop(document.getElementById('pendingVacationInvitesModal'), ()=> doc
       // has not started anything yet, so take the new version now rather
       // than offering it. Anywhere else the offer stands, as before.
       if(e.data.resume && !typingSomewhere()){ window.location.reload(); return; }
-      document.getElementById('shellUpdateBar').classList.remove('hidden');
+      showShellUpdateBar();
     });
+    // Hung under the top bar, measured, because the bar condenses on scroll
+    // and wraps on a phone.
+    function placeShellUpdateBar(){
+      const bar = document.getElementById('shellUpdateBar');
+      if(!bar || bar.classList.contains('hidden')) return;
+      const top = document.getElementById('topBar');
+      const r = top && top.getBoundingClientRect();
+      if(r && r.height && r.bottom > 0) bar.style.setProperty('--upd-top', Math.round(r.bottom + 6) + 'px');
+      else bar.style.removeProperty('--upd-top');
+    }
+    let shellPlaceRaf = 0;
+    const queuePlace = ()=>{ if(!shellPlaceRaf) shellPlaceRaf = requestAnimationFrame(()=>{ shellPlaceRaf = 0; placeShellUpdateBar(); }); };
+    window.addEventListener('scroll', queuePlace, { passive:true });
+    window.addEventListener('resize', queuePlace);
+    function showShellUpdateBar(){
+      document.getElementById('shellUpdateBar').classList.remove('hidden');
+      placeShellUpdateBar();
+    }
     function typingSomewhere(){
       const a = document.activeElement;
       if(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return true;
@@ -51416,8 +51563,26 @@ closeOnBackdrop(document.getElementById('pendingVacationInvitesModal'), ()=> doc
       const c = navigator.serviceWorker.controller;
       if(c) c.postMessage({ type:'pt-check-shell', path: location.pathname });
     });
-    document.getElementById('shellUpdateReloadBtn').addEventListener('click', ()=>{
-      window.location.reload();
+    // RELOAD WAS RELOADING ONTO THE OLD COPY (real-user report, 27 Oct: "the
+    // Reload button is not working"). The worker serves the document from its
+    // cache and only revalidates behind it, and the copy it had just fetched
+    // could still be on its way into the cache when the page reloaded -- so
+    // the reload got the old document, which then offered the update again.
+    // Now the worker is asked to fetch and STORE the live copy first, and the
+    // page reloads once it says so (or after 5s, whatever happens).
+    document.getElementById('shellUpdateReloadBtn').addEventListener('click', (e)=>{
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      let gone = false;
+      const go = ()=>{ if(gone) return; gone = true; window.location.reload(); };
+      setTimeout(go, 5000);
+      const c = navigator.serviceWorker.controller;
+      if(!c){ go(); return; }
+      try{
+        const ch = new MessageChannel();
+        ch.port1.onmessage = go;
+        c.postMessage({ type:'pt-refresh-shell', path: location.pathname }, [ch.port2]);
+      }catch(err){ go(); }
     });
     document.getElementById('shellUpdateCloseBtn').addEventListener('click', ()=>{
       shellUpdateDeclined = true;
