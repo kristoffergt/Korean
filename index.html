@@ -2520,26 +2520,40 @@ button.cm-quote:hover,button.cm-quote:focus-visible{background:rgba(127,127,127,
    and its name in the head, the pills gone. Desktop keeps the corner panel
    and its pills. */
 .chat-back,.chat-thread-title,.cm-convos{display:none;}
-#chatPanel.cm-phone #chatFullBtn, #chatPanel.cm-phone .cm-threads, #chatPanel.cm-phone #chatOnlineSummary{display:none !important;}
+#chatPanel.cm-msgr .cm-threads, #chatPanel.cm-msgr #chatOnlineSummary{display:none !important;}
+#chatPanel.cm-phone #chatFullBtn{display:none !important;}
 #chatPanel.cm-pv-list .cm-groupbar, #chatPanel.cm-pv-list .cm-tools, #chatPanel.cm-pv-list .cm-filedates,
 #chatPanel.cm-pv-list #circleMessageLog, #chatPanel.cm-pv-list .cm-typing, #chatPanel.cm-pv-list .cm-editbar,
 #chatPanel.cm-pv-list .cm-compose, #chatPanel.cm-pv-list .cm-pending, #chatPanel.cm-pv-list .cm-emoji-tray,
 #chatPanel.cm-pv-list .cm-mention-pop, #chatPanel.cm-pv-list .cm-groupform{display:none !important;}
 #chatDock #chatPanel.cm-pv-list .cm-convos{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow-y:auto;
   overscroll-behavior:contain;margin:6px -14px 0;width:auto;max-width:none;}
+/* In the corner panel the list takes the height the conversation does --
+   the tools row, the log and the composer -- so the panel does not jump
+   between the two (and is as tall as the log was dragged to). */
+#chatDock:not(.chat-full) #chatPanel.cm-pv-list .cm-convos{height:calc(var(--chat-log-h,240px) + 104px);flex:none;}
+@media (max-width: 640px){
+  #chatDock:not(.chat-full) #chatPanel.cm-pv-list .cm-convos{height:calc(min(42dvh,240px) + 104px);}
+}
+/* Full screen on a computer: one readable column, like the conversation. */
+#chatDock.chat-full #chatPanel.cm-pv-list:not(.cm-phone) .cm-convos{width:100%;max-width:880px;margin:6px auto 0;}
 #chatPanel.cm-pv-chat .chat-back{display:inline-flex;}
 #chatPanel.cm-pv-chat #chatTitle{display:none;}
 #chatPanel.cm-pv-chat .chat-thread-title{display:flex;}
-#chatPanel.cm-phone .chat-head{min-height:40px;font-size:17px;}
+#chatPanel.cm-msgr .chat-head{min-height:40px;font-size:17px;}
 .chat-back{align-items:center;justify-content:center;width:36px;height:36px;margin:-4px 0 -4px -8px;padding:0;
   border:none;background:none;color:var(--ink);border-radius:50%;cursor:pointer;flex:none;}
 .chat-back:active{background:rgba(127,127,127,0.16);}
+/* Clear of the resize grip in the corner panel's top-left corner. */
+#chatPanel:not(.cm-phone) .chat-back{margin-left:2px;}
+@media (hover:hover){ .chat-back:hover{background:rgba(127,127,127,0.12);} }
 .chat-thread-title{flex:1;min-width:0;align-items:center;gap:9px;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;}
 .chat-thread-title > span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .chat-head .chat-head-right{margin-left:auto;}
 .cm-convo{display:flex;align-items:center;gap:12px;width:100%;padding:10px 16px;border:none;
   background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer;}
 .cm-convo:active{background:rgba(127,127,127,0.14);}
+@media (hover:hover){ .cm-convo:hover{background:rgba(127,127,127,0.09);} }
 .cm-convo-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;
   padding-bottom:10px;margin-bottom:-10px;border-bottom:1px solid var(--line);}
 .cm-convo:last-child .cm-convo-text{border-bottom:none;}
@@ -2561,7 +2575,7 @@ button.cm-quote:hover,button.cm-quote:focus-visible{background:rgba(127,127,127,
 .cm-convo-new .cm-convo-name{font-weight:600;}
 /* The conversation itself, the way a messenger draws one: no box round it,
    round bubbles, the composer flush with the bottom. */
-#chatPanel.cm-phone.cm-dm .cm-msg > .cm-who{display:none;}
+#chatPanel.cm-msgr.cm-dm .cm-msg > .cm-who{display:none;}
 /* In a group, whose message it is: their face beside the bubble and their
    name very small at its top (real-user request, 27 Oct). */
 .cm-msg-ava{display:none;}
@@ -2579,10 +2593,10 @@ button.cm-quote:hover,button.cm-quote:focus-visible{background:rgba(127,127,127,
    took the top of the close mark with it (real-user report). The full-window
    panel starts a little lower on a phone. */
 #chatDock.chat-full #chatPanel.cm-phone{padding-top:calc(24px + env(safe-area-inset-top));}
-#chatPanel.cm-phone .cm-log{border:none;background:none;padding:8px 2px;border-radius:0;}
-#chatPanel.cm-phone .cm-msg{border-radius:18px;padding:7px 12px;max-width:80%;font-size:14px;}
-#chatPanel.cm-phone .cm-msg.mine{border-bottom-right-radius:6px;}
-#chatPanel.cm-phone .cm-msg:not(.mine){border-bottom-left-radius:6px;}
+#chatPanel.cm-msgr .cm-log{border:none;background:none;padding:8px 2px;border-radius:0;}
+#chatPanel.cm-msgr .cm-msg{border-radius:18px;padding:7px 12px;max-width:80%;font-size:14px;}
+#chatPanel.cm-msgr .cm-msg.mine{border-bottom-right-radius:6px;}
+#chatPanel.cm-msgr .cm-msg:not(.mine){border-bottom-left-radius:6px;}
 /* ---------- TYPING ON A PHONE ----------
    While the composer has the keyboard, the panel takes the whole window above
    it (the full-screen layout, temporarily) and gives the rows it does not
@@ -2678,7 +2692,7 @@ body.dark .cm-pt-logo.brand-icon-light{display:inline-block;}
    the pill sat on the time there (real-user report, 27 Oct). The pill is 28px
    and hangs 18 below, so 10 of it is inside the bubble: 12 of padding keeps
    it under the time line. */
-#chatPanel.cm-phone .cm-msg:has(> .cm-reacts:not(:empty)){padding-bottom:12px;margin-bottom:20px;}
+#chatPanel.cm-msgr .cm-msg:has(> .cm-reacts:not(:empty)){padding-bottom:12px;margin-bottom:20px;}
 .cm-reacts{position:absolute;bottom:-18px;z-index:1;display:flex;align-items:center;gap:1px;
   padding:2px;border-radius:999px;background:var(--paper);border:1px solid var(--line);
   box-shadow:0 2px 7px rgba(0,0,0,0.18);white-space:nowrap;
@@ -17458,6 +17472,9 @@ document.addEventListener('keydown', (e)=>{
     cancelCircleReply();
   } else if(!document.getElementById('circleSearchBar').classList.contains('hidden')){
     closeCircleSearch();
+  } else if(document.getElementById('chatPanel').classList.contains('cm-pv-chat')){
+    // A conversation steps back to the list, as the back arrow does.
+    document.getElementById('chatBackBtn').click();
   } else {
     closeChatPanel();
   }
@@ -19217,8 +19234,13 @@ function relDayYesterday(){
 function renderPhoneChat(threads){
   const panel = document.getElementById('chatPanel');
   if(!panel) return;
+  // The same messenger on every width (real-user request, 27 Oct: "on
+  // desktop we should have a pretty similar messaging system as the app"):
+  // the list of conversations, then one conversation with a back arrow.
+  // cm-phone is only what a phone needs on top of that.
   const phone = isMobileDevice();
-  const view = phone ? (circleGroupForm ? 'chat' : circlePhoneView) : null;
+  const view = circleGroupForm ? 'chat' : circlePhoneView;
+  panel.classList.add('cm-msgr');
   panel.classList.toggle('cm-phone', phone);
   panel.classList.toggle('cm-pv-list', view === 'list');
   panel.classList.toggle('cm-pv-chat', view === 'chat');
@@ -19264,6 +19286,10 @@ function renderPhoneChat(threads){
     if(!row) return;
     switchCircleThread(row.dataset.convo);
     renderCircleMessages();
+    // On a computer you are here to type; on a phone the keyboard would cover
+    // the conversation you just opened.
+    const input = document.getElementById('circleMessageInput');
+    if(input && !isMobileDevice()) input.focus({ preventScroll: true });
   });
   const back = document.getElementById('chatBackBtn');
   if(back) back.addEventListener('click', ()=>{
