@@ -1427,13 +1427,12 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   /* It shrinks WITH the bar (real-user request: "the subtabs attached to the
      bottom bar need to grow and shrink together with it so they dont drift
-     apart"). The bar scales about its bottom edge, so its top comes down by
-     the share of its height it gives up; the strip is handed the same --dock-k
-     (dockWriteK writes both) and comes down by exactly that, scaled by the
-     same factor about its own bottom, so the gap between them never moves. */
-  --dock-k:1;--dock-min:0.82;
-  --sd-s:calc(var(--dock-min) + (1 - var(--dock-min)) * var(--dock-k));
-  transform:translateY(calc((1 - var(--sd-s)) * var(--dock-space, 58px))) scale(var(--sd-s));
+     apart"). dockWriteK writes the strip's own `scale` and `translate` from
+     the same number the bar is scaled by, in JS: handing it --dock-k and
+     deriving the scale in CSS worked in Chrome and not on the phone, where
+     the strip stayed full size beside a shrunk bar (real-user report). The
+     individual properties, not `transform`, so the fold animation can use
+     `transform` without the two overwriting each other. */
   transform-origin:bottom center;}
 .sub-dock.dock-easing{will-change:transform;}
 @media (prefers-reduced-transparency: reduce){
@@ -1452,8 +1451,12 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 .sd-toggle:hover{background:rgba(127,127,127,0.14);}
 .sd-toggle svg{transition:transform 180ms ease;}
 .sd-toggle .sd-label{display:none;color:var(--ink);}
-.sub-dock.sd-shut{left:50%;right:auto;width:auto;max-width:none;padding:3px;
-  transform:translateX(-50%) translateY(calc((1 - var(--sd-s)) * var(--dock-space, 58px))) scale(var(--sd-s));}
+/* Shut, it is a pill hard right, directly under the chat button (real-user
+   request: "it should collapse into a pill underneath the chat icon"), not
+   in the middle of the screen over the bar's own tabs. */
+.sub-dock.sd-shut{left:auto;right:10px;width:auto;max-width:none;margin:0;padding:3px;transform-origin:bottom right;}
+.sub-dock > .cal-view-toggle, .sub-dock .sd-label{transition:opacity 140ms ease;}
+.sub-dock.sd-folding > .cal-view-toggle, .sub-dock.sd-folding .sd-label{opacity:0;}
 .sub-dock.sd-shut > .cal-view-toggle{display:none !important;}
 .sub-dock.sd-shut .sd-toggle{padding:0 10px 0 14px;}
 .sub-dock.sd-shut .sd-label{display:inline;}
@@ -3790,6 +3793,12 @@ body.dark .ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-3);}
      condensed bar floats over the page, and the air under its line is where
      the content is seen scrolling past. */
   #topBar{padding-bottom:0;}
+  /* And no shadow under the pinned bar on a phone. It falls 10px below the
+     line, which used to be the sub-tab row; with that row moved down to the
+     bottom bar it fell on the panel's first card instead, and the top of the
+     app read as faded the moment it scrolled (real-user report). The line is
+     enough to say where the bar ends. */
+  #topBar::after{display:none;}
   /* THE MONTH IS A GRID OF DAYS WITH DOTS, AND THE DAY IS READ UNDERNEATH IT.
      A cell is about 50px wide on a phone, which is four characters of an 8.5px
      chip: every event in the grid read as "B..." or "C...". So the cells carry
@@ -22908,7 +22917,7 @@ function ensureSubDock(){
   btn.addEventListener('click', ()=>{
     const open = sd.classList.contains('sd-shut');
     try{ localStorage.setItem(SUB_DOCK_OPEN_KEY, open ? '1' : '0'); }catch(e){}
-    syncSubDock();
+    foldSubDock(sd, ()=> syncSubDock());
   });
   sd.appendChild(btn);
   app.appendChild(sd);
@@ -22920,6 +22929,37 @@ function ensureSubDock(){
   SUB_DOCK_MQ.addEventListener('change', ()=> syncSubDock());
   new ResizeObserver(()=> writeSubDockSpace()).observe(sd);
   return sd;
+}
+// The fold is the BOX travelling between the two shapes, measured before and
+// after (left and width, never a scale, which would squash the text), with
+// the contents faded out across it so nothing reflows mid-flight. It used to
+// switch shape on one frame, which read as the strip jumping (real-user
+// report: "the collapsing is a bit iffy at the moment").
+let subDockFold = null;
+function foldSubDock(sd, apply){
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce || !sd.animate || !sd.classList.contains('sd-has')){ apply(); return; }
+  if(subDockFold){ subDockFold.cancel(); subDockFold = null; }
+  // Layout values, not rects: the open strip carries the shrink's scale and
+  // the shut pill does not, and left and width are what is animated.
+  const css = ()=> ({ left: sd.offsetLeft + 'px', width: sd.offsetWidth + 'px' });
+  const from = css();
+  sd.classList.add('sd-folding');
+  apply();
+  const to = css();
+  const anim = sd.animate([
+    { left: from.left, width: from.width, right: 'auto', marginLeft: '0px', marginRight: '0px', maxWidth: 'none' },
+    { left: to.left, width: to.width, right: 'auto', marginLeft: '0px', marginRight: '0px', maxWidth: 'none' }
+  ], { duration: 260, easing: 'cubic-bezier(0.32, 0.72, 0, 1)' });
+  subDockFold = anim;
+  const done = ()=>{
+    if(subDockFold === anim) subDockFold = null;
+    sd.classList.remove('sd-folding');
+    const row = sd.querySelector(':scope > .cal-view-toggle.sd-on');
+    if(row && !sd.classList.contains('sd-shut')){ try{ moveRowSlider(row, { instant:true }); }catch(e){} }
+  };
+  anim.onfinish = done;
+  anim.oncancel = ()=>{ if(subDockFold === anim) subDockFold = null; };
 }
 function moveSubRows(intoDock){
   const sd = document.getElementById('subDock');
@@ -22987,6 +23027,7 @@ function syncSubDock(){
   sd.classList.toggle('sd-shut', !subDockOpenPref());
   syncSubDockLabel();
   writeSubDockSpace();
+  writeSubDockShrink();
   // The row has just come back on screen, or moved; its pill was measured
   // wherever it was before.
   if(shown && !sd.classList.contains('sd-shut')){
@@ -23210,8 +23251,22 @@ let dockScrollY = 0, dockScrollRun = 0;
 function dockWriteK(dock){
   const k = dockK.toFixed(4);
   dock.style.setProperty('--dock-k', k);
+  writeSubDockShrink(dock);
+}
+// The bar scales about its bottom edge, so its top comes down by the share of
+// its height it gives up; the strip comes down by exactly that and is scaled
+// by the same factor about its own bottom, so the gap between them holds.
+function writeSubDockShrink(dock){
   const sd = document.getElementById('subDock');
-  if(sd) sd.style.setProperty('--dock-k', k);
+  if(!sd) return;
+  // Shut, it is a pill parked under the chat button, which does not shrink,
+  // so neither does it (real-user request: "if it is collapsed it should not
+  // be shrinking with the main tab bar").
+  if(sd.classList.contains('sd-shut')){ sd.style.scale = ''; sd.style.translate = ''; return; }
+  const sc = 0.82 + 0.18 * dockK;
+  const h = (dock || document.querySelector('.tab-dock') || {}).offsetHeight || 58;
+  sd.style.scale = sc.toFixed(4);
+  sd.style.translate = '0 ' + ((1 - sc) * h).toFixed(2) + 'px';
 }
 function dockTick(dock, t){
   const dt = dockKLastT ? Math.min(0.05, (t - dockKLastT) / 1000) : 1 / 60;
@@ -51338,7 +51393,28 @@ closeOnBackdrop(document.getElementById('pendingVacationInvitesModal'), ()=> doc
     navigator.serviceWorker.addEventListener('message', (e)=>{
       if(e.data && e.data.type === 'pt-open-notif'){ openNotificationById(Number(e.data.id)); return; }
       if(!e.data || e.data.type !== 'wk-shell-updated' || shellUpdateDeclined) return;
+      // Found on coming back to the app, with nothing being typed: the reader
+      // has not started anything yet, so take the new version now rather
+      // than offering it. Anywhere else the offer stands, as before.
+      if(e.data.resume && !typingSomewhere()){ window.location.reload(); return; }
       document.getElementById('shellUpdateBar').classList.remove('hidden');
+    });
+    function typingSomewhere(){
+      const a = document.activeElement;
+      if(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return true;
+      const m = document.getElementById('circleMessageInput');
+      return !!(m && m.value.trim());
+    }
+    // An installed app is resumed, not reloaded, so ask the worker whether
+    // the document on screen is still the live one whenever the app comes
+    // back after a while away.
+    let shellHiddenAt = 0;
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.hidden){ shellHiddenAt = Date.now(); return; }
+      if(!shellHiddenAt || Date.now() - shellHiddenAt < 30000) return;
+      shellHiddenAt = 0;
+      const c = navigator.serviceWorker.controller;
+      if(c) c.postMessage({ type:'pt-check-shell', path: location.pathname });
     });
     document.getElementById('shellUpdateReloadBtn').addEventListener('click', ()=>{
       window.location.reload();

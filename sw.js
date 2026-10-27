@@ -6,7 +6,7 @@
 // icons, and the pinned-version CDN scripts/fonts it loads) survives a
 // flaky connection or a fully offline app-switcher relaunch, while data
 // calls still go live over the network exactly as before.
-const CACHE = 'productivity-tracker-shell-v3';
+const CACHE = 'productivity-tracker-shell-v4';
 const SHELL_URLS = [
   './',
   'index.html',
@@ -30,7 +30,7 @@ const NOTIF_I18N_URL = './__notif-i18n.json';
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE && k !== NOTIF_I18N_CACHE).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k !== CACHE && k !== NOTIF_I18N_CACHE && k !== SERVED_CACHE).map((k) => caches.delete(k)))
     )
   );
   self.clients.claim();
@@ -98,7 +98,9 @@ self.addEventListener('fetch', (e) => {
         // compares the URL rather than the mode.
         c.match(req, { ignoreSearch: true }).then((cached) => {
           const key = url.origin + url.pathname;
-          const fresh = fetch(req)
+          // no-cache: revalidate with the host rather than taking the
+          // browser's own copy, which GitHub Pages lets it keep for 10 min.
+          const fresh = fetch(key + url.search, { cache: 'no-cache', credentials: 'same-origin' })
             .then((res) => {
               if (res && res.ok) {
                 c.put(new Request(key), res.clone());
@@ -111,9 +113,14 @@ self.addEventListener('fetch', (e) => {
           // instant with, so that one load waits for the network as before,
           // with the precached shell as the offline fallback it always had.
           if (!cached) {
-            return fresh.then((res) => res || c.match('index.html'));
+            return fresh.then((res) => {
+              const out = res || c.match('index.html');
+              Promise.resolve(out).then((r) => noteServed(e.resultingClientId, r));
+              return out;
+            });
           }
           e.waitUntil(fresh);
+          noteServed(e.resultingClientId, cached);
           return cached;
         })
       )
@@ -146,8 +153,43 @@ self.addEventListener('fetch', (e) => {
 // in renderNotifText(). Anything unrecognised falls back to the stored
 // English title and body, exactly as the bell does.
 // ---------------------------------------------------------------------------
+// WHICH copy of the document each open window was given. An installed app
+// on a phone is resumed, not reopened, so it can go on showing a document
+// the worker replaced days ago, and comparing the network against the CACHE
+// then says "nothing new" while the screen is stale (real-user report: the
+// new chat had shipped and never reached the app). So the page asks, when it
+// comes back to the front, whether the live document differs from the one IT
+// is showing. Kept in a cache rather than a variable: the worker is stopped
+// whenever it is idle and a variable would not survive that.
+const SERVED_CACHE = 'pt-served-doc';
+function docId(r) {
+  if (!r) return '';
+  return r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length') || '';
+}
+function noteServed(clientId, res) {
+  if (!clientId || !res) return;
+  const id = docId(res);
+  if (!id) return;
+  caches.open(SERVED_CACHE).then((c) => c.put('./__served/' + clientId, new Response(id)));
+}
+async function checkShell(client, path) {
+  const c = await caches.open(SERVED_CACHE);
+  const hit = await c.match('./__served/' + client.id);
+  const served = hit ? await hit.text() : '';
+  let res;
+  try { res = await fetch(path, { cache: 'no-cache', credentials: 'same-origin' }); } catch (_) { return; }
+  if (!res || !res.ok) return;
+  const shell = await caches.open(CACHE);
+  await shell.put(new Request(new URL(path, self.location).href), res.clone());
+  if (served && docId(res) && served !== docId(res)) client.postMessage({ type: 'wk-shell-updated', resume: true });
+  // Forget windows that are gone.
+  const live = new Set((await self.clients.matchAll({ type: 'window' })).map((w) => w.id));
+  (await c.keys()).forEach((k) => { const id = k.url.split('/__served/')[1]; if (id && !live.has(id)) c.delete(k); });
+}
+
 self.addEventListener('message', (e) => {
   const d = e.data;
+  if (d && d.type === 'pt-check-shell' && e.source) { e.waitUntil(checkShell(e.source, d.path || './')); return; }
   if (!d || d.type !== 'pt-notif-i18n') return;
   const body = JSON.stringify({ lang: d.lang || 'en', strings: d.strings || {} });
   e.waitUntil(caches.open(NOTIF_I18N_CACHE).then((c) =>
