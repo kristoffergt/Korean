@@ -13870,6 +13870,7 @@ async function withLoadingGate(loadFn){
     switchTopLevelTab(activeTab);
     // The sub-tab of the start choice, once per page load, and only while the
     // reader is still on the tab it belongs to.
+    setTimeout(()=>{ navReady = true; }, 0);
     if(!startTabApplied){
       startTabApplied = true;
       const pref = startTabPref();
@@ -52972,6 +52973,99 @@ document.getElementById('expPendingInvitesBtn').addEventListener('click', ()=>{
 document.getElementById('closePendingVacationInvitesX').addEventListener('click', ()=> document.getElementById('pendingVacationInvitesModal').classList.add('hidden'));
 closeOnBackdrop(document.getElementById('pendingVacationInvitesModal'), ()=> document.getElementById('pendingVacationInvitesModal').classList.add('hidden'));
 
+// ---- Back: swipe in from the left edge
+// Real-user request: "I am on the front page, I click to-do, I swipe left and
+// expect to get back to the front page", the way a phone app goes back. Every
+// change of tab or sub-tab is remembered (the place you were BEFORE it), and a
+// swipe from the screen's left edge carries the page off to the right with the
+// finger and goes back one step. A change made of several calls in one go (a
+// tab, then its sub-tab) is ONE step: the place before is taken at the first
+// call and compared with where things stand once the calls have settled.
+const NAV_FNS = ['switchTopLevelTab', 'switchCalendarSubTab', 'switchStudySubTab', 'switchYonseiSubTab', 'switchReadingSubTab', 'switchJobsSubTab'];
+let navStack = [], navBefore = null, navReplaying = false, navReady = false;
+function navLocation(){
+  const top = TAB_STRUCTURE.find(x=> x.key === activeTab);
+  const sub = top && (top.subs || []).find(x=> document.getElementById(x.btnId)?.classList.contains('active'));
+  return { top: activeTab, view: sub ? sub.view : null };
+}
+NAV_FNS.forEach(name=>{
+  const orig = window[name];
+  if(typeof orig !== 'function') return;
+  window[name] = function(...args){
+    if(navReady && !navReplaying && !navBefore){
+      navBefore = navLocation();
+      setTimeout(()=>{
+        const was = navBefore; navBefore = null;
+        const now = navLocation();
+        if(was && (was.top !== now.top || was.view !== now.view)){
+          navStack.push(was);
+          if(navStack.length > 40) navStack.shift();
+        }
+      }, 0);
+    }
+    return orig.apply(this, args);
+  };
+});
+function navBack(){
+  const loc = navStack.pop();
+  if(!loc) return false;
+  navReplaying = true;
+  try {
+    switchTopLevelTab(loc.top);
+    const top = TAB_STRUCTURE.find(x=> x.key === loc.top);
+    if(top && loc.view && top.subs) top.switchFn()(loc.view);
+  } finally { navReplaying = false; }
+  window.scrollTo(0, 0);
+  return true;
+}
+(function wireBackSwipe(){
+  const EDGE = 22, GO = 90;
+  let sw = null;
+  const panel = ()=> document.querySelector('.tab-panel:not(.hidden)');
+  const blocked = ()=> !!document.querySelector('.modal-overlay:not(.hidden)') || (typeof todoDrag !== 'undefined' && todoDrag);
+  document.addEventListener('touchstart', e=>{
+    if(e.touches.length !== 1 || !navStack.length || blocked()) return;
+    const t0 = e.touches[0];
+    if(t0.clientX > EDGE) return;
+    sw = { x: t0.clientX, y: t0.clientY, dx: 0, on: false, el: panel(), t: Date.now() };
+  }, { passive: true });
+  document.addEventListener('touchmove', e=>{
+    if(!sw) return;
+    const t0 = e.touches[0];
+    const dx = t0.clientX - sw.x, dy = t0.clientY - sw.y;
+    if(!sw.on){
+      if(Math.abs(dy) > 12 && Math.abs(dy) > dx){ sw = null; return; }
+      if(dx < 10) return;
+      sw.on = true;
+    }
+    e.preventDefault();
+    sw.dx = Math.max(0, dx);
+    if(sw.el){ sw.el.style.transition = 'none'; sw.el.style.transform = `translateX(${sw.dx}px)`; sw.el.style.opacity = String(1 - Math.min(.35, sw.dx / innerWidth * .5)); }
+  }, { passive: false });
+  const end = ()=>{
+    if(!sw) return;
+    const { el, dx, on, t } = sw; sw = null;
+    if(!on || !el) return;
+    const fast = dx > 40 && dx / Math.max(1, Date.now() - t) > 0.5;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(dx > GO || fast){
+      el.style.transition = reduced ? 'none' : 'transform .18s ease-in, opacity .18s ease-in';
+      el.style.transform = `translateX(${innerWidth}px)`; el.style.opacity = '0';
+      setTimeout(()=>{
+        el.style.transition = ''; el.style.transform = ''; el.style.opacity = '';
+        navBack();
+        const now = panel();
+        if(now && now.animate && !reduced) now.animate([{ transform: 'translateX(-28px)', opacity: .4 }, { transform: 'none', opacity: 1 }], { duration: 220, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      }, reduced ? 0 : 180);
+    } else {
+      el.style.transition = 'transform .22s cubic-bezier(.2,.8,.2,1), opacity .22s';
+      el.style.transform = ''; el.style.opacity = '';
+      setTimeout(()=>{ el.style.transition = ''; }, 240);
+    }
+  };
+  document.addEventListener('touchend', end);
+  document.addEventListener('touchcancel', end);
+})();
 (async function init(){
   initForm();
   applyLanguage(currentLang);
