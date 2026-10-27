@@ -2218,6 +2218,17 @@ body.no-anim-ui .gram-sentence-row .gram-sentence-edit-btn:active{transform:none
 #chatDock.chat-full{top:var(--chat-vv-top,0px);bottom:auto;left:0;right:0;
   height:var(--chat-vv-h,100dvh);z-index:940;align-items:stretch;gap:0;}
 #chatDock.chat-full #chatLauncher{display:none;}
+/* WITH THE KEYBOARD UP (real-user report, 27 Oct, with a screenshot: "this
+   part is extremely messed up"). The dock is sized to the visual viewport,
+   which ends at the top of the keyboard -- and on iOS 26 the keyboard and its
+   bar are see-through glass, so the page below the dock (cards, the tab bar)
+   showed through them, blurred, under the composer. The panel's own surface
+   now runs on down behind the keyboard. And the home-indicator padding is
+   dropped while it is up: the keyboard covers the indicator, so that padding
+   was only a dead band between the composer and the keys. */
+#chatDock.chat-full::after{content:'';position:absolute;left:0;right:0;top:100%;height:100vh;
+  background:var(--paper-dim);pointer-events:none;}
+#chatDock.chat-full.kb-up #chatPanel{padding-bottom:8px;}
 #chatDock.chat-full #chatPanel{flex:1 1 auto;min-height:0;width:auto;max-width:none;
   display:flex;flex-direction:column;border:none;border-radius:0;box-shadow:none;
   padding:calc(12px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right))
@@ -21060,7 +21071,9 @@ function syncChatFullViewport(){
   if(dock.classList.contains('chat-full') && vv){
     dock.style.setProperty('--chat-vv-h', vv.height + 'px');
     dock.style.setProperty('--chat-vv-top', vv.offsetTop + 'px');
+    dock.classList.toggle('kb-up', vv.height < window.innerHeight - 120);
   } else {
+    dock.classList.remove('kb-up');
     dock.style.removeProperty('--chat-vv-h');
     dock.style.removeProperty('--chat-vv-top');
   }
@@ -21235,6 +21248,7 @@ function leaveChatKb(){
       }
       dock.style.removeProperty('--chat-vv-h');
       dock.style.setProperty('--chat-vv-top', '0px');
+      dock.classList.remove('kb-up');
     }, 0);
   });
 })();
