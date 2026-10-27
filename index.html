@@ -4560,6 +4560,14 @@ body.ws-work .ws-class-only{display:none !important;}
 .tq-show-wrap{position:relative;}
 .tq-show-btn{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:13px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink-soft);cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .tq-show-btn[aria-expanded="true"]{color:var(--ink);border-color:var(--ink-soft);}
+.tq-show-btn svg{transition:transform .22s cubic-bezier(.2,.8,.2,1);}
+.tq-show-btn[aria-expanded="true"] svg{transform:rotate(180deg);}
+/* The Show menu folds open from the button and closes the same way. */
+.tq-show-menu{transform-origin:top left;animation:tqMenuIn .18s cubic-bezier(.2,.8,.2,1);}
+.tq-show-menu.closing{animation:tqMenuOut .14s ease-in forwards;pointer-events:none;}
+@keyframes tqMenuIn{from{opacity:0;transform:translateY(-4px) scale(.96);}to{opacity:1;transform:none;}}
+@keyframes tqMenuOut{to{opacity:0;transform:translateY(-4px) scale(.96);}}
+@media (prefers-reduced-motion: reduce){.tq-show-menu,.tq-show-menu.closing,.tq-show-btn svg{animation:none;transition:none;}}
 .tq-show-menu .tq-scopes{flex-wrap:nowrap;}
 @media (hover: none){
   #yonseiTodosSection .todo-row[data-drag] .todo-check{touch-action:none;position:relative;}
@@ -4571,12 +4579,16 @@ body.ws-work .ws-class-only{display:none !important;}
 #yonseiTodosSection .todo-row.todo-draft .lecture-actions{opacity:1;}
 .tq-show-dot{width:6px;height:6px;border-radius:50%;background:var(--seal);}
 .tq-show-menu{position:absolute;top:calc(100% + 6px);left:0;z-index:50;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--paper);box-shadow:0 8px 24px rgba(0,0,0,.18);white-space:nowrap;}
-.tq-plus{flex:none;width:28px;height:28px;padding:0;border:none;border-radius:50%;background:none;color:var(--ink-soft);font-size:22px;font-weight:400;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
+.tq-plus{flex:none;width:28px;height:28px;padding:0;border:none;border-radius:50%;background:none;color:var(--on);font-size:22px;font-weight:400;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
 .tq-plus:hover{color:var(--ink);background:rgba(127,127,127,0.14);}
 .tq-add-day-wrap{position:relative;margin-top:10px;}
-.tq-add-day{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px dashed var(--line);background:none;color:var(--ink-soft);cursor:pointer;}
-.tq-add-day:hover{color:var(--ink);border-color:var(--ink-soft);}
-.tq-add-day-input{position:absolute;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0;}
+.tq-add-day{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px dashed var(--on);background:none;color:var(--on);cursor:pointer;}
+.tq-add-day-wrap:hover .tq-add-day{border-style:solid;}
+.tq-add-day-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;font-size:16px;cursor:pointer;-webkit-appearance:none;appearance:none;}
+.tq-add-day-wrap{display:inline-block;}
+/* The calendar mark on a row: the date input lies over it, invisible. */
+.todo-day-pick{position:relative;width:28px;height:28px;margin:-7px -4px;display:inline-flex;align-items:center;justify-content:center;color:var(--on) !important;cursor:pointer;overflow:hidden;}
+.todo-day-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;font-size:16px;cursor:pointer;-webkit-appearance:none;appearance:none;}
 .tq-flat .tq-add{margin-bottom:4px;}
 .tq-trash-btn{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink-soft);cursor:pointer;margin-left:auto;}
 .tq-trash-panel{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:-4px 0 14px;}
@@ -5632,8 +5644,8 @@ body.todo-drag-on, body.todo-drag-on *{cursor:grabbing !important;user-select:no
         <button type="button" class="linkbtn tq-fold-all"></button>
         <div class="tq-flat-list tq-list"></div>
         <div class="tq-add-day-wrap">
-          <button type="button" class="tq-add-day">+ <span></span></button>
-          <input type="date" class="tq-add-day-input" tabindex="-1" aria-hidden="true">
+          <button type="button" class="tq-add-day" tabindex="-1" aria-hidden="true">+ <span></span></button>
+          <input type="date" class="tq-add-day-input">
         </div>
       </div>
     </div>
@@ -28802,12 +28814,22 @@ function todoRowHtml(td, where = 'list', showDate = false){
       ${td.notes ? `<span class="todo-notes">${escapeHtml(td.notes)}</span>` : ''}
     </span>
     <span class="lecture-actions">
-      ${todoCanBeOnCal(td) ? todoCalToggleHtml(td) : ''}
+      ${mine && !td.done ? todoDayPickHtml(td) : ''}
       ${mine && !td.done ? `<button class="lecture-edit todo-move-btn" data-todo="${td.id}" aria-expanded="${todoMoveOpen === td.id && todoMoveWhere === where}" title="${escapeHtml(t('todoMoveTo'))}">${ICON.moveTo()}</button>` : ''}
       ${mine ? `<button class="lecture-edit todo-edit-btn" data-todo="${td.id}" title="${escapeHtml(t('todoEdit'))}">${ICON.pencil()}</button>` : ''}
       ${mine ? `<button class="lecture-del todo-del-btn" data-todo="${td.id}" title="${escapeHtml(t('todoDelete'))}">✕</button>` : ''}
     </span>
   </div>${mine && todoMoveOpen === td.id && todoMoveWhere === where && todoEditOpen !== td.id ? `<div class="todo-move-row">${todoMoveHtml(td)}</div>` : ''}${mine && todoEditOpen === td.id && todoEditWhere === where ? todoEditHtml(td) : ''}`;
+}
+// The calendar mark on a row picks the day it is for (real-user request:
+// "that green icon button is supposed to be ... opening up a calendar to pick
+// a different day"). The date input lies invisibly over the mark, so a tap
+// lands on the input itself and the phone opens its own picker: a hidden input
+// opened from script (showPicker) is what fell over on iOS.
+function todoDayPickHtml(td){
+  const at = todoScopeOf(td);
+  const v = at && at.scope === 'day' ? at.start : todayStr();
+  return `<label class="lecture-edit todo-day-pick" title="${escapeHtml(t('todoPickDay'))}">${ICON.calOn(14)}<input type="date" class="todo-day-input" data-todo="${td.id}" value="${v}" aria-label="${escapeHtml(t('todoPickDay'))}"></label>`;
 }
 // Only on a row the calendar could show: an undated or finished to-do is
 // never on it, and somebody else's never is on this account's calendar.
@@ -28842,18 +28864,12 @@ function todoMoveHtml(td){
     const here = cur && cur.scope === m.scope && cur.start === m.at;
     return `<button type="button" class="todo-move-chip${here ? ' on' : ''}" data-move-scope="${m.scope}" data-move-at="${m.at}" ${here ? 'aria-current="true"' : ''}>${escapeHtml(t(m.key))}</button>`;
   }).join('');
-  return `<div class="todo-move" data-move-todo="${td.id}"><span class="todo-move-lbl">${escapeHtml(t('todoMoveTo'))}</span>${chips}<label class="todo-move-chip todo-move-pick">${escapeHtml(t('todoPickDay'))}<input type="date" class="todo-move-date" aria-label="${escapeHtml(t('todoPickDay'))}"></label></div>`;
+  return `<div class="todo-move" data-move-todo="${td.id}"><span class="todo-move-lbl">${escapeHtml(t('todoMoveTo'))}</span>${chips}</div>`;
 }
 function wireTodoMove(root){
   root.querySelectorAll('.todo-move').forEach(box=>{
     const id = box.dataset.moveTodo;
     box.querySelectorAll('[data-move-scope]').forEach(b=> b.addEventListener('click', ()=> moveTodo(id, b.dataset.moveScope, b.dataset.moveAt)));
-    const pick = box.querySelector('.todo-move-date');
-    const label = box.querySelector('.todo-move-pick');
-    // A native date input opens its picker only when the input itself is
-    // pressed; showPicker makes the whole chip the button.
-    label.addEventListener('click', e=>{ if(e.target !== pick && pick.showPicker){ e.preventDefault(); try { pick.showPicker(); } catch(_){} } });
-    pick.addEventListener('change', ()=>{ if(pick.value) moveTodo(id, 'day', pick.value); });
   });
 }
 async function moveTodo(id, scope, at){
@@ -29423,10 +29439,17 @@ function buildTodoViewBar(){
   });
   bar.querySelector('.tq-trash-btn').addEventListener('click', ()=>{ todoTrashOpen = !todoTrashOpen; renderTodoTrash(); });
   const showBtn = bar.querySelector('.tq-show-btn'), showMenu = bar.querySelector('.tq-show-menu');
+  let closeTimer = 0;
   const setShow = open=>{
-    showMenu.classList.toggle('hidden', !open);
+    clearTimeout(closeTimer);
     showBtn.setAttribute('aria-expanded', open);
-    if(!open) return;
+    if(!open){
+      if(showMenu.classList.contains('hidden')) return;
+      showMenu.classList.add('closing');
+      closeTimer = setTimeout(()=>{ showMenu.classList.add('hidden'); showMenu.classList.remove('closing'); }, 140);
+      return;
+    }
+    showMenu.classList.remove('closing', 'hidden');
     // Hangs from the button, pulled back in where it would run off a phone.
     showMenu.style.left = '0px';
     // Against the card's edge, not the window: an overflowing menu widens the
@@ -29435,17 +29458,19 @@ function buildTodoViewBar(){
     const over = showMenu.getBoundingClientRect().right - (card ? card.getBoundingClientRect().right - 8 : window.innerWidth - 8);
     if(over > 0) showMenu.style.left = (-over) + 'px';
   };
-  showBtn.addEventListener('click', ()=> setShow(showMenu.classList.contains('hidden')));
+  showBtn.addEventListener('click', ()=> setShow(showMenu.classList.contains('hidden') || showMenu.classList.contains('closing')));
   document.addEventListener('pointerdown', e=>{ if(!e.target.closest || !e.target.closest('.tq-show-wrap')) setShow(false); });
   document.addEventListener('keydown', e=>{ if(e.key === 'Escape') setShow(false); });
   // The list's own pieces: the + Add a day button opens a date picker.
   const box = document.getElementById('todoFlat');
   const dayInput = box.querySelector('.tq-add-day-input');
-  box.querySelector('.tq-add-day').addEventListener('click', ()=>{
-    dayInput.value = todayStr();
-    try { dayInput.showPicker(); } catch(_){ dayInput.focus(); dayInput.click(); }
-  });
-  dayInput.addEventListener('change', ()=> todoAddDay(dayInput.value));
+  // Left empty, so picking TODAY is a change too: with today preset, choosing
+  // it changed nothing and the button looked dead (real-user report). blur
+  // covers a picker that commits without a change event.
+  dayInput.value = '';
+  const takeDay = ()=>{ const v = dayInput.value; if(!v) return; dayInput.value = ''; todoAddDay(v); };
+  dayInput.addEventListener('change', takeDay);
+  dayInput.addEventListener('blur', takeDay);
 }
 function paintTodoViewBar(){
   buildTodoViewBar();
@@ -29538,6 +29563,7 @@ function todoEditHtml(td){
       <div class="field"><label>${escapeHtml(t('lblTodoTime'))}</label><input type="time" class="te-time" value="${(td.due_time || '').slice(0, 5)}" ${td.due_date ? '' : 'disabled'}></div>
       <div class="field"><label>${escapeHtml(t('todoRepeat'))}</label><select class="te-repeat">${todoRepeatOptionsHtml(todoEditScope(td), td.repeat)}</select></div>
       <div class="field wide"><label>${escapeHtml(t('lblNotesCourse'))}</label><select class="te-course"><option value="">${escapeHtml(t('noNote'))}</option>${courses.map(c=> `<option value="${c.id}" ${c.id === td.course_id ? 'selected' : ''}>${escapeHtml(c.title)}</option>`).join('')}</select></div>
+      ${todoCanBeOnCal(td) ? `<div class="field wide"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" class="te-oncal" data-todo="${td.id}" ${todoOnCal(td) ? 'checked' : ''} style="width:15px;height:15px;">${escapeHtml(t('todoShowOnCalendar'))}</label></div>` : ''}
       <div class="field wide"><label>${escapeHtml(t('todoNotesLabel'))}</label><textarea class="te-notes" maxlength="2000">${escapeHtml(td.notes || '')}</textarea></div>
       ${guestMode ? '' : `<div class="field wide"><label>${escapeHtml(t('lblTodoRemind'))}</label><div class="todo-remind te-remind">${todoRemindPickerHtml((td.reminders || []).filter(r=> new Date(r.at).getTime() > Date.now()))}</div></div>`}
     </div>
@@ -29548,7 +29574,42 @@ function todoEditHtml(td){
     </div>
   </div>`;
 }
+// Every redraw of the to-dos moves rows from where they were to where they
+// now are, instead of teleporting (real-user report: moving one to Tomorrow
+// "bounces around ... teleporting around. All of this should be smooth").
+// Rows that are new fade in. Matched by id and by which copy it is, since a
+// to-do can be on screen in more than one list.
+function todoRowRects(){
+  const map = new Map(), seen = {};
+  document.querySelectorAll('.todo-row[data-todo], .todo-group-head[data-g]').forEach(el=>{
+    if(!el.offsetParent) return;
+    const id = el.dataset.todo || 'g:' + el.dataset.g;
+    const n = seen[id] = (seen[id] || 0) + 1;
+    map.set(id + '#' + n, el.getBoundingClientRect());
+  });
+  return map;
+}
+function todoFlipFrom(before){
+  if(!before || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const seen = {};
+  document.querySelectorAll('.todo-row[data-todo], .todo-group-head[data-g]').forEach(el=>{
+    if(!el.offsetParent || !el.animate) return;
+    const id = el.dataset.todo || 'g:' + el.dataset.g;
+    const n = seen[id] = (seen[id] || 0) + 1;
+    const was = before.get(id + '#' + n);
+    if(!was){ if(before.size) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' }); return; }
+    const now = el.getBoundingClientRect();
+    const dx = was.left - now.left, dy = was.top - now.top;
+    if(Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  });
+}
 function renderTodos(){
+  const flipBefore = todoDrag ? null : todoRowRects();
+  renderTodosNow();
+  todoFlipFrom(flipBefore);
+}
+function renderTodosNow(){
   // Never redraw under a to-do being dragged: the row in the finger would be
   // replaced, its touchend would go to a detached node and the drag would
   // hang on screen (real-user report: "it gets stuck ... and then i cant move
@@ -29610,6 +29671,12 @@ function renderTodos(){
 function wireTodoRows(root, where){
   root.querySelectorAll('.todo-check').forEach(b=> b.addEventListener('click', ()=> toggleTodoDone(b.dataset.todo)));
   root.querySelectorAll('.todo-cal-toggle').forEach(b=> b.addEventListener('click', ()=> toggleTodoOnCalendar(b.dataset.todo)));
+  root.querySelectorAll('.todo-day-input').forEach(inp=> inp.addEventListener('change', ()=>{
+    const td = allTodos.find(x=> x.id === inp.dataset.todo);
+    const at = td && todoScopeOf(td);
+    if(inp.value && !(at && at.scope === 'day' && at.start === inp.value)) moveTodo(inp.dataset.todo, 'day', inp.value);
+  }));
+  root.querySelectorAll('.te-oncal').forEach(cb=> cb.addEventListener('change', ()=> toggleTodoOnCalendar(cb.dataset.todo)));
   root.querySelectorAll('.todo-title, .todo-edit-btn').forEach(b=> b.addEventListener('click', ()=>{
     // The tap that ends a drag is not a request to edit.
     if(Date.now() - todoDragClickBlock < 400) return;
