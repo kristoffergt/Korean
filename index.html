@@ -4417,6 +4417,35 @@ label.file-upload-btn:hover{background:none;color:var(--ink);text-decoration-col
 /* One settings section. The caret is drawn from aria-expanded rather than
    written by JS, so the arrow cannot drift out of step with the fold and
    the state is announced to a screen reader for free. */
+/* ---- Settings on a phone: a screen of its own, the way Welcome Korea's is
+   (real-user request). It comes in from the right over the whole app, each
+   section is a row that opens its own page from the right, a back arrow sits
+   top left, and the left-edge swipe goes back one level. Desktop keeps the
+   centred card with folding sections. */
+.set-back-btn,.set-page-head{display:none;}
+@media (max-width: 640px){
+  #accountSettingsModal{padding:0;background:transparent;transition:background 300ms ease;}
+  #accountSettingsModal.set-in{background:rgba(0,0,0,0.32);}
+  #accountSettingsModal > .modal-box{max-width:none;width:100%;height:100dvh;max-height:none;border:none;border-radius:0;
+    padding:calc(env(safe-area-inset-top) + 10px) 18px calc(env(safe-area-inset-bottom) + 24px);
+    background:var(--paper);transform:translateX(100%);transition:transform 360ms cubic-bezier(0.32,0.72,0,1);
+    overscroll-behavior:contain;}
+  #accountSettingsModal.set-in > .modal-box{transform:translateX(0);}
+  #accountSettingsModal .set-top{justify-content:flex-start !important;margin:0 0 14px;}
+  #accountSettingsModal .set-top .close-x{display:none;}
+  #accountSettingsModal div:has(> #closeAccountSettingsBtn){display:none;}
+  .set-back-btn,.set-page-head .set-back-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;margin-left:-10px;padding:0;border:none;background:none;color:var(--ink);}
+  #accountSettingsModal .set-group-head{min-height:52px;padding:12px 2px;font-size:15px;}
+  #accountSettingsModal .set-group-head::before{display:none;}
+  #accountSettingsModal .set-group-head::after{content:'\203A';margin-left:auto;font-size:22px;line-height:1;color:var(--ink-soft);font-weight:400;}
+  #accountSettingsModal .set-group-body{position:fixed;inset:0;z-index:5;background:var(--paper);overflow-y:auto;overscroll-behavior:contain;
+    padding:calc(env(safe-area-inset-top) + 10px) 18px calc(env(safe-area-inset-bottom) + 28px);
+    transform:translateX(100%);transition:transform 360ms cubic-bezier(0.32,0.72,0,1);}
+  #accountSettingsModal .set-group.page-in .set-group-body{transform:translateX(0);}
+  #accountSettingsModal .set-page-head{display:flex;align-items:center;gap:6px;margin:0 0 12px;font-family:'Noto Serif KR',serif;font-size:19px;font-weight:700;color:var(--ink);}
+  /* The list behind a page eases back a little, as iOS does. */
+  #accountSettingsModal > .modal-box.page-under{overflow:hidden;}
+}
 .set-group{border-top:1px solid var(--line);}
 .set-group:last-of-type{border-bottom:1px solid var(--line);}
 .set-group-head{display:flex;align-items:center;gap:8px;width:100%;padding:12px 2px;
@@ -6478,7 +6507,8 @@ body.todo-drag-on, body.todo-drag-on *{cursor:grabbing !important;user-select:no
 <!-- ACCOUNT SETTINGS MODAL -->
 <div class="modal-overlay hidden" id="accountSettingsModal">
   <div class="modal-box">
-    <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+    <h2 class="set-top" style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <button type="button" class="icon-btn set-back-btn" id="settingsBackBtn"></button>
       <span id="hAccountSettings"></span>
       <button class="icon-btn close-x" id="closeAccountSettingsX" data-title-key="closeNoteBtn">✕</button>
     </h2>
@@ -15831,7 +15861,67 @@ async function openAccountSettings(){
   if(isAdmin) loadModeratorUsers();
   wireSettingsHints();
   syncSettingsSections();
-  document.getElementById('accountSettingsModal').classList.remove('hidden');
+  showAccountSettings();
+}
+function settingsPhone(){ return isMobileDevice(); }
+let settingsCloseTimer = 0;
+function showAccountSettings(){
+  const m = document.getElementById('accountSettingsModal');
+  clearTimeout(settingsCloseTimer);
+  m.querySelectorAll('.set-group.page-in').forEach(sec=> closeSettingsPage(sec, true));
+  const back = document.getElementById('settingsBackBtn');
+  back.innerHTML = ICON.chevL(22);
+  back.setAttribute('aria-label', t('versionBack'));
+  const box = m.querySelector('.modal-box');
+  box.scrollTop = 0;
+  m.classList.remove('hidden');
+  if(!settingsPhone()){ m.classList.add('set-in'); return; }
+  m.classList.remove('set-in');
+  void box.offsetWidth;
+  m.classList.add('set-in');
+}
+function closeAccountSettings(stepBack){
+  const m = document.getElementById('accountSettingsModal');
+  if(m.classList.contains('hidden')) return;
+  const page = m.querySelector('.set-group.page-in');
+  if(stepBack && page && settingsPhone()){ closeSettingsPage(page); return; }
+  clearTimeout(settingsCloseTimer);
+  if(!settingsPhone()){ m.classList.add('hidden'); m.classList.remove('set-in'); return; }
+  m.classList.remove('set-in');
+  settingsCloseTimer = setTimeout(()=>{
+    m.classList.add('hidden');
+    m.querySelectorAll('.set-group.page-in').forEach(sec=> closeSettingsPage(sec, true));
+  }, 360);
+}
+// A section's own page: its heading becomes the page title, with a back
+// arrow, and the page comes in from the right over the list.
+function openSettingsPage(sec){
+  const body = sec.querySelector('.set-group-body');
+  const head = sec.querySelector('.set-group-head');
+  let ph = body.querySelector(':scope > .set-page-head');
+  if(!ph){
+    ph = document.createElement('div');
+    ph.className = 'set-page-head';
+    ph.innerHTML = `<button type="button" class="icon-btn set-back-btn">${ICON.chevL(22)}</button><span></span>`;
+    ph.querySelector('button').addEventListener('click', ()=> closeSettingsPage(sec));
+    body.prepend(ph);
+  }
+  ph.querySelector('button').setAttribute('aria-label', t('versionBack'));
+  ph.querySelector('span').textContent = head.textContent.trim();
+  clearTimeout(sec._closeTimer);
+  head.setAttribute('aria-expanded', 'true');
+  body.classList.remove('hidden');
+  body.scrollTop = 0;
+  void body.offsetWidth;
+  sec.classList.add('page-in');
+}
+function closeSettingsPage(sec, now){
+  const body = sec.querySelector('.set-group-body');
+  sec.classList.remove('page-in');
+  sec.querySelector('.set-group-head').setAttribute('aria-expanded', 'false');
+  const hide = ()=>{ if(!sec.classList.contains('page-in')) body.classList.add('hidden'); };
+  clearTimeout(sec._closeTimer);
+  if(now) hide(); else sec._closeTimer = setTimeout(hide, 360);
 }
 document.getElementById('accountSettingsBtn').addEventListener('click', ()=>{ openAccountSettings(); });
 document.getElementById('resumeUploadBtn').addEventListener('click', async ()=>{
@@ -18076,16 +18166,13 @@ document.getElementById('appTitleHome').addEventListener('click', ()=>{
 });
 document.getElementById('brandLightboxClose').addEventListener('click', closeBrandLightbox);
 closeOnBackdrop(document.getElementById('brandLightbox'), closeBrandLightbox);
-document.getElementById('closeAccountSettingsBtn').addEventListener('click', ()=>{
-  document.getElementById('accountSettingsModal').classList.add('hidden');
-});
-document.getElementById('closeAccountSettingsX').addEventListener('click', ()=>{
-  document.getElementById('accountSettingsModal').classList.add('hidden');
-});
+document.getElementById('closeAccountSettingsBtn').addEventListener('click', ()=> closeAccountSettings());
+// The ✕ is also what Escape and the edge swipe press, so on a phone with a
+// section open it steps back to the list rather than closing everything.
+document.getElementById('closeAccountSettingsX').addEventListener('click', ()=> closeAccountSettings(true));
+document.getElementById('settingsBackBtn').addEventListener('click', ()=> closeAccountSettings());
 // Clicking the dimmed backdrop (not the settings card itself) closes the modal.
-closeOnBackdrop(document.getElementById('accountSettingsModal'), ()=>{
-  document.getElementById('accountSettingsModal').classList.add('hidden');
-});
+closeOnBackdrop(document.getElementById('accountSettingsModal'), ()=> closeAccountSettings());
 
 /* ---------- LINKED CIRCLE (settings UI) ---------- */
 async function refreshLinkData(){
@@ -21798,6 +21885,8 @@ function edgeBackTarget(){
   const modals = Array.from(document.querySelectorAll('.modal-overlay:not(.hidden)'));
   const m = modals[modals.length - 1];
   if(m){
+    const page = m.id === 'accountSettingsModal' && m.querySelector('.set-group.page-in');
+    if(page) return { el: page.querySelector('.set-group-body'), run: ()=> closeSettingsPage(page, true) };
     const x = m.querySelector('.close-x, .modal-close, [data-close]');
     return x ? { el: m.firstElementChild || m, run: ()=> x.click() } : null;
   }
@@ -31875,6 +31964,7 @@ function labelSettingsHints(){
 document.getElementById('accountSettingsModal').addEventListener('click', (e)=>{
   const head = e.target.closest('.set-group-head');
   if(!head) return;
+  if(settingsPhone()){ openSettingsPage(head.parentElement); return; }
   const open = head.getAttribute('aria-expanded') === 'true';
   head.setAttribute('aria-expanded', open ? 'false' : 'true');
   head.parentElement.querySelector('.set-group-body').classList.toggle('hidden', open);
