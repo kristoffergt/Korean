@@ -1067,7 +1067,7 @@ header{display:flex;flex-direction:row;align-items:center;justify-content:space-
 #topBar::before{content:'';position:absolute;bottom:100%;
   left:calc(-20px - env(safe-area-inset-left));
   right:calc(-20px - env(safe-area-inset-right));
-  height:calc(var(--topbar-top,0px) + env(safe-area-inset-top));
+  height:calc(var(--topbar-top,0px) + env(safe-area-inset-top) + var(--bar-rest,0px));
   background:var(--paper);pointer-events:none;}
 #topBar #tabNav{margin-bottom:0;}
 /* Stuck, it CONDENSES. Measured before it was written: the full bar is 184px
@@ -1133,7 +1133,18 @@ header{display:flex;flex-direction:row;align-items:center;justify-content:space-
   right:calc(-20px - env(safe-area-inset-right));
   pointer-events:none;opacity:0;transition:opacity 0.18s ease;
   background:linear-gradient(rgba(30,31,34,0.13),rgba(30,31,34,0));}
-#topBar.stuck::after{opacity:1;}
+#topBar.stuck::after,#topBar.bar-scrolled::after{opacity:1;}
+/* The phone's shrink: every size is its resting value less a share of the
+   condensed one, by --bar-k (0 at the top of the page, 1 sixty pixels down).
+   No transitions on these, since the scroll itself is the animation. */
+@media (max-width: 640px){
+  #topBar{padding-bottom:calc(22px - 12px * var(--bar-k,0));}
+  #topBar header{padding-bottom:calc(16px - 9px * var(--bar-k,0));margin-bottom:calc(18px - 9px * var(--bar-k,0));transition:none;}
+  #topBar .brand-icon{width:calc(32px - 10px * var(--bar-k,0));height:calc(32px - 10px * var(--bar-k,0));}
+  html body #topBar:not(.stuck) #appTitleHome{font-size:calc(var(--title-f,15px) * (1 - 0.2 * var(--bar-k,0)));}
+  #topBar .who{--who-icon:calc(23px - 5px * var(--bar-k,0));}
+  #topBar, #topBar header, #topBar header *, #topBar h1{transition-property:opacity,background-color,color,border-color,box-shadow;}
+}
 body.dark #topBar::after{background:linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0));}
 /* Turned off, the bar is an ordinary block again: no pinning, and no
    condensing either, since there is nothing to condense FOR. Both boxes go
@@ -1152,7 +1163,7 @@ body.topbar-loose .topbar-inner{max-width:none;}
    condensed, the spacer is TALLER than what is painted in it, and without this
    that band would swallow taps meant for the content showing through it. */
 #topBarSpacer{height:0;flex:none;pointer-events:none;
-  position:sticky;top:calc(var(--topbar-top,0px) + env(safe-area-inset-top));
+  position:sticky;top:calc(var(--topbar-top,0px) + env(safe-area-inset-top) + var(--bar-rest,0px));
   z-index:200;}
 /* A fixed element is not an anchor candidate anyway; this says so out loud,
    and covers the spacer, whose height is written from JS. */
@@ -17119,17 +17130,25 @@ document.getElementById('notifBellPanel').addEventListener('click', (e)=> e.stop
 // and the class is put on for the length of the press and a beat after.
 // The phone's one-line title takes whatever the controls beside it leave,
 // measured, so a guest's short row gets a bigger title than a full one.
+// The resting offset the phone's bar sticks at is measured, so it has to be
+// measured again whenever what sits above the bar changes height.
+(function(){
+  const b = document.getElementById('guestBanner');
+  if(b && typeof ResizeObserver !== 'undefined')
+    new ResizeObserver(()=>{ try{ syncTopBarMetrics(); updateTopBarStuck(); }catch(e){} }).observe(b);
+})();
 (function fitHomeTitle(){
   const h = document.getElementById('appTitleHome');
   const who = document.querySelector('#topBar .who');
   const mark = h && h.closest('.brand-mark');
   if(!h || !who || !mark || typeof ResizeObserver === 'undefined') return;
   const fit = ()=>{
-    if(!isMobileDevice() || document.getElementById('topBar').classList.contains('stuck')){ h.style.removeProperty('font-size'); return; }
+    if(!isMobileDevice()){ h.style.removeProperty('--title-f'); return; }
     const header = h.closest('header');
     const icon = mark.querySelector('img, svg, .brand-icon');
     const room = header.clientWidth - who.getBoundingClientRect().width - (icon ? icon.getBoundingClientRect().width : 32) - 28;
-    h.style.fontSize = Math.max(11, Math.min(18, room / 10.6)).toFixed(1) + 'px';
+    h.style.setProperty('--title-f', Math.max(11, Math.min(18, room / 10.6)).toFixed(1) + 'px');
+    h.style.removeProperty('font-size');
   };
   new ResizeObserver(fit).observe(who);
   new MutationObserver(fit).observe(document.getElementById('topBar'), { attributes: true, attributeFilter: ['class'] });
@@ -25842,6 +25861,7 @@ function syncTopBarMetrics(){
   const gh = (banner && !banner.classList.contains('hidden'))
     ? Math.round(banner.getBoundingClientRect().height) : 0;
   root.style.setProperty('--topbar-top', gh + 'px');
+  root.style.setProperty('--bar-rest', '0px');
 
   // Where it sticks, read off the spacer's own sticky offset rather than
   // recomputed: it carries an env(), and only the browser can resolve one.
@@ -25851,7 +25871,11 @@ function syncTopBarMetrics(){
   // thing the spacer is ever set to, and it is set here and nowhere else.
   const was = bar.classList.contains('stuck');
   bar.classList.remove('stuck');
+  // And at its unshrunk size, whatever the scroll has done to it.
+  const k = bar.style.getPropertyValue('--bar-k');
+  bar.style.setProperty('--bar-k', '0');
   const full = bar.getBoundingClientRect().height;
+  if(k) bar.style.setProperty('--bar-k', k); else bar.style.removeProperty('--bar-k');
   bar.classList.toggle('stuck', was);
   if(full > 0){
     topBarFullH = full;
@@ -25867,6 +25891,14 @@ function syncTopBarMetrics(){
   sp.style.position = 'static';
   topBarRestTop = Math.round(sp.getBoundingClientRect().top + window.scrollY);
   sp.style.position = prevPos;
+  // On a phone the bar sticks where it RESTS, so it never travels up into
+  // the band under the status bar that iOS 26 smears (real-user report, with
+  // a recording). What scrolling does to it instead is shrink, below.
+  if(isMobileDevice()){
+    const rest = Math.max(0, topBarRestTop - topBarPinTop);
+    root.style.setProperty('--bar-rest', rest + 'px');
+    topBarPinTop += rest;
+  }
   root.style.setProperty('--topbar-h',
     Math.round(bar.getBoundingClientRect().height + topBarPinTop) + 'px');
   topBarMeasuring = false;
@@ -25875,6 +25907,22 @@ function syncTopBarMetrics(){
 function updateTopBarStuck(){
   const bar = document.getElementById('topBar');
   if(!bar || !stickyTopBarEnabled()) return;
+  // A phone's bar shrinks WITH the scroll over its first 60px, one number the
+  // stylesheet interpolates every size from, instead of snapping to the
+  // condensed layout at a threshold (real-user request: "so it just sorta
+  // shrinks down instead of jumps").
+  if(isMobileDevice()){
+    if(topBarStuck){ topBarStuck = false; bar.classList.remove('stuck'); }
+    const k = Math.max(0, Math.min(1, window.scrollY / 60));
+    const v = k.toFixed(3);
+    if(bar.style.getPropertyValue('--bar-k') !== v){
+      bar.style.setProperty('--bar-k', v);
+      bar.classList.toggle('bar-scrolled', k > 0);
+    }
+    return;
+  }
+  bar.style.removeProperty('--bar-k');
+  bar.classList.remove('bar-scrolled');
   // Pure arithmetic against numbers measured off the scroll path. It does not
   // consult the bar's own box, so the bar's height can never feed back into
   // the decision that changes the bar's height.
