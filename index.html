@@ -4319,12 +4319,25 @@ button.tpl-act:hover{background:rgba(127,127,127,0.16);}
 .tg-body li{margin:2px 0;}
 /* ---------- TOPIK SUB-TABS AND READING TIPS ----------
    The TOPIK sub-tab shows one of four panes at a time through its own
-   second row, a .cal-view-toggle so it gets the sliding pill like every
-   other sub-tab row. Every button family below declares its own :hover and
+   second row (a .pane-row, see PANE ROWS in the script), a .cal-view-toggle
+   so it gets the sliding pill like every other sub-tab row. Every button family below declares its own :hover and
    :focus background, because the global button:hover paints them ink. */
-.tk-nav{flex-wrap:wrap;}
-.tk-nav > button:focus:not(.active):not(:hover){background:var(--paper);}
-.has-slider.slider-ready.tk-nav > button:focus:not(.active):not(:hover){background:transparent;}
+/* A pane row sits under the sub-tab row and must not read as a second copy
+   of it, so it is one quiet segmented strip instead of separate buttons. */
+.pane-row{flex-wrap:wrap;width:fit-content;max-width:100%;box-sizing:border-box;gap:2px;padding:3px;border:1px solid var(--line);border-radius:9px;background:var(--paper);}
+.pane-row > button{border-color:transparent;padding:5px 12px;}
+.pane-row > button:hover:not(.active){background:rgba(127,127,127,0.14);}
+/* The phone rule for .cal-view-toggle shrinks every label to fit one line
+   (down to 7px). A pane row has at most four short labels, so it keeps a
+   readable size and may wrap a long label onto two lines instead. */
+@media (max-width: 640px){
+  .pane-row{width:100%;}
+  .pane-row > button{font-size:12px;padding:7px 4px;white-space:normal;line-height:1.2;}
+}
+.pane-row > button:focus:not(.active):not(:hover){background:var(--paper);}
+.has-slider.slider-ready.pane-row > button:focus:not(.active):not(:hover){background:transparent;}
+/* A card on a pane that is not the open one. Its own .hidden is left alone. */
+.pane-off{display:none !important;}
 .tt-search{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:15px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);margin:0 0 10px;}
 .tt-search:focus{outline:2px solid var(--ink);outline-offset:-1px;}
 .tt-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px;}
@@ -5516,13 +5529,18 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       <button data-view="videos" id="studySubVideosBtn"></button>
     </div>
     <div id="studyLogSection">
-    <div class="card">
+    <div class="cal-view-toggle pane-row" id="logPaneRow">
+      <button data-pane="log" class="active" id="logPaneLogBtn"></button>
+      <button data-pane="progress" id="logPaneProgressBtn"></button>
+      <button data-pane="history" id="logPaneHistoryBtn"></button>
+    </div>
+    <div data-pane-of="logPaneRow" data-pane="progress" class="pane-off card">
       <h2 id="hLeaderboard"></h2>
       <div class="lb-head"><span id="lbHeadRank"></span><span id="lbHeadName"></span><span id="lbHeadStreak"></span><span id="lbHeadWeek"></span><span id="lbHeadTotal"></span></div>
       <div id="leaderboard"></div>
       <div id="leaderboardControls" style="margin-top:8px;"></div>
     </div>
-    <div class="card">
+    <div data-pane-of="logPaneRow" data-pane="log" class="card">
       <h2 id="hStudyTimer"></h2>
       <div style="text-align:center;">
         <div id="timerDisplay" style="font-family:'Space Grotesk',monospace;font-size:42px;font-weight:700;margin:6px 0 14px;">00:00:00</div>
@@ -5539,7 +5557,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       </div>
       <div class="hint" id="timerHint"></div>
     </div>
-    <div class="card">
+    <div data-pane-of="logPaneRow" data-pane="log" class="card">
       <h2 id="hLogStudy"></h2>
       <div class="log-form" data-enter-add="#addBtn">
         <div class="field">
@@ -5558,7 +5576,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       </div>
       <div class="hint" id="studyHint"></div>
     </div>
-    <div class="card">
+    <div data-pane-of="logPaneRow" data-pane="log" class="card">
       <h2 id="hCalendar"></h2>
       <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;">
         <div>
@@ -5583,14 +5601,14 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         </div>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="logPaneRow" data-pane="progress history" class="pane-off card">
       <div class="field">
         <label for="studyLogPersonFilter" id="lblStudyLogPersonFilter"></label>
         <button type="button" class="person-filter-btn" id="studyLogPersonFilterBtn"></button>
         <div class="person-filter-panel hidden" id="studyLogPersonFilterPanel"></div>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="logPaneRow" data-pane="progress" class="pane-off card">
       <h2 id="hBreakdown"></h2>
       <div class="bd-toggle" id="bdToggle">
         <button data-range="7" id="bd7"></button>
@@ -5599,11 +5617,11 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       </div>
       <div id="bdBars"></div>
     </div>
-    <div class="card">
+    <div data-pane-of="logPaneRow" data-pane="history" class="pane-off card">
       <h2><span id="hMyEntries"></span><button class="export-btn" id="exportStudyBtn"></button></h2>
       <ul class="entries" id="entryList"></ul>
     </div>
-    <div class="card">
+    <div data-pane-of="logPaneRow" data-pane="history" class="pane-off card">
       <h2 id="hFeed"></h2>
       <ul class="entries" id="feedList"></ul>
     </div>
@@ -5832,28 +5850,28 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       </div>
     </div>
     <div id="studyTopikSection" class="hidden">
-      <div class="cal-view-toggle tk-nav" id="topikSubToggle">
-        <button data-tk="forecast" class="active" id="topikSubForecastBtn"></button>
-        <button data-tk="guide" id="topikSubGuideBtn"></button>
-        <button data-tk="templates" id="topikSubTplBtn"></button>
-        <button data-tk="tips" id="topikSubTipsBtn"></button>
+      <div class="cal-view-toggle pane-row" id="topikSubToggle">
+        <button data-pane="forecast" class="active" id="topikSubForecastBtn"></button>
+        <button data-pane="guide" id="topikSubGuideBtn"></button>
+        <button data-pane="templates" id="topikSubTplBtn"></button>
+        <button data-pane="tips" id="topikSubTipsBtn"></button>
       </div>
-      <div class="card" id="q54ForecastCard" data-tk-pane="forecast">
+      <div class="card" id="q54ForecastCard" data-pane-of="topikSubToggle" data-pane="forecast">
         <h2 id="hTopikForecast"></h2>
         <div class="hint" id="q54ForecastNote"></div>
         <div id="q54ForecastList"></div>
       </div>
-      <div class="card hidden" id="topikGuideCard" data-tk-pane="guide">
+      <div class="pane-off card" id="topikGuideCard" data-pane-of="topikSubToggle" data-pane="guide">
         <h2 id="hTopikGuide"></h2>
         <div class="hint" id="topikGuideIntro"></div>
         <div id="topikGuideBody"></div>
       </div>
-      <div class="card hidden" id="writingTemplatesCard" data-tk-pane="templates">
+      <div class="pane-off card" id="writingTemplatesCard" data-pane-of="topikSubToggle" data-pane="templates">
         <h2 id="hTopikTemplates"></h2>
         <div class="hint" id="topikTplIntro" style="margin:-6px 0 12px;"></div>
         <div id="writingTplBrowse"></div>
       </div>
-      <div class="card hidden" id="topikTipsCard" data-tk-pane="tips">
+      <div class="pane-off card" id="topikTipsCard" data-pane-of="topikSubToggle" data-pane="tips">
         <h2 id="hTopikTips"></h2>
         <div class="hint" id="topikTipsIntro" style="margin:-6px 0 12px;"></div>
         <input type="search" id="topikTipsSearch" class="tt-search" data-ph-key="topikTipsSearchPh" autocomplete="off">
@@ -5929,7 +5947,11 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       <button data-view="boards" id="yonseiSubBoardsBtn"></button>
     </div>
     <div id="yonseiCoursesSection">
-    <div class="card">
+      <div class="cal-view-toggle pane-row" id="coursePaneRow">
+        <button data-pane="list" class="active" id="coursePaneListBtn"></button>
+        <button data-pane="add" id="coursePaneAddBtn"></button>
+      </div>
+    <div data-pane-of="coursePaneRow" data-pane="add" class="pane-off card">
       <h2 id="hAddCourse"></h2>
       <div class="log-form" data-enter-add="#addCourseBtn">
         <div class="field wide">
@@ -6020,7 +6042,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <button id="addCourseBtn"></button>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="coursePaneRow" data-pane="list" class="card">
       <h2 id="hYourCourses"></h2>
       <div class="stat-row">
         <div class="stat-mini"><div class="num" id="cStatPlanning">0</div><div class="label" id="cLabelPlanning"></div></div>
@@ -6028,7 +6050,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <div class="stat-mini"><div class="num" id="cStatLockedIn">0</div><div class="label" id="cLabelLockedIn"></div></div>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="coursePaneRow" data-pane="list" class="card">
       <h2 id="hCourseList"></h2>
       <div class="field" style="margin-bottom:12px;">
         <label for="coursePersonFilter" id="lblCoursePersonFilter"></label>
@@ -6161,7 +6183,11 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       <button data-view="articles" id="readingSubArticlesBtn"></button>
     </div>
     <div id="readingBooksSection">
-    <div class="card">
+      <div class="cal-view-toggle pane-row" id="bookPaneRow">
+        <button data-pane="list" class="active" id="bookPaneListBtn"></button>
+        <button data-pane="stats" id="bookPaneStatsBtn"></button>
+      </div>
+    <div data-pane-of="bookPaneRow" data-pane="stats" class="pane-off card">
       <h2 id="hReadingStats"></h2>
       <div class="stat-row">
         <div class="stat-mini"><div class="num" id="rStatReading">0</div><div class="label" id="rLabelReading"></div></div>
@@ -6169,7 +6195,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <div class="stat-mini"><div class="num" id="rStatFinished">0</div><div class="label" id="rLabelFinished"></div></div>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="bookPaneRow" data-pane="list" class="card">
       <h2 id="hAddBook"></h2>
       <div class="log-form" data-enter-add="#addBookBtn" data-ai-scope="book">
         <div class="field wide">
@@ -6192,7 +6218,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <button id="addBookBtn"></button>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="bookPaneRow" data-pane="list" class="card">
       <h2><span id="hYourBooks"></span><button class="export-btn" id="exportBooksBtn"></button></h2>
       <div class="field" style="margin-bottom:12px;">
         <label for="bookPersonFilter" id="lblBookPersonFilter"></label>
@@ -6201,7 +6227,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       </div>
       <div id="bookList"></div>
     </div>
-    <div class="card">
+    <div data-pane-of="bookPaneRow" data-pane="stats" class="pane-off card">
       <h2 id="hBookLB"></h2>
       <div class="lb-head-simple"><span id="blbHeadRank"></span><span id="blbHeadName"></span><span id="blbHeadFinished"></span></div>
       <div id="bookLeaderboard"></div>
@@ -6209,7 +6235,11 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
     </div>
     </div>
     <div id="readingArticlesSection" class="hidden">
-    <div class="card">
+      <div class="cal-view-toggle pane-row" id="articlePaneRow">
+        <button data-pane="list" class="active" id="articlePaneListBtn"></button>
+        <button data-pane="stats" id="articlePaneStatsBtn"></button>
+      </div>
+    <div data-pane-of="articlePaneRow" data-pane="stats" class="pane-off card">
       <h2 id="hArticleStats"></h2>
       <div class="stat-row">
         <div class="stat-mini"><div class="num" id="aStatReading">0</div><div class="label" id="aLabelReading"></div></div>
@@ -6217,7 +6247,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <div class="stat-mini"><div class="num" id="aStatFinished">0</div><div class="label" id="aLabelFinished"></div></div>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="articlePaneRow" data-pane="list" class="card">
       <h2 id="hAddArticle"></h2>
       <div class="log-form" data-enter-add="#addArticleBtn" data-ai-scope="article">
         <div class="field wide">
@@ -6244,7 +6274,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <button id="addArticleBtn"></button>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="articlePaneRow" data-pane="list" class="card">
       <h2><span id="hYourArticles"></span><button class="export-btn" id="exportArticlesBtn"></button></h2>
       <div class="field" style="margin-bottom:12px;">
         <label for="articlePersonFilter" id="lblArticlePersonFilter"></label>
@@ -6253,7 +6283,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       </div>
       <div id="articleList"></div>
     </div>
-    <div class="card">
+    <div data-pane-of="articlePaneRow" data-pane="stats" class="pane-off card">
       <h2 id="hArticleLB"></h2>
       <div class="lb-head-simple"><span id="albHeadRank"></span><span id="albHeadName"></span><span id="albHeadFinished"></span></div>
       <div id="articleLeaderboard"></div>
@@ -6269,7 +6299,11 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       <button data-view="jobboard" id="jobsSubJobBoardBtn"></button>
     </div>
     <div id="jobsApplicationsSection">
-    <div class="card">
+      <div class="cal-view-toggle pane-row" id="jobPaneRow">
+        <button data-pane="list" class="active" id="jobPaneListBtn"></button>
+        <button data-pane="stats" id="jobPaneStatsBtn"></button>
+      </div>
+    <div data-pane-of="jobPaneRow" data-pane="stats" class="pane-off card">
       <h2 id="hJobStats"></h2>
       <div class="field" style="margin-bottom:12px;">
         <label for="jobPersonFilter" id="lblJobPersonFilter"></label>
@@ -6285,7 +6319,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <div class="stat-mini"><div class="num" id="jStatRejected">0</div><div class="label" id="jLabelRejected"></div></div>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="jobPaneRow" data-pane="list" class="card">
       <h2 id="hAddJob"></h2>
       <div class="log-form" data-enter-add="#addJobBtn" data-ai-scope="job">
         <div class="field wide">
@@ -6324,7 +6358,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <div id="jobAiControls" style="display:flex;align-items:center;gap:8px;align-self:flex-end;padding-bottom:11px;"></div>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="jobPaneRow" data-pane="list" class="card">
       <h2><span id="hYourJobs"></span><button class="export-btn" id="exportJobsBtn"></button></h2>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
         <div class="field" style="flex:1;min-width:160px;">
@@ -6339,7 +6373,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       <div id="jobList"></div>
       <div id="jobListControls"></div>
     </div>
-    <div class="card">
+    <div data-pane-of="jobPaneRow" data-pane="stats" class="pane-off card">
       <h2 id="hJobLB"></h2>
       <div class="lb-head-simple"><span id="jlbHeadRank"></span><span id="jlbHeadName"></span><span id="jlbHeadApplied"></span></div>
       <div id="jobLeaderboard"></div>
@@ -6347,7 +6381,11 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
     </div>
     </div>
     <div id="jobsCertificationsSection" class="hidden">
-    <div class="card">
+      <div class="cal-view-toggle pane-row" id="certPaneRow">
+        <button data-pane="list" class="active" id="certPaneListBtn"></button>
+        <button data-pane="stats" id="certPaneStatsBtn"></button>
+      </div>
+    <div data-pane-of="certPaneRow" data-pane="stats" class="pane-off card">
       <h2 id="hCertStats"></h2>
       <div class="field" style="margin-bottom:12px;">
         <label for="certPersonFilter" id="lblCertPersonFilter"></label>
@@ -6359,7 +6397,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <div class="stat-mini"><div class="num" id="cStatAcquired">0</div><div class="label" id="cLabelAcquired"></div></div>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="certPaneRow" data-pane="list" class="card">
       <h2 id="hAddCert"></h2>
       <div class="log-form" data-enter-add="#addCertBtn">
         <div class="field wide">
@@ -6385,7 +6423,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <button id="addCertBtn"></button>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="certPaneRow" data-pane="list" class="card">
       <h2><span id="hYourCerts"></span><button class="export-btn" id="exportCertsBtn"></button></h2>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
         <div class="field" style="flex:1;min-width:160px;">
@@ -6400,7 +6438,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       <div id="certList"></div>
       <div id="certListControls"></div>
     </div>
-    <div class="card">
+    <div data-pane-of="certPaneRow" data-pane="stats" class="pane-off card">
       <h2 id="hCertLB"></h2>
       <div class="lb-head-simple"><span id="clbHeadRank"></span><span id="clbHeadName"></span><span id="clbHeadAcquired"></span></div>
       <div id="certLeaderboard"></div>
@@ -6475,7 +6513,11 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       </div>
     </div>
     <div id="calendarCalendarSection" class="hidden">
-    <div class="card hidden" id="topikCountdownCard">
+      <div class="cal-view-toggle pane-row" id="calPaneRow">
+        <button data-pane="cal" class="active" id="calPaneCalBtn"></button>
+        <button data-pane="lists" id="calPaneListsBtn"></button>
+      </div>
+    <div data-pane-of="calPaneRow" data-pane="cal" class="card hidden" id="topikCountdownCard">
       <h2 id="hTopik"></h2>
       <div class="topik-row">
         <div class="topik-box">
@@ -6486,7 +6528,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         </div>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="calPaneRow" data-pane="cal" class="card">
       <h2 id="hMonthView"></h2>
       <div style="display:flex;justify-content:flex-start;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
         <div class="cal-view-toggle" id="calViewToggle" style="margin-bottom:0;">
@@ -6521,7 +6563,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         </div>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="calPaneRow" data-pane="cal" class="card">
       <h2 id="hAddDeadline"></h2>
       <div class="log-form" data-enter-add="#addEventBtn">
         <div class="field wide">
@@ -6621,7 +6663,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <button id="addEventBtn"></button>
       </div>
     </div>
-    <div class="card">
+    <div data-pane-of="calPaneRow" data-pane="lists" class="pane-off card">
       <h2>
         <span id="hDeadlines"></span>
         <span>
@@ -6638,7 +6680,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       <div id="deadlineList"></div>
       <div class="list-controls" id="deadlineListControls"></div>
     </div>
-    <div class="card">
+    <div data-pane-of="calPaneRow" data-pane="lists" class="pane-off card">
       <h2><span id="hEvents"></span><button class="export-btn" id="exportEventsKindBtn"></button></h2>
       <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);cursor:pointer;margin-bottom:8px;">
         <input type="checkbox" id="showPastEventsToggle" style="width:14px;height:14px;">
@@ -6647,12 +6689,12 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       <div id="eventListKind"></div>
       <div class="list-controls" id="eventListControls"></div>
     </div>
-    <div class="card">
+    <div data-pane-of="calPaneRow" data-pane="lists" class="pane-off card">
       <h2 id="hCoursesCal"></h2>
       <div id="courseListKind"></div>
       <div class="list-controls" id="courseListControls"></div>
     </div>
-    <div class="card">
+    <div data-pane-of="calPaneRow" data-pane="lists" class="pane-off card">
       <h2 id="hBirthdays"></h2>
       <div id="birthdayListKind"></div>
       <div class="list-controls" id="birthdayListControls"></div>
@@ -6681,7 +6723,13 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <button type="button" class="linkbtn hidden" id="expRetryLoadBtn"></button>
       </div>
       <div id="expActiveContent" class="hidden">
-        <div class="card">
+        <div class="cal-view-toggle pane-row" id="expPaneRow">
+          <button data-pane="overview" class="active" id="expPaneOverviewBtn"></button>
+          <button data-pane="cat" id="expPaneCatBtn"></button>
+          <button data-pane="list" id="expPaneListBtn"></button>
+          <button data-pane="bal" id="expPaneBalBtn"></button>
+        </div>
+        <div data-pane-of="expPaneRow" data-pane="overview" class="card">
           <div class="exp-head">
             <h2 id="hExpOverview" style="margin:0;"></h2>
             <button class="export-btn" id="expMembersBtn"></button>
@@ -6706,11 +6754,11 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
           </div>
           <div id="expCountEverythingWrap"></div>
         </div>
-        <div class="card">
+        <div data-pane-of="expPaneRow" data-pane="cat" class="pane-off card">
           <h2 id="hExpCategoryBreakdown"></h2>
           <div id="expCategoryBreakdown"></div>
         </div>
-        <div class="card">
+        <div data-pane-of="expPaneRow" data-pane="overview" class="card">
           <div class="month-nav">
             <button id="expMonthPrevBtn">‹</button>
             <div class="month-label-group"><span class="month-label" id="expMonthLabel"></span></div>
@@ -6720,7 +6768,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
           <div id="expDayMuteReset"></div>
           <div id="expDayAgendaPanel" class="notes-panel hidden" style="margin-top:10px;"></div>
         </div>
-        <div class="card">
+        <div data-pane-of="expPaneRow" data-pane="list" class="pane-off card">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
             <h2 id="hExpAllExpenses" style="margin:0;"></h2>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -6736,7 +6784,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
           </div>
           <div id="expAllList"></div>
         </div>
-        <div class="card">
+        <div data-pane-of="expPaneRow" data-pane="bal" class="pane-off card">
           <h2 id="hExpBalances"></h2>
           <div id="expBalancesWrap"></div>
         </div>
@@ -13445,6 +13493,7 @@ const I18N = {
     tabCourses:'Courses', tabNotes:'Notes', fineLeft:'left', fineAgo:'ago',
     tabYonsei:'Yonsei', tabTodos:'To-do', shareSendAsMessage:'Send as message', shareCopyText:'Copy text', shareSendTo:'Send to', shareAddMessage:'Add a message (optional)', shareNoOne:'No one to send to yet. Add people to your circle first.', shareSentTo:'Sent to {name}', shareSendFailed:'Could not send. Try again.', shareCopied:'Copied', shareOpenChat:'Open', shareQuickView:'Quick view', shareFrom:'Shared by {name}', shareKindTodo:'To-do', shareKindTodos:'To-dos', shareKindEvent:'Calendar event', shareKindEvents:'Calendar', shareKindBirthday:'Birthday', shareKindBook:'Book', shareKindArticle:'Article', shareKindJob:'Job application', shareKindWriting:'Writing sample', shareKindGrammar:'Grammar note', shareKindNote:'Course note', shareKindNotebook:'Note', shareKindTrip:'Trip', shareKindExpense:'Expense', shareFldWhen:'When', shareFldTime:'Time', shareFldWhere:'Where', shareFldRepeats:'Repeats', shareFldStatus:'Status', shareFldAuthor:'Author', shareFldPages:'Pages', shareFldSource:'Source', shareFldLink:'Link', shareFldCompany:'Company', shareFldRole:'Role', shareFldApplied:'Applied', shareFldWords:'Words', shareFldDate:'Date', shareFldAmount:'Amount', shareFldCategory:'Category', shareFldPaidBy:'Paid by', shareFldTotal:'Total', shareFldLevel:'Level', shareFldFormation:'Form', shareFldMeaning:'Meaning', shareFldExample:'Example', shareFldCourse:'Course', todoThisWeek:'This week', todoDeleteAllBlank:'Delete all {n} blank to-dos?', todoShowMenu:'Show', todoChipWeek:'Week', todoChipMonth:'Month', todoChipYear:'Year', todoRelDates:'Today, Tomorrow', setCapAccount:'Account', setCapGeneral:'General', setCapProfile:'Profile', setCapEmail:'Email', setCapSignIn:'Sign-in', setCapStart:'Start', setCapTopBar:'Top Bar', setCapBottomBar:'Bottom Bar', setCapCalendar:'Calendar', setCapTabs:'Tabs', setCapMessages:'Messages', setCapUpload:'Upload', setCapAccounts:'Accounts', setCapStudyEditor:'Study Editor', setTheme:'Theme', setThemeLight:'Light', setThemeDark:'Dark', setThemeSystem:'System', setLanguage:'Language', setCapApp:'App', setCapAdmin:'Admin', setSubSecurity:'Name, email, password and two-step login', setSubAppearance:'Start tab, bottom bar, animations and tabs', setSubNotify:'Messages, push, reminders and recaps', setSubResume:'Upload and sync your resume', setSubModerator:'Every account', setSubDanger:'Remove your account and its data', todoPlainDates:'Dates', todoRemoveDay:'Remove this day', todoRemoveDayConfirm:'Remove this day and its {n} to-dos? They can be put back from Deleted.', todoRemoveDayConfirmOne:'Remove this day and its {n} to-do? It can be put back from Deleted.', todoAddDay:'Add a day', todoTrashDrop:'Drop to delete', todoTrashOpen:'Deleted', todoRestore:'Restore', todoViewColumns:'Columns', todoViewList:'List', todoFoldAll:'Fold all', todoUnfoldAll:'Unfold all', todoShowScope:'Show or hide these to-dos',  todoNextWeek:'Next week', todoLastWeek:'Last week', todoWeekOf:'Week of {d}', todoPrev:'Previous', todoNext:'Next', todoPickDay:'Pick a day', todoMoveTo:'Move to', todoBackToNow:'Back to now', todoRepeat:'Repeat', todoNoRepeat:"Doesn't repeat", todoEveryDay:'Every day', todoEveryWeek:'Every week', todoEveryMonth:'Every month', todoEveryYear:'Every year', todoScopeLbl:'For', todoScopeDay:'A day', todoScopeWeek:'A week', todoScopeMonth:'A month', todoScopeYear:'A year', todoScopeNone:'No date', hAddTodo:'Add a to-do', lblTodoTitle:'To-do', lblTodoDue:'Due date', lblTodoTime:'Time', lblTodoRemind:'Remind me', remindAtTime:'At the time', remindHourBefore:'1 hour before', remindMorningOf:'Morning of (8:00)', remindDayBefore:'Day before', remindCustom:'Pick a time', addTodoBtn:'Add to-do', hTodoList:'Your to-dos', todoToday:'Today', todoTomorrow:'Tomorrow', todoOverdue:'Overdue', todoDone:'Done', todoClearDone:'Clear done', todoClearDoneConfirm:'Delete {n} finished to-dos?', todoClearDoneConfirmOne:'Delete {n} finished to-do?', deleteTodoConfirm:'Delete the to-do "{title}"?', todoMarkDone:'Mark done', todoMarkOpen:'Mark not done', todoShowOnCalendar:'Show on calendar', todoCalAdd:'Add to the calendar', todoCalLeaveOff:'Leave off the calendar', todoShareCircle:'Share with your circle', todoNotesLabel:'Notes', todoSave:'Save', todoCancel:'Cancel', todoEdit:'Edit', todoDelete:'Delete', todoAllCourses:'All courses', todoAllProjects:'All projects', notifTypeTodoReminder:'To-do reminders', notifTodoReminderTitleTpl:'To-do: {title}', hWorkspaceSetup:'Set up your Productivity Tracker', wsWhereLabel:'Where will you use it?', wsKindYonsei:'Yonsei', wsKindSchool:'Another school', wsKindWork:'Work', wsNameLabel:'Tab name', wsKoreanLabel:'Korean study tab', wsContinue:'Continue', wsSave:'Save', wsSaved:'Saved.', wsSettingsHeading:'School or work tab', workspaceSchoolDefault:'School', workspaceWorkDefault:'Work', tabProjects:'Projects', hAddProject:'Add a project', projectTitle:'Project name', projectLocation:'Location', addProjectBtn:'Add project', deleteProjectConfirm:'Delete this project? This also removes its calendar entries and its notes for everyone.', lockInProjectConfirm:"Lock in this project? You won't be able to move it back to Planning or Active afterward.", statusActive:'Active', hYourProjects:'Your projects', hProjectList:'All projects', lblNotesProject:'Project', noProject:'No project', notesEmptyHintWork:'Add a project in the Projects tab first, then create notes here.', hNotesWork:'Your notes', kindProject:'Project', hProjectsCal:'Projects', linkCatProjects:'Projects', linkCatProjectNotes:'Project notes', tabBoards:'Board', hYonseiBoards:'Official notices', yonseiBoardsLoading:'Loading notices...', yonseiBoardsError:'Could not load notices right now.', yonseiBoardsViewDirect:'View on Yonsei site', lblManageTabs:'Manage visible tabs', manageTabsShowAll:'Show all', manageTabsHideAll:'Hide all', yonseiNotifyOff:'Notifications: Off', yonseiNotifyOn:'Notifications: On', yonseiNotifyOnMsg:'You\'ll get an email when a new notice is posted.', yonseiNotifyOffMsg:'Email notifications turned off.', lblYonseiBoardsSearch:'Search', lblYonseiBoardsCategory:'Category', lblYonseiBoardsSince:'Period', lblYonseiBoardsSort:'Sort', yonseiPeriodAll:'All time', yonseiPeriodWeek:'Last week', yonseiPeriodMonth:'Last month', yonseiPeriod6Months:'Last 6 months', yonseiPeriodYear:'Last year', yonseiPeriod2Years:'Last 2 years', yonseiPeriod3Years:'Last 3 years', yonseiPeriod4Years:'Last 4 years', yonseiPeriod5Years:'Last 5 years', yonseiSortNewest:'Newest first', yonseiSortOldest:'Oldest first', yonseiCategoryAll:'All categories', yonseiCatAcademics:'Academics', yonseiCatRecruiting:'Recruiting', yonseiCatAdmission:'Admission', yonseiCatEvent:'Event', yonseiCatGeneral:'General Notice', yonseiBoardsNoMatches:'No notices match your search/filter.', yonseiHideSubtagsLabel:'Hide these sub-tags:', yonseiNotifyCategoriesLabel:'Notify me about:', jobBoardTab:'Job Board', jobsSubJobBoard:'Board', jobBoardIndustryLabel:'Industry', jobBoardTypeLabel:'Type', jobBoardIndustryAll:'All industries', jobBoardTypeAll:'All types', jobBoardTypeFull:'Full-Time Job', jobBoardTypePart:'Part-Time Job', jobBoardTypeIntern:'Internship', jobBoardDeadlineLabel:'Deadline:', jobBoardUpdated:'Last updated {time}', jobBoardLoading:'Loading...', jobBoardEmpty:'Nothing here yet.', jobBoardUpdateBtn:'Update', jobBoardAiUpdateBtn:'AI Job Fetch', jobBoardAiFetching:'Fetching', jobBoardUpdating:'Updating...', jobBoardIndBankingFinance:'Banking/Finance', jobBoardIndConsumerFashion:'Consumer/Fashion', jobBoardIndForeignFirms:'Foreign firms', jobBoardIndIntlOrg:'International Organization', jobBoardIndNGO:'NGO', jobBoardIndOthers:'Others', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Public', jobBoardIndResearchInstitute:'Research Institute', jobBoardIndTechnology:'Technology', jobBoardIndTopChaebol:'Top Chaebol', jobBoardIndTrade:'Trade', jobBoardNewBadge:'NEW', cdcLoginWarnTitle:'Logged in to CDC?', cdcLoginWarnBody:'The Yonsei CDC site needs its own separate login. Make sure you\'re signed in there before opening this posting, or the page may not load right.', cdcLoginWarnContinueBtn:'Continue', cdcLoginWarnLoginBtn:'Log in', cdcLoginWarnCancelBtn:'Cancel',
     tabExpenditure:'Expenses', hExpVacations:'Vacations', expNewVacationBtn:'+ New vacation', expPendingInvites:'Pending invites', expNoVacationsHint:'No vacations yet. Create one to get started.', expEmptyStateText:'Create a vacation above to start logging expenses.', expLoadFailedHint:'Couldn\'t load your vacations. Check your connection and try again.', expRetryLoadBtn:'Retry', expAmountInvalid:'Enter a number, optionally ending in k or m (e.g. 4k, 1.5m).', hExpOverview:'Overview', expMembersBtn:'Members', lblExpStatTotal:'Total', expAvgPerDay:'Avg/day', expAvgPerWeek:'Avg/week', lblExpStatSelectedDay:'Selected day', lblExpStatMembers:'Members', hExpCategoryBreakdown:'By category', hExpAllExpenses:'All expenses', sortLabel:'Sort', sortFieldStatus:'Status', sortFieldCompany:'Company', sortFieldRole:'Role', sortFieldIssuer:'Issuer', sortFieldDeadline:'Deadline', sortFieldTitle:'Title', sortFieldPosted:'Posted', sortFieldMfa:'2FA', sortFieldConfirmed:'Confirmed', sortFieldDate:'Date', sortFieldAmount:'Amount', sortFieldName:'Name', sortFieldCategory:'Category', sortFieldPaidBy:'Paid by', sortAsc:'Sorting up. Press to sort down.', sortDesc:'Sorting down. Press to sort up.', sortThen:'then', sortMultiple:'Multiple sort', expExcluded:'{n} expenses left out', expExcludedOne:'{n} expense left out', expShowLabel:'Show', expShowAll:'All', expShowCounted:'Counted only', expShowExcluded:'Excluded only', expNoExcluded:'Nothing is excluded right now.', expNoCounted:'Everything here is excluded right now.', expNoExpensesYet:'No expenses logged yet.', expCountCategory:'Count this category', expDontCountCategory:"Don't count this category", expCountAllCategories:'Count all categories', expDontCountDay:"Don't count this day", expCountDay:'Count this day', expDontCountExpense:"Don't count this expense", expCountExpense:'Count this expense', expCountEverything:'Count everything', expCatFood:'Food & Drink', expCatAccommodation:'Accommodation', expCatTransport:'Transport', expCatActivities:'Activities', expCatShopping:'Shopping', expCatNightlife:'Nightlife', expCatGroceries:'Groceries', expCatFees:'Fees & Tips', expCatOther:'Other', expNoExpensesThisDay:'Nothing logged for this day yet.', expAddExpense:'Add expense', expEditExpense:'Edit expense', expPaidBy:'Paid by', hExpBalances:'Balances', expBalancesNeedMembers:'Add another member to this vacation to see balances.', expAllSettled:'Everyone is settled up.', expBalancesNote:'Split evenly across all members by default; a solo purchase still counts toward everyone\'s share unless you note it in the description.', hNewVacation:'New vacation', lblNewVacationName:'Name', lblNewVacationStart:'Start date', lblNewVacationEnd:'End date', lblNewVacationCurrency:'Currency', createVacationBtn:'Create vacation', hEditVacation:'Edit vacation', expPickVacationHint:'Pick a vacation above.', expVacationDeleteConfirm:'Delete "{name}"? Every expense logged on it goes with it, for everyone on the trip.', lblExpFormDate:'Date', lblExpFormAmount:'Amount', lblExpFormCategory:'Category', lblExpFormDescription:'Description', lblExpFormPaidBy:'Paid by', saveExpenseBtn:'Save', expDeleteBtn:'Delete', hInviteFromCircle:'Invite from your circle', expCircleEmpty:'You\'re not linked with anyone yet. Add people to your Linked circle from Account settings.', expCircleAllOnTrip:'Everyone in your Linked circle is already on this trip.', expRoleOwner:'Owner', expStatusAccepted:'Member', expStatusPending:'Invited', expStatusDeclined:'Declined', hPendingVacationInvites:'Pending vacation invites', expNoPendingInvites:'No pending invites.', expFormInvalid:'Please fill in all required fields.', expDateRangeInvalid:'End date must be on or after the start date.', expDateOutsideRangeConfirm:'This date is outside the vacation\'s dates. Log it anyway?', expDeleteConfirm:'Delete this expense?', expRemoveMemberBtn:'Remove from trip', lblExpCustomCategoryName:'Custom name', optNewVacationCurrencyCustom:'Other…', lblNewVacationCustomCurrency:'Currency code', lblExpDisplayCurrency:'Show in', optExpDisplayCurrencyOriginal:'Original', lblExpDisplayFull:'Convert every amount', expDisplayFullHint:'Shows every amount in the chosen currency. What was typed in is kept as it is, so switching back gives the exact amounts again.', hInviteBySearch:'Or invite by name', vacationInviteSearchPlaceholder:'Search by name...', recapLoadingHint:'Loading…', shellUpdatedText:'A new version is ready.', shellUpdatedBtn:'Reload', qlVisit:'Visit link:', qlEnterLink:'Enter link:', qlEnterVideo:'Enter video:', qlEdit:'Edit', qlSave:'Save', qlRemove:'Remove',
+    paneLogTime:'Log time', paneProgress:'Progress', paneHistory:'History', paneStats:'Stats', paneLists:'Lists', paneList:'List',
     authEnterEmailPassword:'Enter your email and password.', authInvalidLogin:'Wrong email, name or password.', authEmailNotConfirmed:'Confirm your email first. The link is in the email we sent you.', authAlreadyRegistered:'An account with this email already exists. Sign in instead.', authRateLimited:'Too many attempts. Wait a minute and try again.', authEmailInvalid:'That email address does not look right.', authSamePassword:'Pick a password different from your current one.', authNetworkError:'Could not reach the server. Check your connection and try again.', authSignupsClosed:'Sign-ups are closed right now.', authLinkExpired:'That link has expired or was already used. Ask for a new one.', guestUnavailable:'Not available in guest mode.', tipDelete:'Delete', tipRemove:'Remove', tipMoveUp:'Move up', tipMoveDown:'Move down', lblSubcategory:'Sub-category', noteMoveTo:'Move to a position', noteMovePick:'Pick a position', noteMoveTop:'To top', noteMoveBottom:'To bottom', noteMoveDone:'Done', noteStatsShow:'Word count', noteStatsShowHint:'Show words and characters', noteStatsHide:'press to hide', noteDragTip:'Drag to move', noteSubAdd:'Add a sub-category', noteSubNewPh:'Sub-category name', tipDarkMode:'Toggle dark mode', tipMyNotes:'My notes', tipClickToEdit:'Click to edit', tipJumpToDate:'Jump to date', tipPagesRead:'Pages read', tipJobBoardAiUpdate:'Walks each of today\'s postings individually and saves full descriptions to a local file', notesLinkShortcutPrompt:'Shortcut name:', saveFailedTryAgain:'Could not save. Try again.', termsLink:'Terms of Use', installGuideTitle:'Get the app', installGuideIntro:'Add Productivity Tracker to your home screen. It opens full screen like an app and can send you notifications.', installInAppNote:'This page is open inside another app, which cannot add it to your home screen. Open it in Safari or Chrome first (look for "Open in browser" in its ··· menu).', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'Install the app', installIosStep1:'Tap the Share button {icon} at the bottom of Safari. On newer iPhones it is inside the ··· menu.', installIosOtherStep1:'Tap the Share button {icon} in your browser, next to the address bar or in its menu.', installIosStep2:'Tap "View More" if you see it, then "Add to Home Screen".', installIosStep3:'Tap "Add". The app is now on your home screen.', installAndroidStep1:'Tap the menu {icon} at the top right of Chrome.', installAndroidStep2:'Tap "Add to home screen" or "Install app".', installAndroidStep3:'Tap "Install". The app is now on your home screen.', installGuideToast:'You can find this guide in Settings any time.', settingsInstallGuideBtn:'Get the app on your phone'
   },
   ko: {
@@ -13571,6 +13620,7 @@ const I18N = {
     tabCourses:'수업', tabNotes:'노트', fineLeft:'남음', fineAgo:'전',
     tabYonsei:'연세', tabTodos:'할 일', shareSendAsMessage:'메시지로 보내기', shareCopyText:'텍스트 복사', shareSendTo:'보낼 곳', shareAddMessage:'메시지 추가 (선택)', shareNoOne:'아직 보낼 사람이 없어요. 먼저 서클에 사람을 추가하세요.', shareSentTo:'{name}에게 보냈어요', shareSendFailed:'보내지 못했어요. 다시 시도하세요.', shareCopied:'복사했어요', shareOpenChat:'열기', shareQuickView:'빠른 보기', shareFrom:'{name}님이 공유함', shareKindTodo:'할 일', shareKindTodos:'할 일 목록', shareKindEvent:'캘린더 일정', shareKindEvents:'캘린더', shareKindBirthday:'생일', shareKindBook:'책', shareKindArticle:'기사', shareKindJob:'입사 지원', shareKindWriting:'글쓰기 샘플', shareKindGrammar:'문법 노트', shareKindNote:'강의 노트', shareKindNotebook:'노트', shareKindTrip:'여행', shareKindExpense:'지출', shareFldWhen:'언제', shareFldTime:'시간', shareFldWhere:'장소', shareFldRepeats:'반복', shareFldStatus:'상태', shareFldAuthor:'저자', shareFldPages:'페이지', shareFldSource:'출처', shareFldLink:'링크', shareFldCompany:'회사', shareFldRole:'직무', shareFldApplied:'지원일', shareFldWords:'단어 수', shareFldDate:'날짜', shareFldAmount:'금액', shareFldCategory:'분류', shareFldPaidBy:'결제자', shareFldTotal:'합계', shareFldLevel:'수준', shareFldFormation:'형태', shareFldMeaning:'의미', shareFldExample:'예문', shareFldCourse:'과목', todoThisWeek:'이번 주', todoDeleteAllBlank:'빈 할 일 {n}개를 모두 삭제할까요?', todoShowMenu:'표시', todoChipWeek:'주', todoChipMonth:'월', todoChipYear:'년', todoRelDates:'오늘, 내일', setCapAccount:'계정', setCapGeneral:'일반', setCapProfile:'프로필', setCapEmail:'이메일', setCapSignIn:'로그인', setCapStart:'시작', setCapTopBar:'상단 바', setCapBottomBar:'하단 바', setCapCalendar:'캘린더', setCapTabs:'탭', setCapMessages:'메시지', setCapUpload:'업로드', setCapAccounts:'계정', setCapStudyEditor:'학습 편집', setTheme:'테마', setThemeLight:'라이트', setThemeDark:'다크', setThemeSystem:'시스템', setLanguage:'언어', setCapApp:'앱', setCapAdmin:'관리자', setSubSecurity:'이름, 이메일, 비밀번호, 2단계 로그인', setSubAppearance:'시작 탭, 하단 바, 애니메이션, 탭', setSubNotify:'메시지, 푸시, 알림, 요약', setSubResume:'이력서 업로드 및 동기화', setSubModerator:'모든 계정', setSubDanger:'계정과 데이터 삭제', todoPlainDates:'날짜', todoRemoveDay:'이 날짜 삭제', todoRemoveDayConfirm:'이 날짜와 할 일 {n}개를 삭제할까요? 삭제됨에서 되돌릴 수 있습니다.', todoAddDay:'날짜 추가', todoTrashDrop:'여기에 놓아 삭제', todoTrashOpen:'삭제됨', todoRestore:'복원', todoViewColumns:'열', todoViewList:'목록', todoFoldAll:'모두 접기', todoUnfoldAll:'모두 펼치기', todoShowScope:'이 할 일 표시 또는 숨기기',  todoNextWeek:'다음 주', todoLastWeek:'지난주', todoWeekOf:'{d} 주', todoPrev:'이전', todoNext:'다음', todoPickDay:'날짜 선택', todoMoveTo:'옮기기', todoBackToNow:'오늘로', todoRepeat:'반복', todoNoRepeat:'반복 안 함', todoEveryDay:'매일', todoEveryWeek:'매주', todoEveryMonth:'매월', todoEveryYear:'매년', todoScopeLbl:'기간', todoScopeDay:'하루', todoScopeWeek:'한 주', todoScopeMonth:'한 달', todoScopeYear:'한 해', todoScopeNone:'날짜 없음', hAddTodo:'할 일 추가', lblTodoTitle:'할 일', lblTodoDue:'마감일', lblTodoTime:'시간', lblTodoRemind:'알림', remindAtTime:'정각', remindHourBefore:'1시간 전', remindMorningOf:'당일 아침 (8:00)', remindDayBefore:'하루 전', remindCustom:'시간 선택', addTodoBtn:'할 일 추가', hTodoList:'나의 할 일', todoToday:'오늘', todoTomorrow:'내일', todoOverdue:'기한 지남', todoDone:'완료', todoClearDone:'완료 항목 지우기', todoClearDoneConfirm:'완료된 할 일 {n}개를 삭제할까요?', deleteTodoConfirm:'할 일 "{title}"을(를) 삭제할까요?', todoMarkDone:'완료로 표시', todoMarkOpen:'미완료로 표시', todoShowOnCalendar:'캘린더에 표시', todoCalAdd:'캘린더에 추가', todoCalLeaveOff:'캘린더에서 빼기', todoShareCircle:'내 서클과 공유', todoNotesLabel:'메모', todoSave:'저장', todoCancel:'취소', todoEdit:'수정', todoDelete:'삭제', todoAllCourses:'전체 수업', todoAllProjects:'전체 프로젝트', notifTypeTodoReminder:'할 일 알림', notifTodoReminderTitleTpl:'할 일: {title}', hWorkspaceSetup:'Productivity Tracker 설정하기', wsWhereLabel:'어디에서 사용하시나요?', wsKindYonsei:'연세', wsKindSchool:'다른 학교', wsKindWork:'직장', wsNameLabel:'탭 이름', wsKoreanLabel:'한국어 공부 탭', wsContinue:'계속', wsSave:'저장', wsSaved:'저장했습니다.', wsSettingsHeading:'학교 또는 직장 탭', workspaceSchoolDefault:'학교', workspaceWorkDefault:'직장', tabProjects:'프로젝트', hAddProject:'프로젝트 추가', projectTitle:'프로젝트명', projectLocation:'장소', addProjectBtn:'프로젝트 추가', deleteProjectConfirm:'이 프로젝트를 삭제할까요? 모든 사람의 캘린더 항목과 노트도 함께 삭제됩니다.', lockInProjectConfirm:'이 프로젝트를 확정할까요? 이후에는 계획 중이나 진행 중으로 되돌릴 수 없습니다.', statusActive:'진행 중', hYourProjects:'나의 프로젝트', hProjectList:'전체 프로젝트', lblNotesProject:'프로젝트', noProject:'프로젝트 없음', notesEmptyHintWork:'먼저 프로젝트 탭에서 프로젝트를 추가한 후 노트를 작성하세요.', hNotesWork:'내 노트', kindProject:'프로젝트', hProjectsCal:'프로젝트', linkCatProjects:'프로젝트', linkCatProjectNotes:'프로젝트 노트', tabBoards:'게시판', hYonseiBoards:'공지사항', yonseiBoardsLoading:'공지사항 불러오는 중...', yonseiBoardsError:'지금은 공지사항을 불러올 수 없습니다.', yonseiBoardsViewDirect:'연세 사이트에서 보기', lblManageTabs:'표시할 탭 관리', manageTabsShowAll:'전체 표시', manageTabsHideAll:'전체 숨기기', yonseiNotifyOff:'알림: 꺼짐', yonseiNotifyOn:'알림: 켜짐', yonseiNotifyOnMsg:'새 공지가 올라오면 이메일로 알려드립니다.', yonseiNotifyOffMsg:'이메일 알림이 꺼졌습니다.', lblYonseiBoardsSearch:'검색', lblYonseiBoardsCategory:'카테고리', lblYonseiBoardsSince:'기간', lblYonseiBoardsSort:'정렬', yonseiPeriodAll:'전체 기간', yonseiPeriodWeek:'지난 1주', yonseiPeriodMonth:'지난 1개월', yonseiPeriod6Months:'지난 6개월', yonseiPeriodYear:'지난 1년', yonseiPeriod2Years:'지난 2년', yonseiPeriod3Years:'지난 3년', yonseiPeriod4Years:'지난 4년', yonseiPeriod5Years:'지난 5년', yonseiSortNewest:'최신순', yonseiSortOldest:'오래된순', yonseiCategoryAll:'전체 카테고리', yonseiCatAcademics:'학사', yonseiCatRecruiting:'채용', yonseiCatAdmission:'입학', yonseiCatEvent:'행사', yonseiCatGeneral:'일반 공지', yonseiBoardsNoMatches:'검색/필터와 일치하는 공지가 없습니다.', yonseiHideSubtagsLabel:'이 하위 태그 숨기기:', yonseiNotifyCategoriesLabel:'알림 받을 항목:', jobBoardTab:'채용 게시판', jobsSubJobBoard:'게시판', jobBoardIndustryLabel:'업종', jobBoardTypeLabel:'유형', jobBoardIndustryAll:'전체 업종', jobBoardTypeAll:'전체 유형', jobBoardTypeFull:'정규직', jobBoardTypePart:'시간제', jobBoardTypeIntern:'인턴', jobBoardDeadlineLabel:'마감일:', jobBoardUpdated:'마지막 업데이트: {time}', jobBoardLoading:'불러오는 중...', jobBoardEmpty:'아직 등록된 공고가 없습니다.', jobBoardUpdateBtn:'업데이트', jobBoardAiUpdateBtn:'AI 확인', jobBoardAiFetching:'가져오는 중', jobBoardUpdating:'업데이트 중...', jobBoardIndBankingFinance:'금융', jobBoardIndConsumerFashion:'소비재/패션', jobBoardIndForeignFirms:'외국계 기업', jobBoardIndIntlOrg:'국제기구', jobBoardIndNGO:'NGO', jobBoardIndOthers:'기타', jobBoardIndPRMarketing:'PR/마케팅', jobBoardIndPublic:'공공기관', jobBoardIndResearchInstitute:'연구소', jobBoardIndTechnology:'기술/IT', jobBoardIndTopChaebol:'대기업(재벌)', jobBoardIndTrade:'무역', jobBoardNewBadge:'신규', cdcLoginWarnTitle:'CDC 사이트에 로그인하셨나요?', cdcLoginWarnBody:'연세 CDC 사이트는 별도의 로그인이 필요합니다. 이 공고를 열기 전에 CDC 사이트에 로그인되어 있는지 확인하세요. 그렇지 않으면 페이지가 제대로 열리지 않을 수 있습니다.', cdcLoginWarnContinueBtn:'계속', cdcLoginWarnLoginBtn:'로그인', cdcLoginWarnCancelBtn:'취소',
     tabExpenditure:'지출', hExpVacations:'여행', expNewVacationBtn:'+ 새 여행', expPendingInvites:'대기 중인 초대', expNoVacationsHint:'아직 여행이 없습니다. 위에서 만들어보세요.', expEmptyStateText:'위에서 여행을 만들어 지출 기록을 시작하세요.', expLoadFailedHint:'여행 정보를 불러오지 못했습니다. 연결 상태를 확인하고 다시 시도하세요.', expRetryLoadBtn:'다시 시도', expAmountInvalid:'숫자를 입력하세요. 끝에 k 또는 m을 붙일 수 있습니다 (예: 4k, 1.5m).', hExpOverview:'개요', expMembersBtn:'멤버', lblExpStatTotal:'총액', expAvgPerDay:'일 평균', expAvgPerWeek:'주 평균', lblExpStatSelectedDay:'선택한 날', lblExpStatMembers:'멤버', hExpCategoryBreakdown:'카테고리별', hExpAllExpenses:'전체 지출', sortLabel:'정렬', sortFieldStatus:'상태', sortFieldCompany:'회사', sortFieldRole:'직무', sortFieldIssuer:'발급기관', sortFieldDeadline:'마감일', sortFieldTitle:'제목', sortFieldPosted:'등록일', sortFieldMfa:'2단계 인증', sortFieldConfirmed:'인증 여부', sortFieldDate:'날짜', sortFieldAmount:'금액', sortFieldName:'이름', sortFieldCategory:'카테고리', sortFieldPaidBy:'결제자', sortAsc:'오름차순입니다. 누르면 내림차순으로 바뀝니다.', sortDesc:'내림차순입니다. 누르면 오름차순으로 바뀝니다.', sortThen:'그다음', sortMultiple:'다중 정렬', expExcluded:'{n}개 항목 제외됨', expShowLabel:'표시', expShowAll:'전체', expShowCounted:'포함된 것만', expShowExcluded:'제외된 것만', expNoExcluded:'지금은 제외된 항목이 없습니다.', expNoCounted:'지금은 모든 항목이 제외되어 있습니다.', expNoExpensesYet:'아직 기록된 지출이 없습니다.', expCountCategory:'이 카테고리 포함', expDontCountCategory:'이 카테고리 제외', expCountAllCategories:'모든 카테고리 포함', expDontCountDay:'이 날 제외', expCountDay:'이 날 포함', expDontCountExpense:'이 지출 제외', expCountExpense:'이 지출 포함', expCountEverything:'모두 포함', expCatFood:'식비', expCatAccommodation:'숙박', expCatTransport:'교통', expCatActivities:'액티비티', expCatShopping:'쇼핑', expCatNightlife:'나이트라이프', expCatGroceries:'장보기', expCatFees:'수수료·팁', expCatOther:'기타', expNoExpensesThisDay:'이 날에는 기록된 지출이 없습니다.', expAddExpense:'지출 추가', expEditExpense:'지출 수정', expPaidBy:'결제자', hExpBalances:'정산', expBalancesNeedMembers:'정산을 보려면 이 여행에 멤버를 추가하세요.', expAllSettled:'모두 정산되었습니다.', expBalancesNote:'기본적으로 모든 멤버에게 균등하게 나뉩니다. 개인 구매도 설명에 따로 적지 않으면 모두의 몫에 포함됩니다.', hNewVacation:'새 여행', lblNewVacationName:'이름', lblNewVacationStart:'시작일', lblNewVacationEnd:'종료일', lblNewVacationCurrency:'통화', createVacationBtn:'여행 만들기', hEditVacation:'여행 수정', expPickVacationHint:'위에서 여행을 선택하세요.', expVacationDeleteConfirm:'"{name}" 여행을 삭제할까요? 이 여행에 기록된 모든 지출이 참여자 전원에게서 함께 삭제됩니다.', lblExpFormDate:'날짜', lblExpFormAmount:'금액', lblExpFormCategory:'카테고리', lblExpFormDescription:'설명', lblExpFormPaidBy:'결제자', saveExpenseBtn:'저장', expDeleteBtn:'삭제', hInviteFromCircle:'내 그룹에서 초대', expCircleEmpty:'아직 아무와도 연결되어 있지 않습니다. 계정 설정의 연결된 그룹에서 사람을 추가하세요.', expCircleAllOnTrip:'연결된 그룹의 모든 사람이 이미 이 여행에 참여하고 있습니다.', expRoleOwner:'소유자', expStatusAccepted:'멤버', expStatusPending:'초대됨', expStatusDeclined:'거절함', hPendingVacationInvites:'대기 중인 여행 초대', expNoPendingInvites:'대기 중인 초대가 없습니다.', expFormInvalid:'필수 항목을 모두 입력해 주세요.', expDateRangeInvalid:'종료일은 시작일과 같거나 이후여야 합니다.', expDateOutsideRangeConfirm:'이 날짜는 여행 기간을 벗어났습니다. 그래도 기록할까요?', expDeleteConfirm:'이 지출을 삭제할까요?', expRemoveMemberBtn:'여행에서 제거', lblExpCustomCategoryName:'맞춤 이름', optNewVacationCurrencyCustom:'기타…', lblNewVacationCustomCurrency:'통화 코드', lblExpDisplayCurrency:'표시 통화', optExpDisplayCurrencyOriginal:'원래 통화', lblExpDisplayFull:'모든 금액 변환', expDisplayFullHint:'모든 금액을 선택한 통화로 보여줍니다. 입력한 금액은 그대로 남아 있어 다시 바꾸면 정확한 금액이 돌아옵니다.', hInviteBySearch:'또는 이름으로 초대', vacationInviteSearchPlaceholder:'이름으로 검색...', recapLoadingHint:'불러오는 중...', shellUpdatedText:'새 버전이 준비되었습니다.', shellUpdatedBtn:'새로 고침', qlVisit:'링크 열기:', qlEnterLink:'링크 입력:', qlEnterVideo:'동영상 주소:', qlEdit:'수정', qlSave:'저장', qlRemove:'제거',
+    paneLogTime:'시간 기록', paneProgress:'진행 상황', paneHistory:'내역', paneStats:'통계', paneLists:'목록', paneList:'목록',
     authEnterEmailPassword:'이메일과 비밀번호를 입력하세요.', authInvalidLogin:'이메일, 이름 또는 비밀번호가 올바르지 않습니다.', authEmailNotConfirmed:'먼저 이메일 인증을 완료하세요. 보내 드린 이메일에 링크가 있습니다.', authAlreadyRegistered:'이 이메일로 만든 계정이 이미 있습니다. 로그인하세요.', authRateLimited:'시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.', authEmailInvalid:'이메일 주소가 올바르지 않습니다.', authSamePassword:'현재 비밀번호와 다른 비밀번호를 선택하세요.', authNetworkError:'서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.', authSignupsClosed:'지금은 가입을 받지 않습니다.', authLinkExpired:'링크가 만료되었거나 이미 사용되었습니다. 새 링크를 요청하세요.', guestUnavailable:'게스트 모드에서는 사용할 수 없습니다.', tipDelete:'삭제', tipRemove:'제거', tipMoveUp:'위로 이동', tipMoveDown:'아래로 이동', lblSubcategory:'하위 분류', noteMoveTo:'원하는 위치로 이동', noteMovePick:'위치를 고르세요', noteMoveTop:'맨 위로', noteMoveBottom:'맨 아래로', noteMoveDone:'완료', noteStatsShow:'글자 수', noteStatsShowHint:'단어와 글자 수 보기', noteStatsHide:'누르면 숨겨집니다', noteDragTip:'끌어서 옮기기', noteSubAdd:'하위 분류 추가', noteSubNewPh:'하위 분류 이름', tipDarkMode:'다크 모드 전환', tipMyNotes:'내 노트', tipClickToEdit:'클릭하여 수정', tipJumpToDate:'날짜로 이동', tipPagesRead:'읽은 페이지', tipJobBoardAiUpdate:'오늘 올라온 공고를 하나씩 열어 전체 설명을 기기의 파일로 저장합니다', notesLinkShortcutPrompt:'단축어 이름:', saveFailedTryAgain:'저장하지 못했습니다. 다시 시도하세요.', termsLink:'이용약관', installGuideTitle:'앱으로 사용하기', installGuideIntro:'Productivity Tracker를 홈 화면에 추가하세요. 앱처럼 전체 화면으로 열리고 알림도 받을 수 있어요.', installInAppNote:'지금 다른 앱 안에서 열려 있어서 홈 화면에 추가할 수 없어요. 먼저 Safari나 Chrome에서 여세요(··· 메뉴의 "다른 브라우저로 열기").', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'앱 설치', installIosStep1:'Safari 하단의 공유 버튼 {icon}을 누르세요. 최신 iPhone에서는 ··· 메뉴 안에 있어요.', installIosOtherStep1:'브라우저의 공유 버튼 {icon}을 누르세요. 주소창 옆이나 메뉴 안에 있어요.', installIosStep2:'"더 보기"가 보이면 누른 다음 "홈 화면에 추가"를 누르세요.', installIosStep3:'"추가"를 누르면 홈 화면에 앱이 생겨요.', installAndroidStep1:'Chrome 오른쪽 위의 메뉴 {icon}를 누르세요.', installAndroidStep2:'"홈 화면에 추가" 또는 "앱 설치"를 누르세요.', installAndroidStep3:'"설치"를 누르면 홈 화면에 앱이 생겨요.', installGuideToast:'이 안내는 언제든 설정에서 다시 볼 수 있어요.', settingsInstallGuideBtn:'휴대폰에 앱 추가하기'
   },
   vi: {
@@ -13698,6 +13748,7 @@ const I18N = {
     tabCourses:'Khóa học', tabNotes:'Ghi chú', fineLeft:'còn lại', fineAgo:'trước',
     tabYonsei:'Yonsei', tabTodos:'Việc cần làm', shareSendAsMessage:'Gửi dưới dạng tin nhắn', shareCopyText:'Sao chép văn bản', shareSendTo:'Gửi đến', shareAddMessage:'Thêm lời nhắn (tùy chọn)', shareNoOne:'Chưa có ai để gửi. Hãy thêm người vào nhóm của bạn trước.', shareSentTo:'Đã gửi đến {name}', shareSendFailed:'Không gửi được. Hãy thử lại.', shareCopied:'Đã sao chép', shareOpenChat:'Mở', shareQuickView:'Xem nhanh', shareFrom:'{name} đã chia sẻ', shareKindTodo:'Việc cần làm', shareKindTodos:'Danh sách việc', shareKindEvent:'Sự kiện lịch', shareKindEvents:'Lịch', shareKindBirthday:'Sinh nhật', shareKindBook:'Sách', shareKindArticle:'Bài báo', shareKindJob:'Đơn xin việc', shareKindWriting:'Bài viết mẫu', shareKindGrammar:'Ghi chú ngữ pháp', shareKindNote:'Ghi chú khóa học', shareKindNotebook:'Ghi chú', shareKindTrip:'Chuyến đi', shareKindExpense:'Khoản chi', shareFldWhen:'Khi nào', shareFldTime:'Giờ', shareFldWhere:'Địa điểm', shareFldRepeats:'Lặp lại', shareFldStatus:'Trạng thái', shareFldAuthor:'Tác giả', shareFldPages:'Trang', shareFldSource:'Nguồn', shareFldLink:'Liên kết', shareFldCompany:'Công ty', shareFldRole:'Vị trí', shareFldApplied:'Ngày nộp', shareFldWords:'Số từ', shareFldDate:'Ngày', shareFldAmount:'Số tiền', shareFldCategory:'Danh mục', shareFldPaidBy:'Người trả', shareFldTotal:'Tổng', shareFldLevel:'Trình độ', shareFldFormation:'Cấu trúc', shareFldMeaning:'Ý nghĩa', shareFldExample:'Ví dụ', shareFldCourse:'Khóa học', todoThisWeek:'Tuần này', todoDeleteAllBlank:'Xóa tất cả {n} việc trống?', todoShowMenu:'Hiển thị', todoChipWeek:'Tuần', todoChipMonth:'Tháng', todoChipYear:'Năm', todoRelDates:'Hôm nay, Ngày mai', setCapAccount:'Tài khoản', setCapGeneral:'Chung', setCapProfile:'Hồ sơ', setCapEmail:'Email', setCapSignIn:'Đăng nhập', setCapStart:'Khởi động', setCapTopBar:'Thanh trên', setCapBottomBar:'Thanh dưới', setCapCalendar:'Lịch', setCapTabs:'Tab', setCapMessages:'Tin nhắn', setCapUpload:'Tải lên', setCapAccounts:'Tài khoản', setCapStudyEditor:'Chỉnh sửa học tập', setTheme:'Giao diện', setThemeLight:'Sáng', setThemeDark:'Tối', setThemeSystem:'Hệ thống', setLanguage:'Ngôn ngữ', setCapApp:'Ứng dụng', setCapAdmin:'Quản trị', setSubSecurity:'Tên, email, mật khẩu và đăng nhập hai bước', setSubAppearance:'Tab mở đầu, thanh dưới, hiệu ứng và các tab', setSubNotify:'Tin nhắn, thông báo đẩy, nhắc nhở và tổng kết', setSubResume:'Tải lên và đồng bộ sơ yếu lý lịch', setSubModerator:'Mọi tài khoản', setSubDanger:'Xóa tài khoản và dữ liệu', todoPlainDates:'Ngày', todoRemoveDay:'Xóa ngày này', todoRemoveDayConfirm:'Xóa ngày này và {n} việc của nó? Có thể khôi phục từ mục Đã xóa.', todoAddDay:'Thêm ngày', todoTrashDrop:'Thả vào để xóa', todoTrashOpen:'Đã xóa', todoRestore:'Khôi phục', todoViewColumns:'Cột', todoViewList:'Danh sách', todoFoldAll:'Thu gọn tất cả', todoUnfoldAll:'Mở rộng tất cả', todoShowScope:'Hiện hoặc ẩn các việc này',  todoNextWeek:'Tuần sau', todoLastWeek:'Tuần trước', todoWeekOf:'Tuần {d}', todoPrev:'Trước', todoNext:'Sau', todoPickDay:'Chọn ngày', todoMoveTo:'Chuyển sang', todoBackToNow:'Về hiện tại', todoRepeat:'Lặp lại', todoNoRepeat:'Không lặp lại', todoEveryDay:'Mỗi ngày', todoEveryWeek:'Mỗi tuần', todoEveryMonth:'Mỗi tháng', todoEveryYear:'Mỗi năm', todoScopeLbl:'Cho', todoScopeDay:'Một ngày', todoScopeWeek:'Một tuần', todoScopeMonth:'Một tháng', todoScopeYear:'Một năm', todoScopeNone:'Không có ngày', hAddTodo:'Thêm việc cần làm', lblTodoTitle:'Việc cần làm', lblTodoDue:'Hạn', lblTodoTime:'Giờ', lblTodoRemind:'Nhắc tôi', remindAtTime:'Đúng giờ', remindHourBefore:'Trước 1 giờ', remindMorningOf:'Sáng hôm đó (8:00)', remindDayBefore:'Trước 1 ngày', remindCustom:'Chọn giờ', addTodoBtn:'Thêm việc', hTodoList:'Việc cần làm của bạn', todoToday:'Hôm nay', todoTomorrow:'Ngày mai', todoOverdue:'Quá hạn', todoDone:'Đã xong', todoClearDone:'Xóa việc đã xong', todoClearDoneConfirm:'Xóa {n} việc đã xong?', deleteTodoConfirm:'Xóa việc "{title}"?', todoMarkDone:'Đánh dấu đã xong', todoMarkOpen:'Đánh dấu chưa xong', todoShowOnCalendar:'Hiện trên lịch', todoCalAdd:'Thêm vào lịch', todoCalLeaveOff:'Bỏ khỏi lịch', todoShareCircle:'Chia sẻ với nhóm của bạn', todoNotesLabel:'Ghi chú', todoSave:'Lưu', todoCancel:'Hủy', todoEdit:'Sửa', todoDelete:'Xóa', todoAllCourses:'Tất cả khóa học', todoAllProjects:'Tất cả dự án', notifTypeTodoReminder:'Nhắc việc cần làm', notifTodoReminderTitleTpl:'Việc cần làm: {title}', hWorkspaceSetup:'Thiết lập Productivity Tracker', wsWhereLabel:'Bạn sẽ dùng ở đâu?', wsKindYonsei:'Yonsei', wsKindSchool:'Trường khác', wsKindWork:'Công việc', wsNameLabel:'Tên thẻ', wsKoreanLabel:'Thẻ học tiếng Hàn', wsContinue:'Tiếp tục', wsSave:'Lưu', wsSaved:'Đã lưu.', wsSettingsHeading:'Thẻ trường học hoặc công việc', workspaceSchoolDefault:'Trường học', workspaceWorkDefault:'Công việc', tabProjects:'Dự án', hAddProject:'Thêm dự án', projectTitle:'Tên dự án', projectLocation:'Địa điểm', addProjectBtn:'Thêm dự án', deleteProjectConfirm:'Xóa dự án này? Thao tác này cũng xóa các mục lịch và ghi chú của dự án cho tất cả mọi người.', lockInProjectConfirm:'Chốt dự án này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đang thực hiện.', statusActive:'Đang thực hiện', hYourProjects:'Dự án của bạn', hProjectList:'Tất cả dự án', lblNotesProject:'Dự án', noProject:'Không có dự án', notesEmptyHintWork:'Hãy thêm dự án trong tab Dự án trước, sau đó tạo ghi chú ở đây.', hNotesWork:'Ghi chú của bạn', kindProject:'Dự án', hProjectsCal:'Dự án', linkCatProjects:'Dự án', linkCatProjectNotes:'Ghi chú dự án', tabBoards:'Bảng tin', hYonseiBoards:'Thông báo chính thức', yonseiBoardsLoading:'Đang tải thông báo...', yonseiBoardsError:'Hiện không thể tải thông báo.', yonseiBoardsViewDirect:'Xem trên trang Yonsei', lblManageTabs:'Quản lý các tab hiển thị', manageTabsShowAll:'Hiện tất cả', manageTabsHideAll:'Ẩn tất cả', yonseiNotifyOff:'Thông báo: Tắt', yonseiNotifyOn:'Thông báo: Bật', yonseiNotifyOnMsg:'Bạn sẽ nhận được email khi có thông báo mới.', yonseiNotifyOffMsg:'Đã tắt thông báo qua email.', lblYonseiBoardsSearch:'Tìm kiếm', lblYonseiBoardsCategory:'Danh mục', lblYonseiBoardsSince:'Khoảng thời gian', lblYonseiBoardsSort:'Sắp xếp', yonseiPeriodAll:'Mọi lúc', yonseiPeriodWeek:'Tuần trước', yonseiPeriodMonth:'Tháng trước', yonseiPeriod6Months:'6 tháng qua', yonseiPeriodYear:'Năm trước', yonseiPeriod2Years:'2 năm qua', yonseiPeriod3Years:'3 năm qua', yonseiPeriod4Years:'4 năm qua', yonseiPeriod5Years:'5 năm qua', yonseiSortNewest:'Mới nhất', yonseiSortOldest:'Cũ nhất', yonseiCategoryAll:'Tất cả danh mục', yonseiCatAcademics:'Học thuật', yonseiCatRecruiting:'Tuyển dụng', yonseiCatAdmission:'Tuyển sinh', yonseiCatEvent:'Sự kiện', yonseiCatGeneral:'Thông báo chung', yonseiBoardsNoMatches:'Không có thông báo nào phù hợp với tìm kiếm/bộ lọc.', yonseiHideSubtagsLabel:'Ẩn các thẻ phụ này:', yonseiNotifyCategoriesLabel:'Nhận thông báo về:', jobBoardTab:'Bảng việc làm', jobsSubJobBoard:'Bảng', jobBoardIndustryLabel:'Ngành', jobBoardTypeLabel:'Loại hình', jobBoardIndustryAll:'Tất cả ngành', jobBoardTypeAll:'Tất cả loại hình', jobBoardTypeFull:'Toàn thời gian', jobBoardTypePart:'Bán thời gian', jobBoardTypeIntern:'Thực tập', jobBoardDeadlineLabel:'Hạn nộp:', jobBoardUpdated:'Cập nhật lần cuối {time}', jobBoardLoading:'Đang tải...', jobBoardEmpty:'Chưa có tin nào.', jobBoardUpdateBtn:'Cập nhật', jobBoardAiUpdateBtn:'Kiểm tra AI', jobBoardAiFetching:'Đang lấy dữ liệu', jobBoardUpdating:'Đang cập nhật...', jobBoardIndBankingFinance:'Ngân hàng/Tài chính', jobBoardIndConsumerFashion:'Hàng tiêu dùng/Thời trang', jobBoardIndForeignFirms:'Doanh nghiệp nước ngoài', jobBoardIndIntlOrg:'Tổ chức quốc tế', jobBoardIndNGO:'Tổ chức phi chính phủ (NGO)', jobBoardIndOthers:'Khác', jobBoardIndPRMarketing:'PR/Marketing', jobBoardIndPublic:'Khu vực công', jobBoardIndResearchInstitute:'Viện nghiên cứu', jobBoardIndTechnology:'Công nghệ', jobBoardIndTopChaebol:'Tập đoàn lớn (Chaebol)', jobBoardIndTrade:'Thương mại', jobBoardNewBadge:'MỚI', cdcLoginWarnTitle:'Đã đăng nhập vào CDC chưa?', cdcLoginWarnBody:'Trang CDC của Yonsei cần đăng nhập riêng. Hãy chắc chắn bạn đã đăng nhập ở đó trước khi mở tin này, nếu không trang có thể không tải đúng.', cdcLoginWarnContinueBtn:'Tiếp tục', cdcLoginWarnLoginBtn:'Đăng nhập', cdcLoginWarnCancelBtn:'Hủy',
     tabExpenditure:'Chi tiêu', hExpVacations:'Chuyến đi', expNewVacationBtn:'+ Chuyến đi mới', expPendingInvites:'Lời mời đang chờ', expNoVacationsHint:'Chưa có chuyến đi nào. Tạo một chuyến để bắt đầu.', expEmptyStateText:'Tạo một chuyến đi ở trên để bắt đầu ghi chi tiêu.', expLoadFailedHint:'Không thể tải chuyến đi của bạn. Kiểm tra kết nối và thử lại.', expRetryLoadBtn:'Thử lại', expAmountInvalid:'Nhập một số, có thể kết thúc bằng k hoặc m (vd: 4k, 1.5m).', hExpOverview:'Tổng quan', expMembersBtn:'Thành viên', lblExpStatTotal:'Tổng', expAvgPerDay:'TB/ngày', expAvgPerWeek:'TB/tuần', lblExpStatSelectedDay:'Ngày đã chọn', lblExpStatMembers:'Thành viên', hExpCategoryBreakdown:'Theo danh mục', hExpAllExpenses:'Tất cả khoản chi', sortLabel:'Sắp xếp', sortFieldStatus:'Trạng thái', sortFieldCompany:'Công ty', sortFieldRole:'Vị trí', sortFieldIssuer:'Đơn vị cấp', sortFieldDeadline:'Hạn nộp', sortFieldTitle:'Tiêu đề', sortFieldPosted:'Ngày đăng', sortFieldMfa:'Xác thực 2 bước', sortFieldConfirmed:'Đã xác nhận', sortFieldDate:'Ngày', sortFieldAmount:'Số tiền', sortFieldName:'Tên', sortFieldCategory:'Danh mục', sortFieldPaidBy:'Người trả', sortAsc:'Đang sắp tăng dần. Nhấn để sắp giảm dần.', sortDesc:'Đang sắp giảm dần. Nhấn để sắp tăng dần.', sortThen:'rồi', sortMultiple:'Sắp xếp nhiều tiêu chí', expExcluded:'{n} khoản chi bị loại', expShowLabel:'Hiển thị', expShowAll:'Tất cả', expShowCounted:'Chỉ mục được tính', expShowExcluded:'Chỉ mục bị loại', expNoExcluded:'Hiện không có mục nào bị loại.', expNoCounted:'Hiện tất cả các mục đều bị loại.', expNoExpensesYet:'Chưa có khoản chi nào được ghi.', expCountCategory:'Tính danh mục này', expDontCountCategory:'Không tính danh mục này', expCountAllCategories:'Tính tất cả danh mục', expDontCountDay:'Không tính ngày này', expCountDay:'Tính ngày này', expDontCountExpense:'Không tính khoản chi này', expCountExpense:'Tính khoản chi này', expCountEverything:'Tính tất cả', expCatFood:'Ăn uống', expCatAccommodation:'Chỗ ở', expCatTransport:'Di chuyển', expCatActivities:'Hoạt động', expCatShopping:'Mua sắm', expCatNightlife:'Giải trí đêm', expCatGroceries:'Đồ tạp hóa', expCatFees:'Phí & Tiền tip', expCatOther:'Khác', expNoExpensesThisDay:'Chưa có khoản chi nào cho ngày này.', expAddExpense:'Thêm khoản chi', expEditExpense:'Sửa khoản chi', expPaidBy:'Người trả', hExpBalances:'Cân đối', expBalancesNeedMembers:'Thêm thành viên vào chuyến đi này để xem cân đối.', expAllSettled:'Mọi người đã thanh toán xong.', expBalancesNote:'Mặc định chia đều cho tất cả thành viên. Một khoản chi cá nhân vẫn tính vào phần của mọi người trừ khi bạn ghi chú trong mô tả.', hNewVacation:'Chuyến đi mới', lblNewVacationName:'Tên', lblNewVacationStart:'Ngày bắt đầu', lblNewVacationEnd:'Ngày kết thúc', lblNewVacationCurrency:'Tiền tệ', createVacationBtn:'Tạo chuyến đi', hEditVacation:'Sửa chuyến đi', expPickVacationHint:'Chọn một chuyến đi ở trên.', expVacationDeleteConfirm:'Xóa "{name}"? Mọi khoản chi đã ghi cho chuyến đi này sẽ bị xóa theo, với tất cả mọi người trong chuyến.', lblExpFormDate:'Ngày', lblExpFormAmount:'Số tiền', lblExpFormCategory:'Danh mục', lblExpFormDescription:'Mô tả', lblExpFormPaidBy:'Người trả', saveExpenseBtn:'Lưu', expDeleteBtn:'Xóa', hInviteFromCircle:'Mời từ nhóm của bạn', expCircleEmpty:'Bạn chưa liên kết với ai. Hãy thêm người vào Nhóm liên kết trong Cài đặt tài khoản.', expCircleAllOnTrip:'Mọi người trong Nhóm liên kết của bạn đã tham gia chuyến đi này.', expRoleOwner:'Chủ sở hữu', expStatusAccepted:'Thành viên', expStatusPending:'Đã mời', expStatusDeclined:'Đã từ chối', hPendingVacationInvites:'Lời mời chuyến đi đang chờ', expNoPendingInvites:'Không có lời mời đang chờ.', expFormInvalid:'Vui lòng điền đầy đủ các trường bắt buộc.', expDateRangeInvalid:'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.', expDateOutsideRangeConfirm:'Ngày này nằm ngoài thời gian chuyến đi. Vẫn ghi lại?', expDeleteConfirm:'Xóa khoản chi này?', expRemoveMemberBtn:'Xóa khỏi chuyến đi', lblExpCustomCategoryName:'Tên tùy chỉnh', optNewVacationCurrencyCustom:'Khác…', lblNewVacationCustomCurrency:'Mã tiền tệ', lblExpDisplayCurrency:'Hiển thị bằng', optExpDisplayCurrencyOriginal:'Ban đầu', lblExpDisplayFull:'Đổi mọi số tiền', expDisplayFullHint:'Hiển thị mọi số tiền bằng loại tiền đã chọn. Số tiền đã nhập vẫn giữ nguyên, nên khi đổi lại sẽ thấy đúng số đã nhập.', hInviteBySearch:'Hoặc mời theo tên', vacationInviteSearchPlaceholder:'Tìm theo tên...', recapLoadingHint:'Đang tải...', shellUpdatedText:'Đã có phiên bản mới.', shellUpdatedBtn:'Tải lại', qlVisit:'Mở liên kết:', qlEnterLink:'Nhập liên kết:', qlEnterVideo:'Nhập video:', qlEdit:'Sửa', qlSave:'Lưu', qlRemove:'Xóa',
+    paneLogTime:'Ghi giờ học', paneProgress:'Tiến độ', paneHistory:'Lịch sử', paneStats:'Thống kê', paneLists:'Danh sách', paneList:'Danh sách',
     authEnterEmailPassword:'Hãy nhập email và mật khẩu.', authInvalidLogin:'Email, tên hoặc mật khẩu không đúng.', authEmailNotConfirmed:'Hãy xác nhận email trước. Đường liên kết nằm trong email chúng tôi đã gửi.', authAlreadyRegistered:'Đã có tài khoản dùng email này. Hãy đăng nhập.', authRateLimited:'Bạn đã thử quá nhiều lần. Hãy đợi một lát rồi thử lại.', authEmailInvalid:'Địa chỉ email này không hợp lệ.', authSamePassword:'Hãy chọn mật khẩu khác với mật khẩu hiện tại.', authNetworkError:'Không thể kết nối máy chủ. Hãy kiểm tra kết nối rồi thử lại.', authSignupsClosed:'Hiện chưa mở đăng ký.', authLinkExpired:'Đường liên kết đã hết hạn hoặc đã được dùng. Hãy yêu cầu liên kết mới.', guestUnavailable:'Không khả dụng ở chế độ khách.', tipDelete:'Xóa', tipRemove:'Gỡ bỏ', tipMoveUp:'Chuyển lên', tipMoveDown:'Chuyển xuống', lblSubcategory:'Danh mục con', noteMoveTo:'Chuyển đến vị trí', noteMovePick:'Chọn vị trí', noteMoveTop:'Lên đầu', noteMoveBottom:'Xuống cuối', noteMoveDone:'Xong', noteStatsShow:'Đếm chữ', noteStatsShowHint:'Hiện số từ và ký tự', noteStatsHide:'nhấn để ẩn', noteDragTip:'Kéo để di chuyển', noteSubAdd:'Thêm danh mục con', noteSubNewPh:'Tên danh mục con', tipDarkMode:'Bật/tắt chế độ tối', tipMyNotes:'Ghi chú của tôi', tipClickToEdit:'Nhấn để sửa', tipJumpToDate:'Đến ngày', tipPagesRead:'Số trang đã đọc', tipJobBoardAiUpdate:'Mở lần lượt từng tin đăng hôm nay và lưu toàn bộ mô tả vào một tệp trên máy', notesLinkShortcutPrompt:'Tên phím tắt:', saveFailedTryAgain:'Không lưu được. Hãy thử lại.', termsLink:'Điều khoản sử dụng', installGuideTitle:'Dùng như ứng dụng', installGuideIntro:'Thêm Productivity Tracker vào màn hình chính. Nó mở toàn màn hình như một ứng dụng và có thể gửi thông báo cho bạn.', installInAppNote:'Trang này đang mở bên trong một ứng dụng khác nên không thể thêm vào màn hình chính. Hãy mở bằng Safari hoặc Chrome trước (tìm "Mở trong trình duyệt" ở menu ···).', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'Cài đặt ứng dụng', installIosStep1:'Nhấn nút Chia sẻ {icon} ở cuối Safari. Trên iPhone mới hơn, nút này nằm trong menu ···.', installIosOtherStep1:'Nhấn nút Chia sẻ {icon} của trình duyệt, cạnh thanh địa chỉ hoặc trong menu.', installIosStep2:'Nhấn "Xem thêm" nếu có, rồi nhấn "Thêm vào MH chính".', installIosStep3:'Nhấn "Thêm". Ứng dụng giờ đã ở trên màn hình chính.', installAndroidStep1:'Nhấn menu {icon} ở góc trên bên phải của Chrome.', installAndroidStep2:'Nhấn "Thêm vào màn hình chính" hoặc "Cài đặt ứng dụng".', installAndroidStep3:'Nhấn "Cài đặt". Ứng dụng giờ đã ở trên màn hình chính.', installGuideToast:'Bạn có thể xem lại hướng dẫn này trong Cài đặt bất cứ lúc nào.', settingsInstallGuideBtn:'Thêm ứng dụng vào điện thoại'
   }
 };
@@ -13814,6 +13865,7 @@ const STATIC_MAP = {
   writingSampleTimerStartBtn:'timerStartBtn', writingSampleTimerPauseBtn:'timerPauseBtn', writingSampleTimerResetBtn:'timerResetBtn', writingSampleTimerSaveBtn:'timerSaveBtn',
   hWritingMock:'hWritingMock', writingMockExitBtn:'closeNoteBtn', writingMockQ53Label:'writingMockQ53Label', writingMockQ54Label:'writingMockQ54Label', writingMockQ53SaveBtn:'saveChanges', writingMockQ54SaveBtn:'saveChanges',
   writingMockTimerStartBtn:'timerStartBtn', writingMockTimerPauseBtn:'timerPauseBtn', writingMockTimerResetBtn:'timerResetBtn', writingMockTimerSaveBtn:'timerSaveBtn',
+  logPaneLogBtn:'paneLogTime', logPaneProgressBtn:'paneProgress', logPaneHistoryBtn:'paneHistory', coursePaneListBtn:'hYourCourses', coursePaneAddBtn:'hAddCourse', bookPaneListBtn:'yourBooks', bookPaneStatsBtn:'paneStats', articlePaneListBtn:'yourArticles', articlePaneStatsBtn:'paneStats', jobPaneListBtn:'paneList', jobPaneStatsBtn:'paneStats', certPaneListBtn:'paneList', certPaneStatsBtn:'paneStats', calPaneCalBtn:'tabCalendar', calPaneListsBtn:'paneLists', expPaneOverviewBtn:'hExpOverview', expPaneCatBtn:'hExpCategoryBreakdown', expPaneListBtn:'hExpAllExpenses', expPaneBalBtn:'hExpBalances',
   lblGramSearch:'lblGramSearch', lblGramLevelFilter:'lblGramLevelFilter', lblGramJump:'lblGramJump', lblGramSort:'lblGramSort', lblGramReviewedFilter:'lblGramReviewedFilter'
 };
 const ACT_KEYS = {listening:'actListening', speaking:'actSpeaking', reading:'actReading', writing:'actWriting', grammar:'actGrammar', vocabulary:'actVocabulary', topik:'actTopik', other:'actOther'};
@@ -45958,6 +46010,90 @@ function renderTopikGuide(){
 renderTopikGuide();
 topikGuideReady = true;
 
+/* ---------- PANE ROWS: one sub-tab, several smaller parts ----------
+   A sub-tab that stacked five or six cards was a long scroll on a phone
+   (real-user request: "do an overall design overhaul, so the site doesn't
+   involve AS MUCH scrolling if the sub tabs can be split into smaller sub
+   parts"). Those sub-tabs now carry a second row of buttons, and each card
+   says which row it belongs to and on which of its panes it shows:
+     <div class="cal-view-toggle pane-row" id="bookPaneRow">
+       <button data-pane="list" class="active">...
+     <div data-pane-of="bookPaneRow" data-pane="list" class="card">
+   A card can sit on more than one pane (data-pane="progress history"), for
+   a filter that two panes both read. Cards are put away with .pane-off,
+   NOT .hidden: plenty of these cards hide and show themselves by .hidden
+   for their own reasons (the TOPIK countdown, the expense states), and a
+   pane switch must not overwrite that. The row is a .cal-view-toggle, so it
+   gets the sliding pill like every other sub-tab row, and the last pane
+   picked on each row is remembered on this device.
+   What was split is what reads as separate jobs: logging versus looking at
+   progress, a list versus its stats and leaderboard, the calendar versus the
+   lists under it. An editor is never put on a different pane from the list
+   it edits, and sections that are already short or already folded (Home
+   Overview, Grammar, Writing, the notes, To-do, the boards) are left as one
+   page. */
+var PANE_ROWS = {};
+function paneOf(rowId){
+  const b = document.querySelector('#' + rowId + ' > button[data-pane].active');
+  return b ? b.dataset.pane : null;
+}
+function showPane(rowId, pane, quiet){
+  const row = document.getElementById(rowId);
+  const cfg = PANE_ROWS[rowId];
+  if(!row || !cfg || !row.querySelector(':scope > button[data-pane="' + pane + '"]')) return;
+  row.querySelectorAll(':scope > button[data-pane]').forEach(b=> b.classList.toggle('active', b.dataset.pane === pane));
+  document.querySelectorAll('[data-pane-of="' + rowId + '"]').forEach(c=>{
+    c.classList.toggle('pane-off', !c.dataset.pane.split(' ').includes(pane));
+  });
+  if(!quiet){ try{ localStorage.setItem(cfg.key, pane); }catch(e){} }
+  // A row INSIDE a pane (the calendar's month/week/day toggle) measured 0
+  // while its pane was put away, so its pill is placed now it can be seen.
+  if(typeof refreshRowSliders === 'function') requestAnimationFrame(()=>{ try{ refreshRowSliders(false); }catch(e){} });
+  if(cfg.onShow) cfg.onShow(pane);
+}
+function setupPaneRow(rowId, storageKey, onShow){
+  const row = document.getElementById(rowId);
+  if(!row) return;
+  PANE_ROWS[rowId] = { key: storageKey, onShow: onShow || null };
+  row.querySelectorAll(':scope > button[data-pane]').forEach(b=>{
+    b.type = 'button';
+    b.addEventListener('click', ()=> showPane(rowId, b.dataset.pane));
+  });
+  let saved = null;
+  try{ saved = localStorage.getItem(storageKey); }catch(e){}
+  const first = row.querySelector(':scope > button[data-pane]');
+  const start = saved && row.querySelector(':scope > button[data-pane="' + saved + '"]') ? saved : (first && first.dataset.pane);
+  if(start) showPane(rowId, start, true);
+}
+// Every route that brings something into view on purpose (a grammar jump to
+// its comparison, a notification opening a to-do, a deadline flashed in its
+// list) ends in scrollIntoView. When the thing it scrolls to is on a pane
+// that is put away, that pane is opened first, so no deep link lands on a
+// card that is not there. One hook here rather than a line at each route,
+// so a route somebody adds later is covered too.
+(function(){
+  const own = Element.prototype.scrollIntoView;
+  if(!own || own.__paneAware) return;
+  const aware = function(){
+    let card = this.closest ? this.closest('.pane-off[data-pane-of]') : null;
+    while(card){
+      showPane(card.dataset.paneOf, card.dataset.pane.split(' ')[0]);
+      card = card.parentElement ? card.parentElement.closest('.pane-off[data-pane-of]') : null;
+    }
+    return own.apply(this, arguments);
+  };
+  aware.__paneAware = true;
+  Element.prototype.scrollIntoView = aware;
+})();
+setupPaneRow('logPaneRow', 'paneLog');
+setupPaneRow('coursePaneRow', 'paneCourses');
+setupPaneRow('bookPaneRow', 'paneBooks');
+setupPaneRow('articlePaneRow', 'paneArticles');
+setupPaneRow('jobPaneRow', 'paneJobs');
+setupPaneRow('certPaneRow', 'paneCerts');
+setupPaneRow('calPaneRow', 'paneCalendar');
+setupPaneRow('expPaneRow', 'paneExpenses');
+
 /* ---------- TOPIK SUB-TABS AND READING TIPS ----------
    The TOPIK sub-tab used to stack the forecast, the guide and the writing
    templates as three long cards. It now shows one pane at a time through a
@@ -45978,23 +46114,11 @@ var TOPIK_PANE_KEY = 'topikPane';
 var topikTips = null, topikTipsLoad = null, topikTipsReady = false;
 var topikTipsSec = 'q5', topikTipsQuery = '', topikTipsTimer = null;
 var topikTipsOpen = new Set();
-function topikPane(){
-  const b = document.querySelector('#topikSubToggle > button.active');
-  return b ? b.dataset.tk : 'forecast';
-}
-function switchTopikPane(pane){
-  document.querySelectorAll('#topikSubToggle > button').forEach(b=> b.classList.toggle('active', b.dataset.tk === pane));
-  document.querySelectorAll('#studyTopikSection [data-tk-pane]').forEach(c=> c.classList.toggle('hidden', c.dataset.tkPane !== pane));
-  try{ localStorage.setItem(TOPIK_PANE_KEY, pane); }catch(e){}
+function topikPane(){ return paneOf('topikSubToggle') || 'forecast'; }
+setupPaneRow('topikSubToggle', TOPIK_PANE_KEY, pane=>{
   const sec = document.getElementById('studyTopikSection');
   if(pane === 'tips' && sec && !sec.classList.contains('hidden')) loadTopikTips();
-}
-document.querySelectorAll('#topikSubToggle > button').forEach(b=> b.addEventListener('click', ()=> switchTopikPane(b.dataset.tk)));
-(function(){
-  let p = null;
-  try{ p = localStorage.getItem(TOPIK_PANE_KEY); }catch(e){}
-  if(p && document.querySelector('#topikSubToggle > button[data-tk="' + p + '"]')) switchTopikPane(p);
-})();
+});
 function ttGloss(o, en, vi){
   if(!o) return '';
   const a = o[en || 'en'], b = o[vi || 'vi'];
