@@ -21992,6 +21992,29 @@ function focusComposerWithoutPan(input){
    everything above it -- and gives it back the moment the keyboard goes.
    `chat-kb` marks the borrowing, so a panel the reader made full screen on
    purpose is never shrunk back by it. */
+// A conversation read to its end stays at its end however its box changes:
+// the keyboard rising shrinks it over several frames, after the one moment
+// enterChatKb() scrolled, so the newest messages slid under the composer and
+// what showed above the keyboard was what had been at the bottom of the
+// screen before (real-user report, with a recording). Whether the reader is
+// at the end is noted on every scroll they make, and every resize of the log
+// puts it back there while that is true.
+(function pinChatLogToEnd(){
+  const log = document.getElementById('circleMessageLog');
+  if(!log || typeof ResizeObserver === 'undefined') return;
+  let atEnd = true, lastH = log.clientHeight;
+  log.addEventListener('scroll', ()=>{
+    // A scroll the resize itself caused (the box shrank under a log at its
+    // end) must not count as the reader leaving the end.
+    if(log.clientHeight !== lastH) return;
+    atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+  }, { passive: true });
+  new ResizeObserver(()=>{
+    const h = log.clientHeight;
+    if(h !== lastH && atEnd) log.scrollTop = log.scrollHeight;
+    lastH = h;
+  }).observe(log);
+})();
 function enterChatKb(){
   const dock = document.getElementById('chatDock');
   if(!dock || dock.classList.contains('chat-full') || !isMobileDevice()) return;
