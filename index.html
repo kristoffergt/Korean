@@ -2638,7 +2638,12 @@ button.cm-quote:hover,button.cm-quote:focus-visible{background:rgba(127,127,127,
 .chat-head .chat-head-right{margin-left:auto;}
 .cm-convo{display:flex;align-items:center;gap:12px;width:100%;padding:10px 16px;border:none;
   background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer;}
+.cm-convo:hover{background:none;}
 .cm-convo:active{background:rgba(127,127,127,0.14);}
+/* Only a real pointer gets a hover shade. Without the reset above, a TAP on
+   a phone leaves iOS's sticky :hover on the row, and the site-wide
+   button:hover then paints it solid white in dark mode (real-user report:
+   "the contact card flashes white when you click it"). */
 @media (hover:hover){ .cm-convo:hover{background:rgba(127,127,127,0.09);} }
 .cm-convo-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;
   padding-bottom:10px;margin-bottom:-10px;border-bottom:1px solid var(--line);}
@@ -21881,6 +21886,51 @@ var CORNER_BACK_MS = 700;
 // it springs back. The app has no history of its own to pop, so with nothing
 // open the gesture does nothing.
 var EDGE_BACK_PX = 24;
+// Swiping back from a conversation should uncover the LIST, the way a phone
+// app does, not the page behind the chat (real-user report: "a swipe from
+// within a chat then shows the home page before showing the contact
+// cards"). So the moment the drag starts, a still copy of the conversation
+// is laid over the panel, the panel underneath goes back to the list, and
+// it is the copy that follows the finger. Let go short and the copy settles
+// back and the conversation is reopened under it.
+function chatBackGhostTarget(p){
+  let ghost = null, thread = null;
+  return {
+    begin(){
+      thread = activeCircleThread;
+      ghost = p.cloneNode(true);
+      ghost.dataset.ghost = '1';
+      ghost.setAttribute('aria-hidden', 'true');
+      ghost.style.pointerEvents = 'none';
+      // The panel is IN the dock's flow, so a copy beside it would take half
+      // the room; it is pinned exactly over the panel instead.
+      const rc = p.getBoundingClientRect();
+      Object.assign(ghost.style, { position: 'fixed', margin: '0', top: rc.top + 'px', left: rc.left + 'px', width: rc.width + 'px', height: rc.height + 'px', maxHeight: 'none' });
+      ghost.style.zIndex = String((parseInt(getComputedStyle(p).zIndex, 10) || 0) + 1);
+      ghost.style.boxShadow = '-10px 0 24px rgba(0,0,0,0.22)';
+      const log = p.querySelector('#circleMessageLog');
+      p.after(ghost);
+      // A transformed ancestor makes `fixed` relative to IT, not the screen,
+      // so the copy is measured where it landed and moved onto the panel.
+      const gr = ghost.getBoundingClientRect();
+      ghost.style.left = (rc.left * 2 - gr.left) + 'px';
+      ghost.style.top = (rc.top * 2 - gr.top) + 'px';
+      const glog = ghost.querySelector('#circleMessageLog');
+      if(log && glog) glog.scrollTop = log.scrollTop;
+      document.getElementById('chatBackBtn').click();
+      return ghost;
+    },
+    run(){ if(ghost){ ghost.remove(); ghost = null; } },
+    cancel(){
+      if(circleGroupForm == null && thread){
+        circlePhoneView = 'chat';
+        switchCircleThread(thread);
+        renderCircleMessages();
+      }
+      if(ghost){ ghost.remove(); ghost = null; }
+    },
+  };
+}
 function edgeBackTarget(){
   const modals = Array.from(document.querySelectorAll('.modal-overlay:not(.hidden)'));
   const m = modals[modals.length - 1];
@@ -21892,8 +21942,7 @@ function edgeBackTarget(){
   }
   if(chatPanelOpen()){
     const p = document.getElementById('chatPanel');
-    if(p.classList.contains('cm-pv-chat'))
-      return { el: p, stay: true, run: ()=> document.getElementById('chatBackBtn').click() };
+    if(p.classList.contains('cm-pv-chat')) return chatBackGhostTarget(p);
     return { el: p, run: closeChatPanel };
   }
   return null;
@@ -21917,6 +21966,7 @@ function edgeBackTarget(){
       if(Math.abs(dy) > 12 && Math.abs(dy) > dx){ g = null; return; }
       if(dx < 8) return;
       g.active = true;
+      if(g.target.begin) g.target.el = g.target.begin();
       g.target.el.style.transition = 'none';
     }
     e.preventDefault();
@@ -21935,26 +21985,13 @@ function edgeBackTarget(){
       el.style.transform = `translateX(${w}px)`;
       setTimeout(()=>{
         s.target.run();
-        if(s.target.stay){
-          // The list comes up from just behind, as the screen underneath.
-          el.style.transition = 'none';
-          el.style.transform = 'translateX(-28px)';
-          el.style.opacity = '0.6';
-          requestAnimationFrame(()=>{
-            el.style.transition = 'transform 200ms ease-out, opacity 200ms ease-out';
-            el.style.transform = '';
-            el.style.opacity = '';
-            setTimeout(()=>{ el.style.transition = ''; }, 220);
-          });
-        } else {
-          // Hidden by its own close; let go of the drag once it is.
-          setTimeout(()=>{ el.style.transition = ''; el.style.transform = ''; }, 300);
-        }
+        // Hidden by its own close; let go of the drag once it is.
+        setTimeout(()=>{ el.style.transition = ''; el.style.transform = ''; }, 300);
       }, 170);
     } else {
       el.style.transition = 'transform 220ms cubic-bezier(0.2,0.9,0.3,1)';
       el.style.transform = '';
-      setTimeout(()=>{ el.style.transition = ''; }, 240);
+      setTimeout(()=>{ el.style.transition = ''; if(s.target.cancel) s.target.cancel(); }, 240);
     }
   };
   document.addEventListener('touchend', end, { capture: true });
@@ -53155,7 +53192,11 @@ function navBack(){
   const EDGE = 22, GO = 90;
   let sw = null;
   const panel = ()=> document.querySelector('.tab-panel:not(.hidden)');
-  const blocked = ()=> !!document.querySelector('.modal-overlay:not(.hidden)') || (typeof todoDrag !== 'undefined' && todoDrag);
+  // Anything with its own way back (a dialog, the chat) owns the edge: one
+  // gesture must never both close the chat AND go back a tab (real-user
+  // report: swiping out of the messages landed on Home, not where he was).
+  const blocked = ()=> !!document.querySelector('.modal-overlay:not(.hidden)') || (typeof todoDrag !== 'undefined' && todoDrag)
+    || (typeof edgeBackTarget === 'function' && !!edgeBackTarget());
   document.addEventListener('touchstart', e=>{
     if(e.touches.length !== 1 || !navStack.length || blocked()) return;
     const t0 = e.touches[0];
