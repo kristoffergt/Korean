@@ -1171,6 +1171,18 @@ body.topbar-loose .topbar-inner{max-width:none;}
 /* On a phone nothing may be scroll-anchored: the bar shrinking above the
    page must never be answered by the browser moving the page. */
 @media (max-width:640px){html,body{overflow-anchor:none;}}
+/* The page FOLLOWS the bar as it shrinks (real-user report, with a
+   recording: "Good morning is not supposed to jump by the top bar"). The
+   spacer still reserves the resting height, and a negative margin gives back
+   what the shrink has taken, so the content stays the same distance under the
+   bar's edge. The filler at the end of the app puts the same amount back, so
+   the page never gets shorter: a shorter page could clamp the scroll near the
+   bottom, which would grow the bar, which would lengthen the page again. */
+/* Written as inline styles on the two boxes, never as a custom property on a
+   parent: an inherited property set on every scroll frame restyles the whole
+   page under it. */
+body.topbar-loose #topBarSpacer{margin-bottom:0 !important;}
+body.topbar-loose #topBarGiveBack{height:0 !important;}
 /* The condense SNAPS. flex-direction cannot be transitioned, so the row swap
    is instant whatever the sizes do, and easing the sizes around it read as a
    half-glide beside a snap. Opacity and the shadow still ease, since neither
@@ -25835,6 +25847,7 @@ let topBarFullH = 0;    // the bar at rest; what the spacer reserves, for good
 let topBarRestTop = 0;  // document offset the bar sits at when it is not pinned
 let topBarPinTop = 0;   // viewport offset it pins to, below the guest banner
 let topBarMeasuring = false;
+let topBarGive = 0;     // phone: how much shorter the bar is fully shrunk
 
 // Everything that needs a LAYOUT READ happens here, and this never runs on a
 // scroll. The bar sits under the guest banner rather than behind it: that
@@ -25878,6 +25891,11 @@ function syncTopBarMetrics(){
   const k = bar.style.getPropertyValue('--bar-k');
   bar.style.setProperty('--bar-k', '0');
   const full = bar.getBoundingClientRect().height;
+  // And fully shrunk, for how much room the shrink gives back (phone only).
+  if(isMobileDevice()){
+    bar.style.setProperty('--bar-k', '1');
+    topBarGive = Math.max(0, full - bar.getBoundingClientRect().height);
+  } else topBarGive = 0;
   if(k) bar.style.setProperty('--bar-k', k); else bar.style.removeProperty('--bar-k');
   bar.classList.toggle('stuck', was);
   if(full > 0){
@@ -25907,6 +25925,25 @@ function syncTopBarMetrics(){
   topBarMeasuring = false;
 }
 
+// The page follows the shrinking bar: the spacer gives back what the shrink
+// took and a filler at the end of the app puts it back (see the CSS).
+function setTopBarGive(px){
+  const sp = document.getElementById('topBarSpacer');
+  const app = document.getElementById('appScreen');
+  if(!sp || !app) return;
+  let fill = document.getElementById('topBarGiveBack');
+  if(!fill){
+    fill = document.createElement('div');
+    fill.id = 'topBarGiveBack';
+    fill.setAttribute('aria-hidden', 'true');
+    fill.style.cssText = 'height:0;pointer-events:none;';
+  }
+  if(fill.parentNode !== app || app.lastElementChild !== fill) app.appendChild(fill);
+  const v = px > 0 ? px.toFixed(1) + 'px' : '';
+  if(sp.style.marginBottom !== (v ? '-' + v : '')) sp.style.marginBottom = v ? '-' + v : '';
+  if(fill.style.height !== (v || '0px')) fill.style.height = v || '0px';
+}
+
 function updateTopBarStuck(){
   const bar = document.getElementById('topBar');
   if(!bar || !stickyTopBarEnabled()) return;
@@ -25922,8 +25959,10 @@ function updateTopBarStuck(){
       bar.style.setProperty('--bar-k', v);
       bar.classList.toggle('bar-scrolled', k > 0);
     }
+    setTopBarGive(topBarGive * k);
     return;
   }
+  setTopBarGive(0);
   bar.style.removeProperty('--bar-k');
   bar.classList.remove('bar-scrolled');
   // Pure arithmetic against numbers measured off the scroll path. It does not
