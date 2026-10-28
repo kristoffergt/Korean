@@ -1168,6 +1168,9 @@ body.topbar-loose .topbar-inner{max-width:none;}
 /* A fixed element is not an anchor candidate anyway; this says so out loud,
    and covers the spacer, whose height is written from JS. */
 #topBar, #topBarSpacer{overflow-anchor:none;}
+/* On a phone nothing may be scroll-anchored: the bar shrinking above the
+   page must never be answered by the browser moving the page. */
+@media (max-width:640px){html,body{overflow-anchor:none;}}
 /* The condense SNAPS. flex-direction cannot be transitioned, so the row swap
    is instant whatever the sizes do, and easing the sizes around it read as a
    half-glide beside a snap. Opacity and the shadow still ease, since neither
@@ -25961,6 +25964,18 @@ function initStickyTopBar(){
     // The guard covers the same hazard from the other side.
     const ro = new ResizeObserver(()=>{
       if(topBarMeasuring) return;
+      // On a phone the bar resizes on EVERY frame of the scroll while it
+      // shrinks, and a full re-measure flips the spacer to static and back
+      // each time. iOS showed that as the page under the bar jumping down
+      // (real-user report: "Good morning jumps"). Only re-measure when the
+      // bar's unshrunk size has really changed.
+      if(isMobileDevice() && topBarFullH > 0 && bar.style.getPropertyValue('--bar-k')){
+        const k = bar.style.getPropertyValue('--bar-k');
+        bar.style.setProperty('--bar-k', '0');
+        const full = bar.getBoundingClientRect().height;
+        bar.style.setProperty('--bar-k', k);
+        if(Math.abs(full - topBarFullH) < 1) return;
+      }
       syncTopBarMetrics();
       updateTopBarStuck();
     });
