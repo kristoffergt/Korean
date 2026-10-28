@@ -22384,6 +22384,9 @@ function chatBackGhostTarget(p){
       thread = activeCircleThread;
       ghost = p.cloneNode(true);
       ghost.dataset.ghost = '1';
+      // No duplicate ids: the copy's log is read below by class of position,
+      // and a second #circleMessageLog would answer getElementById for good
+      // if the copy ever outlived the gesture.
       ghost.setAttribute('aria-hidden', 'true');
       ghost.style.pointerEvents = 'none';
       // The panel is IN the dock's flow, so a copy beside it would take half
@@ -22401,6 +22404,8 @@ function chatBackGhostTarget(p){
       ghost.style.top = (rc.top * 2 - gr.top) + 'px';
       const glog = ghost.querySelector('#circleMessageLog');
       if(log && glog) glog.scrollTop = log.scrollTop;
+      ghost.querySelectorAll('[id]').forEach(n=> n.removeAttribute('id'));
+      ghost.removeAttribute('id');
       document.getElementById('chatBackBtn').click();
       return ghost;
     },
@@ -22435,8 +22440,16 @@ function edgeBackTarget(){
   return null;
 }
 (function wireEdgeBack(){
-  let g = null;
+  let g = null, watchdog = 0;
+  // Swiping the chat away FROZE it (real-user report): begin() redraws the
+  // panel, the node the finger landed on leaves the document, and a touchend
+  // aimed at a detached node never reaches document -- so the drag never
+  // ended and the copy sat pinned over the screen. The touch's own target
+  // gets the end listeners too, a touch that stops moving for a second ends
+  // the drag, and a new touch finishes any drag still on the books.
+  const arm = ()=>{ clearTimeout(watchdog); watchdog = setTimeout(()=> end(), 1200); };
   document.addEventListener('touchstart', (e)=>{
+    if(g) end();
     g = null;
     if(e.touches.length !== 1 || !isMobileDevice()) return;
     const t0 = e.touches[0];
@@ -22444,9 +22457,18 @@ function edgeBackTarget(){
     const target = edgeBackTarget();
     if(!target) return;
     g = { x: t0.clientX, y: t0.clientY, at: Date.now(), dx: 0, active: false, target };
+    const node = e.target;
+    if(node && node.addEventListener){
+      node.addEventListener('touchmove', onMove, { passive: false });
+      node.addEventListener('touchend', end, { once: true });
+      node.addEventListener('touchcancel', end, { once: true });
+      g.node = node;
+    }
   }, { passive: true, capture: true });
-  document.addEventListener('touchmove', (e)=>{
-    if(!g) return;
+  function onMove(e){
+    if(!g || e.__edgeSeen) return;
+    e.__edgeSeen = true;
+    arm();
     const t0 = e.touches[0];
     const dx = t0.clientX - g.x, dy = t0.clientY - g.y;
     if(!g.active){
@@ -22459,11 +22481,14 @@ function edgeBackTarget(){
     e.preventDefault();
     g.dx = Math.max(0, dx);
     g.target.el.style.transform = `translateX(${g.dx}px)`;
-  }, { passive: false, capture: true });
-  const end = ()=>{
+  }
+  document.addEventListener('touchmove', onMove, { passive: false, capture: true });
+  function end(){
+    clearTimeout(watchdog);
     if(!g) return;
     const s = g; g = null;
-    if(!s.active) return;
+    if(s.node){ s.node.removeEventListener('touchmove', onMove); s.node.removeEventListener('touchend', end); s.node.removeEventListener('touchcancel', end); }
+    if(!s.active || !s.target.el) return;
     const el = s.target.el;
     const w = window.innerWidth;
     const fast = s.dx / Math.max(1, Date.now() - s.at) > 0.5;
@@ -22471,16 +22496,18 @@ function edgeBackTarget(){
       el.style.transition = 'transform 170ms ease-out';
       el.style.transform = `translateX(${w}px)`;
       setTimeout(()=>{
-        s.target.run();
-        // Hidden by its own close; let go of the drag once it is.
-        setTimeout(()=>{ el.style.transition = ''; el.style.transform = ''; }, 300);
+        try{ s.target.run(); }
+        finally{
+          // Hidden by its own close; let go of the drag once it is.
+          setTimeout(()=>{ el.style.transition = ''; el.style.transform = ''; }, 300);
+        }
       }, 170);
     } else {
       el.style.transition = 'transform 220ms cubic-bezier(0.2,0.9,0.3,1)';
       el.style.transform = '';
       setTimeout(()=>{ el.style.transition = ''; if(s.target.cancel) s.target.cancel(); }, 240);
     }
-  };
+  }
   document.addEventListener('touchend', end, { capture: true });
   document.addEventListener('touchcancel', end, { capture: true });
 })();
@@ -30395,14 +30422,41 @@ function renderTodosNow(){
 // The same rows are drawn in the columns and the full list; a row's own
 // controls are wired here for either, and the edit panel opens under the
 // copy that was pressed, not under both.
-function wireTodoRows(root, where){
-  root.querySelectorAll('.todo-check').forEach(b=> b.addEventListener('click', ()=> toggleTodoDone(b.dataset.todo)));
-  root.querySelectorAll('.todo-cal-toggle').forEach(b=> b.addEventListener('click', ()=> toggleTodoOnCalendar(b.dataset.todo)));
-  root.querySelectorAll('.todo-day-input').forEach(inp=> inp.addEventListener('change', ()=>{
+// The row's day picker. A phone fires `change` while its wheel is still
+// turning, and moving the to-do then redraws the row and tears the open
+// picker out from under the finger ("the calendar add is broken"), so a
+// touch screen commits when the picker is dismissed instead. A desktop
+// commits on the pick, and its mark TOGGLES: Chrome opened the picker from
+// the label's forwarded click, and a second press closed it and the same
+// click opened it again, which read as a flash that never closes.
+function wireTodoDayInput(inp){
+  const commit = ()=>{
     const td = allTodos.find(x=> x.id === inp.dataset.todo);
     const at = td && todoScopeOf(td);
     if(inp.value && !(at && at.scope === 'day' && at.start === inp.value)) moveTodo(inp.dataset.todo, 'day', inp.value);
-  }));
+  };
+  const fine = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if(!fine){
+    inp.addEventListener('blur', commit);
+    inp.addEventListener('change', ()=>{ if(document.activeElement !== inp) commit(); });
+    return;
+  }
+  let open = false;
+  inp.addEventListener('change', ()=>{ open = false; commit(); });
+  inp.addEventListener('blur', ()=>{ open = false; });
+  inp.closest('label')?.addEventListener('click', e=> e.preventDefault());
+  inp.addEventListener('mousedown', e=>{
+    e.preventDefault();
+    if(open){ open = false; inp.blur(); return; }
+    inp.focus({ preventScroll: true });
+    try{ inp.showPicker(); open = true; }catch(err){ open = false; }
+  });
+  inp.addEventListener('keydown', e=>{ if(e.key === 'Escape') open = false; });
+}
+function wireTodoRows(root, where){
+  root.querySelectorAll('.todo-check').forEach(b=> b.addEventListener('click', ()=> toggleTodoDone(b.dataset.todo)));
+  root.querySelectorAll('.todo-cal-toggle').forEach(b=> b.addEventListener('click', ()=> toggleTodoOnCalendar(b.dataset.todo)));
+  root.querySelectorAll('.todo-day-input').forEach(inp=> wireTodoDayInput(inp));
   root.querySelectorAll('.te-oncal').forEach(cb=> cb.addEventListener('change', ()=> toggleTodoOnCalendar(cb.dataset.todo)));
   root.querySelectorAll('.todo-title, .todo-edit-btn').forEach(b=> b.addEventListener('click', ()=>{
     // The tap that ends a drag is not a request to edit.
@@ -53762,14 +53816,28 @@ function navBack(){
   // report: swiping out of the messages landed on Home, not where he was).
   const blocked = ()=> !!document.querySelector('.modal-overlay:not(.hidden)') || (typeof todoDrag !== 'undefined' && todoDrag)
     || (typeof edgeBackTarget === 'function' && !!edgeBackTarget());
+  // Same hazards as the chat's edge swipe: a touchend aimed at a node that
+  // was redrawn mid-swipe never reaches document, so the end is also heard on
+  // the touch's own target, a still finger ends it after a second, and a new
+  // touch finishes a swipe still on the books instead of leaving the page
+  // half slid out.
+  let watchdog = 0;
   document.addEventListener('touchstart', e=>{
+    if(sw) end();
     if(e.touches.length !== 1 || !navStack.length || blocked()) return;
     const t0 = e.touches[0];
     if(t0.clientX > EDGE) return;
     sw = { x: t0.clientX, y: t0.clientY, dx: 0, on: false, el: panel(), t: Date.now() };
+    const node = e.target;
+    if(node && node.addEventListener){
+      node.addEventListener('touchend', end, { once: true });
+      node.addEventListener('touchcancel', end, { once: true });
+      sw.node = node;
+    }
   }, { passive: true });
   document.addEventListener('touchmove', e=>{
     if(!sw) return;
+    clearTimeout(watchdog); watchdog = setTimeout(()=> end(), 1200);
     const t0 = e.touches[0];
     const dx = t0.clientX - sw.x, dy = t0.clientY - sw.y;
     if(!sw.on){
@@ -53781,9 +53849,11 @@ function navBack(){
     sw.dx = Math.max(0, dx);
     if(sw.el){ sw.el.style.transition = 'none'; sw.el.style.transform = `translateX(${sw.dx}px)`; sw.el.style.opacity = String(1 - Math.min(.35, sw.dx / innerWidth * .5)); }
   }, { passive: false });
-  const end = ()=>{
+  function end(){
+    clearTimeout(watchdog);
     if(!sw) return;
-    const { el, dx, on, t } = sw; sw = null;
+    const { el, dx, on, t, node } = sw; sw = null;
+    if(node){ node.removeEventListener('touchend', end); node.removeEventListener('touchcancel', end); }
     if(!on || !el) return;
     const fast = dx > 40 && dx / Math.max(1, Date.now() - t) > 0.5;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -53801,7 +53871,7 @@ function navBack(){
       el.style.transform = ''; el.style.opacity = '';
       setTimeout(()=>{ el.style.transition = ''; }, 240);
     }
-  };
+  }
   document.addEventListener('touchend', end);
   document.addEventListener('touchcancel', end);
 })();
