@@ -51458,39 +51458,62 @@ function noteScriptRuns(word){
 function enableNoteScriptShortcuts(quill){
   const Delta = Quill.import('delta');
   let rewriting = false;
+  // A paste is not typing: "x^2" pasted from somewhere is left as it is.
+  let pastedAt = 0;
+  quill.root.addEventListener('paste', ()=>{ pastedAt = Date.now(); }, true);
   quill.on('text-change', (delta, oldContents, source)=>{
     if(source !== 'user' || rewriting || !noteAutoFormatPref()) return;
+    if(Date.now() - pastedAt < 400) return;
+    // What arrived. Usually one character, but NOT always: Quill can hand over
+    // several keystrokes as one change when typing is quick, and a phone's
+    // autocorrect or predictive text replaces a whole word and its space at
+    // once (retain, insert, delete). Taking only one-character inserts is why
+    // this used to work "most of the time". So: one string insert, with only
+    // a leading retain and deletes around it, and every word boundary in it.
     const ops = delta.ops || [];
-    if(ops.length === 0 || ops.length > 2) return;
-    const last = ops[ops.length - 1];
-    if(typeof last.insert !== 'string' || last.insert.length !== 1) return;
-    const at = ops.length === 2 ? ops[0].retain : 0;
-    if(typeof at !== 'number') return;
-    const ch = last.insert;
-    const brace = ch === '}';
-    if(!brace && NOTE_SCRIPT_ENDS.indexOf(ch) < 0) return;
-    // The word is what runs back from the character before the one typed (or
-    // including it, for a closing brace) to the last space on the line.
-    const end = brace ? at + 1 : at;
-    const from = Math.max(0, end - 80);
-    const before = quill.getText(from, end - from);
-    const cut = Math.max(before.lastIndexOf(' '), before.lastIndexOf('\n'), before.lastIndexOf('\t'));
-    const word = before.slice(cut + 1);
-    if(word.length < 3 || !/[\^_]/.test(word)) return;
-    if(/:\/\/|@|www\.|\\/.test(word)) return;
-    let runs = noteScriptRuns(word);
-    if(brace) runs = runs.filter(r=> r.tail && r.at + r.cut + r.len + r.tail === word.length);
-    if(!runs.length) return;
-    const start = end - word.length;
-    const fmt = quill.getFormat(start, word.length);
-    if(fmt['code-block'] || fmt.code || fmt.link) return;
-    let d = new Delta().retain(start), pos = 0, removed = 0;
+    let at = 0, ins = null;
+    for(let i = 0; i < ops.length; i++){
+      const op = ops[i];
+      if(typeof op.retain === 'number'){ if(i !== 0) return; at = op.retain; }
+      else if(op.delete){ /* removed text does not shift what follows */ }
+      else if(typeof op.insert === 'string'){ if(ins !== null) return; ins = op.insert; }
+      else return;
+    }
+    if(!ins || ins.length > 200) return;
+    const ends = [];
+    for(let k = 0; k < ins.length; k++){
+      const ch = ins[k];
+      if(ch === '}') ends.push({ end: at + k + 1, brace: true });
+      else if(NOTE_SCRIPT_ENDS.indexOf(ch) >= 0) ends.push({ end: at + k, brace: false });
+    }
+    if(!ends.length) return;
+    const found = new Map();
+    ends.forEach(({ end, brace })=>{
+      // The word runs back from the boundary to the last space on the line.
+      const from = Math.max(0, end - 80);
+      const before = quill.getText(from, end - from);
+      const cut = Math.max(before.lastIndexOf(' '), before.lastIndexOf('\n'), before.lastIndexOf('\t'));
+      const word = before.slice(cut + 1);
+      if(word.length < 3 || !/[\^_]/.test(word)) return;
+      if(/:\/\/|@|www\.|\\/.test(word)) return;
+      let runs = noteScriptRuns(word);
+      if(brace) runs = runs.filter(r=> r.tail && r.at + r.cut + r.len + r.tail === word.length);
+      if(!runs.length) return;
+      const start = end - word.length;
+      const fmt = quill.getFormat(start, word.length);
+      if(fmt['code-block'] || fmt.code || fmt.link) return;
+      runs.forEach(r=>{ const abs = start + r.at; if(!found.has(abs)) found.set(abs, Object.assign({ abs }, r)); });
+    });
+    if(!found.size) return;
+    const runs = [...found.values()].sort((x, y)=> x.abs - y.abs);
+    let d = new Delta(), pos = 0, removed = 0;
     runs.forEach(r=>{
-      if(r.at > pos) d = d.retain(r.at - pos);
+      if(r.abs < pos) return;
+      if(r.abs > pos) d = d.retain(r.abs - pos);
       d = d.delete(r.cut).retain(r.len, { script: r.kind === '^' ? 'super' : 'sub' });
       if(r.tail) d = d.delete(r.tail);
       removed += r.cut + r.tail;
-      pos = r.at + r.cut + r.len + r.tail;
+      pos = r.abs + r.cut + r.len + r.tail;
     });
     rewriting = true;
     quill.history.cutoff();
@@ -51500,12 +51523,14 @@ function enableNoteScriptShortcuts(quill){
     // Put back after Quill restores its own idea of the caret (see the same
     // step in enableTypingShortcuts), and after a closing brace stop the next
     // letter from being typed as a script too.
-    const caret = at + 1 - removed;
+    const typedEnd = at + ins.length;
+    const caret = typedEnd - removed;
+    const lastBrace = ins[ins.length - 1] === '}';
     Promise.resolve().then(()=>{
       const sel = quill.getSelection();
       if(sel && sel.length === 0 && Math.abs(sel.index - caret) <= removed + 1) quill.setSelection(caret, 0, 'silent');
-      if(brace) quill.format('script', false, 'silent');
-      armAutoformatUndo(quill, caret, at + 1);
+      if(lastBrace) quill.format('script', false, 'silent');
+      armAutoformatUndo(quill, caret, typedEnd);
     });
   });
 }
