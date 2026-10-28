@@ -5193,6 +5193,33 @@ body.dark{--comment-hl:rgba(242,190,34,.24);--comment-hl-on:rgba(242,190,34,.5);
 #psQuill .ql-editor{min-height:120px;}
 #psQuill.ql-container.ql-snow{border:1px solid var(--line);border-radius:8px;background:var(--paper);}
 .ps-msg{color:var(--ink-soft);font-size:14px;padding:30px 0;text-align:center;}
+/* ---- Search the whole app. */
+.app-search-btn{display:inline-flex;align-items:center;gap:6px;}
+.app-search-ico{display:inline-flex;}
+.who .app-search-ico svg,.topbar-controls .app-search-ico svg{width:var(--who-icon);height:var(--who-icon);}
+.app-search-btn-label{font-size:13px;color:var(--ink-soft);}
+.app-search-kbd{font-family:'Inter',sans-serif;font-size:10.5px;line-height:16px;border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--ink-soft);background:var(--paper);}
+@media (max-width: 640px){ .app-search-btn-label,.app-search-kbd{display:none;} }
+@media (hover: none){ .app-search-kbd{display:none;} }
+#appSearchModal{align-items:flex-start;padding-top:9vh;z-index:1015;}
+.app-search-box{max-width:560px;}
+.app-search-input{display:block;width:100%;box-sizing:border-box;font-family:'Inter',sans-serif;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);}
+.app-search-input:focus{outline:none;border-color:var(--on);}
+.app-search-list{margin-top:8px;max-height:min(58vh,520px);overflow-y:auto;}
+.app-search-group{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);margin:12px 6px 4px;}
+.app-search-group:first-child{margin-top:4px;}
+.app-search-item{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;box-sizing:border-box;text-align:left;border:none;background:none;color:var(--ink);padding:7px 10px;border-radius:8px;font:inherit;cursor:pointer;}
+.app-search-item:hover,.app-search-item:focus{background:var(--paper);color:var(--ink);}
+.app-search-item.on,.app-search-item.on:hover,.app-search-item.on:focus{background:var(--on-soft);color:var(--ink);}
+.app-search-label{font-size:14px;font-weight:600;overflow-wrap:anywhere;}
+.app-search-path{font-size:11.5px;color:var(--ink-soft);overflow-wrap:anywhere;}
+.app-search-empty{padding:18px 6px;color:var(--ink-soft);font-size:13px;}
+.app-search-foot{margin-top:8px;font-size:11.5px;}
+@media (hover: none){ .app-search-foot{display:none;} }
+@media (max-width: 640px){ .app-search-list{max-height:none;} }
+.search-flash{animation:searchFlash 1.7s ease-out;}
+@keyframes searchFlash{0%,35%{box-shadow:0 0 0 3px var(--on);}100%{box-shadow:0 0 0 3px transparent;}}
+@media (prefers-reduced-motion: reduce){ .search-flash{animation:none;outline:3px solid var(--on);outline-offset:2px;} }
 .modal-box{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:22px 24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;}
 .modal-box h2{font-family:'Noto Serif KR',serif;font-size:16px;margin:0 0 14px;}
 .modal-box p{font-size:13.5px;color:var(--ink);margin:0;}
@@ -5522,6 +5549,7 @@ body.dark{--comment-hl:rgba(242,190,34,.24);--comment-hl-on:rgba(242,190,34,.5);
     <div class="brand-mark"><div class="brand-icon brand-icon-light"></div><div class="brand-icon brand-icon-dark"></div><h1 id="appTitleHome" style="cursor:pointer;">Productivity Tracker</h1></div>
     <div class="header-row2">
     <div class="who">
+      <button type="button" class="icon-btn app-search-btn" id="appSearchBtn" data-title-key="searchTitle" data-aria-key="searchTitle"><span class="app-search-ico"></span><span class="app-search-btn-label" id="appSearchBtnLabel"></span><kbd class="app-search-kbd" id="appSearchKbd"></kbd></button>
       <div class="lang-switch" id="langSwitchApp"></div>
       <button class="icon-btn" id="darkToggleApp" data-title-key="tipDarkMode"><svg class="ui-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
       <div style="position:relative;display:inline-flex;">
@@ -7548,6 +7576,19 @@ body.dark{--comment-hl:rgba(242,190,34,.24);--comment-hl-on:rgba(242,190,34,.5);
     <span id="chatLauncherOnline" class="hidden online-dot"></span>
     <span id="chatLauncherTyping" class="hidden"><span class="wave-dots"><span>.</span><span>.</span><span>.</span></span></span>
   </button>
+</div>
+<!-- Search the whole app (wireAppSearch): every tab, sub-tab, pane, heading
+     and setting, and the notes and lists in them. -->
+<div class="modal-overlay hidden phone-page" id="appSearchModal" role="dialog" aria-modal="true" aria-labelledby="appSearchTitle">
+  <div class="modal-box app-search-box">
+    <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <span id="appSearchTitle"></span>
+      <button class="icon-btn close-x" id="appSearchClose" data-title-key="closeNoteBtn">✕</button>
+    </h2>
+    <input type="text" inputmode="search" id="appSearchInput" class="app-search-input" autocomplete="off" spellcheck="false" enterkeyhint="go" role="combobox" aria-expanded="true" aria-controls="appSearchList" aria-autocomplete="list">
+    <div id="appSearchList" class="app-search-list" role="listbox"></div>
+    <div id="appSearchFoot" class="hint app-search-foot"></div>
+  </div>
 </div>
 <div class="modal-overlay hidden phone-page" id="friendsModal">
   <div class="modal-box">
@@ -13487,6 +13528,7 @@ const TOPIK_TEST = new Date(TOPIK_CAL_EVENTS[1].date + 'T' + TOPIK_CAL_EVENTS[1]
 /* ---------- I18N ---------- */
 const I18N = {
   en: {
+    searchBtn:'Search', searchTitle:'Search the app', searchPlaceholder:'Tabs, settings, notes, grammar, to-dos...', searchNoResults:'Nothing matches "{q}".', searchFoot:'Up and down to choose, Enter to open, Esc to close. Ctrl K (⌘K on a Mac) or / opens this from anywhere.', searchGroupPlaces:'Places', searchGroupSettings:'Settings', searchGroupNotes:'Notes', searchGroupGrammar:'Grammar', searchGroupItems:'In your lists',
     nsShareBtn:'Share', nsMenuShare:'Share note', nsShareTitle:'Share "{title}"', nsHowAsk:'How do you want to share it?', nsLive:'Live', nsLiveDesc:'They see this same note. Edits show up for both of you.', nsCopy:'As their own copy', nsCopyDesc:'A separate copy goes into their Notebook. It never syncs back.', nsManageAccess:'Manage access', nsBack:'Back', nsPeopleWithAccess:'People with access', nsNoCircle:'Link someone in Account settings first to share with them.', nsRoleLabel:'Role', nsNotify:'Tell them in a message', nsSendCopy:'Send copy', nsSent:'Sent', nsFailed:'Couldn\'t do that. Check your connection and try again.', nsPublicLink:'Public link', nsPublicLinkHint:'Anyone with the link can open this note. No account needed.', nsLinkCreate:'Create link', nsLinkCopy:'Copy link', nsLinkCopied:'Link copied', nsLinkOn:'On', nsLinkOff:'Off', nsLinkTurnOff:'Turn off', nsLinkTurnOn:'Turn on', nsLinkOffHint:'Nobody can open the link until you turn it on again.', nsLinkRegenerate:'New link', nsLinkRegenerateConfirm:'Make a new link? The old one stops working right away.', nsAccessViewer:'Shared by {name}. You can view it.', nsAccessCommenter:'Shared by {name}. You can comment.', nsAccessEditor:'Shared by {name}. You can edit.', nsSharedGroup:'Shared with you', nsSharedByMe:'Shared', nsCardLive:'Shared with you live', nsCardCopy:'A copy is in your Notebook', ncCommentsBtn:'Comments', ncComment:'Comment', ncAddComment:'Add a comment', ncReply:'Reply', ncResolve:'Resolve', ncReopen:'Reopen', ncResolved:'Resolved', ncShowResolved:'Show resolved ({n})', ncHideResolved:'Hide resolved', ncEmpty:'No comments yet. Select some text and press Comment.', ncEmptyView:'No comments yet.', ncOrphan:'The text this was on has changed.', ncDeleteConfirm:'Delete this comment?', ncDeleteThreadConfirm:'Delete this comment and its replies?', ncGuest:'guest', ncYourName:'Your name', ncNameNeeded:'Add your name to comment.', ncRateLimited:'Too many comments on this link right now. Try again in a few minutes.', ncViewOnly:'You can read the comments but not add one.', ncCount:'{n} comments', ncCountOne:'1 comment', psOpenApp:'Open Productivity Tracker', psNotFound:'This link does not work. It may have been turned off or replaced.', psSharedBy:'Shared by {name}', psUpdated:'Updated {time}', psViewOnly:'View only', psCanComment:'You can comment', nsLevelEditor:'Can edit', nsLevelCommenter:'Can comment', nsLevelViewer:'Can view', nsLevelNone:'No access', nsLevelCircle:'As set by the circle ({level})', nsCircleHint:'Your circle gets the level from your sharing settings. Change it here for this note only.',
     noteSub:'Subscript', noteSup:'Superscript', noteStyleBtn:'Text style', noteStyleNormal:'Normal text', noteStyleH1:'Heading', noteStyleH2:'Subheading', noteStyleH3:'Small heading', noteTocBtn:'Contents', noteTocEmpty:'No headings yet. Start a line with # and a space for a heading, ## for a subheading, ### for a small one.', noteTocInsert:'Write this list into the note', noteSymBtn:'Symbols', noteSymTabArrows:'Arrows', noteSymTabMath:'Math', noteSymTabGreek:'Greek', noteSymTabSets:'Sets and logic', noteSymTabScripts:'Super and sub', noteSymTabOther:'Other', noteShorthandHint:'Typing shortcuts: ^^ up arrow, vv down arrow, -> arrow, x^2 and H_2O for scripts, e^{ix} for longer ones. Undo puts back what you typed.', noteEqBtn:'Equation', noteEqTitle:'Equation', noteEqTabStruct:'Structures', noteEqInsert:'Insert', noteEqUpdate:'Update', noteEqRemove:'Remove', noteEqPlaceholder:'Tap the keys above or type LaTeX, for example \\frac{a}{b}', noteEqEmpty:'The preview shows here.', noteEqLoading:'Loading the equation editor...', noteEqFailed:"Couldn't load the equation editor. Check your connection and try again.",
     signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
@@ -13615,6 +13657,7 @@ const I18N = {
     authEnterEmailPassword:'Enter your email and password.', authInvalidLogin:'Wrong email, name or password.', authEmailNotConfirmed:'Confirm your email first. The link is in the email we sent you.', authAlreadyRegistered:'An account with this email already exists. Sign in instead.', authRateLimited:'Too many attempts. Wait a minute and try again.', authEmailInvalid:'That email address does not look right.', authSamePassword:'Pick a password different from your current one.', authNetworkError:'Could not reach the server. Check your connection and try again.', authSignupsClosed:'Sign-ups are closed right now.', authLinkExpired:'That link has expired or was already used. Ask for a new one.', guestUnavailable:'Not available in guest mode.', tipDelete:'Delete', tipRemove:'Remove', tipMoveUp:'Move up', tipMoveDown:'Move down', lblSubcategory:'Sub-category', noteMoveTo:'Move to a position', noteMovePick:'Pick a position', noteMoveTop:'To top', noteMoveBottom:'To bottom', noteMoveDone:'Done', noteStatsShow:'Word count', noteStatsShowHint:'Show words and characters', noteStatsHide:'press to hide', noteDragTip:'Drag to move', noteSubAdd:'Add a sub-category', noteSubNewPh:'Sub-category name', tipDarkMode:'Toggle dark mode', tipMyNotes:'My notes', tipClickToEdit:'Click to edit', tipJumpToDate:'Jump to date', tipPagesRead:'Pages read', tipJobBoardAiUpdate:'Walks each of today\'s postings individually and saves full descriptions to a local file', notesLinkShortcutPrompt:'Shortcut name:', saveFailedTryAgain:'Could not save. Try again.', termsLink:'Terms of Use', installGuideTitle:'Get the app', installGuideIntro:'Add Productivity Tracker to your home screen. It opens full screen like an app and can send you notifications.', installInAppNote:'This page is open inside another app, which cannot add it to your home screen. Open it in Safari or Chrome first (look for "Open in browser" in its ··· menu).', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'Install the app', installIosStep1:'Tap the Share button {icon} at the bottom of Safari. On newer iPhones it is inside the ··· menu.', installIosOtherStep1:'Tap the Share button {icon} in your browser, next to the address bar or in its menu.', installIosStep2:'Tap "View More" if you see it, then "Add to Home Screen".', installIosStep3:'Tap "Add". The app is now on your home screen.', installAndroidStep1:'Tap the menu {icon} at the top right of Chrome.', installAndroidStep2:'Tap "Add to home screen" or "Install app".', installAndroidStep3:'Tap "Install". The app is now on your home screen.', installGuideToast:'You can find this guide in Settings any time.', settingsInstallGuideBtn:'Get the app on your phone'
   },
   ko: {
+    searchBtn:'검색', searchTitle:'앱 검색', searchPlaceholder:'탭, 설정, 노트, 문법, 할 일...', searchNoResults:'"{q}"와(과) 일치하는 항목이 없습니다.', searchFoot:'위아래로 고르고 Enter로 열고 Esc로 닫습니다. 어디서나 Ctrl K(Mac은 ⌘K) 또는 /로 열 수 있습니다.', searchGroupPlaces:'위치', searchGroupSettings:'설정', searchGroupNotes:'노트', searchGroupGrammar:'문법', searchGroupItems:'목록 항목',
     nsShareBtn:'공유', nsMenuShare:'노트 공유', nsShareTitle:'"{title}" 공유', nsHowAsk:'어떻게 공유할까요?', nsLive:'실시간', nsLiveDesc:'상대방이 같은 노트를 봅니다. 수정한 내용이 두 사람 모두에게 보입니다.', nsCopy:'상대방의 사본으로', nsCopyDesc:'상대방의 노트북에 별도의 사본이 들어갑니다. 다시 동기화되지 않습니다.', nsManageAccess:'액세스 관리', nsBack:'뒤로', nsPeopleWithAccess:'액세스할 수 있는 사람', nsNoCircle:'공유하려면 먼저 계정 설정에서 사람을 연결하세요.', nsRoleLabel:'권한', nsNotify:'메시지로 알리기', nsSendCopy:'사본 보내기', nsSent:'보냄', nsFailed:'처리하지 못했습니다. 연결을 확인하고 다시 시도하세요.', nsPublicLink:'공개 링크', nsPublicLinkHint:'링크가 있으면 누구나 계정 없이 이 노트를 열 수 있습니다.', nsLinkCreate:'링크 만들기', nsLinkCopy:'링크 복사', nsLinkCopied:'링크를 복사했습니다', nsLinkOn:'켜짐', nsLinkOff:'꺼짐', nsLinkTurnOff:'끄기', nsLinkTurnOn:'켜기', nsLinkOffHint:'다시 켤 때까지 아무도 링크를 열 수 없습니다.', nsLinkRegenerate:'새 링크', nsLinkRegenerateConfirm:'새 링크를 만들까요? 이전 링크는 바로 작동하지 않게 됩니다.', nsAccessViewer:'{name}님이 공유했습니다. 볼 수 있습니다.', nsAccessCommenter:'{name}님이 공유했습니다. 댓글을 달 수 있습니다.', nsAccessEditor:'{name}님이 공유했습니다. 편집할 수 있습니다.', nsSharedGroup:'나와 공유됨', nsSharedByMe:'공유됨', nsCardLive:'실시간으로 공유됨', nsCardCopy:'사본이 내 노트북에 있습니다', ncCommentsBtn:'댓글', ncComment:'댓글 달기', ncAddComment:'댓글 추가', ncReply:'답글', ncResolve:'해결', ncReopen:'다시 열기', ncResolved:'해결됨', ncShowResolved:'해결된 댓글 보기 ({n})', ncHideResolved:'해결된 댓글 숨기기', ncEmpty:'아직 댓글이 없습니다. 텍스트를 선택하고 댓글 달기를 누르세요.', ncEmptyView:'아직 댓글이 없습니다.', ncOrphan:'이 댓글이 달린 텍스트가 바뀌었습니다.', ncDeleteConfirm:'이 댓글을 삭제할까요?', ncDeleteThreadConfirm:'이 댓글과 답글을 모두 삭제할까요?', ncGuest:'게스트', ncYourName:'이름', ncNameNeeded:'댓글을 달려면 이름을 입력하세요.', ncRateLimited:'지금 이 링크에 댓글이 너무 많습니다. 몇 분 후에 다시 시도하세요.', ncViewOnly:'댓글을 읽을 수만 있습니다.', ncCount:'댓글 {n}개', psOpenApp:'Productivity Tracker 열기', psNotFound:'이 링크는 작동하지 않습니다. 꺼졌거나 새 링크로 바뀌었을 수 있습니다.', psSharedBy:'{name}님이 공유함', psUpdated:'{time}에 업데이트됨', psViewOnly:'보기 전용', psCanComment:'댓글을 달 수 있습니다', nsLevelEditor:'편집 가능', nsLevelCommenter:'댓글 가능', nsLevelViewer:'보기 가능', nsLevelNone:'액세스 없음', nsLevelCircle:'서클 설정대로 ({level})', nsCircleHint:'서클은 공유 설정의 권한을 받습니다. 이 노트만 여기서 바꿀 수 있습니다.',
     noteSub:'아래 첨자', noteSup:'위 첨자', noteStyleBtn:'글자 스타일', noteStyleNormal:'본문', noteStyleH1:'제목', noteStyleH2:'부제목', noteStyleH3:'소제목', noteTocBtn:'목차', noteTocEmpty:'아직 제목이 없습니다. 줄 처음에 #와 띄어쓰기를 치면 제목, ##는 부제목, ###는 소제목이 됩니다.', noteTocInsert:'이 목록을 노트에 쓰기', noteSymBtn:'기호', noteSymTabArrows:'화살표', noteSymTabMath:'수학', noteSymTabGreek:'그리스 문자', noteSymTabSets:'집합과 논리', noteSymTabScripts:'위아래 첨자', noteSymTabOther:'기타', noteShorthandHint:'단축 입력: ^^ 위쪽 화살표, vv 아래쪽 화살표, -> 화살표, x^2와 H_2O는 첨자, 긴 것은 e^{ix}. 되돌리기를 누르면 입력한 그대로 돌아갑니다.', noteEqBtn:'수식', noteEqTitle:'수식', noteEqTabStruct:'구조', noteEqInsert:'넣기', noteEqUpdate:'수정', noteEqRemove:'삭제', noteEqPlaceholder:'위의 키를 누르거나 LaTeX로 입력하세요. 예: \\frac{a}{b}', noteEqEmpty:'여기에 미리 보기가 표시됩니다.', noteEqLoading:'수식 편집기를 불러오는 중...', noteEqFailed:'수식 편집기를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.',
     signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
@@ -13743,6 +13786,7 @@ const I18N = {
     authEnterEmailPassword:'이메일과 비밀번호를 입력하세요.', authInvalidLogin:'이메일, 이름 또는 비밀번호가 올바르지 않습니다.', authEmailNotConfirmed:'먼저 이메일 인증을 완료하세요. 보내 드린 이메일에 링크가 있습니다.', authAlreadyRegistered:'이 이메일로 만든 계정이 이미 있습니다. 로그인하세요.', authRateLimited:'시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.', authEmailInvalid:'이메일 주소가 올바르지 않습니다.', authSamePassword:'현재 비밀번호와 다른 비밀번호를 선택하세요.', authNetworkError:'서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.', authSignupsClosed:'지금은 가입을 받지 않습니다.', authLinkExpired:'링크가 만료되었거나 이미 사용되었습니다. 새 링크를 요청하세요.', guestUnavailable:'게스트 모드에서는 사용할 수 없습니다.', tipDelete:'삭제', tipRemove:'제거', tipMoveUp:'위로 이동', tipMoveDown:'아래로 이동', lblSubcategory:'하위 분류', noteMoveTo:'원하는 위치로 이동', noteMovePick:'위치를 고르세요', noteMoveTop:'맨 위로', noteMoveBottom:'맨 아래로', noteMoveDone:'완료', noteStatsShow:'글자 수', noteStatsShowHint:'단어와 글자 수 보기', noteStatsHide:'누르면 숨겨집니다', noteDragTip:'끌어서 옮기기', noteSubAdd:'하위 분류 추가', noteSubNewPh:'하위 분류 이름', tipDarkMode:'다크 모드 전환', tipMyNotes:'내 노트', tipClickToEdit:'클릭하여 수정', tipJumpToDate:'날짜로 이동', tipPagesRead:'읽은 페이지', tipJobBoardAiUpdate:'오늘 올라온 공고를 하나씩 열어 전체 설명을 기기의 파일로 저장합니다', notesLinkShortcutPrompt:'단축어 이름:', saveFailedTryAgain:'저장하지 못했습니다. 다시 시도하세요.', termsLink:'이용약관', installGuideTitle:'앱으로 사용하기', installGuideIntro:'Productivity Tracker를 홈 화면에 추가하세요. 앱처럼 전체 화면으로 열리고 알림도 받을 수 있어요.', installInAppNote:'지금 다른 앱 안에서 열려 있어서 홈 화면에 추가할 수 없어요. 먼저 Safari나 Chrome에서 여세요(··· 메뉴의 "다른 브라우저로 열기").', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'앱 설치', installIosStep1:'Safari 하단의 공유 버튼 {icon}을 누르세요. 최신 iPhone에서는 ··· 메뉴 안에 있어요.', installIosOtherStep1:'브라우저의 공유 버튼 {icon}을 누르세요. 주소창 옆이나 메뉴 안에 있어요.', installIosStep2:'"더 보기"가 보이면 누른 다음 "홈 화면에 추가"를 누르세요.', installIosStep3:'"추가"를 누르면 홈 화면에 앱이 생겨요.', installAndroidStep1:'Chrome 오른쪽 위의 메뉴 {icon}를 누르세요.', installAndroidStep2:'"홈 화면에 추가" 또는 "앱 설치"를 누르세요.', installAndroidStep3:'"설치"를 누르면 홈 화면에 앱이 생겨요.', installGuideToast:'이 안내는 언제든 설정에서 다시 볼 수 있어요.', settingsInstallGuideBtn:'휴대폰에 앱 추가하기'
   },
   vi: {
+    searchBtn:'Tìm kiếm', searchTitle:'Tìm trong ứng dụng', searchPlaceholder:'Thẻ, cài đặt, ghi chú, ngữ pháp, việc cần làm...', searchNoResults:'Không có gì khớp với "{q}".', searchFoot:'Lên xuống để chọn, Enter để mở, Esc để đóng. Ctrl K (⌘K trên Mac) hoặc / mở hộp này từ bất kỳ đâu.', searchGroupPlaces:'Vị trí', searchGroupSettings:'Cài đặt', searchGroupNotes:'Ghi chú', searchGroupGrammar:'Ngữ pháp', searchGroupItems:'Trong danh sách của bạn',
     nsShareBtn:'Chia sẻ', nsMenuShare:'Chia sẻ ghi chú', nsShareTitle:'Chia sẻ "{title}"', nsHowAsk:'Bạn muốn chia sẻ thế nào?', nsLive:'Trực tiếp', nsLiveDesc:'Họ xem chính ghi chú này. Chỉnh sửa hiện ra cho cả hai người.', nsCopy:'Thành bản sao của họ', nsCopyDesc:'Một bản sao riêng được thêm vào Sổ tay của họ. Nó không bao giờ đồng bộ ngược lại.', nsManageAccess:'Quản lý quyền truy cập', nsBack:'Quay lại', nsPeopleWithAccess:'Người có quyền truy cập', nsNoCircle:'Hãy liên kết với ai đó trong Cài đặt tài khoản trước để chia sẻ với họ.', nsRoleLabel:'Vai trò', nsNotify:'Báo cho họ bằng tin nhắn', nsSendCopy:'Gửi bản sao', nsSent:'Đã gửi', nsFailed:'Không thực hiện được. Hãy kiểm tra kết nối rồi thử lại.', nsPublicLink:'Liên kết công khai', nsPublicLinkHint:'Bất kỳ ai có liên kết đều mở được ghi chú này. Không cần tài khoản.', nsLinkCreate:'Tạo liên kết', nsLinkCopy:'Sao chép liên kết', nsLinkCopied:'Đã sao chép liên kết', nsLinkOn:'Đang bật', nsLinkOff:'Đang tắt', nsLinkTurnOff:'Tắt', nsLinkTurnOn:'Bật', nsLinkOffHint:'Không ai mở được liên kết cho đến khi bạn bật lại.', nsLinkRegenerate:'Liên kết mới', nsLinkRegenerateConfirm:'Tạo liên kết mới? Liên kết cũ sẽ ngừng hoạt động ngay.', nsAccessViewer:'{name} đã chia sẻ. Bạn có thể xem.', nsAccessCommenter:'{name} đã chia sẻ. Bạn có thể bình luận.', nsAccessEditor:'{name} đã chia sẻ. Bạn có thể chỉnh sửa.', nsSharedGroup:'Được chia sẻ với bạn', nsSharedByMe:'Đã chia sẻ', nsCardLive:'Được chia sẻ trực tiếp với bạn', nsCardCopy:'Bản sao đã có trong Sổ tay của bạn', ncCommentsBtn:'Bình luận', ncComment:'Bình luận', ncAddComment:'Thêm bình luận', ncReply:'Trả lời', ncResolve:'Giải quyết', ncReopen:'Mở lại', ncResolved:'Đã giải quyết', ncShowResolved:'Hiện bình luận đã giải quyết ({n})', ncHideResolved:'Ẩn bình luận đã giải quyết', ncEmpty:'Chưa có bình luận. Chọn một đoạn chữ rồi nhấn Bình luận.', ncEmptyView:'Chưa có bình luận.', ncOrphan:'Đoạn chữ của bình luận này đã thay đổi.', ncDeleteConfirm:'Xóa bình luận này?', ncDeleteThreadConfirm:'Xóa bình luận này và các câu trả lời của nó?', ncGuest:'khách', ncYourName:'Tên của bạn', ncNameNeeded:'Hãy nhập tên để bình luận.', ncRateLimited:'Liên kết này đang có quá nhiều bình luận. Hãy thử lại sau vài phút.', ncViewOnly:'Bạn chỉ có thể đọc bình luận.', ncCount:'{n} bình luận', psOpenApp:'Mở Productivity Tracker', psNotFound:'Liên kết này không hoạt động. Có thể nó đã bị tắt hoặc được thay bằng liên kết khác.', psSharedBy:'{name} đã chia sẻ', psUpdated:'Cập nhật {time}', psViewOnly:'Chỉ xem', psCanComment:'Bạn có thể bình luận', nsLevelEditor:'Có thể chỉnh sửa', nsLevelCommenter:'Có thể bình luận', nsLevelViewer:'Có thể xem', nsLevelNone:'Không có quyền truy cập', nsLevelCircle:'Theo cài đặt của nhóm ({level})', nsCircleHint:'Nhóm của bạn nhận quyền theo cài đặt chia sẻ. Bạn có thể đổi riêng cho ghi chú này tại đây.',
     noteSub:'Chỉ số dưới', noteSup:'Chỉ số trên', noteStyleBtn:'Kiểu chữ', noteStyleNormal:'Văn bản thường', noteStyleH1:'Tiêu đề', noteStyleH2:'Tiêu đề phụ', noteStyleH3:'Tiêu đề nhỏ', noteTocBtn:'Mục lục', noteTocEmpty:'Chưa có tiêu đề. Gõ # và dấu cách ở đầu dòng để tạo tiêu đề, ## cho tiêu đề phụ, ### cho tiêu đề nhỏ.', noteTocInsert:'Ghi danh sách này vào ghi chú', noteSymBtn:'Ký hiệu', noteSymTabArrows:'Mũi tên', noteSymTabMath:'Toán', noteSymTabGreek:'Chữ Hy Lạp', noteSymTabSets:'Tập hợp và logic', noteSymTabScripts:'Chỉ số trên, dưới', noteSymTabOther:'Khác', noteShorthandHint:'Gõ tắt: ^^ mũi tên lên, vv mũi tên xuống, -> mũi tên, x^2 và H_2O cho chỉ số, e^{ix} cho chỉ số dài. Hoàn tác sẽ trả lại đúng những gì bạn gõ.', noteEqBtn:'Công thức', noteEqTitle:'Công thức', noteEqTabStruct:'Cấu trúc', noteEqInsert:'Chèn', noteEqUpdate:'Cập nhật', noteEqRemove:'Xóa', noteEqPlaceholder:'Bấm các phím ở trên hoặc gõ LaTeX, ví dụ \\frac{a}{b}', noteEqEmpty:'Bản xem trước hiển thị ở đây.', noteEqLoading:'Đang tải trình soạn công thức...', noteEqFailed:'Không tải được trình soạn công thức. Hãy kiểm tra kết nối rồi thử lại.',
     signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
@@ -13873,6 +13917,7 @@ const I18N = {
   }
 };
 const STATIC_MAP = {
+  appSearchBtnLabel:'searchBtn',
   noteShareBtnLabel:'nsShareBtn', notebookShareBtnLabel:'nsShareBtn', noteCommentsBtnLabel:'ncCommentsBtn', notebookCommentsBtnLabel:'ncCommentsBtn', psOpenApp:'psOpenApp',
   tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password', lblConfirmPassword:'lblConfirmPassword',
   authAgeNote:'authAgeNote', authPrivacyLink:'privacyPolicyLink', settingsPrivacyLink:'privacyPolicyLink', authTermsLink:'termsLink', settingsTermsLink:'termsLink',
@@ -17671,6 +17716,7 @@ function closeOnBackdrop(overlay, close){
   });
 }
 const MODAL_CLOSE_BTN = {
+  appSearchModal: 'appSearchClose',
   noteShareModal: 'noteShareClose',
   shareQuickViewModal: 'shareQvClose',
   shareSheetModal: 'shareSheetClose',
@@ -56898,6 +56944,389 @@ function navBack(){
   }
   document.addEventListener('touchend', end);
   document.addEventListener('touchcancel', end);
+})();
+/* ---------- SEARCH THE WHOLE APP ----------
+   One box (the magnifier in the top bar, Ctrl+K or Cmd+K, or / anywhere that
+   is not a text field) that finds any place in the app, however deep, and
+   the things in it. Nothing here is a hand-kept list of features that would
+   go stale: the places are read off the page as it is when the box opens --
+   TAB_STRUCTURE for the tabs and their sub-tabs, then inside each sub-tab its
+   pane rows, its other view switches and every section heading, and the
+   Account settings groups with the titles inside them -- so a card added
+   tomorrow is findable tomorrow, in whichever language the app is in (and by
+   its English name too). Tabs somebody has hidden are left out. The things
+   are notes, grammar points, courses, to-dos, books, articles, job
+   applications and certifications, from what the app has already loaded.
+   Opening a result goes there the way a person would: the tab, the
+   sub-tab, the pane, the settings group, then the spot itself is scrolled to
+   and flashed. */
+const APP_SEARCH_PANELS = { calendar: 'panelCalendar', study: 'panelStudy', yonsei: 'panelYonsei', reading: 'panelReading', jobs: 'panelJobs' };
+const APP_SEARCH_SECTIONS = {
+  'calendar.overview': 'calendarOverviewSection', 'calendar.calendar': 'calendarCalendarSection', 'calendar.expenditure': 'calendarExpensesSection',
+  'study.log': 'studyLogSection', 'study.grammar': 'studyGrammarSection', 'study.writing': 'studyWritingSection',
+  'study.topik': 'studyTopikSection', 'study.notebook': 'studyNotebookSection', 'study.videos': 'studyVideosSection',
+  'yonsei.courses': 'yonseiCoursesSection', 'yonsei.notes': 'yonseiNotesSection', 'yonsei.todos': 'yonseiTodosSection', 'yonsei.boards': 'yonseiBoardsSection',
+  'reading.books': 'readingBooksSection', 'reading.articles': 'readingArticlesSection',
+  'jobs.applications': 'jobsApplicationsSection', 'jobs.certifications': 'jobsCertificationsSection', 'jobs.jobboard': 'jobsJobBoardSection'
+};
+const APP_SEARCH_GROUPS = [['place', 'searchGroupPlaces'], ['setting', 'searchGroupSettings'], ['note', 'searchGroupNotes'], ['grammar', 'searchGroupGrammar'], ['item', 'searchGroupItems']];
+const APP_SEARCH_PER_GROUP = 8;
+let appSearchIndex = [];
+let appSearchResults = [];
+let appSearchActive = 0;
+// Lower case, accents off (Vietnamese is typed without them as often as
+// with), Korean untouched.
+function appSearchNorm(s){
+  return String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+// A heading's own words: what it says without the buttons and fields that
+// some headings carry beside the title.
+function appSearchLabelOf(el){
+  const c = el.cloneNode(true);
+  c.querySelectorAll('button, input, select, textarea, svg, .hidden, .tag, .note-group-count').forEach(x=> x.remove());
+  return (c.textContent || '').replace(/\s+/g, ' ').trim();
+}
+// Shown where a person would look, not hidden by something of its own (a
+// closed editor, an empty-state card). The sub-tab section, the panel and a
+// pane are hidden on purpose and are opened on the way there.
+function appSearchShowable(el, stopAt){
+  for(let a = el; a && a !== stopAt; a = a.parentElement){
+    if(a.hasAttribute && a.hasAttribute('data-pane-of')) continue;
+    if(a.classList && (a.classList.contains('hidden') || a.classList.contains('modal-overlay'))) return false;
+    if(a.style && a.style.display === 'none') return false;
+  }
+  return true;
+}
+function appSearchTop(key){ return TAB_STRUCTURE.find(x=> x.key === key) || null; }
+function appSearchSub(subKey){
+  const top = appSearchTop(subKey.split('.')[0]);
+  return top ? (top.subs || []).find(s=> s.key === subKey) || null : null;
+}
+function appSearchEnLabel(key){ return (I18N.en && I18N.en[key]) || ''; }
+// Where an element lives: its tab, its sub-tab, its pane.
+function appSearchContextOf(el){
+  const panel = el.closest('.tab-panel');
+  const tab = panel ? Object.keys(APP_SEARCH_PANELS).find(k=> APP_SEARCH_PANELS[k] === panel.id) : null;
+  let sub = null;
+  if(tab) sub = Object.keys(APP_SEARCH_SECTIONS).find(k=> k.startsWith(tab + '.') && document.getElementById(APP_SEARCH_SECTIONS[k]) && document.getElementById(APP_SEARCH_SECTIONS[k]).contains(el)) || null;
+  const paneEl = el.closest('[data-pane-of]');
+  return { tab, sub, row: paneEl ? paneEl.dataset.paneOf : null, pane: paneEl ? paneEl.dataset.pane : null };
+}
+function appSearchPaneLabel(row, pane){
+  const b = row && document.querySelector(`#${CSS.escape(row)} [data-pane="${CSS.escape(pane)}"]`);
+  return b ? appSearchLabelOf(b) : '';
+}
+function appSearchPathOf(ctx){
+  const path = [];
+  const top = ctx.tab && appSearchTop(ctx.tab);
+  if(top) path.push(t(top.labelKey));
+  const sub = ctx.sub && appSearchSub(ctx.sub);
+  if(sub) path.push(t(sub.labelKey));
+  if(ctx.row){ const p = appSearchPaneLabel(ctx.row, ctx.pane); if(p) path.push(p); }
+  return path;
+}
+// Into a tab, a sub-tab, a pane: what clicking them does.
+function appSearchOpenPlace(ctx){
+  if(ctx.tab) switchTopLevelTab(ctx.tab);
+  if(ctx.sub){
+    const top = appSearchTop(ctx.tab), sub = appSearchSub(ctx.sub);
+    if(top && sub) top.switchFn()(sub.view);
+  }
+  if(ctx.row && ctx.pane) showPane(ctx.row, ctx.pane);
+}
+// The spot itself, once the tab it is on has been drawn.
+function appSearchReveal(el){
+  if(!el) return;
+  setTimeout(()=>{
+    if(!el.isConnected) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.remove('search-flash');
+    void el.offsetWidth;
+    el.classList.add('search-flash');
+    setTimeout(()=> el.classList.remove('search-flash'), 1800);
+  }, 80);
+}
+// The row in a list that shows this text, best effort (a list can be folded
+// or paged): the smallest element whose whole text it is, else the section.
+function appSearchFindText(root, text){
+  if(!root || !text) return root;
+  const want = appSearchNorm(text);
+  let best = null;
+  root.querySelectorAll('div, li, span, td, button, a').forEach(el=>{
+    if(el.children.length > 6 || !el.offsetParent) return;
+    const own = appSearchNorm(el.textContent);
+    if(own === want || (own.startsWith(want) && own.length < want.length + 40)){
+      if(!best || best.contains(el)) best = el;
+    }
+  });
+  const row = best && (best.closest('.lecture-row, .todo-row, .item, .gram-row, tr, li') || best);
+  return row || root;
+}
+function appSearchBuild(){
+  const out = [];
+  const add = (e)=>{ if(e.label) out.push(e); };
+  const hidden = (key)=> typeof isTabHidden === 'function' && isTabHidden(key);
+  // Tabs and sub-tabs.
+  TAB_STRUCTURE.forEach(top=>{
+    if(hidden(top.key)) return;
+    add({ kind: 'place', label: t(top.labelKey), alt: appSearchEnLabel(top.labelKey), path: [], go: ()=> appSearchOpenPlace({ tab: top.key }) });
+    (top.subs || []).forEach(sub=>{
+      if(hidden(sub.key)) return;
+      add({ kind: 'place', label: t(sub.labelKey), alt: appSearchEnLabel(sub.labelKey), path: [t(top.labelKey)], go: ()=> appSearchOpenPlace({ tab: top.key, sub: sub.key }) });
+      const section = document.getElementById(APP_SEARCH_SECTIONS[sub.key]);
+      if(!section) return;
+      const seen = new Set();
+      const once = (label, path)=>{ const k = appSearchNorm(label) + '|' + path.join('>'); if(seen.has(k)) return false; seen.add(k); return true; };
+      // Panes: the row of buttons that splits a sub-tab.
+      section.querySelectorAll('.pane-row').forEach(row=>{
+        if(!appSearchShowable(row, section)) return;
+        row.querySelectorAll('button[data-pane]').forEach(b=>{
+          const label = appSearchLabelOf(b);
+          const ctx = { tab: top.key, sub: sub.key, row: row.id, pane: b.dataset.pane };
+          const path = [t(top.labelKey), t(sub.labelKey)];
+          if(label && once(label, path)) add({ kind: 'place', label, path, go: ()=> appSearchOpenPlace(ctx) });
+        });
+      });
+      // Other view switches inside it (month, week and day, and the like).
+      section.querySelectorAll('.cal-view-toggle:not(.pane-row) button[data-view]').forEach(b=>{
+        if(!appSearchShowable(b, section)) return;
+        const label = appSearchLabelOf(b);
+        const ctx = appSearchContextOf(b);
+        const path = appSearchPathOf(ctx);
+        if(label && label.length <= 40 && once(label, path)) add({ kind: 'place', label, path, go: ()=>{ appSearchOpenPlace(ctx); b.click(); appSearchReveal(b.closest('.cal-view-toggle')); } });
+      });
+      // Every section heading.
+      section.querySelectorAll('h2, h3, .home-sec-head, .wtc-title').forEach(h=>{
+        if(!appSearchShowable(h, section)) return;
+        const label = appSearchLabelOf(h);
+        if(!label || label.length > 60) return;
+        const ctx = appSearchContextOf(h);
+        const path = appSearchPathOf(ctx);
+        if(once(label, path)) add({ kind: 'place', label, path, go: ()=>{ appSearchOpenPlace(ctx); appSearchReveal(h.closest('.card') || h); } });
+      });
+    });
+  });
+  // Things that are not on a tab.
+  add({ kind: 'place', label: t('circleTabMessages'), alt: appSearchEnLabel('circleTabMessages'), path: [], go: ()=>{ if(!chatPanelOpen()) openChatPanel(); } });
+  add({ kind: 'place', label: t('lblNotifBell'), alt: appSearchEnLabel('lblNotifBell'), path: [], go: ()=> document.getElementById('notifBellBtn').click() });
+  add({ kind: 'place', label: t('hLinkedCircle'), alt: appSearchEnLabel('hLinkedCircle'), path: [], go: ()=> document.getElementById('friendsBtn').click() });
+  // Account settings: the groups, and the titled parts inside each.
+  const settingsTitle = t('hAccountSettings');
+  add({ kind: 'setting', label: settingsTitle, alt: appSearchEnLabel('hAccountSettings'), path: [], go: ()=> openAccountSettings() });
+  const modal = document.getElementById('accountSettingsModal');
+  if(modal){
+    // The theme and language rows are written when Settings first opens.
+    if(typeof syncGeneralSettings === 'function') syncGeneralSettings();
+    modal.querySelectorAll('.set-gen-row .set-gen-label').forEach(l=>{
+      const label = appSearchLabelOf(l);
+      if(label) add({ kind: 'setting', label, path: [settingsTitle], go: ()=>{ appSearchOpenSettings(null); appSearchReveal(l.closest('.set-gen-row') || l); } });
+    });
+    // The theme's own three choices, so "dark" finds dark mode and sets it.
+    const themeLabel = appSearchLabelOf(document.getElementById('setThemeLabel') || modal);
+    modal.querySelectorAll('[data-theme-choice]').forEach(b=>{
+      const label = appSearchLabelOf(b);
+      if(label) add({ kind: 'setting', label, path: [settingsTitle, themeLabel], go: ()=>{ appSearchOpenSettings(null); b.click(); appSearchReveal(b.closest('.set-gen-row') || b); } });
+    });
+    modal.querySelectorAll('.set-group').forEach(sec=>{
+      if(sec.classList.contains('hidden') || sec.style.display === 'none') return;
+      const head = sec.querySelector('.set-group-head');
+      const name = head ? appSearchLabelOf(head.querySelector('.set-head-text > span:not(.set-sub)') || head) : '';
+      if(!name) return;
+      add({ kind: 'setting', label: name, path: [settingsTitle], go: ()=> appSearchOpenSettings(sec) });
+      const body = sec.querySelector('.set-group-body');
+      if(!body) return;
+      const seen = new Set();
+      body.querySelectorAll('.wtc-title, .note-group-header, h3, .set-gen-label').forEach(h=>{
+        if(!appSearchShowable(h, body)) return;
+        const label = appSearchLabelOf(h);
+        if(!label || label.length > 60 || seen.has(label)) return;
+        seen.add(label);
+        add({ kind: 'setting', label, path: [settingsTitle, name], go: ()=>{ appSearchOpenSettings(sec); appSearchReveal(h); } });
+      });
+      // Every switch and choice in the group, by the words beside it.
+      body.querySelectorAll('label').forEach(l=>{
+        if(!l.querySelector('input, select') || !appSearchShowable(l, body)) return;
+        const label = appSearchLabelOf(l);
+        if(!label || label.length > 70 || seen.has(label)) return;
+        seen.add(label);
+        add({ kind: 'setting', label, path: [settingsTitle, name], go: ()=>{ appSearchOpenSettings(sec); appSearchReveal(l); } });
+      });
+    });
+  }
+  // The things themselves.
+  const myName = (uid)=> uid && currentUser && uid !== currentUser.id ? nameFor(uid) : '';
+  const tabOk = (sub)=> !hidden(sub.split('.')[0]) && !hidden(sub);
+  if(tabOk('yonsei.notes')) Object.entries(allNotes || {}).forEach(([key, list])=> (list || []).forEach(n=>{
+    add({ kind: 'note', label: n.lecture_title, path: [t('tabYonsei'), t('tabNotes')].concat(myName(n.user_id) ? [myName(n.user_id)] : []),
+      go: ()=>{ appSearchOpenPlace({ tab: 'yonsei', sub: 'yonsei.notes' }); openLecture(n.id, key); appSearchReveal(document.getElementById('editorCard')); } });
+  }));
+  if(tabOk('study.notebook')) Object.entries(allNotebookNotes || {}).forEach(([key, list])=> (list || []).forEach(n=>{
+    add({ kind: 'note', label: n.lecture_title, path: [t('tabStudy'), t('studySubNotebook')].concat(myName(n.user_id) ? [myName(n.user_id)] : []),
+      go: ()=>{ appSearchOpenPlace({ tab: 'study', sub: 'study.notebook' }); openNotebookNote(n.id, key); appSearchReveal(document.getElementById('notebookEditorCard')); } });
+  }));
+  if(tabOk('study.grammar')) (GRAMMAR_DATA || []).forEach(g=>{
+    const meaning = g.senses && g.senses[0] ? (g.senses[0].definition || '') : '';
+    add({ kind: 'grammar', label: g.pattern, alt: meaning, path: [t('tabStudy'), t('studySubGrammar')].concat(g.level ? [g.level] : []),
+      go: ()=>{ appSearchOpenPlace({ tab: 'study', sub: 'study.grammar' }); jumpToGrammarPattern(g.id); } });
+  });
+  const listItems = (sub, rows, labelOf, inputId)=>{
+    if(!tabOk(sub)) return;
+    const s = appSearchSub(sub), top = appSearchTop(sub.split('.')[0]);
+    rows.forEach(r=>{
+      const label = labelOf(r);
+      if(!label) return;
+      add({ kind: 'item', label, path: [t(top.labelKey), t(s.labelKey)].concat(myName(r.user_id) ? [myName(r.user_id)] : []),
+        go: ()=>{
+          appSearchOpenPlace({ tab: top.key, sub });
+          // A list with its own search box is narrowed to the one thing.
+          const input = inputId && document.getElementById(inputId);
+          if(input){ input.value = label; input.dispatchEvent(new Event('input', { bubbles: true })); }
+          setTimeout(()=> appSearchReveal(appSearchFindText(document.getElementById(APP_SEARCH_SECTIONS[sub]), label)), 60);
+        } });
+    });
+  };
+  const flat = (store)=> Object.values(store || {}).flat();
+  listItems('yonsei.courses', flat(allCourses), c=> c.title);
+  listItems('yonsei.todos', (allTodos || []).filter(x=> !x.done), x=> x.title);
+  listItems('reading.books', flat(allBooks), b=> b.title);
+  listItems('reading.articles', flat(allArticles), a=> a.title);
+  listItems('jobs.applications', flat(allJobs), j=> [j.role, j.company].filter(Boolean).join(' · '), null);
+  listItems('jobs.certifications', flat(allCerts), c=> c.name, null);
+  return out;
+}
+function appSearchOpenSettings(sec){
+  const modal = document.getElementById('accountSettingsModal');
+  if(modal.classList.contains('hidden')) openAccountSettings();
+  if(!sec) return;
+  const head = sec.querySelector('.set-group-head');
+  if(head && head.getAttribute('aria-expanded') !== 'true') head.click();
+  appSearchReveal(head);
+}
+// Best first: the name starting with what was typed, then a word in it
+// starting so, then anywhere in it, then its English name or its path.
+function appSearchScore(e, q){
+  const label = appSearchNorm(e.label);
+  if(label === q) return 100;
+  if(label.startsWith(q)) return 90 - Math.min(label.length, 40) / 10;
+  if((' ' + label).includes(' ' + q)) return 75;
+  if(label.includes(q)) return 60;
+  const alt = appSearchNorm(e.alt);
+  if(alt && (alt.startsWith(q) || (' ' + alt).includes(' ' + q))) return 50;
+  if(alt && alt.includes(q)) return 40;
+  const path = appSearchNorm(e.path.join(' '));
+  if(q.length > 2 && path.includes(q)) return 20;
+  return 0;
+}
+function appSearchRun(raw){
+  const q = appSearchNorm(raw);
+  let rows;
+  if(!q){
+    // Nothing typed yet: every tab and sub-tab, as a map of the app.
+    rows = appSearchIndex.filter(e=> e.kind === 'place' && e.path.length <= 1).map(e=> ({ e, s: 0 }));
+  } else {
+    const words = q.split(' ').filter(Boolean);
+    rows = appSearchIndex.map(e=>{
+      // Every word has to land somewhere; the first one decides the order.
+      const hay = appSearchNorm(e.label + ' ' + (e.alt || '') + ' ' + e.path.join(' '));
+      if(!words.every(w=> hay.includes(w))) return null;
+      const s = appSearchScore(e, q) || appSearchScore(e, words[0]) / 2 || 1;
+      return { e, s };
+    }).filter(Boolean);
+  }
+  const groups = [];
+  APP_SEARCH_GROUPS.forEach(([kind, key])=>{
+    const g = rows.filter(r=> r.e.kind === kind).sort((a, b)=> b.s - a.s || a.e.path.length - b.e.path.length);
+    if(g.length) groups.push({ key, items: g.slice(0, q ? APP_SEARCH_PER_GROUP : 40).map(r=> r.e) });
+  });
+  return groups;
+}
+function appSearchRender(){
+  const input = document.getElementById('appSearchInput');
+  const list = document.getElementById('appSearchList');
+  const groups = appSearchRun(input.value);
+  appSearchResults = groups.flatMap(g=> g.items);
+  if(appSearchActive >= appSearchResults.length) appSearchActive = 0;
+  if(!appSearchResults.length){
+    list.innerHTML = `<div class="app-search-empty">${escapeHtml(t('searchNoResults').replace('{q}', input.value.trim()))}</div>`;
+    input.removeAttribute('aria-activedescendant');
+    return;
+  }
+  let i = 0;
+  list.innerHTML = groups.map(g=> `<div class="app-search-group" role="presentation">${escapeHtml(t(g.key))}</div>` + g.items.map(e=>{
+    const n = i++;
+    return `<button type="button" class="app-search-item${n === appSearchActive ? ' on' : ''}" id="appSearchOpt${n}" role="option" aria-selected="${n === appSearchActive}" data-i="${n}">
+      <span class="app-search-label">${escapeHtml(e.label)}</span>${e.path.length ? `<span class="app-search-path">${escapeHtml(e.path.join(' › '))}</span>` : ''}</button>`;
+  }).join('')).join('');
+  input.setAttribute('aria-activedescendant', 'appSearchOpt' + appSearchActive);
+}
+function appSearchMove(d){
+  if(!appSearchResults.length) return;
+  appSearchActive = (appSearchActive + d + appSearchResults.length) % appSearchResults.length;
+  document.querySelectorAll('#appSearchList .app-search-item').forEach(b=>{
+    const on = Number(b.dataset.i) === appSearchActive;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-selected', String(on));
+    if(on) b.scrollIntoView({ block: 'nearest' });
+  });
+  document.getElementById('appSearchInput').setAttribute('aria-activedescendant', 'appSearchOpt' + appSearchActive);
+}
+function appSearchChoose(i){
+  const e = appSearchResults[i];
+  if(!e) return;
+  closeAppSearch();
+  try { e.go(); } catch(err){ console.warn('search go', err); }
+}
+function openAppSearch(){
+  if(!currentUser || document.getElementById('appScreen').classList.contains('hidden')) return;
+  const modal = document.getElementById('appSearchModal');
+  document.getElementById('appSearchTitle').textContent = t('searchTitle');
+  const input = document.getElementById('appSearchInput');
+  input.placeholder = t('searchPlaceholder');
+  input.setAttribute('aria-label', t('searchPlaceholder'));
+  document.getElementById('appSearchFoot').textContent = t('searchFoot');
+  appSearchIndex = appSearchBuild();
+  input.value = '';
+  appSearchActive = 0;
+  appSearchRender();
+  modal.classList.remove('hidden');
+  setTimeout(()=> input.focus(), 20);
+}
+function closeAppSearch(){ document.getElementById('appSearchModal').classList.add('hidden'); }
+(function wireAppSearch(){
+  const modal = document.getElementById('appSearchModal');
+  const input = document.getElementById('appSearchInput');
+  const btn = document.getElementById('appSearchBtn');
+  if(!modal || !input || !btn) return;
+  btn.querySelector('.app-search-ico').innerHTML = ICON.search(15);
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+  document.getElementById('appSearchKbd').textContent = mac ? '⌘K' : 'Ctrl K';
+  btn.addEventListener('click', openAppSearch);
+  closeOnBackdrop(modal, closeAppSearch);
+  document.getElementById('appSearchClose').addEventListener('click', closeAppSearch);
+  input.addEventListener('input', ()=>{ appSearchActive = 0; appSearchRender(); });
+  input.addEventListener('keydown', (e)=>{
+    if(e.isComposing || e.keyCode === 229) return;
+    if(e.key === 'ArrowDown'){ e.preventDefault(); appSearchMove(1); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); appSearchMove(-1); }
+    else if(e.key === 'Enter'){ e.preventDefault(); appSearchChoose(appSearchActive); }
+  });
+  document.getElementById('appSearchList').addEventListener('click', (e)=>{
+    const b = e.target.closest('.app-search-item');
+    if(b) appSearchChoose(Number(b.dataset.i));
+  });
+  // Ctrl+K / Cmd+K from anywhere; / from anywhere that is not a place to type.
+  document.addEventListener('keydown', (e)=>{
+    if(!currentUser || e.defaultPrevented) return;
+    const typing = e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"], math-field');
+    const k = (e.key || '').toLowerCase();
+    if(k === 'k' && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey){
+      e.preventDefault();
+      if(modal.classList.contains('hidden')) openAppSearch(); else closeAppSearch();
+    } else if(e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey && modal.classList.contains('hidden') && !document.querySelector('.modal-overlay:not(.hidden)')){
+      e.preventDefault();
+      openAppSearch();
+    }
+  });
 })();
 (async function init(){
   // A public note link opens that note and nothing else: no form, no
