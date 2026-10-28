@@ -50508,6 +50508,40 @@ function typingShortcutRules(){
   typingShortcutRules.longest = Math.max(...typingShortcutRules.list.map(r=>r[0].length));
   return typingShortcutRules.list;
 }
+// Backspace straight after an auto-format takes it back, the way a word
+// processor does: "x^2 " turned into x² comes back as "x^2 ", and "--" turned
+// into an en dash comes back as "--". Only while nothing else has happened:
+// any other edit, or the caret moving off the spot, lets it go, and from then
+// Backspace is an ordinary Backspace again. Cmd-Z still works as before,
+// since every rewrite is its own undo step.
+function armAutoformatUndo(quill, caret, restoreTo){
+  quill.__afUndo = { caret, restoreTo };
+  if(quill.__afUndoWired) return;
+  quill.__afUndoWired = true;
+  quill.on('text-change', (d, o, source)=>{
+    if(quill.__afUndoBusy) return;
+    if(source === 'user') quill.__afUndo = null;
+  });
+  quill.on('selection-change', (range)=>{
+    const a = quill.__afUndo;
+    if(a && (!range || range.length || range.index !== a.caret)) quill.__afUndo = null;
+  });
+  // Capture on the root, so it runs before Quill's own Backspace binding.
+  quill.root.addEventListener('keydown', (e)=>{
+    const a = quill.__afUndo;
+    if(!a || e.key !== 'Backspace' || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || e.isComposing) return;
+    const sel = quill.getSelection();
+    if(!sel || sel.length || sel.index !== a.caret){ quill.__afUndo = null; return; }
+    e.preventDefault();
+    e.stopPropagation();
+    quill.__afUndo = null;
+    quill.__afUndoBusy = true;
+    quill.history.undo();
+    quill.history.cutoff();
+    quill.__afUndoBusy = false;
+    quill.setSelection(a.restoreTo, 0, 'silent');
+  }, true);
+}
 function enableTypingShortcuts(quill){
   let rewriting = false;
   const Delta = Quill.import('delta');
@@ -50554,6 +50588,7 @@ function enableTypingShortcuts(quill){
     Promise.resolve().then(()=>{
       const sel = quill.getSelection();
       if(sel && sel.length === 0 && Math.abs(sel.index - caret) <= pat.length) quill.setSelection(caret, 0, 'silent');
+      armAutoformatUndo(quill, caret, end);
     });
   });
 }
@@ -51470,6 +51505,7 @@ function enableNoteScriptShortcuts(quill){
       const sel = quill.getSelection();
       if(sel && sel.length === 0 && Math.abs(sel.index - caret) <= removed + 1) quill.setSelection(caret, 0, 'silent');
       if(brace) quill.format('script', false, 'silent');
+      armAutoformatUndo(quill, caret, at + 1);
     });
   });
 }
