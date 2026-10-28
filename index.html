@@ -3384,10 +3384,11 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
    app's own top bar, which publishes how much of the screen it covers; in a
    split view the pane is the scroller and its own name bar is what it sits
    under. Opaque, or the writing scrolls through it. */
-#editorCard > .ql-toolbar.ql-snow, #notebookEditorCard > .ql-toolbar.ql-snow{
+#editorCard > .ql-toolbar.ql-snow, #notebookEditorCard > .ql-toolbar.ql-snow,
+#editorCard > .nc-wrap > .ql-toolbar.ql-snow, #notebookEditorCard > .nc-wrap > .ql-toolbar.ql-snow{
   position:sticky;top:var(--topbar-h, 0px);z-index:6;}
-.tab-panel.split-on > .split-pane #editorCard > .ql-toolbar.ql-snow,
-.tab-panel.split-on > .split-pane #notebookEditorCard > .ql-toolbar.ql-snow{top:38px;}
+.tab-panel.split-on > .split-pane #editorCard .ql-toolbar.ql-snow,
+.tab-panel.split-on > .split-pane #notebookEditorCard .ql-toolbar.ql-snow{top:38px;}
 /* Line spacing: one button beside the lists, opening the same kind of list
    the font size does. */
 .ql-toolbar .nf-spacing-group{position:relative;}
@@ -5129,6 +5130,16 @@ body.dark{--comment-hl:rgba(242,190,34,.24);--comment-hl-on:rgba(242,190,34,.5);
 ::highlight(nc-course),::highlight(nc-notebook),::highlight(nc-public){background-color:var(--comment-hl);}
 ::highlight(nc-course-on),::highlight(nc-notebook-on),::highlight(nc-public-on){background-color:var(--comment-hl-on);}
 .note-tool-btn{display:inline-flex;align-items:center;gap:5px;margin-right:6px;}
+/* Share and Comments are MARKS, not pills (real-user request: "comment and
+   shares should just be aligned right icons, not have text ... super
+   clutter"). The word stays for screen readers and as the tooltip; the count
+   of open comments rides on the icon. */
+.export-btn.note-tool-btn{position:relative;border:none;background:none;padding:5px;margin-right:2px;color:var(--ink-soft);transform-origin:center;transition:color .15s, transform .15s;}
+.export-btn.note-tool-btn:hover,.export-btn.note-tool-btn:focus-visible{background:none;color:var(--ink);transform:scale(1.15);}
+.export-btn.note-tool-btn:active{transform:scale(0.94);}
+.note-tool-btn .nt-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+.note-tool-btn .nt-ico svg{width:18px;height:18px;}
+.note-tool-btn .nc-badge{position:absolute;top:-3px;right:-5px;min-width:14px;padding:0 3px;font-size:9.5px;line-height:14px;}
 .note-tool-btn.hidden{display:none;}
 .nc-badge{min-width:16px;padding:0 4px;border-radius:8px;background:var(--on-soft);color:var(--on);font-size:10.5px;line-height:16px;text-align:center;}
 .note-access-badge{display:flex;align-items:center;gap:6px;margin:-6px 0 10px;font-size:12px;color:var(--ink-soft);}
@@ -5139,7 +5150,7 @@ body.dark{--comment-hl:rgba(242,190,34,.24);--comment-hl-on:rgba(242,190,34,.5);
 .nc-wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr);column-gap:14px;}
 .nc-wrap > :not(.nc-rail):not(.nc-add-btn){grid-column:1;}
 .nc-wrap.nc-open:not(.nc-stack){grid-template-columns:minmax(0,1fr) 270px;}
-.nc-wrap.nc-open:not(.nc-stack) > .nc-rail{grid-column:2;grid-row:1 / span 3;align-self:start;position:sticky;top:12px;max-height:calc(100dvh - 24px);overflow-y:auto;}
+.nc-wrap.nc-open:not(.nc-stack) > .nc-rail{grid-column:2;grid-row:1 / span 3;align-self:start;position:sticky;top:calc(var(--topbar-h, 0px) + 12px);max-height:calc(100dvh - var(--topbar-h, 0px) - 24px);overflow-y:auto;}
 .nc-wrap.nc-stack > .nc-rail{margin-top:12px;}
 .nc-rail{box-sizing:border-box;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:10px;font-size:13px;}
 .nc-rail.hidden{display:none;}
@@ -6077,7 +6088,7 @@ body.dark{--comment-hl:rgba(242,190,34,.24);--comment-hl-on:rgba(242,190,34,.5);
         <div id="notebookList"></div>
       </div>
       <div class="card hidden" id="notebookEditorCard">
-        <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" data-title-key="tipClickToEdit"></span><span><button type="button" class="export-btn note-tool-btn hidden" id="notebookShareBtn"><span class="nt-ico" data-icon="share"></span><span id="notebookShareBtnLabel"></span></button><button type="button" class="export-btn note-tool-btn hidden" id="notebookCommentsBtn"><span class="nt-ico" data-icon="comment"></span><span id="notebookCommentsBtnLabel"></span><span class="nc-badge hidden"></span></button><span class="notes-layout-toggle" role="group" data-aria-key="notesLayout"><button type="button" data-layout="beside" data-title-key="notesLayoutBeside" data-aria-key="notesLayoutBeside"></button><button type="button" data-layout="under" data-title-key="notesLayoutUnder" data-aria-key="notesLayoutUnder"></button></span><button class="export-btn act-save" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
+        <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" data-title-key="tipClickToEdit"></span><span><button type="button" class="export-btn note-tool-btn hidden" id="notebookShareBtn" data-title-key="nsShareBtn"><span class="nt-ico" data-icon="share"></span><span class="nt-label" id="notebookShareBtnLabel"></span></button><button type="button" class="export-btn note-tool-btn hidden" id="notebookCommentsBtn" data-title-key="ncCommentsBtn"><span class="nt-ico" data-icon="comment"></span><span class="nt-label" id="notebookCommentsBtnLabel"></span><span class="nc-badge hidden"></span></button><span class="notes-layout-toggle" role="group" data-aria-key="notesLayout"><button type="button" data-layout="beside" data-title-key="notesLayoutBeside" data-aria-key="notesLayoutBeside"></button><button type="button" data-layout="under" data-title-key="notesLayoutUnder" data-aria-key="notesLayoutUnder"></button></span><button class="export-btn act-save" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
         <div class="note-access-badge hidden" id="notebookAccessBadge"></div>
         <div class="notes-panel hidden" id="notebookTitleEditPanel"></div>
         <div class="nc-wrap" id="notebookCommentWrap"><div id="notebookQuillContainer" style="background:var(--paper);border-radius:8px;"></div><aside class="nc-rail hidden" id="notebookCommentRail"></aside></div>
@@ -6248,7 +6259,7 @@ body.dark{--comment-hl:rgba(242,190,34,.24);--comment-hl-on:rgba(242,190,34,.5);
       <div id="lectureList"></div>
     </div>
     <div class="card hidden" id="editorCard">
-      <h2><span id="editorLectureTitle"></span><span><button type="button" class="export-btn note-tool-btn hidden" id="noteShareBtn"><span class="nt-ico" data-icon="share"></span><span id="noteShareBtnLabel"></span></button><button type="button" class="export-btn note-tool-btn hidden" id="noteCommentsBtn"><span class="nt-ico" data-icon="comment"></span><span id="noteCommentsBtnLabel"></span><span class="nc-badge hidden"></span></button><span class="notes-layout-toggle" role="group" data-aria-key="notesLayout"><button type="button" data-layout="beside" data-title-key="notesLayoutBeside" data-aria-key="notesLayoutBeside"></button><button type="button" data-layout="under" data-title-key="notesLayoutUnder" data-aria-key="notesLayoutUnder"></button></span><button class="export-btn act-save" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
+      <h2><span id="editorLectureTitle"></span><span><button type="button" class="export-btn note-tool-btn hidden" id="noteShareBtn" data-title-key="nsShareBtn"><span class="nt-ico" data-icon="share"></span><span class="nt-label" id="noteShareBtnLabel"></span></button><button type="button" class="export-btn note-tool-btn hidden" id="noteCommentsBtn" data-title-key="ncCommentsBtn"><span class="nt-ico" data-icon="comment"></span><span class="nt-label" id="noteCommentsBtnLabel"></span><span class="nc-badge hidden"></span></button><span class="notes-layout-toggle" role="group" data-aria-key="notesLayout"><button type="button" data-layout="beside" data-title-key="notesLayoutBeside" data-aria-key="notesLayoutBeside"></button><button type="button" data-layout="under" data-title-key="notesLayoutUnder" data-aria-key="notesLayoutUnder"></button></span><button class="export-btn act-save" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
       <div class="note-access-badge hidden" id="noteAccessBadge"></div>
       <div class="notes-panel hidden" id="editorTitleEditPanel"></div>
       <div class="nc-wrap" id="noteCommentWrap"><div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div><aside class="nc-rail hidden" id="noteCommentRail"></aside></div>
