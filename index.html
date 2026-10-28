@@ -5105,6 +5105,94 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
   [data-share],.todo-row.theirs,.todo-group-head,.gram-row,.deadline-row,[data-ev]:not(input){-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
   [data-share] input,[data-share] textarea,.gram-row input,.gram-row textarea,.deadline-row input,.deadline-row textarea{-webkit-user-select:text;user-select:text;}
 }
+/* ---- Sharing a note (live, as a copy, a public link) and comments on it. */
+:root{--comment-hl:rgba(242,190,34,.32);--comment-hl-on:rgba(242,190,34,.62);}
+body.dark{--comment-hl:rgba(242,190,34,.24);--comment-hl-on:rgba(242,190,34,.5);}
+::highlight(nc-course),::highlight(nc-notebook),::highlight(nc-public){background-color:var(--comment-hl);}
+::highlight(nc-course-on),::highlight(nc-notebook-on),::highlight(nc-public-on){background-color:var(--comment-hl-on);}
+.note-tool-btn{display:inline-flex;align-items:center;gap:5px;margin-right:6px;}
+.note-tool-btn.hidden{display:none;}
+.nc-badge{min-width:16px;padding:0 4px;border-radius:8px;background:var(--on-soft);color:var(--on);font-size:10.5px;line-height:16px;text-align:center;}
+.note-access-badge{display:flex;align-items:center;gap:6px;margin:-6px 0 10px;font-size:12px;color:var(--ink-soft);}
+.note-access-badge.hidden{display:none;}
+.note-readonly .ql-toolbar{display:none;}
+.note-readonly .ql-container.ql-snow{border-top:1px solid #ccc;}
+.note-share-mark{display:inline-flex;color:var(--ink-soft);margin-left:2px;}
+.nc-wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr);column-gap:14px;}
+.nc-wrap > :not(.nc-rail):not(.nc-add-btn){grid-column:1;}
+.nc-wrap.nc-open:not(.nc-stack){grid-template-columns:minmax(0,1fr) 270px;}
+.nc-wrap.nc-open:not(.nc-stack) > .nc-rail{grid-column:2;grid-row:1 / span 3;align-self:start;position:sticky;top:12px;max-height:calc(100dvh - 24px);overflow-y:auto;}
+.nc-wrap.nc-stack > .nc-rail{margin-top:12px;}
+.nc-rail{box-sizing:border-box;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:10px;font-size:13px;}
+.nc-rail.hidden{display:none;}
+.nc-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.nc-title{font-weight:800;font-size:13.5px;}
+.nc-count{color:var(--ink-soft);font-size:12px;flex:1;}
+.nc-list{display:flex;flex-direction:column;gap:8px;}
+.nc-empty{color:var(--ink-soft);font-size:12.5px;line-height:1.45;}
+.nc-thread{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--paper-dim);cursor:pointer;}
+.nc-thread.active{border-color:var(--comment-hl-on);box-shadow:0 0 0 1px var(--comment-hl-on);cursor:default;}
+.nc-thread.resolved{opacity:.75;}
+.nc-quote{font-size:12px;color:var(--ink-soft);border-left:3px solid var(--comment-hl-on);padding-left:7px;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nc-orphan{font-size:11.5px;color:var(--ink-soft);font-style:italic;margin-bottom:6px;}
+.nc-c + .nc-c{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);}
+.nc-c-head{display:flex;align-items:center;gap:6px;font-size:12px;}
+.nc-c-name{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nc-c-guest{font-size:10.5px;color:var(--ink-soft);border:1px solid var(--line);border-radius:6px;padding:0 4px;}
+.nc-c-time{color:var(--ink-soft);font-size:11px;margin-left:auto;white-space:nowrap;}
+.nc-c-body{margin-top:3px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45;}
+.nc-del{border:none;background:none;color:var(--danger);padding:0 2px;font-size:12px;line-height:1;cursor:pointer;}
+.nc-del:hover,.nc-del:focus{background:none;color:var(--danger);filter:brightness(1.15);}
+.nc-resolved-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--on);font-weight:700;}
+.nc-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;}
+.nc-reply-input,.nc-new-input,.nc-name-input{width:100%;box-sizing:border-box;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);resize:vertical;}
+.nc-name-input{margin-bottom:6px;}
+.nc-new{border:1px solid var(--comment-hl-on);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:var(--paper-dim);}
+.nc-err{color:var(--danger);font-size:12px;margin-top:6px;}
+.nc-toggle{border:none;background:none;color:var(--ink-soft);font:inherit;font-size:12px;padding:0;cursor:pointer;text-decoration:underline;}
+.nc-toggle:hover,.nc-toggle:focus{background:none;color:var(--ink);}
+.nc-add-btn{position:absolute;z-index:5;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);
+  background:var(--paper);color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,.18);cursor:pointer;}
+.nc-add-btn:hover,.nc-add-btn:focus{background:var(--paper);color:var(--ink);border-color:var(--on);}
+.nc-add-btn.hidden{display:none;}
+.nc-hl-layer{position:absolute;inset:0;pointer-events:none;z-index:1;}
+.nc-hl-box{position:absolute;background:var(--comment-hl);border-radius:2px;}
+.nc-hl-box.on{background:var(--comment-hl-on);}
+/* The share dialog. */
+.ns-choices{display:flex;flex-direction:column;gap:8px;}
+.ns-choice{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;padding:12px;border:1px solid var(--line);border-radius:12px;
+  background:var(--paper);color:var(--ink);font:inherit;cursor:pointer;}
+.ns-choice:hover,.ns-choice:focus{background:var(--paper);color:var(--ink);border-color:var(--on);}
+.ns-choice-icon{display:inline-flex;color:var(--on);margin-top:1px;}
+.ns-choice-title{display:block;font-weight:800;font-size:14px;}
+.ns-choice-desc{display:block;font-size:12.5px;color:var(--ink-soft);margin-top:2px;line-height:1.4;}
+.ns-section{margin-top:16px;}
+.ns-section h3{font-size:12px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 8px;}
+.ns-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);}
+.ns-row:last-child{border-bottom:none;}
+.ns-name{flex:1;min-width:0;font-weight:700;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ns-row select{font-size:12.5px;padding:3px 6px;}
+.ns-back{display:inline-flex;align-items:center;gap:4px;margin-bottom:10px;}
+.ns-notify{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);margin-top:10px;}
+.ns-link-url{width:100%;box-sizing:border-box;font-size:12px;padding:6px 8px;margin:6px 0;}
+.ns-link-state{font-size:12px;font-weight:700;}
+.ns-link-state.on{color:var(--on);}
+.ns-link-state.off{color:var(--ink-soft);}
+.ns-link-acts{display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+.ns-err{color:var(--danger);font-size:12.5px;margin-top:8px;}
+.ns-done{color:var(--on);display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;}
+#noteShareModal{z-index:1010;}
+/* The page a public link opens: no account, no app around it. */
+#publicShareScreen{min-height:100dvh;box-sizing:border-box;padding:16px;}
+#publicShareScreen.hidden{display:none;}
+.ps-inner{max-width:1080px;margin:0 auto;}
+.ps-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.ps-top .brand-mark h1{font-size:15px;}
+.ps-title{font-family:'Noto Serif KR',serif;font-size:22px;line-height:1.3;margin:0 0 4px;overflow-wrap:anywhere;}
+.ps-meta{font-size:12.5px;color:var(--ink-soft);margin-bottom:12px;}
+#psQuill .ql-editor{min-height:120px;}
+#psQuill.ql-container.ql-snow{border:1px solid var(--line);border-radius:8px;background:var(--paper);}
+.ps-msg{color:var(--ink-soft);font-size:14px;padding:30px 0;text-align:center;}
 .modal-box{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:22px 24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;}
 .modal-box h2{font-family:'Noto Serif KR',serif;font-size:16px;margin:0 0 14px;}
 .modal-box p{font-size:13.5px;color:var(--ink);margin:0;}
@@ -5255,6 +5343,22 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
   <span id="guestBannerText"></span>
 </button>
 <!-- AUTH SCREEN -->
+<!-- What a public note link (?share=<token>) opens: the note, read only,
+     with its comments. Nothing else of the app is started for it. -->
+<div id="publicShareScreen" class="hidden">
+  <div class="ps-inner">
+    <div class="ps-top">
+      <div class="brand-mark"><div class="brand-icon brand-icon-light" style="width:22px;height:22px;"></div><div class="brand-icon brand-icon-dark" style="width:22px;height:22px;"></div><h1>Productivity Tracker</h1></div>
+      <a class="linkbtn" id="psOpenApp" href="./"></a>
+    </div>
+    <div class="card">
+      <h1 class="ps-title" id="psTitle"></h1>
+      <div class="ps-meta" id="psMeta"></div>
+      <div class="ps-msg hidden" id="psMsg"></div>
+      <div class="nc-wrap" id="psWrap"><div id="psQuill"></div><aside class="nc-rail hidden" id="psRail"></aside></div>
+    </div>
+  </div>
+</div>
 <div id="authScreen" class="hidden">
   <div class="auth-topbar">
     <div class="topbar-controls">
@@ -5927,9 +6031,10 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
         <div id="notebookList"></div>
       </div>
       <div class="card hidden" id="notebookEditorCard">
-        <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" data-title-key="tipClickToEdit"></span><span><span class="notes-layout-toggle" role="group" data-aria-key="notesLayout"><button type="button" data-layout="beside" data-title-key="notesLayoutBeside" data-aria-key="notesLayoutBeside"></button><button type="button" data-layout="under" data-title-key="notesLayoutUnder" data-aria-key="notesLayoutUnder"></button></span><button class="export-btn act-save" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
+        <h2><span id="notebookEditorTitle" style="cursor:pointer;text-decoration:underline dotted;" data-title-key="tipClickToEdit"></span><span><button type="button" class="export-btn note-tool-btn hidden" id="notebookShareBtn"><span class="nt-ico" data-icon="share"></span><span id="notebookShareBtnLabel"></span></button><button type="button" class="export-btn note-tool-btn hidden" id="notebookCommentsBtn"><span class="nt-ico" data-icon="comment"></span><span id="notebookCommentsBtnLabel"></span><span class="nc-badge hidden"></span></button><span class="notes-layout-toggle" role="group" data-aria-key="notesLayout"><button type="button" data-layout="beside" data-title-key="notesLayoutBeside" data-aria-key="notesLayoutBeside"></button><button type="button" data-layout="under" data-title-key="notesLayoutUnder" data-aria-key="notesLayoutUnder"></button></span><button class="export-btn act-save" id="saveNotebookBtn"></button> <button class="export-btn" id="closeNotebookBtn"></button></span></h2>
+        <div class="note-access-badge hidden" id="notebookAccessBadge"></div>
         <div class="notes-panel hidden" id="notebookTitleEditPanel"></div>
-        <div id="notebookQuillContainer" style="background:var(--paper);border-radius:8px;"></div>
+        <div class="nc-wrap" id="notebookCommentWrap"><div id="notebookQuillContainer" style="background:var(--paper);border-radius:8px;"></div><aside class="nc-rail hidden" id="notebookCommentRail"></aside></div>
         <div class="note-pagebar" id="notebookPageBar" style="display:none;"></div>
         <div class="note-foot"><button class="linkbtn" id="notebookVersionHistoryToggle"></button><div class="saved-row"><div class="hint saved-info" id="notebookLastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutoFormatTip"><input type="checkbox" class="note-autoformat-toggle"><span id="notebookAutoFormatLabel"></span></label><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="notebookAutosaveLabel"></span></label></div></div>
         <div class="notes-panel hidden" id="notebookVersionHistoryPanel"></div>
@@ -6097,9 +6202,10 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       <div id="lectureList"></div>
     </div>
     <div class="card hidden" id="editorCard">
-      <h2><span id="editorLectureTitle"></span><span><span class="notes-layout-toggle" role="group" data-aria-key="notesLayout"><button type="button" data-layout="beside" data-title-key="notesLayoutBeside" data-aria-key="notesLayoutBeside"></button><button type="button" data-layout="under" data-title-key="notesLayoutUnder" data-aria-key="notesLayoutUnder"></button></span><button class="export-btn act-save" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
+      <h2><span id="editorLectureTitle"></span><span><button type="button" class="export-btn note-tool-btn hidden" id="noteShareBtn"><span class="nt-ico" data-icon="share"></span><span id="noteShareBtnLabel"></span></button><button type="button" class="export-btn note-tool-btn hidden" id="noteCommentsBtn"><span class="nt-ico" data-icon="comment"></span><span id="noteCommentsBtnLabel"></span><span class="nc-badge hidden"></span></button><span class="notes-layout-toggle" role="group" data-aria-key="notesLayout"><button type="button" data-layout="beside" data-title-key="notesLayoutBeside" data-aria-key="notesLayoutBeside"></button><button type="button" data-layout="under" data-title-key="notesLayoutUnder" data-aria-key="notesLayoutUnder"></button></span><button class="export-btn act-save" id="saveNoteBtn"></button> <button class="export-btn" id="closeNoteBtn"></button></span></h2>
+      <div class="note-access-badge hidden" id="noteAccessBadge"></div>
       <div class="notes-panel hidden" id="editorTitleEditPanel"></div>
-      <div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div>
+      <div class="nc-wrap" id="noteCommentWrap"><div id="quillContainer" style="background:var(--paper);border-radius:8px;"></div><aside class="nc-rail hidden" id="noteCommentRail"></aside></div>
       <div class="note-pagebar" id="notePageBar" style="display:none;"></div>
       <div class="note-foot"><button class="linkbtn" id="versionHistoryToggle"></button><div class="saved-row"><div class="hint saved-info" id="lastSavedInfo"></div><label class="note-autosave" data-title-key="noteAutoFormatTip"><input type="checkbox" class="note-autoformat-toggle"><span id="noteAutoFormatLabel"></span></label><label class="note-autosave" data-title-key="noteAutosaveTip"><input type="checkbox" class="note-autosave-toggle"><span id="noteAutosaveLabel"></span></label></div></div>
       <div class="notes-panel hidden" id="versionHistoryPanel"></div>
@@ -6857,6 +6963,17 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
       <button class="icon-btn close-x" id="shareQvClose" data-title-key="closeNoteBtn">✕</button>
     </h2>
     <div id="shareQvBody"></div>
+  </div>
+</div>
+<!-- Sharing a note: live, as their own copy, or a public link. Built by
+     renderNoteShareModal. -->
+<div class="modal-overlay hidden phone-page" id="noteShareModal" role="dialog" aria-modal="true" aria-labelledby="noteShareTitle">
+  <div class="modal-box" style="max-width:480px;">
+    <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <span id="noteShareTitle" style="overflow-wrap:anywhere;"></span>
+      <button class="icon-btn close-x" id="noteShareClose" data-title-key="closeNoteBtn">✕</button>
+    </h2>
+    <div id="noteShareBody"></div>
   </div>
 </div>
 <div class="modal-overlay hidden" id="newVacationModal">
@@ -13370,6 +13487,7 @@ const TOPIK_TEST = new Date(TOPIK_CAL_EVENTS[1].date + 'T' + TOPIK_CAL_EVENTS[1]
 /* ---------- I18N ---------- */
 const I18N = {
   en: {
+    nsShareBtn:'Share', nsMenuShare:'Share note', nsShareTitle:'Share "{title}"', nsHowAsk:'How do you want to share it?', nsLive:'Live', nsLiveDesc:'They see this same note. Edits show up for both of you.', nsCopy:'As their own copy', nsCopyDesc:'A separate copy goes into their Notebook. It never syncs back.', nsManageAccess:'Manage access', nsBack:'Back', nsAddPeople:'Add people', nsPeopleWithAccess:'People with access', nsNoPeople:'Nobody yet.', nsEveryoneHasIt:'Everyone in your circle already has access.', nsNoCircle:'Link someone in Account settings first to share with them.', nsRoleLabel:'Role', nsRoleViewer:'Viewer', nsRoleCommenter:'Commenter', nsRoleEditor:'Editor', nsRemove:'Remove', nsRemoveConfirm:'Remove {name}\'s access to this note?', nsNotify:'Tell them in a message', nsSendCopy:'Send copy', nsSent:'Sent', nsFailed:'Couldn\'t do that. Check your connection and try again.', nsNotReady:'Sharing is not set up on the server yet.', nsPublicLink:'Public link', nsPublicLinkHint:'Anyone with the link can open this note. No account needed.', nsLinkCreate:'Create link', nsLinkCopy:'Copy link', nsLinkCopied:'Link copied', nsLinkOn:'On', nsLinkOff:'Off', nsLinkTurnOff:'Turn off', nsLinkTurnOn:'Turn on', nsLinkOffHint:'Nobody can open the link until you turn it on again.', nsLinkRegenerate:'New link', nsLinkRegenerateConfirm:'Make a new link? The old one stops working right away.', nsAccessViewer:'Shared by {name}. You can view it.', nsAccessCommenter:'Shared by {name}. You can comment.', nsAccessEditor:'Shared by {name}. You can edit.', nsSharedGroup:'Shared with you', nsSharedByMe:'Shared', nsCardLive:'Shared with you live', nsCardCopy:'A copy is in your Notebook', ncCommentsBtn:'Comments', ncComment:'Comment', ncAddComment:'Add a comment', ncReply:'Reply', ncResolve:'Resolve', ncReopen:'Reopen', ncResolved:'Resolved', ncShowResolved:'Show resolved ({n})', ncHideResolved:'Hide resolved', ncEmpty:'No comments yet. Select some text and press Comment.', ncEmptyView:'No comments yet.', ncOrphan:'The text this was on has changed.', ncDeleteConfirm:'Delete this comment?', ncDeleteThreadConfirm:'Delete this comment and its replies?', ncGuest:'guest', ncYourName:'Your name', ncNameNeeded:'Add your name to comment.', ncRateLimited:'Too many comments on this link right now. Try again in a few minutes.', ncViewOnly:'You can read the comments but not add one.', ncCount:'{n} comments', ncCountOne:'1 comment', psOpenApp:'Open Productivity Tracker', psNotFound:'This link does not work. It may have been turned off or replaced.', psSharedBy:'Shared by {name}', psUpdated:'Updated {time}', psViewOnly:'View only', psCanComment:'You can comment',
     noteSub:'Subscript', noteSup:'Superscript', noteStyleBtn:'Text style', noteStyleNormal:'Normal text', noteStyleH1:'Heading', noteStyleH2:'Subheading', noteStyleH3:'Small heading', noteTocBtn:'Contents', noteTocEmpty:'No headings yet. Start a line with # and a space for a heading, ## for a subheading, ### for a small one.', noteTocInsert:'Write this list into the note', noteSymBtn:'Symbols', noteSymTabArrows:'Arrows', noteSymTabMath:'Math', noteSymTabGreek:'Greek', noteSymTabSets:'Sets and logic', noteSymTabScripts:'Super and sub', noteSymTabOther:'Other', noteShorthandHint:'Typing shortcuts: ^^ up arrow, vv down arrow, -> arrow, x^2 and H_2O for scripts, e^{ix} for longer ones. Undo puts back what you typed.', noteEqBtn:'Equation', noteEqTitle:'Equation', noteEqTabStruct:'Structures', noteEqInsert:'Insert', noteEqUpdate:'Update', noteEqRemove:'Remove', noteEqPlaceholder:'Tap the keys above or type LaTeX, for example \\frac{a}{b}', noteEqEmpty:'The preview shows here.', noteEqLoading:'Loading the equation editor...', noteEqFailed:"Couldn't load the equation editor. Check your connection and try again.",
     signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
     signOut:'Sign out',
@@ -13497,6 +13615,7 @@ const I18N = {
     authEnterEmailPassword:'Enter your email and password.', authInvalidLogin:'Wrong email, name or password.', authEmailNotConfirmed:'Confirm your email first. The link is in the email we sent you.', authAlreadyRegistered:'An account with this email already exists. Sign in instead.', authRateLimited:'Too many attempts. Wait a minute and try again.', authEmailInvalid:'That email address does not look right.', authSamePassword:'Pick a password different from your current one.', authNetworkError:'Could not reach the server. Check your connection and try again.', authSignupsClosed:'Sign-ups are closed right now.', authLinkExpired:'That link has expired or was already used. Ask for a new one.', guestUnavailable:'Not available in guest mode.', tipDelete:'Delete', tipRemove:'Remove', tipMoveUp:'Move up', tipMoveDown:'Move down', lblSubcategory:'Sub-category', noteMoveTo:'Move to a position', noteMovePick:'Pick a position', noteMoveTop:'To top', noteMoveBottom:'To bottom', noteMoveDone:'Done', noteStatsShow:'Word count', noteStatsShowHint:'Show words and characters', noteStatsHide:'press to hide', noteDragTip:'Drag to move', noteSubAdd:'Add a sub-category', noteSubNewPh:'Sub-category name', tipDarkMode:'Toggle dark mode', tipMyNotes:'My notes', tipClickToEdit:'Click to edit', tipJumpToDate:'Jump to date', tipPagesRead:'Pages read', tipJobBoardAiUpdate:'Walks each of today\'s postings individually and saves full descriptions to a local file', notesLinkShortcutPrompt:'Shortcut name:', saveFailedTryAgain:'Could not save. Try again.', termsLink:'Terms of Use', installGuideTitle:'Get the app', installGuideIntro:'Add Productivity Tracker to your home screen. It opens full screen like an app and can send you notifications.', installInAppNote:'This page is open inside another app, which cannot add it to your home screen. Open it in Safari or Chrome first (look for "Open in browser" in its ··· menu).', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'Install the app', installIosStep1:'Tap the Share button {icon} at the bottom of Safari. On newer iPhones it is inside the ··· menu.', installIosOtherStep1:'Tap the Share button {icon} in your browser, next to the address bar or in its menu.', installIosStep2:'Tap "View More" if you see it, then "Add to Home Screen".', installIosStep3:'Tap "Add". The app is now on your home screen.', installAndroidStep1:'Tap the menu {icon} at the top right of Chrome.', installAndroidStep2:'Tap "Add to home screen" or "Install app".', installAndroidStep3:'Tap "Install". The app is now on your home screen.', installGuideToast:'You can find this guide in Settings any time.', settingsInstallGuideBtn:'Get the app on your phone'
   },
   ko: {
+    nsShareBtn:'공유', nsMenuShare:'노트 공유', nsShareTitle:'"{title}" 공유', nsHowAsk:'어떻게 공유할까요?', nsLive:'실시간', nsLiveDesc:'상대방이 같은 노트를 봅니다. 수정한 내용이 두 사람 모두에게 보입니다.', nsCopy:'상대방의 사본으로', nsCopyDesc:'상대방의 노트북에 별도의 사본이 들어갑니다. 다시 동기화되지 않습니다.', nsManageAccess:'액세스 관리', nsBack:'뒤로', nsAddPeople:'사람 추가', nsPeopleWithAccess:'액세스할 수 있는 사람', nsNoPeople:'아직 아무도 없습니다.', nsEveryoneHasIt:'서클의 모든 사람이 이미 액세스할 수 있습니다.', nsNoCircle:'공유하려면 먼저 계정 설정에서 사람을 연결하세요.', nsRoleLabel:'권한', nsRoleViewer:'보기 가능', nsRoleCommenter:'댓글 가능', nsRoleEditor:'편집 가능', nsRemove:'삭제', nsRemoveConfirm:'{name}님의 이 노트 액세스 권한을 삭제할까요?', nsNotify:'메시지로 알리기', nsSendCopy:'사본 보내기', nsSent:'보냄', nsFailed:'처리하지 못했습니다. 연결을 확인하고 다시 시도하세요.', nsNotReady:'서버에 아직 공유 기능이 설정되지 않았습니다.', nsPublicLink:'공개 링크', nsPublicLinkHint:'링크가 있으면 누구나 계정 없이 이 노트를 열 수 있습니다.', nsLinkCreate:'링크 만들기', nsLinkCopy:'링크 복사', nsLinkCopied:'링크를 복사했습니다', nsLinkOn:'켜짐', nsLinkOff:'꺼짐', nsLinkTurnOff:'끄기', nsLinkTurnOn:'켜기', nsLinkOffHint:'다시 켤 때까지 아무도 링크를 열 수 없습니다.', nsLinkRegenerate:'새 링크', nsLinkRegenerateConfirm:'새 링크를 만들까요? 이전 링크는 바로 작동하지 않게 됩니다.', nsAccessViewer:'{name}님이 공유했습니다. 볼 수 있습니다.', nsAccessCommenter:'{name}님이 공유했습니다. 댓글을 달 수 있습니다.', nsAccessEditor:'{name}님이 공유했습니다. 편집할 수 있습니다.', nsSharedGroup:'나와 공유됨', nsSharedByMe:'공유됨', nsCardLive:'실시간으로 공유됨', nsCardCopy:'사본이 내 노트북에 있습니다', ncCommentsBtn:'댓글', ncComment:'댓글 달기', ncAddComment:'댓글 추가', ncReply:'답글', ncResolve:'해결', ncReopen:'다시 열기', ncResolved:'해결됨', ncShowResolved:'해결된 댓글 보기 ({n})', ncHideResolved:'해결된 댓글 숨기기', ncEmpty:'아직 댓글이 없습니다. 텍스트를 선택하고 댓글 달기를 누르세요.', ncEmptyView:'아직 댓글이 없습니다.', ncOrphan:'이 댓글이 달린 텍스트가 바뀌었습니다.', ncDeleteConfirm:'이 댓글을 삭제할까요?', ncDeleteThreadConfirm:'이 댓글과 답글을 모두 삭제할까요?', ncGuest:'게스트', ncYourName:'이름', ncNameNeeded:'댓글을 달려면 이름을 입력하세요.', ncRateLimited:'지금 이 링크에 댓글이 너무 많습니다. 몇 분 후에 다시 시도하세요.', ncViewOnly:'댓글을 읽을 수만 있습니다.', ncCount:'댓글 {n}개', psOpenApp:'Productivity Tracker 열기', psNotFound:'이 링크는 작동하지 않습니다. 꺼졌거나 새 링크로 바뀌었을 수 있습니다.', psSharedBy:'{name}님이 공유함', psUpdated:'{time}에 업데이트됨', psViewOnly:'보기 전용', psCanComment:'댓글을 달 수 있습니다',
     noteSub:'아래 첨자', noteSup:'위 첨자', noteStyleBtn:'글자 스타일', noteStyleNormal:'본문', noteStyleH1:'제목', noteStyleH2:'부제목', noteStyleH3:'소제목', noteTocBtn:'목차', noteTocEmpty:'아직 제목이 없습니다. 줄 처음에 #와 띄어쓰기를 치면 제목, ##는 부제목, ###는 소제목이 됩니다.', noteTocInsert:'이 목록을 노트에 쓰기', noteSymBtn:'기호', noteSymTabArrows:'화살표', noteSymTabMath:'수학', noteSymTabGreek:'그리스 문자', noteSymTabSets:'집합과 논리', noteSymTabScripts:'위아래 첨자', noteSymTabOther:'기타', noteShorthandHint:'단축 입력: ^^ 위쪽 화살표, vv 아래쪽 화살표, -> 화살표, x^2와 H_2O는 첨자, 긴 것은 e^{ix}. 되돌리기를 누르면 입력한 그대로 돌아갑니다.', noteEqBtn:'수식', noteEqTitle:'수식', noteEqTabStruct:'구조', noteEqInsert:'넣기', noteEqUpdate:'수정', noteEqRemove:'삭제', noteEqPlaceholder:'위의 키를 누르거나 LaTeX로 입력하세요. 예: \\frac{a}{b}', noteEqEmpty:'여기에 미리 보기가 표시됩니다.', noteEqLoading:'수식 편집기를 불러오는 중...', noteEqFailed:'수식 편집기를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.',
     signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
     signOut:'로그아웃',
@@ -13624,6 +13743,7 @@ const I18N = {
     authEnterEmailPassword:'이메일과 비밀번호를 입력하세요.', authInvalidLogin:'이메일, 이름 또는 비밀번호가 올바르지 않습니다.', authEmailNotConfirmed:'먼저 이메일 인증을 완료하세요. 보내 드린 이메일에 링크가 있습니다.', authAlreadyRegistered:'이 이메일로 만든 계정이 이미 있습니다. 로그인하세요.', authRateLimited:'시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.', authEmailInvalid:'이메일 주소가 올바르지 않습니다.', authSamePassword:'현재 비밀번호와 다른 비밀번호를 선택하세요.', authNetworkError:'서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.', authSignupsClosed:'지금은 가입을 받지 않습니다.', authLinkExpired:'링크가 만료되었거나 이미 사용되었습니다. 새 링크를 요청하세요.', guestUnavailable:'게스트 모드에서는 사용할 수 없습니다.', tipDelete:'삭제', tipRemove:'제거', tipMoveUp:'위로 이동', tipMoveDown:'아래로 이동', lblSubcategory:'하위 분류', noteMoveTo:'원하는 위치로 이동', noteMovePick:'위치를 고르세요', noteMoveTop:'맨 위로', noteMoveBottom:'맨 아래로', noteMoveDone:'완료', noteStatsShow:'글자 수', noteStatsShowHint:'단어와 글자 수 보기', noteStatsHide:'누르면 숨겨집니다', noteDragTip:'끌어서 옮기기', noteSubAdd:'하위 분류 추가', noteSubNewPh:'하위 분류 이름', tipDarkMode:'다크 모드 전환', tipMyNotes:'내 노트', tipClickToEdit:'클릭하여 수정', tipJumpToDate:'날짜로 이동', tipPagesRead:'읽은 페이지', tipJobBoardAiUpdate:'오늘 올라온 공고를 하나씩 열어 전체 설명을 기기의 파일로 저장합니다', notesLinkShortcutPrompt:'단축어 이름:', saveFailedTryAgain:'저장하지 못했습니다. 다시 시도하세요.', termsLink:'이용약관', installGuideTitle:'앱으로 사용하기', installGuideIntro:'Productivity Tracker를 홈 화면에 추가하세요. 앱처럼 전체 화면으로 열리고 알림도 받을 수 있어요.', installInAppNote:'지금 다른 앱 안에서 열려 있어서 홈 화면에 추가할 수 없어요. 먼저 Safari나 Chrome에서 여세요(··· 메뉴의 "다른 브라우저로 열기").', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'앱 설치', installIosStep1:'Safari 하단의 공유 버튼 {icon}을 누르세요. 최신 iPhone에서는 ··· 메뉴 안에 있어요.', installIosOtherStep1:'브라우저의 공유 버튼 {icon}을 누르세요. 주소창 옆이나 메뉴 안에 있어요.', installIosStep2:'"더 보기"가 보이면 누른 다음 "홈 화면에 추가"를 누르세요.', installIosStep3:'"추가"를 누르면 홈 화면에 앱이 생겨요.', installAndroidStep1:'Chrome 오른쪽 위의 메뉴 {icon}를 누르세요.', installAndroidStep2:'"홈 화면에 추가" 또는 "앱 설치"를 누르세요.', installAndroidStep3:'"설치"를 누르면 홈 화면에 앱이 생겨요.', installGuideToast:'이 안내는 언제든 설정에서 다시 볼 수 있어요.', settingsInstallGuideBtn:'휴대폰에 앱 추가하기'
   },
   vi: {
+    nsShareBtn:'Chia sẻ', nsMenuShare:'Chia sẻ ghi chú', nsShareTitle:'Chia sẻ "{title}"', nsHowAsk:'Bạn muốn chia sẻ thế nào?', nsLive:'Trực tiếp', nsLiveDesc:'Họ xem chính ghi chú này. Chỉnh sửa hiện ra cho cả hai người.', nsCopy:'Thành bản sao của họ', nsCopyDesc:'Một bản sao riêng được thêm vào Sổ tay của họ. Nó không bao giờ đồng bộ ngược lại.', nsManageAccess:'Quản lý quyền truy cập', nsBack:'Quay lại', nsAddPeople:'Thêm người', nsPeopleWithAccess:'Người có quyền truy cập', nsNoPeople:'Chưa có ai.', nsEveryoneHasIt:'Mọi người trong nhóm của bạn đã có quyền truy cập.', nsNoCircle:'Hãy liên kết với ai đó trong Cài đặt tài khoản trước để chia sẻ với họ.', nsRoleLabel:'Vai trò', nsRoleViewer:'Người xem', nsRoleCommenter:'Người bình luận', nsRoleEditor:'Người chỉnh sửa', nsRemove:'Gỡ', nsRemoveConfirm:'Gỡ quyền truy cập ghi chú này của {name}?', nsNotify:'Báo cho họ bằng tin nhắn', nsSendCopy:'Gửi bản sao', nsSent:'Đã gửi', nsFailed:'Không thực hiện được. Hãy kiểm tra kết nối rồi thử lại.', nsNotReady:'Máy chủ chưa được thiết lập để chia sẻ.', nsPublicLink:'Liên kết công khai', nsPublicLinkHint:'Bất kỳ ai có liên kết đều mở được ghi chú này. Không cần tài khoản.', nsLinkCreate:'Tạo liên kết', nsLinkCopy:'Sao chép liên kết', nsLinkCopied:'Đã sao chép liên kết', nsLinkOn:'Đang bật', nsLinkOff:'Đang tắt', nsLinkTurnOff:'Tắt', nsLinkTurnOn:'Bật', nsLinkOffHint:'Không ai mở được liên kết cho đến khi bạn bật lại.', nsLinkRegenerate:'Liên kết mới', nsLinkRegenerateConfirm:'Tạo liên kết mới? Liên kết cũ sẽ ngừng hoạt động ngay.', nsAccessViewer:'{name} đã chia sẻ. Bạn có thể xem.', nsAccessCommenter:'{name} đã chia sẻ. Bạn có thể bình luận.', nsAccessEditor:'{name} đã chia sẻ. Bạn có thể chỉnh sửa.', nsSharedGroup:'Được chia sẻ với bạn', nsSharedByMe:'Đã chia sẻ', nsCardLive:'Được chia sẻ trực tiếp với bạn', nsCardCopy:'Bản sao đã có trong Sổ tay của bạn', ncCommentsBtn:'Bình luận', ncComment:'Bình luận', ncAddComment:'Thêm bình luận', ncReply:'Trả lời', ncResolve:'Giải quyết', ncReopen:'Mở lại', ncResolved:'Đã giải quyết', ncShowResolved:'Hiện bình luận đã giải quyết ({n})', ncHideResolved:'Ẩn bình luận đã giải quyết', ncEmpty:'Chưa có bình luận. Chọn một đoạn chữ rồi nhấn Bình luận.', ncEmptyView:'Chưa có bình luận.', ncOrphan:'Đoạn chữ của bình luận này đã thay đổi.', ncDeleteConfirm:'Xóa bình luận này?', ncDeleteThreadConfirm:'Xóa bình luận này và các câu trả lời của nó?', ncGuest:'khách', ncYourName:'Tên của bạn', ncNameNeeded:'Hãy nhập tên để bình luận.', ncRateLimited:'Liên kết này đang có quá nhiều bình luận. Hãy thử lại sau vài phút.', ncViewOnly:'Bạn chỉ có thể đọc bình luận.', ncCount:'{n} bình luận', psOpenApp:'Mở Productivity Tracker', psNotFound:'Liên kết này không hoạt động. Có thể nó đã bị tắt hoặc được thay bằng liên kết khác.', psSharedBy:'{name} đã chia sẻ', psUpdated:'Cập nhật {time}', psViewOnly:'Chỉ xem', psCanComment:'Bạn có thể bình luận',
     noteSub:'Chỉ số dưới', noteSup:'Chỉ số trên', noteStyleBtn:'Kiểu chữ', noteStyleNormal:'Văn bản thường', noteStyleH1:'Tiêu đề', noteStyleH2:'Tiêu đề phụ', noteStyleH3:'Tiêu đề nhỏ', noteTocBtn:'Mục lục', noteTocEmpty:'Chưa có tiêu đề. Gõ # và dấu cách ở đầu dòng để tạo tiêu đề, ## cho tiêu đề phụ, ### cho tiêu đề nhỏ.', noteTocInsert:'Ghi danh sách này vào ghi chú', noteSymBtn:'Ký hiệu', noteSymTabArrows:'Mũi tên', noteSymTabMath:'Toán', noteSymTabGreek:'Chữ Hy Lạp', noteSymTabSets:'Tập hợp và logic', noteSymTabScripts:'Chỉ số trên, dưới', noteSymTabOther:'Khác', noteShorthandHint:'Gõ tắt: ^^ mũi tên lên, vv mũi tên xuống, -> mũi tên, x^2 và H_2O cho chỉ số, e^{ix} cho chỉ số dài. Hoàn tác sẽ trả lại đúng những gì bạn gõ.', noteEqBtn:'Công thức', noteEqTitle:'Công thức', noteEqTabStruct:'Cấu trúc', noteEqInsert:'Chèn', noteEqUpdate:'Cập nhật', noteEqRemove:'Xóa', noteEqPlaceholder:'Bấm các phím ở trên hoặc gõ LaTeX, ví dụ \\frac{a}{b}', noteEqEmpty:'Bản xem trước hiển thị ở đây.', noteEqLoading:'Đang tải trình soạn công thức...', noteEqFailed:'Không tải được trình soạn công thức. Hãy kiểm tra kết nối rồi thử lại.',
     signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
     signOut:'Đăng xuất',
@@ -13753,6 +13873,7 @@ const I18N = {
   }
 };
 const STATIC_MAP = {
+  noteShareBtnLabel:'nsShareBtn', notebookShareBtnLabel:'nsShareBtn', noteCommentsBtnLabel:'ncCommentsBtn', notebookCommentsBtnLabel:'ncCommentsBtn', psOpenApp:'psOpenApp',
   tabSignIn:'signIn', tabSignUp:'signUp', lblDisplayName:'yourName', lblEmail:'email', lblPassword:'password', lblConfirmPassword:'lblConfirmPassword',
   authAgeNote:'authAgeNote', authPrivacyLink:'privacyPolicyLink', settingsPrivacyLink:'privacyPolicyLink', authTermsLink:'termsLink', settingsTermsLink:'termsLink',
   installGuideTitle:'installGuideTitle', installGuideIntro:'installGuideIntro', installInAppNote:'installInAppNote', installOsIos:'installOsIos', installOsAndroid:'installOsAndroid', installNowBtn:'installNowBtn', installGuideToastText:'installGuideToast', settingsInstallGuideBtn:'settingsInstallGuideBtn',
@@ -14540,6 +14661,10 @@ const ICON_PATHS = {
      top with the note below. Drawn as the page, so the two read as a pair. */
   layoutBeside: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><polyline points="10 4 10 12 3 12"></polyline>',
   layoutUnder:  '<rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line>',
+  /* Three joined dots: handing something on to other people. */
+  share:   '<circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line>',
+  /* A speech bubble: a comment on a note, beside the chat's own send. */
+  comment: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>',
   pipette: '<path d="m2 22 1-1h3l9-9"></path><path d="M3 21v-3l9-9"></path><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"></path>'
 };
 const ICON = {
@@ -14595,7 +14720,10 @@ const ICON = {
   pipette: function(sz){ return svgIcon(ICON_PATHS.pipette, sz); },
   users:   function(sz){ return svgIcon(ICON_PATHS.users, sz); },
   layoutBeside: function(sz){ return svgIcon(ICON_PATHS.layoutBeside, sz); },
-  layoutUnder:  function(sz){ return svgIcon(ICON_PATHS.layoutUnder, sz); }
+  layoutUnder:  function(sz){ return svgIcon(ICON_PATHS.layoutUnder, sz); },
+  share:   function(sz){ return svgIcon(ICON_PATHS.share, sz); },
+  lock:    function(sz){ return svgIcon(ICON_PATHS.lock, sz); },
+  comment: function(sz){ return svgIcon(ICON_PATHS.comment, sz); }
 };
 // ---- Every list's remembered ordering ----
 // UP HERE, not beside the control it belongs to, because the lists initialise
@@ -17543,6 +17671,7 @@ function closeOnBackdrop(overlay, close){
   });
 }
 const MODAL_CLOSE_BTN = {
+  noteShareModal: 'noteShareClose',
   shareQuickViewModal: 'shareQvClose',
   shareSheetModal: 'shareSheetClose',
   // First: it can be open ON TOP of Account settings, and Escape closes the
@@ -22017,7 +22146,9 @@ function openShareMenu(key, x, y){
   m.id = 'shareCtxMenu';
   m.className = 'cm-menu share-menu';
   m.setAttribute('role', 'menu');
-  m.innerHTML = `<div class="cm-menu-acts">${messageMenuAct('send', ICON.send(15), t('shareSendAsMessage'))}${messageMenuAct('copy', ICON.copy(15), t('shareCopyText'))}</div>`;
+  // A note of your own can also be shared as a note (live, a copy, a link).
+  const noteShare = noteShareKeyTarget(key) ? messageMenuAct('noteshare', ICON.share(15), t('nsMenuShare')) : '';
+  m.innerHTML = `<div class="cm-menu-acts">${noteShare}${messageMenuAct('send', ICON.send(15), t('shareSendAsMessage'))}${messageMenuAct('copy', ICON.copy(15), t('shareCopyText'))}</div>`;
   document.body.appendChild(m);
   const r = m.getBoundingClientRect();
   m.style.left = Math.max(8, Math.min(x, window.innerWidth - r.width - 8)) + 'px';
@@ -22026,7 +22157,8 @@ function openShareMenu(key, x, y){
     const b = e.target.closest('[data-act]');
     if(!b) return;
     closeShareMenu();
-    if(b.dataset.act === 'send') openShareFor(key);
+    if(b.dataset.act === 'noteshare'){ const tg = noteShareKeyTarget(key); if(tg) openNoteShareModal(tg.kind, tg.note); }
+    else if(b.dataset.act === 'send') openShareFor(key);
     else shareCopyDraft(shareDraftFor(key));
   });
   const first = m.querySelector('[data-act]');
@@ -27248,6 +27380,9 @@ async function loadAllData(){
     courses: supabaseClient.from('courses').select('*').order('created_at', {ascending:false}),
     course_notes: supabaseClient.from('course_notes').select(NOTE_LIST_SELECT.course_notes).order('sort_order', {ascending:true}).order('created_at', {ascending:true}),
     notebook_notes: supabaseClient.from('notebook_notes').select(NOTE_LIST_SELECT.notebook_notes).order('sort_order', {ascending:true}).order('created_at', {ascending:true}),
+    // Who a note is shared with, both ways (note_sharing_migration.sql).
+    // Before that migration the read errors and nothing is shared.
+    note_shares: (currentUser && !guestMode) ? supabaseClient.from('note_shares').select('id,note_table,note_id,owner_id,grantee_id,role,created_at') : null,
     todos: supabaseClient.from('todos').select('*').order('created_at', {ascending:true}),
     grammar_notes: supabaseClient.from('grammar_notes').select('*').order('created_at', {ascending:true}),
     grammar_review_overrides: supabaseClient.from('grammar_review_overrides').select('*'),
@@ -27346,10 +27481,12 @@ async function loadAllData(){
     if(!allCourses[c.user_id]) allCourses[c.user_id] = [];
     allCourses[c.user_id].push(c);
   });
+  const shareRes = __rows.note_shares ? await __rows.note_shares : null;
+  noteSharesSet(shareRes && shareRes.data, !!(shareRes && !shareRes.error));
   const { data: noteRows } = await __rows.course_notes;
   allNotes = {};
   (noteRows||[]).forEach(n=>{
-    const key = n.course_id || (n.header && n.header.trim()) || '__none__';
+    const key = courseNoteGroupKey(n);
     if(!allNotes[key]) allNotes[key] = [];
     allNotes[key].push(n);
   });
@@ -47704,6 +47841,7 @@ async function deleteCourse(courseId){
     selectedLectureId = null;
     document.getElementById('editorCard').classList.add('hidden');
     teardownNoteLiveChannel('course-notes');
+    noteSharingClosed('course');
   }
   if(selectedNotesCourse === courseId) selectedNotesCourse = null;
   renderCourses();
@@ -48577,6 +48715,7 @@ async function deleteNote(noteId, groupKey){
     selectedLectureId = null;
     document.getElementById('editorCard').classList.add('hidden');
     teardownNoteLiveChannel('course-notes');
+    noteSharingClosed('course');
   }
   renderLectureList();
 }
@@ -49038,7 +49177,7 @@ function noteRowEl(kind, groupKey, n, idx, count, placing, o){
         ${slot}
         <span class="lecture-title-btn" data-id="${n.id}" data-group="${g}">
           <span class="author-dot" style="background:${colorForNote(n)}" title="${nameFor(n.user_id)}"></span>
-          ${escapeHtml(n.lecture_title)}
+          ${escapeHtml(n.lecture_title)}${noteShareMarkHtml(kind, n)}
         </span>
         <span class="lecture-actions">
           ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${g}" title="${escapeHtml(t('editBtn'))}">${ICON.pencil()}</button>` : ''}
@@ -49525,9 +49664,9 @@ function renderLectureList(){
   groupKeys.forEach(groupKey=>{
     let notes = (allNotes[groupKey]||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
     if(!(groupKey in courseTitleFor)){
-      notes = notes.filter(n => showIds.includes(n.user_id));
+      notes = notes.filter(n => noteShownFor(showIds, 'course', n));
     }
-    const groupLabel = groupKey === '__none__' ? t('generalNotes') : (courseTitleFor[groupKey] || groupKey);
+    const groupLabel = groupKey === '__none__' ? t('generalNotes') : groupKey === NOTE_SHARED_GROUP ? t('nsSharedGroup') : (courseTitleFor[groupKey] || groupKey);
     const isExpanded = expandedNoteGroups.has(groupKey);
 
     const { wrap, header } = noteGroupEl('course', groupKey, groupLabel, notes.length, isExpanded);
@@ -53115,6 +53254,7 @@ let noteRealtimeSubscribed = false;
 function subscribeNoteRealtimeInserts(){
   if(noteRealtimeSubscribed || !currentUser) return;
   noteRealtimeSubscribed = true;
+  subscribeNoteShareRealtime();
   // Removes a note id from every group bucket (an UPDATE can move a note
   // between groups when its header changes, and a DELETE payload carries
   // only the id -- the group it lived in has to be searched for either way).
@@ -53131,6 +53271,7 @@ function subscribeNoteRealtimeInserts(){
           selectedNotebookNoteId = null;
           document.getElementById('notebookEditorCard').classList.add('hidden');
           teardownNoteLiveChannel('notebook');
+          noteSharingClosed('notebook');
         }
         if(activeTab === 'study') renderNotebookList();
         return;
@@ -53169,13 +53310,14 @@ function subscribeNoteRealtimeInserts(){
           selectedLectureId = null;
           document.getElementById('editorCard').classList.add('hidden');
           teardownNoteLiveChannel('course-notes');
+          noteSharingClosed('course');
         }
         if(activeTab === 'yonsei') renderLectureList();
         return;
       }
       const row = payload.new;
       if(row.user_id === currentUser.id && payload.eventType === 'INSERT') return;
-      const groupKey = row.course_id || (row.header && row.header.trim()) || '__none__';
+      const groupKey = courseNoteGroupKey(row);
       dropFromGroups(allNotes, row.id);
       if(!allNotes[groupKey]) allNotes[groupKey] = [];
       allNotes[groupKey].push(row);
@@ -53344,7 +53486,9 @@ function ensureQuillInitialized(){
   enableTypingShortcuts(quillEditor);
   enableNoteLinks(quillEditor);
   quillEditor.on('text-change', (delta, oldDelta, source)=>{
-    if(source === 'user'){
+    // A note shared with you to view or comment on is read only: what loads
+    // into it is neither an edit to save nor one to send to the others.
+    if(source === 'user' && !noteEditorReadOnly('course')){
       editorDirty = true;
       courseNoteAutosave.edited();
       const note = selectedLectureId ? Object.values(allNotes).flat().find(n=>n.id===selectedLectureId) : null;
@@ -53444,6 +53588,7 @@ function openLecture(noteId, groupKey){
   ensureNoteLiveChannel('course-notes', noteId, (delta)=>{
     if(quillEditor) quillEditor.updateContents(delta, 'silent');
   });
+  noteSharingOpened('course');
 }
 const courseNoteAutosave = makeNoteAutosaver({
   table: 'course_notes', statusId: 'lastSavedInfo',
@@ -53466,6 +53611,7 @@ document.getElementById('closeNoteBtn').addEventListener('click', ()=>{
   document.getElementById('editorCard').classList.add('hidden');
   document.getElementById('versionHistoryPanel').classList.add('hidden');
   teardownNoteLiveChannel('course-notes');
+  noteSharingClosed('course');
   renderLectureList();
 });
 
@@ -53538,6 +53684,7 @@ async function deleteNotebookNote(noteId, groupKey){
     selectedNotebookNoteId = null;
     document.getElementById('notebookEditorCard').classList.add('hidden');
     teardownNoteLiveChannel('notebook');
+    noteSharingClosed('notebook');
   }
   renderNotebookList();
 }
@@ -53552,7 +53699,7 @@ function renderNotebookList(){
 
   const showIds = personFilterShowIds('notebookPersonFilter');
   let groupKeys = Object.keys(allNotebookNotes).filter(k => (allNotebookNotes[k]||[]).length > 0);
-  groupKeys = groupKeys.filter(k => (allNotebookNotes[k]||[]).some(n=>showIds.includes(n.user_id)));
+  groupKeys = groupKeys.filter(k => (allNotebookNotes[k]||[]).some(n=> noteShownFor(showIds, 'notebook', n)));
   if(groupKeys.length === 0){ list.innerHTML = '<div class="empty">–</div>'; return; }
 
   groupKeys = orderNoteGroups('notebook', groupKeys, (a,b)=>{
@@ -53563,7 +53710,7 @@ function renderNotebookList(){
 
   groupKeys.forEach(groupKey=>{
     let notes = (allNotebookNotes[groupKey]||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
-    notes = notes.filter(n => showIds.includes(n.user_id));
+    notes = notes.filter(n => noteShownFor(showIds, 'notebook', n));
     const groupLabel = groupKey === '__none__' ? t('generalNotes') : groupKey;
     const isExpanded = expandedNotebookGroups.has(groupKey);
 
@@ -53697,7 +53844,7 @@ function ensureNotebookQuillInitialized(){
   enableTypingShortcuts(notebookQuillEditor);
   enableNoteLinks(notebookQuillEditor);
   notebookQuillEditor.on('text-change', (delta, oldDelta, source)=>{
-    if(source === 'user'){
+    if(source === 'user' && !noteEditorReadOnly('notebook')){
       notebookEditorDirty = true;
       notebookNoteAutosave.edited();
       const note = selectedNotebookNoteId ? Object.values(allNotebookNotes).flat().find(n=>n.id===selectedNotebookNoteId) : null;
@@ -53782,6 +53929,7 @@ function openNotebookNote(noteId, groupKey){
   ensureNoteLiveChannel('notebook', noteId, (delta)=>{
     if(notebookQuillEditor) notebookQuillEditor.updateContents(delta, 'silent');
   });
+  noteSharingOpened('notebook');
 }
 const notebookNoteAutosave = makeNoteAutosaver({
   table: 'notebook_notes', statusId: 'notebookLastSavedInfo',
@@ -53810,8 +53958,1122 @@ document.getElementById('closeNotebookBtn').addEventListener('click', ()=>{
   document.getElementById('notebookEditorCard').classList.add('hidden');
   document.getElementById('notebookVersionHistoryPanel').classList.add('hidden');
   teardownNoteLiveChannel('notebook');
+  noteSharingClosed('notebook');
   renderNotebookList();
 });
+
+/* ---------- SHARING A NOTE, AND COMMENTS ON IT ----------
+   Phase 2 of sharing (phase 1 is "Send as message", above). The Share button
+   on a note of your own asks HOW every time it is used:
+   - LIVE: a note_shares row. The person reads the owner's own row (the note
+     tables' SELECT policies take an OR for it), so edits go both ways. The
+     role is per person -- viewer, commenter or editor -- and the owner
+     changes it or removes the person under Manage access.
+   - AS THEIR OWN COPY: copy_note_to_user() writes a separate row into their
+     Notebook. Nothing links it back to this one.
+   - A PUBLIC LINK, for anyone with no account: note_share_links, read only
+     through the anon RPC note_share_public_get (openPublicSharePage).
+   The server half, and who may do what, is sql migrations/
+   note_sharing_migration.sql. */
+const NOTE_KIND_TABLE = { course: 'course_notes', notebook: 'notebook_notes' };
+// The group a course note lands in when it was shared with you on its own and
+// its course is not one you can see: its course id would be all the heading
+// had to show.
+const NOTE_SHARED_GROUP = '__shared__';
+let noteShares = [];        // note_shares rows: those I made, and those made for me
+let noteSharesReady = false; // false until read, and while the table is not there yet
+function noteSharesSet(rows, ok){
+  noteShares = Array.isArray(rows) ? rows : [];
+  noteSharesReady = !!ok;
+}
+function noteShareToMe(table, id){
+  if(!currentUser) return null;
+  return noteShares.find(s=> s.note_table === table && s.note_id === id && s.grantee_id === currentUser.id) || null;
+}
+function noteSharesByMe(table, id){
+  if(!currentUser) return [];
+  return noteShares.filter(s=> s.note_table === table && s.note_id === id && s.owner_id === currentUser.id);
+}
+// 'owner', the role of a share made for me, or 'circle' for a note I see
+// through the circle as before any of this (left exactly as it was: edits
+// allowed where the database allows them).
+function noteRoleFor(kind, note){
+  if(!note || !currentUser) return null;
+  if(note.user_id === currentUser.id) return 'owner';
+  const s = noteShareToMe(NOTE_KIND_TABLE[kind], note.id);
+  return s ? s.role : 'circle';
+}
+function noteRoleCanEdit(role){ return !!role && role !== 'viewer' && role !== 'commenter'; }
+function noteRoleCanComment(role){ return !!role && role !== 'viewer'; }
+function courseKnownById(id){
+  return Object.values(allCourses || {}).some(arr=> (arr || []).some(c=> c.id === id));
+}
+function courseNoteGroupKey(n){
+  if(n.course_id){
+    if(currentUser && n.user_id !== currentUser.id && noteShareToMe('course_notes', n.id) && !courseKnownById(n.course_id)) return NOTE_SHARED_GROUP;
+    return n.course_id;
+  }
+  return (n.header && n.header.trim()) || '__none__';
+}
+// A note shared with me shows whoever the person filter is set to.
+function noteShownFor(showIds, kind, n){
+  return showIds.includes(n.user_id) || !!noteShareToMe(NOTE_KIND_TABLE[kind], n.id);
+}
+function noteShareMarkHtml(kind, n){
+  if(!noteSharesReady || !currentUser) return '';
+  const table = NOTE_KIND_TABLE[kind];
+  let title = '';
+  if(n.user_id === currentUser.id){
+    if(!noteSharesByMe(table, n.id).length) return '';
+    title = t('nsSharedByMe');
+  } else {
+    if(!noteShareToMe(table, n.id)) return '';
+    title = t('nsSharedGroup');
+  }
+  return `<span class="note-share-mark" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">${ICON.users(12)}</span>`;
+}
+// 'note:<id>' / 'notebook:<id>' (the list row's data-share) to a note of
+// your own, or null.
+function noteShareKeyTarget(key){
+  if(!key || !currentUser || guestMode || !noteSharesReady) return null;
+  const i = key.indexOf(':');
+  const k = key.slice(0, i), id = key.slice(i + 1);
+  const kind = k === 'note' ? 'course' : k === 'notebook' ? 'notebook' : null;
+  if(!kind) return null;
+  const store = kind === 'course' ? allNotes : allNotebookNotes;
+  const note = Object.values(store).flat().find(n=> String(n.id) === id);
+  return note && note.user_id === currentUser.id ? { kind, note } : null;
+}
+
+/* --- The two editors. */
+const NOTE_SHARE_EDITORS = {
+  course: { table: 'course_notes', card: 'editorCard', wrap: 'noteCommentWrap', rail: 'noteCommentRail',
+    shareBtn: 'noteShareBtn', commentsBtn: 'noteCommentsBtn', badge: 'noteAccessBadge', saveBtn: 'saveNoteBtn', hl: 'nc-course',
+    quill: ()=> quillEditor, note: ()=> openNoteRecord() },
+  notebook: { table: 'notebook_notes', card: 'notebookEditorCard', wrap: 'notebookCommentWrap', rail: 'notebookCommentRail',
+    shareBtn: 'notebookShareBtn', commentsBtn: 'notebookCommentsBtn', badge: 'notebookAccessBadge', saveBtn: 'saveNotebookBtn', hl: 'nc-notebook',
+    quill: ()=> notebookQuillEditor, note: ()=> openNotebookNoteRecord() }
+};
+const noteCommentCtls = {};
+function noteCommentCtl(kind){
+  if(noteCommentCtls[kind]) return noteCommentCtls[kind];
+  const cfg = NOTE_SHARE_EDITORS[kind];
+  const role = ()=> noteRoleFor(kind, cfg.note());
+  noteCommentCtls[kind] = makeNoteComments({
+    hl: cfg.hl,
+    wrap: ()=> document.getElementById(cfg.wrap),
+    rail: ()=> document.getElementById(cfg.rail),
+    quill: cfg.quill,
+    api: noteCommentApi(kind),
+    canComment: ()=> noteSharesReady && noteRoleCanComment(role()),
+    canResolve: ()=> noteSharesReady && noteRoleCanComment(role()),
+    canDelete: (c)=> !!currentUser && (c.author_id === currentUser.id || role() === 'owner'),
+    nameOf: (c)=> c.author_id ? nameFor(c.author_id) : (c.anon_name || t('someoneName')),
+    isGuest: (c)=> !c.author_id,
+    colorOf: (c)=> c.author_id ? colorForUser(c.author_id) : '',
+    guest: false,
+    onCount: (n)=> setNoteCommentsBadge(kind, n)
+  });
+  return noteCommentCtls[kind];
+}
+function setNoteCommentsBadge(kind, n){
+  const btn = document.getElementById(NOTE_SHARE_EDITORS[kind].commentsBtn);
+  const b = btn && btn.querySelector('.nc-badge');
+  if(!b) return;
+  b.textContent = String(n);
+  b.classList.toggle('hidden', !n);
+}
+// Who may do what on the open note, applied to the editor: a viewer or a
+// commenter gets the note read only, with no toolbar and no Save.
+// Read only is contenteditable=false on the editor itself, NOT quill.enable(
+// false): a disabled Quill drops every change it hears about from the page as
+// a "user" change, and a note is loaded by writing the editor's HTML, so its
+// model would go on holding the note opened before it (measured: getText()
+// gave "\n" for a loaded note). Kept enabled, the model follows the page and
+// the comment anchors read the right text.
+function noteEditorReadOnly(kind){
+  const card = document.getElementById(NOTE_SHARE_EDITORS[kind].card);
+  return !!(card && card.classList.contains('note-readonly'));
+}
+function setNoteEditorWritable(quill, on){
+  quill.root.setAttribute('contenteditable', on ? 'true' : 'false');
+}
+function applyNoteAccess(kind){
+  const cfg = NOTE_SHARE_EDITORS[kind];
+  const note = cfg.note(), quill = cfg.quill();
+  const card = document.getElementById(cfg.card);
+  if(!note || !quill || !card) return;
+  const role = noteRoleFor(kind, note);
+  const editable = noteRoleCanEdit(role);
+  setNoteEditorWritable(quill, editable);
+  card.classList.toggle('note-readonly', !editable);
+  document.getElementById(cfg.saveBtn).classList.toggle('hidden', !editable);
+  document.getElementById(cfg.shareBtn).classList.toggle('hidden', role !== 'owner' || guestMode || !noteSharesReady);
+  document.getElementById(cfg.commentsBtn).classList.toggle('hidden', guestMode || !noteSharesReady);
+  const badge = document.getElementById(cfg.badge);
+  const key = { viewer: 'nsAccessViewer', commenter: 'nsAccessCommenter', editor: 'nsAccessEditor' }[role];
+  if(key){
+    badge.innerHTML = ICON.users(13) + `<span>${escapeHtml(t(key).replace('{name}', nameFor(note.user_id)))}</span>`;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+    badge.innerHTML = '';
+  }
+  if(noteCommentCtls[kind]) noteCommentCtls[kind].refresh();
+}
+function noteSharingOpened(kind){
+  const cfg = NOTE_SHARE_EDITORS[kind];
+  const note = cfg.note();
+  applyNoteAccess(kind);
+  if(guestMode || !noteSharesReady){ if(noteCommentCtls[kind]) noteCommentCtls[kind].attach(null); return; }
+  noteCommentCtl(kind).attach(note ? { table: cfg.table, id: note.id } : null);
+}
+function noteSharingClosed(kind){
+  if(noteCommentCtls[kind]) noteCommentCtls[kind].attach(null);
+  const quill = NOTE_SHARE_EDITORS[kind].quill();
+  // The next note opened decides again; an editor left read only would stay so.
+  if(quill) setNoteEditorWritable(quill, true);
+  const card = document.getElementById(NOTE_SHARE_EDITORS[kind].card);
+  if(card) card.classList.remove('note-readonly');
+}
+(function wireNoteShareButtons(){
+  ['course', 'notebook'].forEach(kind=>{
+    const cfg = NOTE_SHARE_EDITORS[kind];
+    document.querySelectorAll(`#${cfg.shareBtn} .nt-ico, #${cfg.commentsBtn} .nt-ico`).forEach(el=>{
+      el.innerHTML = el.dataset.icon === 'share' ? ICON.share(13) : ICON.comment(13);
+    });
+    document.getElementById(cfg.shareBtn).addEventListener('click', ()=>{
+      const note = cfg.note();
+      if(note) openNoteShareModal(kind, note);
+    });
+    document.getElementById(cfg.commentsBtn).addEventListener('click', ()=>{
+      if(noteCommentCtls[kind]) noteCommentCtls[kind].toggle();
+    });
+  });
+})();
+
+/* --- Access changing while the app is open. */
+let noteShareChannel = null;
+let noteShareRefreshTimer = 0;
+function subscribeNoteShareRealtime(){
+  if(noteShareChannel || !currentUser || guestMode) return;
+  noteShareChannel = supabaseClient.channel('note-shares-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'note_shares' }, ()=>{
+      clearTimeout(noteShareRefreshTimer);
+      noteShareRefreshTimer = setTimeout(refreshNoteShares, 300);
+    })
+    .subscribe();
+}
+// Read again and compare: a DELETE arrives with no more than its id, so the
+// note a share was for is only known from what was there before.
+async function refreshNoteShares(){
+  if(!currentUser || guestMode) return;
+  const key = (s)=> s.note_table + ':' + s.note_id;
+  const before = new Map(noteShares.filter(s=> s.grantee_id === currentUser.id).map(s=> [key(s), s]));
+  const { data, error } = await supabaseClient.from('note_shares').select('id,note_table,note_id,owner_id,grantee_id,role,created_at');
+  if(error) return;
+  noteSharesSet(data, true);
+  const after = new Map(noteShares.filter(s=> s.grantee_id === currentUser.id).map(s=> [key(s), s]));
+  const changed = [...after.values()].filter(s=> !before.has(key(s))).concat([...before.values()].filter(s=> !after.has(key(s))));
+  for(const s of changed) await noteShareFetchInto(s.note_table, s.note_id);
+  if(activeTab === 'yonsei') renderLectureList();
+  if(activeTab === 'study') renderNotebookList();
+  if(selectedLectureId) applyNoteAccess('course');
+  if(selectedNotebookNoteId) applyNoteAccess('notebook');
+  if(noteShareCtx) renderNoteShareModal();
+}
+// One note read again after its share changed: added to the list, filed
+// again, or taken out when it can no longer be read at all.
+async function noteShareFetchInto(table, id){
+  const kind = table === 'course_notes' ? 'course' : 'notebook';
+  const { data, error } = await supabaseClient.from(table).select(NOTE_LIST_SELECT[table]).eq('id', id).maybeSingle();
+  if(error) return;
+  const store = kind === 'course' ? allNotes : allNotebookNotes;
+  const existing = Object.values(store).flat().find(n=> n.id === id) || null;
+  Object.keys(store).forEach(k=>{ store[k] = store[k].filter(n=> n.id !== id); });
+  if(data){
+    const row = existing || data;
+    const gk = kind === 'course' ? courseNoteGroupKey(row) : ((row.header && row.header.trim()) || '__none__');
+    (store[gk] = store[gk] || []).push(row);
+    if(kind === 'course' && selectedLectureId === id) selectedNotesCourse = gk;
+    if(kind === 'notebook' && selectedNotebookNoteId === id) selectedNotebookGroup = gk;
+    return;
+  }
+  if(kind === 'course' && selectedLectureId === id){
+    editorDirty = false;
+    selectedLectureId = null;
+    document.getElementById('editorCard').classList.add('hidden');
+    teardownNoteLiveChannel('course-notes');
+    noteSharingClosed('course');
+  }
+  if(kind === 'notebook' && selectedNotebookNoteId === id){
+    notebookEditorDirty = false;
+    selectedNotebookNoteId = null;
+    document.getElementById('notebookEditorCard').classList.add('hidden');
+    teardownNoteLiveChannel('notebook');
+    noteSharingClosed('notebook');
+  }
+}
+
+/* --- The Share dialog. */
+let noteShareCtx = null;  // { kind, note, step, err, notify, roleFor, copied, busy }
+let noteShareLink;        // the open note's link row; null for none, undefined while unread
+function noteSharePublicUrl(token){
+  return location.origin + location.pathname + '?share=' + token;
+}
+function openNoteShareModal(kind, note){
+  if(!note || !currentUser || guestMode || note.user_id !== currentUser.id) return;
+  noteShareCtx = { kind, note, step: 'choose', err: '', notify: true, roleFor: {}, copied: {}, busy: false };
+  noteShareLink = undefined;
+  document.getElementById('noteShareModal').classList.remove('hidden');
+  renderNoteShareModal();
+  loadNoteShareLink();
+}
+function closeNoteShareModal(){
+  document.getElementById('noteShareModal').classList.add('hidden');
+  noteShareCtx = null;
+}
+async function loadNoteShareLink(){
+  const ctx = noteShareCtx;
+  if(!ctx) return;
+  const { data, error } = await supabaseClient.from('note_share_links').select('id,token,role,enabled')
+    .eq('note_table', NOTE_KIND_TABLE[ctx.kind]).eq('note_id', ctx.note.id).maybeSingle();
+  if(noteShareCtx !== ctx) return;
+  noteShareLink = error ? null : (data || null);
+  renderNoteShareModal();
+}
+function noteShareRoleSelect(cls, attrs, value, roles){
+  const label = { viewer: 'nsRoleViewer', commenter: 'nsRoleCommenter', editor: 'nsRoleEditor' };
+  return `<select class="${cls}" ${attrs} aria-label="${escapeHtml(t('nsRoleLabel'))}">${roles.map(r=> `<option value="${r}"${r === value ? ' selected' : ''}>${escapeHtml(t(label[r]))}</option>`).join('')}</select>`;
+}
+function noteShareBackHtml(){
+  return `<button type="button" class="export-btn ns-back" data-step="choose">${ICON.chevL(12)}<span>${escapeHtml(t('nsBack'))}</span></button>`;
+}
+function noteShareNotifyHtml(){
+  return `<label class="ns-notify"><input type="checkbox" class="ns-notify-box"${noteShareCtx.notify ? ' checked' : ''}><span>${escapeHtml(t('nsNotify'))}</span></label>`;
+}
+function noteShareAccessHtml(){
+  const ctx = noteShareCtx;
+  const shares = noteSharesByMe(NOTE_KIND_TABLE[ctx.kind], ctx.note.id)
+    .slice().sort((a, b)=> nameFor(a.grantee_id).localeCompare(nameFor(b.grantee_id)));
+  const people = shares.length ? shares.map(s=> `<div class="ns-row">
+      <span class="author-dot" style="background:${colorForUser(s.grantee_id)}"></span>
+      <span class="ns-name">${escapeHtml(nameFor(s.grantee_id))}</span>
+      ${noteShareRoleSelect('ns-role-change', `data-share-id="${escapeHtml(s.id)}"`, s.role, ['viewer', 'commenter', 'editor'])}
+      <button type="button" class="btn-danger ns-remove" data-share-id="${escapeHtml(s.id)}" style="padding:4px 10px;font-size:12px;">${escapeHtml(t('nsRemove'))}</button>
+    </div>`).join('') : `<p class="hint" style="margin:0;">${escapeHtml(t('nsNoPeople'))}</p>`;
+  const l = noteShareLink;
+  let link;
+  if(l === undefined) link = loadingHtml(t('recapLoadingHint'));
+  else if(!l) link = `<button type="button" class="export-btn ns-link-create">${ICON.link(12)} ${escapeHtml(t('nsLinkCreate'))}</button>`;
+  else link = `
+      <div class="ns-link-acts">
+        <span class="ns-link-state ${l.enabled ? 'on' : 'off'}">${escapeHtml(t(l.enabled ? 'nsLinkOn' : 'nsLinkOff'))}</span>
+        ${noteShareRoleSelect('ns-link-role', '', l.role, ['viewer', 'commenter'])}
+      </div>
+      ${l.enabled ? `<input type="text" class="ns-link-url" readonly value="${escapeHtml(noteSharePublicUrl(l.token))}" aria-label="${escapeHtml(t('nsPublicLink'))}">` : `<p class="hint" style="margin:6px 0;">${escapeHtml(t('nsLinkOffHint'))}</p>`}
+      <div class="ns-link-acts">
+        ${l.enabled ? `<button type="button" class="export-btn act-save ns-link-copy">${ICON.copy(12)} ${escapeHtml(t('nsLinkCopy'))}</button>` : ''}
+        <button type="button" class="export-btn ${l.enabled ? 'act-cancel' : 'act-save'} ns-link-toggle">${escapeHtml(t(l.enabled ? 'nsLinkTurnOff' : 'nsLinkTurnOn'))}</button>
+        <button type="button" class="export-btn ns-link-regen">${ICON.repeat(12)} ${escapeHtml(t('nsLinkRegenerate'))}</button>
+      </div>`;
+  return `<div class="ns-section"><h3>${escapeHtml(t('nsPeopleWithAccess'))}</h3>${people}</div>
+    <div class="ns-section"><h3>${escapeHtml(t('nsPublicLink'))}</h3><p class="hint" style="margin:0 0 8px;">${escapeHtml(t('nsPublicLinkHint'))}</p>${link}</div>`;
+}
+function renderNoteShareModal(){
+  const ctx = noteShareCtx;
+  if(!ctx) return;
+  const box = document.getElementById('noteShareBody');
+  document.getElementById('noteShareTitle').textContent = t('nsShareTitle').replace('{title}', ctx.note.lecture_title || '');
+  const table = NOTE_KIND_TABLE[ctx.kind];
+  const circle = visibleCircleMembers();
+  const shared = new Set(noteSharesByMe(table, ctx.note.id).map(s=> s.grantee_id));
+  const err = ctx.err ? `<div class="ns-err">${escapeHtml(ctx.err)}</div>` : '';
+  let html = '';
+  if(ctx.step === 'choose'){
+    const n = shared.size;
+    html = `<p class="hint" style="margin:0 0 10px;">${escapeHtml(t('nsHowAsk'))}</p>
+      <div class="ns-choices">
+        <button type="button" class="ns-choice" data-step="live"><span class="ns-choice-icon">${ICON.users(20)}</span><span><span class="ns-choice-title">${escapeHtml(t('nsLive'))}</span><span class="ns-choice-desc">${escapeHtml(t('nsLiveDesc'))}</span></span></button>
+        <button type="button" class="ns-choice" data-step="copy"><span class="ns-choice-icon">${ICON.copy(20)}</span><span><span class="ns-choice-title">${escapeHtml(t('nsCopy'))}</span><span class="ns-choice-desc">${escapeHtml(t('nsCopyDesc'))}</span></span></button>
+      </div>
+      <div style="margin-top:14px;"><button type="button" class="export-btn" data-step="access">${ICON.lock(12)} ${escapeHtml(t('nsManageAccess'))}${n ? ' (' + n + ')' : ''}</button></div>`;
+  } else if(ctx.step === 'live'){
+    const add = circle.filter(uid=> !shared.has(uid)).sort((a, b)=> nameFor(a).localeCompare(nameFor(b)));
+    const rows = !circle.length ? `<p class="hint" style="margin:0;">${escapeHtml(t('nsNoCircle'))}</p>`
+      : !add.length ? `<p class="hint" style="margin:0;">${escapeHtml(t('nsEveryoneHasIt'))}</p>`
+      : add.map(uid=> `<div class="ns-row">
+          <span class="author-dot" style="background:${colorForUser(uid)}"></span>
+          <span class="ns-name">${escapeHtml(nameFor(uid))}</span>
+          ${noteShareRoleSelect('ns-role-pick', `data-uid="${escapeHtml(uid)}"`, ctx.roleFor[uid] || 'commenter', ['viewer', 'commenter', 'editor'])}
+          <button type="button" class="export-btn act-save ns-add" data-uid="${escapeHtml(uid)}"${ctx.busy ? ' disabled' : ''}>${escapeHtml(t('nsShareBtn'))}</button>
+        </div>`).join('') + noteShareNotifyHtml();
+    html = `${noteShareBackHtml()}<div class="ns-section" style="margin-top:4px;"><h3>${escapeHtml(t('nsAddPeople'))}</h3>${rows}</div>${noteShareAccessHtml()}`;
+  } else if(ctx.step === 'copy'){
+    const people = circle.slice().sort((a, b)=> nameFor(a).localeCompare(nameFor(b)));
+    const rows = !people.length ? `<p class="hint" style="margin:0;">${escapeHtml(t('nsNoCircle'))}</p>`
+      : people.map(uid=> `<div class="ns-row">
+          <span class="author-dot" style="background:${colorForUser(uid)}"></span>
+          <span class="ns-name">${escapeHtml(nameFor(uid))}</span>
+          ${ctx.copied[uid] ? `<span class="ns-done">${ICON.check(12)} ${escapeHtml(t('nsSent'))}</span>`
+            : `<button type="button" class="export-btn act-save ns-copy-send" data-uid="${escapeHtml(uid)}"${ctx.busy ? ' disabled' : ''}>${escapeHtml(t('nsSendCopy'))}</button>`}
+        </div>`).join('') + noteShareNotifyHtml();
+    html = `${noteShareBackHtml()}<p class="hint" style="margin:0 0 8px;">${escapeHtml(t('nsCopyDesc'))}</p>${rows}`;
+  } else {
+    html = `${noteShareBackHtml()}${noteShareAccessHtml()}`;
+  }
+  box.innerHTML = html + err;
+}
+function noteShareFail(e){
+  console.warn('note share', e);
+  if(!noteShareCtx) return;
+  noteShareCtx.err = t('nsFailed');
+  renderNoteShareModal();
+}
+async function noteShareNotify(uid, kind, note, mode){
+  try {
+    const draft = shareNoteDraft(note, kind === 'notebook' ? 'notebook' : 'note');
+    draft.card.sub = t(mode === 'live' ? 'nsCardLive' : 'nsCardCopy');
+    await shareSendTo(uid, draft, '');
+  } catch(e){ console.warn('note share message', e); }
+}
+function rerenderNoteList(kind){
+  if(kind === 'course'){ if(activeTab === 'yonsei') renderLectureList(); }
+  else if(activeTab === 'study') renderNotebookList();
+}
+(function wireNoteShareModal(){
+  const modal = document.getElementById('noteShareModal');
+  if(!modal) return;
+  closeOnBackdrop(modal, closeNoteShareModal);
+  document.getElementById('noteShareClose').addEventListener('click', closeNoteShareModal);
+  const body = document.getElementById('noteShareBody');
+  body.addEventListener('change', async (e)=>{
+    const ctx = noteShareCtx;
+    if(!ctx) return;
+    const el = e.target;
+    if(el.classList.contains('ns-notify-box')){ ctx.notify = el.checked; return; }
+    if(el.classList.contains('ns-role-pick')){ ctx.roleFor[el.dataset.uid] = el.value; return; }
+    ctx.err = '';
+    try {
+      if(el.classList.contains('ns-role-change')){
+        const id = el.dataset.shareId;
+        const { error } = await supabaseClient.from('note_shares').update({ role: el.value }).eq('id', id);
+        if(error) throw error;
+        const s = noteShares.find(x=> x.id === id);
+        if(s) s.role = el.value;
+      } else if(el.classList.contains('ns-link-role') && noteShareLink){
+        const { error } = await supabaseClient.from('note_share_links').update({ role: el.value }).eq('id', noteShareLink.id);
+        if(error) throw error;
+        noteShareLink.role = el.value;
+      } else return;
+      renderNoteShareModal();
+    } catch(err){ noteShareFail(err); }
+  });
+  body.addEventListener('click', async (e)=>{
+    const ctx = noteShareCtx;
+    const b = e.target.closest && e.target.closest('button');
+    if(!ctx || !b || b.disabled) return;
+    if(b.dataset.step){ ctx.step = b.dataset.step; ctx.err = ''; renderNoteShareModal(); return; }
+    const table = NOTE_KIND_TABLE[ctx.kind];
+    const note = ctx.note;
+    ctx.err = '';
+    try {
+      if(b.classList.contains('ns-add')){
+        const uid = b.dataset.uid;
+        ctx.busy = true; renderNoteShareModal();
+        const { data, error } = await supabaseClient.from('note_shares')
+          .insert({ note_table: table, note_id: note.id, owner_id: currentUser.id, grantee_id: uid, role: ctx.roleFor[uid] || 'commenter' })
+          .select('id,note_table,note_id,owner_id,grantee_id,role,created_at');
+        ctx.busy = false;
+        if(error) throw error;
+        (data || []).forEach(r=>{ if(!noteShares.some(x=> x.id === r.id)) noteShares.push(r); });
+        if(!(data || []).length) await refreshNoteShares();
+        if(ctx.notify) noteShareNotify(uid, ctx.kind, note, 'live');
+        shareToast(t('nsSharedByMe') + ': ' + nameFor(uid));
+        rerenderNoteList(ctx.kind);
+      } else if(b.classList.contains('ns-remove')){
+        const s = noteShares.find(x=> x.id === b.dataset.shareId);
+        if(!s || !confirm(t('nsRemoveConfirm').replace('{name}', nameFor(s.grantee_id)))) return;
+        const { error } = await supabaseClient.from('note_shares').delete().eq('id', s.id);
+        if(error) throw error;
+        noteShares = noteShares.filter(x=> x.id !== s.id);
+        rerenderNoteList(ctx.kind);
+      } else if(b.classList.contains('ns-copy-send')){
+        const uid = b.dataset.uid;
+        ctx.busy = true; renderNoteShareModal();
+        const { error } = await supabaseClient.rpc('copy_note_to_user', { p_table: table, p_note_id: note.id, p_recipient: uid });
+        ctx.busy = false;
+        if(error) throw error;
+        ctx.copied[uid] = true;
+        if(ctx.notify) noteShareNotify(uid, ctx.kind, note, 'copy');
+      } else if(b.classList.contains('ns-link-create')){
+        const { data, error } = await supabaseClient.from('note_share_links')
+          .insert({ note_table: table, note_id: note.id, owner_id: currentUser.id, role: 'viewer' })
+          .select('id,token,role,enabled').maybeSingle();
+        if(error) throw error;
+        noteShareLink = data || null;
+      } else if(b.classList.contains('ns-link-toggle') && noteShareLink){
+        const next = !noteShareLink.enabled;
+        const { error } = await supabaseClient.from('note_share_links').update({ enabled: next }).eq('id', noteShareLink.id);
+        if(error) throw error;
+        noteShareLink.enabled = next;
+      } else if(b.classList.contains('ns-link-regen') && noteShareLink){
+        if(!confirm(t('nsLinkRegenerateConfirm'))) return;
+        const { data, error } = await supabaseClient.rpc('note_share_link_regenerate', { p_link_id: noteShareLink.id });
+        if(error) throw error;
+        if(typeof data === 'string') noteShareLink.token = data;
+      } else if(b.classList.contains('ns-link-copy') && noteShareLink){
+        try { await navigator.clipboard.writeText(noteSharePublicUrl(noteShareLink.token)); shareToast(t('nsLinkCopied')); }
+        catch(err){ const inp = body.querySelector('.ns-link-url'); if(inp){ inp.focus(); inp.select(); } }
+        return;
+      } else return;
+      if(noteShareCtx === ctx) renderNoteShareModal();
+    } catch(err){
+      ctx.busy = false;
+      noteShareFail(err);
+    }
+  });
+})();
+
+/* --- COMMENT ANCHORS. The approach, chosen and kept to: QUOTED TEXT PLUS AN
+   OFFSET, RE-FOUND. A comment stores {index, length, quote, prefix, suffix}
+   from the moment it was made, in Quill's own index space (noteDocText puts
+   one placeholder character where an embed is, so a text offset IS a Quill
+   index). Nothing is ever written back: whenever the note is drawn, the quote
+   is looked for in the text as it is now. Where it still sits at its offset
+   that is the answer; otherwise every place the quote occurs is scored by how
+   much of the 32 characters either side still match (prefix / suffix), the
+   nearest to the old offset breaking ties. Text that no longer contains the
+   quote leaves the comment in the rail with "the text this was on has
+   changed" and no highlight. While a note is open, the place each anchor was
+   last found is carried through every edit with the delta's own
+   transformPosition, but only as the tie-breaker's "old offset", so a quote
+   that occurs twice keeps to the right one as text is typed above it. The
+   public page draws the note with the same Quill, so both agree on offsets. */
+const NC_CONTEXT = 32;
+function noteDocText(quill){
+  return quill.getContents().ops.map(op=> typeof op.insert === 'string' ? op.insert : '￼').join('');
+}
+function noteCommentAnchorFor(quill, index, length){
+  const text = noteDocText(quill);
+  return {
+    index, length,
+    quote: text.slice(index, index + length),
+    prefix: text.slice(Math.max(0, index - NC_CONTEXT), index),
+    suffix: text.slice(index + length, index + length + NC_CONTEXT)
+  };
+}
+function noteCommentResolve(text, a, hint){
+  if(!a || typeof a.quote !== 'string' || !a.quote) return null;
+  const q = a.quote;
+  const want = Number.isFinite(hint) ? hint : (Number(a.index) || 0);
+  if(text.substr(want, q.length) === q) return { index: want, length: q.length };
+  const pre = typeof a.prefix === 'string' ? a.prefix : '';
+  const suf = typeof a.suffix === 'string' ? a.suffix : '';
+  let best = -1, bestScore = -Infinity, from = 0;
+  for(let guard = 0; guard < 1000; guard++){
+    const i = text.indexOf(q, from);
+    if(i < 0) break;
+    from = i + 1;
+    let ctx = 0;
+    const before = text.slice(Math.max(0, i - pre.length), i);
+    while(ctx < pre.length && ctx < before.length && pre[pre.length - 1 - ctx] === before[before.length - 1 - ctx]) ctx++;
+    const after = text.slice(i + q.length, i + q.length + suf.length);
+    let ctx2 = 0;
+    while(ctx2 < suf.length && ctx2 < after.length && suf[ctx2] === after[ctx2]) ctx2++;
+    const score = (ctx + ctx2) * 1e6 - Math.abs(i - want);
+    if(score > bestScore){ bestScore = score; best = i; }
+  }
+  return best < 0 ? null : { index: best, length: q.length };
+}
+// A DOM point for a Quill index: inside a text node where there is one, else
+// beside the element (an embed, an empty line).
+function noteDomPoint(quill, index){
+  let found;
+  try { found = quill.getLeaf(index); } catch(e){ return null; }
+  const leaf = found && found[0];
+  const offset = found ? found[1] : 0;
+  const node = leaf && leaf.domNode;
+  if(!node) return null;
+  if(node.nodeType === 3) return { node, offset: Math.min(offset, node.length) };
+  const parent = node.parentNode;
+  if(!parent) return null;
+  const i = Array.prototype.indexOf.call(parent.childNodes, node);
+  return { node: parent, offset: offset > 0 ? i + 1 : i };
+}
+function noteDomRange(quill, index, length){
+  const a = noteDomPoint(quill, index), b = noteDomPoint(quill, index + length);
+  if(!a || !b) return null;
+  try {
+    const r = document.createRange();
+    r.setStart(a.node, a.offset);
+    r.setEnd(b.node, b.offset);
+    return r;
+  } catch(e){ return null; }
+}
+
+/* --- The comment rail: one per editor, and one on the public page. The
+   highlight is drawn with the CSS Custom Highlight API, which marks text
+   without touching the note's DOM (so nothing of it can be saved into the
+   note); a browser without it gets boxes laid over the text instead. */
+function makeNoteComments(o){
+  let target = null;
+  let comments = [];
+  let open = false;
+  let openedOnce = false;
+  let showResolved = false;
+  let activeId = null;
+  let draft = null;            // { anchor, hint } while a new comment is written
+  let draftText = '';
+  let err = '';
+  let busy = false;
+  let renderPending = false;
+  let lastPos = new Map();
+  const replyText = {};
+  const hints = new Map();     // thread id -> where it was last found, carried through edits
+  let pendingRange = null;
+  let addBtn = null, layer = null, boundQuill = null, railBound = null, wrapObserved = null;
+  let channelOff = null, reloadTimer = 0, paintRaf = 0, selTimer = 0;
+  const useHighlights = !!(window.CSS && CSS.highlights && typeof window.Highlight === 'function');
+
+  const roots = ()=> comments.filter(c=> !c.parent_id);
+  const repliesOf = (id)=> comments.filter(c=> c.parent_id === id).sort((a, b)=> String(a.created_at).localeCompare(String(b.created_at)));
+  const openThreads = ()=> roots().filter(c=> !c.resolved);
+
+  function bindQuill(){
+    const q = o.quill();
+    if(!q || q === boundQuill) return;
+    boundQuill = q;
+    q.on('text-change', (delta)=>{
+      if(!target) return;
+      hints.forEach((h, id)=>{
+        const s = delta.transformPosition(h.index);
+        const e = delta.transformPosition(h.index + h.length);
+        hints.set(id, { index: s, length: Math.max(0, e - s) });
+      });
+      if(draft && draft.hint){
+        const s = delta.transformPosition(draft.hint.index);
+        const e = delta.transformPosition(draft.hint.index + draft.hint.length);
+        draft.hint = { index: s, length: Math.max(0, e - s) };
+      }
+      queuePaint();
+    });
+    // A press on highlighted text opens its thread.
+    q.root.addEventListener('click', ()=>{
+      if(!target || !comments.length) return;
+      let r = null;
+      try { r = q.getSelection(); } catch(e){}
+      if(!r || r.length) return;
+      const hit = roots().find(c=>{
+        if(c.resolved && !showResolved) return false;
+        const p = lastPos.get(c.id);
+        return p && r.index >= p.index && r.index <= p.index + p.length;
+      });
+      if(!hit) return;
+      activeId = hit.id;
+      setOpen(true);
+      render(true);
+      queuePaint();
+      const card = o.rail().querySelector(`[data-thread="${hit.id}"]`);
+      if(card) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+    if(!useHighlights && window.ResizeObserver) new ResizeObserver(()=> queuePaint()).observe(q.root);
+  }
+  function observeWrap(){
+    const wrap = o.wrap();
+    if(!wrap || wrap === wrapObserved) return;
+    wrapObserved = wrap;
+    const fit = ()=> wrap.classList.toggle('nc-stack', wrap.clientWidth < 760);
+    fit();
+    if(window.ResizeObserver) new ResizeObserver(fit).observe(wrap);
+    else window.addEventListener('resize', fit);
+  }
+
+  /* Highlights. */
+  function queuePaint(){
+    if(paintRaf) return;
+    paintRaf = requestAnimationFrame(paint);
+  }
+  function clearPaint(){
+    if(useHighlights){ CSS.highlights.delete(o.hl); CSS.highlights.delete(o.hl + '-on'); }
+    if(layer) layer.innerHTML = '';
+  }
+  function positions(q){
+    const out = new Map();
+    const withAnchor = roots().filter(c=> c.anchor);
+    if(!withAnchor.length) return out;
+    const text = noteDocText(q);
+    withAnchor.forEach(c=>{
+      const h = hints.get(c.id);
+      const r = noteCommentResolve(text, c.anchor, h ? h.index : null);
+      if(r){ out.set(c.id, r); hints.set(c.id, r); }
+      else hints.delete(c.id);
+    });
+    return out;
+  }
+  function paint(){
+    paintRaf = 0;
+    clearPaint();
+    const q = o.quill();
+    if(!q || !target){ lastPos = new Map(); return; }
+    lastPos = positions(q);
+    const normal = [], on = [];
+    roots().forEach(c=>{
+      if(c.resolved && c.id !== activeId) return;
+      const p = lastPos.get(c.id);
+      if(!p || !p.length) return;
+      const r = noteDomRange(q, p.index, p.length);
+      if(r) (c.id === activeId ? on : normal).push(r);
+    });
+    if(draft && draft.hint && draft.hint.length){
+      const r = noteDomRange(q, draft.hint.index, draft.hint.length);
+      if(r) on.push(r);
+    }
+    if(useHighlights){
+      CSS.highlights.set(o.hl, new Highlight(...normal));
+      const hon = new Highlight(...on);
+      hon.priority = 1;
+      CSS.highlights.set(o.hl + '-on', hon);
+      return;
+    }
+    if(!layer || layer.parentNode !== q.container){
+      layer = document.createElement('div');
+      layer.className = 'nc-hl-layer';
+      q.container.appendChild(layer);
+    }
+    const base = q.container.getBoundingClientRect();
+    const boxes = [];
+    [[normal, ''], [on, ' on']].forEach(([list, cls])=> list.forEach(r=>{
+      Array.from(r.getClientRects()).forEach(b=>{
+        if(!b.width) return;
+        boxes.push(`<div class="nc-hl-box${cls}" style="left:${b.left - base.left}px;top:${b.top - base.top}px;width:${b.width}px;height:${b.height}px;"></div>`);
+      });
+    }));
+    layer.innerHTML = boxes.join('');
+  }
+
+  /* The Comment button over a selection. */
+  // The range stays after the button hides: on a phone the tap that presses
+  // it can collapse the selection a moment before the click arrives.
+  function hideAdd(){ if(addBtn) addBtn.classList.add('hidden'); }
+  function checkSelection(){
+    const q = o.quill();
+    if(!q || !target || !o.canComment()){ hideAdd(); return; }
+    let r = null;
+    try { r = q.getSelection(); } catch(e){}
+    if(!r || !r.length || !q.getText(r.index, r.length).trim()){ hideAdd(); return; }
+    const wrap = o.wrap();
+    if(!addBtn){
+      addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'nc-add-btn hidden';
+      // Pressing it must not take the selection away first.
+      addBtn.addEventListener('mousedown', (e)=> e.preventDefault());
+      addBtn.addEventListener('click', startDraft);
+    }
+    if(addBtn.parentNode !== wrap) wrap.appendChild(addBtn);
+    addBtn.innerHTML = ICON.comment(13) + `<span>${escapeHtml(t('ncComment'))}</span>`;
+    const b = q.getBounds(r.index + r.length);
+    const cr = q.container.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+    const left = Math.max(0, Math.min(cr.left - wr.left + b.left - 20, wrap.clientWidth - 120));
+    addBtn.style.left = left + 'px';
+    addBtn.style.top = (cr.top - wr.top + b.bottom + 8) + 'px';
+    pendingRange = { index: r.index, length: r.length };
+    addBtn.classList.remove('hidden');
+  }
+  document.addEventListener('selectionchange', ()=>{
+    if(!target) return;
+    clearTimeout(selTimer);
+    selTimer = setTimeout(checkSelection, 160);
+  });
+  function startDraft(){
+    const q = o.quill();
+    const r = pendingRange;
+    if(!q || !r) return;
+    draft = { anchor: noteCommentAnchorFor(q, r.index, r.length), hint: { index: r.index, length: r.length } };
+    draftText = '';
+    err = '';
+    activeId = null;
+    hideAdd();
+    setOpen(true);
+    render(true);
+    queuePaint();
+    const ta = o.rail().querySelector('.nc-new-input');
+    if(ta){ ta.focus({ preventScroll: true }); ta.scrollIntoView({ block: 'nearest' }); }
+  }
+
+  /* The rail. */
+  function setOpen(v){
+    open = !!v;
+    if(open) observeWrap();
+    const rail = o.rail(), wrap = o.wrap();
+    if(rail) rail.classList.toggle('hidden', !open);
+    if(wrap) wrap.classList.toggle('nc-open', open);
+  }
+  function guestName(){ try { return localStorage.getItem('ncGuestName') || ''; } catch(e){ return ''; } }
+  function nameFieldHtml(){
+    if(!o.guest) return '';
+    return `<input type="text" class="nc-name-input" maxlength="40" autocomplete="name" value="${escapeHtml(guestName())}" placeholder="${escapeHtml(t('ncYourName'))}" aria-label="${escapeHtml(t('ncYourName'))}">`;
+  }
+  function commentHtml(c){
+    const dot = o.colorOf(c) ? `<span class="author-dot" style="background:${o.colorOf(c)}"></span>` : '';
+    const guest = o.isGuest(c) ? `<span class="nc-c-guest">${escapeHtml(t('ncGuest'))}</span>` : '';
+    const del = o.canDelete(c) ? `<button type="button" class="nc-del" data-del="${escapeHtml(c.id)}" title="${escapeHtml(t('tipDelete'))}" aria-label="${escapeHtml(t('tipDelete'))}">✕</button>` : '';
+    return `<div class="nc-c"><div class="nc-c-head">${dot}<span class="nc-c-name">${escapeHtml(o.nameOf(c))}</span>${guest}<span class="nc-c-time">${escapeHtml(formatMessageTime(c.created_at))}</span>${del}</div>
+      <div class="nc-c-body">${escapeHtml(c.body || '')}</div></div>`;
+  }
+  function threadHtml(c){
+    const active = c.id === activeId;
+    const quote = c.anchor && c.anchor.quote ? `<div class="nc-quote">${escapeHtml(String(c.anchor.quote).replace(/\s+/g, ' ').slice(0, 160))}</div>` : '';
+    const orphan = c.anchor && !lastPos.get(c.id) ? `<div class="nc-orphan">${escapeHtml(t('ncOrphan'))}</div>` : '';
+    const resolved = c.resolved ? `<div class="nc-resolved-tag">${ICON.check(11)} ${escapeHtml(t('ncResolved'))}</div>` : '';
+    let acts = '';
+    if(active){
+      const reply = o.canComment() && !c.resolved
+        ? `${nameFieldHtml()}<textarea class="nc-reply-input" rows="2" maxlength="2000" data-thread="${escapeHtml(c.id)}" placeholder="${escapeHtml(t('ncReply'))}" aria-label="${escapeHtml(t('ncReply'))}">${escapeHtml(replyText[c.id] || '')}</textarea>`
+        : '';
+      const btns = (reply ? `<button type="button" class="export-btn act-save nc-reply-send" data-thread="${escapeHtml(c.id)}"${busy ? ' disabled' : ''}>${escapeHtml(t('ncReply'))}</button>` : '')
+        + (o.canResolve() ? `<button type="button" class="export-btn nc-resolve" data-thread="${escapeHtml(c.id)}"${busy ? ' disabled' : ''}>${ICON[c.resolved ? 'repeat' : 'check'](11)} ${escapeHtml(t(c.resolved ? 'ncReopen' : 'ncResolve'))}</button>` : '');
+      acts = (reply || btns) ? `<div style="margin-top:8px;">${reply}</div><div class="nc-actions">${btns}</div>` : '';
+    }
+    return `<div class="nc-thread${active ? ' active' : ''}${c.resolved ? ' resolved' : ''}" data-thread="${escapeHtml(c.id)}">
+      ${resolved}${quote}${orphan}${[c].concat(repliesOf(c.id)).map(commentHtml).join('')}${acts}</div>`;
+  }
+  function render(force){
+    const rail = o.rail();
+    if(!rail) return;
+    o.onCount && o.onCount(target ? openThreads().length : 0);
+    if(!open || !target){ setOpen(open && !!target); return; }
+    const a = document.activeElement;
+    if(!force && a && rail.contains(a) && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT')){ renderPending = true; return; }
+    renderPending = false;
+    bindRail(rail);
+    const all = roots();
+    const resolvedCount = all.filter(c=> c.resolved).length;
+    const shown = all.filter(c=> showResolved || !c.resolved || c.id === activeId).sort((x, y)=>{
+      const px = lastPos.get(x.id), py = lastPos.get(y.id);
+      const ix = px ? px.index : Infinity, iy = py ? py.index : Infinity;
+      if(ix !== iy) return ix - iy;
+      return String(x.created_at).localeCompare(String(y.created_at));
+    });
+    const composer = draft ? `<div class="nc-new">
+        <div class="nc-quote">${escapeHtml(String(draft.anchor.quote).replace(/\s+/g, ' ').slice(0, 160))}</div>
+        ${nameFieldHtml()}
+        <textarea class="nc-new-input" rows="3" maxlength="2000" placeholder="${escapeHtml(t('ncAddComment'))}" aria-label="${escapeHtml(t('ncAddComment'))}">${escapeHtml(draftText)}</textarea>
+        <div class="nc-actions">
+          <button type="button" class="export-btn act-save nc-new-send"${busy ? ' disabled' : ''}>${escapeHtml(t('ncComment'))}</button>
+          <button type="button" class="export-btn act-cancel nc-new-cancel">${escapeHtml(t('cancelEdit'))}</button>
+        </div></div>` : '';
+    const empty = !shown.length && !draft
+      ? `<div class="nc-empty">${escapeHtml(t(o.canComment() ? 'ncEmpty' : 'ncEmptyView'))}</div>` : '';
+    const viewOnly = !o.canComment() && all.length ? `<div class="nc-empty" style="margin-bottom:8px;">${escapeHtml(t('ncViewOnly'))}</div>` : '';
+    rail.innerHTML = `<div class="nc-head">
+        <span class="nc-title">${escapeHtml(t('ncCommentsBtn'))}</span>
+        <span class="nc-count">${escapeHtml(tCount('ncCount', openThreads().length))}</span>
+        <button type="button" class="icon-btn close-x nc-close" title="${escapeHtml(t('closeNoteBtn'))}" aria-label="${escapeHtml(t('closeNoteBtn'))}">✕</button>
+      </div>
+      ${resolvedCount ? `<div style="margin-bottom:8px;"><button type="button" class="nc-toggle">${escapeHtml(showResolved ? t('ncHideResolved') : t('ncShowResolved').replace('{n}', resolvedCount))}</button></div>` : ''}
+      ${viewOnly}${composer}${err ? `<div class="nc-err" style="margin:0 0 8px;">${escapeHtml(err)}</div>` : ''}
+      <div class="nc-list">${shown.map(threadHtml).join('')}${empty}</div>`;
+  }
+  function failText(e){
+    const s = [e && e.message, e && e.hint].join(' ').toLowerCase();
+    return s.includes('rate_limited') || s.includes('too many') ? t('ncRateLimited') : t('nsFailed');
+  }
+  async function submit(parentId, body, anchor){
+    const text = String(body || '').trim();
+    if(!text || busy) return false;
+    let name = '';
+    if(o.guest){
+      const f = o.rail().querySelector('.nc-name-input');
+      name = ((f && f.value) || guestName()).trim();
+      if(!name){ err = t('ncNameNeeded'); render(true); return false; }
+      try { localStorage.setItem('ncGuestName', name); } catch(e){}
+    }
+    busy = true; err = '';
+    render(true);
+    try {
+      await o.api.add(target, { parent_id: parentId || null, body: text.slice(0, 2000), anchor: anchor || null, name });
+      busy = false;
+      await reload();
+      return true;
+    } catch(e){
+      console.warn('note comment', e);
+      busy = false;
+      err = failText(e);
+      render(true);
+      return false;
+    }
+  }
+  function bindRail(rail){
+    if(railBound === rail) return;
+    railBound = rail;
+    rail.addEventListener('input', (e)=>{
+      const el = e.target;
+      if(el.classList.contains('nc-reply-input')) replyText[el.dataset.thread] = el.value;
+      else if(el.classList.contains('nc-new-input')) draftText = el.value;
+    });
+    rail.addEventListener('keydown', (e)=>{
+      const el = e.target;
+      if(e.key === 'Escape'){
+        // Not the editor's own Escape, which closes the note.
+        e.stopPropagation();
+        if(el.classList && el.classList.contains('nc-new-input')){ draft = null; render(true); queuePaint(); }
+        return;
+      }
+      if(e.key === 'Enter' && (e.metaKey || e.ctrlKey)){
+        if(el.classList.contains('nc-new-input')){ e.preventDefault(); rail.querySelector('.nc-new-send').click(); }
+        else if(el.classList.contains('nc-reply-input')){ e.preventDefault(); const b = rail.querySelector(`.nc-reply-send[data-thread="${el.dataset.thread}"]`); if(b) b.click(); }
+      }
+    });
+    rail.addEventListener('focusout', ()=> setTimeout(()=>{
+      if(renderPending && !rail.contains(document.activeElement)) render();
+    }, 0));
+    rail.addEventListener('click', async (e)=>{
+      const b = e.target.closest && e.target.closest('button');
+      if(b){
+        if(b.disabled) return;
+        if(b.classList.contains('nc-close')){ setOpen(false); activeId = null; draft = null; queuePaint(); return; }
+        if(b.classList.contains('nc-toggle')){ showResolved = !showResolved; render(true); queuePaint(); return; }
+        if(b.classList.contains('nc-new-cancel')){ draft = null; err = ''; render(true); queuePaint(); return; }
+        if(b.classList.contains('nc-new-send') && draft){
+          const d = draft;
+          if(await submit(null, draftText, d.anchor)){ if(draft === d){ draft = null; draftText = ''; } render(true); queuePaint(); }
+          return;
+        }
+        if(b.classList.contains('nc-reply-send')){
+          const id = b.dataset.thread;
+          if(await submit(id, replyText[id], null)){ delete replyText[id]; render(true); }
+          return;
+        }
+        if(b.classList.contains('nc-resolve')){
+          const c = comments.find(x=> x.id === b.dataset.thread);
+          if(!c || busy) return;
+          busy = true; err = '';
+          try { await o.api.resolve(target, c.id, !c.resolved); c.resolved = !c.resolved; if(c.resolved && !showResolved) activeId = null; }
+          catch(er){ console.warn('note comment resolve', er); err = t('nsFailed'); }
+          busy = false;
+          render(true); queuePaint();
+          return;
+        }
+        if(b.classList.contains('nc-del')){
+          const c = comments.find(x=> x.id === b.dataset.del);
+          if(!c) return;
+          const thread = !c.parent_id && repliesOf(c.id).length;
+          if(!confirm(t(thread ? 'ncDeleteThreadConfirm' : 'ncDeleteConfirm'))) return;
+          try { await o.api.remove(target, c.id); comments = comments.filter(x=> x.id !== c.id && x.parent_id !== c.id); }
+          catch(er){ console.warn('note comment delete', er); err = t('nsFailed'); }
+          render(true); queuePaint();
+          return;
+        }
+        return;
+      }
+      if(e.target.closest('textarea, input')) return;
+      const th = e.target.closest('[data-thread]');
+      if(!th || th.dataset.thread === activeId) return;
+      activeId = th.dataset.thread;
+      render(true);
+      queuePaint();
+      reveal(activeId);
+    });
+  }
+  // The highlighted text brought into view when its thread is picked.
+  function reveal(id){
+    const q = o.quill(), p = lastPos.get(id);
+    if(!q || !p) return;
+    const r = noteDomRange(q, p.index, p.length);
+    const box = r && r.getBoundingClientRect();
+    if(!box || (box.top >= 70 && box.bottom <= window.innerHeight - 20)) return;
+    const el = r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer;
+    if(el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  async function reload(){
+    const tg = target;
+    if(!tg) return;
+    try {
+      const list = await o.api.list(tg);
+      if(target !== tg) return;
+      comments = Array.isArray(list) ? list : [];
+    } catch(e){
+      console.warn('note comments', e);
+      return;
+    }
+    if(activeId && !comments.some(c=> c.id === activeId)) activeId = null;
+    // A note's HTML written just before reaches Quill's model a moment later.
+    await new Promise(r=> setTimeout(r, 0));
+    if(target !== tg) return;
+    // Open by itself the first time a note with open comments is shown.
+    if(!openedOnce && openThreads().length){ openedOnce = true; setOpen(true); }
+    paint();
+    render();
+  }
+  function queueReload(){
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(reload, 250);
+  }
+  return {
+    attach(tg){
+      if(channelOff){ channelOff(); channelOff = null; }
+      target = tg;
+      comments = []; activeId = null; draft = null; draftText = ''; err = ''; busy = false; openedOnce = false;
+      hints.clear();
+      lastPos = new Map();
+      hideAdd();
+      pendingRange = null;
+      clearPaint();
+      if(!tg){ setOpen(false); render(); return; }
+      bindQuill();
+      render();
+      reload();
+      if(o.api.subscribe) channelOff = o.api.subscribe(tg, queueReload);
+    },
+    toggle(){
+      if(!target) return;
+      setOpen(!open);
+      if(!open){ activeId = null; draft = null; }
+      render(true);
+      queuePaint();
+    },
+    refresh(){ render(); queuePaint(); },
+    reload,
+    repaint: queuePaint
+  };
+}
+// The signed-in app's comments: the note_comments table under its RLS.
+function noteCommentApi(kind){
+  return {
+    async list(tg){
+      const { data, error } = await supabaseClient.from('note_comments')
+        .select('id,note_table,note_id,parent_id,author_id,anon_name,body,anchor,resolved,resolved_by,resolved_at,created_at')
+        .eq('note_table', tg.table).eq('note_id', tg.id).order('created_at', { ascending: true });
+      if(error) throw error;
+      return data || [];
+    },
+    async add(tg, row){
+      const { error } = await supabaseClient.from('note_comments').insert({
+        note_table: tg.table, note_id: tg.id, author_id: currentUser.id,
+        parent_id: row.parent_id, body: row.body, anchor: row.anchor
+      });
+      if(error) throw error;
+    },
+    async resolve(tg, id, value){
+      const { error } = await supabaseClient.rpc('note_comment_set_resolved', { p_comment_id: id, p_resolved: value });
+      if(error) throw error;
+    },
+    async remove(tg, id){
+      const { error } = await supabaseClient.from('note_comments').delete().eq('id', id);
+      if(error) throw error;
+    },
+    // Inserts and resolves arrive filtered to the note; a DELETE carries only
+    // its id and cannot be filtered, so every one is heard and checked.
+    subscribe(tg, onChange){
+      const ch = supabaseClient.channel(`note-comments-${kind}-${tg.id}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'note_comments', filter: `note_id=eq.${tg.id}` }, onChange)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'note_comments', filter: `note_id=eq.${tg.id}` }, onChange)
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'note_comments' }, onChange)
+        .subscribe();
+      return ()=>{ try { supabaseClient.removeChannel(ch); } catch(e){} };
+    }
+  };
+}
+
+/* ---------- THE PUBLIC LINK PAGE ----------
+   ?share=<token> on the app's own address. Handled first thing in init(), and
+   nothing of the signed-in app is started for it: no session is read, no data
+   loaded, no worker registered. Everything comes from the two anon RPCs
+   (note_share_public_get, note_share_public_comment), keyed on the token; no
+   table is readable by anon. The note is put through safeRichHtml (DOMPurify)
+   exactly as the editors do, into a read-only Quill so a comment's offsets
+   mean the same here as in the app.
+   The worker serves index.html stale-while-revalidate (sw.js, ignoreSearch),
+   so a device holding a copy from before this existed opens the plain app
+   for the link once; the worker then says a new copy is in, and this page
+   (or that app's own bar) reloads onto it. */
+function publicShareTokenFromUrl(){
+  try {
+    const v = new URLSearchParams(location.search).get('share');
+    return v === null ? null : v;
+  } catch(e){ return null; }
+}
+async function publicShareFetch(token){
+  if(!/^[0-9a-f]{64}$/.test(token || '')) return null;
+  const { data, error } = await supabaseClient.rpc('note_share_public_get', { p_token: token });
+  if(error) throw error;
+  return data && typeof data === 'object' ? data : null;
+}
+async function openPublicSharePage(token){
+  const screen = document.getElementById('publicShareScreen');
+  screen.classList.remove('hidden');
+  const msg = document.getElementById('psMsg');
+  const wrap = document.getElementById('psWrap');
+  const titleEl = document.getElementById('psTitle');
+  const meta = document.getElementById('psMeta');
+  setLoadingText(msg, t('recapLoadingHint'));
+  msg.classList.remove('hidden');
+  wrap.classList.add('hidden');
+  let data = null;
+  try { data = await publicShareFetch(token); }
+  catch(e){ console.warn('public share', e); msg.textContent = t('nsFailed'); return; }
+  if(!data){ msg.textContent = t('psNotFound'); return; }
+  msg.classList.add('hidden');
+  wrap.classList.remove('hidden');
+  // Not readOnly: a disabled Quill would not take the note's HTML into its
+  // model (see setNoteEditorWritable). The page cannot be typed into all the
+  // same.
+  const quill = new Quill('#psQuill', { theme: 'snow', modules: { toolbar: false } });
+  setNoteEditorWritable(quill, false);
+  let shown = null;
+  const show = (d)=>{
+    titleEl.textContent = d.title || '';
+    document.title = (d.title || '') + ' · Productivity Tracker';
+    const bits = [];
+    if(d.owner_name) bits.push(t('psSharedBy').replace('{name}', d.owner_name));
+    if(d.updated_at) bits.push(t('psUpdated').replace('{time}', localDateTimeStr(d.updated_at)));
+    bits.push(t(d.role === 'commenter' ? 'psCanComment' : 'psViewOnly'));
+    meta.textContent = bits.join(' · ');
+    if(d.content !== shown){
+      shown = d.content;
+      quill.root.innerHTML = safeRichHtml(d.content || '');
+    }
+    data = d;
+  };
+  show(data);
+  const ctl = makeNoteComments({
+    hl: 'nc-public',
+    wrap: ()=> wrap,
+    rail: ()=> document.getElementById('psRail'),
+    quill: ()=> quill,
+    api: {
+      async list(){ const d = await publicShareFetch(token); if(!d) return []; show(d); return d.comments || []; },
+      async add(tg, row){
+        const { error } = await supabaseClient.rpc('note_share_public_comment', {
+          p_token: token, p_name: row.name, p_body: row.body, p_parent_id: row.parent_id, p_anchor: row.anchor
+        });
+        if(error) throw error;
+      },
+      async resolve(){ throw new Error('not allowed'); },
+      async remove(){ throw new Error('not allowed'); }
+    },
+    canComment: ()=> data && data.role === 'commenter',
+    canResolve: ()=> false,
+    canDelete: ()=> false,
+    nameOf: (c)=> c.name || t('someoneName'),
+    isGuest: (c)=> !!c.guest,
+    colorOf: ()=> '',
+    guest: true
+  });
+  ctl.attach({ token });
+  // Comments made meanwhile, whenever the page is looked at again.
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) ctl.reload(); });
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.addEventListener('message', (e)=>{
+      if(!e.data || e.data.type !== 'wk-shell-updated') return;
+      const typing = Array.from(document.querySelectorAll('#psRail textarea')).some(x=> x.value.trim());
+      if(!typing) window.location.reload();
+    });
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Expenditure -- vacation expense tracker, a sub-tab of Home. Reuses this
@@ -55538,6 +56800,15 @@ function navBack(){
   document.addEventListener('touchcancel', end);
 })();
 (async function init(){
+  // A public note link opens that note and nothing else: no form, no
+  // session, no data, no worker (see openPublicSharePage).
+  const publicShareToken = publicShareTokenFromUrl();
+  if(publicShareToken !== null){
+    applyLanguage(currentLang);
+    applyDarkMode(themeChoice() === 'system' ? !!(systemDarkMq && systemDarkMq.matches) : themeChoice() === 'dark', false);
+    await openPublicSharePage(publicShareToken);
+    return;
+  }
   initForm();
   applyLanguage(currentLang);
   // #appScreen (and this card with it) is shown the instant onAuthed() starts,
