@@ -44,6 +44,10 @@
 <!-- Quill's own theme. The editor is not on screen until a note is opened, so
      this has no business holding up the first paint either. -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" integrity="sha384-Cr4NirNGPwhXoUPml2HA5PmMExeUuxM/oxUMDhMdSzUi9udHL+hdgDZZpq/2rOrp" crossorigin="anonymous" media="print" onload="this.media='all'">
+<!-- KaTeX's stylesheet, for the equations in a note. Not render-blocking for
+     the same reason as Quill's; its script loads only when an equation is
+     first edited (see loadKatex). -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" media="print" onload="this.media='all'">
 <style>
 :root{
   color-scheme: light;
@@ -3391,6 +3395,66 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
 .ql-snow.ql-toolbar button.nf-spacing-open:hover{color:#06c;}
 .ql-toolbar button.nf-spacing-open svg{display:block;float:none;width:16px;height:16px;}
 .nf-spacing-panel{min-width:84px;}
+/* Text style, contents, symbols and equations: four more toolbar buttons in
+   the same family as line spacing, and the equation box (see the EQUATIONS
+   block in the script). Each button family sets its own :hover and :focus
+   background, because the global button:hover paints them ink on iOS. */
+.ql-toolbar .nf-tool-group{position:relative;}
+.ql-snow.ql-toolbar button.nf-tool-open,.ql-snow.ql-toolbar button.nf-eq-open{color:var(--ink-soft);display:inline-flex;align-items:center;justify-content:center;}
+.ql-snow.ql-toolbar button.nf-tool-open:hover,.ql-snow.ql-toolbar button.nf-tool-open:focus,
+.ql-snow.ql-toolbar button.nf-eq-open:hover,.ql-snow.ql-toolbar button.nf-eq-open:focus{color:#06c;background:none;}
+.ql-snow.ql-toolbar button.nf-tool-open.ql-active{color:#06c;}
+.ql-toolbar button.nf-tool-open svg,.ql-toolbar button.nf-eq-open svg{display:block;float:none;width:16px;height:16px;}
+.nf-size-panel.nf-tool-panel{max-height:320px;min-width:180px;text-align:left;}
+/* Quill's own .ql-snow.ql-toolbar button (a 28px float) would otherwise win
+   over the rows of a panel that hangs inside the toolbar. */
+.ql-snow.ql-toolbar .nf-tool-panel button{float:none;display:block;width:100%;height:auto;line-height:1.35;}
+.ql-snow.ql-toolbar .nf-tool-panel .nf-tabs button.nf-tab{display:inline-block;width:auto;}
+.ql-snow.ql-toolbar .nf-tool-panel button.nf-sym{display:flex;align-items:center;justify-content:center;width:auto;}
+.nf-tool-panel button:focus{background:transparent;}
+.nf-tool-panel button:hover,.nf-tool-panel button:focus-visible{background:var(--paper);}
+.nf-tool-panel button.on,.nf-tool-panel button.on:hover,.nf-tool-panel button.on:focus{background:var(--ink);color:var(--paper);}
+.nf-size-panel button.nf-style-opt,.nf-size-panel button.nf-toc-item,.nf-size-panel button.nf-toc-insert{text-align:left;white-space:normal;}
+.nf-size-panel button.nf-style-1{font-size:17px;font-weight:700;}
+.nf-size-panel button.nf-style-2{font-size:14.5px;font-weight:700;}
+.nf-size-panel button.nf-style-3{font-size:12.5px;font-weight:700;}
+.nf-size-panel button.nf-style-0{font-weight:500;}
+.nf-size-panel button.nf-toc-item{font-weight:600;}
+.nf-size-panel button.nf-toc-2{padding-left:20px;font-weight:500;}
+.nf-size-panel button.nf-toc-3{padding-left:32px;font-weight:500;color:var(--ink-soft);}
+.nf-size-panel button.nf-toc-insert{margin-top:4px;border-top:1px solid var(--line);border-radius:0 0 4px 4px;color:var(--ink-soft);font-weight:500;}
+.nf-tool-hint{font-family:'Inter',sans-serif;font-size:11.5px;line-height:1.45;color:var(--ink-soft);padding:6px 6px 2px;max-width:300px;}
+.nf-sym-group .nf-tool-panel{width:min(300px, calc(100vw - 24px));box-sizing:border-box;}
+.nf-tabs{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px;}
+.nf-tabs button.nf-tab,.nf-size-panel .nf-tabs button.nf-tab{display:inline-block;width:auto;font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink-soft);cursor:pointer;}
+.nf-tabs button.nf-tab:hover,.nf-tabs button.nf-tab:focus{background:var(--paper);color:var(--ink);}
+.nf-tabs button.nf-tab.on,.nf-tabs button.nf-tab.on:hover,.nf-tabs button.nf-tab.on:focus{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.nf-sym-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:2px;}
+.nf-size-panel button.nf-sym{font-family:'Inter','Noto Sans KR',sans-serif;font-size:16px;font-weight:500;padding:5px 0;text-align:center;}
+/* Headings in a note: the size steps of the style menu above. */
+.ql-editor h1{font-size:1.55em;font-weight:700;margin:0.5em 0 0.2em;}
+.ql-editor h2{font-size:1.28em;font-weight:700;margin:0.45em 0 0.15em;}
+.ql-editor h3{font-size:1.08em;font-weight:700;margin:0.4em 0 0.1em;}
+/* An equation in a note: inline, clickable to edit. */
+.ql-editor .ql-formula{cursor:pointer;border-radius:4px;padding:0 2px;}
+.ql-editor .ql-formula:hover{background:rgba(127,127,127,0.14);}
+.ql-formula .katex{font-size:1.08em;}
+.nf-tex-wait{font-family:monospace;font-size:0.9em;color:var(--ink-soft);}
+.nf-eq-box{max-width:600px;}
+.nf-eq-head{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.nf-eq-x{background:none;border:none;color:var(--ink-soft);padding:4px;cursor:pointer;display:inline-flex;}
+.nf-eq-x:hover,.nf-eq-x:focus{background:none;color:var(--ink);}
+.nf-eq-keys{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:4px;margin:0 0 10px;max-height:220px;overflow-y:auto;}
+.nf-eq-key{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:6px;min-height:40px;padding:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;font-size:13px;}
+.nf-eq-key:hover,.nf-eq-key:focus{background:var(--paper);border-color:var(--ink-soft);color:var(--ink);}
+.nf-eq-key .katex{font-size:0.95em;}
+.nf-eq-src{display:block;width:100%;box-sizing:border-box;font-family:'Space Grotesk',monospace;font-size:15px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);resize:vertical;}
+.nf-eq-preview{min-height:52px;margin:10px 0 14px;padding:10px;border:1px dashed var(--line);border-radius:6px;overflow-x:auto;text-align:center;font-size:1.15em;}
+.nf-eq-preview .hint{margin:0;font-size:12px;}
+.nf-eq-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.nf-eq-del{margin-left:auto;background:none;border:none;color:var(--danger);padding:6px 4px;cursor:pointer;font-size:13px;}
+.nf-eq-del:hover,.nf-eq-del:focus{background:none;color:var(--danger);text-decoration:underline;}
+@media (pointer: coarse){ .nf-eq-src{font-size:16px;} }
 /* A WORD STAYS WHOLE AT THE END OF A LINE (real-user request: "don't cut a
    word in the middle to go to the next line"). keep-all is what keeps a Korean
    word in one piece; a word joined by a symbol is held together by the
@@ -13258,6 +13322,7 @@ const TOPIK_TEST = new Date(TOPIK_CAL_EVENTS[1].date + 'T' + TOPIK_CAL_EVENTS[1]
 /* ---------- I18N ---------- */
 const I18N = {
   en: {
+    noteSub:'Subscript', noteSup:'Superscript', noteStyleBtn:'Text style', noteStyleNormal:'Normal text', noteStyleH1:'Heading', noteStyleH2:'Subheading', noteStyleH3:'Small heading', noteTocBtn:'Contents', noteTocEmpty:'No headings yet. Start a line with # and a space for a heading, ## for a subheading, ### for a small one.', noteTocInsert:'Write this list into the note', noteSymBtn:'Symbols', noteSymTabArrows:'Arrows', noteSymTabMath:'Math', noteSymTabGreek:'Greek', noteSymTabSets:'Sets and logic', noteSymTabScripts:'Super and sub', noteSymTabOther:'Other', noteShorthandHint:'Typing shortcuts: ^^ up arrow, vv down arrow, -> arrow, x^2 and H_2O for scripts, e^{ix} for longer ones. Undo puts back what you typed.', noteEqBtn:'Equation', noteEqTitle:'Equation', noteEqTabStruct:'Structures', noteEqInsert:'Insert', noteEqUpdate:'Update', noteEqRemove:'Remove', noteEqPlaceholder:'Tap the keys above or type LaTeX, for example \\frac{a}{b}', noteEqEmpty:'The preview shows here.', noteEqLoading:'Loading the equation editor...', noteEqFailed:"Couldn't load the equation editor. Check your connection and try again.",
     signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
     signOut:'Sign out',
     tabStudy:'Korean', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar', tabHome:'Home', tabOverview:'Overview', lblQuickNav:'Jump to', homeMorning:'Good morning', homeAfternoon:'Good afternoon', homeEvening:'Good evening', homeToday:'Today', homeTodos:'To-dos', homeTodosNone:'Nothing due today', homeAllDone:'All done for today', homeNextUp:'Next up', homeTodayWord:'Today', homeStreak:'{n}-day streak', homeReading:'Reading', 
@@ -13383,6 +13448,7 @@ const I18N = {
     authEnterEmailPassword:'Enter your email and password.', authInvalidLogin:'Wrong email, name or password.', authEmailNotConfirmed:'Confirm your email first. The link is in the email we sent you.', authAlreadyRegistered:'An account with this email already exists. Sign in instead.', authRateLimited:'Too many attempts. Wait a minute and try again.', authEmailInvalid:'That email address does not look right.', authSamePassword:'Pick a password different from your current one.', authNetworkError:'Could not reach the server. Check your connection and try again.', authSignupsClosed:'Sign-ups are closed right now.', authLinkExpired:'That link has expired or was already used. Ask for a new one.', guestUnavailable:'Not available in guest mode.', tipDelete:'Delete', tipRemove:'Remove', tipMoveUp:'Move up', tipMoveDown:'Move down', lblSubcategory:'Sub-category', noteMoveTo:'Move to a position', noteMovePick:'Pick a position', noteMoveTop:'To top', noteMoveBottom:'To bottom', noteMoveDone:'Done', noteStatsShow:'Word count', noteStatsShowHint:'Show words and characters', noteStatsHide:'press to hide', noteDragTip:'Drag to move', noteSubAdd:'Add a sub-category', noteSubNewPh:'Sub-category name', tipDarkMode:'Toggle dark mode', tipMyNotes:'My notes', tipClickToEdit:'Click to edit', tipJumpToDate:'Jump to date', tipPagesRead:'Pages read', tipJobBoardAiUpdate:'Walks each of today\'s postings individually and saves full descriptions to a local file', notesLinkShortcutPrompt:'Shortcut name:', saveFailedTryAgain:'Could not save. Try again.', termsLink:'Terms of Use', installGuideTitle:'Get the app', installGuideIntro:'Add Productivity Tracker to your home screen. It opens full screen like an app and can send you notifications.', installInAppNote:'This page is open inside another app, which cannot add it to your home screen. Open it in Safari or Chrome first (look for "Open in browser" in its ··· menu).', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'Install the app', installIosStep1:'Tap the Share button {icon} at the bottom of Safari. On newer iPhones it is inside the ··· menu.', installIosOtherStep1:'Tap the Share button {icon} in your browser, next to the address bar or in its menu.', installIosStep2:'Tap "View More" if you see it, then "Add to Home Screen".', installIosStep3:'Tap "Add". The app is now on your home screen.', installAndroidStep1:'Tap the menu {icon} at the top right of Chrome.', installAndroidStep2:'Tap "Add to home screen" or "Install app".', installAndroidStep3:'Tap "Install". The app is now on your home screen.', installGuideToast:'You can find this guide in Settings any time.', settingsInstallGuideBtn:'Get the app on your phone'
   },
   ko: {
+    noteSub:'아래 첨자', noteSup:'위 첨자', noteStyleBtn:'글자 스타일', noteStyleNormal:'본문', noteStyleH1:'제목', noteStyleH2:'부제목', noteStyleH3:'소제목', noteTocBtn:'목차', noteTocEmpty:'아직 제목이 없습니다. 줄 처음에 #와 띄어쓰기를 치면 제목, ##는 부제목, ###는 소제목이 됩니다.', noteTocInsert:'이 목록을 노트에 쓰기', noteSymBtn:'기호', noteSymTabArrows:'화살표', noteSymTabMath:'수학', noteSymTabGreek:'그리스 문자', noteSymTabSets:'집합과 논리', noteSymTabScripts:'위아래 첨자', noteSymTabOther:'기타', noteShorthandHint:'단축 입력: ^^ 위쪽 화살표, vv 아래쪽 화살표, -> 화살표, x^2와 H_2O는 첨자, 긴 것은 e^{ix}. 되돌리기를 누르면 입력한 그대로 돌아갑니다.', noteEqBtn:'수식', noteEqTitle:'수식', noteEqTabStruct:'구조', noteEqInsert:'넣기', noteEqUpdate:'수정', noteEqRemove:'삭제', noteEqPlaceholder:'위의 키를 누르거나 LaTeX로 입력하세요. 예: \\frac{a}{b}', noteEqEmpty:'여기에 미리 보기가 표시됩니다.', noteEqLoading:'수식 편집기를 불러오는 중...', noteEqFailed:'수식 편집기를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.',
     signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
     signOut:'로그아웃',
     tabStudy:'한국어', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더', tabHome:'홈', tabOverview:'개요', lblQuickNav:'바로가기', homeMorning:'좋은 아침이에요', homeAfternoon:'좋은 오후예요', homeEvening:'좋은 저녁이에요', homeToday:'오늘', homeTodos:'할 일', homeTodosNone:'오늘 할 일이 없어요', homeAllDone:'오늘 할 일을 다 했어요', homeNextUp:'다음 일정', homeTodayWord:'오늘', homeStreak:'{n}일 연속', homeReading:'읽는 중', 
@@ -13508,6 +13574,7 @@ const I18N = {
     authEnterEmailPassword:'이메일과 비밀번호를 입력하세요.', authInvalidLogin:'이메일, 이름 또는 비밀번호가 올바르지 않습니다.', authEmailNotConfirmed:'먼저 이메일 인증을 완료하세요. 보내 드린 이메일에 링크가 있습니다.', authAlreadyRegistered:'이 이메일로 만든 계정이 이미 있습니다. 로그인하세요.', authRateLimited:'시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요.', authEmailInvalid:'이메일 주소가 올바르지 않습니다.', authSamePassword:'현재 비밀번호와 다른 비밀번호를 선택하세요.', authNetworkError:'서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.', authSignupsClosed:'지금은 가입을 받지 않습니다.', authLinkExpired:'링크가 만료되었거나 이미 사용되었습니다. 새 링크를 요청하세요.', guestUnavailable:'게스트 모드에서는 사용할 수 없습니다.', tipDelete:'삭제', tipRemove:'제거', tipMoveUp:'위로 이동', tipMoveDown:'아래로 이동', lblSubcategory:'하위 분류', noteMoveTo:'원하는 위치로 이동', noteMovePick:'위치를 고르세요', noteMoveTop:'맨 위로', noteMoveBottom:'맨 아래로', noteMoveDone:'완료', noteStatsShow:'글자 수', noteStatsShowHint:'단어와 글자 수 보기', noteStatsHide:'누르면 숨겨집니다', noteDragTip:'끌어서 옮기기', noteSubAdd:'하위 분류 추가', noteSubNewPh:'하위 분류 이름', tipDarkMode:'다크 모드 전환', tipMyNotes:'내 노트', tipClickToEdit:'클릭하여 수정', tipJumpToDate:'날짜로 이동', tipPagesRead:'읽은 페이지', tipJobBoardAiUpdate:'오늘 올라온 공고를 하나씩 열어 전체 설명을 기기의 파일로 저장합니다', notesLinkShortcutPrompt:'단축어 이름:', saveFailedTryAgain:'저장하지 못했습니다. 다시 시도하세요.', termsLink:'이용약관', installGuideTitle:'앱으로 사용하기', installGuideIntro:'Productivity Tracker를 홈 화면에 추가하세요. 앱처럼 전체 화면으로 열리고 알림도 받을 수 있어요.', installInAppNote:'지금 다른 앱 안에서 열려 있어서 홈 화면에 추가할 수 없어요. 먼저 Safari나 Chrome에서 여세요(··· 메뉴의 "다른 브라우저로 열기").', installOsIos:'iPhone', installOsAndroid:'Android', installNowBtn:'앱 설치', installIosStep1:'Safari 하단의 공유 버튼 {icon}을 누르세요. 최신 iPhone에서는 ··· 메뉴 안에 있어요.', installIosOtherStep1:'브라우저의 공유 버튼 {icon}을 누르세요. 주소창 옆이나 메뉴 안에 있어요.', installIosStep2:'"더 보기"가 보이면 누른 다음 "홈 화면에 추가"를 누르세요.', installIosStep3:'"추가"를 누르면 홈 화면에 앱이 생겨요.', installAndroidStep1:'Chrome 오른쪽 위의 메뉴 {icon}를 누르세요.', installAndroidStep2:'"홈 화면에 추가" 또는 "앱 설치"를 누르세요.', installAndroidStep3:'"설치"를 누르면 홈 화면에 앱이 생겨요.', installGuideToast:'이 안내는 언제든 설정에서 다시 볼 수 있어요.', settingsInstallGuideBtn:'휴대폰에 앱 추가하기'
   },
   vi: {
+    noteSub:'Chỉ số dưới', noteSup:'Chỉ số trên', noteStyleBtn:'Kiểu chữ', noteStyleNormal:'Văn bản thường', noteStyleH1:'Tiêu đề', noteStyleH2:'Tiêu đề phụ', noteStyleH3:'Tiêu đề nhỏ', noteTocBtn:'Mục lục', noteTocEmpty:'Chưa có tiêu đề. Gõ # và dấu cách ở đầu dòng để tạo tiêu đề, ## cho tiêu đề phụ, ### cho tiêu đề nhỏ.', noteTocInsert:'Ghi danh sách này vào ghi chú', noteSymBtn:'Ký hiệu', noteSymTabArrows:'Mũi tên', noteSymTabMath:'Toán', noteSymTabGreek:'Chữ Hy Lạp', noteSymTabSets:'Tập hợp và logic', noteSymTabScripts:'Chỉ số trên, dưới', noteSymTabOther:'Khác', noteShorthandHint:'Gõ tắt: ^^ mũi tên lên, vv mũi tên xuống, -> mũi tên, x^2 và H_2O cho chỉ số, e^{ix} cho chỉ số dài. Hoàn tác sẽ trả lại đúng những gì bạn gõ.', noteEqBtn:'Công thức', noteEqTitle:'Công thức', noteEqTabStruct:'Cấu trúc', noteEqInsert:'Chèn', noteEqUpdate:'Cập nhật', noteEqRemove:'Xóa', noteEqPlaceholder:'Bấm các phím ở trên hoặc gõ LaTeX, ví dụ \\frac{a}{b}', noteEqEmpty:'Bản xem trước hiển thị ở đây.', noteEqLoading:'Đang tải trình soạn công thức...', noteEqFailed:'Không tải được trình soạn công thức. Hãy kiểm tra kết nối rồi thử lại.',
     signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
     signOut:'Đăng xuất',
     tabStudy:'Tiếng Hàn', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch', tabHome:'Trang chủ', tabOverview:'Tổng quan', lblQuickNav:'Đi đến', homeMorning:'Chào buổi sáng', homeAfternoon:'Chào buổi chiều', homeEvening:'Chào buổi tối', homeToday:'Hôm nay', homeTodos:'Việc cần làm', homeTodosNone:'Hôm nay không có việc gì', homeAllDone:'Đã xong hết hôm nay', homeNextUp:'Sắp tới', homeTodayWord:'Hôm nay', homeStreak:'Chuỗi {n} ngày', homeReading:'Đang đọc', 
@@ -43671,7 +43738,10 @@ function getRichPurifier(){
   return p;
 }
 const RICH_HTML_CONFIG = {
-  USE_PROFILES: { html: true },
+  // svg for the equations in a note: KaTeX draws square roots, long arrows
+  // and wide accents as SVG (see the EQUATIONS block). DOMPurify cleans SVG
+  // the same way it cleans HTML, scripts and handlers included.
+  USE_PROFILES: { html: true, svg: true },
   ADD_TAGS: ['iframe'],
   ADD_ATTR: ['target', 'allowfullscreen', 'frameborder'],
   // Nothing Quill writes, and each can dress a note up as part of the app: a
@@ -50121,7 +50191,12 @@ function typingShortcutRules(){
     ['>=', '\u2265'],
     ['<=', '\u2264'],
     ['+-', '\u00b1'],
-    ['~=', '\u2248']
+    ['~=', '\u2248'],
+    // Up and down arrows (real-user request: "maybe ^^ is an up arrow and vv
+    // is a down arrow (almost no words have double v)"). vv is matched as
+    // typed, lowercase only, so a VVIP stays a VVIP.
+    ['^^', '\u2191'],
+    ['vv', '\u2193', true]
   ];
   typingShortcutRules.longest = Math.max(...typingShortcutRules.list.map(r=>r[0].length));
   return typingShortcutRules.list;
@@ -50142,8 +50217,9 @@ function enableTypingShortcuts(quill){
     const end = at + 1;
     const rules = typingShortcutRules();
     const from = Math.max(0, end - typingShortcutRules.longest);
-    const tail = quill.getText(from, end - from).toLowerCase();
-    const rule = rules.find(([pat])=> tail.endsWith(pat));
+    const raw = quill.getText(from, end - from);
+    const tail = raw.toLowerCase();
+    const rule = rules.find(([pat, , exact])=> (exact ? raw : tail).endsWith(pat));
     if(!rule) return;
     const [pat, repl] = rule;
     const start = end - pat.length;
@@ -50918,6 +50994,561 @@ function enhanceNoteEditor(quill, key, opts){
   enableNoteWholeWords(quill);
   buildNoteLineSpacingControl(quill, opts && opts.markDirty);
   buildNoteStats(quill, key);
+  enableNoteMath(quill, key, opts);
+}
+
+/* ---------- EQUATIONS, SYMBOLS, HEADINGS AND SCRIPTS IN A NOTE ----------
+   Real-user request: "Add an equation thing for notes (with symbols and
+   mathlab layout) and like subscript, superscript stuff (can make an easy
+   shorthand way of doing this with _ and ^ that you can just undo if you
+   didn't want it). And headers/subheaders for an easy ToC input. Need a
+   symbol tab." Five additions to the note toolbar, the course notes and the
+   Notebook alike (enhanceNoteEditor is the one door both go through):
+     - TEXT STYLE: normal, heading, subheading, small heading, also typed as
+       "# ", "## " and "### " at the start of a line;
+     - CONTENTS: the headings of the note as a list to jump to, and a button
+       that writes that list into the note;
+     - SUBSCRIPT and SUPERSCRIPT buttons, plus the shorthand: x^2, H_2O, e^{ix}
+       turn into scripts when the word ends, and one undo puts the ^ back;
+     - SYMBOLS: a tabbed panel of characters to drop into the text;
+     - EQUATIONS: a keypad of structures and symbols over a LaTeX box with a
+       live preview, inserted as Quill's own formula embed and opened again by
+       clicking it.
+   Equations are drawn by KaTeX. Its stylesheet loads with the page (a saved
+   equation has to look right wherever the note is shown) and its script only
+   when the equation box is first opened. KaTeX is asked for HTML output only:
+   its MathML half would not survive the note sanitizer and would come back as
+   loose text, and its square roots and long arrows are SVG, which
+   RICH_HTML_CONFIG lets through for that reason. */
+var KATEX_JS = 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js';
+var KATEX_JS_SRI = 'sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg';
+var katexLoading = null;
+function loadKatex(){
+  if(window.katex) return Promise.resolve(window.katex);
+  if(katexLoading) return katexLoading;
+  katexLoading = new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = KATEX_JS;
+    s.integrity = KATEX_JS_SRI;
+    s.crossOrigin = 'anonymous';
+    s.onload = ()=> window.katex ? resolve(window.katex) : reject(new Error('katex'));
+    s.onerror = ()=>{ katexLoading = null; reject(new Error('katex')); };
+    document.head.appendChild(s);
+  }).then(k=>{
+    // Formulas that arrived before KaTeX did (a note opened, or a pasted
+    // equation) were written out as their source; draw them now.
+    document.querySelectorAll('.nf-tex-wait').forEach(el=>{
+      const f = el.closest('.ql-formula');
+      if(f) noteTexInto(el, f.getAttribute('data-value') || '');
+    });
+    return k;
+  });
+  return katexLoading;
+}
+function noteTexInto(el, tex){
+  if(window.katex){
+    el.classList.remove('nf-tex-wait');
+    try{ window.katex.render(String(tex), el, { throwOnError: false, output: 'html', strict: 'ignore' }); }
+    catch(e){ el.textContent = tex; }
+  } else {
+    el.textContent = tex;
+    el.classList.add('nf-tex-wait');
+  }
+}
+// Quill's own formula blot, with two changes. It does not need KaTeX loaded
+// to exist, and it draws itself again from data-value every time a note is
+// opened. Quill's Embed wraps whatever the node holds in a fresh inner span,
+// so a saved formula (already wrapped once) would otherwise gain another
+// layer on every save and open.
+var NoteFormula = null;
+(function(){
+  let Base, Embed;
+  try{ Base = Quill.import('formats/formula'); Embed = Quill.import('blots/embed'); }catch(e){ return; }
+  if(!Base || !Embed) return;
+  NoteFormula = class extends Base {
+    static create(value){
+      const node = Embed.create.call(this, value);
+      node.setAttribute('data-value', String(value == null ? '' : value));
+      return node;
+    }
+    constructor(node, value){
+      const tex = node.getAttribute('data-value') || '';
+      node.textContent = '';
+      const inner = document.createElement('span');
+      noteTexInto(inner, tex);
+      node.appendChild(inner);
+      if(!window.katex) loadKatex().catch(()=>{});
+      super(node, value);
+    }
+  };
+  Quill.register(NoteFormula, true);
+})();
+
+// The two typed shortcuts for scripts. A ^ or _ glued to the character before
+// it, followed by a number (x^2, x^-1, H_2O), a single letter that ends the
+// word (a_i, e^x) or anything in braces (e^{ix}), is turned into a
+// superscript or subscript when the word ends: a space, return or closing
+// punctuation, or straight away for the brace form. "file_name" is left
+// alone (the letter after the _ does not end the word), and so is anything
+// that looks like an address. One undo puts the typed characters back.
+var NOTE_SCRIPT_ENDS = ' \n.,;:!?)';
+function noteScriptRuns(word){
+  const runs = [];
+  for(let i = 1; i < word.length; i++){
+    const c = word[i];
+    if(c !== '^' && c !== '_') continue;
+    if(word[i - 1] === '^' || word[i - 1] === '_') continue;
+    const rest = word.slice(i + 1);
+    let m;
+    if((m = /^\{([^{}]{1,40})\}/.exec(rest))){
+      runs.push({ at: i, cut: 2, len: m[1].length, tail: 1, kind: c });
+      i += m[0].length;
+    } else if((m = /^[+\-−]?\d+/.exec(rest))){
+      runs.push({ at: i, cut: 1, len: m[0].length, tail: 0, kind: c });
+      i += m[0].length;
+    } else if((m = /^[A-Za-zͰ-Ͽ](?![A-Za-zͰ-Ͽ])/.exec(rest))){
+      runs.push({ at: i, cut: 1, len: 1, tail: 0, kind: c });
+      i += 1;
+    }
+  }
+  return runs;
+}
+function enableNoteScriptShortcuts(quill){
+  const Delta = Quill.import('delta');
+  let rewriting = false;
+  quill.on('text-change', (delta, oldContents, source)=>{
+    if(source !== 'user' || rewriting || !noteAutoFormatPref()) return;
+    const ops = delta.ops || [];
+    if(ops.length === 0 || ops.length > 2) return;
+    const last = ops[ops.length - 1];
+    if(typeof last.insert !== 'string' || last.insert.length !== 1) return;
+    const at = ops.length === 2 ? ops[0].retain : 0;
+    if(typeof at !== 'number') return;
+    const ch = last.insert;
+    const brace = ch === '}';
+    if(!brace && NOTE_SCRIPT_ENDS.indexOf(ch) < 0) return;
+    // The word is what runs back from the character before the one typed (or
+    // including it, for a closing brace) to the last space on the line.
+    const end = brace ? at + 1 : at;
+    const from = Math.max(0, end - 80);
+    const before = quill.getText(from, end - from);
+    const cut = Math.max(before.lastIndexOf(' '), before.lastIndexOf('\n'), before.lastIndexOf('\t'));
+    const word = before.slice(cut + 1);
+    if(word.length < 3 || !/[\^_]/.test(word)) return;
+    if(/:\/\/|@|www\.|\\/.test(word)) return;
+    let runs = noteScriptRuns(word);
+    if(brace) runs = runs.filter(r=> r.tail && r.at + r.cut + r.len + r.tail === word.length);
+    if(!runs.length) return;
+    const start = end - word.length;
+    const fmt = quill.getFormat(start, word.length);
+    if(fmt['code-block'] || fmt.code || fmt.link) return;
+    let d = new Delta().retain(start), pos = 0, removed = 0;
+    runs.forEach(r=>{
+      if(r.at > pos) d = d.retain(r.at - pos);
+      d = d.delete(r.cut).retain(r.len, { script: r.kind === '^' ? 'super' : 'sub' });
+      if(r.tail) d = d.delete(r.tail);
+      removed += r.cut + r.tail;
+      pos = r.at + r.cut + r.len + r.tail;
+    });
+    rewriting = true;
+    quill.history.cutoff();
+    quill.updateContents(d, 'user');
+    quill.history.cutoff();
+    rewriting = false;
+    // Put back after Quill restores its own idea of the caret (see the same
+    // step in enableTypingShortcuts), and after a closing brace stop the next
+    // letter from being typed as a script too.
+    const caret = at + 1 - removed;
+    Promise.resolve().then(()=>{
+      const sel = quill.getSelection();
+      if(sel && sel.length === 0 && Math.abs(sel.index - caret) <= removed + 1) quill.setSelection(caret, 0, 'silent');
+      if(brace) quill.format('script', false, 'silent');
+    });
+  });
+}
+
+// "# ", "## " and "### " at the very start of a line make it a heading, the
+// way the list shortcuts make "1. " a list.
+function enableNoteHeadingShortcut(quill){
+  const Delta = Quill.import('delta');
+  quill.keyboard.addBinding({ key: ' ', collapsed: true, prefix: /^#{1,3}$/ }, function(range, context){
+    if(!noteAutoFormatPref()) return true;
+    const fmt = context.format || {};
+    if(fmt['code-block'] || fmt.list || fmt.header) return true;
+    const level = context.prefix.length;
+    const [line, offset] = quill.getLine(range.index);
+    if(offset !== level) return true;
+    quill.insertText(range.index, ' ', 'user');
+    quill.history.cutoff();
+    quill.updateContents(new Delta().retain(range.index - offset).delete(level + 1)
+      .retain(line.length() - 2 - offset).retain(1, { header: level }), 'user');
+    quill.history.cutoff();
+    quill.setSelection(range.index - level, 0, 'silent');
+    return false;
+  });
+  // Quill runs bindings in the order they were added, and its own space
+  // binding would otherwise get the keystroke first.
+  const list = quill.keyboard.bindings[32];
+  if(list && list.length > 1) list.unshift(list.pop());
+}
+
+var NOTE_SYMBOLS = {
+  arrows: '→ ← ↑ ↓ ↔ ↕ ⇒ ⇐ ⇔ ⇑ ⇓ ↗ ↘ ↙ ↖ ↦ ⇌ ⟶ ⟵ ↺ ↻',
+  math: '± ∓ × ÷ · − ≠ ≈ ≡ ≤ ≥ ≪ ≫ ∝ ∞ √ ∛ ∑ ∏ ∫ ∮ ∂ ∇ Δ ° ′ ″ ‰ …',
+  greek: 'α β γ δ ε ζ η θ ι κ λ μ ν ξ π ρ σ τ υ φ χ ψ ω Γ Δ Θ Λ Ξ Π Σ Φ Ψ Ω',
+  sets: '∈ ∉ ⊂ ⊆ ⊃ ⊇ ∪ ∩ ∅ ∀ ∃ ∄ ¬ ∧ ∨ ∴ ∵ ℝ ℕ ℤ ℚ ℂ ⊥ ∥ ∠',
+  scripts: '⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ⁺ ⁻ ⁿ ⁱ ₀ ₁ ₂ ₃ ₄ ₅ ₆ ₇ ₈ ₉ ₊ ₋',
+  other: '• ◦ ▪ ✓ ✗ ★ ☆ † ‡ § ¶ © ® ™ € £ ¥ ₩ ₫ ¢ ½ ¼ ¾ ⅓ 「 」 『 』 【 】'
+};
+var NOTE_SYMBOL_TABS = [['arrows', 'noteSymTabArrows'], ['math', 'noteSymTabMath'], ['greek', 'noteSymTabGreek'], ['sets', 'noteSymTabSets'], ['scripts', 'noteSymTabScripts'], ['other', 'noteSymTabOther']];
+// The equation keypad. d is what the key shows, s what it types into the
+// LaTeX box; a | in s is where the caret lands (and where selected text goes).
+var NOTE_EQ_KEYS = {
+  struct: [
+    ['\\frac{\\square}{\\square}', '\\frac{|}{}'], ['x^{\\square}', '^{|}'], ['x_{\\square}', '_{|}'], ['\\sqrt{\\square}', '\\sqrt{|}'],
+    ['\\sqrt[n]{\\square}', '\\sqrt[|]{}'], ['\\sum_{i=1}^{n}', '\\sum_{i=1}^{n} |'], ['\\prod_{i=1}^{n}', '\\prod_{i=1}^{n} |'], ['\\int_{a}^{b}', '\\int_{a}^{b} | \\, dx'],
+    ['\\lim_{x\\to\\infty}', '\\lim_{x \\to \\infty} |'], ['\\frac{d}{dx}', '\\frac{d}{dx} |'], ['\\frac{\\partial}{\\partial x}', '\\frac{\\partial}{\\partial x} |'], ['\\left(\\square\\right)', '\\left( | \\right)'],
+    ['\\left|\\square\\right|', '\\left| | \\right|'], ['\\binom{n}{k}', '\\binom{|}{}'], ['\\log_{b}', '\\log_{|}'], ['\\ln', '\\ln |'],
+    ['\\sin', '\\sin |'], ['\\cos', '\\cos |'], ['\\tan', '\\tan |'], ['e^{x}', 'e^{|}'],
+    ['\\vec{v}', '\\vec{|}'], ['\\hat{x}', '\\hat{|}'], ['\\bar{x}', '\\bar{|}'], ['\\overline{AB}', '\\overline{|}'],
+    ['\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}', '\\begin{pmatrix} | & \\\\ & \\end{pmatrix}'], ['\\begin{cases}a\\\\b\\end{cases}', '\\begin{cases} | & \\text{if } \\\\ & \\text{otherwise} \\end{cases}'], ['\\text{abc}', '\\text{|}'], ['x\\,y', '\\, |']
+  ],
+  greek: ['\\alpha', '\\beta', '\\gamma', '\\delta', '\\epsilon', '\\theta', '\\lambda', '\\mu', '\\pi', '\\rho', '\\sigma', '\\tau', '\\phi', '\\chi', '\\psi', '\\omega', '\\Gamma', '\\Delta', '\\Theta', '\\Lambda', '\\Pi', '\\Sigma', '\\Phi', '\\Omega'],
+  ops: ['+', '-', '\\times', '\\div', '\\pm', '\\mp', '\\cdot', '=', '\\neq', '\\approx', '\\equiv', '<', '>', '\\leq', '\\geq', '\\ll', '\\gg', '\\propto', '\\infty', '\\partial', '\\nabla', '^{\\circ}', '\\prime', '\\%'],
+  arrows: ['\\to', '\\leftarrow', '\\uparrow', '\\downarrow', '\\leftrightarrow', '\\Rightarrow', '\\Leftarrow', '\\Leftrightarrow', '\\mapsto', '\\longrightarrow', '\\rightleftharpoons', '\\xrightarrow{\\square}'],
+  sets: ['\\in', '\\notin', '\\subset', '\\subseteq', '\\supset', '\\cup', '\\cap', '\\emptyset', '\\forall', '\\exists', '\\neg', '\\land', '\\lor', '\\therefore', '\\because', '\\mathbb{R}', '\\mathbb{N}', '\\mathbb{Z}', '\\mathbb{Q}', '\\mathbb{C}']
+};
+var NOTE_EQ_TABS = [['struct', 'noteEqTabStruct'], ['greek', 'noteSymTabGreek'], ['ops', 'noteSymTabMath'], ['arrows', 'noteSymTabArrows'], ['sets', 'noteSymTabSets']];
+function noteEqKey(k){
+  if(Array.isArray(k)) return { d: k[0], s: k[1] };
+  if(k === '\\xrightarrow{\\square}') return { d: k, s: '\\xrightarrow{|}' };
+  return { d: k, s: k + ' |' };
+}
+var NOTE_TOOL_SVG = {
+  style: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5v12M12 5v12M4 11h8"/><path d="M16 9l3-2v10"/></svg>',
+  toc: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M8 12h12M8 18h12"/><circle cx="4" cy="12" r="0.6"/><circle cx="4" cy="18" r="0.6"/></svg>',
+  sym: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20h4v-3a7 7 0 1 1 6 0v3h4"/></svg>',
+  eq: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 4H7l6 8-6 8h10"/></svg>'
+};
+// One pop-out panel on the toolbar, built the way the line spacing one is: the
+// buttons never take the focus from the text, and a click anywhere else or
+// Escape closes it.
+function noteToolPanel(quill, cls, icon, titleKey, fill, first){
+  const toolbar = quill.getModule('toolbar').container;
+  const group = document.createElement('span');
+  group.className = 'ql-formats nf-tool-group ' + cls;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'nf-tool-open';
+  btn.innerHTML = icon;
+  const panel = document.createElement('div');
+  panel.className = 'nf-size-panel nf-tool-panel';
+  btn.addEventListener('mousedown', e=> e.preventDefault());
+  panel.addEventListener('mousedown', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
+  const close = ()=>{ panel.style.display = 'none'; btn.classList.remove('ql-active'); };
+  const label = ()=>{ btn.title = t(titleKey); btn.setAttribute('aria-label', t(titleKey)); };
+  btn.addEventListener('click', e=>{
+    e.preventDefault();
+    if(panel.style.display === 'block'){ close(); return; }
+    label();
+    fill(panel, close);
+    panel.style.display = 'block';
+    btn.classList.add('ql-active');
+    // Kept on screen on a phone: the toolbar wraps, and a panel hung off a
+    // button near the right edge would run off it.
+    panel.style.left = '0px';
+    const r = panel.getBoundingClientRect();
+    const over = r.right - (document.documentElement.clientWidth - 8);
+    if(over > 0) panel.style.left = (-Math.min(over, r.left - 8)) + 'px';
+  });
+  document.addEventListener('click', e=>{ if(!group.contains(e.target)) close(); });
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape') close(); });
+  group.append(btn, panel);
+  if(first && toolbar.firstChild) toolbar.insertBefore(group, toolbar.firstChild);
+  else toolbar.appendChild(group);
+  label();
+  (quill._noteToolLabels = quill._noteToolLabels || []).push(label);
+  return { btn, panel, close, label };
+}
+function noteHeadings(quill){
+  const out = [];
+  quill.getLines().forEach(line=>{
+    const f = line.formats ? line.formats() : {};
+    if(f.header) out.push({ level: f.header, text: (line.domNode.textContent || '').trim(), index: quill.getIndex(line), node: line.domNode });
+  });
+  return out.filter(h=> h.text);
+}
+
+function enableNoteMath(quill, key, opts){
+  if(!quill || quill.__noteMath) return;
+  quill.__noteMath = true;
+  const markDirty = ()=>{ if(opts && opts.markDirty) opts.markDirty(); };
+  const toolbar = quill.getModule('toolbar');
+  const icons = Quill.import('ui/icons');
+  enableNoteScriptShortcuts(quill);
+  enableNoteHeadingShortcut(quill);
+
+  // Subscript and superscript: Quill's own format and its own toolbar
+  // handling, attached after the fact since the toolbar was built already.
+  const scripts = document.createElement('span');
+  scripts.className = 'ql-formats nf-script-group';
+  [['sub', 'noteSub'], ['super', 'noteSup']].forEach(([v, k])=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ql-script';
+    b.value = v;
+    b.innerHTML = icons.script[v];
+    b.dataset.tkey = k;
+    scripts.appendChild(b);
+    toolbar.attach(b);
+  });
+  toolbar.container.appendChild(scripts);
+
+  noteToolPanel(quill, 'nf-style-group', NOTE_TOOL_SVG.style, 'noteStyleBtn', (panel, close)=>{
+    const range = quill.getSelection();
+    const cur = range ? (quill.getFormat(range).header || 0) : 0;
+    panel.innerHTML = [[0, 'noteStyleNormal'], [1, 'noteStyleH1'], [2, 'noteStyleH2'], [3, 'noteStyleH3']].map(([lv, k])=>
+      `<button type="button" class="nf-style-opt nf-style-${lv}${lv === cur ? ' on' : ''}" data-lv="${lv}">${escapeHtml(t(k))}</button>`).join('');
+    panel.querySelectorAll('button').forEach(b=> b.addEventListener('click', e=>{
+      e.preventDefault();
+      close();
+      const r = quill.getSelection(true);
+      if(!r) return;
+      const lv = Number(b.dataset.lv);
+      quill.formatLine(r.index, r.length, 'header', lv || false, 'user');
+      markDirty();
+    }));
+  }, true);
+
+  noteToolPanel(quill, 'nf-toc-group', NOTE_TOOL_SVG.toc, 'noteTocBtn', (panel, close)=>{
+    const hs = noteHeadings(quill);
+    panel.innerHTML = (hs.length
+      ? hs.map((h, i)=> `<button type="button" class="nf-toc-item nf-toc-${h.level}" data-i="${i}">${escapeHtml(h.text)}</button>`).join('')
+        + `<button type="button" class="nf-toc-insert">${escapeHtml(t('noteTocInsert'))}</button>`
+      : `<div class="nf-tool-hint">${escapeHtml(t('noteTocEmpty'))}</div>`);
+    panel.querySelectorAll('.nf-toc-item').forEach(b=> b.addEventListener('click', e=>{
+      e.preventDefault();
+      close();
+      const h = hs[Number(b.dataset.i)];
+      // The caret goes first, so the pager turns to the page it is on.
+      quill.setSelection(h.index, 0, 'user');
+      if(notePagers[key]) renderNotePager(key, true);
+      requestAnimationFrame(()=>{ try{ h.node.scrollIntoView({ block: 'center', behavior: 'smooth' }); }catch(err){} });
+    }));
+    const ins = panel.querySelector('.nf-toc-insert');
+    if(ins) ins.addEventListener('click', e=>{
+      e.preventDefault();
+      close();
+      const r = quill.getSelection(true);
+      if(!r) return;
+      // A plain bullet list, indented by level: the note sanitizer drops ids,
+      // so in-note anchors would not survive a save; the panel is the jump.
+      let at = r.index;
+      const [line, offset] = quill.getLine(at);
+      if(offset > 0){ quill.insertText(at, '\n', 'user'); at += 1; }
+      quill.history.cutoff();
+      hs.forEach(h=>{
+        quill.insertText(at, h.text, 'user');
+        at += h.text.length;
+        quill.insertText(at, '\n', { list: 'bullet', indent: h.level > 1 ? h.level - 1 : false }, 'user');
+        at += 1;
+      });
+      quill.history.cutoff();
+      quill.setSelection(at, 0, 'user');
+      markDirty();
+    });
+  });
+
+  let symTab = 'arrows';
+  try{ symTab = localStorage.getItem('noteSymTab') || symTab; }catch(e){}
+  noteToolPanel(quill, 'nf-sym-group', NOTE_TOOL_SVG.sym, 'noteSymBtn', (panel)=>{
+    const draw = ()=>{
+      panel.innerHTML = `<div class="nf-tabs">${NOTE_SYMBOL_TABS.map(([id, k])=>
+          `<button type="button" class="nf-tab${id === symTab ? ' on' : ''}" data-tab="${id}">${escapeHtml(t(k))}</button>`).join('')}</div>
+        <div class="nf-sym-grid">${(NOTE_SYMBOLS[symTab] || '').split(' ').map(c=>
+          `<button type="button" class="nf-sym" data-c="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join('')}</div>
+        <div class="nf-tool-hint">${escapeHtml(t('noteShorthandHint'))}</div>`;
+      panel.querySelectorAll('.nf-tab').forEach(b=> b.addEventListener('click', e=>{
+        e.preventDefault();
+        symTab = b.dataset.tab;
+        try{ localStorage.setItem('noteSymTab', symTab); }catch(err){}
+        draw();
+      }));
+      panel.querySelectorAll('.nf-sym').forEach(b=> b.addEventListener('click', e=>{
+        e.preventDefault();
+        const r = quill.getSelection(true);
+        if(!r) return;
+        if(r.length) quill.deleteText(r.index, r.length, 'user');
+        quill.insertText(r.index, b.dataset.c, 'user');
+        quill.setSelection(r.index + b.dataset.c.length, 0, 'user');
+        markDirty();
+      }));
+    };
+    draw();
+  });
+
+  const eqBtn = document.createElement('button');
+  eqBtn.type = 'button';
+  eqBtn.className = 'nf-eq-open';
+  eqBtn.innerHTML = NOTE_TOOL_SVG.eq;
+  eqBtn.addEventListener('mousedown', e=> e.preventDefault());
+  eqBtn.addEventListener('click', e=>{
+    e.preventDefault();
+    const r = quill.getSelection(true);
+    openNoteEquation(quill, r ? r.index : quill.getLength() - 1, r ? r.length : 0, '', null, markDirty);
+  });
+  const eqGroup = document.createElement('span');
+  eqGroup.className = 'ql-formats nf-eq-group';
+  eqGroup.appendChild(eqBtn);
+  toolbar.container.appendChild(eqGroup);
+
+  // Clicking an equation in the note opens it to edit.
+  quill.root.addEventListener('click', e=>{
+    const f = e.target.closest && e.target.closest('.ql-formula');
+    if(!f || !quill.root.contains(f) || quill.root.getAttribute('contenteditable') !== 'true') return;
+    const blot = Quill.find(f);
+    if(!blot) return;
+    const idx = quill.getIndex(blot);
+    openNoteEquation(quill, idx, 1, f.getAttribute('data-value') || '', idx, markDirty);
+  });
+
+  const relabel = ()=>{
+    scripts.querySelectorAll('button').forEach(b=>{ b.title = t(b.dataset.tkey); b.setAttribute('aria-label', t(b.dataset.tkey)); });
+    eqBtn.title = t('noteEqBtn');
+    eqBtn.setAttribute('aria-label', t('noteEqBtn'));
+    (quill._noteToolLabels || []).forEach(f=> f());
+  };
+  relabel();
+  quill._relabelNoteMath = relabel;
+}
+
+// THE EQUATION BOX: one for the whole app, handed whichever note opened it.
+var noteEq = null;
+function noteEqBuild(){
+  if(noteEq) return noteEq;
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay hidden nf-eq-overlay';
+  ov.innerHTML = `
+    <div class="modal-box nf-eq-box" role="dialog" aria-modal="true">
+      <h2 class="nf-eq-head"><span class="nf-eq-title"></span><button type="button" class="nf-eq-x" aria-label=""><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></h2>
+      <div class="nf-tabs nf-eq-tabs"></div>
+      <div class="nf-eq-keys"></div>
+      <textarea class="nf-eq-src" rows="3" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+      <div class="nf-eq-preview"></div>
+      <div class="nf-eq-actions"><button type="button" class="nf-eq-ok"></button><button type="button" class="export-btn nf-eq-cancel"></button><button type="button" class="nf-eq-del"></button></div>
+    </div>`;
+  document.body.appendChild(ov);
+  const box = ov.querySelector('.nf-eq-box');
+  const src = ov.querySelector('.nf-eq-src');
+  const prev = ov.querySelector('.nf-eq-preview');
+  const keys = ov.querySelector('.nf-eq-keys');
+  const tabs = ov.querySelector('.nf-eq-tabs');
+  let tab = 'struct';
+  try{ tab = localStorage.getItem('noteEqTab') || tab; }catch(e){}
+  const st = { quill: null, index: 0, length: 0, editing: null, markDirty: null };
+  const preview = ()=>{
+    const v = src.value.trim();
+    if(!v){ prev.innerHTML = `<span class="hint">${escapeHtml(t('noteEqEmpty'))}</span>`; return; }
+    if(!window.katex){ prev.textContent = v; return; }
+    noteTexInto(prev, v);
+  };
+  const drawKeys = ()=>{
+    tabs.innerHTML = NOTE_EQ_TABS.map(([id, k])=> `<button type="button" class="nf-tab${id === tab ? ' on' : ''}" data-tab="${id}">${escapeHtml(t(k))}</button>`).join('');
+    keys.innerHTML = '';
+    (NOTE_EQ_KEYS[tab] || []).map(noteEqKey).forEach(k=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'nf-eq-key';
+      b.title = k.s.replace('|', '').trim();
+      if(window.katex) noteTexInto(b, k.d); else b.textContent = k.d;
+      b.addEventListener('mousedown', e=> e.preventDefault());
+      b.addEventListener('click', e=>{
+        e.preventDefault();
+        const a = src.selectionStart, z = src.selectionEnd;
+        const sel = src.value.slice(a, z);
+        const parts = k.s.split('|');
+        const ins = parts[0] + sel + (parts[1] || '');
+        src.value = src.value.slice(0, a) + ins + src.value.slice(z);
+        const caret = a + parts[0].length + sel.length;
+        src.focus();
+        src.setSelectionRange(caret, caret);
+        preview();
+      });
+      keys.appendChild(b);
+    });
+  };
+  tabs.addEventListener('click', e=>{
+    const b = e.target.closest('.nf-tab');
+    if(!b) return;
+    tab = b.dataset.tab;
+    try{ localStorage.setItem('noteEqTab', tab); }catch(err){}
+    drawKeys();
+  });
+  const close = ()=>{
+    ov.classList.add('hidden');
+    const q = st.quill;
+    st.quill = null;
+    if(q) q.focus();
+  };
+  const commit = ()=>{
+    const q = st.quill;
+    const v = src.value.trim();
+    if(!q) return close();
+    if(!v){ close(); return; }
+    q.history.cutoff();
+    if(st.length) q.deleteText(st.index, st.length, 'user');
+    q.insertEmbed(st.index, 'formula', v, 'user');
+    q.history.cutoff();
+    const at = st.index + 1;
+    if(st.markDirty) st.markDirty();
+    close();
+    q.setSelection(at, 0, 'user');
+  };
+  ov.querySelector('.nf-eq-ok').addEventListener('click', commit);
+  ov.querySelector('.nf-eq-cancel').addEventListener('click', close);
+  ov.querySelector('.nf-eq-x').addEventListener('click', close);
+  ov.querySelector('.nf-eq-del').addEventListener('click', ()=>{
+    const q = st.quill;
+    if(q && st.editing !== null){
+      q.deleteText(st.editing, 1, 'user');
+      if(st.markDirty) st.markDirty();
+      const at = st.editing;
+      close();
+      q.setSelection(at, 0, 'user');
+    }
+  });
+  ov.addEventListener('mousedown', e=>{ if(e.target === ov) close(); });
+  src.addEventListener('input', preview);
+  src.addEventListener('keydown', e=>{
+    if(e.key === 'Enter' && (e.metaKey || e.ctrlKey)){ e.preventDefault(); commit(); }
+    if(e.key === 'Escape'){ e.preventDefault(); close(); }
+  });
+  box.addEventListener('keydown', e=>{ if(e.key === 'Escape'){ e.preventDefault(); close(); } });
+  noteEq = { ov, src, st, preview, drawKeys, label: ()=>{
+    ov.querySelector('.nf-eq-title').textContent = t('noteEqTitle');
+    ov.querySelector('.nf-eq-x').setAttribute('aria-label', t('closeNoteBtn'));
+    ov.querySelector('.nf-eq-cancel').textContent = t('cancelBtn');
+    ov.querySelector('.nf-eq-del').textContent = t('noteEqRemove');
+    ov.querySelector('.nf-eq-ok').textContent = t(st.editing !== null ? 'noteEqUpdate' : 'noteEqInsert');
+    src.placeholder = t('noteEqPlaceholder');
+  } };
+  return noteEq;
+}
+function openNoteEquation(quill, index, length, tex, editing, markDirty){
+  const eq = noteEqBuild();
+  Object.assign(eq.st, { quill, index, length, editing, markDirty });
+  eq.src.value = tex || '';
+  eq.ov.querySelector('.nf-eq-del').classList.toggle('hidden', editing === null);
+  eq.label();
+  eq.drawKeys();
+  eq.preview();
+  eq.ov.classList.remove('hidden');
+  setTimeout(()=>{ eq.src.focus(); eq.src.setSelectionRange(eq.src.value.length, eq.src.value.length); }, 30);
+  if(!window.katex){
+    eq.ov.querySelector('.nf-eq-preview').innerHTML = `<span class="hint">${escapeHtml(t('noteEqLoading'))}</span>`;
+    loadKatex().then(()=>{ if(!eq.ov.classList.contains('hidden')){ eq.drawKeys(); eq.preview(); } })
+      .catch(()=>{ eq.ov.querySelector('.nf-eq-preview').innerHTML = `<span class="hint">${escapeHtml(t('noteEqFailed'))}</span>`; });
+  }
 }
 /* ---------- LINKS IN A NOTE ----------
    A URL in a note was dead text: the toolbar had no link button and nothing
@@ -52252,6 +52883,7 @@ function relabelNotePagers(){
     renderNotePager(k);
     const q = notePagers[k].quill;
     if(q && q._relabelFontSize) q._relabelFontSize();
+    if(q && q._relabelNoteMath) q._relabelNoteMath();
   });
 }
 
