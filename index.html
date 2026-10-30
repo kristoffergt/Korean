@@ -1224,7 +1224,7 @@ h1{font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(15px,2vw + 
 .who .icon-btn{padding:calc(clamp(4px,1vw,7px) - 4px) calc(clamp(5px,1.3vw,10px) - 4px);font-size:clamp(11px,1.8vw,14px);}
 .who .name{font-size:clamp(10px,1.8vw,13px);color:var(--ink-soft);background:var(--paper-dim);border:1px solid var(--line);border-radius:8px;padding:clamp(4px,1vw,7px) clamp(5px,1.3vw,10px);}
 .tabs{display:flex;gap:4px;margin-bottom:22px;flex-wrap:nowrap;position:relative;z-index:60;}
-.tabs button{position:relative;z-index:2;flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--line);padding:8px 2px;font-size:clamp(7px,1.7vw,13px);font-weight:600;border-radius:6px;}
+.tabs button{position:relative;z-index:2;flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--paper-dim);color:var(--ink-soft);border:1px solid var(--line);padding:8px 2px;font-size:clamp(7px,1.7vw,13px);font-weight:600;border-radius:10px;}
 /* On a phone the pills were mostly empty air: icon and label centred with
    2px of side padding, and the label's own clamp bottoming out at SEVEN
    pixels (1.7vw is 6.4px at 375) (real-user request: "make the tabs more
@@ -1371,7 +1371,9 @@ body.no-anim-ui .tabs button.tab-gulp{animation:none;}
    landing on (real-user report: "it goes a bit too far out before bouncing
    back in"). At 3.0% the same jump overshoots about 19px and a one-tab hop
    about 5, which still reads as a bounce rather than a slide. */
-.tab-slider{position:absolute;top:0;left:0;z-index:0;height:100%;border-radius:6px;
+/* 10px = .tabs button and .cal-view-toggle button, the two rows it rides in
+   with no corner of their own (the dock and sub-dock set theirs). */
+.tab-slider{position:absolute;top:0;left:0;z-index:0;height:100%;border-radius:10px;
   background:var(--ink);opacity:0;pointer-events:none;transform-origin:center center;
   transition:transform 0.42s cubic-bezier(.34,1.3,.64,1),
              width 0.42s cubic-bezier(.34,1.3,.64,1),
@@ -1583,7 +1585,18 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
    resting on the tab you are already on lights that one. */
 .tab-dock.dragging > button.active{color:var(--ink-soft);}
 .tab-dock.dragging > button.dock-aim{color:var(--paper);}
-.card{background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:22px;}
+.card{background:var(--paper-dim);border:1px solid var(--line);border-radius:18px;padding:20px 22px;margin-bottom:22px;animation:homeIn .4s ease backwards;animation-delay:calc(var(--ci, 0) * 50ms);}
+/* THE OLD PAGES WEAR HOME'S LOOK (real-user request: "the same look as the
+   newer Home page ... through the shared classes, not page by page"). A card
+   enters the way a Home card does, each one a beat after the one above it.
+   The fill is BACKWARDS only: it holds the start through the delay and then
+   lets go, so the end state never outranks a card's own opacity/transform.
+   The cards are static markup, so a realtime re-render does not replay it;
+   showing a panel again does, which is the entrance. */
+.card:nth-child(2){--ci:1;} .card:nth-child(3){--ci:2;} .card:nth-child(4){--ci:3;}
+.card:nth-child(n+5){--ci:4;}
+body.no-anim-ui .card{animation:none;}
+@media (prefers-reduced-motion: reduce){.card{animation:none;}}
 /* ---- Home ---- */
 .home-hero{padding:8px 2px 18px;animation:homeIn .4s ease both;}
 .home-app{display:none;}
@@ -1630,8 +1643,8 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 #calendarQuickNav .home-chip:hover,#calendarQuickNav .home-chip:focus{background:var(--paper);color:var(--ink);}
 @keyframes homeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 @media (prefers-reduced-motion: reduce){.home-hero,.home-card,.home-space{animation:none;}}
-.card h2{font-family:'Noto Serif KR',serif;font-size:15px;margin:0 0 14px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:10px;}
-.export-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:5px 10px;font-size:11px;font-weight:600;border-radius:6px;}
+.card h2{font-family:'Noto Serif KR',serif;font-size:18px;font-weight:700;line-height:1.25;margin:0 0 14px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.export-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);padding:5px 11px;font-size:11px;font-weight:600;border-radius:10px;}
 .export-btn:hover{background:var(--paper);color:var(--ink);}
 /* A BOXED DELETE IS SOLID RED, at whichever of the two sizes its row uses:
    .btn-danger beside a full-size button, .export-btn.btn-danger in a row of
@@ -1654,15 +1667,15 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 .linkbtn.act-save, .item-meta .linkbtn.act-save{color:var(--on);}
 .linkbtn.act-save:hover, .item-meta .linkbtn.act-save:hover{color:var(--on);filter:brightness(1.15);}
 .list-controls{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap;}
-.page-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 10px;font-size:12px;font-weight:600;border-radius:6px;min-width:32px;}
+.page-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 10px;font-size:12px;font-weight:600;border-radius:10px;min-width:32px;}
 .page-btn.active{background:var(--ink);color:var(--paper);}
 /* The same neutral tint the day toggles below use, and NOT on the page you
    are already on: .page-btn.active is (0,2,0), so the hover has to be more
    specific than that or it would repaint the current page on the way past. */
 .page-btn:hover:not(.active):not(:disabled){background:rgba(127,127,127,0.16);}
 .page-btn:disabled{opacity:0.35;cursor:default;}
-.page-jump-input{width:56px;padding:5px 6px;font-size:12px;border-radius:5px;border:1px solid var(--celadon-4);background:var(--paper);color:var(--ink);text-align:center;}
-.day-toggle-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:3px 7px;font-size:10.5px;font-weight:600;border-radius:6px;min-width:26px;}
+.page-jump-input{width:56px;padding:5px 6px;font-size:12px;border-radius:10px;border:1px solid var(--celadon-4);background:var(--paper);color:var(--ink);text-align:center;}
+.day-toggle-btn{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:3px 7px;font-size:10.5px;font-weight:600;border-radius:8px;min-width:26px;}
 .day-toggle-btn:hover{background:rgba(127,127,127,0.16);}
 /* A trip pill and its pencil read as one object: the pencil is a sibling
    (a button cannot contain a button) sitting in the pill's own border, so it
@@ -1685,11 +1698,11 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
    of source order. filter:brightness is the app's own hover convention for a
    control that already has a solid fill, rather than inventing a new one. */
 .day-toggle-btn.active:hover, .day-toggle-btn.excluded:hover{filter:brightness(1.15);}
-.show-more-btn{width:100%;background:none;border:1px dashed var(--line);color:var(--ink-soft);padding:10px;font-size:12.5px;font-weight:600;border-radius:6px;margin-top:10px;}
+.show-more-btn{width:100%;background:none;border:1px dashed var(--line);color:var(--ink-soft);padding:10px;font-size:12.5px;font-weight:600;border-radius:12px;margin-top:10px;}
 .show-more-btn:hover{background:var(--paper);color:var(--ink);}
-.lb-row{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+.lb-row{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
 .lb-row:last-child{border-bottom:none;}
-.lb-row.me{background:rgba(127,166,148,0.12);border-radius:6px;padding:10px 0;}
+.lb-row.me{background:rgba(127,166,148,0.12);border-radius:10px;padding:12px 0;}
 .lb-rank{color:var(--ink-soft);font-family:'Space Grotesk',monospace;}
 .lb-name{font-weight:600;}
 /* "YOU" is emphasis, not a state -- it was green, which said "on" about a
@@ -1701,9 +1714,9 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
 .lb-stat{text-align:right;font-family:'Space Grotesk',monospace;}
 .lb-head{display:grid;grid-template-columns:22px 1fr 60px 70px 70px;gap:10px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);padding-bottom:8px;border-bottom:1px solid var(--line);}
 .lb-head span:not(:first-child):not(:nth-child(2)){text-align:right;}
-.lb-row-simple{display:grid;grid-template-columns:22px 1fr 70px;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+.lb-row-simple{display:grid;grid-template-columns:22px 1fr 70px;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
 .lb-row-simple:last-child{border-bottom:none;}
-.lb-row-simple.me{background:rgba(127,166,148,0.12);border-radius:6px;padding:10px 0;}
+.lb-row-simple.me{background:rgba(127,166,148,0.12);border-radius:10px;padding:12px 0;}
 .lb-head-simple{display:grid;grid-template-columns:22px 1fr 70px;gap:10px;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);padding-bottom:8px;border-bottom:1px solid var(--line);}
 .lb-head-simple span:last-child{text-align:right;}
 .log-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
@@ -1718,17 +1731,21 @@ button.tab-popped > *{animation:tabPop 0.34s cubic-bezier(.34,1.56,.64,1);}
    aria-required beside it, so a screen reader is told the same thing. A select
    that always has a value is never marked: it cannot be left empty. */
 label.req::after{content:'*';color:var(--danger);font-weight:700;margin-left:3px;}
-.field input, .field select, .field textarea{font-family:'Space Grotesk',monospace;font-size:15px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:150px;}
+.field input, .field select, .field textarea{font-family:'Space Grotesk',monospace;font-size:15px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:150px;}
 /* 3px here would have been a different roundness from the one the tick mask
    draws, so a box in a form changed shape as it was ticked. The mask is the
    shape now, and 5px is what it draws at this size. */
 .field input[type="checkbox"], .field input[type="radio"]{width:16px !important;height:16px !important;min-width:16px;min-height:16px;padding:0 !important;margin:0;border-radius:5px;flex-shrink:0;}
 .field.wide input, .field.wide textarea, .field.wide select{width:320px;}
+/* 320 is wider than a phone card's inside (375 leaves 289), so it ran past
+   the card's right edge; it stops at the card's padding instead. */
+.field.wide{max-width:100%;min-width:0;}
+.field.wide input, .field.wide textarea, .field.wide select{max-width:100%;}
 .field select{font-family:'Inter',sans-serif;font-size:14px;}
 /* Visibility names the circle now, which no longer fits the shared width.
    Both the add form's own select and the edit panel's copy of it. */
 #eventPrivate, .field select.edit-private{width:auto;min-width:150px;max-width:100%;}
-.field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--celadon-3);outline-offset:1px;}
+.field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--celadon-3);outline-offset:1px;border-color:var(--celadon-3);}
 /* The rest of a suggested note title, drawn in grey after what has been typed
    (see NOTE TITLE SUGGESTIONS). The typed part is laid out invisibly so the
    grey starts exactly at the caret; box and font are copied from the input by
@@ -1738,16 +1755,16 @@ label.req::after{content:'*';color:var(--danger);font-weight:700;margin-left:3px
 .title-suggest-ghost .tsg-typed{visibility:hidden;flex:none;}
 .title-suggest-ghost .tsg-rest{color:var(--ink-soft);flex:none;pointer-events:auto;cursor:pointer;}
 #newLectureTitle::placeholder, #newNotebookTitle::placeholder{color:var(--ink-soft);opacity:1;}
-.person-filter-btn{font-family:'Inter',sans-serif;font-weight:500;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);width:fit-content;min-width:56px;max-width:220px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.person-filter-btn{font-family:'Inter',sans-serif;font-weight:500;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:fit-content;min-width:56px;max-width:220px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .person-filter-btn:hover{background:var(--paper-dim);}
-.person-filter-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:50;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper-dim);width:fit-content;min-width:150px;box-shadow:0 4px 16px rgba(0,0,0,0.25);}
+.person-filter-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:50;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--paper-dim);width:fit-content;min-width:150px;box-shadow:0 4px 16px rgba(0,0,0,0.25);}
 .quick-nav-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.quick-nav-btn{display:flex;align-items:center;justify-content:flex-start;gap:6px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:9px 14px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);cursor:pointer;flex:none;width:150px;}
+.quick-nav-btn{display:flex;align-items:center;justify-content:flex-start;gap:6px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:9px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);cursor:pointer;flex:none;width:150px;}
 .quick-nav-btn:hover{background:var(--paper-dim);}
 .quick-nav-subs{display:flex;gap:6px;flex-wrap:wrap;}
-.quick-nav-sub-btn{font-family:'Inter',sans-serif;font-weight:600;font-size:12px;padding:6px 14px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink-soft);cursor:pointer;}
+.quick-nav-sub-btn{font-family:'Inter',sans-serif;font-weight:600;font-size:12px;padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink-soft);cursor:pointer;}
 .quick-nav-sub-btn:hover{background:rgba(127,127,127,0.22);color:var(--ink);}
-button{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:10px 20px;border:none;border-radius:6px;background:var(--ink);color:var(--paper);cursor:pointer;}
+button{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:10px 20px;border:none;border-radius:10px;background:var(--ink);color:var(--paper);cursor:pointer;}
 /* This hover belongs to the SOLID default button above (near-black fill
    deepening to pure black, and the inverse in dark mode) -- but at
    specificity (0,1,1) it also beats any single-class button (.linkbtn,
@@ -1825,7 +1842,7 @@ button:hover{background:var(--ink-hover);}
 .e-chip .dot{width:7px;height:7px;border-radius:50%;}
 .e-chip .del{background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:0 0 0 3px;line-height:1;}
 .e-chip .del:hover{color:var(--danger);filter:brightness(1.15);}
-.empty{color:var(--ink-soft);font-size:13px;padding:10px 0;}
+.empty{color:var(--ink-soft);font-size:13px;padding:14px 2px;}
 /* The Overview heading, the currency controls and the Members button share one
    row on a desktop, in that order. On a phone that row wraps and Members ends
    up stranded on a line of its own, so there it rides in the heading's own
@@ -1839,25 +1856,25 @@ button:hover{background:var(--ink-hover);}
   .exp-head-controls{order:2;flex-basis:100%;margin-left:0;}
 }
 .stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:0;}
-.stat-mini{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 16px;text-align:center;flex:1;min-width:110px;}
+.stat-mini{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 16px;text-align:center;flex:1;min-width:110px;}
 .stat-mini .num{font-family:'Space Grotesk',monospace;font-size:18px;font-weight:700;color:var(--celadon-4);}
 .stat-mini .label{font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-top:3px;}
 .stat-mini.urgent .num{color:var(--seal);}
 .stat-mini-sub{position:absolute;top:4px;right:6px;font-size:8.5px;line-height:1.2;color:var(--ink-soft);text-align:right;}
-.badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;color:#fff;}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;color:#fff;}
 .badge.applied, .badge.to_read{background:var(--ink-soft);}
 .badge.interview, .badge.reading{background:var(--celadon-3);color:var(--ink);}
 .badge.offer, .badge.finished{background:var(--on);}
 .badge.rejected{background:var(--seal);}
 .badge.withdrawn{background:#B0A79A;color:var(--ink);}
-.item-row{padding:14px 0;border-bottom:1px solid var(--line);}
+.item-row{padding:16px 0;border-bottom:1px solid var(--line);}
 .item-row:last-child{border-bottom:none;}
 .item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px;}
-.item-title{font-weight:600;font-size:14.5px;}
+.item-title{font-weight:600;font-size:15px;line-height:1.35;}
 .item-sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
 .item-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;}
-.item-meta select{font-family:'Inter',sans-serif;font-size:12px;padding:5px 8px;border-radius:5px;border:1px solid var(--line);background:var(--paper);color:var(--ink);}
-.item-meta input[type=number]{width:70px;font-family:'Space Grotesk',monospace;font-size:12px;padding:5px 7px;border-radius:5px;border:1px solid var(--line);background:var(--paper);color:var(--ink);}
+.item-meta select{font-family:'Inter',sans-serif;font-size:12px;padding:5px 9px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);}
+.item-meta input[type=number]{width:70px;font-family:'Space Grotesk',monospace;font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);}
 .item-meta a{font-size:12px;color:var(--celadon-4);}
 .linkbtn{background:none;border:none;color:var(--celadon-4);font-size:12px;padding:0;text-decoration:underline;font-weight:600;cursor:pointer;}
 /* An underline drawn by the BUTTON runs the width of the button, so on one
@@ -1969,14 +1986,14 @@ button:hover{background:var(--ink-hover);}
 .gram-sentence-row .gram-note-del:hover{color:var(--danger);filter:brightness(1.15);}
 .progress-track{background:var(--paper);border:1px solid var(--line);border-radius:4px;height:8px;overflow:hidden;margin-top:6px;width:160px;}
 .progress-fill{height:100%;background:var(--celadon-3);}
-.notes-panel{margin-top:10px;padding:12px;background:var(--paper);border:1px solid var(--line);border-radius:8px;}
+.notes-panel{margin-top:10px;padding:14px;background:var(--paper);border:1px solid var(--line);border-radius:14px;}
 .note-item{padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
 .note-item:last-child{border-bottom:none;}
 .note-item .note-page{font-size:10.5px;color:var(--ink-soft);margin-bottom:2px;}
 .note-item .note-del{float:right;background:none;border:none;color:var(--danger);font-size:15px;cursor:pointer;padding:0;line-height:1;}
 .note-add{display:flex;gap:6px;margin-top:8px;align-items:flex-end;flex-wrap:wrap;}
-.note-add textarea{flex:1;min-width:160px;height:44px;resize:vertical;font-family:'Inter',sans-serif;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:5px;background:var(--paper-dim);color:var(--ink);}
-.note-add input{width:60px;font-family:'Space Grotesk',monospace;font-size:12px;padding:6px;border:1px solid var(--line);border-radius:5px;background:var(--paper-dim);color:var(--ink);}
+.note-add textarea{flex:1;min-width:160px;height:44px;resize:vertical;font-family:'Inter',sans-serif;font-size:12.5px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper-dim);color:var(--ink);}
+.note-add input{width:60px;font-family:'Space Grotesk',monospace;font-size:12px;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--paper-dim);color:var(--ink);}
 .topik-row{display:flex;gap:14px;flex-wrap:wrap;}
 .topik-box{flex:1;min-width:180px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px 16px;}
 .topik-box .tlabel{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-bottom:6px;}
@@ -3784,7 +3801,7 @@ body.cal-exporting #monthAgendaPanel,
 body.cal-exporting #weekMoreAbove,
 body.cal-exporting #weekMoreBelow{visibility:hidden;}
 .cal-view-toggle{display:flex;gap:8px;margin-bottom:12px;}
-.cal-view-toggle button{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 14px;font-size:12px;font-weight:600;border-radius:6px;}
+.cal-view-toggle button{background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);padding:6px 14px;font-size:12px;font-weight:600;border-radius:10px;}
 .cal-view-toggle button:hover:not(.active){background:rgba(127,127,127,0.22);}
 .cal-view-toggle button.active{background:var(--ink);color:var(--paper);}
 /* ---------- WHAT THE SLIDING PILL NEEDS FROM EVERY ROW IT IS IN ----------
