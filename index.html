@@ -3441,25 +3441,27 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
   .ql-snow.ql-toolbar button.nf-size-step{width:18px;height:15px;border-radius:0;}
   .ql-snow.ql-toolbar button.nf-size-step:first-child{height:16px;}
   .ql-snow.ql-toolbar button.nf-size-open{width:22px;height:auto;border-radius:0;}
-  /* The note editors' own arrangement: everything that changes how TEXT looks
-     on the first row -- size, the four styles, colour and highlight -- and
-     everything that shapes or inserts on the second. Placed by class rather
-     than by order, because the size box and the two colour buttons are added to
-     the toolbar after Quill has built it, at its two ends. */
-  .ql-toolbar.ql-snow.nf-toolbar{grid-auto-flow:row;grid-template-columns:repeat(8,minmax(0,1fr));}
+  /* The note editors' own arrangement, two rows of seven: what changes how
+     TEXT looks on the first -- size, bold, italic, underline, colour and
+     highlight -- and the lists, a link, a picture and the three menus on the
+     second (see THE NOTE TOOLBAR'S MENUS). Placed by class rather than by
+     order, because the size box and the two colour buttons are added to the
+     toolbar after Quill has built it. Only the bar's own buttons are placed:
+     the ones moved into a menu are no grid's items. */
+  .ql-toolbar.ql-snow.nf-toolbar{grid-auto-flow:row;grid-template-columns:repeat(7,minmax(0,1fr));}
   .nf-toolbar .nf-size-group{grid-area:1 / 1 / 2 / 3;}
-  .nf-toolbar .ql-bold{grid-area:1 / 3;}
-  .nf-toolbar .ql-italic{grid-area:1 / 4;}
-  .nf-toolbar .ql-underline{grid-area:1 / 5;}
-  .nf-toolbar .ql-strike{grid-area:1 / 6;}
-  .nf-toolbar .cc-color-wrap{grid-area:1 / 7;}
-  .nf-toolbar .cc-background-wrap{grid-area:1 / 8;}
-  .nf-toolbar .ql-list[value=ordered]{grid-area:2 / 1;}
-  .nf-toolbar .ql-list[value=bullet]{grid-area:2 / 2;}
-  .nf-toolbar .ql-link{grid-area:2 / 3;}
-  .nf-toolbar .ql-image{grid-area:2 / 4;}
-  .nf-toolbar .ql-video{grid-area:2 / 5;}
-  .nf-toolbar .ql-clean{grid-area:2 / 6;}
+  .nf-toolbar > .ql-formats > .ql-bold{grid-area:1 / 3;}
+  .nf-toolbar > .ql-formats > .ql-italic{grid-area:1 / 4;}
+  .nf-toolbar > .ql-formats > .ql-underline{grid-area:1 / 5;}
+  .nf-toolbar .cc-color-wrap{grid-area:1 / 6;}
+  .nf-toolbar .cc-background-wrap{grid-area:1 / 7;}
+  .nf-toolbar > .ql-formats > .ql-list[value=ordered]{grid-area:2 / 1;}
+  .nf-toolbar > .ql-formats > .ql-list[value=bullet]{grid-area:2 / 2;}
+  .nf-toolbar > .ql-formats > .ql-link{grid-area:2 / 3;}
+  .nf-toolbar > .ql-formats > .ql-image{grid-area:2 / 4;}
+  .nf-toolbar .nf-menu-text{grid-area:2 / 5;}
+  .nf-toolbar .nf-menu-para{grid-area:2 / 6;}
+  .nf-toolbar .nf-menu-insert{grid-area:2 / 7;}
 }
 /* On the narrowest phones the two cells come to about 54px, which leaves the
    number itself less room than "96" needs. The arrows go there: the list and
@@ -3492,55 +3494,92 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
    notes should be fixed as you scroll down while typing"). Pinned under the
    app's own top bar, which publishes how much of the screen it covers; in a
    split view the pane is the scroller and its own name bar is what it sits
-   under. Opaque, or the writing scrolls through it. */
+   under. Opaque, or the writing scrolls through it. --topbar-now is what the
+   bar covers AT THE MOMENT, written on the toolbar itself while a phone's bar
+   is shrinking with the scroll (see pinNoteToolbarsUnderBar): pinned at the
+   resting height, the toolbar left the band the shrink gave back open, and
+   the note scrolled through it above the toolbar (real-user report, with a
+   screenshot: "This bar is broken on phone (shows the text there at the top
+   in the back)"). */
 #editorCard > .ql-toolbar.ql-snow, #notebookEditorCard > .ql-toolbar.ql-snow,
 #editorCard > .nc-wrap > .ql-toolbar.ql-snow, #notebookEditorCard > .nc-wrap > .ql-toolbar.ql-snow{
-  position:sticky;top:var(--topbar-h, 0px);z-index:6;}
+  position:sticky;top:var(--topbar-now, var(--topbar-h, 0px));z-index:6;}
 .tab-panel.split-on > .split-pane #editorCard .ql-toolbar.ql-snow,
 .tab-panel.split-on > .split-pane #notebookEditorCard .ql-toolbar.ql-snow{top:38px;}
-/* Line spacing: one button beside the lists, opening the same kind of list
-   the font size does. */
-.ql-toolbar .nf-spacing-group{position:relative;}
-.ql-snow.ql-toolbar button.nf-spacing-open{color:var(--ink-soft);display:inline-flex;align-items:center;justify-content:center;}
-.ql-snow.ql-toolbar button.nf-spacing-open:hover{color:#06c;}
-.ql-toolbar button.nf-spacing-open svg{display:block;float:none;width:16px;height:16px;}
-.nf-spacing-panel{min-width:84px;}
-/* Text style, contents, symbols and equations: four more toolbar buttons in
-   the same family as line spacing, and the equation box (see the EQUATIONS
-   block in the script). Each button family sets its own :hover and :focus
-   background, because the global button:hover paints them ink on iOS. */
-.ql-toolbar .nf-tool-group{position:relative;}
-.ql-snow.ql-toolbar button.nf-tool-open,.ql-snow.ql-toolbar button.nf-eq-open{color:var(--ink-soft);display:inline-flex;align-items:center;justify-content:center;}
-.ql-snow.ql-toolbar button.nf-tool-open:hover,.ql-snow.ql-toolbar button.nf-tool-open:focus,
-.ql-snow.ql-toolbar button.nf-eq-open:hover,.ql-snow.ql-toolbar button.nf-eq-open:focus{color:#06c;background:none;}
-.ql-snow.ql-toolbar button.nf-tool-open.ql-active{color:#06c;}
-.ql-toolbar button.nf-tool-open svg,.ql-toolbar button.nf-eq-open svg{display:block;float:none;width:16px;height:16px;}
-.nf-size-panel.nf-tool-panel{max-height:320px;min-width:180px;text-align:left;}
-/* Quill's own .ql-snow.ql-toolbar button (a 28px float) would otherwise win
-   over the rows of a panel that hangs inside the toolbar. */
-.ql-snow.ql-toolbar .nf-tool-panel button{float:none;display:block;width:100%;height:auto;line-height:1.35;}
-.ql-snow.ql-toolbar .nf-tool-panel .nf-tabs button.nf-tab{display:inline-block;width:auto;}
-.ql-snow.ql-toolbar .nf-tool-panel button.nf-sym{display:flex;align-items:center;justify-content:center;width:auto;}
-.nf-tool-panel button:focus{background:transparent;}
-.nf-tool-panel button:hover,.nf-tool-panel button:focus-visible{background:var(--paper);}
-.nf-tool-panel button.on,.nf-tool-panel button.on:hover,.nf-tool-panel button.on:focus{background:var(--ink);color:var(--paper);}
-.nf-size-panel button.nf-style-opt,.nf-size-panel button.nf-toc-item,.nf-size-panel button.nf-toc-insert{text-align:left;white-space:normal;}
-.nf-size-panel button.nf-style-1{font-size:17px;font-weight:700;}
-.nf-size-panel button.nf-style-2{font-size:14.5px;font-weight:700;}
-.nf-size-panel button.nf-style-3{font-size:12.5px;font-weight:700;}
-.nf-size-panel button.nf-style-0{font-weight:500;}
-.nf-size-panel button.nf-toc-item{font-weight:600;}
-.nf-size-panel button.nf-toc-2{padding-left:20px;font-weight:500;}
-.nf-size-panel button.nf-toc-3{padding-left:32px;font-weight:500;color:var(--ink-soft);}
-.nf-size-panel button.nf-toc-insert{margin-top:4px;border-top:1px solid var(--line);border-radius:0 0 4px 4px;color:var(--ink-soft);font-weight:500;}
+/* Quill pastes through a hidden box of its own, at half the editor's height,
+   and the browser brings the place it pastes into on screen -- so on a long
+   note every paste jumped the page to the middle of the note (real-user
+   report: "when i try to copy and paste anything into notes, it scrolls up
+   the notes every time ... incredibly annoying"). Fixed, the box is always on
+   screen already, and there is nothing to scroll to. */
+.ql-container .ql-clipboard{position:fixed;top:50%;}
+/* THE NOTE TOOLBAR'S MENUS (see the block of that name in the script). The
+   button is its mark and a chevron saying it opens; the panel is rows with
+   their names, in sections. A row of Quill's own is lit (ql-active) for what
+   is on at the caret, here as on the bar. Quill's .ql-snow.ql-toolbar button
+   (a 28px float) would otherwise win over every row, and the global
+   button:hover paints a row ink on iOS, so each family sets its own :hover
+   and :focus. */
+.ql-toolbar .nf-menu-group{position:relative;display:inline-block;vertical-align:middle;}
+.ql-snow.ql-toolbar button.nf-menu-open{width:auto;padding:3px 4px;display:inline-flex;align-items:center;gap:1px;color:var(--ink-soft);border-radius:6px;}
+.ql-snow.ql-toolbar button.nf-menu-open:hover,.ql-snow.ql-toolbar button.nf-menu-open:focus{color:#06c;background:none;}
+.ql-snow.ql-toolbar button.nf-menu-open.ql-active,.ql-snow.ql-toolbar button.nf-menu-open.ql-active:hover{color:#06c;background:var(--paper-dim);}
+.ql-snow.ql-toolbar button.nf-menu-open svg{display:block;float:none;width:16px;height:16px;}
+.ql-snow.ql-toolbar button.nf-menu-open .nf-menu-chev svg{width:10px;height:10px;}
+.nf-menu-panel{display:none;position:absolute;top:100%;left:0;z-index:20;margin-top:4px;box-sizing:border-box;
+  width:max-content;min-width:224px;max-width:min(320px, calc(100vw - 24px));max-height:min(70vh, 480px);overflow-y:auto;
+  background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;padding:6px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.18);font-family:'Inter',sans-serif;text-align:left;cursor:default;}
+.nf-menu-panel.open{display:block;}
+.nf-menu-sec + .nf-menu-sec{border-top:1px solid var(--line);margin-top:6px;padding-top:6px;}
+.nf-menu-head{font-size:11px;font-weight:600;color:var(--ink-soft);padding:2px 8px 4px;}
+.ql-snow.ql-toolbar .nf-menu-panel button{float:none;height:auto;line-height:1.35;font-family:inherit;}
+.ql-snow.ql-toolbar .nf-menu-panel button:focus{background:none;}
+.ql-snow.ql-toolbar .nf-menu-panel button:hover,.ql-snow.ql-toolbar .nf-menu-panel button:focus-visible{background:var(--paper);}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:7px 8px;border-radius:6px;font-size:13px;font-weight:500;color:var(--ink);text-align:left;}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-item svg{float:none;flex:none;width:18px;height:18px;}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-item.ql-active{color:#06c;}
+.nf-menu-item .nf-menu-label{flex:1;min-width:0;}
+.ql-snow.ql-toolbar .nf-menu-panel .nf-menu-item .nf-menu-more svg{width:14px;height:14px;color:var(--ink-soft);}
+/* Alignment, line spacing and indent are a row of choices each, the one in
+   force filled in, so the panel stays open while they are tried. */
+.nf-menu-seg{display:flex;gap:2px;padding:0 4px 2px;}
+.ql-snow.ql-toolbar .nf-menu-panel .nf-menu-seg button{flex:1 1 auto;min-width:0;width:auto;height:32px;padding:0 6px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;color:var(--ink-soft);}
+.ql-snow.ql-toolbar .nf-menu-panel .nf-menu-seg button svg{float:none;width:18px;height:18px;}
+.ql-snow.ql-toolbar .nf-menu-panel .nf-menu-seg button.ql-active,.ql-snow.ql-toolbar .nf-menu-panel .nf-menu-seg button.on{background:var(--ink);color:var(--paper);}
+.ql-snow.ql-toolbar .nf-menu-panel .nf-menu-seg button.ql-active .ql-stroke{stroke:var(--paper);}
+.ql-snow.ql-toolbar .nf-menu-panel .nf-menu-seg button.ql-active .ql-fill{fill:var(--paper);}
+/* Inside a menu, one step down: the symbols and the contents, with the way
+   back above them. */
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-back{display:flex;align-items:center;gap:6px;width:100%;padding:4px 6px 8px;margin-bottom:6px;
+  border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;font-size:12.5px;font-weight:600;color:var(--ink-soft);text-align:left;}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-back:hover,.ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-back:focus{background:none;color:var(--ink);}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-back svg{float:none;width:14px;height:14px;}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-style-opt,.ql-snow.ql-toolbar .nf-menu-panel button.nf-toc-item,
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-toc-insert{display:block;width:100%;padding:6px 8px;border-radius:6px;font-size:13px;color:var(--ink);text-align:left;white-space:normal;}
+.ql-snow.ql-toolbar .nf-menu-panel button.on,.ql-snow.ql-toolbar .nf-menu-panel button.on:hover,.ql-snow.ql-toolbar .nf-menu-panel button.on:focus{background:var(--ink);color:var(--paper);}
+.nf-menu-panel button.nf-style-1{font-size:17px;font-weight:700;}
+.nf-menu-panel button.nf-style-2{font-size:14.5px;font-weight:700;}
+.nf-menu-panel button.nf-style-3{font-size:12.5px;font-weight:700;}
+.nf-menu-panel button.nf-style-0{font-weight:500;}
+.nf-menu-panel button.nf-toc-item{font-weight:600;}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-toc-2{padding-left:20px;font-weight:500;}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-toc-3{padding-left:32px;font-weight:500;color:var(--ink-soft);}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-toc-insert{margin-top:4px;border-top:1px solid var(--line);border-radius:0 0 4px 4px;color:var(--ink-soft);font-weight:500;}
 .nf-tool-hint{font-family:'Inter',sans-serif;font-size:11.5px;line-height:1.45;color:var(--ink-soft);padding:6px 6px 2px;max-width:300px;}
-.nf-sym-group .nf-tool-panel{width:min(300px, calc(100vw - 24px));box-sizing:border-box;}
 .nf-tabs{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px;}
-.nf-tabs button.nf-tab,.nf-size-panel .nf-tabs button.nf-tab{display:inline-block;width:auto;font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink-soft);cursor:pointer;}
-.nf-tabs button.nf-tab:hover,.nf-tabs button.nf-tab:focus{background:var(--paper);color:var(--ink);}
-.nf-tabs button.nf-tab.on,.nf-tabs button.nf-tab.on:hover,.nf-tabs button.nf-tab.on:focus{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.ql-snow.ql-toolbar .nf-menu-panel .nf-tabs button.nf-tab{display:inline-block;width:auto;font-size:11.5px;font-weight:600;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink-soft);cursor:pointer;}
+.ql-snow.ql-toolbar .nf-menu-panel .nf-tabs button.nf-tab:hover,.ql-snow.ql-toolbar .nf-menu-panel .nf-tabs button.nf-tab:focus{background:var(--paper);color:var(--ink);}
+.ql-snow.ql-toolbar .nf-menu-panel .nf-tabs button.nf-tab.on{background:var(--ink);color:var(--paper);border-color:var(--ink);}
 .nf-sym-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:2px;}
-.nf-size-panel button.nf-sym{font-family:'Inter','Noto Sans KR',sans-serif;font-size:16px;font-weight:500;padding:5px 0;text-align:center;}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-sym{display:flex;align-items:center;justify-content:center;width:auto;font-family:'Inter','Noto Sans KR',sans-serif;font-size:16px;font-weight:500;padding:5px 0;border-radius:4px;color:var(--ink);}
+/* Alignment and indent outside the editor too: an earlier version is read in
+   a plain box, and Quill's own rules for them are scoped to .ql-editor. */
+.ver-body .ql-align-center{text-align:center;}
+.ver-body .ql-align-right{text-align:right;}
+.ver-body .ql-align-justify{text-align:justify;}
+.ver-body .ql-indent-1{padding-left:3em;} .ver-body .ql-indent-2{padding-left:6em;} .ver-body .ql-indent-3{padding-left:9em;} .ver-body .ql-indent-4{padding-left:12em;}
 /* Headings in a note: the size steps of the style menu above. */
 .ql-editor h1{font-size:1.55em;font-weight:700;margin:0.5em 0 0.2em;}
 .ql-editor h2{font-size:1.28em;font-weight:700;margin:0.45em 0 0.15em;}
@@ -3599,10 +3638,15 @@ math-field.nf-eq-field::part(menu-toggle),math-field.nf-eq-field::part(virtual-k
 .note-af-chip button.note-af-off{border-color:transparent;background:transparent;color:var(--ink-soft);font-weight:500;}
 .note-af-chip button.note-af-off:hover{color:var(--ink);}
 @media (max-width: 640px){
-  .nf-toolbar .nf-spacing-group{grid-area:2 / 7;display:flex !important;align-items:center;justify-content:center;margin:0;min-width:0;height:36px;}
-  .ql-snow.ql-toolbar .nf-spacing-group > button.nf-spacing-open{width:100%;height:36px;padding:0;border-radius:8px;}
-  .ql-toolbar button.nf-spacing-open svg{width:20px;height:20px;}
-  .nf-spacing-group .nf-size-panel{left:auto;right:0;}
+  /* A menu is a cell of the grid like any button, and its panel hangs from
+     the toolbar rather than from the button: the toolbar is what is pinned,
+     and the full width of it is room for the rows' names. */
+  .ql-toolbar.ql-snow .nf-menu-group{display:flex !important;align-items:center;justify-content:center;position:static;margin:0;min-width:0;height:36px;}
+  .ql-snow.ql-toolbar .nf-menu-group > button.nf-menu-open{width:100%;height:36px;padding:0;border-radius:8px;justify-content:center;}
+  .ql-snow.ql-toolbar button.nf-menu-open svg{width:20px;height:20px;}
+  .nf-menu-panel{left:6px;right:6px;width:auto;min-width:0;max-width:none;max-height:min(60vh, 440px);}
+  .ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-item{padding:10px 8px;font-size:14px;}
+  .ql-snow.ql-toolbar .nf-menu-panel .nf-menu-seg button{height:38px;}
 }
 /* THE EDITOR GOES UNDER THE LIST ONCE THE LIST HAS ENDED (real-user request:
    "when you get a certain distance down, it should no longer be side-by-side
@@ -13832,6 +13876,7 @@ const I18N = {
     searchBtn:'Search', searchTitle:'Search the app', searchPlaceholder:'Tabs, settings, notes, grammar, to-dos...', searchNoResults:'Nothing matches "{q}".', searchFoot:'Up and down to choose, Enter to open, Esc to close. Ctrl K (⌘K on a Mac) or / opens this from anywhere.', searchGroupPlaces:'Places', searchGroupSettings:'Settings', searchGroupNotes:'Notes', searchGroupGrammar:'Grammar', searchGroupItems:'In your lists',
     nsShareBtn:'Share', nsMenuShare:'Share note', nsShareTitle:'Share "{title}"', nsHowAsk:'How do you want to share it?', nsLive:'Live', nsLiveDesc:'They see this same note. Edits show up for both of you.', nsCopy:'As their own copy', nsCopyDesc:'A separate copy goes into their Notebook. It never syncs back.', nsManageAccess:'Manage access', nsBack:'Back', nsPeopleWithAccess:'People with access', nsNoCircle:'Link someone in Account settings first to share with them.', nsRoleLabel:'Role', nsNotify:'Tell them in a message', nsSendCopy:'Send copy', nsSent:'Sent', nsFailed:'Couldn\'t do that. Check your connection and try again.', nsPublicLink:'Public link', nsPublicLinkHint:'Anyone with the link can open this note. No account needed.', nsLinkCreate:'Create link', nsLinkCopy:'Copy link', nsLinkCopied:'Link copied', nsLinkOn:'On', nsLinkOff:'Off', nsLinkTurnOff:'Turn off', nsLinkTurnOn:'Turn on', nsLinkOffHint:'Nobody can open the link until you turn it on again.', nsLinkRegenerate:'New link', nsLinkRegenerateConfirm:'Make a new link? The old one stops working right away.', nsAccessViewer:'Shared by {name}. You can view it.', nsAccessCommenter:'Shared by {name}. You can comment.', nsAccessEditor:'Shared by {name}. You can edit.', nsSharedGroup:'Shared with you', nsSharedByMe:'Shared', nsCardLive:'Shared with you live', nsCardCopy:'A copy is in your Notebook', ncCommentsBtn:'Comments', ncComment:'Comment', ncAddComment:'Add a comment', ncReply:'Reply', ncResolve:'Resolve', ncReopen:'Reopen', ncResolved:'Resolved', ncShowResolved:'Show resolved ({n})', ncHideResolved:'Hide resolved', ncEmpty:'No comments yet. Select some text and press Comment.', ncEmptyView:'No comments yet.', ncOrphan:'The text this was on has changed.', ncDeleteConfirm:'Delete this comment?', ncDeleteThreadConfirm:'Delete this comment and its replies?', ncGuest:'guest', ncYourName:'Your name', ncNameNeeded:'Add your name to comment.', ncRateLimited:'Too many comments on this link right now. Try again in a few minutes.', ncViewOnly:'You can read the comments but not add one.', ncCount:'{n} comments', ncCountOne:'1 comment', psOpenApp:'Open Productivity Tracker', psNotFound:'This link does not work. It may have been turned off or replaced.', psSharedBy:'Shared by {name}', psUpdated:'Updated {time}', psViewOnly:'View only', psCanComment:'You can comment', nsLevelEditor:'Can edit', nsLevelCommenter:'Can comment', nsLevelViewer:'Can view', nsLevelNone:'No access', nsLevelCircle:'As set by the circle ({level})', nsCircleHint:'Your circle gets the level from your sharing settings. Change it here for this note only.',
     noteSub:'Subscript', noteSup:'Superscript', noteStyleBtn:'Text style', noteStyleNormal:'Normal text', noteStyleH1:'Heading', noteStyleH2:'Subheading', noteStyleH3:'Small heading', noteTocBtn:'Contents', noteTocEmpty:'No headings yet. Start a line with # and a space for a heading, ## for a subheading, ### for a small one.', noteTocInsert:'Write this list into the note', noteSymBtn:'Symbols', noteSymTabArrows:'Arrows', noteSymTabMath:'Math', noteSymTabGreek:'Greek', noteSymTabSets:'Sets and logic', noteSymTabScripts:'Super and sub', noteSymTabOther:'Other', noteShorthandHint:'Typing shortcuts: ^^ up arrow, vv down arrow, -> arrow, x^2 and H_2O for scripts, e^{ix} for longer ones. Undo puts back what you typed.', noteEqBtn:'Equation', noteEqTitle:'Equation', noteEqTabStruct:'Structures', noteEqInsert:'Insert', noteEqUpdate:'Update', noteEqRemove:'Remove', noteEqPlaceholder:'Tap the keys above or type LaTeX, for example \\frac{a}{b}', noteEqEmpty:'The preview shows here.', noteEqLoading:'Loading the equation editor...', noteEqFailed:"Couldn't load the equation editor. Check your connection and try again.",
+    noteMenuText:'Text', noteMenuPara:'Paragraph', noteMenuInsert:'Insert', noteStrike:'Strikethrough', noteClean:'Clear formatting', noteVideo:'Video', noteAlign:'Alignment', noteAlignLeft:'Align left', noteAlignCenter:'Align center', noteAlignRight:'Align right', noteAlignJustify:'Justify', noteIndent:'Indent', noteIndentLess:'Decrease indent', noteIndentMore:'Increase indent',
     signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
     signOut:'Sign out',
     tabStudy:'Korean', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar', tabHome:'Home', tabOverview:'Overview', lblQuickNav:'Jump to', homeMorning:'Good morning', homeAfternoon:'Good afternoon', homeEvening:'Good evening', homeToday:'Today', homeTodos:'To-dos', homeTodosNone:'Nothing due today', homeAllDone:'All done for today', homeNextUp:'Next up', homeTodayWord:'Today', homeStreak:'{n}-day streak', homeReading:'Reading', 
@@ -13965,6 +14010,7 @@ const I18N = {
     searchBtn:'검색', searchTitle:'앱 검색', searchPlaceholder:'탭, 설정, 노트, 문법, 할 일...', searchNoResults:'"{q}"와(과) 일치하는 항목이 없습니다.', searchFoot:'위아래로 고르고 Enter로 열고 Esc로 닫습니다. 어디서나 Ctrl K(Mac은 ⌘K) 또는 /로 열 수 있습니다.', searchGroupPlaces:'위치', searchGroupSettings:'설정', searchGroupNotes:'노트', searchGroupGrammar:'문법', searchGroupItems:'목록 항목',
     nsShareBtn:'공유', nsMenuShare:'노트 공유', nsShareTitle:'"{title}" 공유', nsHowAsk:'어떻게 공유할까요?', nsLive:'실시간', nsLiveDesc:'상대방이 같은 노트를 봅니다. 수정한 내용이 두 사람 모두에게 보입니다.', nsCopy:'상대방의 사본으로', nsCopyDesc:'상대방의 노트북에 별도의 사본이 들어갑니다. 다시 동기화되지 않습니다.', nsManageAccess:'액세스 관리', nsBack:'뒤로', nsPeopleWithAccess:'액세스할 수 있는 사람', nsNoCircle:'공유하려면 먼저 계정 설정에서 사람을 연결하세요.', nsRoleLabel:'권한', nsNotify:'메시지로 알리기', nsSendCopy:'사본 보내기', nsSent:'보냄', nsFailed:'처리하지 못했습니다. 연결을 확인하고 다시 시도하세요.', nsPublicLink:'공개 링크', nsPublicLinkHint:'링크가 있으면 누구나 계정 없이 이 노트를 열 수 있습니다.', nsLinkCreate:'링크 만들기', nsLinkCopy:'링크 복사', nsLinkCopied:'링크를 복사했습니다', nsLinkOn:'켜짐', nsLinkOff:'꺼짐', nsLinkTurnOff:'끄기', nsLinkTurnOn:'켜기', nsLinkOffHint:'다시 켤 때까지 아무도 링크를 열 수 없습니다.', nsLinkRegenerate:'새 링크', nsLinkRegenerateConfirm:'새 링크를 만들까요? 이전 링크는 바로 작동하지 않게 됩니다.', nsAccessViewer:'{name}님이 공유했습니다. 볼 수 있습니다.', nsAccessCommenter:'{name}님이 공유했습니다. 댓글을 달 수 있습니다.', nsAccessEditor:'{name}님이 공유했습니다. 편집할 수 있습니다.', nsSharedGroup:'나와 공유됨', nsSharedByMe:'공유됨', nsCardLive:'실시간으로 공유됨', nsCardCopy:'사본이 내 노트북에 있습니다', ncCommentsBtn:'댓글', ncComment:'댓글 달기', ncAddComment:'댓글 추가', ncReply:'답글', ncResolve:'해결', ncReopen:'다시 열기', ncResolved:'해결됨', ncShowResolved:'해결된 댓글 보기 ({n})', ncHideResolved:'해결된 댓글 숨기기', ncEmpty:'아직 댓글이 없습니다. 텍스트를 선택하고 댓글 달기를 누르세요.', ncEmptyView:'아직 댓글이 없습니다.', ncOrphan:'이 댓글이 달린 텍스트가 바뀌었습니다.', ncDeleteConfirm:'이 댓글을 삭제할까요?', ncDeleteThreadConfirm:'이 댓글과 답글을 모두 삭제할까요?', ncGuest:'게스트', ncYourName:'이름', ncNameNeeded:'댓글을 달려면 이름을 입력하세요.', ncRateLimited:'지금 이 링크에 댓글이 너무 많습니다. 몇 분 후에 다시 시도하세요.', ncViewOnly:'댓글을 읽을 수만 있습니다.', ncCount:'댓글 {n}개', psOpenApp:'Productivity Tracker 열기', psNotFound:'이 링크는 작동하지 않습니다. 꺼졌거나 새 링크로 바뀌었을 수 있습니다.', psSharedBy:'{name}님이 공유함', psUpdated:'{time}에 업데이트됨', psViewOnly:'보기 전용', psCanComment:'댓글을 달 수 있습니다', nsLevelEditor:'편집 가능', nsLevelCommenter:'댓글 가능', nsLevelViewer:'보기 가능', nsLevelNone:'액세스 없음', nsLevelCircle:'서클 설정대로 ({level})', nsCircleHint:'서클은 공유 설정의 권한을 받습니다. 이 노트만 여기서 바꿀 수 있습니다.',
     noteSub:'아래 첨자', noteSup:'위 첨자', noteStyleBtn:'글자 스타일', noteStyleNormal:'본문', noteStyleH1:'제목', noteStyleH2:'부제목', noteStyleH3:'소제목', noteTocBtn:'목차', noteTocEmpty:'아직 제목이 없습니다. 줄 처음에 #와 띄어쓰기를 치면 제목, ##는 부제목, ###는 소제목이 됩니다.', noteTocInsert:'이 목록을 노트에 쓰기', noteSymBtn:'기호', noteSymTabArrows:'화살표', noteSymTabMath:'수학', noteSymTabGreek:'그리스 문자', noteSymTabSets:'집합과 논리', noteSymTabScripts:'위아래 첨자', noteSymTabOther:'기타', noteShorthandHint:'단축 입력: ^^ 위쪽 화살표, vv 아래쪽 화살표, -> 화살표, x^2와 H_2O는 첨자, 긴 것은 e^{ix}. 되돌리기를 누르면 입력한 그대로 돌아갑니다.', noteEqBtn:'수식', noteEqTitle:'수식', noteEqTabStruct:'구조', noteEqInsert:'넣기', noteEqUpdate:'수정', noteEqRemove:'삭제', noteEqPlaceholder:'위의 키를 누르거나 LaTeX로 입력하세요. 예: \\frac{a}{b}', noteEqEmpty:'여기에 미리 보기가 표시됩니다.', noteEqLoading:'수식 편집기를 불러오는 중...', noteEqFailed:'수식 편집기를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.',
+    noteMenuText:'글자', noteMenuPara:'단락', noteMenuInsert:'삽입', noteStrike:'취소선', noteClean:'서식 지우기', noteVideo:'동영상', noteAlign:'정렬', noteAlignLeft:'왼쪽 정렬', noteAlignCenter:'가운데 정렬', noteAlignRight:'오른쪽 정렬', noteAlignJustify:'양쪽 정렬', noteIndent:'들여쓰기', noteIndentLess:'내어쓰기', noteIndentMore:'들여쓰기',
     signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
     signOut:'로그아웃',
     tabStudy:'한국어', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더', tabHome:'홈', tabOverview:'개요', lblQuickNav:'바로가기', homeMorning:'좋은 아침이에요', homeAfternoon:'좋은 오후예요', homeEvening:'좋은 저녁이에요', homeToday:'오늘', homeTodos:'할 일', homeTodosNone:'오늘 할 일이 없어요', homeAllDone:'오늘 할 일을 다 했어요', homeNextUp:'다음 일정', homeTodayWord:'오늘', homeStreak:'{n}일 연속', homeReading:'읽는 중', 
@@ -14098,6 +14144,7 @@ const I18N = {
     searchBtn:'Tìm kiếm', searchTitle:'Tìm trong ứng dụng', searchPlaceholder:'Thẻ, cài đặt, ghi chú, ngữ pháp, việc cần làm...', searchNoResults:'Không có gì khớp với "{q}".', searchFoot:'Lên xuống để chọn, Enter để mở, Esc để đóng. Ctrl K (⌘K trên Mac) hoặc / mở hộp này từ bất kỳ đâu.', searchGroupPlaces:'Vị trí', searchGroupSettings:'Cài đặt', searchGroupNotes:'Ghi chú', searchGroupGrammar:'Ngữ pháp', searchGroupItems:'Trong danh sách của bạn',
     nsShareBtn:'Chia sẻ', nsMenuShare:'Chia sẻ ghi chú', nsShareTitle:'Chia sẻ "{title}"', nsHowAsk:'Bạn muốn chia sẻ thế nào?', nsLive:'Trực tiếp', nsLiveDesc:'Họ xem chính ghi chú này. Chỉnh sửa hiện ra cho cả hai người.', nsCopy:'Thành bản sao của họ', nsCopyDesc:'Một bản sao riêng được thêm vào Sổ tay của họ. Nó không bao giờ đồng bộ ngược lại.', nsManageAccess:'Quản lý quyền truy cập', nsBack:'Quay lại', nsPeopleWithAccess:'Người có quyền truy cập', nsNoCircle:'Hãy liên kết với ai đó trong Cài đặt tài khoản trước để chia sẻ với họ.', nsRoleLabel:'Vai trò', nsNotify:'Báo cho họ bằng tin nhắn', nsSendCopy:'Gửi bản sao', nsSent:'Đã gửi', nsFailed:'Không thực hiện được. Hãy kiểm tra kết nối rồi thử lại.', nsPublicLink:'Liên kết công khai', nsPublicLinkHint:'Bất kỳ ai có liên kết đều mở được ghi chú này. Không cần tài khoản.', nsLinkCreate:'Tạo liên kết', nsLinkCopy:'Sao chép liên kết', nsLinkCopied:'Đã sao chép liên kết', nsLinkOn:'Đang bật', nsLinkOff:'Đang tắt', nsLinkTurnOff:'Tắt', nsLinkTurnOn:'Bật', nsLinkOffHint:'Không ai mở được liên kết cho đến khi bạn bật lại.', nsLinkRegenerate:'Liên kết mới', nsLinkRegenerateConfirm:'Tạo liên kết mới? Liên kết cũ sẽ ngừng hoạt động ngay.', nsAccessViewer:'{name} đã chia sẻ. Bạn có thể xem.', nsAccessCommenter:'{name} đã chia sẻ. Bạn có thể bình luận.', nsAccessEditor:'{name} đã chia sẻ. Bạn có thể chỉnh sửa.', nsSharedGroup:'Được chia sẻ với bạn', nsSharedByMe:'Đã chia sẻ', nsCardLive:'Được chia sẻ trực tiếp với bạn', nsCardCopy:'Bản sao đã có trong Sổ tay của bạn', ncCommentsBtn:'Bình luận', ncComment:'Bình luận', ncAddComment:'Thêm bình luận', ncReply:'Trả lời', ncResolve:'Giải quyết', ncReopen:'Mở lại', ncResolved:'Đã giải quyết', ncShowResolved:'Hiện bình luận đã giải quyết ({n})', ncHideResolved:'Ẩn bình luận đã giải quyết', ncEmpty:'Chưa có bình luận. Chọn một đoạn chữ rồi nhấn Bình luận.', ncEmptyView:'Chưa có bình luận.', ncOrphan:'Đoạn chữ của bình luận này đã thay đổi.', ncDeleteConfirm:'Xóa bình luận này?', ncDeleteThreadConfirm:'Xóa bình luận này và các câu trả lời của nó?', ncGuest:'khách', ncYourName:'Tên của bạn', ncNameNeeded:'Hãy nhập tên để bình luận.', ncRateLimited:'Liên kết này đang có quá nhiều bình luận. Hãy thử lại sau vài phút.', ncViewOnly:'Bạn chỉ có thể đọc bình luận.', ncCount:'{n} bình luận', psOpenApp:'Mở Productivity Tracker', psNotFound:'Liên kết này không hoạt động. Có thể nó đã bị tắt hoặc được thay bằng liên kết khác.', psSharedBy:'{name} đã chia sẻ', psUpdated:'Cập nhật {time}', psViewOnly:'Chỉ xem', psCanComment:'Bạn có thể bình luận', nsLevelEditor:'Có thể chỉnh sửa', nsLevelCommenter:'Có thể bình luận', nsLevelViewer:'Có thể xem', nsLevelNone:'Không có quyền truy cập', nsLevelCircle:'Theo cài đặt của nhóm ({level})', nsCircleHint:'Nhóm của bạn nhận quyền theo cài đặt chia sẻ. Bạn có thể đổi riêng cho ghi chú này tại đây.',
     noteSub:'Chỉ số dưới', noteSup:'Chỉ số trên', noteStyleBtn:'Kiểu chữ', noteStyleNormal:'Văn bản thường', noteStyleH1:'Tiêu đề', noteStyleH2:'Tiêu đề phụ', noteStyleH3:'Tiêu đề nhỏ', noteTocBtn:'Mục lục', noteTocEmpty:'Chưa có tiêu đề. Gõ # và dấu cách ở đầu dòng để tạo tiêu đề, ## cho tiêu đề phụ, ### cho tiêu đề nhỏ.', noteTocInsert:'Ghi danh sách này vào ghi chú', noteSymBtn:'Ký hiệu', noteSymTabArrows:'Mũi tên', noteSymTabMath:'Toán', noteSymTabGreek:'Chữ Hy Lạp', noteSymTabSets:'Tập hợp và logic', noteSymTabScripts:'Chỉ số trên, dưới', noteSymTabOther:'Khác', noteShorthandHint:'Gõ tắt: ^^ mũi tên lên, vv mũi tên xuống, -> mũi tên, x^2 và H_2O cho chỉ số, e^{ix} cho chỉ số dài. Hoàn tác sẽ trả lại đúng những gì bạn gõ.', noteEqBtn:'Công thức', noteEqTitle:'Công thức', noteEqTabStruct:'Cấu trúc', noteEqInsert:'Chèn', noteEqUpdate:'Cập nhật', noteEqRemove:'Xóa', noteEqPlaceholder:'Bấm các phím ở trên hoặc gõ LaTeX, ví dụ \\frac{a}{b}', noteEqEmpty:'Bản xem trước hiển thị ở đây.', noteEqLoading:'Đang tải trình soạn công thức...', noteEqFailed:'Không tải được trình soạn công thức. Hãy kiểm tra kết nối rồi thử lại.',
+    noteMenuText:'Chữ', noteMenuPara:'Đoạn văn', noteMenuInsert:'Chèn', noteStrike:'Gạch ngang', noteClean:'Xóa định dạng', noteVideo:'Video', noteAlign:'Căn lề', noteAlignLeft:'Căn trái', noteAlignCenter:'Căn giữa', noteAlignRight:'Căn phải', noteAlignJustify:'Căn đều hai bên', noteIndent:'Thụt lề', noteIndentLess:'Giảm thụt lề', noteIndentMore:'Tăng thụt lề',
     signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
     signOut:'Đăng xuất',
     tabStudy:'Tiếng Hàn', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch', tabHome:'Trang chủ', tabOverview:'Tổng quan', lblQuickNav:'Đi đến', homeMorning:'Chào buổi sáng', homeAfternoon:'Chào buổi chiều', homeEvening:'Chào buổi tối', homeToday:'Hôm nay', homeTodos:'Việc cần làm', homeTodosNone:'Hôm nay không có việc gì', homeAllDone:'Đã xong hết hôm nay', homeNextUp:'Sắp tới', homeTodayWord:'Hôm nay', homeStreak:'Chuỗi {n} ngày', homeReading:'Đang đọc', 
@@ -15061,6 +15108,12 @@ const ICON_PATHS = {
   /* Three lines with an up-and-down arrow beside them: the space BETWEEN lines,
      which is what the control changes, rather than another kind of list. */
   lineSpacing: '<line x1="11" y1="6" x2="21" y2="6"></line><line x1="11" y1="12" x2="21" y2="12"></line><line x1="11" y1="18" x2="21" y2="18"></line><polyline points="3 8 5.5 5.5 8 8"></polyline><polyline points="3 16 5.5 18.5 8 16"></polyline><line x1="5.5" y1="5.5" x2="5.5" y2="18.5"></line>',
+  /* The note toolbar's three menus: a capital T for what the letters look
+     like, the paragraph mark for how the lines sit, and a boxed plus for
+     what goes into the note. */
+  textMenu:  '<polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line>',
+  paraMenu:  '<path d="M13 4v16"></path><path d="M17 4v16"></path><path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13"></path>',
+  insertMenu:'<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line>',
   /* A curved arrow back to the left: answering a message, beside copying it. */
   reply:  '<polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path>',
   /* A clock with its hand turned back: the earlier versions of a message. */
@@ -15131,6 +15184,9 @@ const ICON = {
   arrowR:  function(sz){ return svgIcon(ICON_PATHS.arrowR, sz); },
   pageAdd: function(sz){ return svgIcon(ICON_PATHS.pageAdd, sz); },
   lineSpacing: function(sz){ return svgIcon(ICON_PATHS.lineSpacing, sz); },
+  textMenu:  function(sz){ return svgIcon(ICON_PATHS.textMenu, sz); },
+  paraMenu:  function(sz){ return svgIcon(ICON_PATHS.paraMenu, sz); },
+  insertMenu:function(sz){ return svgIcon(ICON_PATHS.insertMenu, sz); },
   reply:   function(sz){ return svgIcon(ICON_PATHS.reply, sz); },
   history: function(sz){ return svgIcon(ICON_PATHS.history, sz); },
   reorder: function(sz){ return svgIcon(ICON_PATHS.reorder, sz); },
@@ -17673,11 +17729,26 @@ function pushSupported(){
 // iOS only gives push to a web app opened from the Home Screen (16.4 and
 // later); in a Safari tab PushManager simply is not there. Worth telling
 // apart from "this browser cannot", because the fix is one the reader can do.
-function isIosBrowserTab(){
-  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-  return ios && !standalone;
+function isIosDevice(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
+function isIosBrowserTab(){
+  const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  return isIosDevice() && !standalone;
+}
+// iOS ZOOMS THE PAGE IN on any field whose text is under 16px the moment it
+// takes the focus, and does not zoom back out when it loses it (real-user
+// report, with a screenshot: "when you try to type something and go out (this
+// is ios) it zooms in like this for whatever reason?"). Every input is held at
+// 16px under a coarse pointer for that reason, but a note is 14px text in a
+// contenteditable and has to stay 14px. maximum-scale=1 is what stops the
+// focus zoom; Safari has ignored it for the reader's own pinch since iOS 10,
+// so zooming by hand still works there. iOS only: Android does honour it,
+// and would lose pinch zoom for nothing.
+(function(){
+  const vp = document.querySelector('meta[name="viewport"]');
+  if(vp && isIosDevice() && !/maximum-scale/.test(vp.content)) vp.content += ', maximum-scale=1';
+})();
 // The key is a literal on purpose: applyLanguage() calls pushOwner() while the
 // page is still loading, before any const further down has been initialised.
 function pushOwner(){ try { return localStorage.getItem('ptPushOwner'); } catch(e){ return null; } }
@@ -27770,6 +27841,35 @@ function syncTopBarMetrics(){
   root.style.setProperty('--topbar-h',
     Math.round(bar.getBoundingClientRect().height + topBarPinTop) + 'px');
   topBarMeasuring = false;
+  pinNoteToolbarsUnderBar(true);
+}
+
+// What the bar covers AT THE MOMENT, for the note toolbars pinned under it.
+// --topbar-h is the bar at rest, and on a phone the bar then gives back up to
+// topBarGive px as the page scrolls; pinned at the resting height, a toolbar
+// left that band open and the note scrolled through it above the toolbar
+// (real-user report, with a screenshot: "This bar is broken on phone (shows
+// the text there at the top in the back)"). Read off the bar rather than
+// worked out from --bar-k: its height is the tallest of several things
+// shrinking at different rates, so it bends, and the straight line between
+// its two ends left two pixels of the note showing half way. Read only when
+// --bar-k has moved, which is the first sixty pixels of the scroll. Written
+// on the two toolbars, not the root, which would restyle the whole page on
+// every frame of the shrink; rounded down, so a toolbar tucks a fraction of
+// a pixel under the bar rather than leaving a hairline.
+var noteToolbarPin = '', noteToolbarPinK = null;
+function pinNoteToolbarsUnderBar(force){
+  const bar = document.getElementById('topBar');
+  const k = bar && topBarFullH > 0 && isMobileDevice() && stickyTopBarEnabled()
+    ? parseFloat(bar.style.getPropertyValue('--bar-k')) : NaN;
+  if(!force && Object.is(k, noteToolbarPinK)) return;
+  noteToolbarPinK = k;
+  const v = isNaN(k) ? '' : Math.floor(bar.getBoundingClientRect().bottom) + 'px';
+  if(v === noteToolbarPin && !force) return;
+  noteToolbarPin = v;
+  document.querySelectorAll('#editorCard .ql-toolbar.ql-snow, #notebookEditorCard .ql-toolbar.ql-snow').forEach(el=>{
+    if(v) el.style.setProperty('--topbar-now', v); else el.style.removeProperty('--topbar-now');
+  });
 }
 
 // The page follows the shrinking bar: the spacer gives back what the shrink
@@ -27807,9 +27907,11 @@ function updateTopBarStuck(){
       bar.classList.toggle('bar-scrolled', k > 0);
     }
     setTopBarGive(topBarGive * k);
+    pinNoteToolbarsUnderBar();
     return;
   }
   setTopBarGive(0);
+  pinNoteToolbarsUnderBar();
   bar.style.removeProperty('--bar-k');
   bar.classList.remove('bar-scrolled');
   // Pure arithmetic against numbers measured off the scroll path. It does not
@@ -52694,6 +52796,45 @@ function keepPageStillOnPaste(quill){
     setTimeout(()=> window.scrollTo(x, y), 20);
   }, true);
 }
+// AND IN EVERY BROWSER, whatever else moves it (real-user report, with both
+// fixes above already shipped: "when i try to copy and paste anything into
+// notes, it scrolls up the notes every time"). The browser itself brings the
+// place a paste lands in on screen, and that place was Quill's hidden box,
+// half way down the note -- a jump no focus() can reach, and one a synthetic
+// paste event never shows, since the browser only pastes on a real one. The
+// box is fixed now (see .ql-clipboard in the CSS), and as well as that the
+// page is put back where it was once Quill's 1ms timeout is done, then moved
+// only as far as it takes to show the caret, which is where the next key
+// lands. Not for the address pasted over a selection (enableNoteLinks), which
+// takes the event before Quill and moves nothing.
+function keepNotePasteInPlace(quill){
+  if(!quill || quill.__pasteInPlace) return;
+  quill.__pasteInPlace = true;
+  quill.root.addEventListener('paste', ()=>{
+    const x = window.scrollX, y = window.scrollY;
+    const settle = (showCaret)=>{
+      if(Math.abs(window.scrollY - y) > 1 || Math.abs(window.scrollX - x) > 1) window.scrollTo(x, y);
+      if(showCaret) revealNoteCaret(quill);
+    };
+    setTimeout(()=> settle(false), 2);
+    setTimeout(()=> settle(true), 20);
+  }, true);
+}
+// The caret on screen, by the least scroll that does it: below what can be
+// seen (the top of the keyboard, on a phone), or up under the pinned toolbar.
+function revealNoteCaret(quill){
+  const r = quill.getSelection();
+  const b = r ? quill.getBounds(r.index + r.length, 0) : null;
+  if(!b) return;
+  const box = quill.container.getBoundingClientRect();
+  const top = box.top + b.top, bottom = box.top + b.bottom;
+  const vv = window.visualViewport;
+  const seenBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+  const tb = quill.getModule('toolbar').container;
+  const seenTop = tb ? Math.max(0, tb.getBoundingClientRect().bottom) : 0;
+  if(bottom > seenBottom - 24) window.scrollBy(0, bottom - seenBottom + 24);
+  else if(top < seenTop + 12) window.scrollBy(0, top - seenTop - 12);
+}
 /* ---------- TOUCH GESTURES IN THE EDITORS ----------
    A phone has no Cmd-Z and nothing on screen undoes anything, so a slip of the
    thumb in a note or an essay could only be typed out again (real-user report:
@@ -53413,70 +53554,6 @@ function enableNoteAutoFormat(quill, opts){
   });
 }
 
-/* ---------- LINE SPACING CONTROL ----------
-   A button and a list, built like the size control beside it, and put on the
-   lines the selection touches (or the caret's line). */
-function buildNoteLineSpacingControl(quill, markDirty){
-  const toolbar = quill.getModule('toolbar').container;
-  if(!toolbar || toolbar.querySelector('.nf-spacing-group')) return;
-  const group = document.createElement('span');
-  group.className = 'ql-formats nf-spacing-group';
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'nf-spacing-open';
-  btn.innerHTML = ICON.lineSpacing(16);
-  const panel = document.createElement('div');
-  panel.className = 'nf-size-panel nf-spacing-panel';
-  const noSteal = (el)=> el.addEventListener('mousedown', (e)=> e.preventDefault());
-  noSteal(btn);
-  const close = ()=>{ panel.style.display = 'none'; };
-  const current = ()=>{
-    const range = quill.getSelection();
-    const v = range ? quill.getFormat(range).lineheight : null;
-    return typeof v === 'string' ? v : '';
-  };
-  const options = [''].concat(NOTE_LINE_SPACINGS);
-  options.forEach(v=>{
-    const o = document.createElement('button');
-    o.type = 'button';
-    o.dataset.value = v;
-    noSteal(o);
-    o.addEventListener('click', (e)=>{
-      e.preventDefault();
-      close();
-      const range = quill.getSelection(true);
-      if(!range) return;
-      quill.formatLine(range.index, range.length, 'lineheight', v || false, 'user');
-      if(markDirty) markDirty();
-    });
-    panel.appendChild(o);
-  });
-  const label = ()=>{
-    panel.querySelectorAll('button').forEach(o=>{
-      o.textContent = o.dataset.value ? noteNum(Number(o.dataset.value)) : t('noteLineSpacingDefault');
-    });
-    btn.title = t('noteLineSpacing');
-    btn.setAttribute('aria-label', t('noteLineSpacing'));
-  };
-  btn.addEventListener('click', (e)=>{
-    e.preventDefault();
-    if(panel.style.display === 'block'){ close(); return; }
-    label();
-    const at = current();
-    panel.querySelectorAll('button').forEach(o=> o.classList.toggle('on', o.dataset.value === at));
-    panel.style.display = 'block';
-  });
-  toolbar.addEventListener('click', (e)=>{ if(!group.contains(e.target)) close(); }, true);
-  document.addEventListener('click', (e)=>{ if(!group.contains(e.target)) close(); });
-  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') close(); });
-  group.append(btn, panel);
-  const listGroup = toolbar.querySelector('.ql-list') && toolbar.querySelector('.ql-list').parentNode;
-  if(listGroup && listGroup.nextSibling) toolbar.insertBefore(group, listGroup.nextSibling);
-  else toolbar.appendChild(group);
-  label();
-  quill._relabelLineSpacing = label;
-}
-
 /* ---------- WORDS AND CHARACTERS ----------
    At the right-hand end of the bar under the note, on the row with "Use
    pages" (real-user requests: "there should be a place for word + character
@@ -53640,9 +53717,9 @@ function enableNoteWholeWords(quill){
 function enhanceNoteEditor(quill, key, opts){
   enableNoteAutoFormat(quill, { defaultColor: opts && opts.defaultColor });
   enableNoteWholeWords(quill);
-  buildNoteLineSpacingControl(quill, opts && opts.markDirty);
   buildNoteStats(quill, key);
   enableNoteMath(quill, key, opts);
+  buildNoteMenus(quill, key, opts);
 }
 
 /* ---------- EQUATIONS, SYMBOLS, HEADINGS AND SCRIPTS IN A NOTE ----------
@@ -53967,45 +54044,176 @@ var NOTE_TOOL_SVG = {
   sym: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20h4v-3a7 7 0 1 1 6 0v3h4"/></svg>',
   eq: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 4H7l6 8-6 8h10"/></svg>'
 };
-// One pop-out panel on the toolbar, built the way the line spacing one is: the
-// buttons never take the focus from the text, and a click anywhere else or
-// Escape closes it.
-function noteToolPanel(quill, cls, icon, titleKey, fill, first){
+/* ---------- THE NOTE TOOLBAR'S MENUS ----------
+   Real-user request: "I wish, both for desktop and phone, that less common
+   actions were grouped in categories in some sort of nice expandable menu
+   options, so you dont have all of those options overwhelming you at once".
+   Twenty controls in three rows on a phone came down to what a note is
+   written with -- the size, bold, italic, underline, the two colours, the two
+   lists, a link and a picture -- and three menus for the rest:
+     - TEXT: strikethrough, subscript, superscript, clear formatting;
+     - PARAGRAPH: the text style (heading and so on), alignment (asked for in
+       the same breath: "have line spacing and aligning (left and right)"),
+       line spacing and indent;
+     - INSERT: a symbol, an equation, the contents, a video.
+   A menu is a button with a chevron and a panel of named rows under it, on a
+   pointer and a phone alike, since a menu is where the names are read. The
+   symbols and the contents open a step INTO their menu, with the way back
+   above them, rather than as a second pop-out over the first. The controls
+   that are Quill's own (strike, the scripts, clean, align, indent, video)
+   stay Quill's buttons, attached to its toolbar, so its own handling and its
+   lighting of what is on at the caret carry on wherever they sit. */
+// One menu: its button on the toolbar and the panel under it. Nothing in it
+// takes the focus from the note (what it formats would stop looking
+// selected); a press anywhere else closes it, and so does Escape.
+function noteMenu(quill, cls, icon, titleKey){
   const toolbar = quill.getModule('toolbar').container;
+  let holder = toolbar.querySelector('.nf-menus');
+  if(!holder){
+    holder = document.createElement('span');
+    holder.className = 'ql-formats nf-menus';
+    toolbar.appendChild(holder);
+  }
   const group = document.createElement('span');
-  group.className = 'ql-formats nf-tool-group ' + cls;
+  group.className = 'nf-menu-group ' + cls;
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'nf-tool-open';
-  btn.innerHTML = icon;
+  btn.className = 'nf-menu-open';
+  btn.setAttribute('aria-haspopup', 'true');
+  btn.setAttribute('aria-expanded', 'false');
+  btn.innerHTML = icon + `<span class="nf-menu-chev">${ICON.chevD(10)}</span>`;
   const panel = document.createElement('div');
-  panel.className = 'nf-size-panel nf-tool-panel';
+  panel.className = 'nf-menu-panel';
+  const main = document.createElement('div');
+  main.className = 'nf-menu-main';
+  panel.appendChild(main);
   btn.addEventListener('mousedown', e=> e.preventDefault());
   panel.addEventListener('mousedown', e=>{ if(!e.target.closest('input,textarea')) e.preventDefault(); });
-  const close = ()=>{ panel.style.display = 'none'; btn.classList.remove('ql-active'); };
-  const label = ()=>{ btn.title = t(titleKey); btn.setAttribute('aria-label', t(titleKey)); };
-  btn.addEventListener('click', e=>{
-    e.preventDefault();
-    if(panel.style.display === 'block'){ close(); return; }
-    label();
-    fill(panel, close);
-    panel.style.display = 'block';
-    btn.classList.add('ql-active');
-    // Kept on screen on a phone: the toolbar wraps, and a panel hung off a
-    // button near the right edge would run off it.
+  const m = { group, btn, panel, main, sub: null, refresh: [] };
+  m.isOpen = ()=> panel.classList.contains('open');
+  m.back = ()=>{
+    if(m.sub){ m.sub.remove(); m.sub = null; }
+    main.hidden = false;
+  };
+  m.close = ()=>{
+    if(!m.isOpen()) return;
+    panel.classList.remove('open');
+    btn.classList.remove('ql-active');
+    btn.setAttribute('aria-expanded', 'false');
+    m.back();
+  };
+  // Hung from its button, and slid back onto the screen if that runs it off
+  // the right. A phone's spans the toolbar instead (see the CSS).
+  m.place = ()=>{
+    panel.style.left = '';
+    if(isMobileDevice()) return;
     panel.style.left = '0px';
     const r = panel.getBoundingClientRect();
     const over = r.right - (document.documentElement.clientWidth - 8);
     if(over > 0) panel.style.left = (-Math.min(over, r.left - 8)) + 'px';
+  };
+  m.open = ()=>{
+    (quill._noteMenus || []).forEach(o=>{ if(o !== m) o.close(); });
+    m.refresh.forEach(f=> f());
+    panel.classList.add('open');
+    btn.classList.add('ql-active');
+    btn.setAttribute('aria-expanded', 'true');
+    m.place();
+  };
+  // A step into the menu: its own view, with the way back above it.
+  m.show = (titleKey, fill)=>{
+    m.back();
+    const view = document.createElement('div');
+    view.className = 'nf-menu-sub';
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'nf-menu-back';
+    back.innerHTML = `${ICON.chevL(14)}<span>${escapeHtml(t(titleKey))}</span>`;
+    back.addEventListener('click', e=>{ e.preventDefault(); m.back(); m.place(); });
+    const body = document.createElement('div');
+    view.append(back, body);
+    main.hidden = true;
+    panel.appendChild(view);
+    m.sub = view;
+    fill(body);
+    m.place();
+  };
+  btn.addEventListener('click', e=>{
+    e.preventDefault();
+    if(m.isOpen()) m.close(); else m.open();
   });
-  document.addEventListener('click', e=>{ if(!group.contains(e.target)) close(); });
-  document.addEventListener('keydown', e=>{ if(e.key === 'Escape') close(); });
+  // A row that DOES something closes the menu behind it; a row that steps
+  // in, and the rows of choices in Paragraph, leave it open.
+  panel.addEventListener('click', e=>{
+    const b = e.target.closest('button.nf-menu-item');
+    if(b && !b.classList.contains('nf-menu-drill')) m.close();
+  });
+  // Read off the path the press took rather than off the target, which may
+  // be gone by now (a step in or a symbol tab redraws what was pressed). In
+  // the capture phase, so a control that stops its own click (the colours)
+  // still closes an open menu.
+  document.addEventListener('click', e=>{
+    if(m.isOpen() && !e.composedPath().includes(group)) m.close();
+  }, true);
+  // Before the note's own Escape (which checks defaultPrevented): back out
+  // of a step first, then close the menu, and only then is Escape the note's.
+  document.addEventListener('keydown', e=>{
+    if(e.key !== 'Escape' || !m.isOpen()) return;
+    e.preventDefault();
+    if(m.sub){ m.back(); m.place(); } else m.close();
+  }, true);
   group.append(btn, panel);
-  if(first && toolbar.firstChild) toolbar.insertBefore(group, toolbar.firstChild);
-  else toolbar.appendChild(group);
-  label();
-  (quill._noteToolLabels = quill._noteToolLabels || []).push(label);
-  return { btn, panel, close, label };
+  holder.appendChild(group);
+  m.label = ()=>{ btn.title = t(titleKey); btn.setAttribute('aria-label', t(titleKey)); };
+  (quill._noteMenus = quill._noteMenus || []).push(m);
+  return m;
+}
+// A section of a menu's panel, under its heading when it has one.
+function noteMenuSection(m, headKey){
+  const sec = document.createElement('div');
+  sec.className = 'nf-menu-sec';
+  if(headKey){
+    const h = document.createElement('div');
+    h.className = 'nf-menu-head';
+    h.dataset.tkey = headKey;
+    sec.appendChild(h);
+  }
+  m.main.appendChild(sec);
+  return sec;
+}
+// A row of choices inside a section (alignment, line spacing, indent).
+function noteMenuChoices(sec){
+  const row = document.createElement('div');
+  row.className = 'nf-menu-seg';
+  sec.appendChild(row);
+  return row;
+}
+// A named row: its mark, its name, and a chevron when it steps in.
+function noteMenuRow(sec, b, labelKey, drill){
+  b.classList.add('nf-menu-item');
+  if(drill) b.classList.add('nf-menu-drill');
+  const label = document.createElement('span');
+  label.className = 'nf-menu-label';
+  label.dataset.tkey = labelKey;
+  b.appendChild(label);
+  if(drill) b.insertAdjacentHTML('beforeend', `<span class="nf-menu-more">${ICON.chevR(14)}</span>`);
+  sec.appendChild(b);
+  return b;
+}
+function noteMenuButton(icon){
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.innerHTML = icon;
+  return b;
+}
+// One of Quill's own controls, made here and attached to its toolbar: Quill
+// handles the press, and lights it for what is on at the caret.
+function noteQuillButton(quill, format, value, icon){
+  const b = noteMenuButton(icon);
+  b.className = 'ql-' + format;
+  if(value != null) b.setAttribute('value', value);
+  quill.getModule('toolbar').attach(b);
+  return b;
 }
 function noteHeadings(quill){
   const out = [];
@@ -54020,125 +54228,8 @@ function enableNoteMath(quill, key, opts){
   if(!quill || quill.__noteMath) return;
   quill.__noteMath = true;
   const markDirty = ()=>{ if(opts && opts.markDirty) opts.markDirty(); };
-  const toolbar = quill.getModule('toolbar');
-  const icons = Quill.import('ui/icons');
   enableNoteScriptShortcuts(quill);
   enableNoteHeadingShortcut(quill);
-
-  // Subscript and superscript: Quill's own format and its own toolbar
-  // handling, attached after the fact since the toolbar was built already.
-  const scripts = document.createElement('span');
-  scripts.className = 'ql-formats nf-script-group';
-  [['sub', 'noteSub'], ['super', 'noteSup']].forEach(([v, k])=>{
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'ql-script';
-    b.value = v;
-    b.innerHTML = icons.script[v];
-    b.dataset.tkey = k;
-    scripts.appendChild(b);
-    toolbar.attach(b);
-  });
-  toolbar.container.appendChild(scripts);
-
-  noteToolPanel(quill, 'nf-style-group', NOTE_TOOL_SVG.style, 'noteStyleBtn', (panel, close)=>{
-    const range = quill.getSelection();
-    const cur = range ? (quill.getFormat(range).header || 0) : 0;
-    panel.innerHTML = [[0, 'noteStyleNormal'], [1, 'noteStyleH1'], [2, 'noteStyleH2'], [3, 'noteStyleH3']].map(([lv, k])=>
-      `<button type="button" class="nf-style-opt nf-style-${lv}${lv === cur ? ' on' : ''}" data-lv="${lv}">${escapeHtml(t(k))}</button>`).join('');
-    panel.querySelectorAll('button').forEach(b=> b.addEventListener('click', e=>{
-      e.preventDefault();
-      close();
-      const r = quill.getSelection(true);
-      if(!r) return;
-      const lv = Number(b.dataset.lv);
-      quill.formatLine(r.index, r.length, 'header', lv || false, 'user');
-      markDirty();
-    }));
-  }, true);
-
-  noteToolPanel(quill, 'nf-toc-group', NOTE_TOOL_SVG.toc, 'noteTocBtn', (panel, close)=>{
-    const hs = noteHeadings(quill);
-    panel.innerHTML = (hs.length
-      ? hs.map((h, i)=> `<button type="button" class="nf-toc-item nf-toc-${h.level}" data-i="${i}">${escapeHtml(h.text)}</button>`).join('')
-        + `<button type="button" class="nf-toc-insert">${escapeHtml(t('noteTocInsert'))}</button>`
-      : `<div class="nf-tool-hint">${escapeHtml(t('noteTocEmpty'))}</div>`);
-    panel.querySelectorAll('.nf-toc-item').forEach(b=> b.addEventListener('click', e=>{
-      e.preventDefault();
-      close();
-      const h = hs[Number(b.dataset.i)];
-      // The caret goes first, so the pager turns to the page it is on.
-      quill.setSelection(h.index, 0, 'user');
-      if(notePagers[key]) renderNotePager(key, true);
-      requestAnimationFrame(()=>{ try{ h.node.scrollIntoView({ block: 'center', behavior: 'smooth' }); }catch(err){} });
-    }));
-    const ins = panel.querySelector('.nf-toc-insert');
-    if(ins) ins.addEventListener('click', e=>{
-      e.preventDefault();
-      close();
-      const r = quill.getSelection(true);
-      if(!r) return;
-      // A plain bullet list, indented by level: the note sanitizer drops ids,
-      // so in-note anchors would not survive a save; the panel is the jump.
-      let at = r.index;
-      const [line, offset] = quill.getLine(at);
-      if(offset > 0){ quill.insertText(at, '\n', 'user'); at += 1; }
-      quill.history.cutoff();
-      hs.forEach(h=>{
-        quill.insertText(at, h.text, 'user');
-        at += h.text.length;
-        quill.insertText(at, '\n', { list: 'bullet', indent: h.level > 1 ? h.level - 1 : false }, 'user');
-        at += 1;
-      });
-      quill.history.cutoff();
-      quill.setSelection(at, 0, 'user');
-      markDirty();
-    });
-  });
-
-  let symTab = 'arrows';
-  try{ symTab = localStorage.getItem('noteSymTab') || symTab; }catch(e){}
-  noteToolPanel(quill, 'nf-sym-group', NOTE_TOOL_SVG.sym, 'noteSymBtn', (panel)=>{
-    const draw = ()=>{
-      panel.innerHTML = `<div class="nf-tabs">${NOTE_SYMBOL_TABS.map(([id, k])=>
-          `<button type="button" class="nf-tab${id === symTab ? ' on' : ''}" data-tab="${id}">${escapeHtml(t(k))}</button>`).join('')}</div>
-        <div class="nf-sym-grid">${(NOTE_SYMBOLS[symTab] || '').split(' ').map(c=>
-          `<button type="button" class="nf-sym" data-c="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join('')}</div>
-        <div class="nf-tool-hint">${escapeHtml(t('noteShorthandHint'))}</div>`;
-      panel.querySelectorAll('.nf-tab').forEach(b=> b.addEventListener('click', e=>{
-        e.preventDefault();
-        symTab = b.dataset.tab;
-        try{ localStorage.setItem('noteSymTab', symTab); }catch(err){}
-        draw();
-      }));
-      panel.querySelectorAll('.nf-sym').forEach(b=> b.addEventListener('click', e=>{
-        e.preventDefault();
-        const r = quill.getSelection(true);
-        if(!r) return;
-        if(r.length) quill.deleteText(r.index, r.length, 'user');
-        quill.insertText(r.index, b.dataset.c, 'user');
-        quill.setSelection(r.index + b.dataset.c.length, 0, 'user');
-        markDirty();
-      }));
-    };
-    draw();
-  });
-
-  const eqBtn = document.createElement('button');
-  eqBtn.type = 'button';
-  eqBtn.className = 'nf-eq-open';
-  eqBtn.innerHTML = NOTE_TOOL_SVG.eq;
-  eqBtn.addEventListener('mousedown', e=> e.preventDefault());
-  eqBtn.addEventListener('click', e=>{
-    e.preventDefault();
-    const r = quill.getSelection(true);
-    openNoteEquation(quill, r ? r.index : quill.getLength() - 1, r ? r.length : 0, '', null, markDirty);
-  });
-  const eqGroup = document.createElement('span');
-  eqGroup.className = 'ql-formats nf-eq-group';
-  eqGroup.appendChild(eqBtn);
-  toolbar.container.appendChild(eqGroup);
-
   // Clicking an equation in the note opens it to edit.
   quill.root.addEventListener('click', e=>{
     const f = e.target.closest && e.target.closest('.ql-formula');
@@ -54148,15 +54239,190 @@ function enableNoteMath(quill, key, opts){
     const idx = quill.getIndex(blot);
     openNoteEquation(quill, idx, 1, f.getAttribute('data-value') || '', idx, markDirty);
   });
+}
+
+// The three menus, filled, and the bar put in the order it is read.
+function buildNoteMenus(quill, key, opts){
+  const toolbar = quill.getModule('toolbar').container;
+  if(!toolbar || toolbar.querySelector('.nf-menus')) return;
+  const markDirty = ()=>{ if(opts && opts.markDirty) opts.markDirty(); };
+  const icons = Quill.import('ui/icons');
+  const own = (sel)=> toolbar.querySelector(sel);
+  const atCaret = (name)=>{
+    const r = quill.getSelection();
+    return r ? quill.getFormat(r)[name] : null;
+  };
+
+  // TEXT: how the letters look, past the three on the bar.
+  const text = noteMenu(quill, 'nf-menu-text', ICON.textMenu(16), 'noteMenuText');
+  const looks = noteMenuSection(text);
+  noteMenuRow(looks, own('button.ql-strike'), 'noteStrike');
+  noteMenuRow(looks, noteQuillButton(quill, 'script', 'sub', icons.script.sub), 'noteSub');
+  noteMenuRow(looks, noteQuillButton(quill, 'script', 'super', icons.script.super), 'noteSup');
+  noteMenuRow(looks, own('button.ql-clean'), 'noteClean');
+
+  // PARAGRAPH: how the lines sit. The text style first, drawn at its size.
+  const para = noteMenu(quill, 'nf-menu-para', ICON.paraMenu(16), 'noteMenuPara');
+  const styles = noteMenuSection(para, 'noteStyleBtn');
+  [[0, 'noteStyleNormal'], [1, 'noteStyleH1'], [2, 'noteStyleH2'], [3, 'noteStyleH3']].forEach(([lv, k])=>{
+    const b = noteMenuButton('');
+    b.className = 'nf-style-opt nf-style-' + lv;
+    b.dataset.lv = String(lv);
+    b.dataset.tkey = k;
+    b.addEventListener('click', e=>{
+      e.preventDefault();
+      para.close();
+      const r = quill.getSelection(true);
+      if(!r) return;
+      quill.formatLine(r.index, r.length, 'header', lv || false, 'user');
+      markDirty();
+    });
+    styles.appendChild(b);
+  });
+  para.refresh.push(()=>{
+    const cur = atCaret('header') || 0;
+    styles.querySelectorAll('.nf-style-opt').forEach(b=> b.classList.toggle('on', Number(b.dataset.lv) === cur));
+  });
+  // Alignment, Quill's own format: a class on the line, which the note keeps
+  // and the export reads.
+  const aligns = noteMenuChoices(noteMenuSection(para, 'noteAlign'));
+  [['', 'noteAlignLeft'], ['center', 'noteAlignCenter'], ['right', 'noteAlignRight'], ['justify', 'noteAlignJustify']].forEach(([v, k])=>{
+    const b = noteQuillButton(quill, 'align', v, icons.align[v]);
+    b.dataset.tipKey = k;
+    aligns.appendChild(b);
+  });
+  // Line spacing, on the lines the selection touches (or the caret's line).
+  const spacing = noteMenuChoices(noteMenuSection(para, 'noteLineSpacing'));
+  const litSpacing = ()=>{
+    const cur = atCaret('lineheight');
+    const at = typeof cur === 'string' ? cur : '';
+    spacing.querySelectorAll('button').forEach(b=> b.classList.toggle('on', b.dataset.value === at));
+  };
+  [''].concat(NOTE_LINE_SPACINGS).forEach(v=>{
+    const b = noteMenuButton('');
+    b.dataset.value = v;
+    if(!v) b.dataset.tkey = 'noteLineSpacingDefault';
+    b.addEventListener('click', e=>{
+      e.preventDefault();
+      const r = quill.getSelection(true);
+      if(!r) return;
+      quill.formatLine(r.index, r.length, 'lineheight', v || false, 'user');
+      markDirty();
+      litSpacing();
+    });
+    spacing.appendChild(b);
+  });
+  para.refresh.push(litSpacing);
+  // Indent: what Tab does in a list, for a phone, which has no Tab key.
+  const indents = noteMenuChoices(noteMenuSection(para, 'noteIndent'));
+  [['-1', 'noteIndentLess'], ['+1', 'noteIndentMore']].forEach(([v, k])=>{
+    const b = noteQuillButton(quill, 'indent', v, icons.indent[v]);
+    b.dataset.tipKey = k;
+    indents.appendChild(b);
+  });
+
+  // INSERT: what goes into the note besides a link and a picture.
+  const ins = noteMenu(quill, 'nf-menu-insert', ICON.insertMenu(16), 'noteMenuInsert');
+  const adds = noteMenuSection(ins);
+  let symTab = 'arrows';
+  try{ symTab = localStorage.getItem('noteSymTab') || symTab; }catch(e){}
+  noteMenuRow(adds, noteMenuButton(NOTE_TOOL_SVG.sym), 'noteSymBtn', true).addEventListener('click', e=>{
+    e.preventDefault();
+    // Stays open while symbols are put in: one after another is the usual.
+    ins.show('noteSymBtn', (body)=>{
+      const draw = ()=>{
+        body.innerHTML = `<div class="nf-tabs">${NOTE_SYMBOL_TABS.map(([id, k])=>
+            `<button type="button" class="nf-tab${id === symTab ? ' on' : ''}" data-tab="${id}">${escapeHtml(t(k))}</button>`).join('')}</div>
+          <div class="nf-sym-grid">${(NOTE_SYMBOLS[symTab] || '').split(' ').map(c=>
+            `<button type="button" class="nf-sym" data-c="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join('')}</div>
+          <div class="nf-tool-hint">${escapeHtml(t('noteShorthandHint'))}</div>`;
+        body.querySelectorAll('.nf-tab').forEach(b=> b.addEventListener('click', ev=>{
+          ev.preventDefault();
+          symTab = b.dataset.tab;
+          try{ localStorage.setItem('noteSymTab', symTab); }catch(err){}
+          draw();
+        }));
+        body.querySelectorAll('.nf-sym').forEach(b=> b.addEventListener('click', ev=>{
+          ev.preventDefault();
+          const r = quill.getSelection(true);
+          if(!r) return;
+          if(r.length) quill.deleteText(r.index, r.length, 'user');
+          quill.insertText(r.index, b.dataset.c, 'user');
+          quill.setSelection(r.index + b.dataset.c.length, 0, 'user');
+          markDirty();
+        }));
+      };
+      draw();
+    });
+  });
+  noteMenuRow(adds, noteMenuButton(NOTE_TOOL_SVG.eq), 'noteEqBtn').addEventListener('click', e=>{
+    e.preventDefault();
+    const r = quill.getSelection(true);
+    openNoteEquation(quill, r ? r.index : quill.getLength() - 1, r ? r.length : 0, '', null, markDirty);
+  });
+  noteMenuRow(adds, noteMenuButton(NOTE_TOOL_SVG.toc), 'noteTocBtn', true).addEventListener('click', e=>{
+    e.preventDefault();
+    ins.show('noteTocBtn', (body)=>{
+      const hs = noteHeadings(quill);
+      body.innerHTML = (hs.length
+        ? hs.map((h, i)=> `<button type="button" class="nf-toc-item nf-toc-${h.level}" data-i="${i}">${escapeHtml(h.text)}</button>`).join('')
+          + `<button type="button" class="nf-toc-insert">${escapeHtml(t('noteTocInsert'))}</button>`
+        : `<div class="nf-tool-hint">${escapeHtml(t('noteTocEmpty'))}</div>`);
+      body.querySelectorAll('.nf-toc-item').forEach(b=> b.addEventListener('click', ev=>{
+        ev.preventDefault();
+        ins.close();
+        const h = hs[Number(b.dataset.i)];
+        // The caret goes first, so the pager turns to the page it is on.
+        quill.setSelection(h.index, 0, 'user');
+        if(notePagers[key]) renderNotePager(key, true);
+        requestAnimationFrame(()=>{ try{ h.node.scrollIntoView({ block: 'center', behavior: 'smooth' }); }catch(err){} });
+      }));
+      const put = body.querySelector('.nf-toc-insert');
+      if(put) put.addEventListener('click', ev=>{
+        ev.preventDefault();
+        ins.close();
+        const r = quill.getSelection(true);
+        if(!r) return;
+        // A plain bullet list, indented by level: the note sanitizer drops ids,
+        // so in-note anchors would not survive a save; the menu is the jump.
+        let at = r.index;
+        const [, offset] = quill.getLine(at);
+        if(offset > 0){ quill.insertText(at, '\n', 'user'); at += 1; }
+        quill.history.cutoff();
+        hs.forEach(h=>{
+          quill.insertText(at, h.text, 'user');
+          at += h.text.length;
+          quill.insertText(at, '\n', { list: 'bullet', indent: h.level > 1 ? h.level - 1 : false }, 'user');
+          at += 1;
+        });
+        quill.history.cutoff();
+        quill.setSelection(at, 0, 'user');
+        markDirty();
+      });
+    });
+  });
+  noteMenuRow(adds, own('button.ql-video'), 'noteVideo');
+
+  // The bar itself, in the order it is read: the size, the letters, their
+  // colours, the lists, a link and a picture, then the menus. Quill's own
+  // groups that the menus emptied go.
+  const groupOf = (sel)=>{ const el = own(sel); return el && el.closest('.ql-formats'); };
+  [own('.nf-size-group'), groupOf('button.ql-bold'), own('.cc-color-wrap'), own('.cc-background-wrap'),
+    groupOf('button.ql-list'), groupOf('button.ql-link'), own('.nf-menus')]
+    .forEach(el=>{ if(el && el.parentNode === toolbar) toolbar.appendChild(el); });
+  Array.from(toolbar.children).forEach(g=>{ if(g.classList.contains('ql-formats') && !g.children.length) g.remove(); });
 
   const relabel = ()=>{
-    scripts.querySelectorAll('button').forEach(b=>{ b.title = t(b.dataset.tkey); b.setAttribute('aria-label', t(b.dataset.tkey)); });
-    eqBtn.title = t('noteEqBtn');
-    eqBtn.setAttribute('aria-label', t('noteEqBtn'));
-    (quill._noteToolLabels || []).forEach(f=> f());
+    (quill._noteMenus || []).forEach(m=>{
+      m.label();
+      m.panel.querySelectorAll('[data-tkey]').forEach(el=>{ el.textContent = t(el.dataset.tkey); });
+      m.panel.querySelectorAll('[data-tip-key]').forEach(el=>{ el.title = t(el.dataset.tipKey); el.setAttribute('aria-label', t(el.dataset.tipKey)); });
+    });
+    spacing.querySelectorAll('button').forEach(b=>{ if(b.dataset.value) b.textContent = noteNum(Number(b.dataset.value)); });
   };
   relabel();
-  quill._relabelNoteMath = relabel;
+  quill._relabelNoteMenus = relabel;
+  pinNoteToolbarsUnderBar(true);
 }
 
 // THE EQUATION BOX: one for the whole app, handed whichever note opened it.
@@ -55722,7 +55988,7 @@ function relabelNotePagers(){
     renderNotePager(k);
     const q = notePagers[k].quill;
     if(q && q._relabelFontSize) q._relabelFontSize();
-    if(q && q._relabelNoteMath) q._relabelNoteMath();
+    if(q && q._relabelNoteMenus) q._relabelNoteMenus();
   });
 }
 
@@ -56057,6 +56323,7 @@ function ensureQuillInitialized(){
     }
   });
   keepPageStillOnPaste(quillEditor);
+  keepNotePasteInPlace(quillEditor);
   storePastedNoteImages(quillEditor);
   enableTouchUndo(quillEditor);
   enableTypingShortcuts(quillEditor);
@@ -56416,6 +56683,7 @@ function ensureNotebookQuillInitialized(){
     }
   });
   keepPageStillOnPaste(notebookQuillEditor);
+  keepNotePasteInPlace(notebookQuillEditor);
   storePastedNoteImages(notebookQuillEditor);
   enableTouchUndo(notebookQuillEditor);
   enableTypingShortcuts(notebookQuillEditor);
