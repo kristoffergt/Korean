@@ -5196,7 +5196,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
 .sw-btn.sw-edit,.sw-btn.sw-edit:hover,.sw-btn.sw-edit:focus{color:var(--edit);}
 .sw-btn.sw-del,.sw-btn.sw-del:hover,.sw-btn.sw-del:focus{color:var(--danger);font-size:15px;}
 .sw-btn .sw-ic-touch{display:none;}
-.sw-btn.sw-on,.sw-btn.sw-on:hover,.sw-btn.sw-on:focus{color:var(--on);}
+.sw-btn.sw-on,.sw-btn.sw-on:hover,.sw-btn.sw-on:focus,.sw-btn.lecture-move.on{color:var(--on);}
 .ev-sub-mark{display:inline-flex;vertical-align:-1px;margin-left:6px;color:var(--on);}
 @media (hover: hover) and (pointer: fine){
   .sw-acts{opacity:0;transition:opacity 120ms ease;}
@@ -5217,6 +5217,8 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
   .sw-row > .sw-acts > .sw-more{left:0;width:max(0px, var(--sw-x));background:color-mix(in srgb, var(--ink) 9%, var(--paper));}
   .sw-tray .sw-btn{flex:1 1 0;min-width:0;width:auto;height:auto;margin:0;padding:0;overflow:hidden;color:var(--ink);transition:flex-grow 160ms ease;}
   .sw-tray .sw-btn:hover,.sw-tray .sw-btn:focus{color:var(--ink);}
+  /* A tray button is a block, not a mark: no grow (and no sticky iOS hover). */
+  .sw-tray .sw-btn:hover,.sw-tray .sw-btn:active{transform:none !important;filter:none;}
   .sw-tray .sw-btn.sw-on,.sw-tray .sw-btn.todo-day-pick{color:var(--on) !important;}
   .sw-tray .sw-btn.todo-day-pick{width:auto;height:auto;margin:0;}
   .sw-tray .sw-btn.sw-edit,.sw-tray .sw-btn.sw-edit:hover,.sw-tray .sw-btn.sw-edit:focus{background:var(--edit);color:var(--paper);}
@@ -18205,7 +18207,7 @@ function swTouchMode(){
     if(!row || e.pointerType !== 'touch' || !swTouchMode()) return;
     // The left edge is the phone's back swipe.
     if(e.clientX <= (typeof EDGE_BACK_PX === 'number' ? EDGE_BACK_PX : 24)) return;
-    if(e.target.closest('input, textarea, select, [contenteditable="true"], .todo-check, .notes-panel, .todo-edit, .sw-tray')) return;
+    if(e.target.closest('input, textarea, select, [contenteditable="true"], .todo-check, .note-grip, .note-move-bar, .notes-panel, .todo-edit, .sw-tray')) return;
     swGesture = { row, key: swKeyOf(row), id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now(), lock: null, dx: 0, w: row.getBoundingClientRect().width || 1 };
     // A re-render mid-swipe takes the touched node out of the page, and an
     // end aimed at a detached node never reaches document: it is heard on
@@ -45172,17 +45174,17 @@ function buildGrammarCardHtml(g){
       </div>`;
     }
     const check = checkGrammarUsage(n.sentence, g);
-    return `<div class="gram-sentence-row">
+    return `<div class="gram-sentence-row${isMine ? ' sw-row' : ''}"${isMine ? ` data-sw-key="gramnote:${n.id}"` : ''}>
       <span><span class="author-dot" style="background:${colorForUser(n.user_id)};margin-right:6px;"></span>${authorLabel ? `<b style="color:${colorForUser(n.user_id)};">${authorLabel}:</b> ` : ''}${check.html}</span>
-      ${isMine ? `<span><button class="gram-sentence-edit-btn" data-id="${n.id}" title="${escapeHtml(t('editBtn'))}">${ICON.pencil()}</button><button class="gram-note-del" data-id="${n.id}" data-pattern="${g.id}">✕</button></span>` : ''}
+      ${isMine ? swipeActsHtml('', swipeEditBtnHtml('gram-sentence-edit-btn', `data-id="${n.id}"`, t('editBtn')) + swipeDelBtnHtml('gram-note-del', `data-id="${n.id}" data-pattern="${g.id}"`, t('tipDelete'))) : ''}
     </div>`;
   }).join('') || `<div class="empty">–</div>`;
   const hasMatchingSentence = myNotes.some(n=>n.user_id===currentUser.id && checkGrammarUsage(n.sentence, g).matched);
   const isReviewOverridden = !!grammarReviewOverrides[currentUser.id + '::' + g.id];
   const resourcesHtml = (g.resources||[]).map((r,idx)=>`
-    <div class="gram-resource-row">
+    <div class="gram-resource-row${amICore() ? ' sw-row' : ''}"${amICore() ? ` data-sw-key="gramres:${g.id}:${idx}"` : ''}>
       ${externalLinkHtml(r.url, (r.type==='youtube'?'▶':ICON.link(12)) + ' ' + escapeHtml(r.label || r.url))}
-      ${amICore() ? `<button class="gram-resource-del" data-pattern="${g.id}" data-idx="${idx}">✕</button>` : ''}
+      ${amICore() ? swipeActsHtml('', swipeDelBtnHtml('gram-resource-del', `data-pattern="${g.id}" data-idx="${idx}"`, t('tipDelete'))) : ''}
     </div>`).join('') || `<div class="empty">–</div>`;
   const isFav = isGrammarFavorited(g);
   const cmpGroupIdx = findComparisonGroupIndex(g.id);
@@ -45785,10 +45787,25 @@ async function addGrammarSentence(patternId){
   input.value = '';
   renderGrammarList();
 }
-async function deleteGrammarSentence(noteId, patternId){
-  await supabaseClient.from('grammar_notes').delete().eq('id', noteId);
-  allGrammarNotes[patternId] = (allGrammarNotes[patternId]||[]).filter(n=>n.id!==noteId);
-  renderGrammarList();
+// One example sentence goes at once, with an Undo.
+function deleteGrammarSentence(noteId, patternId){
+  const n = (allGrammarNotes[patternId]||[]).find(x=> x.id === noteId);
+  if(!n) return;
+  const at = allGrammarNotes[patternId].indexOf(n);
+  const restore = ()=>{
+    const l = allGrammarNotes[patternId] || (allGrammarNotes[patternId] = []);
+    if(!l.some(x=> x.id === noteId)) l.splice(Math.min(at, l.length), 0, n);
+  };
+  deleteWithUndo({
+    label: n.sentence,
+    hide: ()=>{ if(allGrammarNotes[patternId]) allGrammarNotes[patternId] = allGrammarNotes[patternId].filter(x=> x.id !== noteId); expandedSentenceEdit.delete(noteId); },
+    restore,
+    commit: async ()=>{
+      const { error } = await supabaseClient.from('grammar_notes').delete().eq('id', noteId);
+      if(error){ console.error('Delete refused:', error); restore(); renderGrammarList(); alert(t('saveFailed')); }
+    },
+    render: renderGrammarList,
+  });
 }
 async function saveGrammarSentenceEdit(noteId, patternId){
   const input = document.querySelector(`.gram-sentence-edit-input[data-id="${noteId}"]`);
@@ -45860,16 +45877,31 @@ async function addGrammarResource(patternId){
     alert(t('saveFailedTryAgain'));
   }
 }
-async function deleteGrammarResource(patternId, idx){
+// One link goes at once, with an Undo. A reload hands back fresh objects, so
+// the link is matched by what it is, not by which object it was.
+function deleteGrammarResource(patternId, idx){
   if(!amICore()) return;
-  const g = GRAMMAR_DATA.find(x=>x.id===patternId);
-  if(!g) return;
-  const resources = (g.resources||[]).filter((r,i)=>i!==idx);
-  const { error } = await supabaseClient.from('grammar_points').update({ resources }).eq('id', patternId);
-  if(!error){
-    g.resources = resources;
-    renderGrammarList();
-  }
+  const g0 = GRAMMAR_DATA.find(x=>x.id===patternId);
+  const res = g0 && (g0.resources||[])[idx];
+  if(!res) return;
+  const same = r=> r === res || (r.url === res.url && (r.label||'') === (res.label||'') && r.type === res.type);
+  const point = ()=> GRAMMAR_DATA.find(x=>x.id===patternId);
+  const restore = ()=>{
+    const g = point();
+    if(g && !(g.resources||[]).some(same)){ const l = (g.resources||[]).slice(); l.splice(Math.min(idx, l.length), 0, res); g.resources = l; }
+  };
+  deleteWithUndo({
+    label: res.label || res.url,
+    hide: ()=>{ const g = point(); if(g) g.resources = (g.resources||[]).filter(r=> !same(r)); },
+    restore,
+    commit: async ()=>{
+      const g = point();
+      if(!g) return;
+      const { error } = await supabaseClient.from('grammar_points').update({ resources: g.resources || [] }).eq('id', patternId);
+      if(error){ console.error('Delete refused:', error); restore(); renderGrammarList(); alert(t('saveFailed')); }
+    },
+    render: renderGrammarList,
+  });
 }
 /* ---------- THE VIDEOS TAB ----------
    Every video link on a GRAMMAR POINT, gathered into one place with its own
@@ -48754,8 +48786,9 @@ function renderWritingList(){
   items.forEach(w=>{
     const isMine = w.user_id === currentUser.id;
     const row = document.createElement('div');
-    row.className = 'lecture-row' + (w.id===selectedWritingSampleId ? ' active' : '');
+    row.className = 'lecture-row' + (w.id===selectedWritingSampleId ? ' active' : '') + (isMine ? ' sw-row' : '');
     row.dataset.share = 'writing:' + w.id;
+    if(isMine) row.dataset.swKey = 'writing:' + w.id;
     row.innerHTML = `
       <div style="flex:1;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -48763,16 +48796,15 @@ function renderWritingList(){
             <span class="author-dot" style="background:${colorForUser(w.user_id)};" title="${escapeHtml(nameFor(w.user_id)||'')}"></span>
             ${escapeHtml(w.topic || '')}
           </span>
-          <span class="lecture-actions">${isMine ? `<button class="lecture-del" data-id="${w.id}">✕</button>` : ''}</span>
         </div>
         <div class="item-sub" style="margin-top:2px;">${tCount('wordCountLabel', w.word_count||0)} · ${localDateStr(w.created_at)}${!isMine ? ' · ' + escapeHtml(nameFor(w.user_id)||'') : ''}</div>
-      </div>`;
+      </div>${isMine ? swipeActsHtml('', swipeDelBtnHtml('ws-del', `data-id="${w.id}"`, t('tipDelete'))) : ''}`;
     list.appendChild(row);
   });
   list.querySelectorAll('.lecture-title-btn').forEach(btn=>{
     btn.addEventListener('click', ()=> openWritingSample(btn.dataset.id, btn.dataset.uid));
   });
-  list.querySelectorAll('.lecture-del').forEach(btn=>{
+  list.querySelectorAll('.ws-del').forEach(btn=>{
     btn.addEventListener('click', (e)=>{ e.stopPropagation(); deleteWritingSample(btn.dataset.id); });
   });
 }
@@ -49338,18 +49370,15 @@ function renderWritingFeedback(sampleId, ownerUid){
   } else {
     listEl.innerHTML = items.map(f=>{
       const isMine = currentUser && f.author_id === currentUser.id;
-      return `<div style="padding:8px 0;border-bottom:1px solid var(--line);">
+      return `<div class="wfb-row${isMine ? ' sw-row' : ''}"${isMine ? ` data-sw-key="wfb:${f.id}"` : ''} style="padding:8px 0;border-bottom:1px solid var(--line);">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
           <span style="font-weight:700;font-size:12px;color:${colorForUser(f.author_id)};">${escapeHtml(nameFor(f.author_id)||'')}</span>
-          <span style="display:flex;align-items:center;gap:8px;">
-            <span class="hint" style="margin:0;">${localDateStr(f.created_at)}</span>
-            ${isMine ? `<button class="lecture-del" data-id="${f.id}">✕</button>` : ''}
-          </span>
+          <span class="hint" style="margin:0;">${localDateStr(f.created_at)}</span>
         </div>
         <div style="font-size:13px;margin-top:2px;white-space:pre-wrap;">${escapeHtml(f.content)}</div>
-      </div>`;
+        ${isMine ? swipeActsHtml('', swipeDelBtnHtml('wfb-del', `data-id="${f.id}"`, t('tipDelete'))) : ''}</div>`;
     }).join('');
-    listEl.querySelectorAll('.lecture-del').forEach(btn=>{
+    listEl.querySelectorAll('.wfb-del').forEach(btn=>{
       btn.addEventListener('click', ()=> deleteWritingFeedback(btn.dataset.id, sampleId));
     });
   }
@@ -49372,10 +49401,26 @@ async function sendWritingFeedback(sampleId){
   input.value = '';
   renderWritingFeedback(sampleId, selectedWritingSampleOwner);
 }
-async function deleteWritingFeedback(id, sampleId){
-  await supabaseClient.from('writing_feedback').delete().eq('id', id);
-  allWritingFeedback[sampleId] = (allWritingFeedback[sampleId]||[]).filter(f=>f.id!==id);
-  renderWritingFeedback(sampleId, selectedWritingSampleOwner);
+// One comment goes at once, with an Undo.
+function deleteWritingFeedback(id, sampleId){
+  const f = (allWritingFeedback[sampleId]||[]).find(x=> x.id === id);
+  if(!f) return;
+  const at = allWritingFeedback[sampleId].indexOf(f);
+  const render = ()=> renderWritingFeedback(sampleId, selectedWritingSampleOwner);
+  const restore = ()=>{
+    const l = allWritingFeedback[sampleId] || (allWritingFeedback[sampleId] = []);
+    if(!l.some(x=> x.id === id)) l.splice(Math.min(at, l.length), 0, f);
+  };
+  deleteWithUndo({
+    label: f.content,
+    hide: ()=>{ if(allWritingFeedback[sampleId]) allWritingFeedback[sampleId] = allWritingFeedback[sampleId].filter(x=> x.id !== id); },
+    restore,
+    commit: async ()=>{
+      const { error } = await supabaseClient.from('writing_feedback').delete().eq('id', id);
+      if(error){ console.error('Delete refused:', error); restore(); render(); alert(t('saveFailed')); }
+    },
+    render,
+  });
 }
 document.getElementById('writingFeedbackSendBtn').addEventListener('click', ()=>{
   if(selectedWritingSampleId) sendWritingFeedback(selectedWritingSampleId);
@@ -49999,7 +50044,6 @@ function renderCourses(){
       `<div class="item-top">
         <div><div class="item-title">${ownerTagsHtml}${escapeHtml(c.title)}</div>
         <div class="item-sub">${metaParts.join(' · ')}</div></div>
-        <button class="item-del" data-id="${c.id}" title="${escapeHtml(t('tipDelete'))}">✕</button>
       </div>
       <div class="item-meta">
         ${COURSE_LOCKED_STATUSES.includes(c.status) ? '' : `<span class="badge ${badgeClass}">${t(statusKey)}</span>`}
@@ -50012,9 +50056,13 @@ function renderCourses(){
           <option value="locked_in">${t('statusLockedIn')}</option>
         </select>`}
         ${c.syllabus_url ? `<a href="${shortLinkForUrl(c.syllabus_url) ? shortLinkUrl(shortLinkForUrl(c.syllabus_url)) : c.syllabus_url}" target="_blank" rel="noopener">${extLinkLabel('viewSyllabus')}</a>` : ''}
-        <button class="linkbtn act-edit act-icon course-edit-toggle" data-id="${c.id}" title="${t('editCourse')}" aria-label="${t('editCourse')}">${ICON.pencil(14)}</button>
       </div>
-      <div class="notes-panel ${isEditOpen?'':'hidden'}" data-course-edit-for="${c.id}">${isEditOpen ? buildCourseEditFieldsHtml(c) : ''}</div>`;
+      <div class="notes-panel ${isEditOpen?'':'hidden'}" data-course-edit-for="${c.id}">${isEditOpen ? buildCourseEditFieldsHtml(c) : ''}</div>`
+      // Edit and delete ride on the row; deleting a course still asks, since
+      // its notes and calendar entries go with it.
+      + swipeActsHtml('', swipeEditBtnHtml('course-edit-toggle', `data-id="${c.id}"`, t('editCourse')) + swipeDelBtnHtml('item-del', `data-id="${c.id}"`, t('tipDelete')));
+    div.classList.add('sw-row');
+    div.dataset.swKey = 'course:' + c.id;
     list.appendChild(div);
   });
   list.querySelectorAll('.item-del').forEach(btn=>{
@@ -51111,17 +51159,17 @@ function noteRowEl(kind, groupKey, n, idx, count, placing, o){
           <span class="author-dot" style="background:${colorForNote(n)}" title="${nameFor(n.user_id)}"></span>
           ${escapeHtml(n.lecture_title)}${noteShareMarkHtml(kind, n)}
         </span>
-        <span class="lecture-actions">
-          ${isMine ? `<button class="lecture-edit" data-id="${n.id}" data-group="${g}" title="${escapeHtml(t('editBtn'))}">${ICON.pencil()}</button>` : ''}
-          ${isMine && count > 2 ? `<button class="lecture-move${isMover ? ' on' : ''}" data-id="${n.id}" data-group="${g}" title="${escapeHtml(t('noteMoveTo'))}" aria-pressed="${isMover}">${ICON.reorder()}</button>` : ''}
-          ${isMine ? `<button class="lecture-del" data-id="${n.id}" data-group="${g}" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
-        </span>
       </div>${bar}
       ${isMine && o.metaOpen(n.id) ? `
       <div class="notes-panel" data-note-edit-for="${n.id}" style="margin-top:6px;">
         ${o.metaHtml(n, groupKey)}
       </div>` : ''}
-    </div>`;
+    </div>${isMine ? swipeActsHtml(
+      count > 2 ? `<button type="button" class="sw-btn lecture-move${isMover ? ' on' : ''}" data-id="${n.id}" data-group="${g}" title="${escapeHtml(t('noteMoveTo'))}" aria-label="${escapeHtml(t('noteMoveTo'))}" aria-pressed="${isMover}">${ICON.reorder()}</button>` : '',
+      swipeEditBtnHtml('lecture-edit', `data-id="${n.id}" data-group="${g}"`, t('editBtn')) + swipeDelBtnHtml('lecture-del', `data-id="${n.id}" data-group="${g}"`, t('tipDelete'))) : ''}`;
+  // Edit, move and delete ride on the row (swipeActsHtml); a note still asks
+  // before it goes, since it can hold hours of writing.
+  if(isMine){ row.classList.add('sw-row'); row.dataset.swKey = kind + ':' + n.id; }
   return row;
 }
 // The field a new sub-category is named in, straight under the heading whose
@@ -51302,7 +51350,9 @@ function beginNoteDrag(d){
   if(!src) return false;
   const r = src.getBoundingClientRect();
   const ghost = src.cloneNode(true);
-  ghost.querySelectorAll('.notes-panel, .note-move-bar, .note-head-actions, .lecture-actions').forEach(x=> x.remove());
+  ghost.querySelectorAll('.notes-panel, .note-move-bar, .note-head-actions, .lecture-actions, .sw-acts').forEach(x=> x.remove());
+  ghost.classList.remove('sw-row', 'sw-live', 'sw-anim');
+  ghost.removeAttribute('data-sw-key');
   ghost.classList.remove('active', 'moving', 'drag-src');
   ghost.classList.add('note-drag-ghost');
   ghost.removeAttribute('data-drop-into');
