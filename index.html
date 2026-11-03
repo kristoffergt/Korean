@@ -5327,7 +5327,31 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
 /* As wide as its sentence (up to the screen's gutters): centred by left:50%,
    a shrink-to-fit box would wrap at half the screen. */
 .compliment-toast{width:max-content;cursor:pointer;line-height:1.4;}
-.compliment-toast .ui-icon{flex:none;color:var(--heart-on-ink);fill:currentColor;}
+.compliment-toast > .ui-icon{flex:none;color:var(--heart-on-ink);fill:currentColor;}
+/* ENCOURAGEMENT (renderEncourage): a card at the top of To-do and of Jobs >
+   Applications, tinted with its mark's colour, the mark white on a round
+   chip of it. Pressing it brings another line, which rises in. The slot is
+   never redrawn, so the page's own entrance plays on it as on the cards. */
+.enc-orange{--enc:#ca6f1e;}
+.enc-blue{--enc:#2a78d6;}
+.enc-teal{--enc:#138a6b;}
+.enc-purple{--enc:#7d3c98;}
+.enc-pink{--enc:#C81E4F;}
+.enc-slot{margin-bottom:14px;animation:homeIn .4s ease backwards;}
+button.enc-card{display:flex;align-items:center;gap:12px;width:100%;margin:0;padding:12px 16px 12px 12px;border-radius:18px;
+  border:1px solid color-mix(in srgb, var(--enc) 30%, transparent);background:color-mix(in srgb, var(--enc) 9%, var(--paper));
+  color:var(--ink);font:inherit;font-size:14.5px;font-weight:600;line-height:1.4;text-align:left;cursor:pointer;
+  transform-origin:center center;transition:transform .13s cubic-bezier(0.4,0,0.2,1);}
+button.enc-card:hover,button.enc-card:focus{background:color-mix(in srgb, var(--enc) 14%, var(--paper));color:var(--ink);}
+button.enc-card:active{transform:scale(.98);transition-duration:.06s;}
+.enc-chip{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--enc);color:#fff;
+  transition:transform .13s cubic-bezier(0.4,0,0.2,1);}
+.enc-chip .ui-icon{display:block;}
+button.enc-card:hover .enc-chip{transform:scale(1.08);}
+.enc-card.enc-swap .enc-text, .enc-card.enc-swap .enc-chip .ui-icon{display:inline-block;animation:complimentIn .35s ease;}
+.compliment-toast .enc-chip{width:28px;height:28px;}
+body.no-anim-ui .enc-slot, body.no-anim-ui .enc-card.enc-swap .enc-text, body.no-anim-ui .enc-card.enc-swap .enc-chip .ui-icon{animation:none;}
+@media (prefers-reduced-motion: reduce){.enc-slot, .enc-card.enc-swap .enc-text, .enc-card.enc-swap .enc-chip .ui-icon{animation:none;}}
 /* ---- Swipe rows (swipeActsHtml) and the Undo toast (deleteWithUndo).
    A pointer: the row's buttons sit at its end, unseen until it is hovered or
    holds focus. Touch: they lie behind the row, in a tray only as wide as the
@@ -6595,6 +6619,7 @@ button.search-clear:active{transform:scale(0.92);}
     </div>
     </div>
     <div id="yonseiTodosSection" class="hidden">
+    <div class="enc-slot hidden" id="todoEncourage"></div>
     <!-- Day, week, month and year, side by side: a different scope each, with
          its own arrows and its own one line to type into. The to-do itself is
          the only thing most people ever write, so it is the only field; time,
@@ -6791,6 +6816,7 @@ button.search-clear:active{transform:scale(0.92);}
         <button data-pane="list" class="active" id="jobPaneListBtn"></button>
         <button data-pane="stats" id="jobPaneStatsBtn"></button>
       </div>
+      <div class="enc-slot hidden" id="jobEncourage"></div>
     <div data-pane-of="jobPaneRow" data-pane="stats" class="pane-off card">
       <h2 id="hJobStats"></h2>
       <div class="field" style="margin-bottom:12px;">
@@ -13899,7 +13925,7 @@ const I18N = {
     noteMenuText:'Text', noteMenuPara:'Paragraph', noteMenuInsert:'Insert', noteStrike:'Strikethrough', noteClean:'Clear formatting', noteVideo:'Video', noteAlign:'Alignment', noteAlignLeft:'Align left', noteAlignCenter:'Align center', noteAlignRight:'Align right', noteAlignJustify:'Justify', noteIndent:'Indent', noteIndentLess:'Decrease indent', noteIndentMore:'Increase indent',
     signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
     signOut:'Sign out',
-    tabStudy:'Korean', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar', tabHome:'Home', tabOverview:'Overview', lblQuickNav:'Jump to', homeMorning:'Good morning', complimentAnother:'Another compliment', homeAfternoon:'Good afternoon', homeEvening:'Good evening', homeToday:'Today', homeTodos:'To-dos', homeTodosNone:'Nothing due today', homeAllDone:'All done for today', homeNextUp:'Next up', homeTodayWord:'Today', homeStreak:'{n}-day streak', homeReading:'Reading', 
+    tabStudy:'Korean', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar', tabHome:'Home', tabOverview:'Overview', lblQuickNav:'Jump to', homeMorning:'Good morning', complimentAnother:'Another compliment', encourageAnother:'More encouragement', homeAfternoon:'Good afternoon', homeEvening:'Good evening', homeToday:'Today', homeTodos:'To-dos', homeTodosNone:'Nothing due today', homeAllDone:'All done for today', homeNextUp:'Next up', homeTodayWord:'Today', homeStreak:'{n}-day streak', homeReading:'Reading', 
     leaderboard:'Leaderboard', lbRank:'#', lbName:'Name', lbStreak:'Streak', lbWeek:'Week', lbTotal:'Total',
     logStudy:'Log a study session', date:'Date', activity:'Activity', hours:'Hours', addSession:'Add session',
     studyHint:'This logs to your own account only.',
@@ -14033,7 +14059,7 @@ const I18N = {
     noteMenuText:'글자', noteMenuPara:'단락', noteMenuInsert:'삽입', noteStrike:'취소선', noteClean:'서식 지우기', noteVideo:'동영상', noteAlign:'정렬', noteAlignLeft:'왼쪽 정렬', noteAlignCenter:'가운데 정렬', noteAlignRight:'오른쪽 정렬', noteAlignJustify:'양쪽 정렬', noteIndent:'들여쓰기', noteIndentLess:'내어쓰기', noteIndentMore:'들여쓰기',
     signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
     signOut:'로그아웃',
-    tabStudy:'한국어', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더', tabHome:'홈', tabOverview:'개요', lblQuickNav:'바로가기', homeMorning:'좋은 아침이에요', complimentAnother:'다른 칭찬 보기', homeAfternoon:'좋은 오후예요', homeEvening:'좋은 저녁이에요', homeToday:'오늘', homeTodos:'할 일', homeTodosNone:'오늘 할 일이 없어요', homeAllDone:'오늘 할 일을 다 했어요', homeNextUp:'다음 일정', homeTodayWord:'오늘', homeStreak:'{n}일 연속', homeReading:'읽는 중', 
+    tabStudy:'한국어', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더', tabHome:'홈', tabOverview:'개요', lblQuickNav:'바로가기', homeMorning:'좋은 아침이에요', complimentAnother:'다른 칭찬 보기', encourageAnother:'응원 하나 더', homeAfternoon:'좋은 오후예요', homeEvening:'좋은 저녁이에요', homeToday:'오늘', homeTodos:'할 일', homeTodosNone:'오늘 할 일이 없어요', homeAllDone:'오늘 할 일을 다 했어요', homeNextUp:'다음 일정', homeTodayWord:'오늘', homeStreak:'{n}일 연속', homeReading:'읽는 중', 
     leaderboard:'순위표', lbRank:'#', lbName:'이름', lbStreak:'연속', lbWeek:'이번 주', lbTotal:'총합',
     logStudy:'공부 시간 기록', date:'날짜', activity:'활동', hours:'시간', addSession:'기록 추가',
     studyHint:'본인 계정에만 기록됩니다.',
@@ -14167,7 +14193,7 @@ const I18N = {
     noteMenuText:'Chữ', noteMenuPara:'Đoạn văn', noteMenuInsert:'Chèn', noteStrike:'Gạch ngang', noteClean:'Xóa định dạng', noteVideo:'Video', noteAlign:'Căn lề', noteAlignLeft:'Căn trái', noteAlignCenter:'Căn giữa', noteAlignRight:'Căn phải', noteAlignJustify:'Căn đều hai bên', noteIndent:'Thụt lề', noteIndentLess:'Giảm thụt lề', noteIndentMore:'Tăng thụt lề',
     signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
     signOut:'Đăng xuất',
-    tabStudy:'Tiếng Hàn', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch', tabHome:'Trang chủ', tabOverview:'Tổng quan', lblQuickNav:'Đi đến', homeMorning:'Chào buổi sáng', complimentAnother:'Xem lời khen khác', homeAfternoon:'Chào buổi chiều', homeEvening:'Chào buổi tối', homeToday:'Hôm nay', homeTodos:'Việc cần làm', homeTodosNone:'Hôm nay không có việc gì', homeAllDone:'Đã xong hết hôm nay', homeNextUp:'Sắp tới', homeTodayWord:'Hôm nay', homeStreak:'Chuỗi {n} ngày', homeReading:'Đang đọc', 
+    tabStudy:'Tiếng Hàn', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch', tabHome:'Trang chủ', tabOverview:'Tổng quan', lblQuickNav:'Đi đến', homeMorning:'Chào buổi sáng', complimentAnother:'Xem lời khen khác', encourageAnother:'Thêm lời động viên', homeAfternoon:'Chào buổi chiều', homeEvening:'Chào buổi tối', homeToday:'Hôm nay', homeTodos:'Việc cần làm', homeTodosNone:'Hôm nay không có việc gì', homeAllDone:'Đã xong hết hôm nay', homeNextUp:'Sắp tới', homeTodayWord:'Hôm nay', homeStreak:'Chuỗi {n} ngày', homeReading:'Đang đọc', 
     leaderboard:'Bảng xếp hạng', lbRank:'#', lbName:'Tên', lbStreak:'Chuỗi ngày', lbWeek:'Tuần này', lbTotal:'Tổng cộng',
     logStudy:'Ghi lại buổi học', date:'Ngày', activity:'Hoạt động', hours:'Số giờ', addSession:'Thêm buổi học',
     studyHint:'Chỉ ghi vào tài khoản của bạn.',
@@ -15134,6 +15160,18 @@ const ICON_PATHS = {
   textMenu:  '<polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line>',
   paraMenu:  '<path d="M13 4v16"></path><path d="M17 4v16"></path><path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13"></path>',
   insertMenu:'<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line>',
+  /* The Encouragement block's marks, each on a round chip of its colour
+     (ENC_MARK_HUE): a sun rising over the horizon, a sprout with two leaves,
+     a paper plane, a flag on a summit, a four-point sparkle, a stair with an
+     arrow up, a steaming cup and a trophy. */
+  encSunrise: '<path d="M3 18h18"></path><path d="M7 18a5 5 0 0 1 10 0"></path><path d="M12 7.5v2.5"></path><path d="M6.3 10.8l1.6 1.6"></path><path d="M17.7 10.8l-1.6 1.6"></path><path d="M9 21.5h6"></path>',
+  encSprout: '<path d="M12 21v-8"></path><path d="M12 13c0-4.4 3-7.5 8-7.5 0 4.4-3 7.5-8 7.5z"></path><path d="M12 15.5C12 12 9.6 9.5 5 9.5c0 3.5 2.4 6 7 6z"></path><path d="M8 21h8"></path>',
+  encPlane: '<path d="M21.5 3 3 10.4l7.2 2.9 2.9 7.2z"></path><path d="M21.5 3 10.2 13.3"></path>',
+  encSummit: '<path d="M2.5 20.5 9.5 9l3.6 5.6 2.4-3.2 6 9.1z"></path><path d="M9.5 9V3.5l4.5 1.6-4.5 1.7"></path>',
+  encSparkle: '<path d="M11 3.5c.5 4.5 2.5 6.5 7 7-4.5.5-6.5 2.5-7 7-.5-4.5-2.5-6.5-7-7 4.5-.5 6.5-2.5 7-7z"></path><path d="M19 15.5v5"></path><path d="M16.5 18h5"></path>',
+  encStairs: '<path d="M3 20.5h4.5v-4h4.5v-4h4.5v-4H21"></path><path d="M4 12 10 6"></path><path d="M5.8 6H10v4.2"></path>',
+  encCoffee: '<path d="M4 10h12v4.5A5.5 5.5 0 0 1 10.5 20h-1A5.5 5.5 0 0 1 4 14.5z"></path><path d="M16 11.5h1.5a2.5 2.5 0 0 1 0 5H16"></path><path d="M8 2.5c-1.2 1 1.2 2 0 3.5"></path><path d="M12 2.5c-1.2 1 1.2 2 0 3.5"></path>',
+  encTrophy: '<path d="M8 4h8v5.5a4 4 0 0 1-8 0z"></path><path d="M8 6H5.5a2.5 2.5 0 0 0 2.6 4"></path><path d="M16 6h2.5a2.5 2.5 0 0 1-2.6 4"></path><path d="M12 13.5V17"></path><path d="M9 17h6v3.5H9z"></path>',
   /* A heart: the compliments on Home and in their toast (filled there). */
   heart:  '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>',
   /* A curved arrow back to the left: answering a message, beside copying it. */
@@ -28419,6 +28457,28 @@ const COMPLIMENT_MOMENTS = {
   ] },
   writing: { lines: [
     ["A blank page never stood a chance against you.", "빈 페이지는 너를 이길 수 없어.", "Trang giấy trắng làm sao thắng được em."]
+  ] },
+  // An application moving along (the Encouragement block): every time, with
+  // that block's chip in place of the heart.
+  jobAdded: { big: true, lines: [
+    ["Sent! That took courage. Proud of you.", "보냈다! 용기 낸 거야. 자랑스러워.", "Đã gửi! Cần can đảm lắm đó. Tự hào về em.", 'plane'],
+    ["Another application out there. Your yes is getting closer.", "지원서 하나 더! '합격'이 점점 가까워지고 있어.", "Thêm một hồ sơ nữa. Lời đồng ý đang đến gần hơn rồi.", 'sparkle'],
+    ["One more door knocked on. One of them is going to open.", "문 하나 더 두드렸어. 그중 하나는 꼭 열릴 거야.", "Gõ thêm một cánh cửa nữa. Rồi sẽ có cánh cửa mở ra thôi.", 'sunrise']
+  ] },
+  jobAssignment: { big: true, lines: [
+    ["On to the assignment round! You're through to the next step.", "과제 전형이다! 다음 단계로 넘어갔어.", "Vào vòng làm bài test rồi! Em đã qua được bước tiếp theo.", 'sparkle']
+  ] },
+  jobInterview: { big: true, lines: [
+    ["An interview! They saw what we see. You're going to be great.", "면접이다! 그들도 네 진가를 알아봤어. 잘할 거야.", "Có phỏng vấn rồi! Họ đã thấy điều ai cũng thấy ở em. Em sẽ làm tốt thôi.", 'trophy']
+  ] },
+  jobOffer: { big: true, lines: [
+    ["AN OFFER! You did it. So, so proud of you.", "합격 제안이다! 해냈어. 정말 정말 자랑스러워.", "CÓ OFFER RỒI! Em làm được rồi. Tự hào về em lắm luôn.", 'trophy']
+  ] },
+  jobRejected: { big: true, lines: [
+    ["Their loss, truly. The right place is still ahead of you.", "그 회사의 손해야, 진짜로. 너에게 맞는 곳은 아직 앞에 있어.", "Là thiệt thòi của họ, thật đấy. Nơi phù hợp với em vẫn đang ở phía trước.", 'coffee']
+  ] },
+  jobAccepted: { big: true, lines: [
+    ["You said yes! A whole new chapter starts now.", "수락했구나! 이제 완전히 새로운 챕터가 시작돼.", "Em đã nhận lời! Một chương hoàn toàn mới bắt đầu rồi.", 'sunrise']
   ] }
 };
 function complimentLang(){ return currentLang === 'ko' ? 1 : currentLang === 'vi' ? 2 : 0; }
@@ -28520,9 +28580,9 @@ function complimentMoment(kind, delay){
   if(!m.big && (now - complimentToastAt < COMPLIMENT_GAP_MS || Math.random() > 0.35)) return;
   complimentToastAt = now;
   const line = m.lines[Math.floor(Math.random() * m.lines.length)];
-  setTimeout(()=> complimentToast(complimentText(line)), delay == null ? 700 : delay);
+  setTimeout(()=> complimentToast(complimentText(line), line[3] ? encChipHtml(line[3], 15) : null), delay == null ? 700 : delay);
 }
-function complimentToast(text){
+function complimentToast(text, chip){
   // An Undo on screen is the one thing that must not be covered.
   if(document.querySelector('.undo-toast.show')) return;
   let el = complimentToastEl;
@@ -28533,11 +28593,162 @@ function complimentToast(text){
     el.addEventListener('click', ()=> el.classList.remove('show'));
     document.body.appendChild(el);
   }
-  el.innerHTML = `${ICON.heart(15)}<span>${escapeHtml(text)}</span>`;
+  el.innerHTML = `${chip || ICON.heart(15)}<span>${escapeHtml(text)}</span>`;
   el.classList.add('show');
   clearTimeout(el._timer);
   el._timer = setTimeout(()=> el.classList.remove('show'), 5000);
 }
+// ---- Encouragement in To-do and Jobs > Applications (real-user request, 4
+// Nov: "add some (a bunch of) encouraging messages for her (different more
+// encouraging colored, simple, icons (you design yourself)) in to-do and in
+// job applications (she really wants a job). That's where she uses the
+// website the most."). The compliments' account switch (complimentsOn).
+// Each place gets a card at its top: one of the app's own drawn marks
+// (ICON_PATHS.enc*) on a round chip of its colour, the card tinted with that
+// colour, and a line; pressing it brings another. What is true right now
+// (nothing planned, how many are left, all done, an interview lined up, an
+// offer) takes the card when it newly becomes true, and otherwise counts
+// three times in the draw. Moving an application along (sent, assignment,
+// interview, offer, rejected, accepted) always brings a toast with the same
+// chip. The colours are Welcome Korea's orange (--temp-27), blue
+// (--chart-rain), teal (--chart-wind) and purple (--temp-n10) and the
+// compliments' pink; the chip keeps that deep value in both themes so its
+// white mark reads on it. Lines are [en, ko, vi, mark]; {n} is at least 2
+// wherever it appears (a count of 1 has its own line).
+const ENC_MARK_HUE = { sunrise:'orange', sprout:'teal', plane:'blue', summit:'purple', sparkle:'pink', stairs:'blue', coffee:'teal', trophy:'orange' };
+const ENCOURAGE = {
+  todo: [
+    ["A fresh page and a fresh start. You've got this.", "새로운 하루, 새로운 시작. 넌 할 수 있어.", "Một trang mới, một khởi đầu mới. Em làm được mà.", 'sunrise'],
+    ["One small step at a time still gets you to the top.", "한 걸음씩 가도 결국 정상에 닿아.", "Từng bước nhỏ rồi cũng sẽ đưa em lên đến đỉnh.", 'stairs'],
+    ["Little things done every day grow into big things.", "매일 하는 작은 일들이 큰 결과로 자라나.", "Những việc nhỏ mỗi ngày sẽ lớn lên thành điều lớn lao.", 'sprout'],
+    ["Start with the easiest one. Momentum is magic.", "제일 쉬운 것부터 시작해 봐. 탄력이 붙으면 마법 같아.", "Bắt đầu từ việc dễ nhất. Có đà rồi mọi thứ sẽ nhẹ nhàng hơn.", 'sparkle'],
+    ["Done is better than perfect. And you're already doing great.", "완벽보다 완료가 나아. 그리고 넌 이미 잘하고 있어.", "Xong còn hơn hoàn hảo. Mà em đang làm rất tốt rồi.", 'trophy'],
+    ["You don't have to do it all today. Just the next thing.", "오늘 다 할 필요 없어. 다음 하나만 하면 돼.", "Không cần làm hết trong hôm nay. Chỉ cần làm việc tiếp theo thôi.", 'summit'],
+    ["Take a breath, take a sip, then take on the next one.", "숨 한 번, 커피 한 모금, 그리고 다음 거 하나.", "Hít một hơi, nhấp một ngụm, rồi làm tiếp việc kế nhé.", 'coffee'],
+    ["Future you is going to be so grateful for today.", "미래의 네가 오늘의 너한테 정말 고마워할 거야.", "Em của tương lai sẽ rất biết ơn em của hôm nay.", 'sparkle'],
+    ["Every tick is a tiny win. Collect them all.", "체크 하나하나가 작은 승리야. 다 모아 보자.", "Mỗi dấu tích là một chiến thắng nhỏ. Gom thật nhiều nhé.", 'trophy'],
+    ["Progress, not perfection.", "완벽이 아니라 성장.", "Tiến bộ, không cần hoàn hảo.", 'sprout'],
+    ["You've handled harder days than this one.", "넌 오늘보다 더 힘든 날도 잘 이겨냈어.", "Em đã vượt qua những ngày khó hơn hôm nay nhiều.", 'summit'],
+    ["Whatever's on the list, you're bigger than all of it.", "할 일이 뭐든, 넌 그보다 훨씬 커.", "Dù danh sách có gì đi nữa, em vẫn lớn hơn tất cả.", 'sunrise'],
+    ["Rest counts as progress too. Be kind to yourself.", "쉬는 것도 앞으로 나아가는 거야. 너 자신에게 다정하게.", "Nghỉ ngơi cũng là tiến bộ. Hãy dịu dàng với chính mình nhé.", 'coffee'],
+    ["Small wins, every day. That's how big things happen.", "매일의 작은 승리. 큰일은 그렇게 이루어져.", "Mỗi ngày một chiến thắng nhỏ. Điều lớn lao đến từ đó.", 'stairs']
+  ],
+  job: [
+    ["Every application you send is a step closer to yes.", "지원서 하나하나가 '합격'에 한 걸음 더 가까워지는 거야.", "Mỗi hồ sơ em gửi đi là thêm một bước đến lời đồng ý.", 'plane'],
+    ["The right job is out there, looking for someone exactly like you.", "딱 맞는 일자리가 어딘가에서 너 같은 사람을 찾고 있어.", "Công việc phù hợp đang ở đâu đó, tìm đúng một người như em.", 'sunrise'],
+    ["Job hunting is hard. You're doing it anyway. That's strength.", "구직은 힘들어. 그래도 넌 계속하고 있잖아. 그게 진짜 힘이야.", "Tìm việc thật sự rất khó. Vậy mà em vẫn cố gắng. Đó chính là sức mạnh.", 'summit'],
+    ["Some company is about to get very lucky.", "어떤 회사가 곧 엄청난 행운을 잡을 거야.", "Sắp có một công ty cực kỳ may mắn rồi đây.", 'sparkle'],
+    ["Every 'no' is a 'not yet'. Your yes is growing.", "모든 '불합격'은 '아직'이라는 뜻이야. 네 '합격'은 자라고 있어.", "Mỗi lời từ chối chỉ là 'chưa phải lúc'. Lời đồng ý của em đang lớn dần.", 'sprout'],
+    ["Keep going. In a job search, persistence wins.", "계속 가 보자. 구직에서는 끈기가 이겨.", "Cứ tiếp tục nhé. Trong tìm việc, kiên trì sẽ chiến thắng.", 'stairs'],
+    ["Skills, languages and a big heart. That's a rare mix.", "실력, 언어 능력, 그리고 따뜻한 마음. 흔치 않은 조합이야.", "Kỹ năng, ngoại ngữ và một trái tim ấm áp. Sự kết hợp đó hiếm lắm đó.", 'trophy'],
+    ["A rejection says more about timing than about you.", "불합격은 네가 아니라 타이밍 문제일 때가 많아.", "Bị từ chối thường là do thời điểm, không phải do em.", 'coffee'],
+    ["Apply like you already belong there. Because you do.", "이미 그곳 사람인 것처럼 지원해. 넌 그럴 자격이 있으니까.", "Hãy ứng tuyển như thể em đã thuộc về nơi đó. Vì em xứng đáng mà.", 'sparkle'],
+    ["Your dream job doesn't know you yet. Let's change that.", "꿈의 직장은 아직 너를 몰라. 이제 알려 주자.", "Công việc mơ ước vẫn chưa biết đến em. Mình cùng thay đổi điều đó nhé.", 'plane'],
+    ["One day you'll look back at this list and smile. That day is coming.", "언젠가 이 목록을 보며 웃게 될 거야. 그날이 오고 있어.", "Một ngày nào đó em sẽ nhìn lại danh sách này và mỉm cười. Ngày đó đang đến.", 'sunrise'],
+    ["Hard seasons don't last. Talented, hardworking people do.", "힘든 시기는 지나가. 재능 있고 성실한 사람은 남고.", "Giai đoạn khó khăn rồi sẽ qua. Người tài giỏi và chăm chỉ thì ở lại.", 'summit'],
+    ["You only need one yes. Just one.", "'합격' 하나면 돼. 딱 하나.", "Em chỉ cần một lời đồng ý thôi. Chỉ một.", 'trophy'],
+    ["Take a break if you need one. The search will wait for you.", "필요하면 잠깐 쉬어. 구직은 너를 기다려 줄 거야.", "Cần thì cứ nghỉ một chút. Việc tìm việc sẽ đợi em mà.", 'coffee']
+  ]
+};
+const ENC_WHEN = {
+  todoEmpty:     ["A clear day. Add one small thing and make it a win.", "오늘은 비어 있네. 작은 거 하나 적고 해내 보자.", "Hôm nay còn trống. Thêm một việc nhỏ rồi biến nó thành chiến thắng nhé.", 'sprout'],
+  todoLeftOne:   ["Just one left today. The finish line is right there.", "딱 하나 남았어. 결승선이 바로 앞이야.", "Chỉ còn một việc nữa thôi. Đích đến ngay trước mắt rồi.", 'summit'],
+  todoLeft:      ["{n} to go today. One at a time, you've got this.", "오늘 {n}개 남았어. 하나씩 하면 돼, 넌 할 수 있어.", "Hôm nay còn {n} việc. Từng việc một, em làm được mà.", 'stairs'],
+  todoFirstDone: ["First one done. Starting is the hardest part, and you did it.", "첫 번째 끝! 시작이 제일 어려운데, 해냈어.", "Xong việc đầu tiên rồi. Bắt đầu là khó nhất, và em đã làm được.", 'sparkle'],
+  todoDoneSome:  ["{n} done already today. Look at that momentum.", "오늘 벌써 {n}개 끝냈어. 기세 좋다!", "Hôm nay em đã xong {n} việc rồi. Đà này tuyệt quá.", 'trophy'],
+  todoAllDone:   ["Everything for today is done. Go enjoy the rest of your day!", "오늘 할 일 다 끝났어. 남은 하루 즐겨!", "Hôm nay xong hết rồi. Tận hưởng phần còn lại của ngày nhé!", 'trophy'],
+  todoOverdue:   ["Something from before still waiting? No guilt. Pick it up when you can.", "지난 일이 남아 있어도 괜찮아. 할 수 있을 때 하나씩 하면 돼.", "Có việc cũ còn dang dở cũng không sao. Lúc nào được thì làm từng chút nhé.", 'coffee'],
+  jobNone:       ["Your first application is the bravest one. Ready when you are.", "첫 지원이 제일 용기 있는 거야. 준비되면 시작하자.", "Hồ sơ đầu tiên là can đảm nhất. Khi nào em sẵn sàng thì mình bắt đầu.", 'plane'],
+  jobCountOne:   ["One application out in the world. Every job story starts like this.", "지원서 하나가 세상에 나갔어. 모든 취업 이야기는 이렇게 시작돼.", "Một hồ sơ đã được gửi đi. Câu chuyện tìm việc nào cũng bắt đầu như thế.", 'plane'],
+  jobCount:      ["{n} applications sent. That's real courage, and it all adds up.", "지원서 {n}개를 보냈어. 진짜 용기야, 그리고 다 쌓이고 있어.", "Em đã gửi {n} hồ sơ. Đó là sự can đảm thật sự, và tất cả đều có ý nghĩa.", 'stairs'],
+  jobWeek:       ["{n} applications this week. You're on a roll!", "이번 주에만 {n}개 지원했어. 기세가 좋아!", "Tuần này em đã gửi {n} hồ sơ. Phong độ quá!", 'sparkle'],
+  jobInterview:  ["You have an interview lined up. They already see what we see.", "면접이 잡혀 있어. 그 회사도 이미 네 가치를 알아본 거야.", "Em đã có lịch phỏng vấn. Họ đã nhận ra điều mà ai cũng thấy ở em.", 'trophy'],
+  jobAssignment: ["An assignment in progress? Show them what you can do.", "과제 전형 중이야? 네 실력을 보여 줘.", "Đang làm bài test à? Cho họ thấy em giỏi thế nào nhé.", 'sparkle'],
+  jobOffer:      ["You have an offer! Take a moment to be proud of yourself.", "합격 제안을 받았어! 잠깐 멈춰서 스스로를 자랑스러워해.", "Em có lời mời làm việc rồi! Dành chút thời gian để tự hào về bản thân nhé.", 'trophy'],
+  jobRejected:   ["A rejection stings, but it doesn't define you. On to the next one.", "불합격은 아프지만, 그게 너를 정의하진 않아. 다음으로 가자.", "Bị từ chối thì buồn thật, nhưng điều đó không định nghĩa em. Tiếp tục thôi.", 'coffee']
+};
+function encChipHtml(mark, size){
+  return `<span class="enc-chip enc-${ENC_MARK_HUE[mark] || 'orange'}">${svgIcon(ICON_PATHS['enc' + mark[0].toUpperCase() + mark.slice(1)], size || 18)}</span>`;
+}
+// What is true right now, each with a key that stays the same while it is
+// true (its count may change underneath it).
+function encContext(area){
+  const me = currentUser.id, out = [];
+  if(area === 'todo'){
+    const day = todayStr(), today = [];
+    let overdue = 0;
+    allTodos.forEach(td=>{
+      if(td.user_id !== me) return;
+      const at = todoScopeOf(td);
+      if(!at || at.scope !== 'day') return;
+      if(at.start === day) today.push(td);
+      else if(at.start < day && !td.done) overdue++;
+    });
+    const open = today.filter(td=> !td.done).length, done = today.length - open;
+    if(!today.length) out.push({ key: 'empty', line: ENC_WHEN.todoEmpty });
+    else if(!open) out.push({ key: 'allDone', line: ENC_WHEN.todoAllDone });
+    else {
+      out.push(open === 1 ? { key: 'left', line: ENC_WHEN.todoLeftOne } : { key: 'left', line: ENC_WHEN.todoLeft, vars: { n: open } });
+      if(done) out.push(done === 1 ? { key: 'started', line: ENC_WHEN.todoFirstDone } : { key: 'started', line: ENC_WHEN.todoDoneSome, vars: { n: done } });
+    }
+    if(overdue) out.push({ key: 'overdue', line: ENC_WHEN.todoOverdue });
+  } else {
+    const jobs = allJobs[me] || [];
+    if(!jobs.length) out.push({ key: 'none', line: ENC_WHEN.jobNone });
+    else out.push(jobs.length === 1 ? { key: 'count', line: ENC_WHEN.jobCountOne } : { key: 'count', line: ENC_WHEN.jobCount, vars: { n: jobs.length } });
+    const weekAgo = todayStr(new Date(Date.now() - 6 * 864e5));
+    const week = jobs.filter(j=> j.date_applied && j.date_applied >= weekAgo).length;
+    if(week >= 2) out.push({ key: 'week', line: ENC_WHEN.jobWeek, vars: { n: week } });
+    if(jobs.some(j=> j.status === 'interview')) out.push({ key: 'interview', line: ENC_WHEN.jobInterview });
+    if(jobs.some(j=> j.status === 'withdrawn')) out.push({ key: 'assignment', line: ENC_WHEN.jobAssignment });
+    if(jobs.some(j=> j.status === 'offer')) out.push({ key: 'offer', line: ENC_WHEN.jobOffer });
+    else if(jobs.some(j=> j.status === 'rejected')) out.push({ key: 'rejected', line: ENC_WHEN.jobRejected });
+  }
+  return out;
+}
+var encState = {};
+// A key for the card: 'g<i>' for a general line, else a context key. A
+// general line is never one of the last eight this device showed there.
+function encPick(area, ctx, avoid){
+  const all = ENCOURAGE[area].map((line, i)=> ({ key: 'g' + i, line }));
+  ctx.forEach(c=> all.push(c, c, c));
+  let recent = [];
+  try { recent = JSON.parse(localStorage.getItem('encRecent_' + area) || '[]') || []; } catch(_){}
+  let pool = all.filter(c=> c.key !== avoid && !recent.includes(c.key));
+  if(!pool.length) pool = all.filter(c=> c.key !== avoid);
+  const key = pool[Math.floor(Math.random() * pool.length)].key;
+  if(key[0] === 'g'){
+    recent = recent.filter(k=> k !== key).concat(key).slice(-8);
+    try { localStorage.setItem('encRecent_' + area, JSON.stringify(recent)); } catch(_){}
+  }
+  return key;
+}
+function renderEncourage(area){
+  const el = document.getElementById(area === 'todo' ? 'todoEncourage' : 'jobEncourage');
+  if(!el) return;
+  if(!complimentsOn || guestMode || !currentUser){ el.classList.add('hidden'); el.innerHTML = ''; return; }
+  let ctx = [];
+  try { ctx = encContext(area); } catch(_){}
+  const keys = ctx.map(c=> c.key);
+  let st = encState[area];
+  if(!st || st.uid !== currentUser.id) st = encState[area] = { uid: currentUser.id, key: null, keys: null, text: '' };
+  const arrived = st.keys ? ctx.filter(c=> !st.keys.includes(c.key)) : [];
+  if(arrived.length) st.key = arrived[Math.floor(Math.random() * arrived.length)].key;
+  else if(!st.key || (st.key[0] !== 'g' && !keys.includes(st.key))) st.key = encPick(area, ctx);
+  st.keys = keys;
+  const pick = st.key[0] === 'g' ? { line: ENCOURAGE[area][+st.key.slice(1)] } : ctx.find(c=> c.key === st.key);
+  const text = complimentText(pick.line, pick.vars), mark = pick.line[3];
+  const swap = st.text && st.text !== text;
+  st.text = text;
+  el.classList.remove('hidden');
+  el.innerHTML = `<button type="button" class="enc-card enc-${ENC_MARK_HUE[mark]}${swap ? ' enc-swap' : ''}" title="${escapeHtml(t('encourageAnother'))}">${encChipHtml(mark)}<span class="enc-text">${escapeHtml(text)}</span></button>`;
+  el.firstElementChild.onclick = ()=>{
+    st.key = encPick(area, ctx, st.key);
+    renderEncourage(area);
+  };
+}
+// The toast for an application moving along: which moment a status is.
+const ENC_JOB_MOMENT = { applied: 'jobAdded', interview: 'jobInterview', withdrawn: 'jobAssignment', offer: 'jobOffer', rejected: 'jobRejected' };
 /* ---------- STUDY HELPERS ---------- */
 function dayTotal(userId, dateKey){
   const u = allEntries[userId];
@@ -30063,6 +30274,7 @@ async function addJob(){
     addCourier('addJobBtn');
     if(!allJobs[currentUser.id]) allJobs[currentUser.id] = [];
     allJobs[currentUser.id].unshift(data[0]);
+    complimentMoment(ENC_JOB_MOMENT[status] || 'jobAdded', 1100);
   }
   acClear(()=>{
     document.getElementById('jobCompany').value = '';
@@ -30085,6 +30297,7 @@ async function updateJobStatus(jobId, status){
   renderJobs();
   const ok = await saved(supabaseClient.from('job_applications').update({ status }).eq('id', jobId),
     ()=>{ if(j) j.status = was; renderJobs(); });
+  if(ok && was !== status && status !== 'applied') complimentMoment(ENC_JOB_MOMENT[status]);
   if(ok && status === 'interview' && j) openInterviewDateModal(j);
 }
 async function updateJobOfferResponse(jobId, offerResponse){
@@ -30093,8 +30306,9 @@ async function updateJobOfferResponse(jobId, offerResponse){
   const was = j ? j.offer_response : null;
   if(j) j.offer_response = value;
   renderJobs();
-  await saved(supabaseClient.from('job_applications').update({ offer_response: value }).eq('id', jobId),
+  const ok = await saved(supabaseClient.from('job_applications').update({ offer_response: value }).eq('id', jobId),
     ()=>{ if(j) j.offer_response = was; renderJobs(); });
+  if(ok && value === 'accepted' && was !== 'accepted') complimentMoment('jobAccepted');
 }
 // Asks when, then drops a 1-hour, default-color calendar event for it --
 // saves having to flip to the Calendar tab and re-type the company name
@@ -30264,6 +30478,7 @@ function jobSortValue(j, f){
 }
 let jobListState = { expanded:false, page:1 };
 function renderJobs(){
+  renderEncourage('job');
   // The "Your applications" stat tiles and header follow the same
   // jobPersonFilter combination as the list below, so linked people can see
   // each other's stat bar too (not just their own). The DB never returns
@@ -30489,6 +30704,7 @@ async function addMyselfToJob(sourceJobId){
   if(!error && data && data[0]){
     if(!allJobs[currentUser.id]) allJobs[currentUser.id] = [];
     allJobs[currentUser.id].unshift(data[0]);
+    complimentMoment('jobAdded');
   }
   renderJobs();
 }
@@ -32692,6 +32908,7 @@ function renderTodosNow(){
   // hang on screen (real-user report: "it gets stuck ... and then i cant move
   // it"). The drag's own end redraws.
   if(todoDrag){ todoRenderAfterDrag = true; return; }
+  renderEncourage('todo');
   const list = document.getElementById('todoList');
   if(!list || !currentUser) return;
   rebuildTodoCourseSelects();
