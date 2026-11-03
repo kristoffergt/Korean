@@ -4552,6 +4552,18 @@ button.tpl-act:hover{background:rgba(127,127,127,0.16);}
    theme (real-user report: "dont highlight it white like this"). */
 .note-grip:hover, .note-grip:focus-visible{opacity:1;color:var(--ink);background:none;}
 .note-grip:focus-visible{outline:2px solid var(--celadon-4);outline-offset:1px;}
+/* Moving things, site-wide (real-user request, 3 Nov: "when you wanna move
+   around things, you just long tap on a phone and then move it around ...
+   meanwhile desktop uses the dot symbol things where you can drag it from").
+   A finger lifts a row or heading by holding it (wireNoteLongPress), so the
+   grip is not shown; its slot stays, so a phone's rows still line up with the
+   numbers ^/v puts in it. A held finger must not start the phone's own text
+   selection or callout either. */
+@media (pointer: coarse){
+  .note-grip{visibility:hidden;pointer-events:none;}
+  .note-group-header,.note-sub-header,.lecture-row[data-note-id]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
+  .lecture-row[data-note-id] input,.lecture-row[data-note-id] textarea{-webkit-user-select:text;user-select:text;}
+}
 /* The row being placed is a box of its own. Its padding is paid back with
    an equal negative margin, so the box grows OUTWARD past the list's edges
    and nothing inside it moves: the ^/v button stays under the pointer, and
@@ -4580,6 +4592,11 @@ button.tpl-act:hover{background:rgba(127,127,127,0.16);}
 .note-drag-ghost.nowhere{opacity:.6;}
 .note-drop-line{position:fixed;z-index:999;height:2px;background:var(--on);border-radius:1px;pointer-events:none;}
 body.note-dragging, body.note-dragging *{cursor:grabbing !important;user-select:none;-webkit-user-select:none;}
+/* The carried copy is lifted: a box grows to 1.04 from its centre. */
+.note-drag-ghost,.todo-ghost{transform:scale(1.04);transform-origin:center;animation:dragLift .14s cubic-bezier(.2,.8,.2,1);}
+@keyframes dragLift{from{transform:none;}}
+body.no-anim-ui .note-drag-ghost,body.no-anim-ui .todo-ghost{animation:none;}
+@media (prefers-reduced-motion: reduce){ .note-drag-ghost,.todo-ghost{animation:none;} }
 @media (prefers-reduced-motion: reduce){ .note-sub.note-flash > .note-sub-header{animation:none;} }
 .lecture-row .lecture-actions .lecture-move.on{color:var(--on);}
 .note-move-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;}
@@ -5095,8 +5112,22 @@ body.ws-work .ws-class-only{display:none !important;}
 .tq-fold-arrow{display:inline-block;width:12px;color:var(--ink-soft);}
 /* Dragging a to-do: the row stays in the list as a faint space where it
    will land, and a copy rides under the pointer. */
-.todo-row[data-drag]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
-@media (hover:hover) and (pointer:fine){ .todo-row[data-drag]{cursor:grab;} }
+/* A finger lifts a to-do by holding it anywhere on the row, so the phone's
+   own selection and callout must not answer the hold. A mouse drags it by
+   the grip in the gutter at its left, seen when the row is pointed at or
+   holds focus, so the row's words select and press like any others (real-user
+   request, 3 Nov: "desktop uses the dot symbol things where you can drag it
+   from"). Only in a list a to-do can be dropped into. */
+@media (pointer: coarse){ .todo-row[data-drag]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;} }
+.todo-grip{display:none;}
+@media (pointer: fine){
+  [data-todo-drop] .todo-row[data-drag]{position:relative;}
+  [data-todo-drop] .todo-row[data-drag] > .todo-grip{display:inline-flex;position:absolute;left:-17px;top:5px;width:15px;height:20px;align-items:center;justify-content:center;padding:0;margin:0;border:none;border-radius:5px;background:none;color:var(--ink-soft);cursor:grab;opacity:0;transition:opacity 120ms ease;}
+  [data-todo-drop] .todo-row[data-drag]:hover > .todo-grip,[data-todo-drop] .todo-row[data-drag]:focus-within > .todo-grip{opacity:.55;}
+  [data-todo-drop] .todo-row[data-drag] > .todo-grip:hover,[data-todo-drop] .todo-row[data-drag] > .todo-grip:focus-visible{opacity:1;color:var(--ink);background:none;}
+  [data-todo-drop] .todo-row[data-drag] > .todo-grip:focus{background:none;}
+  [data-todo-drop] .todo-row[data-drag] > .todo-grip:focus-visible{outline:2px solid var(--celadon-4);outline-offset:1px;}
+}
 .todo-row.todo-dragging{opacity:.25;}
 .todo-ghost{position:fixed;z-index:9999;pointer-events:none;margin:0;background:var(--paper);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:.96;}
 body.todo-drag-on, body.todo-drag-on *{cursor:grabbing !important;user-select:none !important;}
@@ -18124,6 +18155,17 @@ function swipeActsHtml(moreHtml, mainHtml){
 }
 var swOpen = null;   // { key, x } of the one open row
 var swGesture = null;
+// Moving things on touch is a long press: held this long, within this many
+// pixels, the row lifts and follows the finger (to-dos, notes). Moved further
+// first, it is a swipe (sideways) or a scroll; the swipe locks at the same
+// distance, so the two never both happen.
+var LIFT_HOLD_MS = 450, LIFT_SLOP_PX = 8;
+// A row lifted to be carried is no longer being swiped: it goes back shut.
+function swCancelGesture(){
+  const g = swGesture;
+  swGesture = null;
+  if(g && g.lock) swSet(g.row.isConnected ? g.row : swFindRow(g.key), 0, true);
+}
 // The same item can be drawn in two lists at once (an expense under its day
 // and in the full list), so a row is known by its key AND the nearest
 // ancestor with an id.
@@ -18223,11 +18265,11 @@ function swTouchMode(){
   document.addEventListener('pointermove', e=>{
     const g = swGesture;
     if(!g || e.pointerId !== g.id) return;
-    // A to-do picked up to be carried is the drag's, not a swipe.
-    if(typeof todoDrag !== 'undefined' && todoDrag){ swGesture = null; swSet(g.row, 0, true); return; }
+    // A to-do or note picked up to be carried is the drag's, not a swipe.
+    if((typeof todoDrag !== 'undefined' && todoDrag) || (typeof noteDrag !== 'undefined' && noteDrag)){ swGesture = null; swSet(g.row, 0, true); return; }
     const dx = e.clientX - g.x, dy = e.clientY - g.y;
     if(!g.lock){
-      if(Math.hypot(dx, dy) < 8) return;
+      if(Math.hypot(dx, dy) < LIFT_SLOP_PX) return;
       if(Math.abs(dx) > Math.abs(dy) * 1.3){ g.lock = 'x'; g.x = e.clientX; g.t = Date.now(); }
       else { swGesture = null; return; }
     }
@@ -22612,6 +22654,9 @@ function shareKeyAt(target, touch){
   if(target.closest('input, textarea, select, a[href], [contenteditable="true"], .ql-editor, #circleMessageLog, .cm-menu, .modal-overlay, #calExportList')) return null;
   const el = target.closest('[data-share], .todo-row[data-todo], .todo-group-head[data-g], .gram-row[data-gram-id], .deadline-row[data-event-id], [data-ev]');
   if(!el) return null;
+  // On touch a hold on a note that can be moved lifts it; the send menu
+  // opens when it is let go without moving (wireNoteLongPress).
+  if(touch && noteLongPressTarget(target)) return null;
   if(el.dataset.share) return el.dataset.share;
   if(el.matches('.todo-row')){
     // On touch a hold on your own to-do picks it up to drag; its Edit panel
@@ -22911,7 +22956,8 @@ function openShareMenu(key, x, y){
     // Android sends one for a held finger too: the hold above answers it.
     if(Date.now() - firedAt < 1200){ e.preventDefault(); return; }
     if(hold){ const h = hold; cancel(); e.preventDefault(); firedAt = Date.now(); openShareMenu(h.key, h.x, h.y); return; }
-    if(todoDrag) return;
+    // A hold that is lifting a to-do or a note to move it took this one.
+    if(e.defaultPrevented || todoDrag || noteDrag) return;
     // Selected text keeps the browser's own menu, so it can be copied.
     const sel = window.getSelection && String(window.getSelection() || '');
     if(sel && sel.trim()) return;
@@ -31207,7 +31253,10 @@ function todoRowHtml(td, where = 'list', showDate = false){
   const more = mine && !td.done ? todoDayPickHtml(td)
     + `<button type="button" class="sw-btn todo-move-btn" data-todo="${td.id}" aria-expanded="${todoMoveOpen === td.id && todoMoveWhere === where}" title="${escapeHtml(t('todoMoveTo'))}" aria-label="${escapeHtml(t('todoMoveTo'))}">${ICON.moveTo()}</button>` : '';
   const main = mine ? swipeEditBtnHtml('todo-edit-btn', `data-todo="${td.id}"`, t('todoEdit')) + swipeDelBtnHtml('todo-del-btn', `data-todo="${td.id}"`, t('todoDelete')) : '';
-  return `<div class="lecture-row todo-row${td.done ? ' done' : ''}${mine ? ' sw-row' : ' theirs'}" data-todo="${td.id}"${mine ? ` data-drag="1" data-sw-key="todo:${td.id}:${escapeHtml(String(where))}"` : ''}>
+  // The grip is what a mouse drags it by; touch holds the row instead (CSS
+  // shows it only to a fine pointer, and only where it can be dropped).
+  const grip = mine ? `<button type="button" class="todo-grip" data-todo="${td.id}" title="${escapeHtml(t('noteDragTip'))}" aria-label="${escapeHtml(t('noteDragTip'))}">${ICON.grip(14)}</button>` : '';
+  return `<div class="lecture-row todo-row${td.done ? ' done' : ''}${mine ? ' sw-row' : ' theirs'}" data-todo="${td.id}"${mine ? ` data-drag="1" data-sw-key="todo:${td.id}:${escapeHtml(String(where))}"` : ''}>${grip}
     <button type="button" class="todo-check" role="checkbox" aria-checked="${td.done ? 'true' : 'false'}" data-todo="${td.id}" ${mine ? '' : 'disabled'} title="${escapeHtml(t(td.done ? 'todoMarkOpen' : 'todoMarkDone'))}">${td.done ? ICON.check(13) : ''}</button>
     <span class="todo-main">
       <span class="todo-title" data-todo="${td.id}">${escapeHtml(td.title)}</span>
@@ -31319,11 +31368,13 @@ function todoMovePatch(td, scope, at){
 // it lands decides both its place (sort_order) and its day or period: the
 // nearest thing above it, a heading or another to-do, says which group that
 // is, and with nothing above, the list's own data-todo-drop does. A mouse
-// picks a row up once it has moved a few pixels; a finger holds still on it
-// for a moment first, so an ordinary swipe still scrolls the page.
+// picks a row up by its grip once it has moved a few pixels (the arrow keys
+// move it from the grip too); a finger holds still anywhere on the row for
+// LIFT_HOLD_MS first, so an ordinary swipe still scrolls the page or opens
+// the row's actions (real-user request, 3 Nov: "you just long tap on a phone
+// and then move it around ... desktop uses the dot symbol things").
 let todoDrag = null;
 let todoDragClickBlock = 0;
-const TODO_HOLD_MS = 320;
 function todoRowPeriodKey(el){
   const td = el && allTodos.find(x=> x.id === el.dataset.todo);
   return td ? todoPeriodKey(todoScopeOf(td)) : null;
@@ -31417,6 +31468,13 @@ async function todoDragEnd(cancel){
   todoDragClickBlock = Date.now();
   const td = allTodos.find(x=> x.id === row.dataset.todo);
   if(!cancel && overBin && td){ trashTodo(td); return; }
+  return todoCommitPlace(row, list, startList, startNext, cancel);
+}
+// Saves where `row` now stands in `list` (put there by a drag or by the arrow
+// keys): its group, and the order of that group. The list is drawn again at
+// once; the writes follow.
+async function todoCommitPlace(row, list, startList, startNext, cancel){
+  const td = allTodos.find(x=> x.id === row.dataset.todo);
   const unmoved = list === startList && row.nextElementSibling === startNext;
   if(cancel || !td || unmoved){ renderTodos(); return; }
   const key = todoDropKey(row, list);
@@ -31459,15 +31517,45 @@ function todoDragCandidate(target){
   return row && row.closest('[data-todo-drop]') ? row : null;
 }
 let todoRenderAfterDrag = false;
+// The grip's row, when it is one that can be carried.
+function todoGripRow(target){
+  const grip = target && target.closest && target.closest('.todo-grip');
+  const row = grip && grip.closest('.todo-row[data-drag]');
+  return row && row.closest('[data-todo-drop]') ? row : null;
+}
+// Up and Down on a grip move its to-do one place, past a heading into the
+// next day as a drag would; the grip is focused again in the redrawn list.
+function todoGripKey(e){
+  const step = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0;
+  const row = step && todoGripRow(e.target);
+  if(!row || todoDrag) return;
+  e.preventDefault();
+  const list = row.closest('[data-todo-drop]');
+  const id = row.dataset.todo;
+  const marks = [...list.children].filter(el=> el !== row && (
+    (el.classList.contains('todo-row') && el.dataset.drag) || (el.classList.contains('todo-group-head') && el.dataset.g)));
+  const startNext = row.nextElementSibling;
+  const below = marks.findIndex(el=> row.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const at = below < 0 ? marks.length : below;
+  if(step < 0){ if(at === 0) return; list.insertBefore(row, marks[at - 1]); }
+  else { if(at >= marks.length) return; marks[at].after(row); }
+  // Whatever panel hangs under the row stays with the place it was opened.
+  todoMoveOpen = null; todoEditOpen = null;
+  todoCommitPlace(row, list, list, startNext, false);
+  const g = [...document.querySelectorAll('.todo-grip')].find(b=> b.dataset.todo === id && b.offsetParent);
+  if(g) g.focus({ preventScroll: true });
+}
 function wireTodoDrag(){
-  // Mouse and pen.
+  // Mouse and pen: from the grip only, so the row's words select and press
+  // like any others.
   let pending = null;
   document.addEventListener('pointerdown', e=>{
     if(e.pointerType === 'touch' || e.button !== 0) return;
-    const row = todoDragCandidate(e.target);
-    // No text selection starting under a row that may be picked up.
+    const row = todoGripRow(e.target);
+    // No text selection starting under a grip being pulled.
     if(row){ pending = { row, x: e.clientX, y: e.clientY }; e.preventDefault(); }
   });
+  document.addEventListener('keydown', e=>{ if(!e.defaultPrevented) todoGripKey(e); });
   document.addEventListener('pointermove', e=>{
     if(e.pointerType === 'touch') return;
     if(todoDrag){ e.preventDefault(); todoDragMove(e.clientX, e.clientY); return; }
@@ -31531,19 +31619,24 @@ function wireTodoDrag(){
     if(todoDrag && e.touches.length === 1){ todoDragEnd(false); return; }
     if(e.touches.length !== 1) return;
     const row = todoDragCandidate(e.target);
-    if(!row) return;
+    // Not a row whose actions are out (that press shuts them), and not at
+    // the left edge, which is the phone's back swipe.
+    if(!row || row.classList.contains('sw-live')) return;
     const t0 = e.touches[0];
+    if(t0.clientX <= EDGE_BACK_PX) return;
     watch(e.target);
     hold = { x: t0.clientX, y: t0.clientY, timer: setTimeout(()=>{
-      if(!hold) return;
+      if(!hold || !row.isConnected) { hold = null; return; }
+      swCancelGesture();
       todoDragStart(row, hold.x, hold.y);
       hold = null;
-    }, TODO_HOLD_MS) };
+    }, LIFT_HOLD_MS) };
   }, { passive: true });
   document.addEventListener('touchmove', e=>{
     const t0 = e.touches[0];
     if(todoDrag){ e.preventDefault(); todoDragMove(t0.clientX, t0.clientY); return; }
-    if(hold && Math.hypot(t0.clientX - hold.x, t0.clientY - hold.y) > 12){ clearTimeout(hold.timer); hold = null; }
+    // Moved first: a swipe or a scroll, not a lift.
+    if(hold && Math.hypot(t0.clientX - hold.x, t0.clientY - hold.y) >= LIFT_SLOP_PX){ clearTimeout(hold.timer); hold = null; }
   }, { passive: false });
   function endTouch(cancel){
     if(hold){ clearTimeout(hold.timer); hold = null; }
@@ -31560,7 +31653,9 @@ function wireTodoDrag(){
       e.preventDefault(); e.stopPropagation();
     }
   }, true);
-  document.addEventListener('contextmenu', e=>{ if(todoDrag || hold) e.preventDefault(); });
+  // Android answers a held finger with a context menu; in the capture phase,
+  // so the send menu's own handler hears that it was taken.
+  document.addEventListener('contextmenu', e=>{ if(todoDrag || hold) e.preventDefault(); }, true);
 }
 wireTodoDrag();
 
@@ -50734,7 +50829,8 @@ async function deleteNote(noteId, groupKey){
    section its own notes come first, then its sub-categories.
    - A note is DRAGGED by the grip at its left, to any place in any section of
      the same list: another sub-category, another course or header. Only by
-     its owner, since only the owner can write the row.
+     its owner, since only the owner can write the row. On touch there is no
+     grip: a long press anywhere on the row or heading lifts it.
    - ^/v still turns a section into a numbered list, for a long one. The
      numbers take the grip's slot, which is the same box, so nothing in the
      row grows and the same button is still under the pointer to close it
@@ -51337,20 +51433,24 @@ function noteGripKey(e, grip, kind){
   if(g) g.focus({ preventScroll: true });
 }
 
-/* --- Dragging. Pointer events, so a mouse, a pen and a finger are one path.
-   The grip has touch-action:none, so on a phone a drag from it is a drag and
-   a swipe anywhere else is still a scroll. Listeners sit on the window: the
-   grip may be redrawn away mid-drag (a partner's save re-renders the list),
-   and events go on arriving there either way. */
+/* --- Dragging. A mouse or pen drags by the grip, with pointer events (the
+   grip has touch-action:none, so a finger on a grip a fine-pointer screen
+   shows works too). Listeners sit on the window: the grip may be redrawn away
+   mid-drag (a partner's save re-renders the list), and events go on arriving
+   there either way. A finger lifts the row by holding it instead
+   (wireNoteLongPress), and that drag is carried by touch events. */
+function noteDragState(kind, grip, x, y, pointerId){
+  return {
+    kind, type: grip.dataset.drag, id: grip.dataset.id || null, group: grip.dataset.group, sub: grip.dataset.sub || '',
+    pointerId, x0: x, y0: y, x, y,
+    started: false, target: null, ghost: null, line: null, lit: null, hoverKey: null, hoverTimer: 0, raf: 0
+  };
+}
 function startNoteDrag(e, grip, kind){
   if(noteDrag || (e.pointerType === 'mouse' && e.button !== 0)) return;
   e.preventDefault();
   e.stopPropagation();
-  noteDrag = {
-    kind, type: grip.dataset.drag, id: grip.dataset.id || null, group: grip.dataset.group, sub: grip.dataset.sub || '',
-    pointerId: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY,
-    started: false, target: null, ghost: null, line: null, lit: null, hoverKey: null, hoverTimer: 0, raf: 0
-  };
+  noteDrag = noteDragState(kind, grip, e.clientX, e.clientY, e.pointerId);
   try{ grip.setPointerCapture(e.pointerId); }catch(err){}
   window.addEventListener('pointermove', onNoteDragMove);
   window.addEventListener('pointerup', onNoteDragEnd);
@@ -51399,13 +51499,14 @@ function beginNoteDrag(d){
 function onNoteDragMove(e){
   const d = noteDrag;
   if(!d || e.pointerId !== d.pointerId) return;
-  d.x = e.clientX;
-  d.y = e.clientY;
-  if(!d.started){
-    if(Math.hypot(d.x - d.x0, d.y - d.y0) < 4) return;
-    if(!beginNoteDrag(d)){ cancelNoteDrag(); return; }
-  }
+  if(!d.started && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 4) return;
   e.preventDefault();
+  moveNoteDragTo(d, e.clientX, e.clientY);
+}
+function moveNoteDragTo(d, x, y){
+  d.x = x;
+  d.y = y;
+  if(!d.started && !beginNoteDrag(d)){ cancelNoteDrag(); return; }
   d.ghost.style.left = (d.x - d.offX) + 'px';
   d.ghost.style.top = (d.y - d.offY) + 'px';
   updateNoteDrop(d);
@@ -51519,8 +51620,11 @@ function cancelNoteDrag(){
 function onNoteDragEnd(e){
   const d0 = noteDrag;
   if(!d0 || e.pointerId !== d0.pointerId) return;
+  finishNoteDrag();
+}
+function finishNoteDrag(){
   const d = stopNoteDrag();
-  if(!d.started) return;
+  if(!d || !d.started) return;
   // A release over a heading would otherwise fold it, or over a title open
   // that note: the click that ends a drag is the drag's.
   const swallow = (ev)=>{ ev.stopPropagation(); ev.preventDefault(); };
@@ -51553,6 +51657,107 @@ document.addEventListener('keydown', (e)=>{
   e.stopPropagation();
   noteKindCfg(kind).render();
 }, true);
+// ---- Long press to lift, on touch (real-user request, 3 Nov: "when you
+// wanna move around things, you just long tap on a phone and then move it
+// around"). A finger held still for LIFT_HOLD_MS on a note of your own, or on
+// a heading, lifts it there and then; from then on it follows the finger
+// until it is let go. Moved before that, it was a swipe or a scroll. Let go
+// without moving, it is put back, and a note opens the send menu, which is
+// what a hold on it did before a hold lifted it.
+function noteLongPressTarget(target){
+  if(!target || !target.closest) return null;
+  if(target.closest('button, input, textarea, select, a[href], [contenteditable="true"], .notes-panel, .note-move-bar, .note-head-actions, .sw-tray')) return null;
+  const el = target.closest('.lecture-row[data-note-id], .note-sub-header, .note-group-header');
+  if(!el) return null;
+  const grip = el.matches('.lecture-row') ? el.querySelector('.note-grip[data-drag="note"]') : el.querySelector(':scope > .note-grip');
+  const list = grip && el.closest('#lectureList, #notebookList');
+  return list ? { el, grip, kind: list.id === 'notebookList' ? 'notebook' : 'course' } : null;
+}
+(function wireNoteLongPress(){
+  let hold = null;     // { x, y, timer } until the lift
+  let lifted = null;   // { x, y, moved, key } while a finger carries one
+  // A lift redraws the list, which takes the touched node out of the page,
+  // and a touch aimed at a detached node never reaches document: it is heard
+  // on the node itself too (only while detached, so never twice).
+  let node = null;
+  const onNodeMove = e=>{ if(!document.contains(e.currentTarget)) move(e); };
+  const onNodeEnd = e=>{ if(!document.contains(e.currentTarget)) end(e); };
+  const unwatch = ()=>{
+    if(!node) return;
+    node.removeEventListener('touchmove', onNodeMove);
+    node.removeEventListener('touchend', onNodeEnd);
+    node.removeEventListener('touchcancel', onNodeEnd);
+    node = null;
+  };
+  const watch = n=>{
+    unwatch();
+    node = n;
+    n.addEventListener('touchmove', onNodeMove, { passive: false });
+    n.addEventListener('touchend', onNodeEnd);
+    n.addEventListener('touchcancel', onNodeEnd);
+  };
+  const clearHold = ()=>{ if(hold){ clearTimeout(hold.timer); hold = null; } };
+  document.addEventListener('touchstart', e=>{
+    clearHold();
+    // A carry still up when a new touch lands lost its end: drop it there.
+    if(lifted){ lifted = null; unwatch(); if(noteDrag && noteDrag.touch) finishNoteDrag(); return; }
+    if(e.touches.length !== 1 || noteDrag) return;
+    const t0 = e.touches[0];
+    if(t0.clientX <= EDGE_BACK_PX) return;   // the phone's back swipe
+    const tg = noteLongPressTarget(e.target);
+    // A row whose actions are out shuts on this press instead.
+    if(!tg || tg.el.classList.contains('sw-live')) return;
+    watch(e.target);
+    hold = { x: t0.clientX, y: t0.clientY, timer: setTimeout(()=>{
+      const h = hold;
+      hold = null;
+      if(!h || noteDrag || (typeof todoDrag !== 'undefined' && todoDrag) || !tg.grip.isConnected){ unwatch(); return; }
+      swCancelGesture();
+      const d = noteDragState(tg.kind, tg.grip, h.x, h.y, null);
+      d.touch = true;
+      noteDrag = d;
+      moveNoteDragTo(d, h.x, h.y);
+      if(noteDrag !== d){ unwatch(); return; }
+      lifted = { x: h.x, y: h.y, moved: false, key: tg.el.dataset.share || null };
+      try { if(navigator.vibrate) navigator.vibrate(8); } catch(err){}
+    }, LIFT_HOLD_MS) };
+  }, { passive: true });
+  function move(e){
+    const t0 = e.touches[0];
+    if(!t0) return;
+    if(hold){
+      if(Math.hypot(t0.clientX - hold.x, t0.clientY - hold.y) >= LIFT_SLOP_PX){ clearHold(); unwatch(); }
+      return;
+    }
+    if(!lifted || !noteDrag || !noteDrag.touch) return;
+    // Non-passive: the page stays still under a finger carrying a note.
+    e.preventDefault();
+    if(Math.hypot(t0.clientX - lifted.x, t0.clientY - lifted.y) >= LIFT_SLOP_PX) lifted.moved = true;
+    moveNoteDragTo(noteDrag, t0.clientX, t0.clientY);
+  }
+  function end(e){
+    clearHold();
+    unwatch();
+    const l = lifted;
+    lifted = null;
+    if(!l || !noteDrag || !noteDrag.touch) return;
+    // The lift is not a tap on whatever is under the finger.
+    if(e.cancelable) e.preventDefault();
+    if(e.type === 'touchcancel'){ cancelNoteDrag(); return; }
+    if(!l.moved){
+      cancelNoteDrag();
+      if(l.key && currentUser && !guestMode) openShareMenu(l.key, l.x, l.y);
+      return;
+    }
+    finishNoteDrag();
+  }
+  document.addEventListener('touchmove', move, { passive: false });
+  document.addEventListener('touchend', end, { passive: false });
+  document.addEventListener('touchcancel', end);
+  // Android answers a held finger with a context menu: not over a lift. In
+  // the capture phase, so the send menu's own handler hears it was taken.
+  document.addEventListener('contextmenu', e=>{ if(hold || (noteDrag && noteDrag.touch)) e.preventDefault(); }, true);
+})();
 function moveNote(noteId, groupKey, direction){ return moveNoteBy('course', groupKey, noteId, direction); }
 
 function rebuildNotesPersonFilter(){ rebuildPersonFilter('notesPersonFilter', 'course_notes'); }
