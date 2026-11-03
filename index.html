@@ -5205,6 +5205,9 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
   .sw-btn:active:not(:disabled){transform:scale(.94);transition-duration:.06s;}
   /* The to-do's day mark keeps its overhang, so it does not heighten the row. */
   .sw-acts .sw-btn.todo-day-pick{margin:-7px -4px;padding:0;}
+  /* A card row (.item-row) keeps its marks top right, where the cross was. */
+  .item-row.sw-row > .sw-acts{position:absolute;top:14px;right:0;}
+  .item-row.sw-row .item-top{padding-right:52px;}
 }
 @media not all and (hover: hover) and (pointer: fine){
   .sw-row{touch-action:pan-y pinch-zoom;--sw-x:0px;}
@@ -18118,9 +18121,21 @@ function swipeActsHtml(moreHtml, mainHtml){
 }
 var swOpen = null;   // { key, x } of the one open row
 var swGesture = null;
-function swFindRow(key){
-  if(!key) return null;
-  return document.querySelector('.sw-row[data-sw-key="' + (window.CSS && CSS.escape ? CSS.escape(key) : key) + '"]');
+// The same item can be drawn in two lists at once (an expense under its day
+// and in the full list), so a row is known by its key AND the nearest
+// ancestor with an id.
+function swHomeOf(row){
+  const h = row.parentElement && row.parentElement.closest('[id]');
+  return h ? h.id : '';
+}
+function swKeyOf(row){ return row.dataset.swKey + '|' + swHomeOf(row); }
+function swFindRow(k){
+  if(!k) return null;
+  const i = k.lastIndexOf('|');
+  const key = k.slice(0, i), home = k.slice(i + 1);
+  const all = document.querySelectorAll('.sw-row[data-sw-key="' + (window.CSS && CSS.escape ? CSS.escape(key) : key) + '"]');
+  for(const r of all) if(swHomeOf(r) === home) return r;
+  return all.length === 1 ? all[0] : null;
 }
 function swTrayWidth(row, side){
   const tray = row.querySelector(side < 0 ? ':scope > .sw-acts > .sw-main' : ':scope > .sw-acts > .sw-more');
@@ -18148,8 +18163,8 @@ function swClose(anim = true){
   if(row) swSet(row, 0, anim);
 }
 function swOpenRow(row, x, anim = true){
-  if(swOpen && swOpen.key !== row.dataset.swKey) swClose(anim);
-  swOpen = { key: row.dataset.swKey, x };
+  if(swOpen && swOpen.key !== swKeyOf(row)) swClose(anim);
+  swOpen = { key: swKeyOf(row), x };
   swSet(row, x, anim);
   swWatch(true);
 }
@@ -18191,7 +18206,7 @@ function swTouchMode(){
     // The left edge is the phone's back swipe.
     if(e.clientX <= (typeof EDGE_BACK_PX === 'number' ? EDGE_BACK_PX : 24)) return;
     if(e.target.closest('input, textarea, select, [contenteditable="true"], .todo-check, .notes-panel, .todo-edit, .sw-tray')) return;
-    swGesture = { row, key: row.dataset.swKey, id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now(), lock: null, dx: 0, w: row.getBoundingClientRect().width || 1 };
+    swGesture = { row, key: swKeyOf(row), id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now(), lock: null, dx: 0, w: row.getBoundingClientRect().width || 1 };
     // A re-render mid-swipe takes the touched node out of the page, and an
     // end aimed at a detached node never reaches document: it is heard on
     // the node itself as well.
@@ -18331,6 +18346,29 @@ function undoCancel(p){
 // delete is still waiting; it is hidden again before anything is drawn.
 function undoReapplyPending(){
   if(undoPending) undoPending.hide();
+}
+// The usual shape: one row of `table` out of a per-person map of lists
+// (allBooks[uid] and the like). lists() is read each time because a reload
+// replaces the map. after(item) runs once the row is really gone (files).
+function deleteRowWithUndo({ table, item, label, lists, render, after }){
+  const uid = item.user_id;
+  const at = (lists()[uid] || []).indexOf(item);
+  const restore = ()=>{
+    const m = lists();
+    const l = m[uid] || (m[uid] = []);
+    if(!l.some(x=> x.id === item.id)) l.splice(Math.max(0, Math.min(at, l.length)), 0, item);
+  };
+  deleteWithUndo({
+    label,
+    hide: ()=>{ const m = lists(); if(m[uid]) m[uid] = m[uid].filter(x=> x.id !== item.id); },
+    restore,
+    commit: async ()=>{
+      const { error } = await supabaseClient.from(table).delete().eq('id', item.id);
+      if(error){ console.error('Delete refused:', error); restore(); render(); alert(t('saveFailed')); return; }
+      if(after) await after(item);
+    },
+    render,
+  });
 }
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'hidden') undoFlush(); });
 window.addEventListener('pagehide', undoFlush);
@@ -28844,11 +28882,12 @@ async function updateBookPages(bookId, pages){
   if(b) b.pages_read = pages;
   renderReading();
 }
-async function deleteBook(bookId){
-  if(!confirm(t('deleteBookConfirm'))) return;
-  await supabaseClient.from('books').delete().eq('id', bookId);
-  allBooks[currentUser.id] = (allBooks[currentUser.id]||[]).filter(x=>x.id!==bookId);
-  renderReading();
+// One book (its notes are part of its own row) goes at once, with an Undo.
+function deleteBook(bookId){
+  const b = (allBooks[currentUser.id]||[]).find(x=>x.id===bookId);
+  if(!b) return;
+  expandedBookEdit.delete(bookId);
+  deleteRowWithUndo({ table: 'books', item: b, label: b.title, lists: ()=> allBooks, render: renderReading });
 }
 function genId(){ return (crypto.randomUUID ? crypto.randomUUID() : 'n'+Date.now()+Math.random().toString(16).slice(2)); }
 async function addBookNote(bookId, text, page){
@@ -28924,7 +28963,6 @@ function renderReading(){
     div.innerHTML =
       `<div class="item-top">
         <div><div class="item-title">${escapeHtml(b.title)} ${ownerTag}</div><div class="item-sub">${escapeHtml(b.author || '')}</div></div>
-        ${isMine ? `<button class="item-del" data-id="${b.id}" data-kind="book" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
       </div>
       <div class="item-meta">
         <span class="badge ${escapeHtml(b.status)}">${bookStatusLabel(b.status)}</span>
@@ -28934,7 +28972,6 @@ function renderReading(){
           <option value="finished" ${b.status==='finished'?'selected':''}>${bookStatusLabel('finished')}</option>
         </select>` : ''}
         ${b.total_pages ? (isMine ? `<input type="number" class="book-pages-input" data-id="${b.id}" min="0" max="${b.total_pages}" value="${b.pages_read||0}" title="${escapeHtml(t('tipPagesRead'))}"> / ${b.total_pages}p` : `${b.pages_read||0} / ${b.total_pages}p`) : ''}
-        ${isMine ? `<button class="linkbtn act-edit act-icon book-edit-toggle" data-id="${b.id}" title="${t('editBtn')}" aria-label="${t('editBtn')}">${ICON.pencil(14)}</button>` : ''}
         ${notes.length === 0 && !isMine ? '' : `<button class="linkbtn note-toggle" data-id="${b.id}">${notes.length === 0 ? t('addNote') : t('noteBtn') + ' (' + notes.length + ')'}</button>`}
       </div>
       ${progressHtml}
@@ -28947,6 +28984,12 @@ function renderReading(){
           <button class="export-btn act-save note-save-btn" data-book="${b.id}">${t('addNote')}</button>
         </div>` : ''}
       </div>`;
+    // Edit and delete ride on the row (swipeActsHtml), not in its body.
+    if(isMine){
+      div.classList.add('sw-row');
+      div.dataset.swKey = 'book:' + b.id;
+      div.insertAdjacentHTML('beforeend', swipeActsHtml('', swipeEditBtnHtml('book-edit-toggle', `data-id="${b.id}"`, t('editBtn')) + swipeDelBtnHtml('item-del', `data-id="${b.id}" data-kind="book"`, t('tipDelete'))));
+    }
     list.appendChild(div);
   });
   restoreOpenPanels(list, 'data-book-edit-for', keptBookEditPanels);
@@ -29106,11 +29149,11 @@ async function updateArticleStatus(articleId, status){
   if(a){ a.status = status; if(status==='finished') a.finished_at = todayStr(); }
   renderArticles();
 }
-async function deleteArticle(articleId){
-  if(!confirm(t('deleteArticleConfirm'))) return;
-  await supabaseClient.from('articles').delete().eq('id', articleId);
-  allArticles[currentUser.id] = (allArticles[currentUser.id]||[]).filter(x=>x.id!==articleId);
-  renderArticles();
+function deleteArticle(articleId){
+  const a = (allArticles[currentUser.id]||[]).find(x=>x.id===articleId);
+  if(!a) return;
+  expandedArticleEdit.delete(articleId);
+  deleteRowWithUndo({ table: 'articles', item: a, label: a.title, lists: ()=> allArticles, render: renderArticles });
 }
 async function addArticleNote(articleId, text, page){
   const a = (allArticles[currentUser.id]||[]).find(x=>x.id===articleId);
@@ -29173,7 +29216,6 @@ function renderArticles(){
     div.innerHTML =
       `<div class="item-top">
         <div><div class="item-title">${escapeHtml(a.title)} ${ownerTag}</div><div class="item-sub">${escapeHtml(subParts)}</div></div>
-        ${isMine ? `<button class="item-del" data-id="${a.id}" data-kind="article" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
       </div>
       <div class="item-meta">
         <span class="badge ${a.status}">${bookStatusLabel(a.status)}</span>
@@ -29183,7 +29225,6 @@ function renderArticles(){
           <option value="finished" ${a.status==='finished'?'selected':''}>${bookStatusLabel('finished')}</option>
         </select>` : ''}
         ${externalLinkHtml(a.link, extLinkLabel('linkOpen'))}
-        ${isMine ? `<button class="linkbtn act-edit act-icon article-edit-toggle" data-id="${a.id}" title="${t('editBtn')}" aria-label="${t('editBtn')}">${ICON.pencil(14)}</button>` : ''}
         ${notes.length === 0 && !isMine ? '' : `<button class="linkbtn note-toggle-article" data-id="${a.id}">${notes.length === 0 ? t('addNote') : t('noteBtn') + ' (' + notes.length + ')'}</button>`}
       </div>
       ${isMine ? `<div class="notes-panel ${expandedArticleEdit.has(a.id)?'':'hidden'}" data-ai-scope="article" data-article-edit-for="${a.id}">${expandedArticleEdit.has(a.id) ? buildArticleEditFieldsHtml(a) : ''}</div>` : ''}
@@ -29195,6 +29236,12 @@ function renderArticles(){
           <button class="export-btn act-save note-save-btn-article" data-article="${a.id}">${t('addNote')}</button>
         </div>` : ''}
       </div>`;
+    // Edit and delete ride on the row (swipeActsHtml), not in its body.
+    if(isMine){
+      div.classList.add('sw-row');
+      div.dataset.swKey = 'article:' + a.id;
+      div.insertAdjacentHTML('beforeend', swipeActsHtml('', swipeEditBtnHtml('article-edit-toggle', `data-id="${a.id}"`, t('editBtn')) + swipeDelBtnHtml('item-del', `data-id="${a.id}" data-kind="article"`, t('tipDelete'))));
+    }
     list.appendChild(div);
   });
   restoreOpenPanels(list, 'data-article-edit-for', keptArticleEditPanels);
@@ -29510,6 +29557,13 @@ async function deleteJob(jobId){
   // report: "No CV or resume? Why say it").
   const doomed = (allJobs[currentUser.id]||[]).find(x=>x.id===jobId);
   const hasCv = !!(doomed && doomed.resume_url), hasCover = !!(doomed && doomed.cover_letter_url);
+  // With nothing attached it is one row, and goes with an Undo; a CV or a
+  // cover letter goes with it for good, so that still asks.
+  if(doomed && !hasCv && !hasCover){
+    expandedJobEdit.delete(jobId);
+    deleteRowWithUndo({ table: 'job_applications', item: doomed, label: doomed.company, lists: ()=> allJobs, render: renderJobs });
+    return;
+  }
   const askKey = hasCv && hasCover ? 'deleteJobConfirmBoth'
     : hasCv ? 'deleteJobConfirmCv'
     : hasCover ? 'deleteJobConfirmCover' : 'deleteJobConfirm';
@@ -29737,7 +29791,6 @@ function renderJobs(){
     div.innerHTML =
       `<div class="item-top">
         <div><div class="item-title">${escapeHtml(j.company)} ${ownerTag}</div><div class="item-sub">${escapeHtml(j.role || '')} ${j.date_applied ? '· ' + escapeHtml(j.date_applied) : ''}</div></div>
-        ${isMine ? `<button class="item-del" data-id="${j.id}" data-kind="job" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
       </div>
       <div class="item-meta">
         <span class="badge ${j.status}">${jobStatusLabel(j.status)}</span>
@@ -29756,10 +29809,15 @@ function renderJobs(){
         ${externalLinkHtml(j.link, extLinkLabel('linkOpen'))}
         ${j.resume_url ? `<a href="#" class="stored-file-link" data-bucket="job-application-files" data-url="${escapeHtml(j.resume_url)}">${t('jobResumeView')}</a>` : ''}
         ${j.cover_letter_url ? `<a href="#" class="stored-file-link" data-bucket="job-application-files" data-url="${escapeHtml(j.cover_letter_url)}">${t('jobCoverLetterView')}</a>` : ''}
-        ${isMine ? `<button class="linkbtn act-edit act-icon job-edit-toggle" data-id="${j.id}" title="${t('editBtn')}" aria-label="${t('editBtn')}">${ICON.pencil(14)}</button>` : ''}
         ${addMyselfBtn}
       </div>
       ${isMine ? `<div class="notes-panel ${isEditOpen?'':'hidden'}" data-job-edit-for="${j.id}">${isEditOpen ? buildJobEditFieldsHtml(j) : ''}</div>` : ''}`;
+    // Edit and delete ride on the row (swipeActsHtml), not in its body.
+    if(isMine){
+      div.classList.add('sw-row');
+      div.dataset.swKey = 'job:' + j.id;
+      div.insertAdjacentHTML('beforeend', swipeActsHtml('', swipeEditBtnHtml('job-edit-toggle', `data-id="${j.id}"`, t('editBtn')) + swipeDelBtnHtml('item-del', `data-id="${j.id}" data-kind="job"`, t('tipDelete'))));
+    }
     list.appendChild(div);
   });
   list.querySelectorAll('.item-del[data-kind="job"]').forEach(btn=>{
@@ -29889,11 +29947,11 @@ async function updateCertStatus(certId, status){
   await saved(supabaseClient.from('certifications').update({ status }).eq('id', certId),
     ()=>{ if(c) c.status = was; renderCerts(); });
 }
-async function deleteCert(certId){
-  if(!confirm(t('deleteCertConfirm'))) return;
-  await supabaseClient.from('certifications').delete().eq('id', certId);
-  allCerts[currentUser.id] = (allCerts[currentUser.id]||[]).filter(x=>x.id!==certId);
-  renderCerts();
+function deleteCert(certId){
+  const c = (allCerts[currentUser.id]||[]).find(x=>x.id===certId);
+  if(!c) return;
+  expandedCertEdit.delete(certId);
+  deleteRowWithUndo({ table: 'certifications', item: c, label: c.name, lists: ()=> allCerts, render: renderCerts });
 }
 document.getElementById('addCertBtn').addEventListener('click', addCert);
 let expandedCertEdit = new Set();
@@ -30026,7 +30084,6 @@ function renderCerts(){
     div.innerHTML =
       `<div class="item-top">
         <div><div class="item-title">${escapeHtml(c.name)} ${ownerTag}</div><div class="item-sub">${escapeHtml(c.issuer || '')} ${c.date_completed ? '· ' + escapeHtml(c.date_completed) : ''}</div></div>
-        ${isMine ? `<button class="item-del" data-id="${c.id}" data-kind="cert" title="${escapeHtml(t('tipDelete'))}">✕</button>` : ''}
       </div>
       <div class="item-meta">
         <span class="badge ${c.status==='acquired' ? 'finished' : 'reading'}">${certStatusLabel(c.status)}</span>
@@ -30035,10 +30092,15 @@ function renderCerts(){
           <option value="acquired" ${c.status==='acquired'?'selected':''}>${certStatusLabel('acquired')}</option>
         </select>` : ''}
         ${externalLinkHtml(c.link, extLinkLabel('linkOpen'))}
-        ${isMine ? `<button class="linkbtn act-edit act-icon cert-edit-toggle" data-id="${c.id}" title="${t('editBtn')}" aria-label="${t('editBtn')}">${ICON.pencil(14)}</button>` : ''}
         ${addMyselfBtn}
       </div>
       ${isMine ? `<div class="notes-panel ${isEditOpen?'':'hidden'}" data-cert-edit-for="${c.id}">${isEditOpen ? buildCertEditFieldsHtml(c) : ''}</div>` : ''}`;
+    // Edit and delete ride on the row (swipeActsHtml), not in its body.
+    if(isMine){
+      div.classList.add('sw-row');
+      div.dataset.swKey = 'cert:' + c.id;
+      div.insertAdjacentHTML('beforeend', swipeActsHtml('', swipeEditBtnHtml('cert-edit-toggle', `data-id="${c.id}"`, t('editBtn')) + swipeDelBtnHtml('item-del', `data-id="${c.id}" data-kind="cert"`, t('tipDelete'))));
+    }
     list.appendChild(div);
   });
   list.querySelectorAll('.item-del[data-kind="cert"]').forEach(btn=>{
@@ -58227,6 +58289,7 @@ async function loadActiveVacationDetails(){
   ]);
   expActiveMembers = memRows || [];
   expExpenses = expRows || [];
+  undoReapplyPending();
 }
 function activeVacation(){ return expVacations.find(v=>v.id===expActiveVacationId) || null; }
 function acceptedMemberIds(){ return expActiveMembers.filter(m=>m.status==='accepted').map(m=>m.user_id); }
@@ -58792,7 +58855,8 @@ function expExpenseRowHtml(e, showDate){
   const rowMuted = !expIsCounted(e);
   const selfMuted = expMutedIds.has(e.id);
   const rowLabel = t(selfMuted ? 'expCountExpense' : 'expDontCountExpense');
-  return `<div class="item-row${rowMuted?' exp-muted':''}" data-share="expense:${escapeHtml(String(e.id))}">
+  // Counting it in or out shows on a right swipe; edit and delete on a left.
+  return `<div class="item-row sw-row${rowMuted?' exp-muted':''}" data-share="expense:${escapeHtml(String(e.id))}" data-sw-key="expense:${escapeHtml(String(e.id))}">
       <div class="item-top">
         <div><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${info.color};margin-right:6px;"></span><span class="item-title">${escapeHtml(e.description || expCategoryLabel(e.category))}</span></div>
         <span style="font-family:'Space Grotesk',monospace;font-weight:700;">${expShowMoney(amt, vac && vac.currency)}${vac ? expConvertedInline(amt, vac.currency) : ''}</span>
@@ -58801,10 +58865,9 @@ function expExpenseRowHtml(e, showDate){
         ${showDate ? `<span style="font-family:'Space Grotesk',monospace;font-size:11.5px;color:var(--ink-soft);">${escapeHtml(e.date)}</span>` : ''}
         <span class="badge" style="background:${info.color}22;color:${info.color};">${escapeHtml(expCategoryLabel(e.category))}</span>
         <span style="color:var(--ink-soft);font-size:11.5px;">${escapeHtml(t('expPaidBy'))} ${escapeHtml(nameFor(e.paid_by))}</span>
-        <button class="linkbtn act-off act-icon exp-mute-btn" data-id="${e.id}" aria-pressed="${selfMuted?'true':'false'}" title="${escapeHtml(rowLabel)}" aria-label="${escapeHtml(rowLabel)}">${selfMuted ? ICON.plus(14) : ICON.minus(14)}</button>
-        <button class="linkbtn act-edit act-icon exp-edit-btn" data-id="${e.id}" title="${t('editBtn')}" aria-label="${t('editBtn')}">${ICON.pencil(14)}</button>
-        <button class="item-del exp-del-btn" data-id="${e.id}" title="${escapeHtml(t('tipDelete'))}">✕</button>
-      </div>
+      </div>${swipeActsHtml(
+        `<button type="button" class="sw-btn exp-mute-btn" data-id="${e.id}" aria-pressed="${selfMuted?'true':'false'}" title="${escapeHtml(rowLabel)}" aria-label="${escapeHtml(rowLabel)}">${selfMuted ? ICON.plus(14) : ICON.minus(14)}</button>`,
+        swipeEditBtnHtml('exp-edit-btn', `data-id="${e.id}"`, t('editBtn')) + swipeDelBtnHtml('exp-del-btn', `data-id="${e.id}"`, t('tipDelete')))}
     </div>`;
 }
 function expWireExpenseRows(root){
@@ -59277,12 +59340,23 @@ async function saveExpenseSubmit(){
     renderExpenditure();
   } finally { expSaving = false; }
 }
-async function deleteExpense(id){
-  if(!confirm(t('expDeleteConfirm'))) return;
-  await supabaseClient.from('expenses').delete().eq('id', id);
-  expExpenses = expExpenses.filter(e=>e.id!==id);
+// One expense goes at once, with an Undo (the panel on it closes).
+function deleteExpense(id){
+  const e = expExpenses.find(x=> x.id === id);
   document.getElementById('expenseModal').classList.add('hidden');
-  renderExpenditure();
+  if(!e) return;
+  const at = expExpenses.indexOf(e);
+  const restore = ()=>{ if(!expExpenses.some(x=> x.id === id)) expExpenses.splice(Math.min(at, expExpenses.length), 0, e); };
+  deleteWithUndo({
+    label: e.description || expCategoryLabel(e.category),
+    hide: ()=>{ expExpenses = expExpenses.filter(x=> x.id !== id); },
+    restore,
+    commit: async ()=>{
+      const { error } = await supabaseClient.from('expenses').delete().eq('id', id);
+      if(error){ console.error('Delete refused:', error); restore(); renderExpenditure(); alert(t('saveFailed')); }
+    },
+    render: renderExpenditure,
+  });
 }
 document.getElementById('saveExpenseBtn').addEventListener('click', saveExpenseSubmit);
 document.getElementById('expDeleteBtn').addEventListener('click', ()=> deleteExpense(expEditingId));
