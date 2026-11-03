@@ -99,13 +99,34 @@ function renderResume(data, root){
   const body = (data.sections || []).map(renderSection).join('');
   root.innerHTML = renderHeader(data.header) + `<div class="r-body">${body}</div>`;
 }
+function langOf(root){
+  return ((root.closest('[lang]') || document.documentElement).lang || 'en').slice(0, 2);
+}
 function fail(root){
-  const lang = ((root.closest('[lang]') || document.documentElement).lang || 'en').slice(0, 2);
-  root.innerHTML = `<p class="hint">${FAILED[lang] || FAILED.en}</p>`;
+  root.innerHTML = `<p class="hint">${FAILED[langOf(root)] || FAILED.en}</p>`;
+  root.removeAttribute('aria-busy');
+}
+// A skeleton of the card while its row is on the way (Kristoffer, 3 Nov: "i
+// wish we had a skeleton load (you know where you sorta see the preview of
+// what it is opening, like the shapes of it)"): the navy band with a name and
+// the contact lines, then three sections. Fixed widths, not random, so it
+// looks the same every time. The shapes are hidden from screen readers; the
+// word is what they read. resume.css holds the 150 ms delay before it shows.
+const LOADING = { en: 'Loading', ko: '불러오는 중', vi: 'Đang tải' };
+function skeletonHtml(root){
+  const bar = (w, cls)=> `<span class="r-skel-bar${cls ? ' ' + cls : ''}" style="width:${w};"></span>`;
+  const section = (head, lines)=> bar(head, 'r-skel-head') + bar('100%', 'r-skel-rule') + lines.map(w=> bar(w)).join('');
+  return `<div class="r-skel"><span class="r-skel-sr">${LOADING[langOf(root)] || LOADING.en}</span>
+    <div aria-hidden="true">
+      <div class="r-header"><div class="r-skel-who">${bar('42%', 'r-skel-name')}${bar('30%')}</div>
+        <div class="r-skel-contact">${bar('120px')}${bar('100px')}${bar('150px')}</div></div>
+      <div class="r-body">${section('22%', ['96%', '88%', '60%'])}${section('28%', ['70%', '92%', '84%', '76%', '48%'])}${section('18%', ['64%', '58%'])}</div>
+    </div></div>`;
 }
 window.loadResumes = function(){
   const roots = Array.from(document.querySelectorAll('[data-resume-id]'));
   const ids = roots.map(r=> r.dataset.resumeId);
+  roots.forEach(root=>{ root.innerHTML = skeletonHtml(root); root.setAttribute('aria-busy', 'true'); });
   fetch(`${SUPABASE_URL}/rest/v1/resume_content?id=in.(${ids.map(encodeURIComponent).join(',')})&select=id,content,pdf_url`, {
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
   })
@@ -116,6 +137,7 @@ window.loadResumes = function(){
         const row = (rows || []).find(x=> x.id === id);
         if(!row || !row.content){ fail(root); return; }
         renderResume(row.content, root);
+        root.removeAttribute('aria-busy');
         // A version without its own PDF shows no download at all.
         const pdf = document.querySelector(`[data-resume-pdf="${id}"]`);
         if(pdf && typeof row.pdf_url === 'string' && row.pdf_url.startsWith(PDF_PREFIX)){

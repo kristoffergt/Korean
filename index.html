@@ -2503,6 +2503,57 @@ html.chat-full-open{overflow:hidden;}
   .icon-btn, .lang-switch, .who .name, #whoName{transition-duration:0s;}
   .icon-btn:active, .lang-switch:active, #whoName:active{transform:none;}
 }
+/* SKELETONS (real-user request, 3 Nov: "if anything requires extra loading
+   ... i wish we had a skeleton load (you know where you sorta see the preview
+   of what it is opening, like the shapes of it)"). Grey shapes in the layout
+   of what is on its way, drawn by skeletonHtml()/showSkeleton() in the
+   script; the real render simply replaces them.
+   They stay invisible for the first 150 ms (skelIn's delay, 'forwards' fill,
+   never 'both'), so a fast load goes straight to content with nothing
+   blinking in between. With the motion switched off the delay stays and only
+   the fade and the shimmer go: appearing late is not motion, and a skeleton
+   flashing for a frame is exactly what the delay is there to stop.
+   Own tokens rather than --line: a shape has to read on --paper AND on a
+   card's --paper-dim, in both themes. No background transition anywhere here
+   (body.theme-swapping already kills them for two frames on a theme swap). */
+:root{--skel:rgba(30,31,34,0.10);--skel-hi:rgba(255,255,255,0.55);}
+body.dark{--skel:rgba(237,237,239,0.09);--skel-hi:rgba(255,255,255,0.07);}
+@keyframes skelIn{from{opacity:0;}to{opacity:1;}}
+@keyframes skelShimmer{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
+.skel-wrap{opacity:0;animation:skelIn .25s ease 150ms forwards;text-align:left;}
+/* Where the wait has already been held back somewhere else (the start-up
+   panel is not shown at all until LOADING_SCREEN_DELAY_MS has passed). */
+.skel-wrap.skel-now{opacity:1;animation:none;}
+.skel-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
+.skel-bar{display:block;position:relative;overflow:hidden;background:var(--skel);border-radius:6px;height:12px;}
+.skel-bar::after{content:'';position:absolute;inset:0;transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,var(--skel-hi),transparent);animation:skelShimmer 1.4s ease-in-out infinite;}
+.skel-circle{border-radius:50%;flex:none;}
+/* A list row: the same 9px padding, hairline and 14px x 1.4 line box as the
+   board rows, so the real rows land where the shapes were. */
+.skel-row{display:flex;align-items:center;gap:10px;padding:9px 0;min-height:38.6px;border-bottom:1px solid var(--line);}
+.skel-row:last-child{border-bottom:none;}
+.skel-row .skel-bar{flex:none;}
+.skel-row .skel-grow{flex:0 1 auto;min-width:0;}
+.skel-title{height:16px;margin:2px 0 14px;}
+.skel-card{background:var(--paper-dim);border:1px solid var(--line);border-radius:18px;padding:20px 22px;margin-bottom:22px;}
+.skel-pills{display:flex;gap:8px;margin-bottom:16px;}
+.skel-pills .skel-bar{height:30px;border-radius:999px;}
+/* A phone's sub-tabs live in the dock at the bottom, not above the page. */
+@media (max-width: 640px){ .skel-pills{display:none;} }
+.skel-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.skel-grid .skel-bar{height:58px;border-radius:10px;}
+.skel-lines .skel-bar + .skel-bar{margin-top:11px;}
+.skel-chat{display:flex;flex-direction:column;gap:10px;}
+.skel-chat .skel-bar{height:34px;border-radius:14px;}
+.skel-chat .skel-mine{align-self:flex-end;}
+.skel-inline{display:inline-block;vertical-align:middle;width:120px;}
+@media (prefers-reduced-motion: reduce){
+  .skel-wrap{animation-duration:0s;}
+  .skel-bar::after{display:none;}
+}
+body.no-anim-ui .skel-wrap{animation-duration:0s;}
+body.no-anim-ui .skel-bar::after{display:none;}
 .cm-threads{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 8px;}
 .cm-thread{display:inline-flex;align-items:center;gap:5px;background:var(--paper);
   border:1px solid var(--line);color:var(--ink-soft);border-radius:999px;
@@ -5410,6 +5461,7 @@ body.dark{--comment-hl:rgba(242,190,34,.24);--comment-hl-on:rgba(242,190,34,.5);
 #psQuill .ql-editor{min-height:120px;}
 #psQuill.ql-container.ql-snow{border:1px solid var(--line);border-radius:8px;background:var(--paper);}
 .ps-msg{color:var(--ink-soft);font-size:14px;padding:30px 0;text-align:center;}
+.ps-msg[aria-busy="true"]{padding:4px 0 10px;}
 /* ---- Search the whole app. */
 .app-search-btn{display:inline-flex;align-items:center;gap:6px;}
 .app-search-ico{display:inline-flex;}
@@ -5876,7 +5928,7 @@ button.search-clear:active{transform:scale(0.92);}
        One gate here covers every tab and sub-tab at once, present and
        future, without hunting each one down. -->
   <div class="tab-panel" id="panelLoading">
-    <div class="card"><p class="hint" id="panelLoadingText"></p></div>
+    <div id="panelLoadingText"></div>
   </div>
   <!-- STUDY TAB -->
   <div class="tab-panel hidden" id="panelStudy">
@@ -7081,8 +7133,8 @@ button.search-clear:active{transform:scale(0.92);}
          the pool of people you can invite into a vacation -- no new circle
          concept, see sql migrations/expenditure_migration.sql. -->
     <div id="calendarExpensesSection" class="hidden">
-      <div id="expLoadingState" class="card hidden">
-        <p class="hint" id="expLoadingStateText"></p>
+      <div id="expLoadingState" class="hidden">
+        <div id="expLoadingStateText"></div>
       </div>
       <div id="expVacationsCard" class="card hidden">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
@@ -14818,9 +14870,73 @@ function loadingHtml(text){
   return escapeHtml(String(text || '').replace(/(\u2026|\.\.\.)\s*$/, '')) + WAVE_DOTS_HTML;
 }
 function setLoadingText(el, text){ if(el) el.innerHTML = loadingHtml(text); }
+// SKELETONS (real-user request, 3 Nov: "i wish we had a skeleton load (you
+// know where you sorta see the preview of what it is opening, like the shapes
+// of it)"). The rolling dots above stay for things a person just DID (saving,
+// searching, sending); a VIEW waiting on its data draws the shapes of that
+// view instead. The CSS block of the same name holds the 150 ms delay that
+// keeps a fast load from blinking, and the motion switches.
+//   skeletonHtml(kind, n, opts) -> markup, for a render that builds a string
+//   showSkeleton(el, kind, n, opts) -> fills el, marks it aria-busy, and
+//     leaves an already-drawn skeleton of the same kind alone, so a re-render
+//     during the wait (renderAll every ~600 ms of realtime echo) does not
+//     restart its fade. Whatever the real render writes into el next takes
+//     the skeleton and the aria-busy away with it (the observer below), so a
+//     loader only ever has to call this before it awaits.
+// Kinds: 'rows' (list rows; opts.date = width of a date stub in px), 'card',
+// 'lines', 'note', 'chat', 'line' (one short inline bar), 'page' (the whole
+// tab: sub-tab pills and two cards). opts.now skips the delay.
+// Only on a FIRST load or a real fetch: data already in memory is drawn as it
+// is, never behind a skeleton.
+var SKEL_WIDTHS = ['78%','62%','86%','55%','70%','48%','82%','66%'];
+function skeletonHtml(kind, n, opts){
+  opts = opts || {};
+  const bar = (w, cls)=> `<span class="skel-bar${cls ? ' ' + cls : ''}" style="width:${w};"></span>`;
+  const rows = k=> Array.from({ length: k }, (_, i)=>
+    `<div class="skel-row">${opts.date ? bar(opts.date + 'px') : ''}${bar(SKEL_WIDTHS[i % SKEL_WIDTHS.length], 'skel-grow')}</div>`).join('');
+  // A paragraph's last line is the short one.
+  const lines = k=> `<div class="skel-lines">${Array.from({ length: k }, (_, i)=>
+    bar(i === k - 1 ? '45%' : SKEL_WIDTHS[(i + 2) % SKEL_WIDTHS.length])).join('')}</div>`;
+  let inner = '';
+  if(kind === 'rows') inner = rows(n || 5);
+  else if(kind === 'lines') inner = lines(n || 4);
+  else if(kind === 'card') inner = `<div class="skel-card">${bar('32%', 'skel-title')}${rows(n || 4)}</div>`;
+  else if(kind === 'note') inner = bar('46%', 'skel-title') + bar('28%') + '<div style="height:20px;"></div>' + lines(n || 6);
+  else if(kind === 'chat'){
+    // Theirs on the left, mine on the right, in the order a conversation goes.
+    const w = ['58%','40%','66%','34%','50%','44%'];
+    inner = `<div class="skel-chat">${Array.from({ length: n || 4 }, (_, i)=>
+      bar(w[i % w.length], i % 3 === 1 ? 'skel-mine' : '')).join('')}</div>`;
+  }
+  else if(kind === 'line') inner = bar('120px', 'skel-inline');
+  else if(kind === 'page') inner = `<div class="skel-pills">${bar('84px')}${bar('96px')}${bar('72px')}</div>`
+    + `<div class="skel-card">${bar('32%', 'skel-title')}${rows(4)}</div>`
+    + `<div class="skel-card">${bar('24%', 'skel-title')}${rows(3)}</div>`;
+  // The words are read, the shapes are not: they say nothing to a screen reader.
+  return `<div class="skel-wrap${opts.now ? ' skel-now' : ''}" data-skel="${kind}">`
+    + `<span class="skel-sr">${escapeHtml(t('recapLoadingHint'))}</span><div aria-hidden="true">${inner}</div></div>`;
+}
+function showSkeleton(el, kind, n, opts){
+  if(!el) return;
+  const cur = el.firstElementChild;
+  const same = cur && el.childElementCount === 1 && cur.classList.contains('skel-wrap') && cur.dataset.skel === kind;
+  if(!same) el.innerHTML = skeletonHtml(kind, n, opts);
+  el.setAttribute('aria-busy', 'true');
+  if(!el._skelObs && typeof MutationObserver === 'function'){
+    el._skelObs = new MutationObserver(()=>{ if(!el.querySelector(':scope > .skel-wrap')) skeletonDone(el); });
+    el._skelObs.observe(el, { childList: true });
+  }
+}
+function skeletonDone(el){
+  if(!el) return;
+  el.removeAttribute('aria-busy');
+  if(el._skelObs){ el._skelObs.disconnect(); el._skelObs = null; }
+}
 async function withLoadingGate(loadFn){
   appDataLoading = true;
-  setLoadingText(document.getElementById('panelLoadingText'), t('recapLoadingHint'));
+  // Drawn at once (skel-now): the panel itself is already held back by
+  // LOADING_SCREEN_DELAY_MS, so a second delay would only leave it blank.
+  showSkeleton(document.getElementById('panelLoadingText'), 'page', 0, { now: true });
   ['panelStudy','panelReading','panelJobs','panelCalendar','panelYonsei','panelLoading'].forEach(id=>{
     document.getElementById(id).classList.add('hidden');
   });
@@ -14835,6 +14951,8 @@ async function withLoadingGate(loadFn){
   } finally {
     clearTimeout(timer);
     appDataLoading = false;
+    // The panel is only hidden, never redrawn, so nothing else clears this.
+    skeletonDone(document.getElementById('panelLoadingText'));
     switchTopLevelTab(activeTab);
     // The sub-tab of the start choice, once per page load, and only while the
     // reader is still on the tab it belongs to.
@@ -19375,9 +19493,17 @@ function subscribeCircleMessages(){
     .subscribe();
 }
 document.getElementById('friendsBtn').addEventListener('click', async ()=>{
-  await refreshLinkData();
+  // Opens at once on what loadAllData already read, then checks for news:
+  // it used to wait on two reads in a row before anything appeared, which on
+  // a slow connection is a button that seems not to work. Drawn again only
+  // if the circle actually changed, so nothing being typed is wiped by an
+  // identical redraw (rows sorted first: the reads have no order of their own).
+  const snap = ()=> [linkGroupRows, linkSharingRows].map(rs=> (rs || []).map(r=> JSON.stringify(r)).sort().join('|')).join('#');
+  const before = snap();
   renderLinkedCircle();
   document.getElementById('friendsModal').classList.remove('hidden');
+  await refreshLinkData();
+  if(snap() !== before) renderLinkedCircle();
 });
 document.getElementById('chatLauncher').addEventListener('click', async ()=>{
   if(!circleMessagesLoaded) await loadCircleMessages();
@@ -20242,7 +20368,7 @@ function ptThreadHtml(){
     <div class="cm-who cm-pt-who">${ptMarkHtml()}Productivity Tracker</div>
     <div class="cm-body">${formatMessageHtml(t('ptThreadIntro'))}</div>
   </div>`;
-  if(!ptRemindersLoaded) return intro + `<p class="hint" style="margin:0;">${loadingHtml(t('circleSearching'))}</p>`;
+  if(!ptRemindersLoaded) return intro + skeletonHtml('chat', 3);
   const events = [];
   ptReminders.forEach((r, i)=>{
     events.push({ at: r.created_at, n: i * 3, html: ptMineHtml(r) });
@@ -30543,14 +30669,20 @@ setInterval(maybeAutoTriggerJobBoardSync, JOB_BOARD_AUTO_SYNC_CHECK_MS);
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState === 'visible') maybeAutoTriggerJobBoardSync();
 });
+// Opening the sub-tab reads the board again every time, but only the FIRST
+// read blanks the list (to its skeleton): after that the rows already held
+// stay on screen while the fresh ones are on their way, instead of the list
+// vanishing for a round trip on every visit.
+var jobBoardFetched = false;
 async function fetchJobBoardItems(){
-  jobBoardLoading = true;
-  renderJobBoard();
+  jobBoardLoading = !jobBoardFetched;
+  if(jobBoardLoading) renderJobBoard();
   const [itemsRes] = await Promise.all([
     supabaseClient.from('yonsei_jobboard_items').select('*'),
     ensureJobBoardSeenLoaded()
   ]);
-  jobBoardItems = (!itemsRes.error && itemsRes.data) ? itemsRes.data : [];
+  if(!itemsRes.error && itemsRes.data){ jobBoardItems = itemsRes.data; jobBoardFetched = true; }
+  else if(!jobBoardFetched) jobBoardItems = [];
   jobBoardLoading = false;
   renderJobBoard();
 }
@@ -30619,7 +30751,8 @@ function renderJobBoard(){
   const pagination = document.getElementById('jobBoardPagination');
   if(!list) return;
   if(jobBoardLoading){
-    list.innerHTML = `<div class="hint">${loadingHtml(t('jobBoardLoading'))}</div>`;
+    // A page of rows in the jobboard-row shape: date stub, then the title.
+    showSkeleton(list, 'rows', JOB_BOARD_PAGE_SIZE, { date: 76 });
     if(hint) hint.textContent = '';
     if(pagination) pagination.innerHTML = '';
     return;
@@ -32748,7 +32881,7 @@ function renderYonseiBoards(){
   const pagination = document.getElementById('yonseiBoardsPagination');
   if(!list) return;
   if(yonseiBoardsLoading){
-    list.innerHTML = `<div class="hint">${loadingHtml(t('yonseiBoardsLoading'))}</div>`;
+    showSkeleton(list, 'rows', YONSEI_BOARD_PAGE_SIZE, { date: 58 });
     if(pagination) pagination.innerHTML = '';
     return;
   }
@@ -45641,6 +45774,9 @@ function buildQuizHistoryHtml(){
   const header = `<div class="note-group-header" id="quizHistoryHeader" style="font-size:12px;margin-top:14px;">
     <span>${quizHistoryOpen ? '▾' : '▸'}</span> ${t('quizHistoryHeader')}</div>`;
   if(!quizHistoryOpen) return header;
+  // Opened before the attempts have been read: the summary line and a few
+  // rows in their shapes while they are fetched.
+  if(quizHistory === null && currentUser) return header + skeletonHtml('lines', 4);
   if(!quizHistory || quizHistory.length === 0){
     return header + `<div class="quiz-cluster-note">${t('quizNoAttemptsYet')}</div>`;
   }
@@ -45665,8 +45801,13 @@ function bindQuizHistoryToggle(){
   if(!el) return;
   el.addEventListener('click', async ()=>{
     quizHistoryOpen = !quizHistoryOpen;
-    if(quizHistoryOpen && quizHistory === null) await loadQuizHistory();
+    // Open at once (with its skeleton), not after the read: a click that does
+    // nothing for a round trip reads as a click that missed.
     renderGrammarQuiz();
+    if(quizHistoryOpen && quizHistory === null){
+      await loadQuizHistory();
+      renderGrammarQuiz();
+    }
   });
 }
 async function recordQuizAttempt(){
@@ -47639,7 +47780,7 @@ function ttHay(it){
 function loadTopikTips(){
   if(topikTips || topikTipsLoad) return topikTipsLoad;
   const body = document.getElementById('topikTipsBody');
-  body.innerHTML = '<p class="hint">' + escapeHtml(t('topikTipsLoading')) + '</p>';
+  showSkeleton(body, 'rows', 6);
   topikTipsLoad = fetch('topik-tips.json?v=' + TOPIK_TIPS_VER)
     .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(d=>{ topikTips = d; topikTipsReady = true; renderTopikTips(); })
@@ -55970,7 +56111,8 @@ document.getElementById('versionHistoryToggle').addEventListener('click', async 
   if(!panel.classList.contains('hidden')){ panel.classList.add('hidden'); return; }
   panel.classList.remove('hidden');
   if(!noteVersionsLoaded(note)){
-    panel.innerHTML = `<div class="empty">${loadingHtml(t('recapLoadingHint'))}</div>`;
+    // One row per version: the stamps read with the note already say how many.
+    showSkeleton(panel, 'rows', Math.max(1, Math.min(noteVersionCount(note) ?? 2, NOTE_VERSIONS_KEPT)));
     const loaded = await loadNoteVersions('course_notes', note);
     // Closed, or another note opened, while it was on its way.
     if(panel.classList.contains('hidden') || selectedLectureId !== note.id) return;
@@ -56320,7 +56462,8 @@ document.getElementById('notebookVersionHistoryToggle').addEventListener('click'
   if(!panel.classList.contains('hidden')){ panel.classList.add('hidden'); return; }
   panel.classList.remove('hidden');
   if(!noteVersionsLoaded(note)){
-    panel.innerHTML = `<div class="empty">${loadingHtml(t('recapLoadingHint'))}</div>`;
+    // One row per version: the stamps read with the note already say how many.
+    showSkeleton(panel, 'rows', Math.max(1, Math.min(noteVersionCount(note) ?? 2, NOTE_VERSIONS_KEPT)));
     const loaded = await loadNoteVersions('notebook_notes', note);
     if(panel.classList.contains('hidden') || selectedNotebookNoteId !== note.id) return;
     if(!loaded){ panel.innerHTML = `<div class="empty">${escapeHtml(t('versionsLoadFailed'))}</div>`; return; }
@@ -58251,7 +58394,9 @@ async function openPublicSharePage(token){
   const wrap = document.getElementById('psWrap');
   const titleEl = document.getElementById('psTitle');
   const meta = document.getElementById('psMeta');
-  setLoadingText(msg, t('recapLoadingHint'));
+  // The shapes of the shared note (title, who shared it, its text) where the
+  // note will be, rather than a line of text in the middle of an empty card.
+  showSkeleton(msg, 'note', 7);
   msg.classList.remove('hidden');
   wrap.classList.add('hidden');
   let data = null;
@@ -58636,7 +58781,7 @@ function renderExpenditure(){
   document.getElementById('expLoadingState').classList.toggle('hidden', expInitialLoadDone);
   document.getElementById('expVacationsCard').classList.toggle('hidden', !expInitialLoadDone);
   if(!expInitialLoadDone){
-    setLoadingText(document.getElementById('expLoadingStateText'), t('recapLoadingHint'));
+    showSkeleton(document.getElementById('expLoadingStateText'), 'card', 3);
     document.getElementById('expEmptyState').classList.add('hidden');
     document.getElementById('expActiveContent').classList.add('hidden');
     return;
@@ -60471,7 +60616,7 @@ function closeAppSearch(){ document.getElementById('appSearchModal').classList.a
   // Set once here, not via STATIC_MAP: STATIC_MAP entries get re-applied on
   // every later language switch too, which would stomp the real "▸ Recap"
   // toggle renderRecap() puts here once data actually arrives.
-  setLoadingText(document.getElementById('recapHeader'), t('recapLoadingHint'));
+  showSkeleton(document.getElementById('recapHeader'), 'line');
   applyDarkMode(themeChoice() === 'system' ? !!(systemDarkMq && systemDarkMq.matches) : themeChoice() === 'dark', false);
   renderTopikCountdown();
   renderMonthGrid();

@@ -101,12 +101,40 @@ h2.r-section:first-of-type{margin-top:8px;}
 .r-info-row + .r-info-row{margin-top:1px;}
 .r-info-label{font-weight:700; flex:0 0 auto; min-width:78px;}
 
+/* The resume's own skeleton while its row is fetched (resume.js
+   skeletonHtml): the navy band and a few sections in their shapes, inside
+   the real .r-header/.r-body so the padding is the real padding. Like the
+   card itself it is the same in both themes. Invisible for the first 150 ms
+   ('forwards', never 'both', with a delay), so a quick answer never blinks. */
+@keyframes rSkelIn{from{opacity:0;}to{opacity:1;}}
+@keyframes rSkelShimmer{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
+.r-skel{opacity:0; animation:rSkelIn .25s ease 150ms forwards;}
+.r-skel-sr{position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
+.r-skel-bar{display:block; position:relative; overflow:hidden; height:10px; border-radius:5px; background:rgba(17,17,17,.08);}
+.r-skel-bar::after{content:''; position:absolute; inset:0; transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent); animation:rSkelShimmer 1.4s ease-in-out infinite;}
+.r-header .r-skel-bar{background:rgba(255,255,255,.2);}
+.r-header .r-skel-bar::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent);}
+.r-skel-name{height:20px; margin:2px 0 10px;}
+.r-skel-who{flex:1; min-width:0;}
+.r-skel-contact{display:flex; flex-direction:column; align-items:flex-end; gap:8px; padding-top:4px;}
+.r-skel-head{height:11px; margin:16px 0 4px; background:rgba(27,54,84,.22);}
+.r-skel-rule{height:1.5px; border-radius:0; margin-bottom:10px; background:rgba(27,54,84,.4);}
+.r-skel-bar + .r-skel-bar:not(.r-skel-head):not(.r-skel-rule){margin-top:7px;}
+.r-body > .r-skel-head:first-child{margin-top:8px;}
+@media (prefers-reduced-motion: reduce){
+  .r-skel{animation-duration:0s;}
+  .r-skel-bar::after{display:none;}
+}
+
 @media (max-width:640px){
   .resume{font-size:11px;}
   .resume > .hint{padding:18px;}
   .r-header{flex-direction:column; gap:6px; padding:18px 18px 16px;}
   .r-body{padding:18px 18px 22px;}
   .r-contact{text-align:left;}
+  .r-skel-contact{align-items:flex-start;}
+  .r-skel-who{align-self:stretch;}
   .r-row, .r-sub, .r-row .r-left, .r-row .r-right, .r-sub > span:first-child, .r-sub .r-right{display:block;}
   .r-row .r-right, .r-sub .r-right{text-align:left; white-space:normal; padding-left:0;}
   /* r-date-float lives inside the first <li>, so on mobile it's hidden
