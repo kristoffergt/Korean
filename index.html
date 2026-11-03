@@ -4118,6 +4118,8 @@ body.dark .ql-snow .ql-tooltip a.ql-preview{color:var(--celadon-3);}
   /* The chat launcher is the one other thing anchored to that corner, and at
      its own 10px it would have sat under the bar. */
   #chatDock{bottom:calc(var(--dock-bottom) + var(--dock-space) + var(--subdock-space, 0px) + 10px);}
+  /* The toasts (share, Undo) stand above both bars, not under them. */
+  body .share-toast{bottom:calc(var(--dock-bottom) + var(--dock-space) + var(--subdock-space, 0px) + 12px);}
   /* THE SUB-TABS RIDE ON THE BAR. A panel's own row (Log, Grammar, Writing...)
      is moved out of the top of the panel into a glass strip sitting just
      above the floating bar, where the thumb already is (real-user request:
@@ -5180,6 +5182,55 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
 .share-toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto;}
 .share-toast-open{border:none;background:none;color:var(--paper);font:inherit;font-weight:800;padding:0;cursor:pointer;text-decoration:underline;}
 .share-toast-open:hover,.share-toast-open:focus{background:none;color:var(--paper);}
+/* ---- Swipe rows (swipeActsHtml) and the Undo toast (deleteWithUndo).
+   A pointer: the row's buttons sit at its end, unseen until it is hovered or
+   holds focus. Touch: they lie behind the row, in a tray only as wide as the
+   gap the finger opens (--sw-x, negative = moved left). */
+.undo-toast{z-index:3002;}
+.undo-toast .undo-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sw-row{position:relative;}
+.sw-acts{display:inline-flex;align-items:center;gap:4px;flex:none;}
+.sw-tray{display:inline-flex;align-items:center;gap:4px;}
+.sw-btn{background:none;border:none;border-radius:0;padding:2px 5px;margin:0;font:inherit;font-size:13px;line-height:1;cursor:pointer;color:var(--ink-soft);display:inline-flex;align-items:center;justify-content:center;transform-origin:center;transition:transform .13s cubic-bezier(.4,0,.2,1);}
+.sw-btn:hover,.sw-btn:focus{background:none;color:var(--ink-soft);}
+.sw-btn.sw-edit,.sw-btn.sw-edit:hover,.sw-btn.sw-edit:focus{color:var(--edit);}
+.sw-btn.sw-del,.sw-btn.sw-del:hover,.sw-btn.sw-del:focus{color:var(--danger);font-size:15px;}
+.sw-btn .sw-ic-touch{display:none;}
+.sw-btn.sw-on,.sw-btn.sw-on:hover,.sw-btn.sw-on:focus{color:var(--on);}
+.ev-sub-mark{display:inline-flex;vertical-align:-1px;margin-left:6px;color:var(--on);}
+@media (hover: hover) and (pointer: fine){
+  .sw-acts{opacity:0;transition:opacity 120ms ease;}
+  .sw-row:hover > .sw-acts,.sw-row:focus-within > .sw-acts{opacity:1;}
+  .sw-btn:hover:not(:disabled){transform:scale(1.2);}
+  .sw-btn:active:not(:disabled){transform:scale(.94);transition-duration:.06s;}
+  /* The to-do's day mark keeps its overhang, so it does not heighten the row. */
+  .sw-acts .sw-btn.todo-day-pick{margin:-7px -4px;padding:0;}
+}
+@media not all and (hover: hover) and (pointer: fine){
+  .sw-row{touch-action:pan-y pinch-zoom;--sw-x:0px;}
+  .sw-row > .sw-acts{display:contents;}
+  .sw-row > .sw-acts > .sw-tray{position:absolute;top:0;bottom:0;gap:0;overflow:hidden;z-index:2;align-items:stretch;}
+  .sw-row > .sw-acts > .sw-main{right:0;width:max(0px, calc(-1 * var(--sw-x)));}
+  .sw-row > .sw-acts > .sw-more{left:0;width:max(0px, var(--sw-x));background:color-mix(in srgb, var(--ink) 9%, var(--paper));}
+  .sw-tray .sw-btn{flex:1 1 0;min-width:0;width:auto;height:auto;margin:0;padding:0;overflow:hidden;color:var(--ink);transition:flex-grow 160ms ease;}
+  .sw-tray .sw-btn:hover,.sw-tray .sw-btn:focus{color:var(--ink);}
+  .sw-tray .sw-btn.sw-on,.sw-tray .sw-btn.todo-day-pick{color:var(--on) !important;}
+  .sw-tray .sw-btn.todo-day-pick{width:auto;height:auto;margin:0;}
+  .sw-tray .sw-btn.sw-edit,.sw-tray .sw-btn.sw-edit:hover,.sw-tray .sw-btn.sw-edit:focus{background:var(--edit);color:var(--paper);}
+  .sw-tray .sw-btn.sw-del,.sw-tray .sw-btn.sw-del:hover,.sw-tray .sw-btn.sw-del:focus{background:var(--danger);color:var(--paper);}
+  .sw-btn .sw-ic-touch{display:inline-flex;}
+  .sw-btn .sw-ic-fine{display:none;}
+  /* Past the point of no return, Delete takes the whole tray. */
+  .sw-row.sw-arm .sw-tray .sw-btn:not(.sw-del){flex-grow:0;}
+  .sw-row.sw-live{overflow:hidden;}
+  .sw-row.sw-live > :not(.sw-acts){transform:translateX(var(--sw-x));}
+  .sw-row.sw-anim > :not(.sw-acts){transition:transform 180ms cubic-bezier(.2,.8,.2,1);}
+  .sw-row.sw-anim > .sw-acts > .sw-tray{transition:width 180ms cubic-bezier(.2,.8,.2,1);}
+}
+/* No motion: swSet() never adds .sw-anim, and the marks do not grow. */
+body.no-anim-ui .sw-btn{transition:none !important;}
+body.no-anim-ui .sw-btn:hover,body.no-anim-ui .sw-btn:active{transform:none;}
+@media (prefers-reduced-motion: reduce){ .sw-btn{transition:none !important;} }
 .sqv-title{font-size:20px;font-weight:800;line-height:1.25;overflow-wrap:anywhere;}
 .sqv-sub{font-size:13px;color:var(--ink-soft);margin-top:2px;}
 .sqv-fields{display:flex;flex-direction:column;gap:6px;margin-top:14px;}
@@ -13747,7 +13798,7 @@ const I18N = {
     lblEventReminder:'Reminder', reminderOptNone:'No reminder', reminderOptAtTime:'At the time', reminderOpt1Hour:'1 hour before', reminderOpt1Day:'1 day before', eventReminderFor:'Remind',
     reminderUnitMinute:'minute', reminderUnitMinutes:'minutes', reminderUnitHour:'hour', reminderUnitHours:'hours', reminderUnitDay:'day', reminderUnitDays:'days',
     reminderBeforeSuffix:'before', removeReminderTitle:'Remove reminder', reminderPrecisionNote:'Reminders are checked every 30 minutes, so exact minute offsets fire within that window rather than to the second.',
-    editBtn:'Edit', saveChanges:'Save changes', cancelEdit:'Cancel',
+    editBtn:'Edit', undoBtn:'Undo', undoDeleted:'Deleted "{name}"', undoDeletedBare:'Deleted', saveChanges:'Save changes', cancelEdit:'Cancel',
     kindCourse:'Course', kindBirthday:'Birthday', kindPill:'Pill cycle', lblPillVersion:'Pill version', pillVersionStandard:'Standard (21 active / 7 off)', repeatYear:'Years', repeatYearOne:'Year', amLabel:'AM', pmLabel:'PM', countdownDaysShort:'d', countdownHoursShort:'h', countdownMinsShort:'m', countdownSecsShort:'s',
     hCoursesCal:'Courses', hBirthdays:'Birthdays',
     remindOthersLabel:'Also remind', signInWithNameHint:'Email or Username',
@@ -13880,7 +13931,7 @@ const I18N = {
     lblEventReminder:'알림', reminderOptNone:'알림 없음', reminderOptAtTime:'정시', reminderOpt1Hour:'1시간 전', reminderOpt1Day:'1일 전', eventReminderFor:'알림 대상',
     reminderUnitMinute:'분', reminderUnitMinutes:'분', reminderUnitHour:'시간', reminderUnitHours:'시간', reminderUnitDay:'일', reminderUnitDays:'일',
     reminderBeforeSuffix:'전', removeReminderTitle:'알림 삭제', reminderPrecisionNote:'알림은 30분마다 확인되므로, 정확한 분 단위 설정도 그 범위 안에서 전송됩니다.',
-    editBtn:'수정', saveChanges:'변경사항 저장', cancelEdit:'취소',
+    editBtn:'수정', undoBtn:'실행 취소', undoDeleted:'"{name}" 삭제됨', undoDeletedBare:'삭제됨', saveChanges:'변경사항 저장', cancelEdit:'취소',
     kindCourse:'수업', kindBirthday:'생일', kindPill:'피임약 주기', lblPillVersion:'피임약 종류', pillVersionStandard:'표준 (복용 21일 / 휴약 7일)', repeatYear:'년', amLabel:'오전', pmLabel:'오후', countdownDaysShort:'일', countdownHoursShort:'시간', countdownMinsShort:'분', countdownSecsShort:'초',
     hCoursesCal:'수업', hBirthdays:'생일',
     remindOthersLabel:'함께 알림 받기', signInWithNameHint:'이메일 또는 이름',
@@ -14013,7 +14064,7 @@ const I18N = {
     lblEventReminder:'Nhắc nhở', reminderOptNone:'Không nhắc', reminderOptAtTime:'Đúng giờ', reminderOpt1Hour:'1 giờ trước', reminderOpt1Day:'1 ngày trước', eventReminderFor:'Nhắc cho',
     reminderUnitMinute:'phút', reminderUnitMinutes:'phút', reminderUnitHour:'giờ', reminderUnitHours:'giờ', reminderUnitDay:'ngày', reminderUnitDays:'ngày',
     reminderBeforeSuffix:'trước', removeReminderTitle:'Xóa nhắc nhở', reminderPrecisionNote:'Nhắc nhở được kiểm tra mỗi 30 phút, nên mốc phút chính xác sẽ được gửi trong khoảng đó thay vì đúng từng giây.',
-    editBtn:'Sửa', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy',
+    editBtn:'Sửa', undoBtn:'Hoàn tác', undoDeleted:'Đã xoá "{name}"', undoDeletedBare:'Đã xoá', saveChanges:'Lưu thay đổi', cancelEdit:'Hủy',
     kindCourse:'Khóa học', kindBirthday:'Sinh nhật', kindPill:'Chu kỳ thuốc tránh thai', lblPillVersion:'Loại thuốc', pillVersionStandard:'Tiêu chuẩn (uống 21 ngày / nghỉ 7 ngày)', repeatYear:'Năm', amLabel:'SA', pmLabel:'CH', countdownDaysShort:'ngày', countdownHoursShort:'giờ', countdownMinsShort:'phút', countdownSecsShort:'giây',
     hCoursesCal:'Khóa học', hBirthdays:'Sinh nhật',
     remindOthersLabel:'Nhắc cả người kia', signInWithNameHint:'Email hoặc tên hiển thị',
@@ -18036,6 +18087,253 @@ function restoreOpenPanels(list, attr, kept){
     if(fresh && !fresh.classList.contains('hidden')) fresh.replaceWith(panel);
   });
 }
+/* ---------- SWIPE ROWS AND UNDO ----------
+   One mechanism for every list row with per-row actions (real-user request,
+   1 Nov: "minimizing the look, so there arent so many options. Like swiping
+   to delete like with emails"). A row opts in with the class `sw-row`, a
+   stable `data-sw-key`, and swipeActsHtml() as its LAST DIRECT child. The
+   buttons inside stay ordinary buttons the list wires itself; this module
+   only decides where they are seen:
+   - a mouse or trackpad: hidden until the row is hovered or holds focus;
+   - touch: behind the row. Swipe LEFT shows Edit and Delete, a FULL left
+     swipe (past 60% of the row, or a fast fling past a third) presses the
+     row's Delete ([data-sw-del]); swipe RIGHT shows the rest. One row open
+     at a time; a tap elsewhere, a scroll or Escape closes it.
+   Deleting one thing goes through deleteWithUndo(): it is hidden at once and
+   only really deleted when the Undo toast runs out. */
+var SW_BTN_W = 64;
+function swipeEditBtnHtml(cls, attrs, label){
+  const l = escapeHtml(label);
+  return `<button type="button" class="sw-btn sw-edit ${cls}" ${attrs} title="${l}" aria-label="${l}">${ICON.pencil()}</button>`;
+}
+function swipeDelBtnHtml(cls, attrs, label){
+  const l = escapeHtml(label);
+  return `<button type="button" class="sw-btn sw-del ${cls}" data-sw-del="1" ${attrs} title="${l}" aria-label="${l}"><span class="sw-ic-fine">✕</span><span class="sw-ic-touch">${ICON.trash(18)}</span></button>`;
+}
+// moreHtml: what a RIGHT swipe shows (each a .sw-btn); mainHtml: the edit and
+// delete buttons a LEFT swipe shows. Either may be empty.
+function swipeActsHtml(moreHtml, mainHtml){
+  if(!moreHtml && !mainHtml) return '';
+  return `<span class="sw-acts">${moreHtml ? `<span class="sw-tray sw-more">${moreHtml}</span>` : ''}${mainHtml ? `<span class="sw-tray sw-main">${mainHtml}</span>` : ''}</span>`;
+}
+var swOpen = null;   // { key, x } of the one open row
+var swGesture = null;
+function swFindRow(key){
+  if(!key) return null;
+  return document.querySelector('.sw-row[data-sw-key="' + (window.CSS && CSS.escape ? CSS.escape(key) : key) + '"]');
+}
+function swTrayWidth(row, side){
+  const tray = row.querySelector(side < 0 ? ':scope > .sw-acts > .sw-main' : ':scope > .sw-acts > .sw-more');
+  return tray ? tray.children.length * SW_BTN_W : 0;
+}
+function swAnimOk(){
+  return !document.body.classList.contains('no-anim-ui') && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+function swSet(row, x, anim){
+  if(!row) return;
+  clearTimeout(row._swT);
+  row.classList.toggle('sw-anim', !!anim && swAnimOk());
+  if(x !== 0) row.classList.add('sw-live');
+  row.style.setProperty('--sw-x', x + 'px');
+  if(x === 0){
+    const done = ()=>{ row.classList.remove('sw-live', 'sw-anim', 'sw-arm'); row.style.removeProperty('--sw-x'); };
+    if(anim && swAnimOk()) row._swT = setTimeout(done, 200); else done();
+  }
+}
+function swClose(anim = true){
+  if(!swOpen) return;
+  const row = swFindRow(swOpen.key);
+  swOpen = null;
+  swWatch(false);
+  if(row) swSet(row, 0, anim);
+}
+function swOpenRow(row, x, anim = true){
+  if(swOpen && swOpen.key !== row.dataset.swKey) swClose(anim);
+  swOpen = { key: row.dataset.swKey, x };
+  swSet(row, x, anim);
+  swWatch(true);
+}
+// A re-render replaces the open row's node; the new copy is opened the same
+// way before it is painted, so an open row neither closes nor flickers.
+var swObserver = null;
+function swWatch(on){
+  if(!window.MutationObserver) return;
+  if(!on){ if(swObserver){ swObserver.disconnect(); swObserver = null; } return; }
+  if(swObserver) return;
+  swObserver = new MutationObserver(()=>{
+    if(!swOpen) return;
+    const row = swFindRow(swOpen.key);
+    if(!row){ swOpen = null; swWatch(false); return; }
+    if(row.style.getPropertyValue('--sw-x') !== swOpen.x + 'px') swSet(row, swOpen.x, false);
+  });
+  swObserver.observe(document.body, { childList: true, subtree: true });
+}
+function swTouchMode(){
+  return !(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches);
+}
+(function wireRowSwipe(){
+  let clickBlock = 0;
+  document.addEventListener('pointerdown', e=>{
+    if(!e.isPrimary || !e.target.closest) return;
+    // A swipe that lost its end is put back, not left half open.
+    if(swGesture){ const s = swGesture; swGesture = null; if(s.lock) swSet(s.row.isConnected ? s.row : swFindRow(s.key), 0, true); }
+    // A press anywhere but the open row's buttons closes it, and a press on
+    // the open row itself does nothing else.
+    if(swOpen){
+      const openRow = swFindRow(swOpen.key);
+      if(openRow && openRow.contains(e.target) && e.target.closest('.sw-tray')) return;
+      if(openRow && openRow.contains(e.target)) clickBlock = Date.now();
+      swClose();
+      return;
+    }
+    const row = e.target.closest('.sw-row');
+    if(!row || e.pointerType !== 'touch' || !swTouchMode()) return;
+    // The left edge is the phone's back swipe.
+    if(e.clientX <= (typeof EDGE_BACK_PX === 'number' ? EDGE_BACK_PX : 24)) return;
+    if(e.target.closest('input, textarea, select, [contenteditable="true"], .todo-check, .notes-panel, .todo-edit, .sw-tray')) return;
+    swGesture = { row, key: row.dataset.swKey, id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now(), lock: null, dx: 0, w: row.getBoundingClientRect().width || 1 };
+    // A re-render mid-swipe takes the touched node out of the page, and an
+    // end aimed at a detached node never reaches document: it is heard on
+    // the node itself as well.
+    e.target.addEventListener('pointerup', end, { once: true });
+    e.target.addEventListener('pointercancel', end, { once: true });
+  }, true);
+  document.addEventListener('pointermove', e=>{
+    const g = swGesture;
+    if(!g || e.pointerId !== g.id) return;
+    // A to-do picked up to be carried is the drag's, not a swipe.
+    if(typeof todoDrag !== 'undefined' && todoDrag){ swGesture = null; swSet(g.row, 0, true); return; }
+    const dx = e.clientX - g.x, dy = e.clientY - g.y;
+    if(!g.lock){
+      if(Math.hypot(dx, dy) < 8) return;
+      if(Math.abs(dx) > Math.abs(dy) * 1.3){ g.lock = 'x'; g.x = e.clientX; g.t = Date.now(); }
+      else { swGesture = null; return; }
+    }
+    if(!g.row.isConnected){ const r = swFindRow(g.key); if(!r){ swGesture = null; return; } g.row = r; }
+    const hasDel = !!g.row.querySelector(':scope > .sw-acts > .sw-main [data-sw-del]');
+    const moreW = swTrayWidth(g.row, 1), mainW = swTrayWidth(g.row, -1);
+    let x = e.clientX - g.x;
+    // A side with nothing behind it only gives a little.
+    if(x > 0 && !moreW) x = Math.min(24, x / 4);
+    if(x < 0 && !mainW) x = Math.max(-24, x / 4);
+    if(x < 0 && !hasDel && x < -mainW) x = -mainW + (x + mainW) / 4;
+    if(x > moreW && moreW) x = moreW + (x - moreW) / 4;
+    x = Math.max(-g.w, x);
+    g.dx = x;
+    g.row.classList.toggle('sw-arm', hasDel && x < -0.6 * g.w);
+    swSet(g.row, x, false);
+  }, { passive: true });
+  const end = e=>{
+    const g = swGesture;
+    if(!g || e.pointerId !== g.id) return;
+    swGesture = null;
+    if(g.lock !== 'x') return;
+    clickBlock = Date.now();
+    const row = g.row.isConnected ? g.row : swFindRow(g.key);
+    if(!row) return;
+    if(e.type === 'pointercancel'){ swSet(row, 0, true); return; }
+    const x = g.dx;
+    const fast = Math.abs(x) / Math.max(1, Date.now() - g.t) > 0.9;
+    const del = row.querySelector(':scope > .sw-acts > .sw-main [data-sw-del]');
+    if(x < 0 && del && (x < -0.6 * g.w || (fast && x < -0.35 * g.w))){
+      row.classList.add('sw-arm');
+      if(swOpen && swOpen.key === g.key){ swOpen = null; swWatch(false); }
+      swSet(row, -g.w, true);
+      setTimeout(()=>{
+        del.click();
+        // A delete that asks first (a repeating entry) leaves the row where
+        // it was, so it comes back.
+        setTimeout(()=>{ if(row.isConnected) swSet(row, 0, true); }, 60);
+      }, swAnimOk() ? 170 : 0);
+      return;
+    }
+    const mainW = swTrayWidth(row, -1), moreW = swTrayWidth(row, 1);
+    if(x < 0 && mainW && x < -Math.min(mainW / 2, 48)) swOpenRow(row, -mainW);
+    else if(x > 0 && moreW && x > Math.min(moreW / 2, 48)) swOpenRow(row, moreW);
+    else { if(swOpen && swOpen.key === g.key){ swOpen = null; swWatch(false); } swSet(row, 0, true); }
+  };
+  document.addEventListener('pointerup', end, true);
+  document.addEventListener('pointercancel', end, true);
+  // The tap that ends a swipe, or closes an open row, is not a press.
+  document.addEventListener('click', e=>{
+    if(Date.now() - clickBlock < 350 && e.target.closest && e.target.closest('.sw-row') && !e.target.closest('.sw-tray')){
+      e.preventDefault(); e.stopPropagation();
+    }
+  }, true);
+  // A button pressed in an open row has done its job: the row closes. The
+  // day picker is a label over an input and stays open until it is used.
+  document.addEventListener('click', e=>{
+    if(swOpen && e.target.closest && e.target.closest('.sw-tray button')) setTimeout(()=> swClose(), 0);
+  });
+  window.addEventListener('scroll', ()=>{ if(swOpen && !swGesture) swClose(); }, { passive: true, capture: true });
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape' && swOpen && !e.defaultPrevented){ e.preventDefault(); swClose(); }
+  });
+  // The keyboard reaches a hidden tray too: focusing one of its buttons opens
+  // that side, and focus leaving the row closes it.
+  document.addEventListener('focusin', e=>{
+    if(!swTouchMode() || !e.target.closest) return;
+    const tray = e.target.closest('.sw-tray');
+    const row = tray && tray.closest('.sw-row');
+    if(row){ const side = tray.classList.contains('sw-main') ? -1 : 1; swOpenRow(row, side * swTrayWidth(row, side), false); return; }
+    if(swOpen){ const openRow = swFindRow(swOpen.key); if(!openRow || !openRow.contains(e.target)) swClose(false); }
+  });
+})();
+// ---- Undo instead of "are you sure"
+// One thing deleted is gone from the screen at once and an Undo toast stands
+// for five seconds; the real delete runs when it runs out, when the page is
+// hidden, or when another delete takes the toast. Undo puts it back with
+// nothing sent. Deletes that take other things with them still ask first.
+// opts: { label, hide(), restore(), commit() (may be async), render() }.
+// hide() must be safe to run twice: a realtime reload runs it again.
+var undoPending = null;
+var UNDO_MS = 5000;
+var undoToastEl = null;
+function deleteWithUndo(opts){
+  undoFlush();
+  opts.hide();
+  opts.render();
+  undoPending = opts;
+  let el = undoToastEl;
+  if(!el){
+    el = undoToastEl = document.createElement('div');
+    el.className = 'share-toast undo-toast';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  const name = (opts.label || '').trim();
+  const text = name ? t('undoDeleted').replace('{name}', name.length > 40 ? name.slice(0, 39) + '…' : name) : t('undoDeletedBare');
+  el.innerHTML = `<span class="undo-text">${escapeHtml(text)}</span><button type="button" class="share-toast-open undo-btn">${escapeHtml(t('undoBtn'))}</button>`;
+  el.querySelector('.undo-btn').addEventListener('click', ()=> undoCancel(opts));
+  el.classList.add('show');
+  opts.timer = setTimeout(()=>{ if(undoPending === opts) undoFlush(); }, UNDO_MS);
+}
+function undoHideToast(){
+  if(undoToastEl) undoToastEl.classList.remove('show');
+}
+function undoFlush(){
+  const p = undoPending;
+  if(!p) return;
+  undoPending = null;
+  clearTimeout(p.timer);
+  undoHideToast();
+  Promise.resolve().then(()=> p.commit()).catch(err=> console.error('Delete failed:', err));
+}
+function undoCancel(p){
+  if(undoPending !== p) return;
+  undoPending = null;
+  clearTimeout(p.timer);
+  undoHideToast();
+  p.restore();
+  p.render();
+}
+// A full reload (realtime) reads the row back from the server while its
+// delete is still waiting; it is hidden again before anything is drawn.
+function undoReapplyPending(){
+  if(undoPending) undoPending.hide();
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'hidden') undoFlush(); });
+window.addEventListener('pagehide', undoFlush);
 /* ---------- CASING, AND FILLING A ROW FROM AN LLM ----------
    Bibliographic details are almost always PASTED, and they arrive in
    whatever case the source printed them -- a PDF header gives "SANJAYA
@@ -27903,6 +28201,7 @@ async function loadAllData(){
   await __fileLinksDone;
   await Promise.all([backfillShortLinks(), ensureTopikEvents()]);
   await __vacationsDone;
+  undoReapplyPending();
   // In case the Expenses sub-tab is already on screen and showing its
   // "still loading" placeholder from a render that ran before this line
   // finished (see expInitialLoadDone) -- updates it in place rather than
@@ -30818,20 +31117,17 @@ function todoRowHtml(td, where = 'list', showDate = false){
   }
   if(td.repeat && TODO_REPEAT_LABEL[td.repeat]) meta.push(`<span class="todo-repeat-tag" title="${escapeHtml(t(TODO_REPEAT_LABEL[td.repeat]))}">${ICON.repeat(11)} ${escapeHtml(t(TODO_REPEAT_LABEL[td.repeat]))}</span>`);
   if(!mine) meta.push(`<span><span class="author-dot" style="background:${colorForUser(td.user_id)}"></span> ${escapeHtml(nameFor(td.user_id))}</span>`);
-  return `<div class="lecture-row todo-row${td.done ? ' done' : ''}${mine ? '' : ' theirs'}" data-todo="${td.id}"${mine ? ' data-drag="1"' : ''}>
+  // Swipe right: day and move; swipe left: edit and delete (swipeActsHtml).
+  const more = mine && !td.done ? todoDayPickHtml(td)
+    + `<button type="button" class="sw-btn todo-move-btn" data-todo="${td.id}" aria-expanded="${todoMoveOpen === td.id && todoMoveWhere === where}" title="${escapeHtml(t('todoMoveTo'))}" aria-label="${escapeHtml(t('todoMoveTo'))}">${ICON.moveTo()}</button>` : '';
+  const main = mine ? swipeEditBtnHtml('todo-edit-btn', `data-todo="${td.id}"`, t('todoEdit')) + swipeDelBtnHtml('todo-del-btn', `data-todo="${td.id}"`, t('todoDelete')) : '';
+  return `<div class="lecture-row todo-row${td.done ? ' done' : ''}${mine ? ' sw-row' : ' theirs'}" data-todo="${td.id}"${mine ? ` data-drag="1" data-sw-key="todo:${td.id}:${escapeHtml(String(where))}"` : ''}>
     <button type="button" class="todo-check" role="checkbox" aria-checked="${td.done ? 'true' : 'false'}" data-todo="${td.id}" ${mine ? '' : 'disabled'} title="${escapeHtml(t(td.done ? 'todoMarkOpen' : 'todoMarkDone'))}">${td.done ? ICON.check(13) : ''}</button>
     <span class="todo-main">
       <span class="todo-title" data-todo="${td.id}">${escapeHtml(td.title)}</span>
       ${meta.length ? `<span class="todo-meta">${meta.join('')}</span>` : ''}
       ${td.notes ? `<span class="todo-notes">${escapeHtml(td.notes)}</span>` : ''}
-    </span>
-    <span class="lecture-actions">
-      ${mine && !td.done ? todoDayPickHtml(td) : ''}
-      ${mine && !td.done ? `<button class="lecture-edit todo-move-btn" data-todo="${td.id}" aria-expanded="${todoMoveOpen === td.id && todoMoveWhere === where}" title="${escapeHtml(t('todoMoveTo'))}">${ICON.moveTo()}</button>` : ''}
-      ${mine ? `<button class="lecture-edit todo-edit-btn" data-todo="${td.id}" title="${escapeHtml(t('todoEdit'))}">${ICON.pencil()}</button>` : ''}
-      ${mine ? `<button class="lecture-del todo-del-btn" data-todo="${td.id}" title="${escapeHtml(t('todoDelete'))}">✕</button>` : ''}
-    </span>
-  </div>${mine && todoMoveOpen === td.id && todoMoveWhere === where && todoEditOpen !== td.id ? `<div class="todo-move-row">${todoMoveHtml(td)}</div>` : ''}${mine && todoEditOpen === td.id && todoEditWhere === where ? todoEditHtml(td) : ''}`;
+    </span>${swipeActsHtml(more, main)}</div>${mine && todoMoveOpen === td.id && todoMoveWhere === where && todoEditOpen !== td.id ? `<div class="todo-move-row">${todoMoveHtml(td)}</div>` : ''}${mine && todoEditOpen === td.id && todoEditWhere === where ? todoEditHtml(td) : ''}`;
 }
 // The calendar mark on a row picks the day it is for (real-user request:
 // "that green icon button is supposed to be ... opening up a calendar to pick
@@ -30841,7 +31137,7 @@ function todoRowHtml(td, where = 'list', showDate = false){
 function todoDayPickHtml(td){
   const at = todoScopeOf(td);
   const v = at && at.scope === 'day' ? at.start : todayStr();
-  return `<label class="lecture-edit todo-day-pick" title="${escapeHtml(t('todoPickDay'))}">${ICON.calOn(14)}<input type="date" class="todo-day-input" data-todo="${td.id}" value="${v}" aria-label="${escapeHtml(t('todoPickDay'))}"></label>`;
+  return `<label class="sw-btn todo-day-pick" title="${escapeHtml(t('todoPickDay'))}">${ICON.calOn(14)}<input type="date" class="todo-day-input" data-todo="${td.id}" value="${v}" aria-label="${escapeHtml(t('todoPickDay'))}"></label>`;
 }
 // Only on a row the calendar could show: an undated or finished to-do is
 // never on it, and somebody else's never is on this account's calendar.
@@ -30965,6 +31261,8 @@ function todoDragStart(row, x, y){
   const ghost = row.cloneNode(true);
   ghost.classList.add('todo-ghost');
   ghost.removeAttribute('data-drag');
+  ghost.removeAttribute('data-sw-key');
+  ghost.classList.remove('sw-row', 'sw-live', 'sw-anim');
   ghost.style.width = r.width + 'px';
   ghost.style.left = r.left + 'px';
   ghost.style.top = r.top + 'px';
@@ -31925,9 +32223,24 @@ async function toggleTodoOnCalendar(id){
     renderCalendarTab();
   });
 }
-// No "are you sure": it goes to the trash, which can put it back.
-async function deleteTodo(id){
-  await trashTodo(allTodos.find(x=> x.id === id));
+// No "are you sure": it leaves the list at once with an Undo, and once that
+// runs out it goes to the trash, which can still put it back.
+function deleteTodo(id){
+  const td = allTodos.find(x=> x.id === id);
+  if(!td || !currentUser || td.user_id !== currentUser.id) return;
+  const at = allTodos.indexOf(td);
+  deleteWithUndo({
+    label: td.title,
+    hide: ()=>{
+      allTodos = allTodos.filter(x=> x.id !== id);
+      if(todoEditOpen === id) todoEditOpen = null;
+      if(todoMoveOpen === id) todoMoveOpen = null;
+    },
+    // Back where it stood, so rows with no order of their own keep theirs.
+    restore: ()=>{ if(!allTodos.some(x=> x.id === id)) allTodos.splice(Math.min(at, allTodos.length), 0, td); },
+    commit: ()=> trashTodo(td),
+    render: ()=>{ renderTodos(); renderCalendarTab(); },
+  });
 }
 async function clearDoneTodos(){
   const mine = allTodos.filter(td=> td.done && td.user_id === currentUser.id);
@@ -34587,6 +34900,35 @@ function reminderSelectToOffset(val){
   if(val === '1d') return {value:1, unit:'days'};
   return null;
 }
+function deleteEventWithUndo(ev){
+  const owner = ev.user_id;
+  deleteWithUndo({
+    label: eventLabel(ev),
+    hide: ()=>{
+      allEvents[owner] = (allEvents[owner] || []).filter(x=> x.id !== ev.id);
+      expandedEdit.delete(ev.id);
+      expandedSubscribe.delete(ev.id);
+    },
+    restore: ()=>{
+      if(!allEvents[owner]) allEvents[owner] = [];
+      if(!allEvents[owner].some(x=> x.id === ev.id)) allEvents[owner].push(ev);
+    },
+    commit: async ()=>{
+      const { error } = await supabaseClient.from('events').delete().eq('id', ev.id);
+      if(error){
+        console.error('Delete refused:', error);
+        if(!allEvents[owner]) allEvents[owner] = [];
+        if(!allEvents[owner].some(x=> x.id === ev.id)) allEvents[owner].push(ev);
+        renderCalendarTab();
+        alert(t('saveFailed'));
+        return;
+      }
+      await supabaseClient.from('event_subscriptions').delete().eq('event_id', ev.id).eq('user_id', currentUser.id);
+      delete mySubscriptions[ev.id];
+    },
+    render: renderCalendarTab,
+  });
+}
 async function deleteEvent(eventId){
   await supabaseClient.from('events').delete().eq('id', eventId);
   allEvents[currentUser.id] = (allEvents[currentUser.id]||[]).filter(x=>x.id!==eventId);
@@ -34640,12 +34982,14 @@ function eventLabel(ev){
 // It answers whether the entry was deleted RIGHT HERE, so a caller with a panel
 // open on it knows to close that panel. The choice modal's own buttons close it
 // for the repeating path.
+// A one-off entry no longer asks: it goes at once with an Undo (real-user
+// request, 1 Nov: "the delete with an undo that pops up and disappears after
+// a bit ... is much better for most deletions").
 async function promptDeleteChoice(eventId, dateKey){
   const ev = findEventById(eventId);
   if(!ev) return false;
   if(!ev.recur_freq){
-    if(!confirm(t('deleteEventConfirm').replace('{title}', eventLabel(ev)))) return false;
-    await deleteEvent(eventId);
+    deleteEventWithUndo(ev);
     return true;
   }
   pendingDeleteEventId = eventId;
@@ -35563,8 +35907,9 @@ function buildEventRowEl(ev){
   const isEditOpen = expandedEdit.has(ev.id);
   const editPanelHtml = isEditOpen ? buildEventEditFieldsHtml(ev) : '';
 
-  wrap.className = 'deadline-row';
+  wrap.className = 'deadline-row sw-row';
   wrap.dataset.eventId = ev.id;
+  wrap.dataset.swKey = 'event:' + ev.id;
   // Distinct from expandedEdit.has(ev.id): this reflects whether the edit
   // panel is actually built into THIS DOM node right now, so renderKindList
   // can tell "already open, safe to reuse and keep whatever's typed" apart
@@ -35573,11 +35918,7 @@ function buildEventRowEl(ev){
   wrap.innerHTML =
     `<div class="deadline-left">
       <div class="deadline-title">${ownerTag}<span class="deadline-color" style="background:${safeColor(ev.color, '#4F7563')}"></span>${escapeHtml(ev.title)}</div>
-      <div class="deadline-notes">${[escapeHtml(dateText), escapeHtml(timeText), ev.location ? `<span class="ev-loc">${ICON.pin(11)}${escapeHtml(ev.location)}</span>` : '', escapeHtml(ev.notes || ''), recurText ? escapeHtml('↻ ' + recurText) : ''].filter(Boolean).join(' · ')}</div>
-      <div style="display:flex;gap:12px;margin-top:6px;">
-        <button class="linkbtn sub-toggle act-icon ${mySubForRow?'act-on':'act-off'}" data-id="${ev.id}" title="${bellWord}" aria-label="${bellWord}">${bellLabel}</button>
-        <button class="linkbtn act-edit act-icon edit-toggle" data-id="${ev.id}" title="${t('editBtn')}" aria-label="${t('editBtn')}">${ICON.pencil(14)}</button>
-      </div>
+      <div class="deadline-notes">${[escapeHtml(dateText), escapeHtml(timeText), ev.location ? `<span class="ev-loc">${ICON.pin(11)}${escapeHtml(ev.location)}</span>` : '', escapeHtml(ev.notes || ''), recurText ? escapeHtml('↻ ' + recurText) : ''].filter(Boolean).join(' · ')}${mySubForRow ? `<span class="ev-sub-mark" title="${escapeHtml(bellWord)}">${ICON.bellOn(11)}</span>` : ''}</div>
       <div class="notes-panel ${isEditOpen?'':'hidden'}" data-edit-for="${ev.id}">
         <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
           <button class="icon-btn close-x panel-close-btn" data-close-edit="${ev.id}" title="${escapeHtml(t('closeNoteBtn'))}">✕</button>
@@ -35593,8 +35934,9 @@ function buildEventRowEl(ev){
     </div>
     <div class="deadline-right">
       <span class="deadline-days ${soon?'soon':''}">${daysText}</span>
-      <button class="item-del del-event-btn" data-id="${ev.id}" title="${escapeHtml(t('tipDelete'))}">✕</button>
-    </div>`;
+    </div>${swipeActsHtml(
+      `<button type="button" class="sw-btn sub-toggle${mySubForRow ? ' sw-on' : ''}" data-id="${ev.id}" title="${escapeHtml(bellWord)}" aria-label="${escapeHtml(bellWord)}">${bellLabel}</button>`,
+      swipeEditBtnHtml('edit-toggle', `data-id="${ev.id}"`, t('editBtn')) + swipeDelBtnHtml('del-event-btn', `data-id="${ev.id}"`, t('tipDelete')))}`;
 
   const delBtn = wrap.querySelector('.del-event-btn');
   // Through the same gate as every other delete, rather than straight to
