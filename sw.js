@@ -6,7 +6,7 @@
 // icons, and the pinned-version CDN scripts/fonts it loads) survives a
 // flaky connection or a fully offline app-switcher relaunch, while data
 // calls still go live over the network exactly as before.
-const CACHE = 'productivity-tracker-shell-v4';
+const CACHE = 'productivity-tracker-shell-v5';
 const SHELL_URLS = [
   './',
   'index.html',
@@ -43,6 +43,12 @@ self.addEventListener('activate', (e) => {
 // so nobody "fixes" the fetch handler below into covering it by accident.
 function isSupabase(url) {
   return url.hostname.endsWith('.supabase.co');
+}
+
+// The app is the document at the worker's scope ('/' or '/index.html').
+function isAppDocument(url) {
+  const root = new URL(self.registration.scope).pathname;
+  return url.pathname === root || url.pathname === root + 'index.html';
 }
 
 // Whether two responses for the same URL are the same document. The etag is
@@ -86,6 +92,12 @@ self.addEventListener('fetch', (e) => {
   // what answers it. When the copy that lands differs from the one that was
   // served, the page is told, and it offers a reload rather than taking one:
   // never pull the document out from under somebody mid-sentence.
+  // Only the app's own document. Every other page on the site (/resume,
+  // /privacy.html, the /f/ short links...) is left to the browser: GitHub
+  // Pages answers /resume with a redirect to /resume/, and Chrome fails a
+  // navigation outright (ERR_FAILED) when a worker hands it a redirected
+  // response, so routing those through here broke them.
+  if (req.mode === 'navigate' && !isAppDocument(url)) return;
   if (req.mode === 'navigate') {
     e.respondWith(
       caches.open(CACHE).then((c) =>
@@ -102,6 +114,9 @@ self.addEventListener('fetch', (e) => {
           // browser's own copy, which GitHub Pages lets it keep for 10 min.
           const fresh = fetch(key + url.search, { cache: 'no-cache', credentials: 'same-origin' })
             .then((res) => {
+              // The same Chrome rule as above, should the host ever redirect
+              // the app itself: hand on the content, not the redirect.
+              if (res && res.redirected) res = new Response(res.body, { status: res.status, statusText: res.statusText, headers: res.headers });
               if (res && res.ok) {
                 // Stored BEFORE the page hears of it, or a reload pressed at
                 // once is served the old copy again.
