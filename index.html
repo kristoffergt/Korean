@@ -4471,6 +4471,19 @@ button.tpl-act:hover{background:rgba(127,127,127,0.16);}
   .tt-row > .tt-kw,.tt-row > .tt-side{grid-column:2;}
   .tt-words{grid-template-columns:1fr;}
 }
+/* Words in TOPIK reading: a row per word that opens to the rest. */
+.tw-count{margin:8px 0 2px;}
+.tw-row > summary{font-weight:400;flex-wrap:wrap;gap:4px 10px;}
+.tw-head{display:inline-flex;align-items:baseline;gap:6px;min-width:0;}
+.tw-head .tt-ko{font-size:15px;}
+.tw-hj{font-size:12px;color:var(--ink-soft);}
+.tw-fig{flex:1 1 14em;min-width:0;}
+.tw-body{padding:0 0 12px 15px;}
+.tw-body .tt-tag{margin:0 0 4px;}
+.tw-pages{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;margin-top:14px;}
+.tw-pages:empty{display:none;}
+.tw-foot{text-align:center;margin-top:12px;}
+.tw-foot:empty{display:none;}
 .tg-table{border-collapse:collapse;margin:4px 0 10px;font-size:13px;width:100%;}
 .tg-table th,.tg-table td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top;}
 .tg-table th{background:var(--paper);font-weight:700;}
@@ -6114,6 +6127,7 @@ button.search-clear:active{transform:scale(0.92);}
         <button data-pane="guide" id="topikSubGuideBtn"></button>
         <button data-pane="templates" id="topikSubTplBtn"></button>
         <button data-pane="tips" id="topikSubTipsBtn"></button>
+        <button data-pane="words" id="topikSubWordsBtn"></button>
       </div>
       <div class="card" id="q54ForecastCard" data-pane-of="topikSubToggle" data-pane="forecast">
         <h2 id="hTopikForecast"></h2>
@@ -6136,6 +6150,15 @@ button.search-clear:active{transform:scale(0.92);}
         <input type="search" id="topikTipsSearch" class="tt-search" data-ph-key="topikTipsSearchPh" autocomplete="off">
         <div class="tt-chips" id="topikTipsChips"></div>
         <div id="topikTipsBody"></div>
+      </div>
+      <div class="pane-off card" id="topikWordsCard" data-pane-of="topikSubToggle" data-pane="words">
+        <h2 id="hTopikWords"></h2>
+        <div class="hint" id="topikWordsIntro" style="margin:-6px 0 12px;"></div>
+        <input type="search" id="topikWordsSearch" class="tt-search" data-ph-key="topikWordsSearchPh" autocomplete="off">
+        <div class="tt-chips" id="topikWordsChips"></div>
+        <div id="topikWordsList"></div>
+        <div class="tw-pages" id="topikWordsPages"></div>
+        <div class="tw-foot" id="topikWordsFoot"></div>
       </div>
     </div>
     <div id="studyVideosSection" class="hidden">
@@ -13770,6 +13793,7 @@ const I18N = {
     editEventModalTitle:'Edit', editRemindersModalTitle:'Edit reminders', deleteEventBtn:'Delete',
     addCourseBtn:'Add course', removeSyllabus:'Remove', chooseFile:'Choose file', defaultColor:'Default color', noHighlight:'No highlight', colorCustom:'Custom', colorWheel:'Color wheel', colorBrightness:'Brightness', colorHex:'Color code', colorPicker:'Open the color picker', noteColorLabel:'Color', deleteCourseConfirm:'Delete this course? This also removes its calendar entries, its notes and its syllabus for everyone.', deleteNoteConfirm:'Delete the note "{title}"? Everything written in it goes too, for everyone.', lockInCourseConfirm:"Lock in this course? You won't be able to move it back to Planning or Signed up afterward.", studySubLog:'Log', studySubGrammar:'Grammar', studySubWriting:'Writing', studySubNotebook:'Notebook', saveFailed:'That change could not be saved, so it has been put back. Check your connection and try again.', studySubVideos:'Videos', hVideos:'Videos', lblVideoSearch:'Search', lblVideoSort:'Sort', videoSearchPlaceholder:'Search videos...', videoEmpty:'No video links yet. YouTube links on grammar points show up here.', videoNoMatches:'No video matches that search.', videoPlay:'Play', videoOpenOnYouTube:'Open on YouTube', sortFieldAdded:'Added',  hGrammar:'Korean Grammar Reference', lblCustomHeader:'Custom header',
     hTopikTemplates:'TOPIK writing templates', topikTplIntro:'Sentence frames for questions 51 to 54, each with an example. ~ marks the part you fill in.', topikTplToggle:'Templates', topikTplSearch:'Search templates', topikTplAll:'All', topikTplStyle:'Written style', topikTplQuestion:'Question {n}', topikTplInsert:'Insert', topikTplCopy:'Copy', topikTplCopied:'Copied', topikTplNone:'No templates match.', topikTplCount:'{n} templates', topikTplCountOne:'{n} template', hTopikForecast:'Question 54 forecast', studySubTopik:'TOPIK', topikSubForecast:'Forecast', topikSubGuide:'Guide', topikSubTpl:'Templates', topikSubTips:'Tips & tricks', hTopikTips:'TOPIK reading tips', topikTipsIntro:'Patterns, signal words and word lists for the reading questions, gathered from past exams. A number like 102.15 means exam 102, question 15.', topikTipsSearchPh:'Search the tips', topikTipsAll:'All', topikTipsNone:'Nothing matches that search.', topikTipsLoading:'Loading the tips...', topikTipsFailed:"Couldn't load the tips. Check your connection and try again.", topikTipsRetry:'Try again', topikTipsAnswer:'Answer', topikTipsShowAnswer:'Show answer', topikTipsHideAnswer:'Hide answer', topikTipsLiteral:'Literally', topikTipsSignal:'Signals', topikTipsExam:'Exam {n}', topikTipsQ:'Q{n}', topikTipsMore:'More to know', hTopikGuide:'TOPIK guide', subDockHide:'Hide the sub-tabs', subDockShow:'Show the sub-tabs', topikGuideIntro:'How the exam works and what each writing question asks for, from the 83rd to the 107th papers.', topikForecastLoading:'Ranked from past exams. Loading the news…', topikForecastWrite:'Write', topikForecastNews:'News: {n} articles a week, usually {m}', topikForecastNewsOne:'News: {n} article a week, usually {m}', topikForecastOthers:'Other listed topics', topikForecastUnforeseen:'A topic not on the list', topikForecastUpdated:'Next topic, ranked from past exams and current news. News as of {time}.', topikForecastNoNews:'Next topic, ranked from past exams. News could not be loaded, so current issues are not weighted by it.', hNewWriting:'Start a new writing sample', lblWritingTopic:'Topic', writingCustomTopicOpt:'Other (custom topic)…', lblWritingCustomTopic:'Custom topic', startWritingBtn:'Start writing', hWritingSamples:'Writing samples', lblWritingPersonFilter:'Show', wordCountLabel:'{n} words', wordCountLabelOne:'{n} word', deleteSampleConfirm:'Delete this writing sample?', deleteJobConfirm:'Delete this application?', deleteJobConfirmCv:'Delete this application? The attached CV will be removed too.', deleteJobConfirmCover:'Delete this application? The attached cover letter will be removed too.', deleteJobConfirmBoth:'Delete this application? The attached CV and cover letter will be removed too.', deleteCertConfirm:'Delete this certification?', deleteBookConfirm:'Delete this book? Its notes go with it.', deleteArticleConfirm:'Delete this article? Its notes go with it.', charCountLabel:'{n} characters', charCountLabelOne:'{n} character', charCountTarget:'{n} characters (target: {min}~{max})', charCountTargetOne:'{n} character (target: {min}~{max})', writingGroupEssay:'Essay (Question 54 style, 600–700 characters)', writingGroupData:'Data description (Question 53 style, 200–300 characters)', lblWritingCustomTaskType:'Task type', writingTaskTypeEssay:'Essay (600–700 characters)', writingTaskTypeData:'Data description (200–300 characters)', lblWritingCustomDescription:'Task description', writingCustomDescPlaceholder:'Add instructions or context for this topic, like a real task prompt…', lblWritingImage:'Attach an image', writingImageUrlPlaceholder:'Paste an image URL…', writingImageHint:'Or upload a file below. If both are given, the uploaded file is used.', writingDataHint:"Describe the data in your own words. Don't copy the title or labels directly.", lblWritingEssayGroup:'Essay topics (Question 54, 600–700 characters)', lblWritingQ53Group:'Data description topics (Question 53, 200–300 characters)', lblWritingCustomGroup:'Write your own topic', writingSearchPlaceholder:'Search topics…', writingRandomBtn:'Random', lblWritingQ53Image:'Attach an image', writingQ53ImageHint:'Or upload a file below. If both are given, the uploaded file is used.', lblWritingMockGroup:'Mock exam', writingMockDataStartBtn:'Start a Q53 mock exam (15 min)', writingMockEssayStartBtn:'Start a Q54 mock exam (35 min)', writingMockStartBtn:'Start a full mock test (Q53 + Q54, 50 min)', writingMockHint:'Randomly picks a topic and starts a matching countdown. Q53 alone, Q54 alone, or both together.', writingTimerOfferConfirm:'Start a {n}-minute countdown for this task? It will count toward your study time when it ends.', writingTimerStopConfirm:'Stop the timer now? The time so far will still be logged to your study time.', writingTimerDone:"Time's up! The session was logged to your study time.", writingMockLabel:'Mock test (Q53 + Q54)', writingCountdownStopLabel:'Stop', hWritingMock:'Full mock exam – Q53 + Q54 (50 min)', writingMockQ53Label:'Question 53 – Data description (200–300 characters)', writingMockQ54Label:'Question 54 – Essay (600–700 characters)', deleteAllWritingBtn:'Delete all', deleteAllWritingConfirm1:'Delete all {n} of your writing samples? This cannot be undone.', deleteAllWritingConfirm1One:'Delete your one writing sample? This cannot be undone.', deleteAllWritingConfirm2:'This is permanent. Every one of your saved writing samples and its content will be gone forever. Are you absolutely sure?',
+    topikSubWords:'Words', hTopikWords:'Words in TOPIK reading', topikWordsIntro:'Sound and shape words, metaphors and set phrases that newspaper headlines (questions 25 to 27) and reading passages lean on. Each opens to a headline in the exam\'s style and the plain sentence it means.', topikWordsSearchPh:'Search words and meanings', topikWordsTypeS:'Sound and shape words', topikWordsTypeM:'Metaphors', topikWordsTypeH:'Headline words', topikWordsTypeP:'Set phrases', topikWordsHeadline:'Headline', topikWordsPlain:'Means', topikWordsCount:'{n} words', topikWordsCountOne:'{n} word', topikWordsReset:'Show every word', searchGroupWords:'TOPIK words',
     lblGramSearch:'Search', lblGramLevelFilter:'Level', lblGramJump:'Jump to a pattern',
     lblGramReviewedFilter:'Reviewed', gramReviewedAll:'All', gramReviewedYes:'Reviewed', gramReviewedNo:'Not reviewed', gramReviewedMe:'Me', gramReviewedBoth:'Both',
     gramJumpPlaceholder:'- Select -', gramAllLevels:'All', gramIntermediateGroup:'Intermediate', gramAdvancedGroup:'Advanced',
@@ -13902,6 +13926,7 @@ const I18N = {
     editEventModalTitle:'수정', editRemindersModalTitle:'알림 수정', deleteEventBtn:'삭제',
     addCourseBtn:'수업 추가', removeSyllabus:'삭제', chooseFile:'파일 선택', defaultColor:'기본 색상', noHighlight:'강조 없음', colorCustom:'직접 고르기', colorWheel:'색상환', colorBrightness:'밝기', colorHex:'색상 코드', colorPicker:'색상 선택기 열기', noteColorLabel:'색상', deleteCourseConfirm:'이 수업을 삭제하시겠습니까? 모든 사람의 캘린더 항목, 노트, 강의계획서도 함께 삭제됩니다.', deleteNoteConfirm:'"{title}" 노트를 삭제하시겠습니까? 안에 작성한 내용도 모든 사람에게서 함께 삭제됩니다.', lockInCourseConfirm:'이 수업을 확정하시겠습니까? 이후에는 계획 중/신청 완료로 되돌릴 수 없습니다.', studySubLog:'기록', studySubGrammar:'문법', studySubWriting:'작문', studySubNotebook:'노트북', saveFailed:'변경 내용을 저장할 수 없어 이전 상태로 되돌렸습니다. 연결 상태를 확인하고 다시 시도하세요.', studySubVideos:'영상', hVideos:'영상', lblVideoSearch:'검색', lblVideoSort:'정렬', videoSearchPlaceholder:'영상 검색...', videoEmpty:'아직 영상 링크가 없습니다. 문법 항목의 유튜브 링크가 여기에 나타납니다.', videoNoMatches:'검색 결과가 없습니다.', videoPlay:'재생', videoOpenOnYouTube:'유튜브에서 열기', sortFieldAdded:'추가일',  hGrammar:'한국어 문법 참고', lblCustomHeader:'맞춤 헤더',
     hTopikTemplates:'TOPIK 쓰기 표현', topikTplIntro:'51~54번에 쓰는 문장 틀과 예문입니다. ~ 부분을 채워 쓰세요.', topikTplToggle:'쓰기 표현', topikTplSearch:'표현 검색', topikTplAll:'전체', topikTplStyle:'문어체', topikTplQuestion:'{n}번', topikTplInsert:'넣기', topikTplCopy:'복사', topikTplCopied:'복사됨', topikTplNone:'맞는 표현이 없습니다.', topikTplCount:'{n}개', hTopikForecast:'54번 주제 예측', studySubTopik:'TOPIK', topikSubForecast:'예측', topikSubGuide:'가이드', topikSubTpl:'쓰기 표현', topikSubTips:'공략 팁', hTopikTips:'TOPIK 읽기 공략', topikTipsIntro:'기출문제에서 모은 읽기 문항별 표현, 신호어, 어휘입니다. 102.15는 102회 15번이라는 뜻입니다.', topikTipsSearchPh:'팁 검색', topikTipsAll:'전체', topikTipsNone:'검색 결과가 없습니다.', topikTipsLoading:'팁을 불러오는 중...', topikTipsFailed:'팁을 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.', topikTipsRetry:'다시 시도', topikTipsAnswer:'정답', topikTipsShowAnswer:'정답 보기', topikTipsHideAnswer:'정답 숨기기', topikTipsLiteral:'직역', topikTipsSignal:'신호어', topikTipsExam:'{n}회', topikTipsQ:'{n}번', topikTipsMore:'더 알아 두기', hTopikGuide:'TOPIK 가이드', subDockHide:'하위 탭 숨기기', subDockShow:'하위 탭 보기', topikGuideIntro:'시험 구성과 쓰기 문항별 출제 경향입니다. 83회~107회 기출을 바탕으로 정리했습니다.', topikForecastLoading:'역대 기출로 매긴 순위입니다. 뉴스를 불러오는 중…', topikForecastWrite:'쓰기', topikForecastNews:'뉴스: 주 {n}건 (평소 {m}건)', topikForecastOthers:'그 밖의 후보 주제', topikForecastUnforeseen:'목록에 없는 주제', topikForecastUpdated:'역대 기출과 최근 뉴스로 매긴 다음 주제 순위입니다. 뉴스 기준: {time}.', topikForecastNoNews:'역대 기출로 매긴 다음 주제 순위입니다. 뉴스를 불러오지 못해 시사 주제에 반영하지 않았습니다.', hNewWriting:'새 작문 시작', lblWritingTopic:'주제', writingCustomTopicOpt:'기타 (직접 입력)…', lblWritingCustomTopic:'직접 입력한 주제', startWritingBtn:'작문 시작', hWritingSamples:'작문 목록', lblWritingPersonFilter:'보기', wordCountLabel:'{n}단어', deleteSampleConfirm:'이 작문을 삭제하시겠습니까?', deleteJobConfirm:'이 지원 기록을 삭제하시겠습니까?', deleteJobConfirmCv:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서도 함께 삭제됩니다.', deleteJobConfirmCover:'이 지원 기록을 삭제하시겠습니까? 첨부한 자기소개서도 함께 삭제됩니다.', deleteJobConfirmBoth:'이 지원 기록을 삭제하시겠습니까? 첨부한 이력서와 자기소개서도 함께 삭제됩니다.', deleteCertConfirm:'이 자격증을 삭제하시겠습니까?', deleteBookConfirm:'이 책을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', deleteArticleConfirm:'이 논문을 삭제하시겠습니까? 메모도 함께 삭제됩니다.', charCountLabel:'{n}자', charCountTarget:'{n}자 (목표: {min}~{max}자)', writingGroupEssay:'에세이 (54번 유형, 600~700자)', writingGroupData:'자료 설명 (53번 유형, 200~300자)', lblWritingCustomTaskType:'과제 유형', writingTaskTypeEssay:'에세이 (600~700자)', writingTaskTypeData:'자료 설명 (200~300자)', lblWritingCustomDescription:'과제 설명', writingCustomDescPlaceholder:'실제 시험 문제처럼 지시문이나 배경 설명을 입력하세요…', lblWritingImage:'이미지 첨부', writingImageUrlPlaceholder:'이미지 URL 붙여넣기…', writingImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', writingDataHint:'제목이나 항목명을 그대로 옮기지 말고 자신의 표현으로 바꿔서 쓰세요.', lblWritingEssayGroup:'에세이 주제 (54번, 600~700자)', lblWritingQ53Group:'자료 설명 주제 (53번, 200~300자)', lblWritingCustomGroup:'직접 주제 작성', writingSearchPlaceholder:'주제 검색…', writingRandomBtn:'무작위', lblWritingQ53Image:'이미지 첨부', writingQ53ImageHint:'또는 아래에서 파일을 업로드하세요. 둘 다 입력하면 업로드한 파일이 사용됩니다.', lblWritingMockGroup:'모의고사', writingMockDataStartBtn:'53번 모의고사 시작 (15분)', writingMockEssayStartBtn:'54번 모의고사 시작 (35분)', writingMockStartBtn:'실전 모의고사 시작 (53+54번, 50분)', writingMockHint:'무작위로 주제를 골라 그에 맞는 타이머를 시작합니다. 53번만, 54번만, 또는 둘 다.', writingTimerOfferConfirm:'이 과제로 {n}분 타이머를 시작할까요? 종료되면 학습 시간에 자동으로 기록됩니다.', writingTimerStopConfirm:'지금 타이머를 멈출까요? 지금까지의 시간은 학습 시간에 기록됩니다.', writingTimerDone:'시간이 다 되었습니다! 학습 시간에 기록되었습니다.', writingMockLabel:'실전 모의고사 (53+54번)', writingCountdownStopLabel:'중지', hWritingMock:'실전 모의고사 – 53+54번 (50분)', writingMockQ53Label:'53번 – 자료 설명 (200~300자)', writingMockQ54Label:'54번 – 에세이 (600~700자)', deleteAllWritingBtn:'전체 삭제', deleteAllWritingConfirm1:'작문 {n}개를 모두 삭제하시겠습니까? 되돌릴 수 없습니다.', deleteAllWritingConfirm2:'영구적으로 삭제됩니다. 저장된 모든 작문과 내용이 완전히 사라집니다. 정말로 삭제하시겠습니까?',
+    topikSubWords:'어휘', hTopikWords:'TOPIK 읽기 어휘', topikWordsIntro:'신문 기사 제목(25~27번)과 읽기 지문에 자주 나오는 의성어·의태어, 비유 표현, 관용 표현입니다. 누르면 시험 형식의 기사 제목과 그 뜻을 풀어 쓴 문장이 나옵니다.', topikWordsSearchPh:'어휘나 뜻 검색', topikWordsTypeS:'의성어·의태어', topikWordsTypeM:'비유 표현', topikWordsTypeH:'기사 제목 어휘', topikWordsTypeP:'관용 표현', topikWordsHeadline:'기사 제목', topikWordsPlain:'풀이', topikWordsCount:'{n}개', topikWordsReset:'모든 어휘 보기', searchGroupWords:'TOPIK 어휘',
     lblGramSearch:'검색', lblGramLevelFilter:'난이도', lblGramJump:'문법 선택',
     lblGramReviewedFilter:'복습 여부', gramReviewedAll:'전체', gramReviewedYes:'복습함', gramReviewedNo:'복습 안 함', gramReviewedMe:'나', gramReviewedBoth:'둘 다',
     gramJumpPlaceholder:'- 선택 -', gramAllLevels:'전체', gramIntermediateGroup:'중급', gramAdvancedGroup:'고급',
@@ -14035,6 +14060,7 @@ const I18N = {
     editEventModalTitle:'Sửa', editRemindersModalTitle:'Sửa nhắc nhở', deleteEventBtn:'Xóa',
     addCourseBtn:'Thêm khóa học', removeSyllabus:'Xóa', chooseFile:'Chọn tệp', defaultColor:'Màu mặc định', noHighlight:'Không tô sáng', colorCustom:'Tùy chỉnh', colorWheel:'Bánh xe màu', colorBrightness:'Độ sáng', colorHex:'Mã màu', colorPicker:'Mở bộ chọn màu', noteColorLabel:'Màu', deleteCourseConfirm:'Xóa khóa học này? Thao tác này cũng xóa các mục lịch, ghi chú và đề cương cho tất cả mọi người.', deleteNoteConfirm:'Xóa ghi chú "{title}"? Mọi thứ đã viết trong đó cũng bị xóa với tất cả mọi người.', lockInCourseConfirm:'Chốt khóa học này? Sau đó bạn sẽ không thể chuyển lại thành Dự định hoặc Đã đăng ký.', studySubLog:'Nhật ký', studySubGrammar:'Ngữ pháp', studySubWriting:'Luyện viết', studySubNotebook:'Sổ tay', saveFailed:'Không thể lưu thay đổi đó nên đã hoàn lại. Kiểm tra kết nối và thử lại.', studySubVideos:'Video', hVideos:'Video', lblVideoSearch:'Tìm kiếm', lblVideoSort:'Sắp xếp', videoSearchPlaceholder:'Tìm video...', videoEmpty:'Chưa có liên kết video nào. Liên kết YouTube trên các điểm ngữ pháp sẽ hiện ở đây.', videoNoMatches:'Không có video nào khớp với tìm kiếm đó.', videoPlay:'Phát', videoOpenOnYouTube:'Mở trên YouTube', sortFieldAdded:'Đã thêm',  hGrammar:'Tài liệu ngữ pháp Hàn', lblCustomHeader:'Tiêu đề tùy chỉnh',
     hTopikTemplates:'Mẫu câu viết TOPIK', topikTplIntro:'Khung câu cho câu 51 đến 54, mỗi khung kèm ví dụ. Dấu ~ là phần bạn điền vào.', topikTplToggle:'Mẫu câu', topikTplSearch:'Tìm mẫu câu', topikTplAll:'Tất cả', topikTplStyle:'Văn viết', topikTplQuestion:'Câu {n}', topikTplInsert:'Chèn', topikTplCopy:'Sao chép', topikTplCopied:'Đã chép', topikTplNone:'Không có mẫu câu phù hợp.', topikTplCount:'{n} mẫu', hTopikForecast:'Dự đoán đề câu 54', studySubTopik:'TOPIK', topikSubForecast:'Dự đoán', topikSubGuide:'Hướng dẫn', topikSubTpl:'Mẫu câu', topikSubTips:'Mẹo làm bài', hTopikTips:'Mẹo đọc TOPIK', topikTipsIntro:'Mẫu câu, từ tín hiệu và từ vựng cho các câu đọc, tổng hợp từ đề thi các năm. Số như 102.15 nghĩa là đề 102, câu 15.', topikTipsSearchPh:'Tìm trong mẹo', topikTipsAll:'Tất cả', topikTipsNone:'Không có kết quả phù hợp.', topikTipsLoading:'Đang tải mẹo...', topikTipsFailed:'Không tải được mẹo. Hãy kiểm tra kết nối rồi thử lại.', topikTipsRetry:'Thử lại', topikTipsAnswer:'Đáp án', topikTipsShowAnswer:'Xem đáp án', topikTipsHideAnswer:'Ẩn đáp án', topikTipsLiteral:'Nghĩa đen', topikTipsSignal:'Dấu hiệu', topikTipsExam:'Đề {n}', topikTipsQ:'Câu {n}', topikTipsMore:'Cần biết thêm', hTopikGuide:'Hướng dẫn TOPIK', subDockHide:'Ẩn các tab con', subDockShow:'Hiện các tab con', topikGuideIntro:'Cấu trúc kỳ thi và yêu cầu của từng câu viết, tổng hợp từ đề thi kỳ 83 đến kỳ 107.', topikForecastLoading:'Xếp hạng dựa trên đề cũ. Đang tải tin tức…', topikForecastWrite:'Viết', topikForecastNews:'Tin tức: {n} bài mỗi tuần, thường {m}', topikForecastOthers:'Các chủ đề khác trong danh sách', topikForecastUnforeseen:'Một chủ đề ngoài danh sách', topikForecastUpdated:'Xếp hạng đề tiếp theo dựa trên đề cũ và tin tức gần đây. Tin tức cập nhật lúc {time}.', topikForecastNoNews:'Xếp hạng đề tiếp theo dựa trên đề cũ. Không tải được tin tức nên chủ đề thời sự chưa được tính theo tin tức.', hNewWriting:'Bắt đầu bài viết mới', lblWritingTopic:'Chủ đề', writingCustomTopicOpt:'Khác (chủ đề tự chọn)…', lblWritingCustomTopic:'Chủ đề tự chọn', startWritingBtn:'Bắt đầu viết', hWritingSamples:'Bài viết đã lưu', lblWritingPersonFilter:'Hiển thị', wordCountLabel:'{n} từ', deleteSampleConfirm:'Xóa bài viết này?', deleteJobConfirm:'Xóa đơn ứng tuyển này?', deleteJobConfirmCv:'Xóa đơn ứng tuyển này? CV đã tải lên cũng sẽ bị xóa.', deleteJobConfirmCover:'Xóa đơn ứng tuyển này? Thư xin việc đã tải lên cũng sẽ bị xóa.', deleteJobConfirmBoth:'Xóa đơn ứng tuyển này? CV và thư xin việc đã tải lên cũng sẽ bị xóa.', deleteCertConfirm:'Xóa chứng chỉ này?', deleteBookConfirm:'Xóa cuốn sách này? Các ghi chú sẽ bị xóa theo.', deleteArticleConfirm:'Xóa bài báo này? Các ghi chú sẽ bị xóa theo.', charCountLabel:'{n} ký tự', charCountTarget:'{n} ký tự (mục tiêu: {min}~{max})', writingGroupEssay:'Bài luận (dạng câu 54, 600–700 ký tự)', writingGroupData:'Mô tả dữ liệu (dạng câu 53, 200–300 ký tự)', lblWritingCustomTaskType:'Loại nhiệm vụ', writingTaskTypeEssay:'Bài luận (600–700 ký tự)', writingTaskTypeData:'Mô tả dữ liệu (200–300 ký tự)', lblWritingCustomDescription:'Mô tả nhiệm vụ', writingCustomDescPlaceholder:'Thêm hướng dẫn hoặc bối cảnh cho chủ đề này…', lblWritingImage:'Đính kèm hình ảnh', writingImageUrlPlaceholder:'Dán URL hình ảnh…', writingImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', writingDataHint:'Diễn đạt lại bằng lời của riêng bạn. Đừng sao chép tiêu đề hoặc nhãn.', lblWritingEssayGroup:'Chủ đề bài luận (câu 54, 600–700 ký tự)', lblWritingQ53Group:'Chủ đề mô tả dữ liệu (câu 53, 200–300 ký tự)', lblWritingCustomGroup:'Tự viết chủ đề', writingSearchPlaceholder:'Tìm chủ đề…', writingRandomBtn:'Ngẫu nhiên', lblWritingQ53Image:'Đính kèm hình ảnh', writingQ53ImageHint:'Hoặc tải tệp lên bên dưới. Nếu có cả hai, tệp tải lên sẽ được dùng.', lblWritingMockGroup:'Thi thử', writingMockDataStartBtn:'Bắt đầu thi thử Câu 53 (15 phút)', writingMockEssayStartBtn:'Bắt đầu thi thử Câu 54 (35 phút)', writingMockStartBtn:'Bắt đầu thi thử (Câu 53 + 54, 50 phút)', writingMockHint:'Chọn ngẫu nhiên một chủ đề và bắt đầu đếm ngược phù hợp. Chỉ Câu 53, chỉ Câu 54, hoặc cả hai.', writingTimerOfferConfirm:'Bắt đầu đếm ngược {n} phút cho đề này? Thời gian sẽ được ghi vào thời gian học khi kết thúc.', writingTimerStopConfirm:'Dừng bộ đếm giờ ngay bây giờ? Thời gian đã trôi qua vẫn sẽ được ghi lại.', writingTimerDone:'Hết giờ! Phiên học đã được ghi vào thời gian học của bạn.', writingMockLabel:'Thi thử (Câu 53 + 54)', writingCountdownStopLabel:'Dừng', hWritingMock:'Thi thử đầy đủ – Câu 53 + 54 (50 phút)', writingMockQ53Label:'Câu 53 – Mô tả dữ liệu (200–300 ký tự)', writingMockQ54Label:'Câu 54 – Bài luận (600–700 ký tự)', deleteAllWritingBtn:'Xóa tất cả', deleteAllWritingConfirm1:'Xóa tất cả {n} bài viết của bạn? Không thể hoàn tác.', deleteAllWritingConfirm2:'Việc này là vĩnh viễn. Mọi bài viết đã lưu và nội dung của chúng sẽ biến mất hoàn toàn. Bạn có chắc chắn không?',
+    topikSubWords:'Từ vựng', hTopikWords:'Từ vựng trong bài đọc TOPIK', topikWordsIntro:'Từ tượng thanh, tượng hình, ẩn dụ và cụm từ cố định thường gặp trong tiêu đề báo (câu 25 đến 27) và bài đọc. Mở mỗi mục để xem một tiêu đề theo kiểu đề thi và câu diễn giải ý nghĩa của nó.', topikWordsSearchPh:'Tìm từ hoặc nghĩa', topikWordsTypeS:'Từ tượng thanh, tượng hình', topikWordsTypeM:'Ẩn dụ', topikWordsTypeH:'Từ ngữ tiêu đề báo', topikWordsTypeP:'Cụm từ cố định', topikWordsHeadline:'Tiêu đề', topikWordsPlain:'Nghĩa là', topikWordsCount:'{n} từ', topikWordsReset:'Hiện tất cả từ', searchGroupWords:'Từ vựng TOPIK',
     lblGramSearch:'Tìm kiếm', lblGramLevelFilter:'Cấp độ', lblGramJump:'Chọn mẫu ngữ pháp',
     lblGramReviewedFilter:'Đã ôn tập', gramReviewedAll:'Tất cả', gramReviewedYes:'Đã ôn tập', gramReviewedNo:'Chưa ôn tập', gramReviewedMe:'Tôi', gramReviewedBoth:'Cả hai',
     gramJumpPlaceholder:'- Chọn -', gramAllLevels:'Tất cả', gramIntermediateGroup:'Trung cấp', gramAdvancedGroup:'Cao cấp',
@@ -14169,6 +14195,7 @@ const STATIC_MAP = {
   guestModeBtn:'guestModeBtn', guestBannerText:'guestBannerText',
   hNotebookList:'hNotebookList', lblNotebookPersonFilter:'lblNotesPersonFilter', saveNotebookBtn:'saveNoteBtn', closeNotebookBtn:'closeNoteBtn',
   hTopikTemplates:'hTopikTemplates', topikSubForecastBtn:'topikSubForecast', topikSubGuideBtn:'topikSubGuide', topikSubTplBtn:'topikSubTpl', topikSubTipsBtn:'topikSubTips', hTopikTips:'hTopikTips', topikTipsIntro:'topikTipsIntro', topikTplIntro:'topikTplIntro', writingTplToggleBtn:'topikTplToggle', writingMockTplToggleBtn:'topikTplToggle',
+  topikSubWordsBtn:'topikSubWords', hTopikWords:'hTopikWords', topikWordsIntro:'topikWordsIntro',
   hNewWriting:'hNewWriting', hTopikForecast:'hTopikForecast', studySubTopikBtn:'studySubTopik', hTopikGuide:'hTopikGuide', topikGuideIntro:'topikGuideIntro', lblWritingCustomTopic:'lblWritingCustomTopic', startWritingBtn:'startWritingBtn', hWritingSamples:'hWritingSamples', deleteAllWritingBtn:'deleteAllWritingBtn', lblWritingPersonFilter:'lblWritingPersonFilter', saveWritingBtn:'saveChanges', closeWritingBtn:'closeNoteBtn',
   lblWritingCustomTaskType:'lblWritingCustomTaskType', writingTaskTypeEssayOpt:'writingTaskTypeEssay', writingTaskTypeDataOpt:'writingTaskTypeData', lblWritingCustomDescription:'lblWritingCustomDescription', lblWritingImage:'lblWritingImage', writingImageHint:'writingImageHint',
   lblWritingEssayGroup:'lblWritingEssayGroup', lblWritingQ53Group:'lblWritingQ53Group', lblWritingCustomGroup:'lblWritingCustomGroup', writingEssayRandomBtn:'writingRandomBtn', writingQ53RandomBtn:'writingRandomBtn', writingEssayStartBtn:'startWritingBtn', writingQ53StartBtn:'startWritingBtn', lblWritingQ53Image:'lblWritingQ53Image', writingQ53ImageHint:'writingQ53ImageHint', lblWritingMockGroup:'lblWritingMockGroup', writingMockDataStartBtn:'writingMockDataStartBtn', writingMockEssayStartBtn:'writingMockEssayStartBtn', writingMockStartBtn:'writingMockStartBtn', writingMockHint:'writingMockHint',
@@ -15573,6 +15600,7 @@ function applyLanguage(lang){
   if(q54Ready) renderQ54Forecast(q54NewsCache);
   if(topikGuideReady) renderTopikGuide();
   if(topikTipsReady) renderTopikTips();
+  if(topikWordsReady) renderTopikWords();
   if(document.getElementById('subDock')) syncSubDockLabel();
   if(window.refreshSearchClears) window.refreshSearchClears();
   localStorage.setItem('trackerLang', lang);
@@ -47186,6 +47214,724 @@ document.getElementById('topikTipsSearch').addEventListener('input', e=>{
 // content rather than a column of closed headings.
 ['q5', 'q13', 'q16', 'q19', 'q21'].forEach(id=> topikTipsOpen.add(id + ':0'));
 
+/* ---------- WORDS IN TOPIK READING ----------
+   The words newspaper headlines (reading questions 25 to 27) and the
+   passages lean on: sound and shape words used figuratively, metaphors,
+   short headline words and set phrases. Each has its literal sense, what
+   it means in a headline, how it is used, a headline in the exam's style
+   and the plain sentence the exam expects as its paraphrase. The headlines
+   are written for this list (인주시 is the exam's own made-up city); none is
+   quoted from a newspaper. Words already in the reading tips' idiom lists
+   (발목을 잡다, 기승을 부리다, 각광을 받다, 등을 돌리다, 지갑을 열다,
+   꼬리를 물다, 날개 돋친 듯이) are left out here.
+   ty: s = sound/shape word, m = metaphor, h = headline word, p = set phrase.
+   var, not const: applyLanguage can run before this block has. */
+var TOPIK_WORDS = [
+  // Sound and shape words
+  { w:"톡톡", hj:"", ty:"s",
+    lit:"tapping lightly; popping", lit_ko:"가볍게 두드리거나 터지는 소리나 모양", lit_vi:"tiếng gõ nhẹ, lách tách",
+    fig:"(an effect or benefit) clearly paying off", fig_ko:"효과나 덕을 확실하게 보다", fig_vi:"(hiệu quả, lợi ích) thấy rõ rệt",
+    use:"효과 톡톡 in a headline is short for 효과를 톡톡히 보다: something worked very well.", use_ko:"기사 제목의 '효과 톡톡'은 '효과를 톡톡히 보다'를 줄인 말로, 어떤 일이 아주 효과가 있었다는 뜻이다.", use_vi:"Trên tiêu đề, '효과 톡톡' là dạng rút gọn của '효과를 톡톡히 보다': việc gì đó mang lại hiệu quả rất rõ.",
+    ex:"할인 행사 효과 '톡톡', 매출 두 배로", para:"할인 행사를 한 덕분에 매출이 두 배로 늘었다" },
+  { w:"껑충", hj:"", ty:"s",
+    lit:"with a big jump", lit_ko:"긴 다리로 높이 뛰어오르는 모양", lit_vi:"nhảy vọt lên",
+    fig:"(prices, figures, rank) jump sharply", fig_ko:"값이나 수치, 순위가 갑자기 크게 오르다", fig_vi:"(giá, con số, thứ hạng) tăng vọt",
+    use:"Often alone at the end of a headline, with 오르다 or 뛰다 left out.", use_ko:"제목 끝에 '오르다, 뛰다'를 생략하고 '껑충'만 쓰는 경우가 많다.", use_vi:"Thường đứng một mình ở cuối tiêu đề, lược bỏ động từ 오르다 hoặc 뛰다.",
+    ex:"배춧값 한 달 새 껑충", para:"배추 가격이 한 달 사이에 크게 올랐다" },
+  { w:"훌쩍", hj:"", ty:"s",
+    lit:"in one light bound", lit_ko:"가볍게 단번에 뛰어넘거나 떠나는 모양", lit_vi:"nhẹ nhàng vượt qua trong một bước",
+    fig:"go well past a figure; (time) slip by", fig_ko:"어떤 기준을 크게 넘다, 시간이 빨리 지나다", fig_vi:"vượt xa một mức nào đó; (thời gian) trôi qua nhanh",
+    use:"Usually 훌쩍 넘다: the figure is clearly above the line named.", use_ko:"주로 '훌쩍 넘다'의 꼴로 쓰여 숫자가 기준보다 훨씬 많다는 뜻을 나타낸다.", use_vi:"Thường dùng '훌쩍 넘다': con số vượt hẳn mức được nêu.",
+    ex:"휴가철 항공료 100만 원 훌쩍", para:"휴가철 항공료가 100만 원을 크게 넘었다" },
+  { w:"뚝", hj:"", ty:"s",
+    lit:"with a snap; dropping all of a sudden", lit_ko:"갑자기 끊어지거나 떨어지는 소리나 모양", lit_vi:"đánh rắc; rơi xuống đột ngột",
+    fig:"(temperature, sales, visitors) drop sharply or stop", fig_ko:"기온, 판매량, 손님 등이 갑자기 크게 줄거나 끊기다", fig_vi:"(nhiệt độ, doanh số, khách) giảm mạnh hoặc ngừng hẳn",
+    use:"기온 뚝 = the temperature drops sharply; 발길 뚝 = visitors stop coming.", use_ko:"'기온 뚝'은 기온이 크게 떨어진다는 뜻이고, '발길 뚝'은 사람들이 찾아오지 않는다는 뜻이다.", use_vi:"'기온 뚝': nhiệt độ giảm mạnh; '발길 뚝': khách không còn đến nữa.",
+    ex:"기온 뚝, 내일 아침 영하권", para:"기온이 크게 떨어져서 내일 아침에는 영하가 되겠다" },
+  { w:"주춤", hj:"", ty:"s",
+    lit:"hesitating, stopping short", lit_ko:"걷다가 망설이며 잠깐 멈추는 모양", lit_vi:"khựng lại, chần chừ",
+    fig:"slow down or ease off for a while", fig_ko:"기세가 잠시 약해지거나 멈추다", fig_vi:"chững lại, tạm thời yếu đi",
+    use:"The trend has paused, not ended; it may pick up again.", use_ko:"흐름이 완전히 끝난 것이 아니라 잠시 약해졌다는 뜻이다.", use_vi:"Xu hướng chỉ tạm dừng chứ chưa chấm dứt, có thể tiếp tục lại.",
+    ex:"무더위 주춤, 주말엔 비 소식", para:"무더위가 잠시 약해지고 주말에는 비가 오겠다" },
+  { w:"반짝", hj:"", ty:"s",
+    lit:"with a twinkle, a quick flash", lit_ko:"빛이 잠깐 빛나는 모양", lit_vi:"lấp lánh, lóe lên chốc lát",
+    fig:"brief, short-lived", fig_ko:"잠깐 동안만 나타나는", fig_vi:"ngắn ngủi, chỉ trong chốc lát",
+    use:"Before a noun: 반짝 추위 (a short cold snap), 반짝 인기 (popularity that soon fades).", use_ko:"명사 앞에서 '반짝 추위, 반짝 인기'처럼 잠깐 있다가 사라지는 것을 뜻한다.", use_vi:"Đứng trước danh từ: '반짝 추위' (đợt lạnh ngắn), '반짝 인기' (nổi tiếng chốc lát).",
+    ex:"반짝 추위 뒤 다시 포근", para:"잠깐 추웠다가 다시 따뜻해지겠다" },
+  { w:"활짝", hj:"", ty:"s",
+    lit:"wide open; (flowers) in full bloom", lit_ko:"문이 넓게 열리거나 꽃이 한껏 핀 모양", lit_vi:"mở toang; (hoa) nở rộ",
+    fig:"(a way or chance) fully open; (a smile) beaming", fig_ko:"기회나 길이 크게 열리다, 환하게 웃다", fig_vi:"(con đường, cơ hội) rộng mở; (nụ cười) rạng rỡ",
+    use:"길 활짝 = the way has opened up; 웃음꽃 활짝 = everyone is happy.", use_ko:"'길 활짝'은 길이나 기회가 크게 열렸다는 뜻이고, '웃음꽃 활짝'은 모두 기뻐한다는 뜻이다.", use_vi:"'길 활짝': cơ hội đã rộng mở; '웃음꽃 활짝': mọi người đều vui mừng.",
+    ex:"중소기업 해외 진출 길 활짝", para:"중소기업이 해외로 진출할 수 있는 기회가 크게 열렸다" },
+  { w:"꽁꽁", hj:"", ty:"s",
+    lit:"frozen solid; tied tight", lit_ko:"단단히 얼거나 묶은 모양", lit_vi:"đông cứng; buộc chặt",
+    fig:"(spending, a market) frozen; shut tight", fig_ko:"소비나 시장이 얼어붙다, 굳게 닫다", fig_vi:"(chi tiêu, thị trường) đóng băng; đóng chặt",
+    use:"소비 심리 꽁꽁 = people are not spending; often with 얼어붙다.", use_ko:"'소비 심리 꽁꽁'은 사람들이 돈을 쓰지 않는다는 뜻으로 '얼어붙다'와 자주 쓴다.", use_vi:"'소비 심리 꽁꽁': người dân không chịu chi tiêu; hay đi với 얼어붙다.",
+    ex:"소비 심리 꽁꽁, 백화점 매출 감소", para:"사람들이 돈을 잘 쓰지 않아서 백화점 매출이 줄었다" },
+  { w:"술술", hj:"", ty:"s",
+    lit:"flowing smoothly (water, thread)", lit_ko:"물이나 실이 막힘없이 풀려 나오는 모양", lit_vi:"chảy, tuôn ra trơn tru",
+    fig:"smoothly, easily", fig_ko:"막힘없이 쉽게", fig_vi:"trôi chảy, dễ dàng",
+    use:"Often with 풀리다 (things work out) or 읽히다 (easy to read).", use_ko:"'술술 풀리다, 술술 읽히다'처럼 일이 쉽게 해결되거나 글이 쉽게 읽힐 때 쓴다.", use_vi:"Hay đi với 풀리다 (mọi việc suôn sẻ) hoặc 읽히다 (đọc dễ).",
+    ex:"어려운 과학도 술술, 만화 과학책 인기", para:"만화로 된 과학책은 어려운 내용도 쉽게 읽을 수 있어서 인기가 많다" },
+  { w:"들썩", hj:"", ty:"s",
+    lit:"lifting and shaking", lit_ko:"무엇이 들렸다 놓였다 하며 흔들리는 모양", lit_vi:"rung lên, nhấp nhổm",
+    fig:"(prices) start to stir upward; (a place) buzzing", fig_ko:"물가가 오를 기미를 보이다, 분위기가 들뜨다", fig_vi:"(giá cả) nhấp nhổm tăng; (nơi chốn) náo nhiệt",
+    use:"물가 들썩 = prices are starting to rise; 축제로 들썩 = the town is buzzing.", use_ko:"'물가 들썩'은 값이 오르기 시작한다는 뜻이고, '축제로 들썩'은 분위기가 들떠 있다는 뜻이다.", use_vi:"'물가 들썩': giá bắt đầu tăng; '축제로 들썩': cả nơi rộn ràng vì lễ hội.",
+    ex:"장마에 채솟값 들썩", para:"장마 때문에 채소 가격이 오르기 시작했다" },
+  { w:"훨훨", hj:"", ty:"s",
+    lit:"flapping freely (a bird in flight)", lit_ko:"새가 날개를 치며 자유롭게 나는 모양", lit_vi:"vỗ cánh bay lượn tự do",
+    fig:"soar; do very well (exports, sales)", fig_ko:"수출이나 판매 등이 아주 잘되다", fig_vi:"bay cao; phát triển rất tốt (xuất khẩu, doanh số)",
+    use:"훨훨 날다, or 훨훨 alone after something that is growing fast.", use_ko:"'훨훨 날다' 또는 '훨훨'만 써서 무엇이 아주 잘된다는 것을 나타낸다.", use_vi:"Dùng '훨훨 날다' hoặc chỉ '훨훨' để nói điều gì đó đang rất thuận lợi.",
+    ex:"국산 화장품 수출 훨훨", para:"국산 화장품 수출이 크게 늘고 있다" },
+  { w:"쑥쑥", hj:"", ty:"s",
+    lit:"growing quickly (plants, children)", lit_ko:"식물이나 아이가 빠르게 자라는 모양", lit_vi:"lớn nhanh vùn vụt",
+    fig:"(sales, users, skills) grow fast", fig_ko:"매출, 이용자, 실력 등이 빠르게 늘다", fig_vi:"(doanh số, người dùng, năng lực) tăng nhanh",
+    use:"With 크다, 자라다 or 늘다, or alone at the end of a headline.", use_ko:"'쑥쑥 크다, 쑥쑥 늘다'로 쓰거나 제목 끝에 '쑥쑥'만 쓴다.", use_vi:"Thường đi với 크다, 자라다, 늘다 hoặc đứng một mình cuối tiêu đề.",
+    ex:"온라인 장보기 쑥쑥", para:"온라인으로 장을 보는 사람이 빠르게 늘고 있다" },
+  { w:"뚝딱", hj:"", ty:"s",
+    lit:"with a quick knock", lit_ko:"일을 손쉽게 빨리 해치우는 소리나 모양", lit_vi:"cộc cạch, làm xong ngay",
+    fig:"done quickly and easily", fig_ko:"어떤 일을 빠르고 쉽게 해내다", fig_vi:"làm xong nhanh gọn, dễ dàng",
+    use:"Stresses speed and ease: 10분이면 뚝딱 = ready in ten minutes.", use_ko:"'10분이면 뚝딱'처럼 빠르고 쉽게 끝낸다는 점을 강조한다.", use_vi:"Nhấn mạnh sự nhanh và dễ: '10분이면 뚝딱' = chỉ mười phút là xong.",
+    ex:"10분이면 뚝딱, 간편식 인기", para:"10분 만에 쉽게 만들 수 있는 간편식이 인기를 끌고 있다" },
+  { w:"북적", hj:"", ty:"s",
+    lit:"crowded and bustling", lit_ko:"많은 사람이 한곳에 모여 수선스러운 모양", lit_vi:"đông đúc, nhộn nhịp",
+    fig:"packed with people", fig_ko:"사람이 많이 몰려 붐비다", fig_vi:"chật kín người",
+    use:"From 북적이다 / 북적북적; often with 인파 or 나들이객.", use_ko:"'북적이다, 북적북적'에서 온 말로 '인파, 나들이객'과 자주 쓴다.", use_vi:"Từ 북적이다 / 북적북적; hay đi với 인파, 나들이객.",
+    ex:"포근한 주말, 나들이객 북적", para:"날씨가 따뜻한 주말이라 놀러 나온 사람들이 많았다" },
+  { w:"썰렁", hj:"", ty:"s",
+    lit:"chilly", lit_ko:"서늘하게 찬 느낌", lit_vi:"lạnh lẽo",
+    fig:"deserted, nearly empty", fig_ko:"사람이 없어 쓸쓸하고 텅 빈", fig_vi:"vắng tanh, hiu quạnh",
+    use:"A place with few people, or a cold reception (썰렁한 반응).", use_ko:"사람이 거의 없는 곳이나 반응이 좋지 않을 때('썰렁한 반응') 쓴다.", use_vi:"Tả nơi vắng người, hoặc phản ứng lạnh nhạt ('썰렁한 반응').",
+    ex:"한파에 도심 거리 썰렁", para:"날씨가 몹시 추워서 시내 거리에 사람이 거의 없다" },
+  { w:"텅텅", hj:"", ty:"s",
+    lit:"completely empty", lit_ko:"속이 완전히 빈 모양", lit_vi:"trống rỗng",
+    fig:"(seats, shops) almost all empty", fig_ko:"자리나 가게가 거의 다 비다", fig_vi:"(ghế, cửa hàng) gần như bỏ trống",
+    use:"Usually 텅텅 비다; the doubled form is stronger than 텅.", use_ko:"주로 '텅텅 비다'로 쓰며 '텅'을 겹쳐 뜻을 강하게 한 말이다.", use_vi:"Thường là '텅텅 비다'; lặp lại 텅 để nhấn mạnh.",
+    ex:"관객 줄어 객석 텅텅", para:"관객이 줄어서 공연장 자리가 거의 비어 있다" },
+  { w:"우르르", hj:"", ty:"s",
+    lit:"rushing all at once (a crowd)", lit_ko:"여럿이 한꺼번에 몰려가는 모양", lit_vi:"ùa đến cùng lúc",
+    fig:"flock in all at once", fig_ko:"사람들이 한꺼번에 몰리다", fig_vi:"đổ xô đến",
+    use:"Often with 몰리다 or 몰려들다: many people react to the same news at once.", use_ko:"'몰리다, 몰려들다'와 함께 써서 많은 사람이 한꺼번에 움직인다는 뜻을 나타낸다.", use_vi:"Hay đi với 몰리다, 몰려들다: nhiều người cùng lúc đổ đến.",
+    ex:"반값 할인 소식에 손님 우르르", para:"가격을 절반으로 할인한다는 소식에 손님들이 한꺼번에 몰려왔다" },
+  { w:"오락가락", hj:"", ty:"s",
+    lit:"going back and forth", lit_ko:"왔다 갔다 하는 모양", lit_vi:"đi tới đi lui",
+    fig:"on and off (rain); inconsistent (a policy)", fig_ko:"비가 내렸다 그쳤다 하다, 정책이 이랬다저랬다 하다", fig_vi:"(mưa) lúc có lúc không; (chính sách) thất thường",
+    use:"Of weather, rain stopping and starting; of a policy, changing its mind.", use_ko:"날씨에서는 비가 내렸다 그쳤다 하는 것을, 정책에서는 기준이 자주 바뀌는 것을 말한다.", use_vi:"Về thời tiết: mưa tạnh rồi lại mưa; về chính sách: thay đổi liên tục.",
+    ex:"오락가락 장맛비, 우산 챙기세요", para:"장맛비가 내렸다 그쳤다 하니 우산을 가지고 다녀야 한다" },
+  { w:"들쑥날쑥", hj:"", ty:"s",
+    lit:"jutting in and out unevenly", lit_ko:"들어가고 나온 것이 고르지 않은 모양", lit_vi:"lồi lõm, không đều",
+    fig:"uneven, varying a lot", fig_ko:"기준이나 수치가 일정하지 않다", fig_vi:"không đồng đều, chênh lệch",
+    use:"Prices, rules or quality that differ from place to place or time to time.", use_ko:"가격, 기준, 품질 등이 곳마다 또는 때마다 다를 때 쓴다.", use_vi:"Giá, quy định, chất lượng khác nhau tùy nơi hoặc tùy lúc.",
+    ex:"지역마다 들쑥날쑥 주차 요금", para:"주차 요금이 지역에 따라 일정하지 않다" },
+  { w:"깜짝", hj:"", ty:"s",
+    lit:"with a start", lit_ko:"갑자기 놀라는 모양", lit_vi:"giật mình",
+    fig:"surprise, unexpected", fig_ko:"예상하지 못한, 뜻밖의", fig_vi:"bất ngờ, ngoài dự đoán",
+    use:"Before a noun: 깜짝 실적 (surprisingly good results), 깜짝 발표 (a surprise announcement).", use_ko:"'깜짝 실적, 깜짝 발표'처럼 명사 앞에서 뜻밖이라는 의미를 더한다.", use_vi:"Đứng trước danh từ: '깜짝 실적' (kết quả tốt bất ngờ), '깜짝 발표' (công bố bất ngờ).",
+    ex:"중소기업 깜짝 실적, 매출 30% 늘어", para:"중소기업의 매출이 예상보다 크게 늘었다" },
+  { w:"휘청", hj:"", ty:"s",
+    lit:"staggering, about to fall", lit_ko:"다리에 힘이 없어 쓰러질 듯 흔들리는 모양", lit_vi:"lảo đảo, chao đảo",
+    fig:"(a business, the economy) shaken, struggling", fig_ko:"회사나 경제가 큰 어려움으로 흔들리다", fig_vi:"(doanh nghiệp, kinh tế) chao đảo, khó khăn",
+    use:"From 휘청거리다 / 휘청이다; the cause usually comes first with 에.", use_ko:"'휘청거리다, 휘청이다'에서 온 말로 원인을 '에'로 앞에 둔다.", use_vi:"Từ 휘청거리다 / 휘청이다; nguyên nhân thường đứng trước với 에.",
+    ex:"고물가에 자영업자 휘청", para:"물가가 너무 올라서 자영업자들이 큰 어려움을 겪고 있다" },
+  { w:"꿈틀", hj:"", ty:"s",
+    lit:"wriggling", lit_ko:"몸을 구부리며 움직이는 모양", lit_vi:"ngọ nguậy, cựa quậy",
+    fig:"(prices, a trend) start to stir again", fig_ko:"멈춰 있던 것이 다시 움직일 기미를 보이다", fig_vi:"(giá, xu hướng) bắt đầu nhúc nhích trở lại",
+    use:"A first small sign of movement, often 다시 꿈틀: prices that were flat may rise.", use_ko:"'다시 꿈틀'처럼 멈춰 있던 값이나 흐름이 움직이기 시작했다는 작은 신호를 말한다.", use_vi:"Dấu hiệu nhỏ đầu tiên, hay dùng '다시 꿈틀': giá đang đứng yên có thể tăng lại.",
+    ex:"잠잠하던 집값 다시 꿈틀", para:"오르지 않던 집값이 다시 오를 조짐을 보인다" },
+  { w:"펑펑", hj:"", ty:"s",
+    lit:"(snow) pouring down; popping loudly", lit_ko:"눈이 많이 쏟아지거나 크게 터지는 모양", lit_vi:"(tuyết) rơi dày; nổ đùng đùng",
+    fig:"spend lavishly, without restraint", fig_ko:"돈이나 물자를 아끼지 않고 마구 쓰다", fig_vi:"tiêu xài hoang phí",
+    use:"With money or a budget it criticizes waste: 예산 펑펑.", use_ko:"돈이나 예산과 함께 쓰여 낭비를 비판하는 뜻을 나타낸다.", use_vi:"Đi với tiền, ngân sách để phê phán sự lãng phí: '예산 펑펑'.",
+    ex:"예산은 펑펑, 관리는 허술", para:"예산을 마구 쓰면서 관리는 제대로 하지 않았다" },
+  { w:"바짝", hj:"", ty:"s",
+    lit:"very close; dried right up", lit_ko:"아주 가까이 붙거나 물기가 없이 마른 모양", lit_vi:"sát rạt; khô cong",
+    fig:"close in on; tighten sharply", fig_ko:"바로 뒤까지 다가서다, 매우 긴장하거나 세게 하다", fig_vi:"bám sát; siết chặt",
+    use:"바짝 추격 = close behind a leader; 바짝 긴장 = on high alert.", use_ko:"'바짝 추격'은 앞선 상대를 거의 따라잡았다는 뜻, '바짝 긴장'은 크게 긴장했다는 뜻이다.", use_vi:"'바짝 추격': bám sát người dẫn đầu; '바짝 긴장': hết sức căng thẳng.",
+    ex:"국산 전기차, 세계 1위 바짝 추격", para:"국산 전기차가 세계 1위를 거의 따라잡았다" },
+  { w:"성큼", hj:"", ty:"s",
+    lit:"with a long stride", lit_ko:"발을 크게 떼어 걷는 모양", lit_vi:"sải bước dài",
+    fig:"(a season, the future) arrive quickly; move ahead fast", fig_ko:"어떤 때가 빨리 다가오거나 크게 앞서 나가다", fig_vi:"(mùa, tương lai) đến nhanh; tiến một bước dài",
+    use:"봄이 성큼 = spring has come early; 성큼 다가온 = suddenly near.", use_ko:"'봄이 성큼'은 봄이 빨리 왔다는 뜻이고 '성큼 다가온'은 갑자기 가까워졌다는 뜻이다.", use_vi:"'봄이 성큼': xuân đến sớm; '성큼 다가온': bỗng chốc đã gần kề.",
+    ex:"봄 성큼, 꽃 축제 일주일 앞당겨", para:"봄이 빨리 와서 꽃 축제를 일주일 일찍 연다" },
+  { w:"슬금슬금", hj:"", ty:"s",
+    lit:"stealthily, little by little", lit_ko:"남이 모르게 슬며시 움직이는 모양", lit_vi:"lén lút, từ từ",
+    fig:"(prices) creep up bit by bit", fig_ko:"값이 눈에 띄지 않게 조금씩 오르다", fig_vi:"(giá) tăng dần từng chút",
+    use:"A slow rise people hardly notice until it adds up.", use_ko:"사람들이 잘 느끼지 못할 만큼 조금씩 계속 오를 때 쓴다.", use_vi:"Tăng chậm, khó nhận ra cho đến khi cộng dồn lại.",
+    ex:"외식비 슬금슬금, 점심 한 끼 만 원 시대", para:"외식 비용이 조금씩 계속 올라서 점심 한 끼가 만 원이 되었다" },
+  { w:"후끈", hj:"", ty:"s",
+    lit:"a hot flush", lit_ko:"뜨거운 기운이 갑자기 확 끼치는 모양", lit_vi:"nóng bừng",
+    fig:"(enthusiasm, competition) heats up", fig_ko:"열기나 경쟁이 뜨겁게 달아오르다", fig_vi:"(không khí, cạnh tranh) nóng lên",
+    use:"Often 열기 후끈 or 후끈 달아오르다.", use_ko:"'열기 후끈, 후끈 달아오르다'처럼 분위기가 뜨거워졌다는 뜻으로 쓴다.", use_vi:"Hay dùng '열기 후끈' hoặc '후끈 달아오르다'.",
+    ex:"개막 앞두고 응원 열기 후끈", para:"개막을 앞두고 응원하는 분위기가 아주 뜨겁다" },
+
+  // Metaphors
+  { w:"물결", hj:"", ty:"m",
+    lit:"waves, ripples", lit_ko:"물이 움직여 생기는 결", lit_vi:"sóng nước, gợn sóng",
+    fig:"a wave of people; a spreading trend", fig_ko:"많은 사람이 몰려드는 모습이나 퍼져 나가는 흐름", fig_vi:"dòng người đông đảo; làn sóng xu hướng",
+    use:"관광객 물결 = crowds of tourists; also 변화의 물결 (a wave of change).", use_ko:"'관광객 물결'은 관광객이 많이 몰려온다는 뜻이고 '변화의 물결'처럼 흐름을 나타내기도 한다.", use_vi:"'관광객 물결': khách du lịch đổ về đông; cũng dùng '변화의 물결' (làn sóng thay đổi).",
+    ex:"TV 프로그램 방영 효과 '톡톡', 인주시는 관광객 물결", para:"인주시가 TV 프로그램에 나온 덕분에 많은 관광객이 방문하고 있다" },
+  { w:"훈풍", hj:"薰風", ty:"m",
+    lit:"a warm early-summer breeze", lit_ko:"초여름에 부는 따뜻한 바람", lit_vi:"gió ấm đầu hè",
+    fig:"a favourable turn, things looking up", fig_ko:"어떤 분야에 좋은 기운이나 분위기가 돌다", fig_vi:"luồng gió thuận lợi, tín hiệu khởi sắc",
+    use:"For the economy or relations: 수출 훈풍 = exports picking up. The opposite of 찬바람.", use_ko:"경제나 관계가 좋아질 때 쓰며 '찬바람'과 반대된다.", use_vi:"Dùng cho kinh tế, quan hệ đang tốt lên; trái nghĩa với 찬바람.",
+    ex:"반도체 수출 훈풍, 경기 회복 기대", para:"반도체 수출이 잘되어 경기가 좋아질 것으로 기대된다" },
+  { w:"찬바람", hj:"", ty:"m",
+    lit:"a cold wind", lit_ko:"차가운 바람", lit_vi:"gió lạnh",
+    fig:"a chill, a slump", fig_ko:"시장이나 분위기가 얼어붙음", fig_vi:"sự ảm đạm, trì trệ",
+    use:"A market or sector going cold: 부동산 시장 찬바람.", use_ko:"어떤 시장이나 분야의 경기가 나빠졌을 때 쓴다.", use_vi:"Thị trường hoặc ngành rơi vào ảm đạm: '부동산 시장 찬바람'.",
+    ex:"부동산 시장 찬바람, 거래 절반으로", para:"부동산 경기가 나빠져서 거래가 절반으로 줄었다" },
+  { w:"먹구름", hj:"", ty:"m",
+    lit:"dark rain clouds", lit_ko:"비를 머금은 검은 구름", lit_vi:"mây đen",
+    fig:"a gloomy outlook, trouble ahead", fig_ko:"앞으로 좋지 않은 일이 생길 조짐", fig_vi:"triển vọng u ám",
+    use:"먹구름 끼다 or ~에 먹구름: the outlook for that thing is dark.", use_ko:"'먹구름이 끼다, ~에 먹구름'처럼 앞날이 어둡다는 뜻으로 쓴다.", use_vi:"'먹구름 끼다' hoặc '~에 먹구름': tương lai của điều đó u ám.",
+    ex:"수출 전선에 먹구름, 하반기 전망 어두워", para:"수출이 어려워져서 하반기 전망이 좋지 않다" },
+  { w:"봇물", hj:"洑 + 물", ty:"m",
+    lit:"water held back by a weir", lit_ko:"보에 가두어 둔 물", lit_vi:"nước bị chặn lại ở đập",
+    fig:"a flood of something held back, all at once", fig_ko:"참거나 막혀 있던 것이 한꺼번에 쏟아짐", fig_vi:"ồ ạt tuôn ra cùng lúc",
+    use:"봇물 이루다 / 봇물 터지듯: once a rule eases, requests or complaints pour in.", use_ko:"'봇물을 이루다, 봇물 터지듯'처럼 막혀 있던 것이 한꺼번에 쏟아질 때 쓴다.", use_vi:"'봇물 이루다', '봇물 터지듯': những gì bị dồn nén tuôn ra một lượt.",
+    ex:"규제 풀리자 창업 신청 봇물", para:"규제가 풀리자 창업 신청이 한꺼번에 많이 들어왔다" },
+  { w:"한파", hj:"寒波", ty:"m",
+    lit:"a cold wave", lit_ko:"갑자기 몰려오는 추위", lit_vi:"đợt rét",
+    fig:"a sharp downturn (jobs, spending)", fig_ko:"어떤 분야에 갑자기 닥친 어려움", fig_vi:"giai đoạn khó khăn đột ngột (việc làm, tiêu dùng)",
+    use:"취업 한파 = hardly any hiring; 소비 한파 = people stop spending.", use_ko:"'취업 한파'는 일자리가 매우 적다는 뜻, '소비 한파'는 소비가 크게 줄었다는 뜻이다.", use_vi:"'취업 한파': rất ít tuyển dụng; '소비 한파': người dân ngừng chi tiêu.",
+    ex:"채용 한파, 대기업 신입 채용 줄여", para:"대기업이 신입 사원을 적게 뽑아서 취업하기 어렵다" },
+  { w:"청신호", hj:"靑信號", ty:"m",
+    lit:"a green traffic light", lit_ko:"건너가도 된다는 푸른 신호", lit_vi:"đèn xanh",
+    fig:"a good sign", fig_ko:"일이 잘될 것이라는 좋은 조짐", fig_vi:"tín hiệu tốt",
+    use:"~에 청신호 (켜지다): things look good for that. The opposite of 빨간불 / 적신호.", use_ko:"'~에 청신호가 켜지다'처럼 쓰며 '빨간불, 적신호'와 반대된다.", use_vi:"'~에 청신호 (켜지다)': triển vọng tốt; trái nghĩa với 빨간불 / 적신호.",
+    ex:"출생아 수 증가, 인구 회복에 청신호", para:"태어나는 아이가 늘어서 인구가 회복될 가능성이 보인다" },
+  { w:"빨간불 / 적신호", hj:"赤信號", ty:"m",
+    lit:"a red light", lit_ko:"멈추라는 빨간 신호", lit_vi:"đèn đỏ",
+    fig:"a warning sign", fig_ko:"위험하다는 경고 신호", fig_vi:"tín hiệu cảnh báo",
+    use:"~에 빨간불 (켜지다), the same as 적신호: something is in danger.", use_ko:"'~에 빨간불이 켜지다'처럼 쓰며 '적신호'와 같은 뜻이다.", use_vi:"'~에 빨간불 (켜지다)', giống 적신호: điều gì đó đang gặp nguy.",
+    ex:"청소년 건강에 빨간불, 비만율 증가", para:"청소년 비만율이 늘어서 건강이 위험하다" },
+  { w:"기지개", hj:"", ty:"m",
+    lit:"a stretch on waking", lit_ko:"잠에서 깨어 팔다리를 쭉 펴는 것", lit_vi:"vươn vai",
+    fig:"start to recover, come back to life", fig_ko:"침체되었던 것이 다시 활발해지기 시작함", fig_vi:"bắt đầu hồi phục",
+    use:"기지개를 켜다: a sector waking up after a slump.", use_ko:"'기지개를 켜다'의 꼴로 어려웠던 분야가 다시 살아나기 시작할 때 쓴다.", use_vi:"'기지개를 켜다': một lĩnh vực bắt đầu khởi sắc sau thời gian trì trệ.",
+    ex:"관광업 기지개, 외국인 관광객 다시 늘어", para:"관광업이 회복되기 시작해서 외국인 관광객이 다시 늘고 있다" },
+  { w:"몸살", hj:"", ty:"m",
+    lit:"aches and fever from exhaustion", lit_ko:"몹시 피로하여 몸이 아픈 병", lit_vi:"đau mỏi người, cảm do mệt",
+    fig:"suffer from too much of something", fig_ko:"어떤 것이 지나치게 많아 고통을 겪음", fig_vi:"khổ sở vì quá tải",
+    use:"~(으)로 몸살 (앓다): a place suffering from crowds, rubbish or traffic.", use_ko:"'~(으)로 몸살을 앓다'처럼 사람, 쓰레기, 차 등이 너무 많아 힘들 때 쓴다.", use_vi:"'~(으)로 몸살 (앓다)': một nơi khổ sở vì quá đông người, rác hay xe cộ.",
+    ex:"피서객 몰린 해수욕장, 쓰레기로 몸살", para:"피서객이 많이 와서 해수욕장이 쓰레기 때문에 어려움을 겪고 있다" },
+  { w:"제동", hj:"制動", ty:"m",
+    lit:"braking", lit_ko:"기계나 차의 움직임을 멈추게 함", lit_vi:"phanh, hãm",
+    fig:"a check, a stop put on a plan", fig_ko:"어떤 일이 진행되지 못하게 막음", fig_vi:"sự ngăn chặn, chặn đứng",
+    use:"제동을 걸다 = stop it; 제동이 걸리다 = be stopped.", use_ko:"'제동을 걸다'는 막는다는 뜻, '제동이 걸리다'는 막힌다는 뜻이다.", use_vi:"'제동을 걸다': chặn lại; '제동이 걸리다': bị chặn lại.",
+    ex:"법원, 무리한 공사 강행에 제동", para:"법원이 공사를 무리하게 진행하지 못하게 막았다" },
+  { w:"뒷걸음질", hj:"", ty:"m",
+    lit:"walking backward", lit_ko:"뒤로 물러서며 걷는 것", lit_vi:"đi lùi",
+    fig:"go backward, decline", fig_ko:"수치나 상황이 나빠지거나 줄어듦", fig_vi:"đi xuống, suy giảm",
+    use:"Figures that fall, often for several periods running: 석 달째 뒷걸음질.", use_ko:"'석 달째 뒷걸음질'처럼 수치가 계속 줄어들 때 쓴다.", use_vi:"Con số giảm, thường liên tục nhiều kỳ: '석 달째 뒷걸음질'.",
+    ex:"수출 석 달째 뒷걸음질", para:"수출이 석 달 동안 계속 줄었다" },
+  { w:"울상", hj:"울 + 相", ty:"m",
+    lit:"a face about to cry", lit_ko:"울려고 하는 얼굴", lit_vi:"mặt mếu",
+    fig:"gloomy, in trouble", fig_ko:"어려움 때문에 걱정하고 괴로워함", fig_vi:"rầu rĩ, lo lắng",
+    use:"Who is 울상 comes first, the cause before it with 에: 가뭄에 농민 울상.", use_ko:"누가 울상인지를 앞에 쓰고 원인은 '에'로 나타낸다.", use_vi:"Chủ thể đứng trước, nguyên nhân đi với 에: '가뭄에 농민 울상'.",
+    ex:"긴 가뭄에 농민들 울상", para:"가뭄이 길어져서 농민들이 걱정하고 있다" },
+  { w:"함박웃음", hj:"", ty:"m",
+    lit:"a big, broad smile", lit_ko:"크고 환하게 웃는 웃음", lit_vi:"nụ cười tươi rói",
+    fig:"delight at good results", fig_ko:"좋은 결과로 크게 기뻐함", fig_vi:"vui mừng vì kết quả tốt",
+    use:"The opposite of 울상: 풍년에 농가 함박웃음.", use_ko:"'울상'과 반대로 좋은 일이 생겨 기뻐할 때 쓴다.", use_vi:"Trái với 울상: '풍년에 농가 함박웃음'.",
+    ex:"사과 풍년에 농가 함박웃음", para:"사과 농사가 잘되어 농민들이 크게 기뻐하고 있다" },
+  { w:"단비", hj:"", ty:"m",
+    lit:"welcome rain after a dry spell", lit_ko:"꼭 필요할 때 알맞게 내리는 비", lit_vi:"cơn mưa đúng lúc",
+    fig:"much-needed help or relief", fig_ko:"어려울 때 꼭 필요한 도움", fig_vi:"sự giúp đỡ đúng lúc",
+    use:"단비 같은 or ~에 단비: help that came just when it was needed.", use_ko:"'단비 같은, ~에 단비'처럼 꼭 필요한 때에 받은 도움을 말한다.", use_vi:"Hay dùng '단비 같은' hoặc '~에 단비': sự trợ giúp đến đúng lúc.",
+    ex:"소상공인에 단비, 긴급 지원금 지급", para:"어려운 소상공인에게 꼭 필요한 지원금을 준다" },
+  { w:"날개 달다", hj:"", ty:"m",
+    lit:"to put on wings", lit_ko:"날개를 붙이다", lit_vi:"chắp thêm cánh",
+    fig:"gain momentum, take off", fig_ko:"어떤 일이 힘을 얻어 더 잘되다", fig_vi:"như được chắp cánh, phát triển mạnh hơn",
+    use:"~에 날개 달다 / 날개 단 ~: something got a boost. Not the same as 날개 돋친 듯 (selling fast).", use_ko:"'날개를 달다, 날개 단'은 힘을 얻어 더 잘된다는 뜻으로, 잘 팔린다는 '날개 돋친 듯'과는 다르다.", use_vi:"'날개 달다', '날개 단 ~': được tiếp sức; khác với '날개 돋친 듯' (bán chạy).",
+    ex:"한류 열풍에 날개 단 한국어 교육", para:"한류가 인기를 얻으면서 한국어 교육도 더 활발해졌다" },
+  { w:"열풍", hj:"熱風", ty:"m",
+    lit:"a hot wind", lit_ko:"뜨거운 바람", lit_vi:"gió nóng",
+    fig:"a craze, a boom", fig_ko:"어떤 것이 크게 유행하는 현상", fig_vi:"cơn sốt, trào lưu",
+    use:"~ 열풍 (불다): something has become hugely popular.", use_ko:"'~ 열풍이 불다'처럼 무엇이 매우 유행할 때 쓴다.", use_vi:"'~ 열풍 (불다)': điều gì đó cực kỳ thịnh hành.",
+    ex:"직장인 사이 등산 열풍", para:"직장인들 사이에서 등산이 크게 유행하고 있다" },
+  { w:"돌풍", hj:"突風", ty:"m",
+    lit:"a sudden gust of wind", lit_ko:"갑자기 세게 부는 바람", lit_vi:"cơn gió giật",
+    fig:"a surprise hit, a sudden sensation", fig_ko:"예상을 깨고 크게 성공하거나 주목받는 일", fig_vi:"cú hích bất ngờ, thành công vang dội",
+    use:"흥행 돌풍 = an unexpected box-office hit; 돌풍을 일으키다.", use_ko:"'흥행 돌풍, 돌풍을 일으키다'처럼 뜻밖의 큰 성공을 말한다.", use_vi:"'흥행 돌풍': ăn khách bất ngờ; '돌풍을 일으키다'.",
+    ex:"신인 감독 영화 흥행 돌풍", para:"신인 감독의 영화가 예상과 달리 크게 성공했다" },
+  { w:"거품", hj:"", ty:"m",
+    lit:"bubbles, foam", lit_ko:"액체 속에 공기가 들어가 생긴 방울", lit_vi:"bọt",
+    fig:"an inflated price or value", fig_ko:"실제보다 부풀려진 가격이나 가치", fig_vi:"giá trị bị thổi phồng",
+    use:"가격 거품 = overpriced; 거품이 빠지다 = prices come back down.", use_ko:"'가격 거품'은 실제보다 비싸다는 뜻이고 '거품이 빠지다'는 가격이 제자리로 내려간다는 뜻이다.", use_vi:"'가격 거품': bị đội giá; '거품이 빠지다': giá trở lại thực chất.",
+    ex:"수입 화장품 가격 거품 논란", para:"수입 화장품 가격이 실제 가치보다 너무 비싸다는 지적이 있다" },
+  { w:"빗장", hj:"", ty:"m",
+    lit:"a door bolt", lit_ko:"문을 잠그기 위해 가로지르는 막대", lit_vi:"then cài cửa",
+    fig:"a closed door to a market, country or trade", fig_ko:"시장이나 국경 등을 막는 장벽", fig_vi:"rào cản đóng cửa (thị trường, biên giới)",
+    use:"빗장을 풀다 / 열다 = open up; 빗장을 걸다 = close off.", use_ko:"'빗장을 풀다'는 열어 준다는 뜻, '빗장을 걸다'는 막는다는 뜻이다.", use_vi:"'빗장을 풀다': mở cửa; '빗장을 걸다': đóng lại.",
+    ex:"단체 관광 빗장 풀려, 관광업계 기대", para:"단체 관광이 다시 허용되어 관광업계가 기대하고 있다" },
+  { w:"걸림돌", hj:"", ty:"m",
+    lit:"a stone you trip on", lit_ko:"길을 걸을 때 걸려 방해가 되는 돌", lit_vi:"hòn đá cản đường",
+    fig:"an obstacle", fig_ko:"일을 하는 데 방해가 되는 것", fig_vi:"trở ngại",
+    use:"A는 B의 걸림돌: A gets in B's way. The opposite of 디딤돌 (a stepping stone).", use_ko:"'A가 B의 걸림돌'은 A가 B를 방해한다는 뜻이며 '디딤돌'과 반대된다.", use_vi:"'A는 B의 걸림돌': A cản trở B; trái nghĩa 디딤돌 (bàn đạp).",
+    ex:"비싼 임대료, 청년 창업 걸림돌", para:"비싼 임대료 때문에 청년들이 창업하기 어렵다" },
+  { w:"버팀목", hj:"", ty:"m",
+    lit:"a prop, a supporting post", lit_ko:"쓰러지지 않게 받치는 나무", lit_vi:"cây chống",
+    fig:"a mainstay, what holds something up", fig_ko:"어떤 것을 지탱해 주는 중요한 힘", fig_vi:"trụ cột, chỗ dựa",
+    use:"경제의 버팀목 = what keeps the economy going.", use_ko:"'경제의 버팀목'처럼 무엇을 버티게 해 주는 중심이라는 뜻이다.", use_vi:"'경제의 버팀목': trụ đỡ cho nền kinh tế.",
+    ex:"관광 수입, 섬 경제 버팀목 역할", para:"관광 수입이 섬의 경제를 지탱하고 있다" },
+  { w:"효자", hj:"孝子", ty:"m",
+    lit:"a devoted son", lit_ko:"부모를 잘 모시는 아들", lit_vi:"người con hiếu thảo",
+    fig:"the product or item that earns the most", fig_ko:"큰 이익을 가져다주는 상품이나 산업", fig_vi:"mặt hàng chủ lực, mang lại nhiều lợi nhuận",
+    use:"효자 상품 / 효자 품목: the thing that brings the money in.", use_ko:"'효자 상품, 효자 품목'처럼 돈을 많이 벌어 주는 것을 말한다.", use_vi:"'효자 상품', '효자 품목': mặt hàng mang lại nhiều tiền.",
+    ex:"김, 수산물 수출 효자 품목으로", para:"김이 수산물 가운데 수출로 돈을 많이 벌어 주는 품목이 되었다" },
+  { w:"고삐", hj:"", ty:"m",
+    lit:"reins", lit_ko:"소나 말을 끄는 줄", lit_vi:"dây cương",
+    fig:"control; the pace of an effort", fig_ko:"어떤 일을 다스리거나 이끄는 힘", fig_vi:"sự kiểm soát, nhịp độ",
+    use:"고삐를 죄다 / 당기다 = tighten control or step up; 고삐 풀린 = out of control.", use_ko:"'고삐를 죄다'는 더 강하게 관리한다는 뜻, '고삐 풀린'은 통제되지 않는다는 뜻이다.", use_vi:"'고삐를 죄다': siết chặt, đẩy mạnh; '고삐 풀린': mất kiểm soát.",
+    ex:"정부, 물가 관리 고삐 죈다", para:"정부가 물가 관리를 더 강하게 한다" },
+  { w:"직격탄", hj:"直擊彈", ty:"m",
+    lit:"a direct hit", lit_ko:"목표에 바로 맞은 포탄", lit_vi:"đòn đánh trúng trực diện",
+    fig:"a heavy, direct blow", fig_ko:"어떤 일로 곧바로 큰 피해를 입음", fig_vi:"cú đòn nặng nề trực tiếp",
+    use:"~ 직격탄 (맞다): the thing named hit this group hardest.", use_ko:"'~ 직격탄을 맞다'처럼 어떤 일 때문에 직접 큰 피해를 입었다는 뜻이다.", use_vi:"'~ 직격탄 (맞다)': nhóm nào đó chịu thiệt hại nặng nhất vì việc đó.",
+    ex:"폭염 직격탄, 채솟값 급등", para:"폭염의 영향으로 채소 가격이 갑자기 크게 올랐다" },
+  { w:"불똥", hj:"", ty:"m",
+    lit:"a flying spark", lit_ko:"튀어 오르는 작은 불덩이", lit_vi:"tia lửa bắn ra",
+    fig:"knock-on effects reaching others", fig_ko:"어떤 일의 피해가 다른 곳까지 미침", fig_vi:"hệ lụy lan sang nơi khác",
+    use:"불똥이 튀다: trouble in one place spreads to another.", use_ko:"'불똥이 튀다'처럼 한 곳의 문제가 다른 곳으로 번질 때 쓴다.", use_vi:"'불똥이 튀다': rắc rối ở chỗ này lan sang chỗ khác.",
+    ex:"환율 급등 불똥, 유학생 부담 커져", para:"환율이 크게 오른 영향으로 유학생들의 부담이 커졌다" },
+  { w:"물꼬", hj:"", ty:"m",
+    lit:"the inlet of a rice paddy", lit_ko:"논에 물이 들어오고 나가게 만든 좁은 길", lit_vi:"lối dẫn nước vào ruộng",
+    fig:"an opening, a first breakthrough", fig_ko:"어떤 일이 시작될 수 있는 길", fig_vi:"lối mở, bước đột phá đầu tiên",
+    use:"물꼬를 트다 = open the way (for talks, trade, exchange).", use_ko:"'물꼬를 트다'처럼 대화나 교류가 시작되게 할 때 쓴다.", use_vi:"'물꼬를 트다': mở đường (cho đối thoại, giao lưu).",
+    ex:"두 도시 협약, 문화 교류 물꼬 텄다", para:"두 도시가 협약을 맺어 문화 교류를 시작할 수 있게 되었다" },
+  { w:"탄력", hj:"彈力", ty:"m",
+    lit:"elasticity, spring", lit_ko:"튀어 오르는 힘", lit_vi:"độ đàn hồi",
+    fig:"momentum", fig_ko:"일이 힘을 얻어 잘 진행되는 기세", fig_vi:"đà phát triển",
+    use:"탄력을 받다 / 탄력이 붙다 = gather speed.", use_ko:"'탄력을 받다, 탄력이 붙다'처럼 일이 빨라질 때 쓴다.", use_vi:"'탄력을 받다', '탄력이 붙다': có thêm đà.",
+    ex:"철도 개통 확정, 신도시 개발 탄력", para:"철도 개통이 확정되어 신도시 개발이 더 빨리 진행될 것이다" },
+  { w:"곤두박질", hj:"", ty:"m",
+    lit:"falling headfirst", lit_ko:"몸이 뒤집혀 거꾸로 떨어짐", lit_vi:"lao đầu xuống",
+    fig:"plunge, plummet", fig_ko:"수치가 갑자기 크게 떨어짐", fig_vi:"lao dốc",
+    use:"곤두박질치다: prices, shares or ratings fall very fast.", use_ko:"'곤두박질치다'의 꼴로 값이나 순위가 매우 빠르게 떨어질 때 쓴다.", use_vi:"'곤두박질치다': giá, cổ phiếu, thứ hạng rơi rất nhanh.",
+    ex:"실적 부진에 주가 곤두박질", para:"회사의 실적이 나빠서 주가가 갑자기 크게 떨어졌다" },
+  { w:"박차", hj:"拍車", ty:"m",
+    lit:"spurs on a rider's boot", lit_ko:"말을 빨리 달리게 하려고 박는 쇠 장치", lit_vi:"đinh thúc ngựa",
+    fig:"a push to speed things up", fig_ko:"일을 더 빨리 진행하게 하는 힘", fig_vi:"sự thúc đẩy",
+    use:"박차를 가하다 = step up efforts.", use_ko:"'박차를 가하다'의 꼴로 어떤 일을 더 서두를 때 쓴다.", use_vi:"'박차를 가하다': tăng tốc, đẩy mạnh.",
+    ex:"친환경 차 개발 박차", para:"친환경 자동차 개발을 더 서두르고 있다" },
+  { w:"몸값", hj:"", ty:"m",
+    lit:"a ransom; the price of a person", lit_ko:"사람의 몸을 대가로 치르는 돈", lit_vi:"tiền chuộc",
+    fig:"someone's market value or pay", fig_ko:"어떤 사람의 가치나 대우", fig_vi:"giá trị trên thị trường, mức lương",
+    use:"인재 몸값 = what skilled people can command.", use_ko:"'인재 몸값'처럼 사람의 가치나 연봉을 말할 때 쓴다.", use_vi:"'인재 몸값': giá trị, lương của nhân tài.",
+    ex:"인공 지능 개발자 몸값 치솟아", para:"인공 지능 개발자의 연봉이 크게 올랐다" },
+  { w:"숨통", hj:"", ty:"m",
+    lit:"the windpipe", lit_ko:"숨을 쉬는 목구멍", lit_vi:"khí quản",
+    fig:"breathing room", fig_ko:"어려운 상황에서 조금 생기는 여유", fig_vi:"khoảng thở, chút dễ thở hơn",
+    use:"숨통이 트이다 = get some relief; 숨통을 조이다 = squeeze hard.", use_ko:"'숨통이 트이다'는 조금 나아졌다는 뜻, '숨통을 조이다'는 몹시 어렵게 한다는 뜻이다.", use_vi:"'숨통이 트이다': dễ thở hơn; '숨통을 조이다': siết nghẹt.",
+    ex:"대출 규제 완화, 자영업자 숨통", para:"대출 규제가 풀려서 자영업자들이 조금 여유가 생겼다" },
+  { w:"실종", hj:"失踪", ty:"m",
+    lit:"going missing", lit_ko:"사람이 사라져 간 곳을 모름", lit_vi:"mất tích",
+    fig:"gone, nowhere to be seen", fig_ko:"있어야 할 것이 사라짐", fig_vi:"biến mất (thứ lẽ ra phải có)",
+    use:"명절 특수 실종 = the usual holiday trade never came.", use_ko:"'명절 특수 실종'처럼 당연히 있어야 할 것이 없다는 뜻이다.", use_vi:"'명절 특수 실종': không còn cảnh buôn bán đắt hàng ngày lễ như mọi năm.",
+    ex:"명절 특수 실종, 전통 시장 한숨", para:"명절인데도 손님이 없어서 전통 시장 상인들이 걱정하고 있다" },
+  { w:"활개", hj:"", ty:"m",
+    lit:"outspread arms and legs", lit_ko:"사람의 두 팔이나 새의 두 날개", lit_vi:"dang rộng tay chân",
+    fig:"run rampant (wrongdoers)", fig_ko:"나쁜 사람이나 일이 거리낌 없이 퍼짐", fig_vi:"hoành hành",
+    use:"활개 치다: scams or illegal acts going on freely.", use_ko:"'활개를 치다'의 꼴로 사기나 불법이 마음대로 퍼질 때 쓴다.", use_vi:"'활개 치다': lừa đảo, vi phạm hoành hành tự do.",
+    ex:"온라인 중고 거래 사기 활개", para:"인터넷 중고 거래에서 사기가 많이 일어나고 있다" },
+  { w:"안갯속", hj:"", ty:"m",
+    lit:"inside the fog", lit_ko:"안개가 낀 가운데", lit_vi:"trong sương mù",
+    fig:"unclear, impossible to predict", fig_ko:"앞일을 알 수 없는 상태", fig_vi:"mù mịt, khó đoán",
+    use:"The result or the future cannot be seen yet.", use_ko:"결과나 앞날을 아직 알 수 없을 때 쓴다.", use_vi:"Kết quả hay tương lai còn chưa rõ.",
+    ex:"내년 경기 안갯속", para:"내년 경기가 어떻게 될지 예측하기 어렵다" },
+  { w:"뭇매", hj:"", ty:"m",
+    lit:"a beating from many people", lit_ko:"여러 사람이 한꺼번에 때리는 매", lit_vi:"trận đòn hội đồng",
+    fig:"a storm of public criticism", fig_ko:"여러 사람에게서 한꺼번에 받는 비난", fig_vi:"làn sóng chỉ trích",
+    use:"뭇매를 맞다 = be criticized by many at once.", use_ko:"'뭇매를 맞다'처럼 많은 사람에게 비판받을 때 쓴다.", use_vi:"'뭇매를 맞다': bị nhiều người chỉ trích.",
+    ex:"과대 포장 업체, 소비자 뭇매", para:"포장을 지나치게 한 업체가 소비자들에게 많은 비판을 받았다" },
+  { w:"마중물", hj:"", ty:"m",
+    lit:"priming water for a pump", lit_ko:"펌프에서 물이 나오게 하려고 먼저 붓는 물", lit_vi:"nước mồi cho máy bơm",
+    fig:"seed money or a first step that sets more in motion", fig_ko:"더 큰 효과를 이끌어 내기 위한 처음의 투자나 도움", fig_vi:"vốn mồi, bước khởi động",
+    use:"마중물 역할 = the first funding that draws more in.", use_ko:"'마중물 역할'처럼 다른 투자나 변화를 이끌어 내는 처음의 힘을 말한다.", use_vi:"'마중물 역할': nguồn vốn ban đầu kéo theo đầu tư khác.",
+    ex:"정부 지원금, 민간 투자 마중물 역할", para:"정부 지원금이 민간 기업의 투자를 이끌어 내는 역할을 한다" },
+  { w:"고공 행진", hj:"高空行進", ty:"m",
+    lit:"a march high in the sky", lit_ko:"높은 하늘에서 나아감", lit_vi:"diễu hành trên cao",
+    fig:"staying at a high level (prices)", fig_ko:"가격이나 수치가 높은 상태로 계속됨", fig_vi:"(giá) neo ở mức cao",
+    use:"Prices that stay high for a long time, not a single jump.", use_ko:"한 번 오른 것이 아니라 높은 값이 오래 계속될 때 쓴다.", use_vi:"Giá ở mức cao kéo dài chứ không chỉ tăng một lần.",
+    ex:"과일값 고공 행진, 차례상 부담", para:"과일 가격이 계속 높아서 차례상을 차리는 데 부담이 된다" },
+  { w:"제자리걸음", hj:"", ty:"m",
+    lit:"marking time on the spot", lit_ko:"제자리에서 걷는 동작", lit_vi:"giậm chân tại chỗ",
+    fig:"no progress", fig_ko:"조금도 나아지지 않음", fig_vi:"không tiến triển",
+    use:"Pay, talks or figures that stay where they were.", use_ko:"임금, 협상, 수치 등이 나아지지 않고 그대로일 때 쓴다.", use_vi:"Lương, đàm phán, con số vẫn y nguyên.",
+    ex:"임금은 10년째 제자리걸음", para:"임금이 10년 동안 오르지 않았다" },
+  { w:"물거품", hj:"", ty:"m",
+    lit:"foam on water", lit_ko:"물 위에 생기는 거품", lit_vi:"bọt nước",
+    fig:"effort that came to nothing", fig_ko:"애쓴 일이 헛되게 됨", fig_vi:"công sức tan thành mây khói",
+    use:"물거품이 되다: a year's work or a plan is lost.", use_ko:"'물거품이 되다'의 꼴로 노력이나 계획이 헛일이 될 때 쓴다.", use_vi:"'물거품이 되다': công sức, kế hoạch đổ sông đổ biển.",
+    ex:"갑작스러운 폭우에 1년 농사 물거품", para:"갑자기 내린 폭우 때문에 1년 동안 지은 농사가 헛일이 되었다" },
+  { w:"뒷북", hj:"", ty:"m",
+    lit:"drumming after the event", lit_ko:"일이 끝난 뒤에 치는 북", lit_vi:"đánh trống sau khi mọi việc đã xong",
+    fig:"action taken too late", fig_ko:"때를 놓친 뒤에 하는 대응", fig_vi:"phản ứng muộn màng",
+    use:"뒷북 대책 / 뒷북 행정: measures that come only after the damage.", use_ko:"'뒷북 대책, 뒷북 행정'처럼 사고가 난 뒤에야 하는 늦은 대응을 비판한다.", use_vi:"'뒷북 대책', '뒷북 행정': biện pháp đưa ra sau khi thiệt hại đã xảy ra.",
+    ex:"사고 나자 뒷북 대책", para:"사고가 난 뒤에야 늦게 대책을 내놓았다" },
+  { w:"눈덩이", hj:"", ty:"m",
+    lit:"a snowball", lit_ko:"눈을 뭉친 덩어리", lit_vi:"quả cầu tuyết",
+    fig:"something that keeps growing fast", fig_ko:"점점 크게 불어나는 것", fig_vi:"ngày càng phình to",
+    use:"눈덩이처럼 불어나다: debt or losses growing bigger and faster.", use_ko:"'눈덩이처럼 불어나다'의 꼴로 빚이나 손해가 계속 커질 때 쓴다.", use_vi:"'눈덩이처럼 불어나다': nợ, thua lỗ phình to nhanh.",
+    ex:"적자 눈덩이, 시내버스 운영 위기", para:"적자가 계속 크게 늘어서 시내버스 운영이 어렵다" },
+  { w:"실마리", hj:"", ty:"m",
+    lit:"the loose end of a thread", lit_ko:"감기거나 얽힌 실의 첫머리", lit_vi:"đầu mối sợi chỉ",
+    fig:"a clue, a lead to a solution", fig_ko:"일이나 문제를 풀어 갈 수 있는 첫 단서", fig_vi:"manh mối",
+    use:"실마리를 찾다 / 실마리가 풀리다: find the key to a problem.", use_ko:"'실마리를 찾다, 실마리가 풀리다'처럼 해결의 단서를 말한다.", use_vi:"'실마리를 찾다': tìm ra manh mối giải quyết.",
+    ex:"치매 치료 실마리 찾았다", para:"치매를 치료할 수 있는 단서를 찾았다" },
+  { w:"평행선", hj:"平行線", ty:"m",
+    lit:"parallel lines", lit_ko:"서로 만나지 않는 두 직선", lit_vi:"đường song song",
+    fig:"a deadlock, two sides that never meet", fig_ko:"의견이 좁혀지지 않는 상태", fig_vi:"bế tắc, không tìm được tiếng nói chung",
+    use:"평행선을 달리다: neither side gives way.", use_ko:"'평행선을 달리다'처럼 양쪽의 주장이 끝까지 맞설 때 쓴다.", use_vi:"'평행선을 달리다': hai bên không nhượng bộ.",
+    ex:"임금 협상 평행선, 파업 우려", para:"임금 협상에서 의견이 좁혀지지 않아 파업이 걱정된다" },
+  { w:"하늘길", hj:"", ty:"m",
+    lit:"the road in the sky", lit_ko:"하늘에 난 길", lit_vi:"con đường trên trời",
+    fig:"air routes, flights", fig_ko:"비행기가 다니는 길, 항공 노선", fig_vi:"đường bay, tuyến hàng không",
+    use:"하늘길이 열리다 = flights start or resume.", use_ko:"'하늘길이 열리다'는 항공편이 새로 생기거나 다시 다닌다는 뜻이다.", use_vi:"'하늘길이 열리다': có đường bay mới hoặc nối lại.",
+    ex:"인주-다낭 하늘길 열려, 직항 주 7회", para:"인주와 다낭 사이에 직항 비행기가 일주일에 7번 다니게 되었다" },
+  { w:"인파", hj:"人波", ty:"m",
+    lit:"waves of people", lit_ko:"사람의 물결", lit_vi:"sóng người",
+    fig:"huge crowds", fig_ko:"많이 모여 움직이는 사람들", fig_vi:"biển người, dòng người đông đúc",
+    use:"인파가 몰리다 / 인파로 붐비다; close in meaning to 물결.", use_ko:"'인파가 몰리다, 인파로 붐비다'처럼 쓰며 '물결'과 뜻이 비슷하다.", use_vi:"'인파가 몰리다', '인파로 붐비다'; nghĩa gần với 물결.",
+    ex:"불꽃 축제에 100만 인파", para:"불꽃 축제에 100만 명이나 되는 사람들이 모였다" },
+
+  // Headline words
+  { w:"줄줄이", hj:"", ty:"h",
+    lit:"in a long row", lit_ko:"여럿이 줄을 지어 잇따르는 모양", lit_vi:"nối đuôi nhau",
+    fig:"one after another", fig_ko:"여러 개가 잇따라", fig_vi:"lần lượt, hàng loạt",
+    use:"Many of the same thing in turn: 줄줄이 인상 = one price rise after another.", use_ko:"'줄줄이 인상'처럼 같은 일이 잇따라 일어날 때 쓴다.", use_vi:"Nhiều việc giống nhau xảy ra liên tiếp: '줄줄이 인상'.",
+    ex:"라면·과자값 줄줄이 인상", para:"라면과 과자 등 여러 제품의 가격이 잇따라 올랐다" },
+  { w:"잇따라 / 잇달아", hj:"", ty:"h",
+    lit:"following on", lit_ko:"뒤를 이어", lit_vi:"nối tiếp",
+    fig:"one after another, in a row", fig_ko:"어떤 일이 연이어 계속", fig_vi:"liên tiếp",
+    use:"잇따른 / 잇단 before a noun, 잇따라 before a verb; often of accidents or events.", use_ko:"명사 앞에서는 '잇따른, 잇단', 동사 앞에서는 '잇따라'로 쓰며 사고나 사건에 자주 쓴다.", use_vi:"Trước danh từ: '잇따른', '잇단'; trước động từ: '잇따라'. Hay dùng cho tai nạn, sự kiện.",
+    ex:"전동 킥보드 사고 잇따라", para:"전동 킥보드 사고가 계속 일어나고 있다" },
+  { w:"반토막", hj:"半 + 토막", ty:"h",
+    lit:"half a chunk", lit_ko:"절반으로 자른 토막", lit_vi:"nửa khúc",
+    fig:"cut by half", fig_ko:"수치가 절반으로 줄어듦", fig_vi:"giảm một nửa",
+    use:"Prices, visitors or sales falling to about half: 반토막 나다.", use_ko:"'반토막 나다'처럼 값이나 수가 절반 정도로 줄었을 때 쓴다.", use_vi:"Giá, lượng khách, doanh số giảm còn khoảng một nửa: '반토막 나다'.",
+    ex:"관광객 반토막, 지역 상인 울상", para:"관광객이 절반으로 줄어서 지역 상인들이 걱정하고 있다" },
+  { w:"급증", hj:"急增", ty:"h",
+    lit:"急 sudden + 增 increase", lit_ko:"급할 급(急) + 더할 증(增)", lit_vi:"急 gấp + 增 tăng",
+    fig:"rise sharply in a short time", fig_ko:"짧은 기간에 갑자기 많이 늘다", fig_vi:"tăng mạnh trong thời gian ngắn",
+    use:"For numbers of people or things; for prices the word is 급등.", use_ko:"사람이나 물건의 수에 쓰며, 값이 오를 때는 '급등'을 쓴다.", use_vi:"Dùng cho số lượng người, vật; với giá cả thì dùng 급등.",
+    ex:"1인 가구 급증, 소형 가전 인기", para:"혼자 사는 사람이 빠르게 늘어서 작은 가전제품이 인기를 끌고 있다" },
+  { w:"급감", hj:"急減", ty:"h",
+    lit:"急 sudden + 減 decrease", lit_ko:"급할 급(急) + 덜 감(減)", lit_vi:"急 gấp + 減 giảm",
+    fig:"fall sharply in a short time", fig_ko:"짧은 기간에 갑자기 많이 줄다", fig_vi:"giảm mạnh trong thời gian ngắn",
+    use:"The opposite of 급증; check what fell, not just that something changed.", use_ko:"'급증'의 반대말이며, 무엇이 줄었는지 정확히 확인해야 한다.", use_vi:"Trái nghĩa với 급증; cần xem rõ cái gì giảm.",
+    ex:"저출생에 초등학교 입학생 급감", para:"아이가 적게 태어나서 초등학교에 들어가는 학생이 크게 줄었다" },
+  { w:"급등", hj:"急騰", ty:"h",
+    lit:"急 sudden + 騰 soar", lit_ko:"급할 급(急) + 오를 등(騰)", lit_vi:"急 gấp + 騰 vọt lên",
+    fig:"(prices) jump sharply", fig_ko:"값이 갑자기 크게 오르다", fig_vi:"(giá) tăng vọt",
+    use:"For prices and values; for numbers of things the word is 급증.", use_ko:"'급등'은 값에, '급증'은 수나 양에 주로 쓴다.", use_vi:"'급등' dùng cho giá cả, '급증' dùng cho số lượng.",
+    ex:"국제 유가 급등, 항공료도 올라", para:"국제 석유 가격이 갑자기 크게 올라서 항공료도 올랐다" },
+  { w:"급락", hj:"急落", ty:"h",
+    lit:"急 sudden + 落 fall", lit_ko:"급할 급(急) + 떨어질 락(落)", lit_vi:"急 gấp + 落 rơi",
+    fig:"(prices, rates) drop sharply", fig_ko:"값이나 비율이 갑자기 크게 떨어지다", fig_vi:"(giá, tỉ lệ) giảm mạnh, lao dốc",
+    use:"The opposite of 급등.", use_ko:"'급등'의 반대말이다.", use_vi:"Trái nghĩa với 급등.",
+    ex:"풍년에 쌀값 급락, 농가 시름", para:"쌀농사가 너무 잘되어 쌀 가격이 크게 떨어지자 농민들이 걱정하고 있다" },
+  { w:"오름세 / 내림세", hj:"-勢", ty:"h",
+    lit:"a rising / falling tendency", lit_ko:"오르는 기세 / 내리는 기세", lit_vi:"đà tăng / đà giảm",
+    fig:"an upward or downward trend over time", fig_ko:"값이 계속 오르거나 내리는 흐름", fig_vi:"xu hướng tăng hoặc giảm kéo dài",
+    use:"Often with ~째: 3주째 오름세 = rising for three weeks. Also 상승세 / 하락세.", use_ko:"'3주째 오름세'처럼 기간과 함께 쓰며 '상승세, 하락세'와 같은 뜻이다.", use_vi:"Hay đi với ~째: '3주째 오름세' = tăng ba tuần liền; giống 상승세 / 하락세.",
+    ex:"기름값 3주째 오름세", para:"기름값이 3주 동안 계속 오르고 있다" },
+  { w:"두 자릿수", hj:"", ty:"h",
+    lit:"two digits", lit_ko:"두 개의 숫자로 된 수", lit_vi:"hai chữ số",
+    fig:"10 percent or more", fig_ko:"10% 이상의 비율", fig_vi:"từ 10% trở lên",
+    use:"두 자릿수 증가 = a rise of 10 percent or more; 한 자릿수 = under 10.", use_ko:"'두 자릿수 증가'는 10% 이상 늘었다는 뜻이고 '한 자릿수'는 10% 미만이다.", use_vi:"'두 자릿수 증가': tăng từ 10% trở lên; '한 자릿수': dưới 10%.",
+    ex:"온라인 쇼핑 매출 두 자릿수 증가", para:"온라인 쇼핑 매출이 10% 이상 늘었다" },
+  { w:"역대", hj:"歷代", ty:"h",
+    lit:"歷 pass through + 代 generations", lit_ko:"지날 역(歷) + 세대 대(代)", lit_vi:"歷 trải qua + 代 đời",
+    fig:"of all time, a record", fig_ko:"지금까지 있었던 것 가운데", fig_vi:"từ trước đến nay, kỷ lục",
+    use:"역대 최고 / 최대 / 최저 = the highest / largest / lowest ever recorded.", use_ko:"'역대 최고, 역대 최대, 역대 최저'처럼 지금까지의 기록과 비교할 때 쓴다.", use_vi:"'역대 최고 / 최대 / 최저': cao nhất / lớn nhất / thấp nhất từ trước đến nay.",
+    ex:"외국인 관광객 역대 최대", para:"외국인 관광객이 지금까지 가운데 가장 많다" },
+  { w:"속출", hj:"續出", ty:"h",
+    lit:"續 continue + 出 come out", lit_ko:"이을 속(續) + 날 출(出)", lit_vi:"續 tiếp + 出 ra",
+    fig:"keep happening, one after another", fig_ko:"어떤 일이 잇따라 생기다", fig_vi:"liên tiếp xảy ra",
+    use:"Mostly for bad things: damage, accidents, complaints.", use_ko:"주로 피해, 사고, 불만처럼 좋지 않은 일에 쓴다.", use_vi:"Chủ yếu dùng cho chuyện xấu: thiệt hại, tai nạn, phàn nàn.",
+    ex:"폭설에 빙판길 사고 속출", para:"눈이 많이 와서 길이 얼어 사고가 계속 일어났다" },
+  { w:"무산", hj:"霧散", ty:"h",
+    lit:"霧 fog + 散 scatter (fog clearing away)", lit_ko:"안개 무(霧) + 흩을 산(散)", lit_vi:"霧 sương + 散 tan",
+    fig:"fall through, be called off", fig_ko:"계획한 일이 이루어지지 못하고 취소되다", fig_vi:"đổ bể, bị hủy bỏ",
+    use:"무산되다: a plan that never happens; the cause usually comes first.", use_ko:"'무산되다'의 꼴로 계획이 실현되지 못했을 때 쓰며 원인이 앞에 온다.", use_vi:"'무산되다': kế hoạch không thực hiện được; nguyên nhân thường đứng trước.",
+    ex:"주민 반대로 공원 조성 무산", para:"주민들이 반대해서 공원을 만들려던 계획이 취소되었다" },
+  { w:"차질", hj:"蹉跌", ty:"h",
+    lit:"蹉 stumble + 跌 slip", lit_ko:"미끄러질 차(蹉) + 거꾸러질 질(跌)", lit_vi:"蹉 vấp + 跌 trượt",
+    fig:"a hitch, a setback", fig_ko:"일이 계획대로 되지 않고 어긋남", fig_vi:"trục trặc, gián đoạn",
+    use:"차질을 빚다 / 차질이 생기다: production or a schedule is disrupted.", use_ko:"'차질을 빚다, 차질이 생기다'처럼 생산이나 일정이 어긋날 때 쓴다.", use_vi:"'차질을 빚다', '차질이 생기다': sản xuất, lịch trình bị gián đoạn.",
+    ex:"부품 부족에 생산 차질", para:"부품이 부족해서 계획대로 생산하지 못하고 있다" },
+  { w:"비상", hj:"非常", ty:"h",
+    lit:"非 not + 常 usual", lit_ko:"아닐 비(非) + 항상 상(常)", lit_vi:"非 không + 常 thường",
+    fig:"an emergency; on high alert", fig_ko:"뜻밖의 위급한 상태, 긴장한 상태", fig_vi:"tình trạng khẩn cấp, báo động",
+    use:"~에 비상 (걸리다): the group named is scrambling to cope.", use_ko:"'~에 비상이 걸리다'처럼 어떤 곳이 급하게 대응하고 있다는 뜻이다.", use_vi:"'~에 비상 (걸리다)': nơi đó đang khẩn trương đối phó.",
+    ex:"독감 유행에 병원 비상", para:"독감이 유행해서 병원들이 급하게 대응하고 있다" },
+  { w:"장바구니 물가", hj:"", ty:"h",
+    lit:"shopping-basket prices", lit_ko:"장바구니에 담는 물건의 값", lit_vi:"giá giỏ đi chợ",
+    fig:"everyday grocery prices", fig_ko:"사람들이 생활에서 직접 느끼는 식료품 값", fig_vi:"giá các mặt hàng thiết yếu hằng ngày",
+    use:"What people feel at the shop, not the official average.", use_ko:"공식 통계보다 시장에서 직접 느끼는 물가를 말한다.", use_vi:"Mức giá người dân cảm nhận khi đi chợ, không phải con số thống kê.",
+    ex:"장바구니 물가 비상, 채소·과일 줄줄이 올라", para:"채소와 과일 가격이 잇따라 올라서 생활비 부담이 커졌다" },
+  { w:"호황 / 불황", hj:"好況 / 不況", ty:"h",
+    lit:"good times / bad times", lit_ko:"좋을 호(好)·아닐 불(不) + 상황 황(況)", lit_vi:"好 tốt / 不 không + 況 tình hình",
+    fig:"a boom / a slump", fig_ko:"경기가 좋음 / 경기가 나쁨", fig_vi:"thời kỳ bùng nổ / suy thoái",
+    use:"불황에도 A 호황: A sells well even in hard times.", use_ko:"'불황에도 ~ 호황'처럼 경기가 나쁜데도 어떤 분야는 잘된다고 할 때 쓴다.", use_vi:"'불황에도 A 호황': A vẫn bán chạy dù kinh tế khó khăn.",
+    ex:"불황에도 중고 명품 시장 호황", para:"경기가 좋지 않은데도 중고 명품은 잘 팔린다" },
+  { w:"특수", hj:"特需", ty:"h",
+    lit:"特 special + 需 demand", lit_ko:"특별할 특(特) + 구할 수(需)", lit_vi:"特 đặc biệt + 需 nhu cầu",
+    fig:"a boom in demand from an event or season", fig_ko:"특별한 일이나 때에 생기는 큰 수요", fig_vi:"nhu cầu tăng đột biến theo dịp",
+    use:"Not 특수하다 (special): 월드컵 특수 = the extra trade the World Cup brings.", use_ko:"'특수하다'와 다른 말로, '월드컵 특수'는 월드컵 때문에 생긴 큰 수요를 뜻한다.", use_vi:"Khác với 특수하다 (đặc biệt): '월드컵 특수' là nhu cầu tăng nhờ World Cup.",
+    ex:"월드컵 특수, 치킨 주문 급증", para:"월드컵 때문에 치킨 주문이 크게 늘었다" },
+  { w:"대란", hj:"大亂", ty:"h",
+    lit:"大 great + 亂 disorder", lit_ko:"큰 대(大) + 어지러울 란(亂)", lit_vi:"大 lớn + 亂 loạn",
+    fig:"chaos, a scramble", fig_ko:"큰 혼란", fig_vi:"hỗn loạn lớn",
+    use:"교통 대란 = gridlock; 품절 대란 = a rush to buy before it sells out.", use_ko:"'교통 대란'은 교통이 크게 혼잡하다는 뜻, '품절 대란'은 물건이 모자라 사려는 사람이 몰린다는 뜻이다.", use_vi:"'교통 대란': kẹt xe nghiêm trọng; '품절 대란': tranh nhau mua trước khi hết hàng.",
+    ex:"폭설로 출근길 교통 대란", para:"눈이 많이 와서 출근 시간에 교통이 크게 혼잡했다" },
+  { w:"품귀", hj:"品貴", ty:"h",
+    lit:"品 goods + 貴 dear, scarce", lit_ko:"물건 품(品) + 귀할 귀(貴)", lit_vi:"品 hàng + 貴 quý hiếm",
+    fig:"in short supply, hard to find", fig_ko:"물건이 모자라 구하기 어려움", fig_vi:"khan hiếm, khó mua",
+    use:"품귀 현상 = a shortage; it often comes with 웃돈 (a premium).", use_ko:"'품귀 현상'처럼 쓰며 '웃돈'과 함께 나오는 경우가 많다.", use_vi:"'품귀 현상': hiện tượng khan hàng; hay đi kèm với 웃돈 (tiền chênh).",
+    ex:"인기 장난감 품귀, 웃돈 거래까지", para:"인기 장난감을 구하기 어려워서 원래 가격보다 비싸게 사고팔기도 한다" },
+  { w:"웃돈", hj:"", ty:"h",
+    lit:"money on top", lit_ko:"본래 값에 더 얹는 돈", lit_vi:"tiền trả thêm",
+    fig:"a premium above the list price", fig_ko:"원래 가격보다 더 주는 돈", fig_vi:"tiền chênh trên giá gốc",
+    use:"웃돈을 주다 / 얹다: pay over the price, as with resold tickets.", use_ko:"'웃돈을 주다, 웃돈을 얹다'처럼 정해진 값보다 더 낼 때 쓴다.", use_vi:"'웃돈을 주다 / 얹다': trả cao hơn giá niêm yết, như vé bán lại.",
+    ex:"공연 표 웃돈 거래 기승", para:"공연 표를 원래 가격보다 비싸게 파는 일이 많아졌다" },
+  { w:"장사진", hj:"長蛇陣", ty:"h",
+    lit:"長 long + 蛇 snake + 陣 battle line", lit_ko:"길 장(長) + 뱀 사(蛇) + 진 칠 진(陣)", lit_vi:"長 dài + 蛇 rắn + 陣 trận",
+    fig:"a long queue", fig_ko:"많은 사람이 길게 늘어선 줄", fig_vi:"hàng người dài dằng dặc",
+    use:"장사진을 이루다 / 치다 = people queue in a long line.", use_ko:"'장사진을 이루다'처럼 사람들이 길게 줄을 섰을 때 쓴다.", use_vi:"'장사진을 이루다': người xếp hàng dài.",
+    ex:"신제품 출시 첫날 매장 앞 장사진", para:"신제품이 나온 첫날 매장 앞에 사람들이 길게 줄을 섰다" },
+  { w:"들끓다", hj:"", ty:"h",
+    lit:"to boil up", lit_ko:"물이 끓어오르다", lit_vi:"sôi sục",
+    fig:"(public anger) seethe; (a place) swarm", fig_ko:"여론이나 감정이 크게 일어나다, 사람이 많이 모여 붐비다", fig_vi:"(dư luận) sục sôi; (nơi chốn) đông nghịt",
+    use:"여론 들끓다 = public anger is high; 관광객으로 들끓다 = swarming with tourists.", use_ko:"'여론이 들끓다'는 비판이 크게 일었다는 뜻이고, '관광객으로 들끓다'는 사람이 매우 많다는 뜻이다.", use_vi:"'여론 들끓다': dư luận phẫn nộ; '관광객으로 들끓다': đông nghịt khách.",
+    ex:"갑질 논란에 여론 들끓어", para:"갑질 논란 때문에 사람들의 비판이 크게 일고 있다" },
+  { w:"인기몰이", hj:"", ty:"h",
+    lit:"rounding up popularity", lit_ko:"인기를 몰아 모음", lit_vi:"gom lấy sự yêu thích",
+    fig:"catching on fast", fig_ko:"인기를 크게 얻는 것", fig_vi:"gây sốt, được ưa chuộng nhanh",
+    use:"인기몰이 중 / 인기몰이하다: something is catching on.", use_ko:"'인기몰이 중, 인기몰이하다'처럼 무엇이 빠르게 인기를 얻고 있을 때 쓴다.", use_vi:"'인기몰이 중': đang gây sốt.",
+    ex:"간편 결제 서비스, 중장년층에 인기몰이", para:"간편 결제 서비스가 중장년층에게 인기를 얻고 있다" },
+  { w:"쏠쏠하다", hj:"", ty:"h",
+    lit:"fairly good, not bad", lit_ko:"품질이나 정도가 웬만하여 괜찮다", lit_vi:"kha khá",
+    fig:"(income, fun) quite decent", fig_ko:"수입이나 재미가 기대보다 꽤 괜찮다", fig_vi:"(thu nhập, niềm vui) khá đáng kể",
+    use:"Often 쏠쏠한 부수입 (a nice side income) or 재미 쏠쏠.", use_ko:"'쏠쏠한 부수입, 재미가 쏠쏠하다'처럼 꽤 괜찮은 이익이나 재미를 말한다.", use_vi:"Hay dùng '쏠쏠한 부수입' (thu nhập thêm kha khá) hoặc '재미 쏠쏠'.",
+    ex:"안 쓰는 물건 팔아 쏠쏠한 부수입", para:"쓰지 않는 물건을 팔아서 꽤 괜찮은 부수입을 얻는다" },
+  { w:"치솟다", hj:"", ty:"h",
+    lit:"to shoot upward (flames)", lit_ko:"불길 등이 위로 세차게 솟다", lit_vi:"bốc thẳng lên",
+    fig:"(prices) soar", fig_ko:"값이 갑자기 크게 오르다", fig_vi:"(giá) tăng vọt",
+    use:"Stronger than 오르다: 치솟는 물가 = soaring prices.", use_ko:"'오르다'보다 강한 말로 '치솟는 물가'처럼 쓴다.", use_vi:"Mạnh hơn 오르다: '치솟는 물가' = giá cả leo thang.",
+    ex:"전셋값 치솟아 세입자 한숨", para:"전셋값이 크게 올라서 집을 빌려 사는 사람들이 걱정하고 있다" },
+  { w:"우려", hj:"憂慮", ty:"h",
+    lit:"憂 worry + 慮 think over", lit_ko:"근심 우(憂) + 생각할 려(慮)", lit_vi:"憂 lo + 慮 nghĩ",
+    fig:"fear that something bad may happen", fig_ko:"좋지 않은 일이 생길까 걱정함", fig_vi:"lo ngại",
+    use:"At the end of a headline, ~ 우려 means it has not happened yet: it is feared.", use_ko:"제목 끝의 '~ 우려'는 아직 일어나지 않았지만 걱정된다는 뜻이다.", use_vi:"Cuối tiêu đề, '~ 우려' nghĩa là điều đó chưa xảy ra nhưng đáng lo.",
+    ex:"태풍 북상, 농작물 피해 우려", para:"태풍이 올라오고 있어서 농작물 피해가 걱정된다" },
+  { w:"탈바꿈", hj:"", ty:"h",
+    lit:"metamorphosis (of an insect)", lit_ko:"곤충이 자라면서 모양을 바꾸는 것", lit_vi:"sự biến thái (côn trùng)",
+    fig:"a complete makeover", fig_ko:"모습이나 성격이 완전히 바뀜", fig_vi:"lột xác, thay đổi hoàn toàn",
+    use:"A에서 B로 탈바꿈: an old place reborn as something new.", use_ko:"'A에서 B로 탈바꿈'처럼 원래 것이 전혀 다른 것으로 바뀔 때 쓴다.", use_vi:"'A에서 B로 탈바꿈': nơi cũ biến thành thứ mới.",
+    ex:"문 닫은 학교, 마을 문화 공간으로 탈바꿈", para:"문을 닫은 학교가 마을의 문화 공간으로 바뀌었다" },
+  { w:"자리매김", hj:"", ty:"h",
+    lit:"putting in its place", lit_ko:"자리를 정함", lit_vi:"định vị",
+    fig:"establish itself as", fig_ko:"어떤 위치를 확실히 차지함", fig_vi:"khẳng định vị trí",
+    use:"~(으)로 자리매김하다: has become firmly known as.", use_ko:"'~(으)로 자리매김하다'처럼 어떤 위치를 굳혔을 때 쓴다.", use_vi:"'~(으)로 자리매김하다': đã khẳng định vị thế là.",
+    ex:"작은 마을 축제, 대표 관광 상품으로 자리매김", para:"작은 마을 축제가 대표적인 관광 상품이 되었다" },
+  { w:"입소문", hj:"", ty:"h",
+    lit:"word of mouth", lit_ko:"입에서 입으로 전하는 소문", lit_vi:"lời truyền miệng",
+    fig:"buzz from people telling each other", fig_ko:"사람들 사이에 퍼진 좋은 평가", fig_vi:"tiếng lành đồn xa",
+    use:"입소문을 타다 / 입소문이 나다: became known through people, not ads.", use_ko:"'입소문을 타다, 입소문이 나다'처럼 광고가 아니라 사람들의 말로 알려졌을 때 쓴다.", use_vi:"'입소문을 타다', '입소문이 나다': nổi tiếng nhờ người truyền tai, không nhờ quảng cáo.",
+    ex:"골목 식당, 입소문 타고 전국 명소로", para:"골목에 있는 작은 식당이 사람들의 소문 덕분에 전국적으로 유명해졌다" },
+  { w:"막바지", hj:"", ty:"h",
+    lit:"the far end of a road", lit_ko:"더 갈 데가 없는 마지막 끝", lit_vi:"cuối đường",
+    fig:"the final stage", fig_ko:"어떤 일이나 때의 마지막 단계", fig_vi:"giai đoạn cuối",
+    use:"막바지 더위, 막바지 공사: the last part of a season or a job.", use_ko:"'막바지 더위, 막바지 공사'처럼 어떤 일이 거의 끝나 갈 때 쓴다.", use_vi:"'막바지 더위', '막바지 공사': giai đoạn cuối của mùa hay công việc.",
+    ex:"피서 막바지, 해수욕장 다시 북적", para:"여름 휴가철이 거의 끝나 가는데 해수욕장에 다시 사람이 많아졌다" },
+  { w:"앞다퉈", hj:"", ty:"h",
+    lit:"fighting to be in front", lit_ko:"남보다 먼저 하려고 서로 다투어", lit_vi:"tranh nhau lên trước",
+    fig:"vying, scrambling to be first", fig_ko:"서로 먼저 하려고 경쟁하며", fig_vi:"đua nhau",
+    use:"Many companies or people doing the same thing at once: 앞다퉈 출시.", use_ko:"'앞다퉈 출시'처럼 여럿이 같은 일을 서로 먼저 하려고 할 때 쓴다.", use_vi:"Nhiều công ty, nhiều người cùng đua làm một việc: '앞다퉈 출시'.",
+    ex:"유통업계, 앞다퉈 초저가 경쟁", para:"유통 회사들이 서로 먼저 아주 싼 가격으로 팔려고 경쟁하고 있다" },
+  { w:"무색", hj:"無色", ty:"h",
+    lit:"無 no + 色 colour", lit_ko:"없을 무(無) + 빛 색(色)", lit_vi:"無 không + 色 màu",
+    fig:"(a name or claim) put to shame, made hollow", fig_ko:"본래의 뜻이나 이름에 맞지 않아 부끄럽다", fig_vi:"trở nên vô nghĩa, hổ thẹn với danh xưng",
+    use:"'A' 무색 = the reality does not live up to A.", use_ko:"'~이 무색하다'는 실제 모습이 그 이름에 어울리지 않는다는 뜻이다.", use_vi:"'A' 무색: thực tế không xứng với A.",
+    ex:"'친환경' 이름 무색, 일회용품 그대로", para:"친환경이라고 하지만 실제로는 일회용품을 그대로 쓰고 있다" },
+
+  // Set phrases
+  { w:"발길 이어지다", hj:"", ty:"p",
+    lit:"footsteps follow on", lit_ko:"걸음이 계속 이어지다", lit_vi:"bước chân nối tiếp",
+    fig:"visitors keep coming", fig_ko:"사람들이 계속 찾아오다", fig_vi:"khách tới không ngớt",
+    use:"발길 이어져 at the end of a headline: a steady stream of visitors. Not 발길을 돌리다 (turn back).", use_ko:"제목 끝의 '발길 이어져'는 사람들이 계속 찾아온다는 뜻으로, '발길을 돌리다'와는 다르다.", use_vi:"Cuối tiêu đề, '발길 이어져': khách đến liên tục; khác với '발길을 돌리다' (quay về).",
+    ex:"축제 기간 관광객 발길 이어져", para:"축제 기간에 관광객이 계속 찾아오고 있다" },
+  { w:"발길 끊기다", hj:"", ty:"p",
+    lit:"footsteps are cut off", lit_ko:"걸음이 끊어지다", lit_vi:"bước chân đứt đoạn",
+    fig:"nobody comes any more", fig_ko:"사람들이 더 이상 찾아오지 않다", fig_vi:"không còn ai lui tới",
+    use:"The opposite of 발길 이어지다; also 발길 뚝.", use_ko:"'발길 이어지다'의 반대이며 '발길 뚝'이라고도 한다.", use_vi:"Trái với 발길 이어지다; cũng nói '발길 뚝'.",
+    ex:"공사 길어지자 상가 손님 발길 끊겨", para:"공사가 오래 계속되자 상가에 손님이 찾아오지 않는다" },
+  { w:"도움의 손길", hj:"", ty:"p",
+    lit:"a helping hand", lit_ko:"도와주는 손", lit_vi:"bàn tay giúp đỡ",
+    fig:"help and donations for people in need", fig_ko:"어려운 사람을 돕는 마음과 행동", fig_vi:"sự giúp đỡ, quyên góp",
+    use:"도움의 손길 이어지다 = help keeps arriving; 손길이 닿지 않는 = left uncared for.", use_ko:"'도움의 손길이 이어지다'는 도움이 계속된다는 뜻, '손길이 닿지 않는'은 돌봄을 받지 못한다는 뜻이다.", use_vi:"'도움의 손길 이어지다': sự giúp đỡ liên tục đến; '손길이 닿지 않는': bị bỏ quên.",
+    ex:"수해 지역에 도움의 손길 이어져", para:"홍수 피해를 입은 지역을 돕는 사람들이 계속 늘고 있다" },
+  { w:"손잡다", hj:"", ty:"p",
+    lit:"to hold hands", lit_ko:"서로 손을 잡다", lit_vi:"nắm tay",
+    fig:"team up, cooperate", fig_ko:"서로 힘을 합하여 함께 일하다", fig_vi:"bắt tay hợp tác",
+    use:"A와 손잡다 / A·B 손잡고: two groups working together.", use_ko:"'A와 손잡다'처럼 두 단체가 협력할 때 쓴다.", use_vi:"'A와 손잡다': hai bên hợp tác.",
+    ex:"시·지역 기업 손잡고 청년 일자리 만든다", para:"시와 지역 기업이 협력해서 청년 일자리를 만든다" },
+  { w:"문 닫다", hj:"", ty:"p",
+    lit:"to close the door", lit_ko:"문을 닫다", lit_vi:"đóng cửa",
+    fig:"close a business down for good", fig_ko:"가게나 회사가 영업을 그만두다", fig_vi:"đóng cửa, ngừng kinh doanh",
+    use:"In a headline it usually means closing for good, not for the night.", use_ko:"기사 제목에서는 하루 영업을 마친다는 뜻보다 아주 그만둔다는 뜻으로 많이 쓴다.", use_vi:"Trên tiêu đề thường nghĩa là đóng cửa hẳn, không phải đóng cửa buổi tối.",
+    ex:"손님 줄어 문 닫는 동네 서점 늘어", para:"손님이 줄어서 영업을 그만두는 동네 서점이 늘고 있다" },
+  { w:"한풀 꺾이다", hj:"", ty:"p",
+    lit:"to be bent back a notch", lit_ko:"기운이 한 번 꺾이다", lit_vi:"bị bẻ đi một phần",
+    fig:"(heat, a trend) ease off somewhat", fig_ko:"기세가 어느 정도 약해지다", fig_vi:"dịu bớt, giảm bớt",
+    use:"The heat or a craze is weaker than before, but not over.", use_ko:"더위나 기세가 전보다 약해졌지만 완전히 끝나지는 않았다는 뜻이다.", use_vi:"Cái nóng hay cơn sốt đã yếu đi nhưng chưa hết hẳn.",
+    ex:"더위 한풀 꺾여, 아침저녁 선선", para:"더위가 조금 약해져서 아침과 저녁에는 시원하다" },
+  { w:"고개를 들다", hj:"", ty:"p",
+    lit:"to raise one's head", lit_ko:"숙였던 머리를 들다", lit_vi:"ngẩng đầu",
+    fig:"(a worry, prices) rise up again", fig_ko:"잠잠하던 일이 다시 나타나다", fig_vi:"trỗi dậy trở lại",
+    use:"Usually 다시 고개 (들다): something that had calmed down is back.", use_ko:"'다시 고개를 들다'처럼 가라앉았던 것이 다시 생길 때 쓴다.", use_vi:"Thường là '다시 고개 (들다)': điều đã lắng xuống nay quay lại.",
+    ex:"물가 불안 다시 고개", para:"물가가 오를 것이라는 걱정이 다시 생기고 있다" },
+  { w:"바닥을 치다", hj:"", ty:"p",
+    lit:"to hit the floor", lit_ko:"가장 낮은 곳에 닿다", lit_vi:"chạm sàn",
+    fig:"hit bottom (and may now recover)", fig_ko:"가장 나쁜 상태에 이르다", fig_vi:"chạm đáy (và có thể sắp hồi phục)",
+    use:"Often a question: 바닥 쳤나 = has the worst passed?", use_ko:"'바닥 쳤나'처럼 가장 나쁜 때가 지났는지 묻는 제목이 많다.", use_vi:"Thường ở dạng hỏi: '바닥 쳤나' = đã qua giai đoạn tệ nhất chưa?",
+    ex:"반도체 경기 바닥 쳤나", para:"반도체 경기가 가장 나쁜 때를 지나 좋아질지 관심이 모이고 있다" },
+  { w:"희비 엇갈리다", hj:"喜悲", ty:"p",
+    lit:"joy and sorrow cross", lit_ko:"기쁨과 슬픔이 서로 엇갈리다", lit_vi:"vui buồn đan xen",
+    fig:"some win, some lose", fig_ko:"어떤 쪽은 기뻐하고 어떤 쪽은 슬퍼하다", fig_vi:"kẻ vui người buồn",
+    use:"The same event is good for one group and bad for another.", use_ko:"같은 일이 어떤 쪽에는 좋고 어떤 쪽에는 나쁠 때 쓴다.", use_vi:"Cùng một sự việc, nhóm này có lợi, nhóm kia chịu thiệt.",
+    ex:"이른 더위에 업종별 희비 엇갈려", para:"일찍 더워져서 잘되는 업종도 있고 어려워진 업종도 있다" },
+  { w:"도마에 오르다", hj:"", ty:"p",
+    lit:"to be put on the chopping board", lit_ko:"도마 위에 올려지다", lit_vi:"bị đặt lên thớt",
+    fig:"come under scrutiny or criticism", fig_ko:"비판이나 논의의 대상이 되다", fig_vi:"bị đưa ra mổ xẻ, chỉ trích",
+    use:"Often shortened to ~ 도마에 at the end of a headline.", use_ko:"제목 끝에서 '~ 도마에'로 줄여 쓰는 경우가 많다.", use_vi:"Thường rút gọn thành '~ 도마에' cuối tiêu đề.",
+    ex:"학교 급식 질 도마에", para:"학교 급식의 질이 비판을 받고 있다" },
+  { w:"촉각을 곤두세우다", hj:"觸角", ty:"p",
+    lit:"to raise one's antennae", lit_ko:"더듬이를 바짝 세우다", lit_vi:"dựng râu cảm giác",
+    fig:"watch very closely, on the alert", fig_ko:"어떤 일에 신경을 집중하고 주의 깊게 살피다", fig_vi:"theo dõi sát sao",
+    use:"Shortened to ~ 촉각: a market or group waiting tensely for news.", use_ko:"'~ 촉각'으로 줄여 시장이나 사람들이 결과를 긴장하며 지켜볼 때 쓴다.", use_vi:"Rút gọn '~ 촉각': thị trường, nhóm người hồi hộp chờ tin.",
+    ex:"금리 발표 앞두고 시장 촉각", para:"금리 발표를 앞두고 시장이 결과를 주의 깊게 지켜보고 있다" },
+  { w:"칼을 빼 들다", hj:"", ty:"p",
+    lit:"to draw the sword", lit_ko:"칼을 칼집에서 빼어 들다", lit_vi:"rút gươm",
+    fig:"crack down, take tough action", fig_ko:"어떤 문제를 해결하려고 강하게 나서다", fig_vi:"ra tay mạnh mẽ, trấn áp",
+    use:"Usually an authority taking tough measures: 정부, ~에 칼 빼 들었다.", use_ko:"'정부, ~에 칼 빼 들었다'처럼 기관이 강한 조치를 할 때 쓴다.", use_vi:"Thường là cơ quan ra biện pháp mạnh: '정부, ~에 칼 빼 들었다'.",
+    ex:"정부, 허위 광고에 칼 빼 들었다", para:"정부가 허위 광고를 강하게 단속하기 시작했다" },
+  { w:"수면 위로 떠오르다", hj:"水面", ty:"p",
+    lit:"to rise to the water's surface", lit_ko:"물의 겉면 위로 올라오다", lit_vi:"nổi lên mặt nước",
+    fig:"come out into the open", fig_ko:"숨어 있던 문제가 드러나 관심을 받다", fig_vi:"lộ ra, được chú ý",
+    use:"A hidden problem becomes public; the opposite of 수면 아래 (out of view).", use_ko:"숨어 있던 문제가 드러날 때 쓰며 '수면 아래'와 반대된다.", use_vi:"Vấn đề ẩn giấu lộ ra; trái với '수면 아래'.",
+    ex:"층간 소음 문제 다시 수면 위로", para:"층간 소음 문제가 다시 사람들의 관심을 받게 되었다" },
+  { w:"~도 옛말", hj:"", ty:"p",
+    lit:"also an old saying", lit_ko:"예전에 하던 말", lit_vi:"cũng là chuyện ngày xưa",
+    fig:"no longer true", fig_ko:"예전에는 그랬지만 지금은 그렇지 않다", fig_vi:"nay đã không còn đúng",
+    use:"'A'도 옛말: A used to be the rule but has changed.", use_ko:"''A'도 옛말'은 예전에는 A가 당연했지만 이제는 달라졌다는 뜻이다.", use_vi:"''A'도 옛말': A từng là lẽ thường nhưng nay đã khác.",
+    ex:"'평생직장'도 옛말", para:"한 회사에서 평생 일한다는 생각은 이제 맞지 않는다" },
+  { w:"남의 일 아니다", hj:"", ty:"p",
+    lit:"not someone else's business", lit_ko:"다른 사람의 일이 아니다", lit_vi:"không phải chuyện của người khác",
+    fig:"it could happen to anyone, you included", fig_ko:"누구에게나 일어날 수 있는 일이다", fig_vi:"có thể xảy ra với bất kỳ ai",
+    use:"A warning to readers: do not assume it only affects others.", use_ko:"독자에게 자기와 관계없는 일이라고 생각하지 말라고 경고할 때 쓴다.", use_vi:"Lời cảnh báo người đọc: đừng nghĩ việc này chỉ liên quan người khác.",
+    ex:"보이스 피싱, 남의 일 아니다", para:"보이스 피싱은 누구나 당할 수 있다" }
+];
+var TOPIK_WORD_TYPES = [['s', 'topikWordsTypeS'], ['m', 'topikWordsTypeM'], ['h', 'topikWordsTypeH'], ['p', 'topikWordsTypeP']];
+var topikWordsReady = false, topikWordsType = '', topikWordsQuery = '', topikWordsPage = 1, topikWordsTimer = null;
+var topikWordsOpen = new Set();
+// The field in the reader's language, falling back to English.
+function twField(e, key){
+  const lang = currentLang === 'ko' ? '_ko' : currentLang === 'vi' ? '_vi' : '';
+  return (lang && e[key + lang]) || e[key] || '';
+}
+function twTypeLabel(ty){ const p = TOPIK_WORD_TYPES.find(x=> x[0] === ty); return p ? t(p[1]) : ''; }
+// Matched without spaces too, so 발길이어지다 finds 발길 이어지다.
+function twNorm(s){ return String(s || '').toLowerCase().replace(/\s+/g, ''); }
+function twMatches(e, q){
+  if(!q) return true;
+  return twNorm([e.w, e.hj, e.ex, e.para, twField(e, 'lit'), twField(e, 'fig'), twField(e, 'use')].join(' ')).includes(q);
+}
+function topikWordRowHtml(e){
+  const open = topikWordsOpen.has(e.w);
+  return `<details class="tg-sec tw-row" data-w="${escapeHtml(e.w)}"${open ? ' open' : ''}>
+    <summary><span class="tw-head"><span class="tt-ko">${escapeHtml(e.w)}</span>${e.hj ? `<span class="tw-hj">${escapeHtml(e.hj)}</span>` : ''}</span><span class="tt-gl tw-fig">${escapeHtml(twField(e, 'fig'))}</span></summary>
+    <div class="tw-body">
+      <span class="tt-tag">${escapeHtml(twTypeLabel(e.ty))}</span>
+      <div class="tt-line"><b>${escapeHtml(t('topikTipsLiteral'))}</b>${escapeHtml(twField(e, 'lit'))}</div>
+      <div class="tt-line">${escapeHtml(twField(e, 'use'))}</div>
+      <div class="tt-ex">
+        <div class="tt-line"><b>${escapeHtml(t('topikWordsHeadline'))}</b><span class="tt-ko">${escapeHtml(e.ex)}</span></div>
+        <div class="tt-line"><b>${escapeHtml(t('topikWordsPlain'))}</b>${escapeHtml(e.para)}</div>
+      </div>
+    </div>
+  </details>`;
+}
+function renderTopikWords(){
+  const list = document.getElementById('topikWordsList');
+  const chips = document.getElementById('topikWordsChips');
+  const pages = document.getElementById('topikWordsPages');
+  const foot = document.getElementById('topikWordsFoot');
+  if(!list || !chips || !pages || !foot) return;
+  chips.innerHTML = TOPIK_WORD_TYPES.map(([ty, key])=>
+    `<button type="button" class="tt-chip${topikWordsType === ty ? ' active' : ''}" data-ty="${ty}" aria-pressed="${topikWordsType === ty}">${escapeHtml(t(key))}</button>`).join('');
+  const q = twNorm(topikWordsQuery);
+  const rows = TOPIK_WORDS.filter(e=> (!topikWordsType || e.ty === topikWordsType) && twMatches(e, q));
+  const total = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  if(topikWordsPage > total) topikWordsPage = total;
+  const shown = rows.slice((topikWordsPage - 1) * PAGE_SIZE, topikWordsPage * PAGE_SIZE);
+  list.innerHTML = rows.length
+    ? `<div class="hint tw-count">${escapeHtml(tCount('topikWordsCount', rows.length))}</div>` + shown.map(topikWordRowHtml).join('')
+    : `<p class="hint">${escapeHtml(t('topikTipsNone'))}</p>`;
+  list.querySelectorAll('details.tw-row').forEach(d=> d.addEventListener('toggle', ()=>{
+    if(d.open) topikWordsOpen.add(d.dataset.w); else topikWordsOpen.delete(d.dataset.w);
+  }));
+  renderPaginationBar(pages, topikWordsPage, total, p=>{
+    topikWordsPage = p;
+    renderTopikWords();
+    const card = document.getElementById('topikWordsCard');
+    if(card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  // The way back to the whole list shows only while something narrows it.
+  foot.innerHTML = (topikWordsType || q)
+    ? `<button type="button" class="linkbtn act-on tap-word" id="topikWordsReset">${escapeHtml(t('topikWordsReset'))}</button>` : '';
+  const reset = document.getElementById('topikWordsReset');
+  if(reset) reset.addEventListener('click', ()=>{
+    topikWordsType = ''; topikWordsQuery = ''; topikWordsPage = 1;
+    const box = document.getElementById('topikWordsSearch');
+    if(box) box.value = '';
+    if(window.refreshSearchClears) window.refreshSearchClears();
+    renderTopikWords();
+  });
+}
+// From the app-wide search: the whole list, on the page that holds the word, opened.
+function jumpToTopikWord(idx){
+  const e = TOPIK_WORDS[idx];
+  if(!e) return;
+  topikWordsType = ''; topikWordsQuery = '';
+  const box = document.getElementById('topikWordsSearch');
+  if(box) box.value = '';
+  if(window.refreshSearchClears) window.refreshSearchClears();
+  topikWordsPage = Math.floor(idx / PAGE_SIZE) + 1;
+  topikWordsOpen.add(e.w);
+  renderTopikWords();
+  const row = Array.from(document.querySelectorAll('#topikWordsList details.tw-row')).find(d=> d.dataset.w === e.w);
+  appSearchReveal(row || document.getElementById('topikWordsCard'));
+}
+document.getElementById('topikWordsChips').addEventListener('click', e=>{
+  const b = e.target.closest('.tt-chip');
+  if(!b) return;
+  topikWordsType = topikWordsType === b.dataset.ty ? '' : b.dataset.ty;
+  topikWordsPage = 1;
+  renderTopikWords();
+});
+document.getElementById('topikWordsSearch').addEventListener('input', e=>{
+  topikWordsQuery = e.target.value;
+  topikWordsPage = 1;
+  clearTimeout(topikWordsTimer);
+  topikWordsTimer = setTimeout(renderTopikWords, 140);
+});
+topikWordsReady = true;
+renderTopikWords();
+
 
 function formatNum(n){ return typeof n === 'number' ? n.toLocaleString() : n; }
 function wtcBarRow(label, value, max, unit, fillClass){
@@ -58638,7 +59384,7 @@ const APP_SEARCH_SECTIONS = {
   'reading.books': 'readingBooksSection', 'reading.articles': 'readingArticlesSection',
   'jobs.applications': 'jobsApplicationsSection', 'jobs.certifications': 'jobsCertificationsSection', 'jobs.jobboard': 'jobsJobBoardSection'
 };
-const APP_SEARCH_GROUPS = [['place', 'searchGroupPlaces'], ['setting', 'searchGroupSettings'], ['note', 'searchGroupNotes'], ['grammar', 'searchGroupGrammar'], ['item', 'searchGroupItems']];
+const APP_SEARCH_GROUPS = [['place', 'searchGroupPlaces'], ['setting', 'searchGroupSettings'], ['note', 'searchGroupNotes'], ['grammar', 'searchGroupGrammar'], ['word', 'searchGroupWords'], ['item', 'searchGroupItems']];
 const APP_SEARCH_PER_GROUP = 8;
 let appSearchIndex = [];
 let appSearchResults = [];
@@ -58846,6 +59592,12 @@ function appSearchBuild(){
     add({ kind: 'grammar', label: (lang && group['title'+lang]) || group.title, alt: forms + ' ' + forms.replace(/\s+/g, ''),
       path: [t('tabStudy'), t('studySubGrammar'), t('hGramComparisons')],
       go: ()=>{ appSearchOpenPlace({ tab: 'study', sub: 'study.grammar' }); jumpToComparisonGroup(idx); } });
+  });
+  // The words TOPIK reading leans on, by the word, its hanja and its meaning.
+  if(tabOk('study.topik')) TOPIK_WORDS.forEach((e, idx)=>{
+    add({ kind: 'word', label: e.w, alt: [twField(e, 'fig'), e.hj, e.w.replace(/\s+/g, '')].join(' '),
+      path: [t('tabStudy'), t('studySubTopik'), t('hTopikWords')],
+      go: ()=>{ appSearchOpenPlace({ tab: 'study', sub: 'study.topik', row: 'topikSubToggle', pane: 'words' }); jumpToTopikWord(idx); } });
   });
   const listItems = (sub, rows, labelOf, inputId)=>{
     if(!tabOk(sub)) return;
