@@ -5205,6 +5205,7 @@ button.cm-card:hover,button.cm-card:focus{background:var(--paper);color:var(--in
   .sw-btn:active:not(:disabled){transform:scale(.94);transition-duration:.06s;}
   /* The to-do's day mark keeps its overhang, so it does not heighten the row. */
   .sw-acts .sw-btn.todo-day-pick{margin:-7px -4px;padding:0;}
+  .note-item.sw-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
   /* A card row (.item-row) keeps its marks top right, where the cross was. */
   .item-row.sw-row > .sw-acts{position:absolute;top:14px;right:0;}
   .item-row.sw-row .item-top{padding-right:52px;}
@@ -18207,7 +18208,11 @@ function swTouchMode(){
     if(!row || e.pointerType !== 'touch' || !swTouchMode()) return;
     // The left edge is the phone's back swipe.
     if(e.clientX <= (typeof EDGE_BACK_PX === 'number' ? EDGE_BACK_PX : 24)) return;
-    if(e.target.closest('input, textarea, select, [contenteditable="true"], .todo-check, .note-grip, .note-move-bar, .notes-panel, .todo-edit, .sw-tray')) return;
+    if(e.target.closest('input, textarea, select, [contenteditable="true"], .todo-check, .note-grip, .note-move-bar, .todo-edit, .sw-tray')) return;
+    // An open panel inside the row (an edit form) is for typing, not swiping;
+    // a row that itself sits in a panel (a book's note) still swipes.
+    const panel = e.target.closest('.notes-panel');
+    if(panel && row.contains(panel)) return;
     swGesture = { row, key: swKeyOf(row), id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now(), lock: null, dx: 0, w: row.getBoundingClientRect().width || 1 };
     // A re-render mid-swipe takes the touched node out of the page, and an
     // end aimed at a detached node never reaches document: it is heard on
@@ -18348,6 +18353,31 @@ function undoCancel(p){
 // delete is still waiting; it is hidden again before anything is drawn.
 function undoReapplyPending(){
   if(undoPending) undoPending.hide();
+}
+// One entry of a JSON list column (a book's notes): owner() finds the row
+// fresh each time, since a reload replaces it.
+function deleteJsonItemWithUndo({ table, owner, field, itemId, label, render }){
+  const o0 = owner();
+  const list0 = (o0 && o0[field]) || [];
+  const item = list0.find(x=> x.id === itemId);
+  if(!item) return;
+  const at = list0.indexOf(item);
+  const restore = ()=>{
+    const o = owner();
+    if(o && !(o[field]||[]).some(x=> x.id === itemId)){ const l = (o[field]||[]).slice(); l.splice(Math.min(at, l.length), 0, item); o[field] = l; }
+  };
+  deleteWithUndo({
+    label,
+    hide: ()=>{ const o = owner(); if(o) o[field] = (o[field]||[]).filter(x=> x.id !== itemId); },
+    restore,
+    commit: async ()=>{
+      const o = owner();
+      if(!o) return;
+      const { error } = await supabaseClient.from(table).update({ [field]: o[field] || [] }).eq('id', o.id);
+      if(error){ console.error('Delete refused:', error); restore(); render(); alert(t('saveFailed')); }
+    },
+    render,
+  });
 }
 // The usual shape: one row of `table` out of a per-person map of lists
 // (allBooks[uid] and the like). lists() is read each time because a reload
@@ -28901,13 +28931,10 @@ async function addBookNote(bookId, text, page){
   b.notes = notes;
   renderReading();
 }
-async function deleteBookNote(bookId, noteId){
-  const b = (allBooks[currentUser.id]||[]).find(x=>x.id===bookId);
-  if(!b) return;
-  const notes = (b.notes||[]).filter(n=>n.id!==noteId);
-  await supabaseClient.from('books').update({ notes }).eq('id', bookId);
-  b.notes = notes;
-  renderReading();
+function deleteBookNote(bookId, noteId){
+  const owner = ()=> (allBooks[currentUser.id]||[]).find(x=>x.id===bookId);
+  const n = ((owner() || {}).notes || []).find(x=> x.id === noteId);
+  deleteJsonItemWithUndo({ table: 'books', owner, field: 'notes', itemId: noteId, label: n && n.text, render: renderReading });
 }
 document.getElementById('addBookBtn').addEventListener('click', addBook);
 function renderReading(){
@@ -28956,10 +28983,9 @@ function renderReading(){
     const notes = b.notes || [];
     const isOpen = expandedBookNotes.has(b.id);
     const notesListHtml = notes.map(n => `
-      <div class="note-item">
-        ${isMine ? `<button class="note-del" data-book="${b.id}" data-note="${n.id}">✕</button>` : ''}
-        ${n.page ? `<div class="note-page">${t('page')} ${n.page}</div>` : ''}
-        ${escapeHtml(n.text)}
+      <div class="note-item${isMine ? ' sw-row' : ''}"${isMine ? ` data-sw-key="booknote:${n.id}"` : ''}>
+        <div>${n.page ? `<div class="note-page">${t('page')} ${n.page}</div>` : ''}${escapeHtml(n.text)}</div>
+        ${isMine ? swipeActsHtml('', swipeDelBtnHtml('note-del', `data-book="${b.id}" data-note="${n.id}"`, t('tipDelete'))) : ''}
       </div>`).join('') || `<div class="empty">–</div>`;
     const ownerTag = !isMine ? `<span class="e-who" style="background:${colorForUser(b.user_id)}26;color:${colorForUser(b.user_id)};">${nameFor(b.user_id)}</span>` : '';
     div.innerHTML =
@@ -29166,13 +29192,10 @@ async function addArticleNote(articleId, text, page){
   a.notes = notes;
   renderArticles();
 }
-async function deleteArticleNote(articleId, noteId){
-  const a = (allArticles[currentUser.id]||[]).find(x=>x.id===articleId);
-  if(!a) return;
-  const notes = (a.notes||[]).filter(n=>n.id!==noteId);
-  await supabaseClient.from('articles').update({ notes }).eq('id', articleId);
-  a.notes = notes;
-  renderArticles();
+function deleteArticleNote(articleId, noteId){
+  const owner = ()=> (allArticles[currentUser.id]||[]).find(x=>x.id===articleId);
+  const n = ((owner() || {}).notes || []).find(x=> x.id === noteId);
+  deleteJsonItemWithUndo({ table: 'articles', owner, field: 'notes', itemId: noteId, label: n && n.text, render: renderArticles });
 }
 document.getElementById('addArticleBtn').addEventListener('click', addArticle);
 function renderArticles(){
@@ -29208,10 +29231,9 @@ function renderArticles(){
     const notes = a.notes || [];
     const isOpen = expandedArticleNotes.has(a.id);
     const notesListHtml = notes.map(n => `
-      <div class="note-item">
-        ${isMine ? `<button class="note-del" data-article="${a.id}" data-note="${n.id}">✕</button>` : ''}
-        ${n.page ? `<div class="note-page">${t('page')} ${n.page}</div>` : ''}
-        ${escapeHtml(n.text)}
+      <div class="note-item${isMine ? ' sw-row' : ''}"${isMine ? ` data-sw-key="articlenote:${n.id}"` : ''}>
+        <div>${n.page ? `<div class="note-page">${t('page')} ${n.page}</div>` : ''}${escapeHtml(n.text)}</div>
+        ${isMine ? swipeActsHtml('', swipeDelBtnHtml('note-del', `data-article="${a.id}" data-note="${n.id}"`, t('tipDelete'))) : ''}
       </div>`).join('') || `<div class="empty">–</div>`;
     const ownerTag = !isMine ? `<span class="e-who" style="background:${colorForUser(a.user_id)}26;color:${colorForUser(a.user_id)};">${nameFor(a.user_id)}</span>` : '';
     const subParts = [a.author, a.source].filter(Boolean).join(' · ');
