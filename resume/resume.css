@@ -1,0 +1,130 @@
+/* Shared by /resume, /kr/resume and /vn/resume. The pages load it as
+   resume.css?v=N: the site's service worker serves an asset it has seen from
+   its cache by URL, so bump N in all three pages whenever this file changes. */
+:root{
+  --paper:#FAF7F0; --ink:#1C1C1C; --ink-soft:#6B6B63; --line:#E4DFD3; --celadon-4:#4F7563;
+  --r-serif:'Cambria','Times New Roman', Georgia, 'Noto Serif', serif;
+  /* Korean has no glyphs in the Latin serifs above, so the browser would fall
+     back to a sans; name Korean serif faces after them instead. */
+  --r-serif-ko:'Cambria','Times New Roman', Georgia, 'AppleMyungjo', 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --paper:#181816; --ink:#EDEAE1; --ink-soft:#9C978A; --line:#33332E; }
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:#3a3a3a;color:var(--ink);font-family:'Inter',system-ui,sans-serif;}
+.wrap{max-width:900px;margin:0 auto;padding:24px 20px 60px;}
+.page-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
+.page-header h1{font-size:18px;margin:0;font-weight:700;font-family:var(--r-serif);color:#fff;}
+.page-header a{font-size:12.5px;color:#fff;text-decoration:none;font-family:var(--r-serif);}
+.page-header a:hover{text-decoration:underline;}
+.page-header a[hidden]{display:none;}
+.hint{font-size:12.5px;color:var(--ink-soft);}
+/* One language version after another on /kr/resume and /vn/resume. */
+.r-version + .r-version{margin-top:44px;}
+
+/* The resume itself is deliberately its own visual world (serif, black
+   ink on paper) rather than inheriting the site's Inter/celadon theme --
+   it's a faithful reproduction of a real printed resume layout, not a
+   themed app page, so it should look the same regardless of the site's
+   own light/dark palette above. --r-navy is this template's own accent,
+   unrelated to the app's --celadon-4, for the same reason. */
+.resume{
+  --r-navy:#1B3654;
+  background:#fff; color:#111; font-family:var(--r-serif);
+  font-size:13.5px; line-height:1.35; border:1px solid var(--line); border-radius:10px;
+  overflow:hidden; /* clips the header bar's square corners to the card's rounded ones */
+}
+.resume:lang(ko), .r-version:lang(ko) .page-header{font-family:var(--r-serif-ko);}
+.r-version:lang(ko) .page-header h1, .r-version:lang(ko) .page-header a{font-family:inherit;}
+/* The wide tracking suits Latin capitals; Hangul spread that far reads as
+   separate syllables ("학 력"). */
+.resume:lang(ko) .r-name, .resume:lang(ko) h2.r-section{letter-spacing:.5px;}
+.resume > .hint{padding:20px 40px;margin:0;}
+/* Header bleeds full-bleed to the card's edges (a colored band, not an
+   inset block), so its own padding does the spacing job that used to
+   belong to .resume -- .r-body carries the rest. Splitting it this way
+   (instead of negative-margining .r-header out of .resume's padding)
+   means the mobile and print overrides below only ever set ONE real
+   padding value each, not a margin that has to be kept in sync with it. */
+.r-header{
+  display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+  background:var(--r-navy); color:#fff; padding:26px 40px 20px;
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+.r-body{padding:20px 40px 36px;}
+.r-header a{color:inherit; text-decoration:none;}
+.r-header a:hover{text-decoration:underline;}
+.r-name{font-size:23px; font-weight:700; letter-spacing:2.5px; margin:0 0 4px;}
+.r-name-alt{font-size:14px; letter-spacing:.5px; margin:0 0 5px;}
+.r-linkedin{font-size:12px;}
+.r-details{font-size:12px; margin-top:3px;}
+.r-contact{text-align:right; font-size:12px; line-height:1.5; flex:none;}
+h2.r-section{
+  font-size:12.5px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--r-navy);
+  border-bottom:1.5px solid var(--r-navy); padding-bottom:2px; margin:16px 0 6px;
+}
+h2.r-section:first-of-type{margin-top:8px;}
+.r-text{margin:2px 0 0;}
+.r-entry{margin-bottom:8px;}
+.r-entry:last-child{margin-bottom:0;}
+/* The date/location column is a genuinely fixed width -- 175px --
+   everywhere it appears (title row, subtitle row, floated bullet date,
+   AND the margin reserved from the bullet list), instead of each one
+   separately guessing at how much space to leave based on that one
+   row's own content. A guessed margin can always be wrong for some
+   date string; a shared fixed width is a hard boundary text can never
+   cross, no matter what the left or right side's content is. */
+.r-row{display:table; width:100%; table-layout:fixed;}
+.r-row .r-left{display:table-cell; font-weight:700; text-align:left; vertical-align:top; padding-right:14px;}
+.r-row .r-right{display:table-cell; width:175px; text-align:right; vertical-align:top;}
+/* The float sits inside the <ul>, which already reserves 175px via its
+   own margin-right (so every OTHER line, not just this one, keeps clear
+   of the date column) -- without the matching negative margin here, the
+   float's own 175px width gets reserved a second time inside that
+   already-narrowed box, landing it 175px too far left instead of flush
+   with the row/sub date above it. This shifts it back into the exact
+   zone the list already reserved for it. */
+.r-date-float{float:right; width:175px; margin-right:-175px; font-style:italic; text-align:right;}
+/* Desktop-only twin of r-date-float -- see the mobile breakpoint below,
+   and the comment in renderEntry() in resume.js. */
+.r-date-mobile{display:none;}
+.r-sub{display:table; width:100%; font-style:italic; table-layout:fixed;}
+.r-sub > span:first-child{display:table-cell; text-align:left; vertical-align:top; padding-right:14px;}
+.r-sub .r-right{display:table-cell; width:175px; text-align:right; vertical-align:top;}
+/* Bullets aren't part of the r-row/r-sub table, so without this they'd
+   span the full card width -- reserving the exact same 175px keeps
+   wrapped bullet lines out of the date column too. */
+.r-entry ul{margin:2px 175px 0 0; padding-left:16px;}
+.r-entry li{margin:1px 0;}
+.r-info-row{display:flex; gap:6px;}
+.r-info-row + .r-info-row{margin-top:1px;}
+.r-info-label{font-weight:700; flex:0 0 auto; min-width:78px;}
+
+@media (max-width:640px){
+  .resume{font-size:11px;}
+  .resume > .hint{padding:18px;}
+  .r-header{flex-direction:column; gap:6px; padding:18px 18px 16px;}
+  .r-body{padding:18px 18px 22px;}
+  .r-contact{text-align:left;}
+  .r-row, .r-sub, .r-row .r-left, .r-row .r-right, .r-sub > span:first-child, .r-sub .r-right{display:block;}
+  .r-row .r-right, .r-sub .r-right{text-align:left; white-space:normal; padding-left:0;}
+  /* r-date-float lives inside the first <li>, so on mobile it's hidden
+     entirely rather than reflowed -- putting it on its own line there
+     pushed the bullet marker to sit next to the date instead of the
+     actual bullet text (r-date-float is display:block above that mark),
+     and keeping it inline read as a cramped parenthetical. r-date-mobile
+     is the same date rendered as its own plain line instead, positioned
+     right under location like r-sub's date already does when there IS a
+     subtitle -- same visual rhythm either way. */
+  .r-date-float{display:none;}
+  .r-date-mobile{display:block; font-style:italic; margin-top:1px;}
+  .r-entry ul{margin-right:0;}
+}
+@media print{
+  body{background:#fff;}
+  .page-header, .hint{display:none;}
+  .wrap{max-width:none; padding:0;}
+  .resume{border:none; border-radius:0;}
+  .r-version + .r-version{margin-top:0; break-before:page;}
+}
