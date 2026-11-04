@@ -3572,17 +3572,31 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
   border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;font-size:12.5px;font-weight:600;color:var(--ink-soft);text-align:left;}
 .ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-back:hover,.ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-back:focus{background:none;color:var(--ink);}
 .ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-back svg{float:none;width:14px;height:14px;}
-.ql-snow.ql-toolbar .nf-menu-panel button.nf-style-opt,.ql-snow.ql-toolbar .nf-menu-panel button.nf-toc-item,
-.ql-snow.ql-toolbar .nf-menu-panel button.nf-toc-insert{display:block;width:100%;padding:6px 8px;border-radius:6px;font-size:13px;color:var(--ink);text-align:left;white-space:normal;}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-style-opt,.ql-snow.ql-toolbar .nf-menu-panel button.nf-toc-item{display:block;width:100%;padding:6px 8px;border-radius:6px;font-size:13px;color:var(--ink);text-align:left;white-space:normal;}
 .ql-snow.ql-toolbar .nf-menu-panel button.on,.ql-snow.ql-toolbar .nf-menu-panel button.on:hover,.ql-snow.ql-toolbar .nf-menu-panel button.on:focus{background:var(--ink);color:var(--paper);}
 .nf-menu-panel button.nf-style-1{font-size:17px;font-weight:700;}
 .nf-menu-panel button.nf-style-2{font-size:14.5px;font-weight:700;}
 .nf-menu-panel button.nf-style-3{font-size:12.5px;font-weight:700;}
 .nf-menu-panel button.nf-style-0{font-weight:500;}
+/* The fonts, each name drawn in itself. */
+.nf-menu-panel button.nf-font-opt{font-size:14px;font-weight:400;}
+/* Custom line spacing: its box, the button that sets it, and the range. */
+.nf-ls-custom{display:flex;align-items:center;gap:6px;padding:6px 4px 2px;}
+.nf-ls-custom[hidden]{display:none;}
+.nf-ls-custom input{width:5em;height:30px;box-sizing:border-box;margin:0;padding:0 8px;border:1px solid var(--line);border-radius:6px;
+  background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;-moz-appearance:textfield;}
+.nf-ls-custom input::-webkit-inner-spin-button,.nf-ls-custom input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.nf-ls-custom input.bad{border-color:var(--danger);}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-ls-apply{width:auto;height:30px;padding:0 12px;border:1px solid var(--line);border-radius:6px;
+  background:var(--paper);color:var(--on);font-size:12.5px;font-weight:600;}
+.ql-snow.ql-toolbar .nf-menu-panel button.nf-ls-apply:hover,.ql-snow.ql-toolbar .nf-menu-panel button.nf-ls-apply:focus-visible{border-color:var(--on);background:var(--paper);}
+.nf-ls-range{font-family:'Inter',sans-serif;font-size:11.5px;color:var(--ink-soft);}
+/* An entry of a note's table of contents goes to its heading (wireNoteToc). */
+.ql-editor li.note-toc-1{cursor:pointer;}
+.ql-editor li.note-toc-1:hover{text-decoration:underline;text-underline-offset:2px;}
 .nf-menu-panel button.nf-toc-item{font-weight:600;}
 .ql-snow.ql-toolbar .nf-menu-panel button.nf-toc-2{padding-left:20px;font-weight:500;}
 .ql-snow.ql-toolbar .nf-menu-panel button.nf-toc-3{padding-left:32px;font-weight:500;color:var(--ink-soft);}
-.ql-snow.ql-toolbar .nf-menu-panel button.nf-toc-insert{margin-top:4px;border-top:1px solid var(--line);border-radius:0 0 4px 4px;color:var(--ink-soft);font-weight:500;}
 .nf-tool-hint{font-family:'Inter',sans-serif;font-size:11.5px;line-height:1.45;color:var(--ink-soft);padding:6px 6px 2px;max-width:300px;}
 .nf-tabs{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px;}
 .ql-snow.ql-toolbar .nf-menu-panel .nf-tabs button.nf-tab{display:inline-block;width:auto;font-size:11.5px;font-weight:600;padding:3px 9px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink-soft);cursor:pointer;}
@@ -3680,15 +3694,30 @@ math-field.nf-eq-field::part(menu-toggle),math-field.nf-eq-field::part(virtual-k
    positioned, and a positioned box paints over a plain float. Everything in
    the card that is its own box (the header row, the toolbar) sits beside the
    list rather than under it; the writing itself is what wraps, so it cannot
-   be a scroll box of its own. */
+   be a scroll box of its own.
+   Nor can anything it sits inside: the comments' .nc-wrap is a grid, and a
+   grid is a box of its own that keeps clear of the list all the way down, so
+   wrapped it is a plain block (real-user report, 4 Nov, with a screenshot:
+   "the text box doesnt follow as it should (you can see the big empty space
+   beneath the menus"). The comments then go under the note, where a narrow
+   card puts them anyway (.nc-stack). */
 @media (min-width: 1100px){
   .notes-split.notes-wrap{display:flow-root;}
   .notes-split.notes-wrap > .card:first-child{float:left;width:calc((100% - 18px) / 2.35);
     margin:0 40px 30px 0;position:relative;z-index:2;
     box-shadow:0 0 0 18px var(--paper), 10px 9px 0 9px var(--line), 9.5px 9.5px 0 9.5px var(--line);}
+  .notes-split.notes-wrap > .card > .nc-wrap{display:block;}
+  .notes-split.notes-wrap > .card > .nc-wrap > .nc-rail{display:flow-root;position:static;max-height:none;overflow:visible;margin-top:12px;}
+  .notes-split.notes-wrap > .card > .nc-wrap > .nc-rail.hidden{display:none;}
   .notes-split.notes-wrap > #editorCard > .ql-toolbar.ql-snow,
-  .notes-split.notes-wrap > #notebookEditorCard > .ql-toolbar.ql-snow{display:flow-root;}
+  .notes-split.notes-wrap > #notebookEditorCard > .ql-toolbar.ql-snow,
+  .notes-split.notes-wrap > .card > .nc-wrap > .ql-toolbar.ql-snow{display:flow-root;}
   .notes-split.notes-wrap .ql-container > .ql-editor{overflow:visible;}
+  /* What is indented by its own padding or border (a list and its bullets,
+     an indented line, a quote, a code block) is a box of its own beside the
+     list, or the float swallows the indent and the bullets hang out to the
+     left of the writing. Lines of text still wrap; these keep their shape. */
+  .notes-split.notes-wrap .ql-editor > :is(ol, ul, pre, blockquote, [class*="ql-indent-"]){display:flow-root;}
   .notes-split.notes-wrap > .card > .notes-panel{display:flow-root;}
 }
 /* An earlier version is OPENED from this list rather than only previewed, so
@@ -13918,11 +13947,11 @@ const I18N = {
   en: {
     nsShareBtn:'Share', nsMenuShare:'Share note', nsShareTitle:'Share "{title}"', nsHowAsk:'How do you want to share it?', nsLive:'Live', nsLiveDesc:'They see this same note. Edits show up for both of you.', nsCopy:'As their own copy', nsCopyDesc:'A separate copy goes into their Notebook. It never syncs back.', nsManageAccess:'Manage access', nsBack:'Back', nsPeopleWithAccess:'People with access', nsNoCircle:'Link someone in Account settings first to share with them.', nsRoleLabel:'Role', nsNotify:'Tell them in a message', nsSendCopy:'Send copy', nsSent:'Sent', nsFailed:'Couldn\'t do that. Check your connection and try again.', nsPublicLink:'Public link', nsPublicLinkHint:'Anyone with the link can open this note. No account needed.', nsLinkCreate:'Create link', nsLinkCopy:'Copy link', nsLinkCopied:'Link copied', nsLinkOn:'On', nsLinkOff:'Off', nsLinkTurnOff:'Turn off', nsLinkTurnOn:'Turn on', nsLinkOffHint:'Nobody can open the link until you turn it on again.', nsLinkRegenerate:'New link', nsLinkRegenerateConfirm:'Make a new link? The old one stops working right away.', nsAccessViewer:'Shared by {name}. You can view it.', nsAccessCommenter:'Shared by {name}. You can comment.', nsAccessEditor:'Shared by {name}. You can edit.', nsSharedGroup:'Shared with you', nsSharedByMe:'Shared', nsCardLive:'Shared with you live', nsCardCopy:'A copy is in your Notebook', ncCommentsBtn:'Comments', ncComment:'Comment', ncAddComment:'Add a comment', ncReply:'Reply', ncResolve:'Resolve', ncReopen:'Reopen', ncResolved:'Resolved', ncShowResolved:'Show resolved ({n})', ncHideResolved:'Hide resolved', ncEmpty:'No comments yet. Select some text and press Comment.', ncEmptyView:'No comments yet.', ncOrphan:'The text this was on has changed.', ncDeleteConfirm:'Delete this comment?', ncDeleteThreadConfirm:'Delete this comment and its replies?', ncGuest:'guest', ncYourName:'Your name', ncNameNeeded:'Add your name to comment.', ncRateLimited:'Too many comments on this link right now. Try again in a few minutes.', ncViewOnly:'You can read the comments but not add one.', ncCount:'{n} comments', ncCountOne:'1 comment', psOpenApp:'Open Productivity Tracker', psNotFound:'This link does not work. It may have been turned off or replaced.', psSharedBy:'Shared by {name}', psUpdated:'Updated {time}', psViewOnly:'View only', psCanComment:'You can comment', nsLevelEditor:'Can edit', nsLevelCommenter:'Can comment', nsLevelViewer:'Can view', nsLevelNone:'No access', nsLevelCircle:'As set by the circle ({level})', nsCircleHint:'Your circle gets the level from your sharing settings. Change it here for this note only.', noteEqTips:'Type into the boxes. / makes a fraction, ^ a power, _ a subscript; sqrt, sum, int, alpha and the like turn into symbols. Tab moves to the next box, Enter inserts.', noteEqLatexBtn:'LaTeX', noteEqLatexTip:'Show the LaTeX source', noteEqFieldFailed:'Couldn\'t load the visual editor. You can still type LaTeX below.',
     nxExportBtn:'Export', nxWord:'Word', nxAppleNotes:'For Apple Notes', nxPdf:'PDF (Print, then save as PDF)', nxMarkdown:'Markdown', nxText:'Plain text', nxUntitled:'Note', nxFailed:'Couldn\'t export this note. Check your connection and try again.',
-    noteSub:'Subscript', noteSup:'Superscript', noteStyleBtn:'Text style', noteStyleNormal:'Normal text', noteStyleH1:'Heading', noteStyleH2:'Subheading', noteStyleH3:'Small heading', noteTocBtn:'Contents', noteTocEmpty:'No headings yet. Start a line with # and a space for a heading, ## for a subheading, ### for a small one.', noteTocInsert:'Write this list into the note', noteSymBtn:'Symbols', noteSymTabArrows:'Arrows', noteSymTabMath:'Math', noteSymTabGreek:'Greek', noteSymTabSets:'Sets and logic', noteSymTabScripts:'Super and sub', noteSymTabOther:'Other', noteShorthandHint:'Typing shortcuts: ^^ up arrow, vv down arrow, -> arrow, x^2 and H_2O for scripts, e^{ix} for longer ones. Undo puts back what you typed.', noteEqBtn:'Equation', noteEqTitle:'Equation', noteEqTabStruct:'Structures', noteEqInsert:'Insert', noteEqUpdate:'Update', noteEqRemove:'Remove', noteEqPlaceholder:'Type LaTeX, for example \\frac{a}{b}', noteEqLoading:'Loading the equation editor...', 
+    noteSub:'Subscript', noteSup:'Superscript', noteStyleBtn:'Text style', noteStyleNormal:'Normal text', noteStyleH1:'Heading', noteStyleH2:'Subheading', noteStyleH3:'Small heading', noteTocBtn:'Contents', noteTocEmpty:'No headings yet. Start a line with # and a space for a heading, ## for a subheading, ### for a small one.', noteSymBtn:'Symbols', noteSymTabArrows:'Arrows', noteSymTabMath:'Math', noteSymTabGreek:'Greek', noteSymTabSets:'Sets and logic', noteSymTabScripts:'Super and sub', noteSymTabOther:'Other', noteShorthandHint:'Typing shortcuts: ^^ up arrow, vv down arrow, -> arrow, x^2 and H_2O for scripts, e^{ix} for longer ones. Undo puts back what you typed.', noteEqBtn:'Equation', noteEqTitle:'Equation', noteEqTabStruct:'Structures', noteEqInsert:'Insert', noteEqUpdate:'Update', noteEqRemove:'Remove', noteEqPlaceholder:'Type LaTeX, for example \\frac{a}{b}', noteEqLoading:'Loading the equation editor...', 
     searchBtn:'Search', searchTitle:'Search the app', searchPlaceholder:'Tabs, settings, notes, grammar, to-dos...', searchNoResults:'Nothing matches "{q}".', searchFoot:'Up and down to choose, Enter to open, Esc to close. Ctrl K (⌘K on a Mac) or / opens this from anywhere.', searchGroupPlaces:'Places', searchGroupSettings:'Settings', searchGroupNotes:'Notes', searchGroupGrammar:'Grammar', searchGroupItems:'In your lists',
     nsShareBtn:'Share', nsMenuShare:'Share note', nsShareTitle:'Share "{title}"', nsHowAsk:'How do you want to share it?', nsLive:'Live', nsLiveDesc:'They see this same note. Edits show up for both of you.', nsCopy:'As their own copy', nsCopyDesc:'A separate copy goes into their Notebook. It never syncs back.', nsManageAccess:'Manage access', nsBack:'Back', nsPeopleWithAccess:'People with access', nsNoCircle:'Link someone in Account settings first to share with them.', nsRoleLabel:'Role', nsNotify:'Tell them in a message', nsSendCopy:'Send copy', nsSent:'Sent', nsFailed:'Couldn\'t do that. Check your connection and try again.', nsPublicLink:'Public link', nsPublicLinkHint:'Anyone with the link can open this note. No account needed.', nsLinkCreate:'Create link', nsLinkCopy:'Copy link', nsLinkCopied:'Link copied', nsLinkOn:'On', nsLinkOff:'Off', nsLinkTurnOff:'Turn off', nsLinkTurnOn:'Turn on', nsLinkOffHint:'Nobody can open the link until you turn it on again.', nsLinkRegenerate:'New link', nsLinkRegenerateConfirm:'Make a new link? The old one stops working right away.', nsAccessViewer:'Shared by {name}. You can view it.', nsAccessCommenter:'Shared by {name}. You can comment.', nsAccessEditor:'Shared by {name}. You can edit.', nsSharedGroup:'Shared with you', nsSharedByMe:'Shared', nsCardLive:'Shared with you live', nsCardCopy:'A copy is in your Notebook', ncCommentsBtn:'Comments', ncComment:'Comment', ncAddComment:'Add a comment', ncReply:'Reply', ncResolve:'Resolve', ncReopen:'Reopen', ncResolved:'Resolved', ncShowResolved:'Show resolved ({n})', ncHideResolved:'Hide resolved', ncEmpty:'No comments yet. Select some text and press Comment.', ncEmptyView:'No comments yet.', ncOrphan:'The text this was on has changed.', ncDeleteConfirm:'Delete this comment?', ncDeleteThreadConfirm:'Delete this comment and its replies?', ncGuest:'guest', ncYourName:'Your name', ncNameNeeded:'Add your name to comment.', ncRateLimited:'Too many comments on this link right now. Try again in a few minutes.', ncViewOnly:'You can read the comments but not add one.', ncCount:'{n} comments', ncCountOne:'1 comment', psOpenApp:'Open Productivity Tracker', psNotFound:'This link does not work. It may have been turned off or replaced.', psSharedBy:'Shared by {name}', psUpdated:'Updated {time}', psViewOnly:'View only', psCanComment:'You can comment', nsLevelEditor:'Can edit', nsLevelCommenter:'Can comment', nsLevelViewer:'Can view', nsLevelNone:'No access', nsLevelCircle:'As set by the circle ({level})', nsCircleHint:'Your circle gets the level from your sharing settings. Change it here for this note only.',
-    noteSub:'Subscript', noteSup:'Superscript', noteStyleBtn:'Text style', noteStyleNormal:'Normal text', noteStyleH1:'Heading', noteStyleH2:'Subheading', noteStyleH3:'Small heading', noteTocBtn:'Contents', noteTocEmpty:'No headings yet. Start a line with # and a space for a heading, ## for a subheading, ### for a small one.', noteTocInsert:'Write this list into the note', noteSymBtn:'Symbols', noteSymTabArrows:'Arrows', noteSymTabMath:'Math', noteSymTabGreek:'Greek', noteSymTabSets:'Sets and logic', noteSymTabScripts:'Super and sub', noteSymTabOther:'Other', noteShorthandHint:'Typing shortcuts: ^^ up arrow, vv down arrow, -> arrow, x^2 and H_2O for scripts, e^{ix} for longer ones. Undo puts back what you typed.', noteEqBtn:'Equation', noteEqTitle:'Equation', noteEqTabStruct:'Structures', noteEqInsert:'Insert', noteEqUpdate:'Update', noteEqRemove:'Remove', noteEqPlaceholder:'Tap the keys above or type LaTeX, for example \\frac{a}{b}', noteEqEmpty:'The preview shows here.', noteEqLoading:'Loading the equation editor...', noteEqFailed:"Couldn't load the equation editor. Check your connection and try again.",
-    noteMenuText:'Text', noteMenuPara:'Paragraph', noteMenuInsert:'Insert', noteStrike:'Strikethrough', noteClean:'Clear formatting', noteVideo:'Video', noteAlign:'Alignment', noteAlignLeft:'Align left', noteAlignCenter:'Align center', noteAlignRight:'Align right', noteAlignJustify:'Justify', noteIndent:'Indent', noteIndentLess:'Decrease indent', noteIndentMore:'Increase indent',
+    noteSub:'Subscript', noteSup:'Superscript', noteStyleBtn:'Text style', noteStyleNormal:'Normal text', noteStyleH1:'Heading', noteStyleH2:'Subheading', noteStyleH3:'Small heading', noteTocBtn:'Contents', noteTocEmpty:'No headings yet. Start a line with # and a space for a heading, ## for a subheading, ### for a small one.', noteSymBtn:'Symbols', noteSymTabArrows:'Arrows', noteSymTabMath:'Math', noteSymTabGreek:'Greek', noteSymTabSets:'Sets and logic', noteSymTabScripts:'Super and sub', noteSymTabOther:'Other', noteShorthandHint:'Typing shortcuts: ^^ up arrow, vv down arrow, -> arrow, x^2 and H_2O for scripts, e^{ix} for longer ones. Undo puts back what you typed.', noteEqBtn:'Equation', noteEqTitle:'Equation', noteEqTabStruct:'Structures', noteEqInsert:'Insert', noteEqUpdate:'Update', noteEqRemove:'Remove', noteEqPlaceholder:'Tap the keys above or type LaTeX, for example \\frac{a}{b}', noteEqEmpty:'The preview shows here.', noteEqLoading:'Loading the equation editor...', noteEqFailed:"Couldn't load the equation editor. Check your connection and try again.",
+    noteMenuText:'Text', noteFont:'Font', noteFontDefault:'Default', noteLineSpacingCustom:'Custom', noteLineSpacingApply:'Apply', noteTocInsertBtn:'Table of contents', noteTocUpdateBtn:'Update table of contents', noteGoHeading:'Go to a heading', noteMenuPara:'Paragraph', noteMenuInsert:'Insert', noteStrike:'Strikethrough', noteClean:'Clear formatting', noteVideo:'Video', noteAlign:'Alignment', noteAlignLeft:'Align left', noteAlignCenter:'Align center', noteAlignRight:'Align right', noteAlignJustify:'Justify', noteIndent:'Indent', noteIndentLess:'Decrease indent', noteIndentMore:'Increase indent',
     signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
     signOut:'Sign out',
     tabStudy:'Korean', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar', tabHome:'Home', tabOverview:'Overview', lblQuickNav:'Jump to', homeMorning:'Good morning', complimentAnother:'Another compliment', encourageAnother:'More encouragement', homeAfternoon:'Good afternoon', homeEvening:'Good evening', homeToday:'Today', homeTodos:'To-dos', homeTodosNone:'Nothing due today', homeAllDone:'All done for today', homeNextUp:'Next up', homeTodayWord:'Today', homeStreak:'{n}-day streak', homeReading:'Reading', 
@@ -14052,11 +14081,11 @@ const I18N = {
   ko: {
     nsShareBtn:'공유', nsMenuShare:'노트 공유', nsShareTitle:'"{title}" 공유', nsHowAsk:'어떻게 공유할까요?', nsLive:'실시간', nsLiveDesc:'상대방이 같은 노트를 봅니다. 수정한 내용이 두 사람 모두에게 보입니다.', nsCopy:'상대방의 사본으로', nsCopyDesc:'상대방의 노트북에 별도의 사본이 들어갑니다. 다시 동기화되지 않습니다.', nsManageAccess:'액세스 관리', nsBack:'뒤로', nsPeopleWithAccess:'액세스할 수 있는 사람', nsNoCircle:'공유하려면 먼저 계정 설정에서 사람을 연결하세요.', nsRoleLabel:'권한', nsNotify:'메시지로 알리기', nsSendCopy:'사본 보내기', nsSent:'보냄', nsFailed:'처리하지 못했습니다. 연결을 확인하고 다시 시도하세요.', nsPublicLink:'공개 링크', nsPublicLinkHint:'링크가 있으면 누구나 계정 없이 이 노트를 열 수 있습니다.', nsLinkCreate:'링크 만들기', nsLinkCopy:'링크 복사', nsLinkCopied:'링크를 복사했습니다', nsLinkOn:'켜짐', nsLinkOff:'꺼짐', nsLinkTurnOff:'끄기', nsLinkTurnOn:'켜기', nsLinkOffHint:'다시 켤 때까지 아무도 링크를 열 수 없습니다.', nsLinkRegenerate:'새 링크', nsLinkRegenerateConfirm:'새 링크를 만들까요? 이전 링크는 바로 작동하지 않게 됩니다.', nsAccessViewer:'{name}님이 공유했습니다. 볼 수 있습니다.', nsAccessCommenter:'{name}님이 공유했습니다. 댓글을 달 수 있습니다.', nsAccessEditor:'{name}님이 공유했습니다. 편집할 수 있습니다.', nsSharedGroup:'나와 공유됨', nsSharedByMe:'공유됨', nsCardLive:'실시간으로 공유됨', nsCardCopy:'사본이 내 노트북에 있습니다', ncCommentsBtn:'댓글', ncComment:'댓글 달기', ncAddComment:'댓글 추가', ncReply:'답글', ncResolve:'해결', ncReopen:'다시 열기', ncResolved:'해결됨', ncShowResolved:'해결된 댓글 보기 ({n})', ncHideResolved:'해결된 댓글 숨기기', ncEmpty:'아직 댓글이 없습니다. 텍스트를 선택하고 댓글 달기를 누르세요.', ncEmptyView:'아직 댓글이 없습니다.', ncOrphan:'이 댓글이 달린 텍스트가 바뀌었습니다.', ncDeleteConfirm:'이 댓글을 삭제할까요?', ncDeleteThreadConfirm:'이 댓글과 답글을 모두 삭제할까요?', ncGuest:'게스트', ncYourName:'이름', ncNameNeeded:'댓글을 달려면 이름을 입력하세요.', ncRateLimited:'지금 이 링크에 댓글이 너무 많습니다. 몇 분 후에 다시 시도하세요.', ncViewOnly:'댓글을 읽을 수만 있습니다.', ncCount:'댓글 {n}개', psOpenApp:'Productivity Tracker 열기', psNotFound:'이 링크는 작동하지 않습니다. 꺼졌거나 새 링크로 바뀌었을 수 있습니다.', psSharedBy:'{name}님이 공유함', psUpdated:'{time}에 업데이트됨', psViewOnly:'보기 전용', psCanComment:'댓글을 달 수 있습니다', nsLevelEditor:'편집 가능', nsLevelCommenter:'댓글 가능', nsLevelViewer:'보기 가능', nsLevelNone:'액세스 없음', nsLevelCircle:'서클 설정대로 ({level})', nsCircleHint:'서클은 공유 설정의 권한을 받습니다. 이 노트만 여기서 바꿀 수 있습니다.', noteEqTips:'칸에 바로 입력하세요. /는 분수, ^는 지수, _는 아래 첨자를 만들고 sqrt, sum, int, alpha 등은 기호로 바뀝니다. Tab은 다음 칸으로, Enter는 삽입입니다.', noteEqLatexBtn:'LaTeX', noteEqLatexTip:'LaTeX 원본 보기', noteEqFieldFailed:'시각 편집기를 불러오지 못했습니다. 아래에 LaTeX로 입력할 수 있습니다.',
     nxExportBtn:'내보내기', nxWord:'Word', nxAppleNotes:'Apple 메모용', nxPdf:'PDF (인쇄 후 PDF로 저장)', nxMarkdown:'Markdown', nxText:'일반 텍스트', nxUntitled:'노트', nxFailed:'이 노트를 내보내지 못했습니다. 연결을 확인하고 다시 시도하세요.',
-    noteSub:'아래 첨자', noteSup:'위 첨자', noteStyleBtn:'글자 스타일', noteStyleNormal:'본문', noteStyleH1:'제목', noteStyleH2:'부제목', noteStyleH3:'소제목', noteTocBtn:'목차', noteTocEmpty:'아직 제목이 없습니다. 줄 처음에 #와 띄어쓰기를 치면 제목, ##는 부제목, ###는 소제목이 됩니다.', noteTocInsert:'이 목록을 노트에 쓰기', noteSymBtn:'기호', noteSymTabArrows:'화살표', noteSymTabMath:'수학', noteSymTabGreek:'그리스 문자', noteSymTabSets:'집합과 논리', noteSymTabScripts:'위아래 첨자', noteSymTabOther:'기타', noteShorthandHint:'단축 입력: ^^ 위쪽 화살표, vv 아래쪽 화살표, -> 화살표, x^2와 H_2O는 첨자, 긴 것은 e^{ix}. 되돌리기를 누르면 입력한 그대로 돌아갑니다.', noteEqBtn:'수식', noteEqTitle:'수식', noteEqTabStruct:'구조', noteEqInsert:'넣기', noteEqUpdate:'수정', noteEqRemove:'삭제', noteEqPlaceholder:'LaTeX로 입력하세요. 예: \\frac{a}{b}', noteEqLoading:'수식 편집기를 불러오는 중...', 
+    noteSub:'아래 첨자', noteSup:'위 첨자', noteStyleBtn:'글자 스타일', noteStyleNormal:'본문', noteStyleH1:'제목', noteStyleH2:'부제목', noteStyleH3:'소제목', noteTocBtn:'목차', noteTocEmpty:'아직 제목이 없습니다. 줄 처음에 #와 띄어쓰기를 치면 제목, ##는 부제목, ###는 소제목이 됩니다.', noteSymBtn:'기호', noteSymTabArrows:'화살표', noteSymTabMath:'수학', noteSymTabGreek:'그리스 문자', noteSymTabSets:'집합과 논리', noteSymTabScripts:'위아래 첨자', noteSymTabOther:'기타', noteShorthandHint:'단축 입력: ^^ 위쪽 화살표, vv 아래쪽 화살표, -> 화살표, x^2와 H_2O는 첨자, 긴 것은 e^{ix}. 되돌리기를 누르면 입력한 그대로 돌아갑니다.', noteEqBtn:'수식', noteEqTitle:'수식', noteEqTabStruct:'구조', noteEqInsert:'넣기', noteEqUpdate:'수정', noteEqRemove:'삭제', noteEqPlaceholder:'LaTeX로 입력하세요. 예: \\frac{a}{b}', noteEqLoading:'수식 편집기를 불러오는 중...', 
     searchBtn:'검색', searchTitle:'앱 검색', searchPlaceholder:'탭, 설정, 노트, 문법, 할 일...', searchNoResults:'"{q}"와(과) 일치하는 항목이 없습니다.', searchFoot:'위아래로 고르고 Enter로 열고 Esc로 닫습니다. 어디서나 Ctrl K(Mac은 ⌘K) 또는 /로 열 수 있습니다.', searchGroupPlaces:'위치', searchGroupSettings:'설정', searchGroupNotes:'노트', searchGroupGrammar:'문법', searchGroupItems:'목록 항목',
     nsShareBtn:'공유', nsMenuShare:'노트 공유', nsShareTitle:'"{title}" 공유', nsHowAsk:'어떻게 공유할까요?', nsLive:'실시간', nsLiveDesc:'상대방이 같은 노트를 봅니다. 수정한 내용이 두 사람 모두에게 보입니다.', nsCopy:'상대방의 사본으로', nsCopyDesc:'상대방의 노트북에 별도의 사본이 들어갑니다. 다시 동기화되지 않습니다.', nsManageAccess:'액세스 관리', nsBack:'뒤로', nsPeopleWithAccess:'액세스할 수 있는 사람', nsNoCircle:'공유하려면 먼저 계정 설정에서 사람을 연결하세요.', nsRoleLabel:'권한', nsNotify:'메시지로 알리기', nsSendCopy:'사본 보내기', nsSent:'보냄', nsFailed:'처리하지 못했습니다. 연결을 확인하고 다시 시도하세요.', nsPublicLink:'공개 링크', nsPublicLinkHint:'링크가 있으면 누구나 계정 없이 이 노트를 열 수 있습니다.', nsLinkCreate:'링크 만들기', nsLinkCopy:'링크 복사', nsLinkCopied:'링크를 복사했습니다', nsLinkOn:'켜짐', nsLinkOff:'꺼짐', nsLinkTurnOff:'끄기', nsLinkTurnOn:'켜기', nsLinkOffHint:'다시 켤 때까지 아무도 링크를 열 수 없습니다.', nsLinkRegenerate:'새 링크', nsLinkRegenerateConfirm:'새 링크를 만들까요? 이전 링크는 바로 작동하지 않게 됩니다.', nsAccessViewer:'{name}님이 공유했습니다. 볼 수 있습니다.', nsAccessCommenter:'{name}님이 공유했습니다. 댓글을 달 수 있습니다.', nsAccessEditor:'{name}님이 공유했습니다. 편집할 수 있습니다.', nsSharedGroup:'나와 공유됨', nsSharedByMe:'공유됨', nsCardLive:'실시간으로 공유됨', nsCardCopy:'사본이 내 노트북에 있습니다', ncCommentsBtn:'댓글', ncComment:'댓글 달기', ncAddComment:'댓글 추가', ncReply:'답글', ncResolve:'해결', ncReopen:'다시 열기', ncResolved:'해결됨', ncShowResolved:'해결된 댓글 보기 ({n})', ncHideResolved:'해결된 댓글 숨기기', ncEmpty:'아직 댓글이 없습니다. 텍스트를 선택하고 댓글 달기를 누르세요.', ncEmptyView:'아직 댓글이 없습니다.', ncOrphan:'이 댓글이 달린 텍스트가 바뀌었습니다.', ncDeleteConfirm:'이 댓글을 삭제할까요?', ncDeleteThreadConfirm:'이 댓글과 답글을 모두 삭제할까요?', ncGuest:'게스트', ncYourName:'이름', ncNameNeeded:'댓글을 달려면 이름을 입력하세요.', ncRateLimited:'지금 이 링크에 댓글이 너무 많습니다. 몇 분 후에 다시 시도하세요.', ncViewOnly:'댓글을 읽을 수만 있습니다.', ncCount:'댓글 {n}개', psOpenApp:'Productivity Tracker 열기', psNotFound:'이 링크는 작동하지 않습니다. 꺼졌거나 새 링크로 바뀌었을 수 있습니다.', psSharedBy:'{name}님이 공유함', psUpdated:'{time}에 업데이트됨', psViewOnly:'보기 전용', psCanComment:'댓글을 달 수 있습니다', nsLevelEditor:'편집 가능', nsLevelCommenter:'댓글 가능', nsLevelViewer:'보기 가능', nsLevelNone:'액세스 없음', nsLevelCircle:'서클 설정대로 ({level})', nsCircleHint:'서클은 공유 설정의 권한을 받습니다. 이 노트만 여기서 바꿀 수 있습니다.',
-    noteSub:'아래 첨자', noteSup:'위 첨자', noteStyleBtn:'글자 스타일', noteStyleNormal:'본문', noteStyleH1:'제목', noteStyleH2:'부제목', noteStyleH3:'소제목', noteTocBtn:'목차', noteTocEmpty:'아직 제목이 없습니다. 줄 처음에 #와 띄어쓰기를 치면 제목, ##는 부제목, ###는 소제목이 됩니다.', noteTocInsert:'이 목록을 노트에 쓰기', noteSymBtn:'기호', noteSymTabArrows:'화살표', noteSymTabMath:'수학', noteSymTabGreek:'그리스 문자', noteSymTabSets:'집합과 논리', noteSymTabScripts:'위아래 첨자', noteSymTabOther:'기타', noteShorthandHint:'단축 입력: ^^ 위쪽 화살표, vv 아래쪽 화살표, -> 화살표, x^2와 H_2O는 첨자, 긴 것은 e^{ix}. 되돌리기를 누르면 입력한 그대로 돌아갑니다.', noteEqBtn:'수식', noteEqTitle:'수식', noteEqTabStruct:'구조', noteEqInsert:'넣기', noteEqUpdate:'수정', noteEqRemove:'삭제', noteEqPlaceholder:'위의 키를 누르거나 LaTeX로 입력하세요. 예: \\frac{a}{b}', noteEqEmpty:'여기에 미리 보기가 표시됩니다.', noteEqLoading:'수식 편집기를 불러오는 중...', noteEqFailed:'수식 편집기를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.',
-    noteMenuText:'글자', noteMenuPara:'단락', noteMenuInsert:'삽입', noteStrike:'취소선', noteClean:'서식 지우기', noteVideo:'동영상', noteAlign:'정렬', noteAlignLeft:'왼쪽 정렬', noteAlignCenter:'가운데 정렬', noteAlignRight:'오른쪽 정렬', noteAlignJustify:'양쪽 정렬', noteIndent:'들여쓰기', noteIndentLess:'내어쓰기', noteIndentMore:'들여쓰기',
+    noteSub:'아래 첨자', noteSup:'위 첨자', noteStyleBtn:'글자 스타일', noteStyleNormal:'본문', noteStyleH1:'제목', noteStyleH2:'부제목', noteStyleH3:'소제목', noteTocBtn:'목차', noteTocEmpty:'아직 제목이 없습니다. 줄 처음에 #와 띄어쓰기를 치면 제목, ##는 부제목, ###는 소제목이 됩니다.', noteSymBtn:'기호', noteSymTabArrows:'화살표', noteSymTabMath:'수학', noteSymTabGreek:'그리스 문자', noteSymTabSets:'집합과 논리', noteSymTabScripts:'위아래 첨자', noteSymTabOther:'기타', noteShorthandHint:'단축 입력: ^^ 위쪽 화살표, vv 아래쪽 화살표, -> 화살표, x^2와 H_2O는 첨자, 긴 것은 e^{ix}. 되돌리기를 누르면 입력한 그대로 돌아갑니다.', noteEqBtn:'수식', noteEqTitle:'수식', noteEqTabStruct:'구조', noteEqInsert:'넣기', noteEqUpdate:'수정', noteEqRemove:'삭제', noteEqPlaceholder:'위의 키를 누르거나 LaTeX로 입력하세요. 예: \\frac{a}{b}', noteEqEmpty:'여기에 미리 보기가 표시됩니다.', noteEqLoading:'수식 편집기를 불러오는 중...', noteEqFailed:'수식 편집기를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.',
+    noteMenuText:'글자', noteFont:'글꼴', noteFontDefault:'기본', noteLineSpacingCustom:'직접 지정', noteLineSpacingApply:'적용', noteTocInsertBtn:'목차', noteTocUpdateBtn:'목차 업데이트', noteGoHeading:'제목으로 이동', noteMenuPara:'단락', noteMenuInsert:'삽입', noteStrike:'취소선', noteClean:'서식 지우기', noteVideo:'동영상', noteAlign:'정렬', noteAlignLeft:'왼쪽 정렬', noteAlignCenter:'가운데 정렬', noteAlignRight:'오른쪽 정렬', noteAlignJustify:'양쪽 정렬', noteIndent:'들여쓰기', noteIndentLess:'내어쓰기', noteIndentMore:'들여쓰기',
     signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
     signOut:'로그아웃',
     tabStudy:'한국어', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더', tabHome:'홈', tabOverview:'개요', lblQuickNav:'바로가기', homeMorning:'좋은 아침이에요', complimentAnother:'다른 칭찬 보기', encourageAnother:'응원 하나 더', homeAfternoon:'좋은 오후예요', homeEvening:'좋은 저녁이에요', homeToday:'오늘', homeTodos:'할 일', homeTodosNone:'오늘 할 일이 없어요', homeAllDone:'오늘 할 일을 다 했어요', homeNextUp:'다음 일정', homeTodayWord:'오늘', homeStreak:'{n}일 연속', homeReading:'읽는 중', 
@@ -14186,11 +14215,11 @@ const I18N = {
   vi: {
     nsShareBtn:'Chia sẻ', nsMenuShare:'Chia sẻ ghi chú', nsShareTitle:'Chia sẻ "{title}"', nsHowAsk:'Bạn muốn chia sẻ thế nào?', nsLive:'Trực tiếp', nsLiveDesc:'Họ xem chính ghi chú này. Chỉnh sửa hiện ra cho cả hai người.', nsCopy:'Thành bản sao của họ', nsCopyDesc:'Một bản sao riêng được thêm vào Sổ tay của họ. Nó không bao giờ đồng bộ ngược lại.', nsManageAccess:'Quản lý quyền truy cập', nsBack:'Quay lại', nsPeopleWithAccess:'Người có quyền truy cập', nsNoCircle:'Hãy liên kết với ai đó trong Cài đặt tài khoản trước để chia sẻ với họ.', nsRoleLabel:'Vai trò', nsNotify:'Báo cho họ bằng tin nhắn', nsSendCopy:'Gửi bản sao', nsSent:'Đã gửi', nsFailed:'Không thực hiện được. Hãy kiểm tra kết nối rồi thử lại.', nsPublicLink:'Liên kết công khai', nsPublicLinkHint:'Bất kỳ ai có liên kết đều mở được ghi chú này. Không cần tài khoản.', nsLinkCreate:'Tạo liên kết', nsLinkCopy:'Sao chép liên kết', nsLinkCopied:'Đã sao chép liên kết', nsLinkOn:'Đang bật', nsLinkOff:'Đang tắt', nsLinkTurnOff:'Tắt', nsLinkTurnOn:'Bật', nsLinkOffHint:'Không ai mở được liên kết cho đến khi bạn bật lại.', nsLinkRegenerate:'Liên kết mới', nsLinkRegenerateConfirm:'Tạo liên kết mới? Liên kết cũ sẽ ngừng hoạt động ngay.', nsAccessViewer:'{name} đã chia sẻ. Bạn có thể xem.', nsAccessCommenter:'{name} đã chia sẻ. Bạn có thể bình luận.', nsAccessEditor:'{name} đã chia sẻ. Bạn có thể chỉnh sửa.', nsSharedGroup:'Được chia sẻ với bạn', nsSharedByMe:'Đã chia sẻ', nsCardLive:'Được chia sẻ trực tiếp với bạn', nsCardCopy:'Bản sao đã có trong Sổ tay của bạn', ncCommentsBtn:'Bình luận', ncComment:'Bình luận', ncAddComment:'Thêm bình luận', ncReply:'Trả lời', ncResolve:'Giải quyết', ncReopen:'Mở lại', ncResolved:'Đã giải quyết', ncShowResolved:'Hiện bình luận đã giải quyết ({n})', ncHideResolved:'Ẩn bình luận đã giải quyết', ncEmpty:'Chưa có bình luận. Chọn một đoạn chữ rồi nhấn Bình luận.', ncEmptyView:'Chưa có bình luận.', ncOrphan:'Đoạn chữ của bình luận này đã thay đổi.', ncDeleteConfirm:'Xóa bình luận này?', ncDeleteThreadConfirm:'Xóa bình luận này và các câu trả lời của nó?', ncGuest:'khách', ncYourName:'Tên của bạn', ncNameNeeded:'Hãy nhập tên để bình luận.', ncRateLimited:'Liên kết này đang có quá nhiều bình luận. Hãy thử lại sau vài phút.', ncViewOnly:'Bạn chỉ có thể đọc bình luận.', ncCount:'{n} bình luận', psOpenApp:'Mở Productivity Tracker', psNotFound:'Liên kết này không hoạt động. Có thể nó đã bị tắt hoặc được thay bằng liên kết khác.', psSharedBy:'{name} đã chia sẻ', psUpdated:'Cập nhật {time}', psViewOnly:'Chỉ xem', psCanComment:'Bạn có thể bình luận', nsLevelEditor:'Có thể chỉnh sửa', nsLevelCommenter:'Có thể bình luận', nsLevelViewer:'Có thể xem', nsLevelNone:'Không có quyền truy cập', nsLevelCircle:'Theo cài đặt của nhóm ({level})', nsCircleHint:'Nhóm của bạn nhận quyền theo cài đặt chia sẻ. Bạn có thể đổi riêng cho ghi chú này tại đây.', noteEqTips:'Gõ thẳng vào các ô. / tạo phân số, ^ tạo số mũ, _ tạo chỉ số dưới; sqrt, sum, int, alpha và các từ tương tự thành ký hiệu. Tab sang ô tiếp theo, Enter để chèn.', noteEqLatexBtn:'LaTeX', noteEqLatexTip:'Hiện mã LaTeX', noteEqFieldFailed:'Không tải được trình soạn trực quan. Bạn vẫn có thể gõ LaTeX bên dưới.',
     nxExportBtn:'Xuất', nxWord:'Word', nxAppleNotes:'Cho Apple Notes', nxPdf:'PDF (In, rồi lưu thành PDF)', nxMarkdown:'Markdown', nxText:'Văn bản thuần', nxUntitled:'Ghi chú', nxFailed:'Không xuất được ghi chú này. Hãy kiểm tra kết nối rồi thử lại.',
-    noteSub:'Chỉ số dưới', noteSup:'Chỉ số trên', noteStyleBtn:'Kiểu chữ', noteStyleNormal:'Văn bản thường', noteStyleH1:'Tiêu đề', noteStyleH2:'Tiêu đề phụ', noteStyleH3:'Tiêu đề nhỏ', noteTocBtn:'Mục lục', noteTocEmpty:'Chưa có tiêu đề. Gõ # và dấu cách ở đầu dòng để tạo tiêu đề, ## cho tiêu đề phụ, ### cho tiêu đề nhỏ.', noteTocInsert:'Ghi danh sách này vào ghi chú', noteSymBtn:'Ký hiệu', noteSymTabArrows:'Mũi tên', noteSymTabMath:'Toán', noteSymTabGreek:'Chữ Hy Lạp', noteSymTabSets:'Tập hợp và logic', noteSymTabScripts:'Chỉ số trên, dưới', noteSymTabOther:'Khác', noteShorthandHint:'Gõ tắt: ^^ mũi tên lên, vv mũi tên xuống, -> mũi tên, x^2 và H_2O cho chỉ số, e^{ix} cho chỉ số dài. Hoàn tác sẽ trả lại đúng những gì bạn gõ.', noteEqBtn:'Công thức', noteEqTitle:'Công thức', noteEqTabStruct:'Cấu trúc', noteEqInsert:'Chèn', noteEqUpdate:'Cập nhật', noteEqRemove:'Xóa', noteEqPlaceholder:'Gõ LaTeX, ví dụ \\frac{a}{b}', noteEqLoading:'Đang tải trình soạn công thức...', 
+    noteSub:'Chỉ số dưới', noteSup:'Chỉ số trên', noteStyleBtn:'Kiểu chữ', noteStyleNormal:'Văn bản thường', noteStyleH1:'Tiêu đề', noteStyleH2:'Tiêu đề phụ', noteStyleH3:'Tiêu đề nhỏ', noteTocBtn:'Mục lục', noteTocEmpty:'Chưa có tiêu đề. Gõ # và dấu cách ở đầu dòng để tạo tiêu đề, ## cho tiêu đề phụ, ### cho tiêu đề nhỏ.', noteSymBtn:'Ký hiệu', noteSymTabArrows:'Mũi tên', noteSymTabMath:'Toán', noteSymTabGreek:'Chữ Hy Lạp', noteSymTabSets:'Tập hợp và logic', noteSymTabScripts:'Chỉ số trên, dưới', noteSymTabOther:'Khác', noteShorthandHint:'Gõ tắt: ^^ mũi tên lên, vv mũi tên xuống, -> mũi tên, x^2 và H_2O cho chỉ số, e^{ix} cho chỉ số dài. Hoàn tác sẽ trả lại đúng những gì bạn gõ.', noteEqBtn:'Công thức', noteEqTitle:'Công thức', noteEqTabStruct:'Cấu trúc', noteEqInsert:'Chèn', noteEqUpdate:'Cập nhật', noteEqRemove:'Xóa', noteEqPlaceholder:'Gõ LaTeX, ví dụ \\frac{a}{b}', noteEqLoading:'Đang tải trình soạn công thức...', 
     searchBtn:'Tìm kiếm', searchTitle:'Tìm trong ứng dụng', searchPlaceholder:'Thẻ, cài đặt, ghi chú, ngữ pháp, việc cần làm...', searchNoResults:'Không có gì khớp với "{q}".', searchFoot:'Lên xuống để chọn, Enter để mở, Esc để đóng. Ctrl K (⌘K trên Mac) hoặc / mở hộp này từ bất kỳ đâu.', searchGroupPlaces:'Vị trí', searchGroupSettings:'Cài đặt', searchGroupNotes:'Ghi chú', searchGroupGrammar:'Ngữ pháp', searchGroupItems:'Trong danh sách của bạn',
     nsShareBtn:'Chia sẻ', nsMenuShare:'Chia sẻ ghi chú', nsShareTitle:'Chia sẻ "{title}"', nsHowAsk:'Bạn muốn chia sẻ thế nào?', nsLive:'Trực tiếp', nsLiveDesc:'Họ xem chính ghi chú này. Chỉnh sửa hiện ra cho cả hai người.', nsCopy:'Thành bản sao của họ', nsCopyDesc:'Một bản sao riêng được thêm vào Sổ tay của họ. Nó không bao giờ đồng bộ ngược lại.', nsManageAccess:'Quản lý quyền truy cập', nsBack:'Quay lại', nsPeopleWithAccess:'Người có quyền truy cập', nsNoCircle:'Hãy liên kết với ai đó trong Cài đặt tài khoản trước để chia sẻ với họ.', nsRoleLabel:'Vai trò', nsNotify:'Báo cho họ bằng tin nhắn', nsSendCopy:'Gửi bản sao', nsSent:'Đã gửi', nsFailed:'Không thực hiện được. Hãy kiểm tra kết nối rồi thử lại.', nsPublicLink:'Liên kết công khai', nsPublicLinkHint:'Bất kỳ ai có liên kết đều mở được ghi chú này. Không cần tài khoản.', nsLinkCreate:'Tạo liên kết', nsLinkCopy:'Sao chép liên kết', nsLinkCopied:'Đã sao chép liên kết', nsLinkOn:'Đang bật', nsLinkOff:'Đang tắt', nsLinkTurnOff:'Tắt', nsLinkTurnOn:'Bật', nsLinkOffHint:'Không ai mở được liên kết cho đến khi bạn bật lại.', nsLinkRegenerate:'Liên kết mới', nsLinkRegenerateConfirm:'Tạo liên kết mới? Liên kết cũ sẽ ngừng hoạt động ngay.', nsAccessViewer:'{name} đã chia sẻ. Bạn có thể xem.', nsAccessCommenter:'{name} đã chia sẻ. Bạn có thể bình luận.', nsAccessEditor:'{name} đã chia sẻ. Bạn có thể chỉnh sửa.', nsSharedGroup:'Được chia sẻ với bạn', nsSharedByMe:'Đã chia sẻ', nsCardLive:'Được chia sẻ trực tiếp với bạn', nsCardCopy:'Bản sao đã có trong Sổ tay của bạn', ncCommentsBtn:'Bình luận', ncComment:'Bình luận', ncAddComment:'Thêm bình luận', ncReply:'Trả lời', ncResolve:'Giải quyết', ncReopen:'Mở lại', ncResolved:'Đã giải quyết', ncShowResolved:'Hiện bình luận đã giải quyết ({n})', ncHideResolved:'Ẩn bình luận đã giải quyết', ncEmpty:'Chưa có bình luận. Chọn một đoạn chữ rồi nhấn Bình luận.', ncEmptyView:'Chưa có bình luận.', ncOrphan:'Đoạn chữ của bình luận này đã thay đổi.', ncDeleteConfirm:'Xóa bình luận này?', ncDeleteThreadConfirm:'Xóa bình luận này và các câu trả lời của nó?', ncGuest:'khách', ncYourName:'Tên của bạn', ncNameNeeded:'Hãy nhập tên để bình luận.', ncRateLimited:'Liên kết này đang có quá nhiều bình luận. Hãy thử lại sau vài phút.', ncViewOnly:'Bạn chỉ có thể đọc bình luận.', ncCount:'{n} bình luận', psOpenApp:'Mở Productivity Tracker', psNotFound:'Liên kết này không hoạt động. Có thể nó đã bị tắt hoặc được thay bằng liên kết khác.', psSharedBy:'{name} đã chia sẻ', psUpdated:'Cập nhật {time}', psViewOnly:'Chỉ xem', psCanComment:'Bạn có thể bình luận', nsLevelEditor:'Có thể chỉnh sửa', nsLevelCommenter:'Có thể bình luận', nsLevelViewer:'Có thể xem', nsLevelNone:'Không có quyền truy cập', nsLevelCircle:'Theo cài đặt của nhóm ({level})', nsCircleHint:'Nhóm của bạn nhận quyền theo cài đặt chia sẻ. Bạn có thể đổi riêng cho ghi chú này tại đây.',
-    noteSub:'Chỉ số dưới', noteSup:'Chỉ số trên', noteStyleBtn:'Kiểu chữ', noteStyleNormal:'Văn bản thường', noteStyleH1:'Tiêu đề', noteStyleH2:'Tiêu đề phụ', noteStyleH3:'Tiêu đề nhỏ', noteTocBtn:'Mục lục', noteTocEmpty:'Chưa có tiêu đề. Gõ # và dấu cách ở đầu dòng để tạo tiêu đề, ## cho tiêu đề phụ, ### cho tiêu đề nhỏ.', noteTocInsert:'Ghi danh sách này vào ghi chú', noteSymBtn:'Ký hiệu', noteSymTabArrows:'Mũi tên', noteSymTabMath:'Toán', noteSymTabGreek:'Chữ Hy Lạp', noteSymTabSets:'Tập hợp và logic', noteSymTabScripts:'Chỉ số trên, dưới', noteSymTabOther:'Khác', noteShorthandHint:'Gõ tắt: ^^ mũi tên lên, vv mũi tên xuống, -> mũi tên, x^2 và H_2O cho chỉ số, e^{ix} cho chỉ số dài. Hoàn tác sẽ trả lại đúng những gì bạn gõ.', noteEqBtn:'Công thức', noteEqTitle:'Công thức', noteEqTabStruct:'Cấu trúc', noteEqInsert:'Chèn', noteEqUpdate:'Cập nhật', noteEqRemove:'Xóa', noteEqPlaceholder:'Bấm các phím ở trên hoặc gõ LaTeX, ví dụ \\frac{a}{b}', noteEqEmpty:'Bản xem trước hiển thị ở đây.', noteEqLoading:'Đang tải trình soạn công thức...', noteEqFailed:'Không tải được trình soạn công thức. Hãy kiểm tra kết nối rồi thử lại.',
-    noteMenuText:'Chữ', noteMenuPara:'Đoạn văn', noteMenuInsert:'Chèn', noteStrike:'Gạch ngang', noteClean:'Xóa định dạng', noteVideo:'Video', noteAlign:'Căn lề', noteAlignLeft:'Căn trái', noteAlignCenter:'Căn giữa', noteAlignRight:'Căn phải', noteAlignJustify:'Căn đều hai bên', noteIndent:'Thụt lề', noteIndentLess:'Giảm thụt lề', noteIndentMore:'Tăng thụt lề',
+    noteSub:'Chỉ số dưới', noteSup:'Chỉ số trên', noteStyleBtn:'Kiểu chữ', noteStyleNormal:'Văn bản thường', noteStyleH1:'Tiêu đề', noteStyleH2:'Tiêu đề phụ', noteStyleH3:'Tiêu đề nhỏ', noteTocBtn:'Mục lục', noteTocEmpty:'Chưa có tiêu đề. Gõ # và dấu cách ở đầu dòng để tạo tiêu đề, ## cho tiêu đề phụ, ### cho tiêu đề nhỏ.', noteSymBtn:'Ký hiệu', noteSymTabArrows:'Mũi tên', noteSymTabMath:'Toán', noteSymTabGreek:'Chữ Hy Lạp', noteSymTabSets:'Tập hợp và logic', noteSymTabScripts:'Chỉ số trên, dưới', noteSymTabOther:'Khác', noteShorthandHint:'Gõ tắt: ^^ mũi tên lên, vv mũi tên xuống, -> mũi tên, x^2 và H_2O cho chỉ số, e^{ix} cho chỉ số dài. Hoàn tác sẽ trả lại đúng những gì bạn gõ.', noteEqBtn:'Công thức', noteEqTitle:'Công thức', noteEqTabStruct:'Cấu trúc', noteEqInsert:'Chèn', noteEqUpdate:'Cập nhật', noteEqRemove:'Xóa', noteEqPlaceholder:'Bấm các phím ở trên hoặc gõ LaTeX, ví dụ \\frac{a}{b}', noteEqEmpty:'Bản xem trước hiển thị ở đây.', noteEqLoading:'Đang tải trình soạn công thức...', noteEqFailed:'Không tải được trình soạn công thức. Hãy kiểm tra kết nối rồi thử lại.',
+    noteMenuText:'Chữ', noteFont:'Phông chữ', noteFontDefault:'Mặc định', noteLineSpacingCustom:'Tùy chỉnh', noteLineSpacingApply:'Áp dụng', noteTocInsertBtn:'Mục lục', noteTocUpdateBtn:'Cập nhật mục lục', noteGoHeading:'Đi tới tiêu đề', noteMenuPara:'Đoạn văn', noteMenuInsert:'Chèn', noteStrike:'Gạch ngang', noteClean:'Xóa định dạng', noteVideo:'Video', noteAlign:'Căn lề', noteAlignLeft:'Căn trái', noteAlignCenter:'Căn giữa', noteAlignRight:'Căn phải', noteAlignJustify:'Căn đều hai bên', noteIndent:'Thụt lề', noteIndentLess:'Giảm thụt lề', noteIndentMore:'Tăng thụt lề',
     signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
     signOut:'Đăng xuất',
     tabStudy:'Tiếng Hàn', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch', tabHome:'Trang chủ', tabOverview:'Tổng quan', lblQuickNav:'Đi đến', homeMorning:'Chào buổi sáng', complimentAnother:'Xem lời khen khác', encourageAnother:'Thêm lời động viên', homeAfternoon:'Chào buổi chiều', homeEvening:'Chào buổi tối', homeToday:'Hôm nay', homeTodos:'Việc cần làm', homeTodosNone:'Hôm nay không có việc gì', homeAllDone:'Đã xong hết hôm nay', homeNextUp:'Sắp tới', homeTodayWord:'Hôm nay', homeStreak:'Chuỗi {n} ngày', homeReading:'Đang đọc', 
@@ -53623,15 +53652,62 @@ if(window.Quill){
    Each is an inline style, for the reason the type size is one: a note is
    stored as HTML and read well outside this editor -- the export, the version
    panel, a colleague's copy -- and a class would need this stylesheet there. */
-const NOTE_LINE_SPACINGS = ['1', '1.15', '1.5', '2', '2.5', '3'];
+// The common spacings are buttons; Custom takes anything between MIN and MAX
+// (real-user request, 4 Nov: "dont include 2.5 and 3. instead have a
+// custom"). A note saved with 2.5 or 3 keeps it, being inside the range.
+const NOTE_LINE_SPACINGS = ['1', '1.15', '1.5', '2'];
+const NOTE_LINE_SPACING_MIN = 0.8, NOTE_LINE_SPACING_MAX = 4;
+// The spacing as the note stores it ("1.25"), or '' for one out of range.
+function noteLineSpacingValue(v){
+  const s = String(v == null ? '' : v).trim().replace(',', '.');
+  const n = Number(s);
+  if(!s || !isFinite(n) || n < NOTE_LINE_SPACING_MIN || n > NOTE_LINE_SPACING_MAX) return '';
+  return String(Math.round(n * 100) / 100);
+}
+// FONTS (real-user request, 4 Nov: "add some font options if possible. If
+// there are already some standard ones we can use"): the ones every computer
+// and phone has or stands in for, and the two Korean faces the page already
+// loads, so a Korean line can be one family too. Stored as an inline
+// font-family, like the size and for the same reason; the format's value is
+// the short key, read back from the first name in the style.
+const NOTE_FONTS = [
+  ['arial', 'Arial', 'Arial, Helvetica, sans-serif'],
+  ['times', 'Times New Roman', "'Times New Roman', Times, serif"],
+  ['georgia', 'Georgia', 'Georgia, serif'],
+  ['courier', 'Courier New', "'Courier New', Courier, monospace"],
+  ['notosans', 'Noto Sans KR', "'Noto Sans KR', sans-serif"],
+  ['notoserif', 'Noto Serif KR', "'Noto Serif KR', serif"]
+];
+function noteFontOf(family){
+  const first = String(family || '').split(',')[0].replace(/["']/g, '').trim().toLowerCase();
+  return first ? NOTE_FONTS.find(f=> f[1].toLowerCase() === first) || null : null;
+}
 if(window.Quill){
   const Parchment = Quill.import('parchment');
   // LINE SPACING (real-user request: "we should add line spacing"). A BLOCK
   // format, so it belongs to a paragraph, and Enter carries it on to the next
   // one -- which is what a spacing chosen for a passage should do.
-  Quill.register(new Parchment.Attributor.Style('lineheight', 'line-height', {
-    scope: Parchment.Scope.BLOCK, whitelist: NOTE_LINE_SPACINGS
-  }), true);
+  class NoteLineHeight extends Parchment.Attributor.Style {
+    canAdd(node, value){ return super.canAdd(node, value) && noteLineSpacingValue(value) !== ''; }
+  }
+  Quill.register(new NoteLineHeight('lineheight', 'line-height', { scope: Parchment.Scope.BLOCK }), true);
+  // The font, in place of Quill's own (a class, and only serif and mono).
+  class NoteFont extends Parchment.Attributor.Style {
+    canAdd(node, value){ return super.canAdd(node, value) && NOTE_FONTS.some(f=> f[0] === value); }
+    add(node, value){
+      if(!this.canAdd(node, value)) return false;
+      node.style.fontFamily = NOTE_FONTS.find(f=> f[0] === value)[2];
+      return true;
+    }
+    value(node){ const f = noteFontOf(node.style.fontFamily); return f ? f[0] : ''; }
+  }
+  Quill.register(new NoteFont('font', 'font-family', { scope: Parchment.Scope.INLINE }), true);
+  // A LINE OF A TABLE OF CONTENTS (Insert > Table of contents): its title and
+  // its entries carry the class, so pressing an entry goes to its heading and
+  // a second insert replaces the old table rather than adding another. A
+  // class, not an id or a link, because the note sanitizer drops ids and the
+  // jump is the app's own.
+  Quill.register(new Parchment.Attributor.Class('toc', 'note-toc', { scope: Parchment.Scope.BLOCK, whitelist: ['1'] }), true);
   // A NUMBERED LIST STARTS AT THE NUMBER THAT WAS TYPED (real-user report, with
   // a screenshot: "it annoyingly changes to 1. when I write 2. further down").
   // Quill draws a list's numbers with a CSS counter that every new list starts
@@ -54572,7 +54648,9 @@ var NOTE_TOOL_SVG = {
   style: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5v12M12 5v12M4 11h8"/><path d="M16 9l3-2v10"/></svg>',
   toc: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M8 12h12M8 18h12"/><circle cx="4" cy="12" r="0.6"/><circle cx="4" cy="18" r="0.6"/></svg>',
   sym: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20h4v-3a7 7 0 1 1 6 0v3h4"/></svg>',
-  eq: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 4H7l6 8-6 8h10"/></svg>'
+  eq: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 4H7l6 8-6 8h10"/></svg>',
+  // A heading is typed as "# ", so the way to the headings is the hash.
+  heading: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></svg>'
 };
 /* ---------- THE NOTE TOOLBAR'S MENUS ----------
    Real-user request: "I wish, both for desktop and phone, that less common
@@ -54581,11 +54659,12 @@ var NOTE_TOOL_SVG = {
    Twenty controls in three rows on a phone came down to what a note is
    written with -- the size, bold, italic, underline, the two colours, the two
    lists, a link and a picture -- and three menus for the rest:
-     - TEXT: strikethrough, subscript, superscript, clear formatting;
+     - TEXT: strikethrough, subscript, superscript, clear formatting, the font;
      - PARAGRAPH: the text style (heading and so on), alignment (asked for in
        the same breath: "have line spacing and aligning (left and right)"),
        line spacing and indent;
-     - INSERT: a symbol, an equation, the contents, a video.
+     - INSERT: a symbol, an equation, a table of contents, the way to a
+       heading, a video.
    A menu is a button with a chevron and a panel of named rows under it, on a
    pointer and a phone alike, since a menu is where the names are read. The
    symbols and the contents open a step INTO their menu, with the way back
@@ -54627,6 +54706,8 @@ function noteMenu(quill, cls, icon, titleKey){
   };
   m.close = ()=>{
     if(!m.isOpen()) return;
+    // A box in the panel had the focus (Custom line spacing): back to the note.
+    if(panel.contains(document.activeElement)) quill.focus();
     panel.classList.remove('open');
     btn.classList.remove('ql-active');
     btn.setAttribute('aria-expanded', 'false');
@@ -54673,10 +54754,11 @@ function noteMenu(quill, cls, icon, titleKey){
     if(m.isOpen()) m.close(); else m.open();
   });
   // A row that DOES something closes the menu behind it; a row that steps
-  // in, and the rows of choices in Paragraph, leave it open.
+  // in (or opened a step, as the table of contents does to say there are no
+  // headings yet), and the rows of choices in Paragraph, leave it open.
   panel.addEventListener('click', e=>{
     const b = e.target.closest('button.nf-menu-item');
-    if(b && !b.classList.contains('nf-menu-drill')) m.close();
+    if(b && !b.classList.contains('nf-menu-drill') && !m.sub) m.close();
   });
   // Read off the path the press took rather than off the target, which may
   // be gone by now (a step in or a symbol tab redraws what was pressed). In
@@ -54753,6 +54835,87 @@ function noteHeadings(quill){
   });
   return out.filter(h=> h.text);
 }
+// The lines of the note's table of contents (Insert > Table of contents),
+// which carry the toc class: its title and its entries.
+function noteTocLines(quill){
+  return quill.getLines().filter(l=> l.formats && l.formats().toc);
+}
+function noteGoToHeading(quill, key, h){
+  // The caret goes first, so the pager turns to the page it is on.
+  quill.setSelection(h.index, 0, 'user');
+  if(notePagers[key]) renderNotePager(key, true);
+  requestAnimationFrame(()=>{ try{ h.node.scrollIntoView({ block: 'center', behavior: 'smooth' }); }catch(err){} });
+}
+// A title, then the headings as a bulleted list indented by level, every
+// line marked toc. Over the old table where the note has one (its first run
+// of marked lines; a stray marked line elsewhere is left be), with the caret
+// left where it was; otherwise under the caret's line, and the caret after it.
+function insertNoteToc(quill, hs){
+  const Delta = Quill.import('delta');
+  const sel = quill.getSelection();
+  const old = noteTocLines(quill);
+  let at, gone = 0;
+  if(old.length){
+    at = quill.getIndex(old[0]);
+    let end = at;
+    for(const l of old){ if(quill.getIndex(l) !== end) break; end += l.length(); }
+    gone = end - at;
+  } else {
+    const [line, offset] = quill.getLine(sel ? sel.index : 0);
+    at = line ? quill.getIndex(line) + (offset > 0 ? line.length() : 0) : 0;
+  }
+  const title = t('noteTocBtn');
+  let d = new Delta().retain(at);
+  if(gone) d = d.delete(gone);
+  d = d.insert(title, { bold: true }).insert('\n', { toc: '1' });
+  let len = title.length + 1;
+  // Indented from the note's biggest heading, so a note of subheadings only
+  // is not indented all the way down.
+  const top = Math.min.apply(null, hs.map(h=> h.level));
+  hs.forEach(h=>{
+    const attrs = { list: 'bullet', toc: '1' };
+    if(h.level > top) attrs.indent = h.level - top;
+    d = d.insert(h.text).insert('\n', attrs);
+    len += h.text.length + 1;
+  });
+  quill.history.cutoff();
+  quill.updateContents(d, 'user');
+  quill.history.cutoff();
+  if(!gone){ quill.setSelection(at + len, 0, 'user'); return; }
+  if(!sel) return;
+  const i = sel.index >= at + gone ? sel.index + len - gone : sel.index >= at ? at + len : sel.index;
+  quill.setSelection(Math.min(i, quill.getLength() - 1), 0, 'silent');
+}
+// Pressing an entry of the table goes to its heading (the n-th heading of
+// that name for the n-th entry of it), unless the press picked out text.
+// Enter in the table starts an ordinary line: the class is the table's, and
+// Quill carries a line's formats on to the next like any other.
+function wireNoteToc(quill, key){
+  quill.root.addEventListener('click', e=>{
+    const li = e.target.closest && e.target.closest('li.note-toc-1');
+    if(!li || !quill.root.contains(li)) return;
+    const sel = window.getSelection();
+    if(sel && !sel.isCollapsed) return;
+    const text = (li.textContent || '').trim();
+    const entries = Array.from(quill.root.querySelectorAll('li.note-toc-1'));
+    const nth = entries.slice(0, entries.indexOf(li)).filter(x=> (x.textContent || '').trim() === text).length;
+    const h = noteHeadings(quill).filter(x=> x.text === text)[nth];
+    if(h) noteGoToHeading(quill, key, h);
+  });
+  const list = quill.keyboard.bindings[13] = quill.keyboard.bindings[13] || [];
+  list.unshift({ key: 13, format: ['toc'], handler(range, context){
+    // At the very start of a line the new, empty line is the one above.
+    const above = range.length === 0 && context.offset === 0;
+    Promise.resolve().then(()=>{
+      const r = quill.getSelection();
+      if(!r) return;
+      const [line] = quill.getLine(r.index);
+      const target = above && line && line.length() > 1 ? line.prev : line;
+      if(target && target.formats && target.formats().toc) quill.formatLine(quill.getIndex(target), 0, 'toc', false, 'user');
+    });
+    return true;
+  } });
+}
 
 function enableNoteMath(quill, key, opts){
   if(!quill || quill.__noteMath) return;
@@ -54790,6 +54953,31 @@ function buildNoteMenus(quill, key, opts){
   noteMenuRow(looks, noteQuillButton(quill, 'script', 'sub', icons.script.sub), 'noteSub');
   noteMenuRow(looks, noteQuillButton(quill, 'script', 'super', icons.script.super), 'noteSup');
   noteMenuRow(looks, own('button.ql-clean'), 'noteClean');
+  // The font (NOTE_FONTS), each name drawn in itself, the one at the caret
+  // filled in; none when the selection runs over two.
+  const fonts = noteMenuSection(text, 'noteFont');
+  [['', '', '']].concat(NOTE_FONTS).forEach(([k, name, stack])=>{
+    const b = noteMenuButton('');
+    b.className = 'nf-style-opt nf-font-opt';
+    b.dataset.font = k;
+    if(k){ b.textContent = name; b.style.fontFamily = stack; }
+    else b.dataset.tkey = 'noteFontDefault';
+    b.addEventListener('click', e=>{
+      e.preventDefault();
+      text.close();
+      if(!quill.getSelection(true)) return;
+      quill.format('font', k || false, 'user');
+      markDirty();
+    });
+    fonts.appendChild(b);
+  });
+  text.refresh.push(()=>{
+    // Default is drawn in the note's own font, whatever the page gives it.
+    fonts.querySelector('.nf-font-opt[data-font=""]').style.fontFamily = getComputedStyle(quill.root).fontFamily;
+    const cur = atCaret('font');
+    const at = Array.isArray(cur) ? null : (cur || '');
+    fonts.querySelectorAll('.nf-font-opt').forEach(b=> b.classList.toggle('on', b.dataset.font === at));
+  });
 
   // PARAGRAPH: how the lines sit. The text style first, drawn at its size.
   const para = noteMenu(quill, 'nf-menu-para', ICON.paraMenu(16), 'noteMenuPara');
@@ -54821,12 +55009,36 @@ function buildNoteMenus(quill, key, opts){
     b.dataset.tipKey = k;
     aligns.appendChild(b);
   });
-  // Line spacing, on the lines the selection touches (or the caret's line).
-  const spacing = noteMenuChoices(noteMenuSection(para, 'noteLineSpacing'));
+  // Line spacing, on the lines the selection touches (or the caret's line):
+  // the common ones, and Custom, which opens a box for any other. The box
+  // takes the focus from the note, so the lines it is for are taken first,
+  // while the note still has them selected.
+  const spacingSec = noteMenuSection(para, 'noteLineSpacing');
+  const spacing = noteMenuChoices(spacingSec);
+  const customRow = document.createElement('div');
+  customRow.className = 'nf-ls-custom';
+  customRow.hidden = true;
+  customRow.innerHTML = `<input type="number" inputmode="decimal" step="0.05" min="${NOTE_LINE_SPACING_MIN}" max="${NOTE_LINE_SPACING_MAX}" data-tip-key="noteLineSpacingCustom"><button type="button" class="nf-ls-apply" data-tkey="noteLineSpacingApply"></button><span class="nf-ls-range"></span>`;
+  spacingSec.appendChild(customRow);
+  const customIn = customRow.querySelector('input');
+  const customGo = customRow.querySelector('.nf-ls-apply');
+  let customRange = null;
+  const custom = noteMenuButton('');
+  custom.className = 'nf-ls-custom-btn';
+  custom.dataset.tkey = 'noteLineSpacingCustom';
   const litSpacing = ()=>{
     const cur = atCaret('lineheight');
     const at = typeof cur === 'string' ? cur : '';
-    spacing.querySelectorAll('button').forEach(b=> b.classList.toggle('on', b.dataset.value === at));
+    spacing.querySelectorAll('button[data-value]').forEach(b=> b.classList.toggle('on', b.dataset.value === at));
+    const own = !!at && !NOTE_LINE_SPACINGS.includes(at);
+    custom.classList.toggle('on', own);
+    return own ? at : '';
+  };
+  const openCustom = (value)=>{
+    customRange = quill.getSelection() || customRange;
+    customRow.hidden = false;
+    customIn.value = value;
+    customIn.classList.remove('bad');
   };
   [''].concat(NOTE_LINE_SPACINGS).forEach(v=>{
     const b = noteMenuButton('');
@@ -54839,10 +55051,40 @@ function buildNoteMenus(quill, key, opts){
       quill.formatLine(r.index, r.length, 'lineheight', v || false, 'user');
       markDirty();
       litSpacing();
+      customRow.hidden = true;
     });
     spacing.appendChild(b);
   });
-  para.refresh.push(litSpacing);
+  custom.addEventListener('click', e=>{
+    e.preventDefault();
+    openCustom(litSpacing() || customIn.value);
+    customIn.focus();
+    customIn.select();
+  });
+  spacing.appendChild(custom);
+  const applyCustom = ()=>{
+    const v = noteLineSpacingValue(customIn.value);
+    // Out of range (or empty): the box says so, and keeps the focus.
+    if(!v){ customIn.classList.add('bad'); customIn.focus(); return; }
+    if(!customRange) return;
+    const r = customRange;
+    para.close();
+    quill.setSelection(r, 'user');
+    quill.formatLine(r.index, r.length, 'lineheight', v, 'user');
+    markDirty();
+  };
+  customIn.addEventListener('input', ()=> customIn.classList.remove('bad'));
+  customIn.addEventListener('keydown', e=>{
+    if(e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+    e.preventDefault();
+    applyCustom();
+  });
+  customGo.addEventListener('click', e=>{ e.preventDefault(); applyCustom(); });
+  // Open already when the caret's lines have a spacing of their own.
+  para.refresh.push(()=>{
+    const own = litSpacing();
+    if(own) openCustom(own); else customRow.hidden = true;
+  });
   // Indent: what Tab does in a list, for a phone, which has no Tab key.
   const indents = noteMenuChoices(noteMenuSection(para, 'noteIndent'));
   [['-1', 'noteIndentLess'], ['+1', 'noteIndentMore']].forEach(([v, k])=>{
@@ -54890,45 +55132,40 @@ function buildNoteMenus(quill, key, opts){
     const r = quill.getSelection(true);
     openNoteEquation(quill, r ? r.index : quill.getLength() - 1, r ? r.length : 0, '', null, markDirty);
   });
-  noteMenuRow(adds, noteMenuButton(NOTE_TOOL_SVG.toc), 'noteTocBtn', true).addEventListener('click', e=>{
+  // TABLE OF CONTENTS (real-user request, 4 Nov: "allow to insert a table of
+  // contents ... based on headings"): written under the caret's line, or over
+  // the note's old table when it has one, which is when the row says Update.
+  const tocRow = noteMenuRow(adds, noteMenuButton(NOTE_TOOL_SVG.toc), 'noteTocInsertBtn');
+  const tocLabel = tocRow.querySelector('.nf-menu-label');
+  ins.refresh.push(()=>{
+    tocLabel.dataset.tkey = noteTocLines(quill).length ? 'noteTocUpdateBtn' : 'noteTocInsertBtn';
+    tocLabel.textContent = t(tocLabel.dataset.tkey);
+  });
+  tocRow.addEventListener('click', e=>{
     e.preventDefault();
-    ins.show('noteTocBtn', (body)=>{
+    const hs = noteHeadings(quill);
+    // Nothing to list: say how a heading is made, in the menu, which stays open.
+    if(!hs.length){
+      ins.show('noteTocInsertBtn', (body)=>{ body.innerHTML = `<div class="nf-tool-hint">${escapeHtml(t('noteTocEmpty'))}</div>`; });
+      return;
+    }
+    if(!quill.getSelection(true)) return;
+    insertNoteToc(quill, hs);
+    markDirty();
+  });
+  // The headings as a list to jump to.
+  noteMenuRow(adds, noteMenuButton(NOTE_TOOL_SVG.heading), 'noteGoHeading', true).addEventListener('click', e=>{
+    e.preventDefault();
+    ins.show('noteGoHeading', (body)=>{
       const hs = noteHeadings(quill);
-      body.innerHTML = (hs.length
+      body.innerHTML = hs.length
         ? hs.map((h, i)=> `<button type="button" class="nf-toc-item nf-toc-${h.level}" data-i="${i}">${escapeHtml(h.text)}</button>`).join('')
-          + `<button type="button" class="nf-toc-insert">${escapeHtml(t('noteTocInsert'))}</button>`
-        : `<div class="nf-tool-hint">${escapeHtml(t('noteTocEmpty'))}</div>`);
+        : `<div class="nf-tool-hint">${escapeHtml(t('noteTocEmpty'))}</div>`;
       body.querySelectorAll('.nf-toc-item').forEach(b=> b.addEventListener('click', ev=>{
         ev.preventDefault();
         ins.close();
-        const h = hs[Number(b.dataset.i)];
-        // The caret goes first, so the pager turns to the page it is on.
-        quill.setSelection(h.index, 0, 'user');
-        if(notePagers[key]) renderNotePager(key, true);
-        requestAnimationFrame(()=>{ try{ h.node.scrollIntoView({ block: 'center', behavior: 'smooth' }); }catch(err){} });
+        noteGoToHeading(quill, key, hs[Number(b.dataset.i)]);
       }));
-      const put = body.querySelector('.nf-toc-insert');
-      if(put) put.addEventListener('click', ev=>{
-        ev.preventDefault();
-        ins.close();
-        const r = quill.getSelection(true);
-        if(!r) return;
-        // A plain bullet list, indented by level: the note sanitizer drops ids,
-        // so in-note anchors would not survive a save; the menu is the jump.
-        let at = r.index;
-        const [, offset] = quill.getLine(at);
-        if(offset > 0){ quill.insertText(at, '\n', 'user'); at += 1; }
-        quill.history.cutoff();
-        hs.forEach(h=>{
-          quill.insertText(at, h.text, 'user');
-          at += h.text.length;
-          quill.insertText(at, '\n', { list: 'bullet', indent: h.level > 1 ? h.level - 1 : false }, 'user');
-          at += 1;
-        });
-        quill.history.cutoff();
-        quill.setSelection(at, 0, 'user');
-        markDirty();
-      });
     });
   });
   noteMenuRow(adds, own('button.ql-video'), 'noteVideo');
@@ -54949,9 +55186,11 @@ function buildNoteMenus(quill, key, opts){
       m.panel.querySelectorAll('[data-tip-key]').forEach(el=>{ el.title = t(el.dataset.tipKey); el.setAttribute('aria-label', t(el.dataset.tipKey)); });
     });
     spacing.querySelectorAll('button').forEach(b=>{ if(b.dataset.value) b.textContent = noteNum(Number(b.dataset.value)); });
+    customRow.querySelector('.nf-ls-range').textContent = noteNum(NOTE_LINE_SPACING_MIN) + '\u2013' + noteNum(NOTE_LINE_SPACING_MAX);
   };
   relabel();
   quill._relabelNoteMenus = relabel;
+  wireNoteToc(quill, key);
   pinNoteToolbarsUnderBar(true);
 }
 
@@ -57660,6 +57899,8 @@ function noteExportRuns(el){
       if(n.style){
         if(n.style.color) g.color = n.style.color;
         if(n.style.fontSize) g.size = parseFloat(n.style.fontSize) || 0;
+        const font = noteFontOf(n.style.fontFamily);
+        if(font) g.font = font[0];
       }
       walk(n, g);
     });
@@ -57954,7 +58195,8 @@ function noteExportHtmlRuns(runs, mode, assets){
       if(r.i) s = '<i>' + s + '</i>';
       if(r.b) s = '<b>' + s + '</b>';
       const hex = noteExportHex(r.color);
-      const st = (hex ? 'color:#' + hex + ';' : '') + (r.size ? 'font-size:' + r.size + 'px;' : '');
+      const font = r.font && NOTE_FONTS.find(f=> f[0] === r.font);
+      const st = (hex ? 'color:#' + hex + ';' : '') + (r.size ? 'font-size:' + r.size + 'px;' : '') + (font && !r.code ? 'font-family:' + font[2] + ';' : '');
       if(st) s = `<span style="${st}">${s}</span>`;
       return s;
     }).join('');
@@ -58026,7 +58268,9 @@ function docxText(s){
 function docxRpr(r, linked){
   let x = '';
   if(linked) x += '<w:rStyle w:val="Hyperlink"/>';
+  const font = r.font && NOTE_FONTS.find(f=> f[0] === r.font);
   if(r.code) x += '<w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New"/>';
+  else if(font) x += `<w:rFonts w:ascii="${font[1]}" w:hAnsi="${font[1]}" w:eastAsia="${font[1]}" w:cs="${font[1]}"/>`;
   if(r.b) x += '<w:b/><w:bCs/>';
   if(r.i) x += '<w:i/><w:iCs/>';
   if(r.s) x += '<w:strike/>';
