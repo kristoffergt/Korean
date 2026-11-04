@@ -55101,6 +55101,29 @@ function enableNoteMath(quill, key, opts){
   const markDirty = ()=>{ if(opts && opts.markDirty) opts.markDirty(); };
   enableNoteScriptShortcuts(quill);
   enableNoteHeadingShortcut(quill);
+  // THE CARET AFTER AN EQUATION IS AFTER IT (real-user report, 4 Nov: "if i
+  // have my cursor here (like clicked at the end of the equation) and press
+  // enter, it puts the equation on the next line instead of going to the next
+  // line"). An equation carries an invisible character on each side for the
+  // caret to sit in. A click past its end puts the caret at the START of the
+  // right-hand one, and Quill counts the start of anything inside an
+  // equation as the place before it: measured, index 23 with the equation
+  // at 23, so Enter split the line in front of it. Anywhere in the right-hand
+  // one is now after the equation. Quill's own selection class, patched once
+  // for every editor on the page.
+  const selProto = quill.selection && Object.getPrototypeOf(quill.selection);
+  if(selProto && typeof selProto.normalizedToRange === 'function' && !selProto.__noteRightGuard){
+    selProto.__noteRightGuard = true;
+    const toRange = selProto.normalizedToRange;
+    selProto.normalizedToRange = function(range){
+      [range && range.start, range && range.end].forEach(pos=>{
+        if(!pos || pos.offset !== 0 || !pos.node || pos.node.nodeType !== 3 || !pos.node.parentNode) return;
+        const blot = Quill.find(pos.node.parentNode);
+        if(blot && blot.rightGuard === pos.node) pos.offset = pos.node.data.length || 1;
+      });
+      return toRange.call(this, range);
+    };
+  }
   // Clicking an equation in the note opens it to edit; a drag that ends on
   // one is a selection, not a click on it.
   quill.root.addEventListener('click', e=>{
