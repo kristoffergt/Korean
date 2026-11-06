@@ -5320,7 +5320,7 @@ body.ws-work .ws-class-only{display:none !important;}
   #yonseiTodosSection .todo-row[data-drag] .todo-check::before{content:"";position:absolute;inset:-10px;}
 }
 .todo-check-blank{border-style:dashed !important;opacity:.55;cursor:default;}
-.todo-draft-input{width:100%;border:none !important;background:none !important;box-shadow:none !important;outline:none;padding:0 !important;font:inherit;font-size:14.5px;line-height:20px;color:var(--ink);}
+.todo-draft-input{width:100%;border:none !important;background:none !important;box-shadow:none !important;outline:none;padding:0 !important;font:inherit;font-size:15.5px;line-height:22px;color:var(--ink);}
 #yonseiTodosSection .todo-row.todo-draft .lecture-actions{opacity:1;}
 .tq-show-dot{width:6px;height:6px;border-radius:50%;background:var(--seal);}
 .tq-show-menu{position:absolute;top:calc(100% + 6px);left:0;z-index:50;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--paper);box-shadow:0 8px 24px rgba(0,0,0,.18);white-space:nowrap;}
@@ -5374,6 +5374,12 @@ body.ws-work .ws-class-only{display:none !important;}
 }
 .todo-row.todo-dragging{opacity:.25;}
 .todo-ghost{position:fixed;z-index:9999;pointer-events:none;margin:0;background:var(--paper);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.22);opacity:.96;}
+/* The carried copy lives outside the to-do section, so it is given the
+   section's checklist look: the round tick and the same size of words. */
+.todo-ghost .todo-check{border-radius:50%;margin-top:1px;}
+.todo-ghost .todo-check[aria-checked="true"]{background:var(--on);border-color:var(--on);}
+.todo-ghost .todo-title{font-size:15.5px;line-height:22px;}
+.todo-ghost .todo-meta{font-size:12px;}
 body.todo-drag-on, body.todo-drag-on *{cursor:grabbing !important;user-select:none !important;}
 .todo-move{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px;}
 .todo-move-row{padding:2px 0 8px 30px;}
@@ -5389,11 +5395,15 @@ body.todo-drag-on, body.todo-drag-on *{cursor:grabbing !important;user-select:no
    and nothing else on the line until it is pointed at. On a phone the row's
    buttons never show; tapping the to-do opens it, delete included. */
 #yonseiTodosSection .todo-row{border:none;padding:5px 0;min-height:0;gap:10px;align-items:flex-start;}
-#yonseiTodosSection .todo-check{width:20px;height:20px;border-radius:50%;margin-top:0;}
+#yonseiTodosSection .todo-check{width:20px;height:20px;border-radius:50%;margin-top:1px;}
 #yonseiTodosSection .todo-check[aria-checked="true"]{background:var(--on);border-color:var(--on);}
-#yonseiTodosSection .todo-title{font-size:14.5px;line-height:20px;}
+/* A shade larger than the body text (real-user request, 6 Nov: "make each
+   item just slightly bigger font (like ever so slightly)"), and on touch a
+   taller line, so a row is easy to land a swipe on. */
+#yonseiTodosSection .todo-title{font-size:15.5px;line-height:22px;}
+@media (pointer: coarse){ #yonseiTodosSection .todo-row{padding:8px 0;} }
 #yonseiTodosSection .todo-row.done .todo-title{text-decoration:none;color:var(--ink-soft);}
-#yonseiTodosSection .todo-meta{font-size:11.5px;gap:2px 8px;}
+#yonseiTodosSection .todo-meta{font-size:12px;gap:2px 8px;}
 #yonseiTodosSection .todo-row .lecture-actions{opacity:0;transition:opacity 120ms ease;}
 @media (hover: hover){
   #yonseiTodosSection .todo-row:hover .lecture-actions,
@@ -18549,12 +18559,19 @@ function restoreOpenPanels(list, attr, kept){
    only decides where they are seen:
    - a mouse or trackpad: hidden until the row is hovered or holds focus;
    - touch: behind the row. Swipe LEFT shows Edit and Delete, a FULL left
-     swipe (past 60% of the row, or a fast fling past a third) presses the
-     row's Delete ([data-sw-del]); swipe RIGHT shows the rest. One row open
-     at a time; a tap elsewhere, a scroll or Escape closes it.
+     swipe (let go past SW_FULL of the row, or flung past SW_FLING) presses
+     the row's Delete ([data-sw-del]); swipe RIGHT shows the rest. One row
+     open at a time; a tap elsewhere, a scroll or Escape closes it, and a
+     swipe on another row (or on the open one) works at once.
    Deleting one thing goes through deleteWithUndo(): it is hidden at once and
    only really deleted when the Undo toast runs out. */
 var SW_BTN_W = 64;
+// How far a left swipe must be let go to delete (a share of the row's width),
+// or how far a quick flick must reach, and how quick that is (px/ms over the
+// last 120ms before the finger lifts). Real-user report, 6 Nov: "it needs to
+// be much smoother to just swipe to delete. right now it's incredibly
+// difficult" (it was 60%, and a flick a third, measured over the whole swipe).
+var SW_FULL = 0.42, SW_FLING = 0.22, SW_FLING_V = 0.45;
 function swipeEditBtnHtml(cls, attrs, label){
   const l = escapeHtml(label);
   return `<button type="button" class="sw-btn sw-edit ${cls}" ${attrs} title="${l}" aria-label="${l}">${ICON.pencil()}</button>`;
@@ -18653,25 +18670,39 @@ function swTouchMode(){
     if(!e.isPrimary || !e.target.closest) return;
     // A swipe that lost its end is put back, not left half open.
     if(swGesture){ const s = swGesture; swGesture = null; if(s.lock) swSet(s.row.isConnected ? s.row : swFindRow(s.key), 0, true); }
-    // A press anywhere but the open row's buttons closes it, and a press on
-    // the open row itself does nothing else.
+    // A press on the open row's buttons is theirs. On the open row itself a
+    // swipe carries on from where the row stands and a tap shuts it; a press
+    // anywhere else shuts it, and on another row that row's swipe starts at
+    // once (it used to take one swipe to shut the open row and another to
+    // swipe). A tap that only shut a row presses nothing.
+    const touch = e.pointerType === 'touch' && swTouchMode();
+    let base = 0, shut = false;
     if(swOpen){
       const openRow = swFindRow(swOpen.key);
       if(openRow && openRow.contains(e.target) && e.target.closest('.sw-tray')) return;
-      if(openRow && openRow.contains(e.target)) clickBlock = Date.now();
-      swClose();
-      return;
+      if(openRow && openRow.contains(e.target)){
+        clickBlock = Date.now();
+        if(!touch){ swClose(); return; }
+        base = swOpen.x;
+      } else {
+        swClose();
+        shut = true;
+      }
     }
     const row = e.target.closest('.sw-row');
-    if(!row || e.pointerType !== 'touch' || !swTouchMode()) return;
-    // The left edge is the phone's back swipe.
-    if(e.clientX <= (typeof EDGE_BACK_PX === 'number' ? EDGE_BACK_PX : 24)) return;
-    if(e.target.closest('input, textarea, select, [contenteditable="true"], .todo-check, .note-grip, .note-move-bar, .todo-edit, .sw-tray')) return;
-    // An open panel inside the row (an edit form) is for typing, not swiping;
-    // a row that itself sits in a panel (a book's note) still swipes.
-    const panel = e.target.closest('.notes-panel');
-    if(panel && row.contains(panel)) return;
-    swGesture = { row, key: swKeyOf(row), id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now(), lock: null, dx: 0, w: row.getBoundingClientRect().width || 1 };
+    const panel = row && e.target.closest('.notes-panel');
+    // Not at the left edge, which is the phone's back swipe, not on what is
+    // typed in or carried by its own handle, and not in an open panel inside
+    // the row (an edit form); a row that itself sits in a panel (a book's
+    // note) still swipes.
+    if(!row || !touch
+      || e.clientX <= (typeof EDGE_BACK_PX === 'number' ? EDGE_BACK_PX : 24)
+      || e.target.closest('input, textarea, select, [contenteditable="true"], .note-grip, .note-move-bar, .todo-edit, .sw-tray')
+      || (panel && row.contains(panel))){
+      if(base) swClose();
+      return;
+    }
+    swGesture = { row, key: swKeyOf(row), id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now(), lock: null, dx: base, base, shut, s: [], w: row.getBoundingClientRect().width || 1 };
     // A re-render mid-swipe takes the touched node out of the page, and an
     // end aimed at a detached node never reaches document: it is heard on
     // the node itself as well.
@@ -18686,13 +18717,17 @@ function swTouchMode(){
     const dx = e.clientX - g.x, dy = e.clientY - g.y;
     if(!g.lock){
       if(Math.hypot(dx, dy) < LIFT_SLOP_PX) return;
-      if(Math.abs(dx) > Math.abs(dy) * 1.3){ g.lock = 'x'; g.x = e.clientX; g.t = Date.now(); }
-      else { swGesture = null; return; }
+      // Across at least as much as up or down is a swipe: the same line the
+      // page draws (touch-action:pan-y), so no slant is left that neither
+      // swipes nor scrolls. The row then follows the finger from where it
+      // first touched, so the distance it takes to decide counts too.
+      if(Math.abs(dx) >= Math.abs(dy)){ g.lock = 'x'; g.t = Date.now(); }
+      else { swGesture = null; if(g.base) swClose(); return; }
     }
     if(!g.row.isConnected){ const r = swFindRow(g.key); if(!r){ swGesture = null; return; } g.row = r; }
     const hasDel = !!g.row.querySelector(':scope > .sw-acts > .sw-main [data-sw-del]');
     const moreW = swTrayWidth(g.row, 1), mainW = swTrayWidth(g.row, -1);
-    let x = e.clientX - g.x;
+    let x = g.base + e.clientX - g.x;
     // A side with nothing behind it only gives a little.
     if(x > 0 && !moreW) x = Math.min(24, x / 4);
     if(x < 0 && !mainW) x = Math.max(-24, x / 4);
@@ -18700,22 +18735,32 @@ function swTouchMode(){
     if(x > moreW && moreW) x = moreW + (x - moreW) / 4;
     x = Math.max(-g.w, x);
     g.dx = x;
-    g.row.classList.toggle('sw-arm', hasDel && x < -0.6 * g.w);
+    const now = Date.now();
+    g.s.push([now, x]);
+    while(g.s.length > 2 && now - g.s[0][0] > 120) g.s.shift();
+    g.row.classList.toggle('sw-arm', hasDel && x < -SW_FULL * g.w);
     swSet(g.row, x, false);
   }, { passive: true });
   const end = e=>{
     const g = swGesture;
     if(!g || e.pointerId !== g.id) return;
     swGesture = null;
-    if(g.lock !== 'x') return;
+    if(g.lock !== 'x'){
+      if(g.base) swClose();
+      if(g.base || g.shut) clickBlock = Date.now();
+      return;
+    }
     clickBlock = Date.now();
     const row = g.row.isConnected ? g.row : swFindRow(g.key);
     if(!row) return;
-    if(e.type === 'pointercancel'){ swSet(row, 0, true); return; }
+    if(e.type === 'pointercancel'){ if(swOpen && swOpen.key === g.key){ swOpen = null; swWatch(false); } swSet(row, 0, true); return; }
     const x = g.dx;
-    const fast = Math.abs(x) / Math.max(1, Date.now() - g.t) > 0.9;
+    // How fast it was going as it was let go (not on average): a finger that
+    // stopped before lifting flung nothing.
+    const s = g.s, last = s[s.length - 1];
+    const v = s.length > 1 && Date.now() - last[0] < 100 ? (last[1] - s[0][1]) / Math.max(1, last[0] - s[0][0]) : 0;
     const del = row.querySelector(':scope > .sw-acts > .sw-main [data-sw-del]');
-    if(x < 0 && del && (x < -0.6 * g.w || (fast && x < -0.35 * g.w))){
+    if(x < 0 && del && (x < -SW_FULL * g.w || (v < -SW_FLING_V && x < -SW_FLING * g.w))){
       row.classList.add('sw-arm');
       if(swOpen && swOpen.key === g.key){ swOpen = null; swWatch(false); }
       swSet(row, -g.w, true);
@@ -18728,8 +18773,10 @@ function swTouchMode(){
       return;
     }
     const mainW = swTrayWidth(row, -1), moreW = swTrayWidth(row, 1);
-    if(x < 0 && mainW && x < -Math.min(mainW / 2, 48)) swOpenRow(row, -mainW);
-    else if(x > 0 && moreW && x > Math.min(moreW / 2, 48)) swOpenRow(row, moreW);
+    // Flicked back the way it came, an open row shuts.
+    const back = (g.base < 0 && v > SW_FLING_V) || (g.base > 0 && v < -SW_FLING_V);
+    if(!back && x < 0 && mainW && x < -Math.min(mainW / 2, 48)) swOpenRow(row, -mainW);
+    else if(!back && x > 0 && moreW && x > Math.min(moreW / 2, 48)) swOpenRow(row, moreW);
     else { if(swOpen && swOpen.key === g.key){ swOpen = null; swWatch(false); } swSet(row, 0, true); }
   };
   document.addEventListener('pointerup', end, true);
@@ -32319,6 +32366,9 @@ function todoDragStart(row, x, y){
   if(!list) return;
   const r = row.getBoundingClientRect();
   const ghost = row.cloneNode(true);
+  // Only the to-do itself is carried: its swipe buttons and grip stay behind
+  // (real-user report, 6 Nov: "it shows a bunch of settings along with it").
+  ghost.querySelectorAll('.sw-acts, .todo-grip').forEach(x=> x.remove());
   ghost.classList.add('todo-ghost');
   ghost.removeAttribute('data-drag');
   ghost.removeAttribute('data-sw-key');
@@ -32516,7 +32566,8 @@ function wireTodoDrag(){
   };
   // The circle is the handle on touch (real-user request: "the circle part
   // should be draggable"): it carries touch-action:none, so sliding a finger
-  // off it starts a drag at once with no hold, and a tap still ticks it.
+  // up or down off it starts a drag at once with no hold, sliding it across
+  // swipes the row, and a tap still ticks it.
   let circle = null;
   document.addEventListener('touchstart', e=>{
     if(todoDrag || e.touches.length !== 1) return;
@@ -32530,6 +32581,9 @@ function wireTodoDrag(){
     if(!circle || todoDrag) return;
     const t0 = e.touches[0];
     if(Math.hypot(t0.clientX - circle.x, t0.clientY - circle.y) > 6){
+      // Across is the row's swipe (a thumb swiping to delete often starts on
+      // the circle); up or down carries it.
+      if(Math.abs(t0.clientX - circle.x) > Math.abs(t0.clientY - circle.y)){ circle = null; return; }
       e.preventDefault();
       todoDragStart(circle.row, circle.x, circle.y);
       circle = null;
