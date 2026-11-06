@@ -5241,6 +5241,9 @@ body.ws-work .ws-class-only{display:none !important;}
 .todo-row{justify-content:flex-start;gap:10px;align-items:flex-start;}
 .todo-check{flex:none;width:20px;height:20px;margin-top:1px;border:1.5px solid var(--ink-soft);border-radius:6px;background:var(--paper);color:var(--paper);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
 .todo-check:hover:not(:disabled){border-color:var(--on);}
+/* button:hover's ink fill outranks the class; iOS keeps hover on the last
+   touched circle, so an empty one turned solid black under the thumb. */
+.todo-check:not([aria-checked="true"]):hover{background:var(--paper);}
 .todo-check[aria-checked="true"]{background:var(--on);border-color:var(--on);}
 .todo-check:disabled{cursor:default;opacity:.6;}
 .todo-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
@@ -18571,7 +18574,7 @@ var SW_BTN_W = 64;
 // last 120ms before the finger lifts). Real-user report, 6 Nov: "it needs to
 // be much smoother to just swipe to delete. right now it's incredibly
 // difficult" (it was 60%, and a flick a third, measured over the whole swipe).
-var SW_FULL = 0.42, SW_FLING = 0.22, SW_FLING_V = 0.45;
+var SW_FULL = 0.42, SW_FLING = 0.22, SW_FLING_V = 0.45, SW_ARM_GRACE_MS = 250;
 function swipeEditBtnHtml(cls, attrs, label){
   const l = escapeHtml(label);
   return `<button type="button" class="sw-btn sw-edit ${cls}" ${attrs} title="${l}" aria-label="${l}">${ICON.pencil()}</button>`;
@@ -18738,9 +18741,24 @@ function swTouchMode(){
     const now = Date.now();
     g.s.push([now, x]);
     while(g.s.length > 2 && now - g.s[0][0] > 120) g.s.shift();
-    g.row.classList.toggle('sw-arm', hasDel && x < -SW_FULL * g.w);
+    // Once red, it stays red until it is brought back nearly shut: a thumb
+    // held out there drifts, and the row must not flicker in and out of it.
+    if(hasDel && x < -SW_FULL * g.w){ g.armed = true; g.armedAt = now; }
+    else if(x > -Math.max(24, mainW / 2)) g.armed = false;
+    g.row.classList.toggle('sw-arm', hasDel && !!g.armed);
     swSet(g.row, x, false);
   }, { passive: true });
+  // The page must not take a finger the row already has. iOS turns a pan-y
+  // row's touch into a pull on the page when a sideways thumb curves down
+  // (seen on a real phone: the page bounced and the swipe was thrown away
+  // half way), and touch-action cannot change once a touch has begun, so the
+  // moves are held here instead.
+  document.addEventListener('touchmove', e=>{
+    const g = swGesture;
+    if(!g || !e.cancelable || e.touches.length !== 1) return;
+    const t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y;
+    if(g.lock === 'x' || (!g.lock && Math.abs(dx) >= Math.abs(dy) && Math.hypot(dx, dy) >= LIFT_SLOP_PX)) e.preventDefault();
+  }, { passive: false, capture: true });
   const end = e=>{
     const g = swGesture;
     if(!g || e.pointerId !== g.id) return;
@@ -18753,14 +18771,21 @@ function swTouchMode(){
     clickBlock = Date.now();
     const row = g.row.isConnected ? g.row : swFindRow(g.key);
     if(!row) return;
-    if(e.type === 'pointercancel'){ if(swOpen && swOpen.key === g.key){ swOpen = null; swWatch(false); } swSet(row, 0, true); return; }
+    // A touch the browser takes back (pointercancel) settles where the row
+    // stands, like a lift without speed: it used to snap shut, throwing away
+    // a swipe that had gone red.
+    const cancel = e.type === 'pointercancel';
     const x = g.dx;
     // How fast it was going as it was let go (not on average): a finger that
     // stopped before lifting flung nothing.
     const s = g.s, last = s[s.length - 1];
-    const v = s.length > 1 && Date.now() - last[0] < 100 ? (last[1] - s[0][1]) / Math.max(1, last[0] - s[0][0]) : 0;
+    const v = !cancel && s.length > 1 && Date.now() - last[0] < 100 ? (last[1] - s[0][1]) / Math.max(1, last[0] - s[0][0]) : 0;
     const del = row.querySelector(':scope > .sw-acts > .sw-main [data-sw-del]');
-    if(x < 0 && del && (x < -SW_FULL * g.w || (v < -SW_FLING_V && x < -SW_FLING * g.w))){
+    // Red as it is let go, or red a moment ago: a thumb rolls back as it
+    // lifts (seen on a real phone, the row went red, the finger came back a
+    // little on the way up, and it opened instead of deleting).
+    const armed = g.armed || (g.armedAt && Date.now() - g.armedAt < SW_ARM_GRACE_MS);
+    if(x < 0 && del && (armed || (v < -SW_FLING_V && x < -SW_FLING * g.w))){
       row.classList.add('sw-arm');
       if(swOpen && swOpen.key === g.key){ swOpen = null; swWatch(false); }
       swSet(row, -g.w, true);
