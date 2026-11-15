@@ -48103,10 +48103,15 @@ const WRITING_DATA_TASKS = [
               whether Korean news coverage of them has just jumped (a spike
               against their own usual level), counted live through the
               topik-news-signal function.
-   How often each kind and theme turns up is learned from Q54_HISTORY, recent
-   rounds counting more, and the theme of the last few rounds is marked down
-   because the exam rotates. Add each new exam's topic to the END of
-   Q54_HISTORY; nothing else needs to change. */
+   Backtested round by round on Q54_HISTORY itself (Nov 2026, after 편견):
+   which KIND comes next could not be told from the rounds before it at any
+   recency (every setting scored below a coin, 60 rounds), so the two kinds
+   get even odds. THEME is barely better than chance; what held up best is
+   the whole history counting nearly alike and only the last round's theme
+   marked down (the same theme came twice running 4 times against 7.4
+   expected). So the ranking rests mostly on the candidate list and, for
+   issues, the news. Add each new exam's topic to the END of Q54_HISTORY;
+   nothing else needs to change. */
 // In exam order, oldest first, from round 35. [topic, theme, kind].
 const Q54_HISTORY = [
   ['경제적 조건과 행복한 삶','VALUES','value'], ['동기가 일에 미치는 영향','WORK','value'],
@@ -48147,10 +48152,18 @@ const Q54_HISTORY = [
   ['성과 보상 제도','WORK','value'], ['직접 경험과 간접 경험','LEARN','value'],
   ['대중 매체와 청소년 가치관','MEDIA','issue'], ['학생 간 건전한 경쟁','EDU','issue'],
   ['청소년 진로 체험 교육','EDU','value'], ['전동 킥보드','SOCIETY','issue'],
+  // The November 2026 sitting (Kristoffer, 15 Nov). Not on the list: it
+  // sits next to 차별 and 다름을 인정하는 필요성, which the novelty mark
+  // had held against topics like it.
+  ['편견','RELATION','value'],
 ];
 // Never asked. [topic, theme, kind, fit, novelty, news phrase]
 //   fit      one idea that splits into why / what effect / how (0-1)
-//   novelty  1 = nothing like it asked; lower where a past topic is close
+//   novelty  1 = nothing like it asked; lower where a past topic is close.
+//            Counted lightly (its square root): the exam comes back to a
+//            neighbour of an earlier topic often (직업 선택 -> 직업 선택의
+//            중요성, 독서의 역할 -> 독서 습관, 실패 -> 후회 -> 실수,
+//            차별 -> 편견), about one round in four.
 //   phrase   what the news is searched for (issues only)
 const Q54_CANDIDATES = [
   ['협력의 중요성','WORK','value',0.95,0.85], ['공감 능력의 중요성','RELATION','value',0.95,0.95],
@@ -48166,7 +48179,11 @@ const Q54_CANDIDATES = [
   ['전문가의 조건','WORK','value',0.85,0.85], ['기록의 가치','LEARN','value',0.80,1],
   ['유행을 따르는 것','MEDIA','value',0.80,1], ['놀이의 중요성','LIFESTAGE','value',0.80,0.95],
   ['청년의 자립','LIFESTAGE','value',0.80,0.95],
+  ['경청의 중요성','RELATION','value',0.90,0.80], ['용서와 화해','RELATION','value',0.85,1],
+  ['겸손의 가치','ETHIC','value',0.85,1], ['자존감','MIND','value',0.85,0.75],
+  ['첫인상','RELATION','value',0.80,0.75],
   ['딥페이크 범죄','TECH','issue',0.85,0.85,'딥페이크'],
+  ['혐오 표현','SOCIETY','issue',0.80,0.75,'혐오 표현'],
   ['개인정보 유출과 보안','TECH','issue',0.85,0.90,'개인정보 유출'],
   ['생성형 AI를 사용하는 바람직한 태도','TECH','issue',0.80,0.55,'생성형 AI'],
   ['숏폼 콘텐츠가 집중력에 미치는 영향','TECH','issue',0.80,0.90,'숏폼'],
@@ -48194,24 +48211,18 @@ const Q54_CANDIDATES = [
   ['근로 시간 단축','WORK','issue',0.80,0.90,'주4.5일제'],
   ['미디어 리터러시','MEDIA','issue',0.75,0.70,'미디어 리터러시'],
 ];
-const Q54_HALF_LIFE = 15;          // rounds: recent eras count more
-const Q54_REPEAT = [0.45, 0.70, 0.85]; // last, 2nd-last, 3rd-last theme
+const Q54_HALF_LIFE = 50;          // rounds: the whole history counts nearly alike
+const Q54_REPEAT = [0.5];          // the last round's theme
 const Q54_UNFORESEEN = 0.35;       // a topic nobody would think to list
 const Q54_NEWS_EXP = 1.0;          // how hard the news pushes an issue
-// Whether the next topic is a current issue follows the last few rounds, not
-// the whole decade: the exam's style drifts (전동 킥보드 was pure news).
-const Q54_KIND_HALF_LIFE = 5;
 const Q54_NEWS_URL = SUPABASE_URL + '/functions/v1/topik-news-signal';
 
 function q54Forecast(news){
   const n = Q54_HISTORY.length;
   const decay = i => Math.pow(0.5, (n - 1 - i) / Q54_HALF_LIFE);
-  // Kind: how often recent rounds were current affairs.
-  let issueW = 1, valueW = 1;
-  const kindDecay = i => Math.pow(0.5, (n - 1 - i) / Q54_KIND_HALF_LIFE);
-  Q54_HISTORY.forEach(([, , kind], i)=>{ if(kind === 'issue') issueW += kindDecay(i); else valueW += kindDecay(i); });
-  const pKind = { issue: issueW / (issueW + valueW), value: valueW / (issueW + valueW) };
-  // Theme: smoothed, recency-weighted, last few marked down.
+  // Kind: even odds (see the backtest above: the past rounds do not tell).
+  const pKind = { issue: 0.5, value: 0.5 };
+  // Theme: smoothed, long memory, the last round's theme marked down.
   const themes = new Set([...Q54_HISTORY.map(h=>h[1]), ...Q54_CANDIDATES.map(c=>c[1])]);
   const tw = {};
   themes.forEach(t=>{ tw[t] = 1; });
@@ -48233,7 +48244,7 @@ function q54Forecast(news){
     pool.forEach(c=>{ (byTheme[c[1]] = byTheme[c[1]] || []).push(c); });
     // A theme's share is split by the square root of its candidate count, so
     // a theme is not crowned for having one candidate nor buried for many.
-    const raw = pool.map(c=>({ c, s: tw[c[1]] * c[3] * c[4] * newsMult(c) / Math.sqrt(byTheme[c[1]].length) }));
+    const raw = pool.map(c=>({ c, s: tw[c[1]] * c[3] * Math.sqrt(c[4]) * newsMult(c) / Math.sqrt(byTheme[c[1]].length) }));
     const tot = raw.reduce((a, r)=>a + r.s, 0) || 1;
     raw.forEach(r=>rows.push({
       topic: r.c[0], kind, news: r.c[5] && news && news[r.c[5]] ? news[r.c[5]] : null,
