@@ -18101,12 +18101,22 @@ function appLoadImage(url){
   });
 }
 // An SVG with no size of its own is drawn at 300 by 150 and shrinks into a
-// corner of the square, so it is given the square's size first.
-function appSizedSvgUrl(svgText, n){
-  const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
-  const root = doc.documentElement;
-  if(!root || root.nodeName.toLowerCase() !== 'svg') return null;
-  root.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+// corner of the square, so it is given the square's size first. It must be
+// written out from real SVG elements: markup without its namespace, read as
+// XML, comes out of Safari's serializer with its shapes outside SVG (an
+// empty picture), so such text is read by the HTML reader instead.
+function appSizedSvgUrl(svg, n){
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  let root = null;
+  if(typeof svg === 'string'){
+    const xml = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
+    root = (xml && xml.namespaceURI === SVG_NS && xml.localName === 'svg') ? xml
+         : new DOMParser().parseFromString(svg, 'text/html').querySelector('svg');
+  } else if(svg){
+    root = svg.cloneNode(true);
+  }
+  if(!root || root.namespaceURI !== SVG_NS) return null;
+  root.removeAttribute('class');
   root.setAttribute('width', String(n));
   root.setAttribute('height', String(n));
   root.setAttribute('style', 'color:#000');
@@ -18159,7 +18169,7 @@ async function appTabIcons(btn){
       const variant = (drop)=>{
         const clone = src.el.cloneNode(true);
         clone.querySelectorAll(drop).forEach(n=> n.remove());
-        return appRasterIcon(appSizedSvgUrl(clone.outerHTML, 75), false);
+        return appRasterIcon(appSizedSvgUrl(clone, 75), false);
       };
       out = { icon: await variant('.ico-fill'), iconOn: await variant('.ico-line'), template: true };
     } else {
