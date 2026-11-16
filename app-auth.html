@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Sign-in · Productivity Tracker</title>
+<script>
+// Where the iPhone app's sign-in sheet ends. Supabase sends the answer here
+// (in the query, or in the part after #), and this page hands it on to the
+// app's own address, which closes the sheet and gives the app the answer.
+// It runs before anything is drawn and loads nothing from anywhere else, so
+// the answer never leaves this page except to the app.
+(function(){
+  var rest = (location.search || '') + (location.hash || '');
+  if(rest) location.replace('kristoffergt://auth' + rest);
+})();
+</script>
+<style>
+  :root{ --paper:#F5F5F6; --ink:#1E1F22; --ink-soft:#6B6D72; --line:rgba(30,31,34,0.12); }
+  @media (prefers-color-scheme: dark){ :root{ --paper:#18191B; --ink:#EDEDEF; --ink-soft:#9A9CA1; --line:rgba(237,237,239,0.14); } }
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+    background:var(--paper); color:var(--ink); font-family:'Inter',system-ui,-apple-system,sans-serif;}
+  .card{max-width:420px; text-align:center;}
+  h1{font-size:21px; margin:0 0 10px;}
+  p{font-size:14.5px; line-height:1.55; color:var(--ink-soft); margin:0 0 20px;}
+  a.btn{font:inherit; font-size:14px; font-weight:600; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-block;
+    background:var(--ink); color:var(--paper); border:1px solid var(--ink);}
+  a.alt{display:block; margin-top:16px; font-size:13.5px; color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 id="title">Finishing sign-in</h1>
+  <p id="msg">If the app did not open by itself, press the button.</p>
+  <a class="btn" id="open" href="kristoffergt://auth">Open the app</a>
+  <a class="alt" id="web" href="/">Use the website instead</a>
+</div>
+<script>
+(function(){
+  var S = {
+    en: { title: 'Finishing sign-in', msg: 'If the app did not open by itself, press the button.', open: 'Open the app', web: 'Use the website instead' },
+    ko: { title: '로그인 마무리 중', msg: '앱이 저절로 열리지 않으면 버튼을 누르세요.', open: '앱 열기', web: '웹사이트에서 계속하기' },
+    vi: { title: 'Đang hoàn tất đăng nhập', msg: 'Nếu ứng dụng không tự mở, hãy bấm nút.', open: 'Mở ứng dụng', web: 'Dùng trang web' }
+  };
+  var lang = 'en';
+  try { lang = localStorage.getItem('trackerLang') || ''; } catch(e){}
+  if(!S[lang]){
+    var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+    lang = S[nav] ? nav : 'en';
+  }
+  var s = S[lang];
+  document.documentElement.lang = lang;
+  document.getElementById('title').textContent = s.title;
+  document.getElementById('msg').textContent = s.msg;
+  document.getElementById('open').textContent = s.open;
+  document.getElementById('web').textContent = s.web;
+  document.getElementById('open').href = 'kristoffergt://auth' + (location.search || '') + (location.hash || '');
+})();
+</script>
+</body>
+</html>
