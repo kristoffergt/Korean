@@ -47,7 +47,19 @@ final class Shell: NSObject {
     var lang: String
 
     @ObservationIgnored let lock: AppLock
-    @ObservationIgnored private(set) var webView: WKWebView!
+    @ObservationIgnored private var madeWebView: WKWebView?
+
+    /// The one page. It is made the first time it is asked for (when its
+    /// holder goes on screen), never in `init`: the app's `init` runs before
+    /// UIKit has started, and a web view made then has touch handlers with
+    /// nothing to report to, so the first finger on the page aborts the app.
+    var webView: WKWebView {
+        if let made = madeWebView { return made }
+        let made = makeWebView()
+        madeWebView = made
+        made.load(URLRequest(url: AppConfig.baseURL))
+        return made
+    }
     /// The page has said hello since its document was loaded.
     @ObservationIgnored private var ready = false
     @ObservationIgnored private var loadedOnce = false
@@ -79,9 +91,7 @@ final class Shell: NSObject {
             ink = UIColor(css: store.string(forKey: "trInk")) ?? accent
         }
         super.init()
-        webView = makeWebView()
         Reminders.shared.onOpen = { [weak self] go in self?.go(go) }
-        load(AppConfig.baseURL)
     }
 
     // MARK: Loading
@@ -201,7 +211,7 @@ final class Shell: NSObject {
     /// page has said hello only what still matters later is kept.
     func send(_ type: String, _ data: [String: Any] = [:]) {
         let message: [String: Any] = ["type": type, "data": data]
-        guard ready, let webView else {
+        guard ready, let webView = madeWebView else {
             if type == "go" || type == "oauthCancel" {
                 outbox.append(message)
                 if outbox.count > 8 { outbox.removeFirst() }
@@ -331,7 +341,7 @@ final class Shell: NSObject {
         if scheme != next { scheme = next }
         if let color = UIColor(css: data["paper"] as? String) { paper = color }
         if let color = UIColor(css: data["ink"] as? String) { ink = color }
-        webView?.underPageBackgroundColor = paper
+        madeWebView?.underPageBackgroundColor = paper
         let store = UserDefaults.standard
         store.set(choice, forKey: "trThemeChoice")
         store.set(data["paper"] as? String, forKey: "trPaper")

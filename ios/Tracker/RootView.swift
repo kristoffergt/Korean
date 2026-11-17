@@ -4,8 +4,8 @@ import WebKit
 /// The page, with the system's tab bar over its foot. The site holds every tab
 /// in one document, so there is one web view and it never moves: the bar is a
 /// separate system tab bar laid over it, and a press on the bar asks the page
-/// to switch tab. (Moving the web view between tab containers aborts the app
-/// when it happens under a finger, which a page-driven tab change does.)
+/// to switch tab. (A SwiftUI TabView would move the web view between its tab
+/// containers on every switch.)
 struct RootView: View {
     let shell: Shell
     let lock: AppLock
