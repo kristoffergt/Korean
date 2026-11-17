@@ -70,6 +70,8 @@ enum L10n {
         "wYearDesc": ("How much of the year has gone.", "올해가 얼마나 지났는지.", "Một năm đã trôi qua bao nhiêu."),
         "wStudyName": ("Today", "오늘", "Hôm nay"),
         "wStudyDesc": ("Study time and what is left to do today.", "오늘 공부한 시간과 남은 할 일.", "Thời gian học và việc còn lại hôm nay."),
+        "wOverviewName": ("Overview", "한눈에 보기", "Tổng quan"),
+        "wOverviewDesc": ("Your month, what is next, your week and your to-do lists on one page.", "이번 달, 다가오는 일, 이번 주와 할 일 목록을 한 페이지에.", "Tháng này, việc sắp tới, tuần này và danh sách việc cần làm trên một trang."),
 
         // Widgets: the to-do lists.
         "listToday": ("Today", "오늘", "Hôm nay"),

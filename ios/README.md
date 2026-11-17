@@ -25,7 +25,9 @@ only a native app can:
 - **Widgets** (home screen and lock screen), drawn in the site's own colours
   and parts: Day, Up next, Week, Five weeks, To-do list (Today, This week,
   This month, This year or Upcoming, picked in the widget's settings), Today
-  (study time against the goal) and Year. They read a short summary the page
+  (study time against the goal), Year, and on iOS 27 Overview, a whole home
+  screen page (the month, what is next, the week and this week's and this
+  month's to-dos). They read a short summary the page
   writes into the app group whenever something changes, and move on to the
   next day by themselves at midnight.
 - **Face ID lock** (Settings > Appearance > iPhone App), asking again after

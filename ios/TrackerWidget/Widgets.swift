@@ -12,6 +12,9 @@ struct TrackerWidgets: WidgetBundle {
         TodoListWidget()
         StudyWidget()
         YearWidget()
+        if #available(iOS 27.0, *) {
+            OverviewWidget()
+        }
     }
 }
 
@@ -108,6 +111,21 @@ struct YearWidget: Widget {
         .configurationDisplayName(name("wYearName"))
         .description(name("wYearDesc"))
         .supportedFamilies([.systemSmall, .systemMedium])
+        .contentMarginsDisabled()
+    }
+}
+
+/// A whole home screen page (iOS 27's extra-large iPhone size): the month,
+/// what is next, the week and the to-do lists together.
+@available(iOS 27.0, *)
+struct OverviewWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "Overview", provider: DayProvider()) { entry in
+            Card { OverviewView(entry: entry) }
+        }
+        .configurationDisplayName(name("wOverviewName"))
+        .description(name("wOverviewDesc"))
+        .supportedFamilies([.systemExtraLargePortrait])
         .contentMarginsDisabled()
     }
 }
