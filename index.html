@@ -858,6 +858,12 @@ button.oauth-btn{width:100%;display:flex;align-items:center;justify-content:cent
 button.oauth-btn:hover{background:rgba(127,127,127,0.16);color:var(--ink);}
 button.oauth-btn:disabled{opacity:0.65;cursor:default;}
 button.oauth-btn svg{flex:none;width:17px;height:17px;}
+/* "Last used": the way THIS device last signed in, a small tag sitting on the
+   top edge of that button (the provider's, or Sign in for a password).
+   Neutral, since it says what happened rather than what to press. */
+button.oauth-btn, .auth-submit{position:relative;}
+.last-used-tag{position:absolute;top:-8px;right:10px;padding:0 7px;border-radius:999px;font-size:10px;font-weight:600;line-height:15px;letter-spacing:0.2px;
+  background:var(--paper);color:var(--ink-soft);border:1px solid var(--line);pointer-events:none;white-space:nowrap;}
 /* Google's own button is what has to be PRESSED (it is what makes Google name
    kristoffergt.com, see GOOGLE'S OWN BUTTON), and Google draws it in its own
    look, which nothing here can restyle. So it is drawn into this holder, out
@@ -3823,6 +3829,31 @@ body.dark .nf-draw-wheel-ring > span.tint, body.dark .nf-draw-textbox{filter:inv
      left of the writing. Lines of text still wrap; these keep their shape. */
   .notes-split.notes-wrap .ql-editor > :is(ol, ul, pre, blockquote, [class*="ql-indent-"]){display:flow-root;}
   .notes-split.notes-wrap > .card > .notes-panel{display:flow-root;}
+  /* Pinned below the list's foot, the toolbar slides over to the writing's
+     own left edge (wireNoteToolbarSlide). Its box beside the list cannot
+     grow (a wider one drops under the float, and the browser ignores a
+     negative margin there), so it only moves, and ::before -- its own
+     background and border, over its last 8px of padding and its top-right
+     corner, where it matches what is under it -- grows to the right by as
+     much as it has moved, on the same curve, so the bar's right end stays
+     where it was and it spans the writing's full width. Nothing in flow
+     changes on the scroll. Its border is the line already laid over the
+     paper (background layers, under a transparent border): --line is
+     see-through, and drawn twice where the two overlap it came out darker. */
+  .notes-split.notes-wrap .ql-toolbar.ql-snow{transition:translate 0.26s cubic-bezier(0.2,0.8,0.3,1);}
+  .notes-split.notes-wrap .ql-toolbar.ql-snow::before{content:'';position:absolute;pointer-events:none;box-sizing:border-box;
+    top:-1px;bottom:-1px;left:calc(100% - 8px);width:9px;
+    border:1px solid transparent;border-left:0;border-radius:0 8px 0 0;
+    background:linear-gradient(var(--paper-dim), var(--paper-dim)) padding-box, linear-gradient(var(--line), var(--line)) border-box, var(--paper-dim);
+    transition:width 0.26s cubic-bezier(0.2,0.8,0.3,1);}
+  .notes-split.notes-wrap .ql-toolbar.ql-snow.nt-slid{translate:calc(-1 * var(--nt-shift, 0px)) 0;}
+  .notes-split.notes-wrap .ql-toolbar.ql-snow.nt-slid::before{width:calc(var(--nt-shift, 0px) + 9px);}
+  body.no-anim-ui .notes-split.notes-wrap .ql-toolbar.ql-snow,
+  body.no-anim-ui .notes-split.notes-wrap .ql-toolbar.ql-snow::before{transition:none;}
+}
+@media (min-width: 1100px) and (prefers-reduced-motion: reduce){
+  .notes-split.notes-wrap .ql-toolbar.ql-snow,
+  .notes-split.notes-wrap .ql-toolbar.ql-snow::before{transition:none;}
 }
 /* An earlier version is OPENED from this list rather than only previewed, so
    a row is a button: who and when, as much of it as fits on the line, and the
@@ -14142,7 +14173,7 @@ const I18N = {
     noteEqSize:'Equation size', noteEqSizeTip:'Every equation on this device is drawn this much larger than the text around it (0 is the same size).',
     noteDrawBtn:'Drawing', noteDrawPen:'Pen', noteDrawEraser:'Eraser', noteDrawInk:'Ink', noteDrawRed:'Red', noteDrawOrange:'Orange', noteDrawGreen:'Green', noteDrawBlue:'Blue', noteDrawPurple:'Purple', noteDrawText:'Text', noteDrawSelect:'Select and move', noteDrawPlain:'Plain line', noteDrawSmooth:'Smooth line', noteDrawDotted:'Dotted line', noteDrawDashed:'Dashed line', noteDrawYourColor:'Your color', noteDrawMoreColors:'More colors', noteDrawKeepColor:'To keep this color, press the one it should replace:', noteDrawResetColors:'Reset colors', noteDrawSizeCustom:'Choose a size', noteDrawSizeN:'Size {n}', noteDrawKeepSize:'To keep this size, press the one it should replace:', noteDrawResetSizes:'Reset sizes', noteDrawDeleteSel:'Delete what is selected', noteDrawHintPen:'Hold still at the end of a line to make it straight.', noteDrawHintText:'Press where the text goes, or press a text to change it.', noteDrawHintSelect:'Press something or drag a box around it, then drag to move it.', noteDrawUndo:'Undo', noteDrawRedo:'Redo', noteDrawRoom:'More room below', noteDrawClear:'Clear the drawing', noteDrawLoadFailed:'The drawing could not be opened.',
     noteMenuText:'Text', noteFont:'Font', noteFontDefaultIs:'Default ({font})', noteFontSetDefault:'Default font', noteFontDefaultHint:'Text with no font of its own is written in this one, in every note on this device.', noteLineSpacingCustom:'Custom', noteLineSpacingApply:'Apply', noteTocInsertBtn:'Table of contents', noteTocUpdateBtn:'Update table of contents', noteGoHeading:'Go to a heading', noteMenuPara:'Paragraph', noteMenuInsert:'Insert', noteStrike:'Strikethrough', noteClean:'Clear formatting', noteVideo:'Video', noteAlign:'Alignment', noteAlignLeft:'Align left', noteAlignCenter:'Align center', noteAlignRight:'Align right', noteAlignJustify:'Justify', noteIndent:'Indent', noteIndentLess:'Decrease indent', noteIndentMore:'Increase indent',
-    signIn:'Sign in', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
+    signIn:'Sign in', authLastUsed:'Last used', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
     signOut:'Sign out',
     tabStudy:'Korean', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar', tabHome:'Home', tabOverview:'Overview', lblQuickNav:'Jump to', homeMorning:'Good morning', complimentAnother:'Another compliment', encourageAnother:'More encouragement', homeAfternoon:'Good afternoon', homeEvening:'Good evening', homeToday:'Today', homeTodos:'To-dos', homeTodosNone:'Nothing due today', homeAllDone:'All done for today', homeNextUp:'Next up', homeTodayWord:'Today', homeStreak:'{n}-day streak', homeReading:'Reading', 
     leaderboard:'Leaderboard', lbRank:'#', lbName:'Name', lbStreak:'Streak', lbWeek:'Week', lbTotal:'Total',
@@ -14279,7 +14310,7 @@ const I18N = {
     noteEqSize:'수식 크기', noteEqSizeTip:'이 기기에서 모든 수식을 주변 글자보다 이만큼 크게 표시합니다 (0은 같은 크기).',
     noteDrawBtn:'그림 그리기', noteDrawPen:'펜', noteDrawEraser:'지우개', noteDrawInk:'기본색', noteDrawRed:'빨간색', noteDrawOrange:'주황색', noteDrawGreen:'초록색', noteDrawBlue:'파란색', noteDrawPurple:'보라색', noteDrawText:'텍스트', noteDrawSelect:'선택해서 옮기기', noteDrawPlain:'기본 선', noteDrawSmooth:'매끄러운 선', noteDrawDotted:'점선', noteDrawDashed:'파선', noteDrawYourColor:'내 색', noteDrawMoreColors:'다른 색', noteDrawKeepColor:'이 색을 남기려면 바꿀 색을 누르세요:', noteDrawResetColors:'색 초기화', noteDrawSizeCustom:'크기 정하기', noteDrawSizeN:'크기 {n}', noteDrawKeepSize:'이 크기를 남기려면 바꿀 크기를 누르세요:', noteDrawResetSizes:'크기 초기화', noteDrawDeleteSel:'선택한 것 삭제', noteDrawHintPen:'선 끝에서 잠시 멈추면 곧은 선이 됩니다.', noteDrawHintText:'글을 넣을 곳을 누르거나, 바꿀 글을 누르세요.', noteDrawHintSelect:'대상을 누르거나 주위로 상자를 그린 뒤, 끌어서 옮기세요.', noteDrawUndo:'실행 취소', noteDrawRedo:'다시 실행', noteDrawRoom:'아래에 공간 추가', noteDrawClear:'그림 모두 지우기', noteDrawLoadFailed:'그림을 열 수 없습니다.',
     noteMenuText:'글자', noteFont:'글꼴', noteFontDefaultIs:'기본 ({font})', noteFontSetDefault:'기본 글꼴', noteFontDefaultHint:'글꼴을 따로 정하지 않은 글은 이 기기의 모든 노트에서 이 글꼴로 쓰입니다.', noteLineSpacingCustom:'직접 지정', noteLineSpacingApply:'적용', noteTocInsertBtn:'목차', noteTocUpdateBtn:'목차 업데이트', noteGoHeading:'제목으로 이동', noteMenuPara:'단락', noteMenuInsert:'삽입', noteStrike:'취소선', noteClean:'서식 지우기', noteVideo:'동영상', noteAlign:'정렬', noteAlignLeft:'왼쪽 정렬', noteAlignCenter:'가운데 정렬', noteAlignRight:'오른쪽 정렬', noteAlignJustify:'양쪽 정렬', noteIndent:'들여쓰기', noteIndentLess:'내어쓰기', noteIndentMore:'들여쓰기',
-    signIn:'로그인', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
+    signIn:'로그인', authLastUsed:'최근 사용', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
     signOut:'로그아웃',
     tabStudy:'한국어', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더', tabHome:'홈', tabOverview:'개요', lblQuickNav:'바로가기', homeMorning:'좋은 아침이에요', complimentAnother:'다른 칭찬 보기', encourageAnother:'응원 하나 더', homeAfternoon:'좋은 오후예요', homeEvening:'좋은 저녁이에요', homeToday:'오늘', homeTodos:'할 일', homeTodosNone:'오늘 할 일이 없어요', homeAllDone:'오늘 할 일을 다 했어요', homeNextUp:'다음 일정', homeTodayWord:'오늘', homeStreak:'{n}일 연속', homeReading:'읽는 중', 
     leaderboard:'순위표', lbRank:'#', lbName:'이름', lbStreak:'연속', lbWeek:'이번 주', lbTotal:'총합',
@@ -14416,7 +14447,7 @@ const I18N = {
     noteEqSize:'Cỡ công thức', noteEqSizeTip:'Trên thiết bị này, mọi công thức được hiển thị lớn hơn chữ xung quanh chừng này (0 là cùng cỡ).',
     noteDrawBtn:'Vẽ hình', noteDrawPen:'Bút', noteDrawEraser:'Cục tẩy', noteDrawInk:'Màu mực', noteDrawRed:'Đỏ', noteDrawOrange:'Cam', noteDrawGreen:'Xanh lá', noteDrawBlue:'Xanh dương', noteDrawPurple:'Tím', noteDrawText:'Chữ', noteDrawSelect:'Chọn và di chuyển', noteDrawPlain:'Nét thường', noteDrawSmooth:'Nét mượt', noteDrawDotted:'Nét chấm', noteDrawDashed:'Nét đứt', noteDrawYourColor:'Màu của bạn', noteDrawMoreColors:'Màu khác', noteDrawKeepColor:'Để giữ màu này, nhấn vào màu cần thay:', noteDrawResetColors:'Đặt lại màu', noteDrawSizeCustom:'Chọn cỡ', noteDrawSizeN:'Cỡ {n}', noteDrawKeepSize:'Để giữ cỡ này, nhấn vào cỡ cần thay:', noteDrawResetSizes:'Đặt lại cỡ', noteDrawDeleteSel:'Xóa phần đã chọn', noteDrawHintPen:'Giữ yên ở cuối nét để thành đường thẳng.', noteDrawHintText:'Nhấn vào chỗ đặt chữ, hoặc nhấn vào chữ để sửa.', noteDrawHintSelect:'Nhấn vào thứ cần chọn hoặc kéo khung quanh nó, rồi kéo để di chuyển.', noteDrawUndo:'Hoàn tác', noteDrawRedo:'Làm lại', noteDrawRoom:'Thêm chỗ bên dưới', noteDrawClear:'Xóa toàn bộ hình vẽ', noteDrawLoadFailed:'Không mở được hình vẽ.',
     noteMenuText:'Chữ', noteFont:'Phông chữ', noteFontDefaultIs:'Mặc định ({font})', noteFontSetDefault:'Phông chữ mặc định', noteFontDefaultHint:'Chữ không có phông riêng sẽ dùng phông này, trong mọi ghi chú trên thiết bị này.', noteLineSpacingCustom:'Tùy chỉnh', noteLineSpacingApply:'Áp dụng', noteTocInsertBtn:'Mục lục', noteTocUpdateBtn:'Cập nhật mục lục', noteGoHeading:'Đi tới tiêu đề', noteMenuPara:'Đoạn văn', noteMenuInsert:'Chèn', noteStrike:'Gạch ngang', noteClean:'Xóa định dạng', noteVideo:'Video', noteAlign:'Căn lề', noteAlignLeft:'Căn trái', noteAlignCenter:'Căn giữa', noteAlignRight:'Căn phải', noteAlignJustify:'Căn đều hai bên', noteIndent:'Thụt lề', noteIndentLess:'Giảm thụt lề', noteIndentMore:'Tăng thụt lề',
-    signIn:'Đăng nhập', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
+    signIn:'Đăng nhập', authLastUsed:'Dùng gần đây', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
     signOut:'Đăng xuất',
     tabStudy:'Tiếng Hàn', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch', tabHome:'Trang chủ', tabOverview:'Tổng quan', lblQuickNav:'Đi đến', homeMorning:'Chào buổi sáng', complimentAnother:'Xem lời khen khác', encourageAnother:'Thêm lời động viên', homeAfternoon:'Chào buổi chiều', homeEvening:'Chào buổi tối', homeToday:'Hôm nay', homeTodos:'Việc cần làm', homeTodosNone:'Hôm nay không có việc gì', homeAllDone:'Đã xong hết hôm nay', homeNextUp:'Sắp tới', homeTodayWord:'Hôm nay', homeStreak:'Chuỗi {n} ngày', homeReading:'Đang đọc', 
     leaderboard:'Bảng xếp hạng', lbRank:'#', lbName:'Tên', lbStreak:'Chuỗi ngày', lbWeek:'Tuần này', lbTotal:'Tổng cộng',
@@ -16325,7 +16356,7 @@ function setAuthMode(mode){
   document.getElementById('tabSignUp').classList.toggle('active', mode==='signup');
   document.getElementById('displayNameField').classList.toggle('hidden', mode!=='signup');
   document.getElementById('authAgeNote').classList.toggle('hidden', mode!=='signup');
-  document.getElementById('authSubmit').textContent = mode==='signin' ? t('signIn') : t('createAccount');
+  document.getElementById('authSubmit').innerHTML = authSubmitLabelHtml();
   document.getElementById('lblEmail').textContent = mode==='signin' ? t('signInWithNameHint') : t('email');
   document.getElementById('confirmPasswordField').classList.toggle('hidden', mode!=='signup');
   // What lets a password manager offer to generate a password here and to fill
@@ -16406,8 +16437,8 @@ function renderOauthButtons(){
   // GOOGLE'S OWN BUTTON); until then ours signs in by the redirect.
   const gis = gisReady && shown.some(p => p.id === 'google');
   document.getElementById('oauthList').innerHTML = shown.map(p => p.id === 'google' && gis
-    ? `<button type="button" class="oauth-btn" data-provider="${p.id}">${p.icon}<span>${escapeHtml(t(p.labelKey))}</span></button><div class="gis-holder" id="gisSignInSlot" aria-hidden="true"></div>`
-    : `<button type="button" class="oauth-btn" data-provider="${p.id}">${p.icon}<span>${escapeHtml(t(p.labelKey))}</span></button>`
+    ? `<button type="button" class="oauth-btn" data-provider="${p.id}">${p.icon}<span>${escapeHtml(t(p.labelKey))}</span>${lastUsedTagHtml(p.id)}</button><div class="gis-holder" id="gisSignInSlot" aria-hidden="true"></div>`
+    : `<button type="button" class="oauth-btn" data-provider="${p.id}">${p.icon}<span>${escapeHtml(t(p.labelKey))}</span>${lastUsedTagHtml(p.id)}</button>`
   ).join('');
   if(gis) renderGisButton(document.getElementById('gisSignInSlot'));
   else if(shown.some(p => p.id === 'google') && !document.getElementById('authScreen').classList.contains('hidden')) loadGis().then(ok=>{ if(ok) renderOauthButtons(); });
@@ -16444,6 +16475,8 @@ document.getElementById('oauthList').addEventListener('click', async (e)=>{
     options: { redirectTo: window.location.origin + window.location.pathname }
   });
   if(error){ btn.disabled = false; showAuthMsg(escapeHtml(authErrorText(error)), 'error'); }
+  // The page is leaving for the provider, so the way is noted on the way out.
+  else noteSignInMethod(btn.dataset.provider);
 });
 /* ---------- GOOGLE'S OWN BUTTON ----------
    Google's screen names the site a sign-in goes back to, and the redirect
@@ -16517,13 +16550,15 @@ async function onGoogleCredential(response){
   if(!token || (currentUser && !guestMode)) return;
   const { data, error } = await supabaseClient.auth.signInWithIdToken({ provider: 'google', token, nonce });
   if(error){ renderOauthButtons(); showAuthMsg(escapeHtml(authErrorText(error)), 'error'); return; }
+  noteSignInMethod('google');
   // The same road a password sign-in takes: the second factor, then the app.
   checkMfaAndProceed(data.user);
 }
 // Show the sign-in screen's Google button as soon as that screen appears,
 // wherever it is shown from.
 new MutationObserver(()=>{
-  if(!document.getElementById('authScreen').classList.contains('hidden') && !gisLoad) renderOauthButtons();
+  if(document.getElementById('authScreen').classList.contains('hidden')) return;
+  if(!gisLoad) renderOauthButtons(); else paintLastUsed();
 }).observe(document.getElementById('authScreen'), { attributes: true, attributeFilter: ['class'] });
 // A provider that refuses, or a sign-in link that has expired, comes back with
 // the reason in the address instead of a session. Read once and taken out of
@@ -16572,8 +16607,31 @@ function setAuthSubmitLoading(loading){
     const label = authMode==='signup' ? t('creatingAccountLabel') : t('signingInLabel');
     btn.innerHTML = `<span class="btn-spinner"></span>${loadingHtml(label)}`;
   } else {
-    btn.textContent = authMode==='signin' ? t('signIn') : t('createAccount');
+    btn.innerHTML = authSubmitLabelHtml();
   }
+}
+// Which way this device last signed in (per device, like the display
+// preferences): 'google' or 'password' (an email or a display name). It puts
+// a "Last used" tag on that button on the sign-in screen.
+function noteSignInMethod(method){ try { localStorage.setItem('lastSignInMethod', method); } catch(e){} }
+function lastSignInMethod(){ try { return localStorage.getItem('lastSignInMethod') || ''; } catch(e){ return ''; } }
+function lastUsedTagHtml(method){
+  return lastSignInMethod() === method ? `<span class="last-used-tag">${escapeHtml(t('authLastUsed'))}</span>` : '';
+}
+// Creating an account has nothing to have been used last.
+function authSubmitLabelHtml(){
+  return authMode==='signin' ? escapeHtml(t('signIn')) + lastUsedTagHtml('password') : escapeHtml(t('createAccount'));
+}
+// The sign-in screen coming back (after a sign-out) shows the tag where the
+// sign-in that has happened since put it, without drawing anything again.
+function paintLastUsed(){
+  document.querySelectorAll('#oauthList .oauth-btn').forEach(b=>{
+    const tag = b.querySelector('.last-used-tag');
+    if(tag) tag.remove();
+    b.insertAdjacentHTML('beforeend', lastUsedTagHtml(b.dataset.provider));
+  });
+  const sub = document.getElementById('authSubmit');
+  if(sub && !sub.disabled) sub.innerHTML = authSubmitLabelHtml();
 }
 // After a signup that requires email confirmation, arms a "Send again" link
 // for the given address. It stays hidden until Supabase will accept another
@@ -16872,7 +16930,7 @@ document.getElementById('authSubmit').addEventListener('click', async ()=>{
       if(wait !== null){ showAuthMsg(t('signupCheckEmail'), 'info'); armResendConfirm(email, wait); return; }
       showAuthMsg(escapeHtml(authErrorText(error)), 'error'); return;
     }
-    if(data.session){ hideResendConfirm(); checkMfaAndProceed(data.user); }
+    if(data.session){ hideResendConfirm(); noteSignInMethod('password'); checkMfaAndProceed(data.user); }
     else { showAuthMsg(t('signupCheckEmail'), 'info'); armResendConfirm(email); }
   } else {
     if(!rawInput.includes('@')){
@@ -16891,12 +16949,14 @@ document.getElementById('authSubmit').addEventListener('click', async ()=>{
       }
       const { data: sessionData, error: sessionError } = await supabaseClient.auth.setSession({ access_token: tokens.access_token, refresh_token: tokens.refresh_token });
       if(sessionError || !sessionData || !sessionData.user){ showAuthMsg(escapeHtml(sessionError ? authErrorText(sessionError) : t('authInvalidLogin')), 'error'); return; }
+      noteSignInMethod('password');
       checkMfaAndProceed(sessionData.user);
       return;
     }
     const email = rawInput;
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if(error){ showAuthMsg(escapeHtml(authErrorText(error)), 'error'); return; }
+    noteSignInMethod('password');
     checkMfaAndProceed(data.user);
   }
   } finally {
@@ -17266,6 +17326,8 @@ function handleDeepLinkParam(given){
     if(tabsShown('yonsei.boards')){ switchTopLevelTab('yonsei'); switchYonseiSubTab('boards'); }
   } else if(go === 'todos'){
     openTodoInList(null, false);
+  } else if(go === 'ptchat'){
+    openPtThread();
   } else if(go === 'calendar'){
     switchTopLevelTab('calendar');
     switchCalendarSubTab('calendar');
@@ -18049,6 +18111,7 @@ var appTabsTimer = null, appTabsSent = '', appTabIconCache = {};
 var appSyncTimer = null, appRemindersSent = '', appTodaySent = '';
 var appBadgeParts = { notif: 0, chat: 0 }, appBadgeSent = -1;
 var appSettings = null, appPendingGo = null, appChromeHidden = null, appChromeQueued = false;
+var appBarPill = 0;   // the system bar's height above the home indicator, from the app
 // Where the app's sign-in sheet finishes: a page on the site that hands the
 // answer to the app's own address (kristoffergt://auth). On the site's host,
 // so Supabase accepts it without a list of allowed addresses being changed.
@@ -18205,8 +18268,11 @@ function appSendTabs(){
 // settings pages, the chat at full size), as the page's own bar is covered.
 function appChromeCheck(){
   appChromeQueued = false;
+  // The bell on a phone is a page of its own too (not a .modal-overlay), and
+  // the bar would sit over the foot of its list.
   const hide = !!document.querySelector('.modal-overlay:not(.hidden)')
-    || !!document.querySelector('#chatDock.chat-full');
+    || !!document.querySelector('#chatDock.chat-full')
+    || !!document.querySelector('#notifBellPanel.bell-page:not(.hidden)');
   if(hide === appChromeHidden) return;
   appChromeHidden = hide;
   appPost('chrome', { barHidden: hide });
@@ -18234,6 +18300,11 @@ async function appHello(){
   appPost('hello', { version: 1, theme: appThemePayload(), lang: currentLang, tabs, active: activeTab, barHidden: !!appChromeHidden });
 }
 function appReceive(type, data){
+  if(type === 'tab' || type === 'reselect'){
+    // A press on the bar brings it back to full size, as touching the dock does.
+    const dock = document.getElementById('tabDock');
+    if(dock){ dockScrollRun = 0; dockAimK(dock, 1); }
+  }
   if(type === 'tab'){
     if(TAB_STRUCTURE_KEYS.includes(data.key) && data.key !== activeTab) switchTopLevelTab(data.key);
   } else if(type === 'reselect'){
@@ -18242,13 +18313,18 @@ function appReceive(type, data){
   } else if(type === 'go'){
     appGo(String(data.query || ''));
   } else if(type === 'oauthCancel'){
+    appGoogleAsk = null;
     document.querySelectorAll('#oauthList .oauth-btn').forEach(b=>{ b.disabled = false; });
+  } else if(type === 'oauthResult'){
+    appOAuthResult(String(data.url || ''));
   } else if(type === 'settings'){
     appSettings = data;
     renderAppSettingsRows();
   } else if(type === 'insets'){
     const bar = Number(data.bar);
     if(isFinite(bar) && bar >= 0) document.documentElement.style.setProperty('--app-bar', Math.round(bar) + 'px');
+    const pill = Number(data.pill);
+    if(isFinite(pill) && pill > 0){ appBarPill = pill; writeSubDockShrink(document.getElementById('tabDock')); }
   } else if(type === 'printed'){
     noteExportPrintCleanup();
   } else if(type === 'resume' || type === 'resync'){
@@ -18271,8 +18347,27 @@ function appTakePendingGo(){
 // the app: Google refuses to sign in inside an app's web view, and the sheet
 // shares Safari's sign-ins. Supabase gives the provider's address; the app
 // opens it and loads the page again with the answer (see Shell.finishSignIn).
+// Google in the app asks Google itself for an ID token, as the website's own
+// Google button does, and Supabase takes the token (signInWithIdToken). Going
+// through Supabase's redirect made Google say "Sign in to
+// kbqwitmxpmkueryjsyip.supabase.co" in the app's sheet (17 Nov, as on the web
+// on 29 Sep); asked directly, Google names the address it answers to, which
+// is APP_AUTH_URL. That page hands the answer to the app, and the app hands
+// it back here (oauthResult), to the page that holds the nonce. Needs
+// APP_AUTH_URL among the web client's Authorized redirect URIs in Google
+// Cloud. Other providers still go round through Supabase.
+var appGoogleAsk = null;   // { raw nonce, state } of the sheet that is open
 async function appOAuthSignIn(provider, btn){
   btn.disabled = true;
+  if(provider === 'google' && window.crypto && crypto.subtle){
+    const rand = ()=> Array.from(crypto.getRandomValues(new Uint8Array(24))).map(b=> b.toString(16).padStart(2, '0')).join('');
+    const raw = rand(), state = rand();
+    appGoogleAsk = { raw, state };
+    const q = new URLSearchParams({ client_id: GOOGLE_CLIENT_ID, redirect_uri: APP_AUTH_URL, response_type: 'id_token',
+      scope: 'openid email profile', nonce: await sha256Hex(raw), state, prompt: 'select_account' });
+    appPost('oauth', { url: 'https://accounts.google.com/o/oauth2/v2/auth?' + q.toString(), reply: true });
+    return;
+  }
   const { data, error } = await supabaseClient.auth.signInWithOAuth({
     provider, options: { redirectTo: APP_AUTH_URL, skipBrowserRedirect: true }
   });
@@ -18281,7 +18376,36 @@ async function appOAuthSignIn(provider, btn){
     if(error) showAuthMsg(escapeHtml(authErrorText(error)), 'error');
     return;
   }
+  noteSignInMethod(provider);
   appPost('oauth', { url: data.url });
+}
+// Where the sheet ended (app-auth.html's answer, as kristoffergt://auth#...).
+// Only the answer to the sheet this page opened counts (the state), and the
+// nonce Google signed must be the one kept here.
+async function appOAuthResult(url){
+  const ask = appGoogleAsk;
+  appGoogleAsk = null;
+  const reopen = ()=> document.querySelectorAll('#oauthList .oauth-btn').forEach(b=>{ b.disabled = false; });
+  let answer;
+  try {
+    const u = new URL(url);
+    answer = new URLSearchParams(u.hash ? u.hash.slice(1) : u.search.slice(1));
+  } catch(e){ reopen(); return; }
+  if(!ask || answer.get('state') !== ask.state){ reopen(); return; }
+  const token = answer.get('id_token');
+  if(!token){
+    reopen();
+    // Pressing Cancel on Google's page is not an error to report.
+    const err = answer.get('error');
+    if(err && err !== 'access_denied') showAuthMsg(escapeHtml(answer.get('error_description') || err), 'error');
+    return;
+  }
+  if(currentUser && !guestMode){ reopen(); return; }
+  const { data, error } = await supabaseClient.auth.signInWithIdToken({ provider: 'google', token, nonce: ask.raw });
+  reopen();
+  if(error){ showAuthMsg(escapeHtml(authErrorText(error)), 'error'); return; }
+  noteSignInMethod('google');
+  checkMfaAndProceed(data.user);
 }
 
 // ---- Reminders and widgets. The app keeps the next reminders as the
@@ -18337,7 +18461,7 @@ function appReminderItems(){
     if(r.sent_at || r.canceled_at) return;
     const at = new Date(r.remind_at).getTime();
     if(!ok(at)) return;
-    items.push({ id: 'pt.' + r.id, title: r.label || t('ptReminderTitle'), body: r.label ? t('ptReminderTitle') : '', at, go: '' });
+    items.push({ id: 'pt.' + r.id, title: r.label || t('ptReminderTitle'), body: r.label ? t('ptReminderTitle') : '', at, go: 'go=ptchat' });
   });
   // An event's reminders count back from when it starts, 08:00 on a day with
   // no time (as the server's own reminders do), on the phone's clock.
@@ -18757,6 +18881,16 @@ function renderNotifBellPanel(){
     });
   });
 }
+// The conversation a reminder from the chat came from, with the reminder at
+// the bottom of it: from the bell, a push, or the iPhone app's own reminder
+// (go=ptchat).
+async function openPtThread(){
+  if(!messagingEnabled()) return;
+  if(!circleMessagesLoaded) await loadCircleMessages();
+  else await loadPtReminders();
+  switchCircleThread(PT_THREAD);
+  if(!chatPanelOpen()) openChatPanel(); else renderCircleMessages();
+}
 // Where clicking each notification type should take you -- best-effort,
 // silently does nothing for types with no obvious destination (there's
 // currently no notif type that falls through, but new types added later
@@ -18772,15 +18906,7 @@ function navigateToNotifTarget(n){
   } else if(n.type === 'todo_reminder'){
     openTodoInList(p.todo_id, false);
   } else if(n.type === 'pt_reminder'){
-    // The conversation it came from, with the reminder at the bottom of it.
-    if(!messagingEnabled()) return;
-    const open = async ()=>{
-      if(!circleMessagesLoaded) await loadCircleMessages();
-      else await loadPtReminders();
-      switchCircleThread(PT_THREAD);
-      if(!chatPanelOpen()) openChatPanel(); else renderCircleMessages();
-    };
-    open();
+    openPtThread();
   } else if(n.type === 'reminder' || n.type === 'daily_recap'){
     switchTopLevelTab('calendar');
     switchCalendarSubTab('calendar');
@@ -27078,7 +27204,9 @@ function writeSubDockShrink(dock){
   // be shrinking with the main tab bar").
   if(sd.classList.contains('sd-shut')){ sd.style.scale = ''; sd.style.translate = ''; return; }
   const sc = 0.82 + 0.18 * dockK;
-  const h = (dock || document.querySelector('.tab-dock') || {}).offsetHeight || 58;
+  // In the app the bar is the system's (the dock is display:none there), so
+  // its pill's height comes from the app.
+  const h = IN_APP ? (appBarPill || 49) : ((dock || document.querySelector('.tab-dock') || {}).offsetHeight || 58);
   sd.style.scale = sc.toFixed(4);
   sd.style.translate = '0 ' + ((1 - sc) * h).toFixed(2) + 'px';
 }
@@ -27102,6 +27230,9 @@ function dockTick(dock, t){
 }
 function dockAimK(dock, target){
   if(target === dockKTarget && dockK === dockKTarget) return;
+  // In the iPhone app the dock is not drawn and the system's bar stands in
+  // for it: it is told the same target and eases to the same scale.
+  if(IN_APP && target !== dockKTarget) appPost('barScale', { k: target });
   dockKTarget = target;
   // A reader who has asked for less motion gets the two states and no travel
   // between them: the shrink is here to give the page room, which is useful
@@ -29834,6 +29965,20 @@ function scheduleSharedDataRefresh(){
     acReveal(renderAll);
   }, 600);
 }
+// Back after a while away (a phone that slept, a tab in the background, the
+// iPhone app, whose one page lives for days): the live channel slept too,
+// and what changed meanwhile is never replayed to it, so everything is read
+// again once.
+let pageHiddenAt = 0;
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){ pageHiddenAt = Date.now(); return; }
+  const away = pageHiddenAt ? Date.now() - pageHiddenAt : 0;
+  pageHiddenAt = 0;
+  if(away < 60 * 1000 || !currentUser || guestMode) return;
+  scheduleSharedDataRefresh();
+  refreshNotifBell();
+  if(circleMessagesLoaded) loadCircleMessages().then(()=>{ if(chatPanelOpen()) renderCircleMessages(); });
+});
 // Every table here is visible to more than just its own row owner (shared
 // circle data, same class of bug the job board had -- see
 // subscribeJobBoardRealtime): the calendar, courses, the study feed,
@@ -53835,7 +53980,8 @@ function setupNotesWrap(editorId){
     if(!on && eh > lh + NOTES_WRAP_ON) split.classList.add('notes-wrap');
     else if(on && eh < lh + NOTES_WRAP_OFF) split.classList.remove('notes-wrap');
   };
-  const schedule = ()=>{ if(!raf) raf = requestAnimationFrame(update); };
+  const slide = wireNoteToolbarSlide(editor, list, split);
+  const schedule = ()=>{ if(!raf) raf = requestAnimationFrame(()=>{ update(); slide(); }); };
   const ro = new ResizeObserver(schedule);
   ro.observe(list);
   ro.observe(editor);
@@ -53843,6 +53989,44 @@ function setupNotesWrap(editorId){
   else if(wide.addListener) wide.addListener(schedule);
   notesWrapSchedulers.push(schedule);
   schedule();
+}
+/* Wrapped, the toolbar is a box of its own beside the list (it cannot run
+   under it), so pinned at the top of the screen it kept the list's narrow
+   column after the writing below had gone the full width (real-user request,
+   17 Nov: "The fixed bar here in notes should slide over when you scroll past
+   the point where the text box expands"). Once the pinned toolbar is below
+   the list's foot (its bottom margin included, where the writing widens) it
+   slides left to the writing's left edge, and back when the list comes down
+   beside it again. Only a translate moves (see .nt-slid, whose ::before
+   carries the bar on to its old right end), so nothing in flow moves on the
+   scroll. Returns the check, for the wrap's own scheduler to run too. */
+function wireNoteToolbarSlide(editor, list, split){
+  let raf = 0;
+  const check = ()=>{
+    raf = 0;
+    const tb = editor.querySelector(':scope > .ql-toolbar.ql-snow, :scope > .nc-wrap > .ql-toolbar.ql-snow');
+    const box = editor.querySelector('.ql-container');
+    if(!tb || !box) return;
+    const slid = tb.classList.contains('nt-slid');
+    let over = false, shift = 0;
+    if(split.classList.contains('notes-wrap') && !editor.classList.contains('hidden')){
+      // Where it sits beside the list, without the slide it may be part-way through.
+      const now = parseFloat(getComputedStyle(tb).translate) || 0;
+      shift = tb.getBoundingClientRect().left - now - box.getBoundingClientRect().left;
+      const foot = list.getBoundingClientRect().bottom + (parseFloat(getComputedStyle(list).marginBottom) || 0);
+      over = shift > 4 && tb.getBoundingClientRect().top >= foot;
+    }
+    if(over){
+      tb.style.setProperty('--nt-shift', shift + 'px');
+      tb.classList.add('nt-slid');
+    } else if(slid){
+      tb.classList.remove('nt-slid');
+    }
+  };
+  const schedule = ()=>{ if(!raf) raf = requestAnimationFrame(check); };
+  window.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('resize', schedule);
+  return check;
 }
 const notesWrapSchedulers = [];
 setupNotesWrap('editorCard');
@@ -61660,11 +61844,29 @@ function makeNoteComments(o){
         if(b.classList.contains('nc-del')){
           const c = comments.find(x=> x.id === b.dataset.del);
           if(!c) return;
-          const thread = !c.parent_id && repliesOf(c.id).length;
-          if(!confirm(t(thread ? 'ncDeleteThreadConfirm' : 'ncDeleteConfirm'))) return;
-          try { await o.api.remove(target, c.id); comments = comments.filter(x=> x.id !== c.id && x.parent_id !== c.id); }
-          catch(er){ console.warn('note comment delete', er); err = t('nsFailed'); }
-          render(true); queuePaint();
+          // A comment (with its replies) goes at once with Undo, as every
+          // small delete does; no question first (17 Nov: "deleting comments
+          // shouldnt warn you. it's not a big thing").
+          const tg = target;
+          const gone = comments.filter(x=> x.id === c.id || x.parent_id === c.id);
+          const goneIds = new Set(gone.map(x=> x.id));
+          const putBack = ()=>{
+            if(target !== tg) return;
+            const have = new Set(comments.map(x=> x.id));
+            comments = comments.concat(gone.filter(x=> !have.has(x.id)))
+              .sort((x, y)=> String(x.created_at).localeCompare(String(y.created_at)));
+          };
+          if(goneIds.has(activeId)) activeId = null;
+          deleteWithUndo({
+            label: String(c.body || '').replace(/\s+/g, ' ').trim(),
+            hide: ()=>{ if(target === tg) comments = comments.filter(x=> !goneIds.has(x.id)); },
+            restore: putBack,
+            commit: async ()=>{
+              try { await o.api.remove(tg, c.id); }
+              catch(er){ console.warn('note comment delete', er); putBack(); err = t('nsFailed'); render(true); queuePaint(); }
+            },
+            render: ()=>{ render(true); queuePaint(); },
+          });
           return;
         }
         return;
@@ -61696,6 +61898,8 @@ function makeNoteComments(o){
       const list = await o.api.list(tg);
       if(target !== tg) return;
       comments = Array.isArray(list) ? list : [];
+      // A comment whose delete is still waiting on its Undo stays hidden.
+      undoReapplyPending();
     } catch(e){
       console.warn('note comments', e);
       return;

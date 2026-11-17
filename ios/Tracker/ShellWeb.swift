@@ -107,11 +107,7 @@ extension Shell: WKNavigationDelegate {
 
     /// iOS ended the page's process (memory, mostly): load it again.
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-        if let url = webView.url, AppConfig.isAppDocument(url) {
-            webView.reload()
-        } else {
-            load(AppConfig.baseURL)
-        }
+        reloadAfterCrash()
     }
 
     func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {

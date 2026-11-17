@@ -7,16 +7,21 @@ only a native app can:
 - **The system's tab bar**, following the page's tabs (which are shown, their
   names, their marks, the language and the theme). The page's own floating
   bar is not drawn inside the app. Pressing the open tab again scrolls the
-  page to its top. The bar steps aside while a dialog, the settings pages or
-  the full-size chat cover the page.
+  page to its top. Like the page's bar, it shrinks as you scroll down and
+  comes back as you scroll up (the page sends the same number its own bar
+  follows). The bar steps aside while a dialog, the settings pages, the
+  notifications page or the full-size chat cover the page.
 - **Google sign-in** in the system's sign-in sheet (Google refuses to sign in
-  inside an app's web view). The sheet ends on `/app-auth.html`, which hands
-  the answer to `kristoffergt://auth`; the app then loads the page again with
-  that answer and the page finishes the sign-in as it does on the web.
+  inside an app's web view). The page asks Google itself for an ID token, as
+  the website's own Google button does, so Google's screen names
+  kristoffergt.com and not Supabase's address. The sheet ends on
+  `/app-auth.html`, which hands the answer to `kristoffergt://auth`; the app
+  gives it back to the page, which checks it and signs in with it.
 - **Reminders** as the phone's own notifications: to-do reminders, the
   reminders written to the app in chat, and the reminders on calendar events
   you follow, for the next 35 days (iOS keeps at most 64 waiting, the app
-  keeps 60). Pressing one opens the to-dos or the calendar on that day.
+  keeps 60). Pressing one opens the to-dos, the chat with the app, or the
+  calendar on that day.
 - **Widgets** (home screen and lock screen), drawn in the site's own colours
   and parts: Day, Up next, Week, Five weeks, To-do list (Today, This week,
   This month, This year or Upcoming, picked in the widget's settings), Today
@@ -29,7 +34,8 @@ only a native app can:
   (the page's own buzzes, a ticked to-do, a row about to be swiped away),
   native alert/confirm/prompt dialogs, downloads handed to the share sheet,
   "Save as PDF" through the print sheet, other sites in an in-app Safari view,
-  and an offline screen with Try again.
+  and an offline screen with Try again (also when iOS ended the page and it
+  cannot load again).
 
 ## Running it
 
@@ -52,10 +58,11 @@ A Debug build on a phone, and every Release build, loads
 Arguments) and change its address.
 
 Google sign-in needs `/app-auth.html` to be live on the site (it is the page
-the sign-in sheet ends on), also when the app is pointed at a local server.
-If Google ever lands on the website inside the sheet instead of closing it,
-add `https://kristoffergt.com/app-auth.html` to Supabase > Authentication >
-URL Configuration > Redirect URLs.
+the sign-in sheet ends on), also when the app is pointed at a local server,
+and `https://kristoffergt.com/app-auth.html` among the **Authorized redirect
+URIs** of the site's web OAuth client in Google Cloud (APIs & Services >
+Credentials). A provider that goes through Supabase instead also needs that
+address in Supabase > Authentication > URL Configuration > Redirect URLs.
 
 ## Fonts in the widgets
 
@@ -69,10 +76,10 @@ License) to `TrackerWidget/` with their licence; nothing else has to change.
 Before the page's first line runs, the app defines `window.trackerNative`
 (`platform: 'ios'`, `post(type, data)`). The page checks it once (`IN_APP` in
 `index.html`), adds `in-app` to `<html>`, and from then on posts messages:
-`hello`, `tabs`, `tab`, `theme`, `lang`, `chrome`, `haptic`, `oauth`,
+`hello`, `tabs`, `tab`, `theme`, `lang`, `chrome`, `barScale`, `haptic`, `oauth`,
 `reminders`, `today`, `badge`, `setLock`, `askNotifications`, `openSettings`,
 `share`, `print`. The app answers through `window.trackerShell.receive`
-with `tab`, `reselect`, `go`, `oauthCancel`, `settings`, `insets`,
+with `tab`, `reselect`, `go`, `oauthResult`, `oauthCancel`, `settings`, `insets`,
 `printed`, `resume` and `resync`. Messages are taken only from the main frame
 of the site's own pages.
 

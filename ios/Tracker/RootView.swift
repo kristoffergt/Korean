@@ -10,6 +10,7 @@ struct RootView: View {
     let shell: Shell
     let lock: AppLock
     @Environment(\.scenePhase) private var phase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -20,6 +21,11 @@ struct RootView: View {
                 if !shell.tabs.isEmpty {
                     SystemTabBar(shell: shell)
                         .ignoresSafeArea(edges: .bottom)
+                        // The page's dock scale (0.82 to 1, `--dock-min`), about
+                        // the foot of the pill, eased like the page's follower
+                        // (95% of the way in about a third of a second).
+                        .scaleEffect(0.82 + 0.18 * shell.barK, anchor: UnitPoint(x: 0.5, y: shell.barAnchor))
+                        .animation(reduceMotion ? nil : .timingCurve(0.2, 0.8, 0.3, 1, duration: 0.34), value: shell.barK)
                         .offset(y: shell.barHidden ? 160 : 0)
                         .opacity(shell.barHidden ? 0 : 1)
                         .allowsHitTesting(!shell.barHidden)
@@ -64,7 +70,7 @@ struct SystemTabBar: UIViewRepresentable {
     func makeUIView(context: Context) -> MeasuredTabBar {
         let bar = MeasuredTabBar()
         bar.delegate = context.coordinator
-        bar.onHeight = { [weak shell] height in shell?.setBarInset(height) }
+        bar.onHeight = { [weak shell] height, safe in shell?.setBarInset(height, safe: safe) }
         return bar
     }
 
@@ -113,7 +119,8 @@ struct SystemTabBar: UIViewRepresentable {
 /// indicator's room when it reaches the screen's foot).
 final class MeasuredTabBar: UITabBar {
     var signature = ""
-    var onHeight: ((CGFloat) -> Void)?
+    /// Its height and, of that, the home indicator's room under the pill.
+    var onHeight: ((CGFloat, CGFloat) -> Void)?
 
     override func safeAreaInsetsDidChange() {
         super.safeAreaInsetsDidChange()
@@ -122,7 +129,7 @@ final class MeasuredTabBar: UITabBar {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        if bounds.height > 0 { onHeight?(bounds.height) }
+        if bounds.height > 0 { onHeight?(bounds.height, safeAreaInsets.bottom) }
     }
 }
 
