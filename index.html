@@ -18114,7 +18114,6 @@ var appTabsTimer = null, appTabsSent = '', appTabIconCache = {};
 var appSyncTimer = null, appRemindersSent = '', appTodaySent = '';
 var appBadgeParts = { notif: 0, chat: 0 }, appBadgeSent = -1;
 var appSettings = null, appPendingGo = null, appChromeHidden = null, appChromeQueued = false;
-var appBarPill = 0;   // the system bar's height above the home indicator, from the app
 // Where the app's sign-in sheet finishes: a page on the site that hands the
 // answer to the app's own address (kristoffergt://auth). On the site's host,
 // so Supabase accepts it without a list of allowed addresses being changed.
@@ -18326,8 +18325,6 @@ function appReceive(type, data){
   } else if(type === 'insets'){
     const bar = Number(data.bar);
     if(isFinite(bar) && bar >= 0) document.documentElement.style.setProperty('--app-bar', Math.round(bar) + 'px');
-    const pill = Number(data.pill);
-    if(isFinite(pill) && pill > 0){ appBarPill = pill; writeSubDockShrink(document.getElementById('tabDock')); }
   } else if(type === 'printed'){
     noteExportPrintCleanup();
   } else if(type === 'resume' || type === 'resync'){
@@ -27210,9 +27207,7 @@ function writeSubDockShrink(dock){
   // be shrinking with the main tab bar").
   if(sd.classList.contains('sd-shut')){ sd.style.scale = ''; sd.style.translate = ''; return; }
   const sc = 0.82 + 0.18 * dockK;
-  // In the app the bar is the system's (the dock is display:none there), so
-  // its pill's height comes from the app.
-  const h = IN_APP ? (appBarPill || 49) : ((dock || document.querySelector('.tab-dock') || {}).offsetHeight || 58);
+  const h = (dock || document.querySelector('.tab-dock') || {}).offsetHeight || 58;
   sd.style.scale = sc.toFixed(4);
   sd.style.translate = '0 ' + ((1 - sc) * h).toFixed(2) + 'px';
 }
@@ -27236,9 +27231,6 @@ function dockTick(dock, t){
 }
 function dockAimK(dock, target){
   if(target === dockKTarget && dockK === dockKTarget) return;
-  // In the iPhone app the dock is not drawn and the system's bar stands in
-  // for it: it is told the same target and eases to the same scale.
-  if(IN_APP && target !== dockKTarget) appPost('barScale', { k: target });
   dockKTarget = target;
   // A reader who has asked for less motion gets the two states and no travel
   // between them: the shrink is here to give the page room, which is useful
@@ -27258,8 +27250,11 @@ function dockAimK(dock, target){
 function wireDockShrink(dock){
   const onScroll = ()=>{
     // The bar is display:none above the media query's own width, and a
-    // gesture on a desktop has nothing to shrink.
-    if(!isMobileDevice()) { if(dockK !== 1) dockAimK(dock, 1); return; }
+    // gesture on a desktop has nothing to shrink. In the iPhone app the dock
+    // is not drawn and the system's bar stands in for it at full size:
+    // scaling that bar with the page hung the whole app on the first scroll
+    // on a real iPhone, so the app's bar (and the strip over it) keep still.
+    if(!isMobileDevice() || IN_APP) { if(dockK !== 1) dockAimK(dock, 1); return; }
     const y = Math.max(0, window.scrollY);
     const dy = y - dockScrollY;
     dockScrollY = y;

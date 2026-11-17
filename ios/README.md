@@ -7,10 +7,10 @@ only a native app can:
 - **The system's tab bar**, following the page's tabs (which are shown, their
   names, their marks, the language and the theme). The page's own floating
   bar is not drawn inside the app. Pressing the open tab again scrolls the
-  page to its top. Like the page's bar, it shrinks as you scroll down and
-  comes back as you scroll up (the page sends the same number its own bar
-  follows). The bar steps aside while a dialog, the settings pages, the
-  notifications page or the full-size chat cover the page.
+  page to its top. It keeps one size while the page scrolls (shrinking it
+  with the page hung the app on a real iPhone). The bar steps aside while a
+  dialog, the settings pages, the notifications page or the full-size chat
+  cover the page.
 - **Google sign-in** in the system's sign-in sheet (Google refuses to sign in
   inside an app's web view). The page asks Google itself for an ID token, as
   the website's own Google button does, so Google's screen names

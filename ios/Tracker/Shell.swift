@@ -36,14 +36,6 @@ final class Shell: NSObject {
     /// The page has something over everything (a dialog, a settings page):
     /// the bar steps aside for it, as the page's own bar did.
     var barHidden = false
-    /// 1 at full size, 0 at its smallest: the page's own dock eases between
-    /// the two as the reader scrolls down and up (`--dock-k`), and the
-    /// system's bar follows the same number with the same scale.
-    var barK: CGFloat = 1
-    /// Where the bar shrinks towards, as a share of its height from the top:
-    /// the foot of its pill (above the home indicator), as the page's dock
-    /// shrinks about its own foot.
-    var barAnchor: CGFloat = 1
     var phase: Phase = .loading
     /// Hidden until the page has drawn itself in its own theme, so a dark
     /// page never flashes light.
@@ -79,8 +71,6 @@ final class Shell: NSObject {
     /// How much of the screen's bottom the bar takes, bar and home indicator
     /// together (-1 until measured).
     @ObservationIgnored private var barInset: CGFloat = -1
-    /// The part of that which is the home indicator's room, under the pill.
-    @ObservationIgnored private var barSafe: CGFloat = 0
     #if DEBUG
     @ObservationIgnored private var debugScriptRan = false
     #endif
@@ -131,14 +121,11 @@ final class Shell: NSObject {
         }
     }
 
-    /// A new document: it has to say hello again before it is spoken to. It
-    /// starts at its top with its dock at full size, and says so only when
-    /// that changes, so the bar goes back to full size with it.
+    /// A new document: it has to say hello again before it is spoken to.
     func documentChanged() {
         ready = false
         loadedOnce = true
         phase = .ready
-        barK = 1
     }
 
     func documentFinished() {
@@ -207,11 +194,6 @@ final class Shell: NSObject {
         case "chrome":
             let hide = data["barHidden"] as? Bool ?? false
             if hide != barHidden { barHidden = hide }
-        case "barScale":
-            if let k = data["k"] as? Double, k.isFinite {
-                let next = CGFloat(min(1, max(0, k)))
-                if next != barK { barK = next }
-            }
         case "haptic":
             Haptics.play(data["style"] as? String ?? "light")
         case "oauth":
@@ -273,21 +255,18 @@ final class Shell: NSObject {
     /// The room the bar takes, measured while it is showing (hidden, the
     /// number would only be the home indicator, and the page keeps its room
     /// for when the bar comes back).
-    func setBarInset(_ value: CGFloat, safe: CGFloat) {
-        guard !barHidden, value >= 0, abs(value - barInset) > 0.5 || abs(safe - barSafe) > 0.5 else { return }
+    func setBarInset(_ value: CGFloat) {
+        guard !barHidden, value >= 0, abs(value - barInset) > 0.5 else { return }
         barInset = value
-        barSafe = min(max(0, safe), value)
-        let anchor = value > 0 ? (value - barSafe) / value : 1
-        if abs(anchor - barAnchor) > 0.001 { barAnchor = anchor }
         sendInsets()
     }
 
-    /// `bar` is the room the page keeps clear at its foot; `pill` the bar's
-    /// own height without the home indicator's room, which is what the page's
-    /// strip above it comes down by when the bar shrinks.
+    /// `bar` is the room the page keeps clear at its foot. The bar keeps one
+    /// size while the page scrolls: scaling it with the page's own dock hung
+    /// the whole app on the first scroll on a real iPhone.
     private func sendInsets() {
         guard barInset >= 0 else { return }
-        send("insets", ["bar": Double(barInset), "pill": Double(barInset - barSafe)])
+        send("insets", ["bar": Double(barInset)])
     }
 
     /// The page's "Save as PDF": a web view in an app has no window.print, so
