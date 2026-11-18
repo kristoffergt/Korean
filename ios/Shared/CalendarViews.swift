@@ -18,48 +18,49 @@ struct Gate<Content: View>: View {
 
 // MARK: - A day as the calendar draws it
 
-/// One day of the week or the five weeks: a cell like the month grid's
-/// (.month-day: paper, a hairline, the celadon ring for today), its number,
-/// and as many chips as fit.
+/// One day of the week or the five weeks: its number in the middle (today
+/// in a celadon circle, a past day greyed), the day's events as chips, and
+/// its to-dos as one chip counting how many are done, so a day with
+/// something left is easy to see.
 struct DayCell: View {
     let snapshot: Snapshot
     let day: String
     let today: String
-    /// The weekday over the number (the week's columns); nil puts the
-    /// number in the corner (the five weeks).
+    /// The weekday over the number (the week's columns); nil for the five
+    /// weeks, which name the weekdays once above.
     let weekday: String?
     let chips: Int
     var dim = false
+    /// False for a calendar set to show events only.
+    var todos = true
 
     var body: some View {
         let isToday = day == today
-        let items = snapshot.items(on: day)
-        let room = max(0, chips)
-        let shown = items.count > room ? Array(items.prefix(max(0, room - 1))) : items
-        let extra = items.count - shown.count
-        VStack(alignment: weekday == nil ? .leading : .center, spacing: 2) {
+        let events = snapshot.items(on: day, todos: false)
+        let tally = todos ? snapshot.todoTally(on: day) : nil
+        let room = max(0, chips - (tally == nil ? 0 : 1))
+        let shown = events.count > room ? Array(events.prefix(max(0, room - 1))) : events
+        let extra = events.count - shown.count
+        let size: CGFloat = weekday == nil ? 11 : 13
+        VStack(alignment: .center, spacing: 2) {
             if let weekday {
                 Text(weekday)
                     .font(Typo.text(9, .semibold))
                     .foregroundStyle(Palette.inkSoft)
                     .lineLimit(1)
-                Text(number)
-                    .font(Typo.number(14, isToday ? .bold : .medium))
-                    .foregroundStyle(isToday ? Palette.ink : Palette.ink.opacity(0.85))
-                    .padding(.bottom, 1)
-            } else {
-                Text(number)
-                    .font(Typo.number(10, isToday ? .bold : .medium))
-                    .foregroundStyle(isToday ? Palette.ink : Palette.inkSoft)
             }
-            ForEach(shown) { item in
-                if item.kind == .event {
-                    EventChip(title: item.title, color: item.color,
-                              continuesIn: item.continuesIn && day != weekFirst,
-                              continuesOut: item.continuesOut, size: 9)
-                } else {
-                    TodoChip(title: item.title, done: item.done, size: 9)
+            Text(number)
+                .font(Typo.number(size, isToday ? .bold : .medium))
+                .foregroundStyle(isToday ? Color.white : (day < today ? Palette.inkSoft : Palette.ink))
+                .lineLimit(1)
+                .frame(width: size * 1.75, height: size * 1.75)
+                .background {
+                    if isToday { Circle().fill(Palette.celadon).widgetAccentable() }
                 }
+            ForEach(shown) { item in
+                EventChip(title: item.title, color: item.color,
+                          continuesIn: item.continuesIn && day != weekFirst,
+                          continuesOut: item.continuesOut, size: 9)
             }
             if extra > 0 {
                 Text("+\(extra)")
@@ -67,16 +68,12 @@ struct DayCell: View {
                     .foregroundStyle(Palette.inkSoft)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
+            if let tally {
+                TodoBunchChip(done: tally.done, total: tally.total, size: 9)
+            }
             Spacer(minLength: 0)
         }
-        .padding(3)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Palette.paper))
-        .overlay(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .strokeBorder(isToday ? Palette.celadon : Palette.line, lineWidth: isToday ? 2 : 1)
-                .widgetAccentable(isToday)
-        )
         .opacity(dim ? 0.55 : 1)
     }
 
@@ -95,6 +92,7 @@ struct DayCell: View {
 
 struct WeekView: View {
     let entry: DayEntry
+    var todos = true
 
     var body: some View {
         Gate(snapshot: entry.snapshot) { snapshot in
@@ -102,13 +100,14 @@ struct WeekView: View {
             let start = Clock.weekStart(of: today, first: snapshot.weekStart)
             let names = Clock.weekdays(lang: snapshot.lang, first: snapshot.weekStart)
             GeometryReader { geo in
-                // Weekday and number take about 34 points; a chip 14.
-                let chips = max(1, Int((geo.size.height - 38) / 14))
+                // Weekday and number take about 38 points; a chip and its
+                // gap 16.
+                let chips = max(1, Int((geo.size.height - 38) / 16))
                 HStack(spacing: 3) {
                     ForEach(0..<7, id: \.self) { index in
                         let day = DayKey.add(start, days: index)
                         Link(destination: WidgetLink.calendar(day)) {
-                            DayCell(snapshot: snapshot, day: day, today: today, weekday: names[index], chips: chips)
+                            DayCell(snapshot: snapshot, day: day, today: today, weekday: names[index], chips: chips, todos: todos)
                         }
                     }
                 }
@@ -122,6 +121,7 @@ struct WeekView: View {
 
 struct MonthView: View {
     let entry: DayEntry
+    var todos = true
 
     var body: some View {
         Gate(snapshot: entry.snapshot) { snapshot in
@@ -133,7 +133,8 @@ struct MonthView: View {
             GeometryReader { geo in
                 let head: CGFloat = 36
                 let rowHeight = max(30, (geo.size.height - head - 12) / 5)
-                let chips = max(1, Int((rowHeight - 17) / 13))
+                // The number takes about 21 points; a chip and its gap 16.
+                let chips = max(1, Int((rowHeight - 21) / 16))
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text(range(start, end, lang: snapshot.lang))
@@ -159,7 +160,7 @@ struct MonthView: View {
                                 let day = DayKey.add(start, days: row * 7 + column)
                                 let other = DayKey.date(day).map { Calendar.current.component(.month, from: $0) != month } ?? false
                                 Link(destination: WidgetLink.calendar(day)) {
-                                    DayCell(snapshot: snapshot, day: day, today: today, weekday: nil, chips: chips, dim: other && day < today)
+                                    DayCell(snapshot: snapshot, day: day, today: today, weekday: nil, chips: chips, dim: other && day < today, todos: todos)
                                 }
                             }
                         }
@@ -182,14 +183,19 @@ struct MonthView: View {
 
 struct DayView: View {
     let entry: DayEntry
+    var todos = true
+    var done = true
+    /// Drawn outside a widget (the lock screen picture): the size to draw as.
+    var size: WidgetFamily?
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
         Gate(snapshot: entry.snapshot) { snapshot in
             let today = DayKey.of(entry.date)
-            let items = snapshot.items(on: today)
+            let items = snapshot.items(on: today, todos: todos, done: done)
+            let open = items.filter { !$0.done }.count
             GeometryReader { geo in
-                let rowHeight: CGFloat = family == .systemLarge ? 22 : 19
+                let rowHeight: CGFloat = (size ?? family) == .systemLarge ? 22 : 19
                 let fit = max(1, Int((geo.size.height - 28) / rowHeight))
                 let shown = items.count > fit ? Array(items.prefix(fit - 1)) : items
                 VStack(alignment: .leading, spacing: 0) {
@@ -200,7 +206,7 @@ struct DayView: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                         Spacer(minLength: 0)
-                        if !items.isEmpty { CountPill(count: items.count) }
+                        if open > 0 { CountPill(count: open) }
                     }
                     .frame(height: 22)
                     .padding(.bottom, 4)
@@ -465,13 +471,19 @@ struct MiniMonth: View {
                 }
             if dots {
                 let colors = snapshot.events(on: day).prefix(3).map { ChipColors($0.color).fill }
-                let hasTodo = !snapshot.todos(on: day).isEmpty
+                let tally = snapshot.todoTally(on: day)
                 HStack(spacing: 1.5) {
                     ForEach(Array(colors.enumerated()), id: \.offset) { _, color in
                         Circle().fill(color).frame(width: 3, height: 3)
                     }
-                    if hasTodo {
-                        RoundedRectangle(cornerRadius: 0.6).strokeBorder(Palette.inkSoft, lineWidth: 0.8).frame(width: 3.2, height: 3.2)
+                    // The day's to-dos: an open box, filled green once all
+                    // of them are done.
+                    if let tally {
+                        let all = tally.done >= tally.total
+                        RoundedRectangle(cornerRadius: 0.6)
+                            .fill(all ? Palette.on : Color.clear)
+                            .overlay(RoundedRectangle(cornerRadius: 0.6).strokeBorder(all ? Palette.on : Palette.inkSoft, lineWidth: 0.8))
+                            .frame(width: 3.2, height: 3.2)
                     }
                 }
                 .frame(height: 3)

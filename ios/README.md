@@ -23,13 +23,27 @@ only a native app can:
   keeps 60). Pressing one opens the to-dos, the chat with the app, or the
   calendar on that day.
 - **Widgets** (home screen and lock screen), drawn in the site's own colours
-  and parts: Day, Up next, Week, Five weeks, To-do list (Today, This week,
-  This month, This year or Upcoming, picked in the widget's settings), Today
-  (study time against the goal), Year, and on iOS 27 Overview, a whole home
-  screen page (the month, what is next, the week and this week's and this
-  month's to-dos). They read a short summary the page
-  writes into the app group whenever something changes, and move on to the
-  next day by themselves at midnight.
+  and parts: Day, Up next, Week, Five weeks, To-do list, Today (study time
+  against the goal), Year, and on iOS 27 Overview, a whole home screen page.
+  Finished to-dos stay on, crossed out and greyed, under the open ones, and
+  the calendars show each day's to-dos as one chip, done of all (green once
+  all are done). They read a short summary the page writes into the app
+  group whenever something changes, and move on to the next day by
+  themselves at midnight. Hold a widget and choose **Edit Widget** to set
+  what it shows:
+  - To-do list: Today, Tomorrow, This week, This month, This year or Upcoming.
+  - Day: the to-dos on or off, and the finished ones on or off.
+  - Week and Five weeks: the to-dos on or off (off = events only).
+  - Overview: the study time, the month, Up next and the week each on or off,
+    and two lists (any of the above, or none).
+- **A lock screen picture** (the Shortcuts action **Make Lock Screen
+  Picture**). The lock screen only takes small widgets, so a bigger calendar
+  goes on as the wallpaper: the action draws the calendar and to-dos over a
+  photo at the phone's own size, below the clock. Layouts: Month and to-do
+  lists, Week and today, Year and five weeks, Today and to-do lists, or A
+  different one each time (each run shows the next of the layouts picked).
+  It also takes the panels' colours, the two lists, and whether to leave
+  room for the lock screen's own widgets under the clock.
 - **Face ID lock** (Settings > Appearance > iPhone App), asking again after
   two minutes away.
 - The **badge** on the icon (unread notifications and messages), **haptics**
@@ -65,6 +79,22 @@ and `https://kristoffergt.com/app-auth.html` among the **Authorized redirect
 URIs** of the site's web OAuth client in Google Cloud (APIs & Services >
 Credentials). A provider that goes through Supabase instead also needs that
 address in Supabase > Authentication > URL Configuration > Redirect URLs.
+
+## Putting the picture on the lock screen
+
+In Shortcuts, Automation > New Automation > Time of Day, pick a time and
+Repeat Daily, Run Immediately, then add:
+
+1. Find Photos (or Select Photos) for the photo underneath, if you want one;
+   without one the picture is drawn on the site's soft green.
+2. Make Lock Screen Picture: the photo, a layout, the lists.
+3. Set Wallpaper Photo: the picture, on the Lock Screen of the wallpaper you
+   use, with Show Preview and Crop to Subject turned off.
+
+The wallpaper is only as fresh as the last run, so make several automations
+(for example 06:00, 12:00, 18:00), each with its own layout, or one layout of
+A different one each time. The app has to have been opened once after it is
+installed before Shortcuts lists the action.
 
 ## Fonts in the widgets
 

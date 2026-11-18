@@ -160,27 +160,40 @@ struct EventChip: View {
     }
 }
 
-/// A to-do on the calendar (.todo-cal-chip): a dashed outline with its box.
-struct TodoChip: View {
-    let title: String
-    let done: Bool
+/// A day's to-dos on the calendar, all in one chip: the box (filled once
+/// every one of them is done) and how many are done of how many. A finished
+/// day goes quiet, so a day with something left stands out in the week and
+/// the five weeks.
+struct TodoBunchChip: View {
+    let done: Int
+    let total: Int
     var size: CGFloat = 10
 
     var body: some View {
+        let all = done >= total
         HStack(spacing: 3) {
-            TodoBox(done: done, size: size * 0.9)
-            Text(title)
-                .font(Typo.text(size, .medium))
+            TodoBox(done: all, size: size * 0.9)
+            Text("\(done)/\(total)")
+                .font(Typo.number(size, .semibold))
+                .foregroundStyle(all ? Palette.inkSoft : Palette.ink)
                 .lineLimit(1)
-                .foregroundStyle(done ? Palette.inkSoft : Palette.ink)
+                .minimumScaleFactor(0.8)
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, 3)
         .padding(.vertical, 1)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(
-            RoundedRectangle(cornerRadius: 3.5, style: .continuous)
-                .strokeBorder(Palette.inkSoft.opacity(0.8), style: StrokeStyle(lineWidth: 0.8, dash: [2, 1.6]))
-        )
+        .background {
+            if all {
+                RoundedRectangle(cornerRadius: 3.5, style: .continuous).fill(Palette.onSoft)
+            }
+        }
+        .overlay {
+            if !all {
+                RoundedRectangle(cornerRadius: 3.5, style: .continuous)
+                    .strokeBorder(Palette.inkSoft.opacity(0.8), style: StrokeStyle(lineWidth: 0.8, dash: [2, 1.6]))
+            }
+        }
     }
 }
 

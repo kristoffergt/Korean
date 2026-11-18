@@ -45,8 +45,8 @@ struct Card<Content: View>: View {
 
 struct DayWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "Day", provider: DayProvider()) { entry in
-            Card { DayView(entry: entry) }
+        AppIntentConfiguration(kind: "Day", intent: DayIntent.self, provider: ConfiguredProvider<DayIntent>()) { entry in
+            Card { DayView(entry: entry.day, todos: entry.config.todos, done: entry.config.done) }
         }
         .configurationDisplayName(name("wDayName"))
         .description(name("wDayDesc"))
@@ -69,8 +69,8 @@ struct UpNextWidget: Widget {
 
 struct WeekWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "Week", provider: DayProvider()) { entry in
-            Card { WeekView(entry: entry) }
+        AppIntentConfiguration(kind: "Week", intent: CalendarIntent.self, provider: ConfiguredProvider<CalendarIntent>()) { entry in
+            Card { WeekView(entry: entry.day, todos: entry.config.todos) }
         }
         .configurationDisplayName(name("wWeekName"))
         .description(name("wWeekDesc"))
@@ -81,8 +81,8 @@ struct WeekWidget: Widget {
 
 struct MonthWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "FiveWeeks", provider: DayProvider()) { entry in
-            Card { MonthView(entry: entry) }
+        AppIntentConfiguration(kind: "FiveWeeks", intent: CalendarIntent.self, provider: ConfiguredProvider<CalendarIntent>()) { entry in
+            Card { MonthView(entry: entry.day, todos: entry.config.todos) }
         }
         .configurationDisplayName(name("wMonthName"))
         .description(name("wMonthDesc"))
@@ -120,8 +120,8 @@ struct YearWidget: Widget {
 @available(iOS 27.0, *)
 struct OverviewWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "Overview", provider: DayProvider()) { entry in
-            Card { OverviewView(entry: entry) }
+        AppIntentConfiguration(kind: "Overview", intent: OverviewIntent.self, provider: ConfiguredProvider<OverviewIntent>()) { entry in
+            Card { OverviewView(entry: entry.day, parts: entry.config.parts) }
         }
         .configurationDisplayName(name("wOverviewName"))
         .description(name("wOverviewDesc"))
@@ -133,11 +133,12 @@ struct OverviewWidget: Widget {
 // MARK: - The list widget, with its list chosen in the widget's settings
 
 enum TodoListChoice: String, AppEnum {
-    case today, week, month, year, upcoming
+    case today, tomorrow, week, month, year, upcoming
 
     static let typeDisplayRepresentation: TypeDisplayRepresentation = "List"
     static let caseDisplayRepresentations: [TodoListChoice: DisplayRepresentation] = [
         .today: "Today",
+        .tomorrow: "Tomorrow",
         .week: "This week",
         .month: "This month",
         .year: "This year",
@@ -155,12 +156,6 @@ struct TodoListIntent: WidgetConfigurationIntent {
     var list: TodoListChoice
 
     init() {}
-}
-
-struct ListEntry: TimelineEntry {
-    let date: Date
-    let snapshot: Snapshot?
-    let list: ListKind
 }
 
 struct ListProvider: AppIntentTimelineProvider {
@@ -189,5 +184,129 @@ struct TodoListWidget: Widget {
         .description(name("wTodoDesc"))
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         .contentMarginsDisabled()
+    }
+}
+
+// MARK: - What the other widgets show, chosen in their settings
+
+/// The entry of a widget with settings: the day, the page's data and what
+/// the widget was set to show.
+struct ConfiguredEntry<Intent: WidgetConfigurationIntent>: TimelineEntry {
+    let date: Date
+    let snapshot: Snapshot?
+    let config: Intent
+
+    var day: DayEntry { DayEntry(date: date, snapshot: snapshot) }
+}
+
+/// The same timeline as `DayProvider` (now, each midnight, each timed thing
+/// of today), carrying the widget's settings.
+struct ConfiguredProvider<Intent: WidgetConfigurationIntent>: AppIntentTimelineProvider {
+    func placeholder(in context: Context) -> ConfiguredEntry<Intent> {
+        ConfiguredEntry(date: Date(), snapshot: .sample, config: Intent())
+    }
+
+    func snapshot(for configuration: Intent, in context: Context) async -> ConfiguredEntry<Intent> {
+        let stored = SharedStore.load()
+        return ConfiguredEntry(date: Date(), snapshot: context.isPreview && stored == nil ? .sample : stored, config: configuration)
+    }
+
+    func timeline(for configuration: Intent, in context: Context) async -> Timeline<ConfiguredEntry<Intent>> {
+        let snapshot = SharedStore.load()
+        let dates = DayProvider.moments(from: Date(), snapshot: snapshot)
+        return Timeline(entries: dates.map { ConfiguredEntry(date: $0, snapshot: snapshot, config: configuration) }, policy: .atEnd)
+    }
+}
+
+/// The Day widget: the day's events, and its to-dos (the finished ones
+/// crossed out) unless left out.
+struct DayIntent: WidgetConfigurationIntent {
+    static let title: LocalizedStringResource = "Day"
+    static let description = IntentDescription("Choose what the day shows.")
+
+    @Parameter(title: "To-dos", default: true)
+    var todos: Bool
+
+    @Parameter(title: "Finished to-dos", default: true)
+    var done: Bool
+
+    /// "Finished to-dos" means nothing with the to-dos left out.
+    static var parameterSummary: some ParameterSummary {
+        When(\.$todos, .equalTo, true) {
+            Summary {
+                \.$todos
+                \.$done
+            }
+        } otherwise: {
+            Summary {
+                \.$todos
+            }
+        }
+    }
+
+    init() {}
+}
+
+/// The Week and Five weeks widgets: each day's to-dos as one chip (done of
+/// all), or events only.
+struct CalendarIntent: WidgetConfigurationIntent {
+    static let title: LocalizedStringResource = "Calendar"
+    static let description = IntentDescription("Choose what the days show.")
+
+    @Parameter(title: "To-dos", default: true)
+    var todos: Bool
+
+    init() {}
+}
+
+/// A list in the Overview, or none.
+enum OverviewListChoice: String, AppEnum {
+    case none, today, tomorrow, week, month, year, upcoming
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "List"
+    static let caseDisplayRepresentations: [OverviewListChoice: DisplayRepresentation] = [
+        .none: "None",
+        .today: "Today",
+        .tomorrow: "Tomorrow",
+        .week: "This week",
+        .month: "This month",
+        .year: "This year",
+        .upcoming: "Upcoming",
+    ]
+
+    var kind: ListKind? { ListKind(rawValue: rawValue) }
+}
+
+/// The Overview: which parts it shows and which two to-do lists.
+struct OverviewIntent: WidgetConfigurationIntent {
+    static let title: LocalizedStringResource = "Overview"
+    static let description = IntentDescription("Choose what the page shows.")
+
+    @Parameter(title: "Study time", default: true)
+    var study: Bool
+
+    @Parameter(title: "Month", default: true)
+    var month: Bool
+
+    @Parameter(title: "Up next", default: true)
+    var upNext: Bool
+
+    @Parameter(title: "Week", default: true)
+    var week: Bool
+
+    @Parameter(title: "First list", default: .week)
+    var first: OverviewListChoice
+
+    @Parameter(title: "Second list", default: .month)
+    var second: OverviewListChoice
+
+    init() {}
+
+    var parts: OverviewParts {
+        var lists: [ListKind] = []
+        for kind in [first.kind, second.kind].compactMap({ $0 }) where !lists.contains(kind) {
+            lists.append(kind)
+        }
+        return OverviewParts(study: study, month: month, upNext: upNext, week: week, lists: lists)
     }
 }

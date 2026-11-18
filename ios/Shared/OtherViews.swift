@@ -11,6 +11,7 @@ struct TodoListView: View {
         Gate(snapshot: entry.snapshot) { snapshot in
             let today = DayKey.of(entry.date)
             let rows = snapshot.list(entry.list, today: today)
+            let open = rows.filter { !$0.done }.count
             GeometryReader { geo in
                 let rowHeight: CGFloat = 20
                 let fit = max(1, Int((geo.size.height - 30) / rowHeight))
@@ -22,7 +23,7 @@ struct TodoListView: View {
                             .foregroundStyle(Palette.ink)
                             .lineLimit(1)
                         Spacer(minLength: 0)
-                        if !rows.isEmpty { CountPill(count: rows.count) }
+                        if open > 0 { CountPill(count: open) }
                     }
                     .frame(height: 22)
                     .padding(.bottom, 4)
@@ -31,10 +32,11 @@ struct TodoListView: View {
                     } else {
                         ForEach(shown) { row in
                             HStack(spacing: 7) {
-                                TodoBox(done: false, size: 13)
+                                TodoBox(done: row.done, size: 13)
                                 Text(row.title)
                                     .font(Typo.text(13, .medium))
-                                    .foregroundStyle(Palette.ink)
+                                    .foregroundStyle(row.done ? Palette.inkSoft : Palette.ink)
+                                    .strikethrough(row.done, color: Palette.inkSoft)
                                     .lineLimit(1)
                                 Spacer(minLength: 4)
                                 if let when = row.when, family != .systemSmall || row.title.count < 12 {
@@ -65,7 +67,11 @@ struct TodoListView: View {
 /// the "on" green, this one as far as today.
 struct YearView: View {
     let entry: DayEntry
-    @Environment(\.widgetFamily) private var family
+    /// Drawn outside a widget (the lock screen picture): the size to draw as.
+    var size: WidgetFamily?
+    @Environment(\.widgetFamily) private var widgetFamily
+
+    private var family: WidgetFamily { size ?? widgetFamily }
 
     var body: some View {
         let lang = entry.snapshot?.lang ?? L10n.lang(nil)
@@ -186,7 +192,7 @@ struct StudyView: View {
             let hours = snapshot.studied(on: today)
             let goal = snapshot.goal
             let fraction = goal > 0 ? min(1, hours / goal) : 0
-            let open = snapshot.list(.today, today: today).count
+            let open = snapshot.list(.today, today: today).filter { !$0.done }.count
             let left = open == 0 ? L10n.t("allDone", lang) : L10n.count("todosLeft", open, lang)
             switch family {
             case .accessoryCircular:

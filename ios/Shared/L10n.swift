@@ -75,6 +75,7 @@ enum L10n {
 
         // Widgets: the to-do lists.
         "listToday": ("Today", "오늘", "Hôm nay"),
+        "listTomorrow": ("Tomorrow", "내일", "Ngày mai"),
         "listWeek": ("This week", "이번 주", "Tuần này"),
         "listMonth": ("This month", "이번 달", "Tháng này"),
         "listYear": ("This year", "올해", "Năm nay"),

@@ -18583,15 +18583,23 @@ function appTodaySnapshot(){
       });
     });
   });
-  (allTodos || []).forEach(td=>{
-    if(td.user_id !== currentUser.id || !String(td.title || '').trim() || snap.todos.length >= 300) return;
-    const doneDay = td.done && td.done_at ? todayStr(new Date(td.done_at)) : null;
-    // Done ones only from today, so today's list can show them ticked.
-    if(td.done && doneDay !== today) return;
-    const sc = todoScopeOf(td);
-    if(sc && sc.start > to) return;
-    snap.todos.push({ id: String(td.id), t: td.title, d: sc ? sc.start : undefined, sc: sc ? sc.scope : undefined,
-                      s: hm(td.due_time), x: !!td.done, xd: doneDay || undefined });
+  // Open to-dos first, so finished ones never crowd them out of the cap.
+  // Finished ones go too while they still show somewhere: the widgets'
+  // calendars count each day's done of all, and the lists show what was
+  // done in their own week, month or year crossed out.
+  const mine = (allTodos || []).filter(td=> td.user_id === currentUser.id && String(td.title || '').trim());
+  const periodNow = { week: todoPeriodStart('week', today), month: todoPeriodStart('month', today), year: todoPeriodStart('year', today) };
+  [false, true].forEach(doneOnes=>{
+    mine.forEach(td=>{
+      if(!!td.done !== doneOnes || snap.todos.length >= 400) return;
+      const doneDay = td.done && td.done_at ? todayStr(new Date(td.done_at)) : null;
+      const sc = todoScopeOf(td);
+      if(sc && sc.start > to) return;
+      if(td.done && !(doneDay && doneDay >= from) && !(sc && sc.start >= from)
+         && !(sc && periodNow[sc.scope] && sc.start === periodNow[sc.scope])) return;
+      snap.todos.push({ id: String(td.id), t: td.title, d: sc ? sc.start : undefined, sc: sc ? sc.scope : undefined,
+                        s: hm(td.due_time), x: !!td.done, xd: doneDay || undefined });
+    });
   });
   for(let i = 0; i < 8; i++){
     const key = dateKeyAddDays(today, -i);

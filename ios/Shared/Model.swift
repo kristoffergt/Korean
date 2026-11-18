@@ -6,6 +6,13 @@ struct DayEntry: TimelineEntry {
     let snapshot: Snapshot?
 }
 
+/// The list widget's entry: the day and the list chosen in its settings.
+struct ListEntry: TimelineEntry {
+    let date: Date
+    let snapshot: Snapshot?
+    let list: ListKind
+}
+
 /// One timeline for every widget but the configurable list: an entry now,
 /// one at each of the next week's midnights (so "today" moves on with the
 /// phone not opened), and one as each of today's timed things begins (so
@@ -102,9 +109,11 @@ extension Snapshot {
     }
 
     /// The day in order: all-day events, then everything with a time, then
-    /// to-dos with none.
-    func items(on day: String) -> [DayItem] {
-        let all = events(on: day) + todos(on: day)
+    /// to-dos with none. A widget set to leave out to-dos, or the finished
+    /// ones, says so.
+    func items(on day: String, todos withTodos: Bool = true, done withDone: Bool = true) -> [DayItem] {
+        let dayTodos = withTodos ? todos(on: day).filter { withDone || !$0.done } : []
+        let all = events(on: day) + dayTodos
         let allDay = all.filter { $0.kind == .event && $0.time == nil }
         let timed = all.filter { $0.time != nil }.sorted { ($0.time ?? "") < ($1.time ?? "") }
         let loose = all.filter { $0.kind == .todo && $0.time == nil }
@@ -138,6 +147,14 @@ extension Snapshot {
         return Array(out.prefix(limit)).map { Upcoming(day: $0.0, item: $0.1) }
     }
 
+    /// A day's to-dos counted for the calendar: how many are done of how
+    /// many, nil for a day with none.
+    func todoTally(on day: String) -> (done: Int, total: Int)? {
+        let mine = todos.filter { ($0.sc ?? "day") == "day" && $0.d == day }
+        guard !mine.isEmpty else { return nil }
+        return (mine.filter(\.x).count, mine.count)
+    }
+
     func studied(on day: String) -> Double {
         study[day] ?? 0
     }
@@ -154,11 +171,12 @@ struct Upcoming: Identifiable {
 
 /// The page's to-do sections, as the list widget offers them.
 enum ListKind: String, CaseIterable {
-    case today, week, month, year, upcoming
+    case today, tomorrow, week, month, year, upcoming
 
     var titleKey: String {
         switch self {
         case .today: "listToday"
+        case .tomorrow: "listTomorrow"
         case .week: "listWeek"
         case .month: "listMonth"
         case .year: "listYear"
@@ -173,10 +191,44 @@ struct ListRow: Identifiable, Hashable {
     /// What stands at the right: a time, or a date.
     let when: String?
     let color: String?
+    /// Done in the list's own stretch of time: shown crossed out, under the
+    /// open ones.
+    var done = false
 }
 
 extension Snapshot {
+    /// The open to-dos of a list, then the ones finished in its own stretch
+    /// of time (today, tomorrow, this week, month or year), crossed out.
     func list(_ kind: ListKind, today: String) -> [ListRow] {
+        let open = openList(kind, today: today)
+        let done = doneList(kind, today: today).map { todo in
+            ListRow(id: todo.id, title: todo.t, when: nil, color: todo.c, done: true)
+        }
+        return open + done
+    }
+
+    private func doneList(_ kind: ListKind, today: String) -> [Todo] {
+        let finished = todos.filter(\.x)
+        switch kind {
+        case .today:
+            return finished.filter { ($0.sc ?? "day") == "day" && ($0.d == today || $0.xd == today) }
+        case .tomorrow:
+            let tomorrow = DayKey.add(today, days: 1)
+            return finished.filter { ($0.sc ?? "day") == "day" && $0.d == tomorrow }
+        case .week, .month, .year:
+            let start: String
+            switch kind {
+            case .week: start = Clock.weekStart(of: today, first: weekStart)
+            case .month: start = String(today.prefix(8)) + "01"
+            default: start = String(today.prefix(5)) + "01-01"
+            }
+            return finished.filter { $0.sc == kind.rawValue && (($0.d ?? "") >= start || ($0.xd ?? "") >= start) }
+        case .upcoming:
+            return []
+        }
+    }
+
+    private func openList(_ kind: ListKind, today: String) -> [ListRow] {
         let open = todos.filter { !$0.x }
         func row(_ todo: Todo, showDate: Bool) -> ListRow {
             var when: String?
@@ -193,6 +245,12 @@ extension Snapshot {
                 .filter { ($0.sc ?? "day") == "day" && ($0.d ?? "~") <= today }
                 .sorted { ($0.d ?? "", $0.s ?? "99") < ($1.d ?? "", $1.s ?? "99") }
                 .map { row($0, showDate: true) }
+        case .tomorrow:
+            let tomorrow = DayKey.add(today, days: 1)
+            return open
+                .filter { ($0.sc ?? "day") == "day" && $0.d == tomorrow }
+                .sorted { ($0.s ?? "99") < ($1.s ?? "99") }
+                .map { row($0, showDate: false) }
         case .week, .month, .year:
             return open
                 .filter { $0.sc == kind.rawValue && ($0.d ?? "~") <= today }
@@ -211,7 +269,7 @@ extension Snapshot {
 // MARK: - Times and dates in the page's language
 
 enum Clock {
-    static func trim(_ time: String) -> String {
+    nonisolated static func trim(_ time: String) -> String {
         String(time.prefix(5))
     }
 
