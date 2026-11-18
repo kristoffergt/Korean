@@ -56463,6 +56463,38 @@ function enableNoteScriptShortcuts(quill){
   });
 }
 
+// A ^ or _ typed over selected text makes the selection a superscript or a
+// subscript instead of replacing it (real-user request, 18 Nov: "highlight a
+// part and then do _ or ^ to superscript/subscript it"); the same key again
+// over a selection that already is one turns it back to plain text. It is a
+// command, like Cmd+B, so it works with Auto-format off too. The selection
+// stays, so the other key can follow. Not inside code. A keyboard where ^ is
+// a dead key (it waits for the next key) types over the selection as before.
+function enableNoteScriptSelection(quill){
+  const apply = (kind)=>{
+    if(quill.root.getAttribute('contenteditable') !== 'true') return false;
+    const r = quill.getSelection();
+    if(!r || !r.length) return false;
+    const fmt = quill.getFormat(r.index, r.length);
+    if(fmt['code-block'] || fmt.code) return false;
+    const want = kind === '^' ? 'super' : 'sub';
+    // One undo for each press, however quickly they follow each other.
+    quill.history.cutoff();
+    quill.formatText(r.index, r.length, 'script', fmt.script === want ? false : want, 'user');
+    quill.history.cutoff();
+    quill.setSelection(r.index, r.length, 'silent');
+    return true;
+  };
+  quill.root.addEventListener('keydown', e=>{
+    if(e.isComposing || e.keyCode === 229 || e.metaKey || e.ctrlKey || e.altKey) return;
+    if((e.key === '^' || e.key === '_') && apply(e.key)){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  // Some keyboards say nothing useful in keydown; what they would type does.
+  quill.root.addEventListener('beforeinput', e=>{
+    if(e.inputType === 'insertText' && (e.data === '^' || e.data === '_') && apply(e.data)) e.preventDefault();
+  }, true);
+}
+
 // "# ", "## " and "### " at the very start of a line make it a heading, the
 // way the list shortcuts make "1. " a list.
 function enableNoteHeadingShortcut(quill){
@@ -56819,6 +56851,7 @@ function enableNoteMath(quill, key, opts){
   quill.__noteMath = true;
   const markDirty = ()=>{ if(opts && opts.markDirty) opts.markDirty(); };
   enableNoteScriptShortcuts(quill);
+  enableNoteScriptSelection(quill);
   enableNoteHeadingShortcut(quill);
   // THE CARET AFTER AN EQUATION IS AFTER IT (real-user report, 4 Nov: "if i
   // have my cursor here (like clicked at the end of the equation) and press
