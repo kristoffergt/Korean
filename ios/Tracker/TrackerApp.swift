@@ -28,6 +28,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         // Before launching ends, so a reminder pressed while the app was
         // closed still reaches it.
         Reminders.shared.install()
+        #if DEBUG
+        LockPicture.drawSamples()
+        #endif
         return true
     }
 }

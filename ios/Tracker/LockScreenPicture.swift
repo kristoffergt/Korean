@@ -131,33 +131,15 @@ struct MakeLockScreenPicture: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<IntentFile> {
         let drawn = layout == .rotate ? LockTurns.next(from: rotation) : layout
-        let screen = UIScreen.main
-        let size = CGSize(width: min(screen.bounds.width, screen.bounds.height),
-                          height: max(screen.bounds.width, screen.bounds.height))
-        let scale = screen.scale
         let scheme: ColorScheme
         switch panels {
         case .dark: scheme = .dark
         case .light: scheme = .light
-        case .phone: scheme = screen.traitCollection.userInterfaceStyle == .dark ? .dark : .light
+        case .phone: scheme = UIScreen.main.traitCollection.userInterfaceStyle == .dark ? .dark : .light
         }
-        let background = photo.flatMap { LockPicture.image(from: $0.data, longest: max(size.width, size.height) * scale) }
         let lists = [firstList.kind, secondList.kind].compactMap { $0 }
-        let picture = LockPicture(
-            layout: drawn,
-            snapshot: SharedStore.load(),
-            now: Date(),
-            photo: background,
-            widgetRow: widgetRow,
-            lists: lists.reduce(into: [ListKind]()) { if !$0.contains($1) { $0.append($1) } }
-        )
-        .frame(width: size.width, height: size.height)
-        .environment(\.colorScheme, scheme)
-
-        let renderer = ImageRenderer(content: picture)
-        renderer.scale = scale
-        renderer.proposedSize = ProposedViewSize(size)
-        guard let image = renderer.uiImage, let png = image.pngData() else {
+        guard let png = LockPicture.png(layout: drawn, snapshot: SharedStore.load(), photo: photo?.data,
+                                        scheme: scheme, widgetRow: widgetRow, lists: lists) else {
             throw LockPictureError.notDrawn
         }
         return .result(value: IntentFile(data: png, filename: "lock-screen.png", type: .png))
@@ -283,6 +265,60 @@ struct LockPicture: View {
             }
         }
     }
+
+    /// The picture as a PNG at this phone's screen size and scale.
+    @MainActor
+    static func png(layout: LockLayout, snapshot: Snapshot?, photo: Data?, scheme: ColorScheme,
+                    widgetRow: Bool, lists: [ListKind], now: Date = Date()) -> Data? {
+        let screen = UIScreen.main
+        let size = CGSize(width: min(screen.bounds.width, screen.bounds.height),
+                          height: max(screen.bounds.width, screen.bounds.height))
+        let scale = screen.scale
+        let background = photo.flatMap { image(from: $0, longest: max(size.width, size.height) * scale) }
+        let picture = LockPicture(
+            layout: layout,
+            snapshot: snapshot,
+            now: now,
+            photo: background,
+            widgetRow: widgetRow,
+            lists: lists.reduce(into: [ListKind]()) { if !$0.contains($1) { $0.append($1) } }
+        )
+        .frame(width: size.width, height: size.height)
+        .environment(\.colorScheme, scheme)
+        let renderer = ImageRenderer(content: picture)
+        renderer.scale = scale
+        renderer.proposedSize = ProposedViewSize(size)
+        // The first picture a newly started app draws can come back empty
+        // (seen on the simulator: the first of the samples was missing), and
+        // a Shortcuts run is exactly that first picture. Each read of
+        // `uiImage` draws again.
+        for _ in 0..<3 {
+            if let png = renderer.uiImage?.pngData() { return png }
+        }
+        return nil
+    }
+
+    #if DEBUG
+    /// `-TRDrawLockPictures YES` at launch writes every layout, dark and
+    /// light, drawn from the widgets' sample day, into the app's
+    /// Documents/LockPictures, for looking at them without Shortcuts.
+    @MainActor
+    static func drawSamples() {
+        guard UserDefaults.standard.bool(forKey: "TRDrawLockPictures"),
+              let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        else { return }
+        let folder = documents.appendingPathComponent("LockPictures", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        for layout in LockLayout.drawn {
+            for (name, scheme) in [("dark", ColorScheme.dark), ("light", ColorScheme.light)] {
+                if let png = png(layout: layout, snapshot: .sample, photo: nil, scheme: scheme,
+                                 widgetRow: true, lists: [.today, .week]) {
+                    try? png.write(to: folder.appendingPathComponent("\(layout.rawValue)-\(name).png"))
+                }
+            }
+        }
+    }
+    #endif
 
     /// Reads a photo at no more pixels than the screen has (a phone photo
     /// read whole can be bigger than the memory allowed for this).

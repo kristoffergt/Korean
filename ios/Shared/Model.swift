@@ -371,6 +371,12 @@ extension Snapshot {
             Todo(id: "c", t: "Pick up the parcel", d: today, sc: "day", s: "17:30", x: false, xd: nil, c: nil),
             Todo(id: "d", t: "Read ten pages", d: Clock.weekStart(of: today, first: 0), sc: "week", s: nil, x: false, xd: nil, c: nil),
             Todo(id: "e", t: "Plan the weekend", d: DayKey.add(today, days: 3), sc: "day", s: nil, x: false, xd: nil, c: nil),
+            Todo(id: "f", t: "Call the bank", d: DayKey.add(today, days: 1), sc: "day", s: "10:00", x: false, xd: nil, c: nil),
+            Todo(id: "g", t: "Laundry", d: DayKey.add(today, days: -1), sc: "day", s: nil, x: true, xd: DayKey.add(today, days: -1), c: nil),
+            Todo(id: "h", t: "Vocabulary list", d: DayKey.add(today, days: -1), sc: "day", s: nil, x: true, xd: DayKey.add(today, days: -1), c: nil),
+            Todo(id: "i", t: "Gym", d: DayKey.add(today, days: -2), sc: "day", s: nil, x: false, xd: nil, c: nil),
+            Todo(id: "j", t: "Clean the desk", d: DayKey.add(today, days: -2), sc: "day", s: nil, x: true, xd: DayKey.add(today, days: -2), c: nil),
+            Todo(id: "k", t: "Book the train", d: Clock.weekStart(of: today, first: 0), sc: "week", s: nil, x: true, xd: today, c: nil),
         ]
         return s
     }

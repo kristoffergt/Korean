@@ -73,6 +73,11 @@ A Debug build on a phone, and every Release build, loads
 `-TRBaseURL` argument in the scheme (Product > Scheme > Edit Scheme > Run >
 Arguments) and change its address.
 
+In a Debug build, the argument `-TRDrawLockPictures YES` draws every layout
+of the lock screen picture from the widgets' sample day, dark and light, into
+the app's `Documents/LockPictures` folder (on a simulator:
+`xcrun simctl get_app_container booted com.kristoffergt.tracker data`).
+
 Google sign-in needs `/app-auth.html` to be live on the site (it is the page
 the sign-in sheet ends on), also when the app is pointed at a local server,
 and `https://kristoffergt.com/app-auth.html` among the **Authorized redirect
