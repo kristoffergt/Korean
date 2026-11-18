@@ -3562,6 +3562,16 @@ label:has(> input[type="checkbox"]) input[type="checkbox"]:focus-visible{outline
 .ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-item svg{float:none;flex:none;width:18px;height:18px;}
 .ql-snow.ql-toolbar .nf-menu-panel button.nf-menu-item.ql-active{color:#06c;}
 .nf-menu-item .nf-menu-label{flex:1;min-width:0;}
+/* What a menu has brought out onto a wide bar (see THE BAR SHOWS WHAT FITS):
+   its marks beside the menu's own button, without their names, which are
+   their tooltips there. */
+.ql-toolbar .nf-out{display:inline-block;vertical-align:middle;margin-left:8px;}
+.ql-toolbar .nf-out:empty{display:none;}
+.ql-toolbar .nf-out::after{content:'';display:table;clear:both;}
+.ql-toolbar .nf-out .nf-menu-label, .ql-toolbar .nf-out .nf-menu-more{display:none;}
+.ql-snow.ql-toolbar .nf-out button{color:var(--ink-soft);}
+.ql-snow.ql-toolbar .nf-out button:hover, .ql-snow.ql-toolbar .nf-out button:focus{background:none;}
+.ql-snow.ql-toolbar .nf-out button:hover, .ql-snow.ql-toolbar .nf-out button.ql-active{color:#06c;}
 .ql-snow.ql-toolbar .nf-menu-panel .nf-menu-item .nf-menu-more svg{width:14px;height:14px;color:var(--ink-soft);}
 /* Alignment, line spacing and indent are a row of choices each, the one in
    force filled in, so the panel stays open while they are tried. */
@@ -3680,6 +3690,56 @@ math-field.nf-eq-field::part(menu-toggle),math-field.nf-eq-field::part(virtual-k
    the colour as it is kept. */
 .ql-editor img.note-drawing{cursor:pointer;}
 .ql-editor[contenteditable="true"] img.note-drawing:hover{outline:1px dashed rgba(127,127,127,0.6);outline-offset:3px;}
+/* A PICTURE'S LAYOUT IN A NOTE (see the block of that name in the script).
+   The picture carries its layout as its own inline style, so it reads the
+   same everywhere; what is here is only the frame round a picture that was
+   pressed. A picture behind the text sits under the note's lines, which
+   takes a layer of its own to be under: the editor (and an earlier version)
+   gets one while it holds a picture out of the text's way, and not before,
+   so nothing else about how the note is drawn changes. */
+.ql-container:has(img[data-wrap^="behind"]), .ql-container:has(img[data-wrap^="front"]),
+.ver-body:has(img[data-wrap^="behind"]), .ver-body:has(img[data-wrap^="front"]){isolation:isolate;}
+.nimg-frame{-webkit-touch-callout:none;}
+.nimg-frame.nimg-free{cursor:move;}
+.nimg-frame.nimg-moving{border-style:solid !important;}
+.nimg-lay, .nimg-edit, .nimg-grip{position:absolute;top:6px;z-index:1;width:30px;height:30px;box-sizing:border-box;padding:0;margin:0;
+  display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;
+  background:var(--paper);color:var(--ink);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.18);font:inherit;}
+.nimg-lay{right:6px;}
+.nimg-edit{right:42px;}
+.nimg-grip{left:6px;color:var(--ink-soft);cursor:move;}
+.nimg-lay:hover, .nimg-lay:focus, .nimg-edit:hover, .nimg-edit:focus{background:var(--paper);color:#06c;}
+.nimg-lay[aria-expanded="true"]{color:#06c;border-color:#06c;}
+.nimg-edit{color:var(--edit);}
+.nimg-edit:hover, .nimg-edit:focus{color:var(--edit);border-color:var(--edit);}
+/* The grip is a mouse's way to take hold; a finger holds the picture itself. */
+.nimg-grip[hidden]{display:none;}
+@media (hover: none){ .nimg-grip{display:none;} }
+.nimg-panel{position:absolute;top:42px;right:6px;z-index:2;box-sizing:border-box;width:max-content;min-width:214px;
+  max-width:min(300px, calc(100vw - 24px));background:var(--paper-dim);border:1px solid var(--line);border-radius:10px;
+  padding:6px;box-shadow:0 6px 18px rgba(0,0,0,0.18);font-family:'Inter',sans-serif;text-align:left;cursor:default;}
+.nimg-panel[hidden]{display:none;}
+.nimg-sec + .nimg-sec{border-top:1px solid var(--line);margin-top:6px;padding-top:6px;}
+.nimg-head{font-size:11px;font-weight:600;color:var(--ink-soft);padding:2px 8px 4px;}
+.nimg-opt{display:flex;align-items:center;gap:10px;width:100%;margin:0;padding:7px 8px;border:0;border-radius:6px;
+  background:none;font:500 13px/1.35 'Inter',sans-serif;color:var(--ink);text-align:left;cursor:pointer;}
+.nimg-opt:hover, .nimg-opt:focus{background:none;}
+.nimg-opt:hover, .nimg-opt:focus-visible{background:var(--paper);}
+.nimg-opt svg{flex:none;width:18px;height:18px;}
+.nimg-opt.on{color:#06c;}
+.nimg-seg{display:flex;gap:2px;padding:0 4px 2px;}
+.nimg-seg button{flex:1 1 auto;min-width:0;height:32px;margin:0;padding:0 8px;border:0;border-radius:6px;background:none;
+  font:600 12.5px/1 'Inter',sans-serif;color:var(--ink-soft);cursor:pointer;}
+.nimg-seg button:hover, .nimg-seg button:focus{background:var(--paper);color:var(--ink);}
+.nimg-seg button.on, .nimg-seg button.on:hover{background:var(--ink);color:var(--paper);}
+.nimg-hint{font-size:12px;line-height:1.4;color:var(--ink-soft);padding:6px 8px 2px;max-width:240px;}
+@media (pointer: coarse){
+  .nimg-lay, .nimg-edit{width:36px;height:36px;}
+  .nimg-edit{right:48px;}
+  .nimg-panel{top:48px;}
+  .nimg-opt{padding:10px 8px;font-size:14px;}
+  .nimg-seg button{height:38px;}
+}
 body.dark img.note-drawing, body.dark .nf-draw-cv, body.dark .nf-draw-sw > span, body.dark .nf-draw-slot > span,
 body.dark .nf-draw-wheel-ring > span.tint, body.dark .nf-draw-textbox{filter:invert(1) hue-rotate(180deg);}
 .modal-box.nf-draw-box{position:relative;max-width:780px;max-height:none;overflow:visible;outline:none;}
@@ -5673,7 +5733,7 @@ body.dark{--comment-hl:rgba(242,190,34,.24);--comment-hl-on:rgba(242,190,34,.5);
 @media print{
   html.nx-printing body > *:not(#noteExportPrint){display:none !important;}
   html.nx-printing, html.nx-printing body{height:auto !important;min-height:0 !important;overflow:visible !important;position:static !important;background:#fff !important;margin:0 !important;padding:0 !important;}
-  html.nx-printing #noteExportPrint{display:block !important;color:#000;background:#fff;font:11pt/1.5 -apple-system,"Helvetica Neue","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;}
+  html.nx-printing #noteExportPrint{display:block !important;isolation:isolate;color:#000;background:#fff;font:11pt/1.5 -apple-system,"Helvetica Neue","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;}
   #noteExportPrint *{color:inherit;}
   #noteExportPrint :is(h1,h2,h3,h4,h5,h6,p,li,blockquote){font-family:inherit;}
   #noteExportPrint :is(pre,code){font-family:ui-monospace,Menlo,Consolas,monospace;}
@@ -14175,7 +14235,7 @@ const I18N = {
     noteSub:'Subscript', noteSup:'Superscript', noteStyleBtn:'Text style', noteStyleNormal:'Normal text', noteStyleH1:'Heading', noteStyleH2:'Subheading', noteStyleH3:'Small heading', noteTocBtn:'Contents', noteTocEmpty:'No headings yet. Start a line with # and a space for a heading, ## for a subheading, ### for a small one.', noteSymBtn:'Symbols', noteSymTabArrows:'Arrows', noteSymTabMath:'Math', noteSymTabGreek:'Greek', noteSymTabSets:'Sets and logic', noteSymTabScripts:'Super and sub', noteSymTabOther:'Other', noteShorthandHint:'Typing shortcuts: ^^ up arrow, vv down arrow, -> arrow, x^2 and H_2O for scripts, e^{ix} for longer ones. Undo puts back what you typed.', noteEqBtn:'Equation', noteEqTitle:'Equation', noteEqTabStruct:'Structures', noteEqInsert:'Insert', noteEqUpdate:'Update', noteEqRemove:'Remove', noteEqPlaceholder:'Tap the keys above or type LaTeX, for example \\frac{a}{b}', noteEqEmpty:'The preview shows here.', noteEqLoading:'Loading the equation editor...', noteEqFailed:"Couldn't load the equation editor. Check your connection and try again.",
     noteEqSize:'Equation size', noteEqSizeTip:'Every equation on this device is drawn this much larger than the text around it (0 is the same size).',
     noteDrawBtn:'Drawing', noteDrawPen:'Pen', noteDrawEraser:'Eraser', noteDrawInk:'Ink', noteDrawRed:'Red', noteDrawOrange:'Orange', noteDrawGreen:'Green', noteDrawBlue:'Blue', noteDrawPurple:'Purple', noteDrawText:'Text', noteDrawSelect:'Select and move', noteDrawPlain:'Plain line', noteDrawSmooth:'Smooth line', noteDrawDotted:'Dotted line', noteDrawDashed:'Dashed line', noteDrawYourColor:'Your color', noteDrawMoreColors:'More colors', noteDrawKeepColor:'To keep this color, press the one it should replace:', noteDrawResetColors:'Reset colors', noteDrawSizeCustom:'Choose a size', noteDrawSizeN:'Size {n}', noteDrawKeepSize:'To keep this size, press the one it should replace:', noteDrawResetSizes:'Reset sizes', noteDrawDeleteSel:'Delete what is selected', noteDrawHintPen:'Hold still at the end of a line to make it straight.', noteDrawHintText:'Press where the text goes, or press a text to change it.', noteDrawHintSelect:'Press something or drag a box around it, then drag to move it.', noteDrawUndo:'Undo', noteDrawRedo:'Redo', noteDrawRoom:'More room below', noteDrawClear:'Clear the drawing', noteDrawLoadFailed:'The drawing could not be opened.',
-    noteMenuText:'Text', noteFont:'Font', noteFontDefaultIs:'Default ({font})', noteFontSetDefault:'Default font', noteFontDefaultHint:'Text with no font of its own is written in this one, in every note on this device.', noteLineSpacingCustom:'Custom', noteLineSpacingApply:'Apply', noteTocInsertBtn:'Table of contents', noteTocUpdateBtn:'Update table of contents', noteGoHeading:'Go to a heading', noteMenuPara:'Paragraph', noteMenuInsert:'Insert', noteStrike:'Strikethrough', noteClean:'Clear formatting', noteVideo:'Video', noteAlign:'Alignment', noteAlignLeft:'Align left', noteAlignCenter:'Align center', noteAlignRight:'Align right', noteAlignJustify:'Justify', noteIndent:'Indent', noteIndentLess:'Decrease indent', noteIndentMore:'Increase indent',
+    noteMenuText:'Text', noteFont:'Font', noteFontDefaultIs:'Default ({font})', noteFontSetDefault:'Default font', noteFontDefaultHint:'Text with no font of its own is written in this one, in every note on this device.', noteLineSpacingCustom:'Custom', noteLineSpacingApply:'Apply', noteTocInsertBtn:'Table of contents', noteTocUpdateBtn:'Update table of contents', noteGoHeading:'Go to a heading', noteMenuPara:'Paragraph', noteMenuInsert:'Insert', noteStrike:'Strikethrough', noteClean:'Clear formatting', noteVideo:'Video', noteAlign:'Alignment', noteAlignLeft:'Align left', noteAlignCenter:'Align center', noteAlignRight:'Align right', noteAlignJustify:'Justify', noteIndent:'Indent', noteIndentLess:'Decrease indent', noteIndentMore:'Increase indent', noteImgLayout:'Layout options', noteImgInline:'In line with text', noteImgWrapping:'With text wrapping', noteImgSquare:'Square', noteImgTight:'Tight', noteImgTopBottom:'Top and bottom', noteImgBehind:'Behind text', noteImgFront:'In front of text', noteImgSide:'Position', noteImgLeft:'Left', noteImgCenter:'Center', noteImgRight:'Right', noteImgMoveHint:'Drag the picture to move it.', noteImgMoveHintTouch:'Hold the picture, then move it.', noteImgDraw:'Draw on it',
     signIn:'Sign in', authLastUsed:'Last used', signUp:'Sign up', yourName:'Your name', email:'Email', password:'Password', createAccount:'Create account',
     signOut:'Sign out',
     tabStudy:'Korean', tabReading:'Reading', tabJobs:'Jobs', tabCalendar:'Calendar', tabHome:'Home', tabOverview:'Overview', lblQuickNav:'Jump to', homeMorning:'Good morning', complimentAnother:'Another compliment', encourageAnother:'More encouragement', homeAfternoon:'Good afternoon', homeEvening:'Good evening', homeToday:'Today', homeTodos:'To-dos', homeTodosNone:'Nothing due today', homeAllDone:'All done for today', homeNextUp:'Next up', homeTodayWord:'Today', homeStreak:'{n}-day streak', homeReading:'Reading', 
@@ -14312,7 +14372,7 @@ const I18N = {
     noteSub:'아래 첨자', noteSup:'위 첨자', noteStyleBtn:'글자 스타일', noteStyleNormal:'본문', noteStyleH1:'제목', noteStyleH2:'부제목', noteStyleH3:'소제목', noteTocBtn:'목차', noteTocEmpty:'아직 제목이 없습니다. 줄 처음에 #와 띄어쓰기를 치면 제목, ##는 부제목, ###는 소제목이 됩니다.', noteSymBtn:'기호', noteSymTabArrows:'화살표', noteSymTabMath:'수학', noteSymTabGreek:'그리스 문자', noteSymTabSets:'집합과 논리', noteSymTabScripts:'위아래 첨자', noteSymTabOther:'기타', noteShorthandHint:'단축 입력: ^^ 위쪽 화살표, vv 아래쪽 화살표, -> 화살표, x^2와 H_2O는 첨자, 긴 것은 e^{ix}. 되돌리기를 누르면 입력한 그대로 돌아갑니다.', noteEqBtn:'수식', noteEqTitle:'수식', noteEqTabStruct:'구조', noteEqInsert:'넣기', noteEqUpdate:'수정', noteEqRemove:'삭제', noteEqPlaceholder:'위의 키를 누르거나 LaTeX로 입력하세요. 예: \\frac{a}{b}', noteEqEmpty:'여기에 미리 보기가 표시됩니다.', noteEqLoading:'수식 편집기를 불러오는 중...', noteEqFailed:'수식 편집기를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.',
     noteEqSize:'수식 크기', noteEqSizeTip:'이 기기에서 모든 수식을 주변 글자보다 이만큼 크게 표시합니다 (0은 같은 크기).',
     noteDrawBtn:'그림 그리기', noteDrawPen:'펜', noteDrawEraser:'지우개', noteDrawInk:'기본색', noteDrawRed:'빨간색', noteDrawOrange:'주황색', noteDrawGreen:'초록색', noteDrawBlue:'파란색', noteDrawPurple:'보라색', noteDrawText:'텍스트', noteDrawSelect:'선택해서 옮기기', noteDrawPlain:'기본 선', noteDrawSmooth:'매끄러운 선', noteDrawDotted:'점선', noteDrawDashed:'파선', noteDrawYourColor:'내 색', noteDrawMoreColors:'다른 색', noteDrawKeepColor:'이 색을 남기려면 바꿀 색을 누르세요:', noteDrawResetColors:'색 초기화', noteDrawSizeCustom:'크기 정하기', noteDrawSizeN:'크기 {n}', noteDrawKeepSize:'이 크기를 남기려면 바꿀 크기를 누르세요:', noteDrawResetSizes:'크기 초기화', noteDrawDeleteSel:'선택한 것 삭제', noteDrawHintPen:'선 끝에서 잠시 멈추면 곧은 선이 됩니다.', noteDrawHintText:'글을 넣을 곳을 누르거나, 바꿀 글을 누르세요.', noteDrawHintSelect:'대상을 누르거나 주위로 상자를 그린 뒤, 끌어서 옮기세요.', noteDrawUndo:'실행 취소', noteDrawRedo:'다시 실행', noteDrawRoom:'아래에 공간 추가', noteDrawClear:'그림 모두 지우기', noteDrawLoadFailed:'그림을 열 수 없습니다.',
-    noteMenuText:'글자', noteFont:'글꼴', noteFontDefaultIs:'기본 ({font})', noteFontSetDefault:'기본 글꼴', noteFontDefaultHint:'글꼴을 따로 정하지 않은 글은 이 기기의 모든 노트에서 이 글꼴로 쓰입니다.', noteLineSpacingCustom:'직접 지정', noteLineSpacingApply:'적용', noteTocInsertBtn:'목차', noteTocUpdateBtn:'목차 업데이트', noteGoHeading:'제목으로 이동', noteMenuPara:'단락', noteMenuInsert:'삽입', noteStrike:'취소선', noteClean:'서식 지우기', noteVideo:'동영상', noteAlign:'정렬', noteAlignLeft:'왼쪽 정렬', noteAlignCenter:'가운데 정렬', noteAlignRight:'오른쪽 정렬', noteAlignJustify:'양쪽 정렬', noteIndent:'들여쓰기', noteIndentLess:'내어쓰기', noteIndentMore:'들여쓰기',
+    noteMenuText:'글자', noteFont:'글꼴', noteFontDefaultIs:'기본 ({font})', noteFontSetDefault:'기본 글꼴', noteFontDefaultHint:'글꼴을 따로 정하지 않은 글은 이 기기의 모든 노트에서 이 글꼴로 쓰입니다.', noteLineSpacingCustom:'직접 지정', noteLineSpacingApply:'적용', noteTocInsertBtn:'목차', noteTocUpdateBtn:'목차 업데이트', noteGoHeading:'제목으로 이동', noteMenuPara:'단락', noteMenuInsert:'삽입', noteStrike:'취소선', noteClean:'서식 지우기', noteVideo:'동영상', noteAlign:'정렬', noteAlignLeft:'왼쪽 정렬', noteAlignCenter:'가운데 정렬', noteAlignRight:'오른쪽 정렬', noteAlignJustify:'양쪽 정렬', noteIndent:'들여쓰기', noteIndentLess:'내어쓰기', noteIndentMore:'들여쓰기', noteImgLayout:'레이아웃 옵션', noteImgInline:'텍스트 줄 안', noteImgWrapping:'텍스트 배치', noteImgSquare:'정사각형', noteImgTight:'빽빽하게', noteImgTopBottom:'위/아래', noteImgBehind:'텍스트 뒤', noteImgFront:'텍스트 앞', noteImgSide:'위치', noteImgLeft:'왼쪽', noteImgCenter:'가운데', noteImgRight:'오른쪽', noteImgMoveHint:'그림을 끌어서 옮기세요.', noteImgMoveHintTouch:'그림을 길게 누른 뒤 옮기세요.', noteImgDraw:'그림 위에 그리기',
     signIn:'로그인', authLastUsed:'최근 사용', signUp:'회원가입', yourName:'이름', email:'이메일', password:'비밀번호', createAccount:'계정 만들기',
     signOut:'로그아웃',
     tabStudy:'한국어', tabReading:'독서', tabJobs:'구직', tabCalendar:'캘린더', tabHome:'홈', tabOverview:'개요', lblQuickNav:'바로가기', homeMorning:'좋은 아침이에요', complimentAnother:'다른 칭찬 보기', encourageAnother:'응원 하나 더', homeAfternoon:'좋은 오후예요', homeEvening:'좋은 저녁이에요', homeToday:'오늘', homeTodos:'할 일', homeTodosNone:'오늘 할 일이 없어요', homeAllDone:'오늘 할 일을 다 했어요', homeNextUp:'다음 일정', homeTodayWord:'오늘', homeStreak:'{n}일 연속', homeReading:'읽는 중', 
@@ -14449,7 +14509,7 @@ const I18N = {
     noteSub:'Chỉ số dưới', noteSup:'Chỉ số trên', noteStyleBtn:'Kiểu chữ', noteStyleNormal:'Văn bản thường', noteStyleH1:'Tiêu đề', noteStyleH2:'Tiêu đề phụ', noteStyleH3:'Tiêu đề nhỏ', noteTocBtn:'Mục lục', noteTocEmpty:'Chưa có tiêu đề. Gõ # và dấu cách ở đầu dòng để tạo tiêu đề, ## cho tiêu đề phụ, ### cho tiêu đề nhỏ.', noteSymBtn:'Ký hiệu', noteSymTabArrows:'Mũi tên', noteSymTabMath:'Toán', noteSymTabGreek:'Chữ Hy Lạp', noteSymTabSets:'Tập hợp và logic', noteSymTabScripts:'Chỉ số trên, dưới', noteSymTabOther:'Khác', noteShorthandHint:'Gõ tắt: ^^ mũi tên lên, vv mũi tên xuống, -> mũi tên, x^2 và H_2O cho chỉ số, e^{ix} cho chỉ số dài. Hoàn tác sẽ trả lại đúng những gì bạn gõ.', noteEqBtn:'Công thức', noteEqTitle:'Công thức', noteEqTabStruct:'Cấu trúc', noteEqInsert:'Chèn', noteEqUpdate:'Cập nhật', noteEqRemove:'Xóa', noteEqPlaceholder:'Bấm các phím ở trên hoặc gõ LaTeX, ví dụ \\frac{a}{b}', noteEqEmpty:'Bản xem trước hiển thị ở đây.', noteEqLoading:'Đang tải trình soạn công thức...', noteEqFailed:'Không tải được trình soạn công thức. Hãy kiểm tra kết nối rồi thử lại.',
     noteEqSize:'Cỡ công thức', noteEqSizeTip:'Trên thiết bị này, mọi công thức được hiển thị lớn hơn chữ xung quanh chừng này (0 là cùng cỡ).',
     noteDrawBtn:'Vẽ hình', noteDrawPen:'Bút', noteDrawEraser:'Cục tẩy', noteDrawInk:'Màu mực', noteDrawRed:'Đỏ', noteDrawOrange:'Cam', noteDrawGreen:'Xanh lá', noteDrawBlue:'Xanh dương', noteDrawPurple:'Tím', noteDrawText:'Chữ', noteDrawSelect:'Chọn và di chuyển', noteDrawPlain:'Nét thường', noteDrawSmooth:'Nét mượt', noteDrawDotted:'Nét chấm', noteDrawDashed:'Nét đứt', noteDrawYourColor:'Màu của bạn', noteDrawMoreColors:'Màu khác', noteDrawKeepColor:'Để giữ màu này, nhấn vào màu cần thay:', noteDrawResetColors:'Đặt lại màu', noteDrawSizeCustom:'Chọn cỡ', noteDrawSizeN:'Cỡ {n}', noteDrawKeepSize:'Để giữ cỡ này, nhấn vào cỡ cần thay:', noteDrawResetSizes:'Đặt lại cỡ', noteDrawDeleteSel:'Xóa phần đã chọn', noteDrawHintPen:'Giữ yên ở cuối nét để thành đường thẳng.', noteDrawHintText:'Nhấn vào chỗ đặt chữ, hoặc nhấn vào chữ để sửa.', noteDrawHintSelect:'Nhấn vào thứ cần chọn hoặc kéo khung quanh nó, rồi kéo để di chuyển.', noteDrawUndo:'Hoàn tác', noteDrawRedo:'Làm lại', noteDrawRoom:'Thêm chỗ bên dưới', noteDrawClear:'Xóa toàn bộ hình vẽ', noteDrawLoadFailed:'Không mở được hình vẽ.',
-    noteMenuText:'Chữ', noteFont:'Phông chữ', noteFontDefaultIs:'Mặc định ({font})', noteFontSetDefault:'Phông chữ mặc định', noteFontDefaultHint:'Chữ không có phông riêng sẽ dùng phông này, trong mọi ghi chú trên thiết bị này.', noteLineSpacingCustom:'Tùy chỉnh', noteLineSpacingApply:'Áp dụng', noteTocInsertBtn:'Mục lục', noteTocUpdateBtn:'Cập nhật mục lục', noteGoHeading:'Đi tới tiêu đề', noteMenuPara:'Đoạn văn', noteMenuInsert:'Chèn', noteStrike:'Gạch ngang', noteClean:'Xóa định dạng', noteVideo:'Video', noteAlign:'Căn lề', noteAlignLeft:'Căn trái', noteAlignCenter:'Căn giữa', noteAlignRight:'Căn phải', noteAlignJustify:'Căn đều hai bên', noteIndent:'Thụt lề', noteIndentLess:'Giảm thụt lề', noteIndentMore:'Tăng thụt lề',
+    noteMenuText:'Chữ', noteFont:'Phông chữ', noteFontDefaultIs:'Mặc định ({font})', noteFontSetDefault:'Phông chữ mặc định', noteFontDefaultHint:'Chữ không có phông riêng sẽ dùng phông này, trong mọi ghi chú trên thiết bị này.', noteLineSpacingCustom:'Tùy chỉnh', noteLineSpacingApply:'Áp dụng', noteTocInsertBtn:'Mục lục', noteTocUpdateBtn:'Cập nhật mục lục', noteGoHeading:'Đi tới tiêu đề', noteMenuPara:'Đoạn văn', noteMenuInsert:'Chèn', noteStrike:'Gạch ngang', noteClean:'Xóa định dạng', noteVideo:'Video', noteAlign:'Căn lề', noteAlignLeft:'Căn trái', noteAlignCenter:'Căn giữa', noteAlignRight:'Căn phải', noteAlignJustify:'Căn đều hai bên', noteIndent:'Thụt lề', noteIndentLess:'Giảm thụt lề', noteIndentMore:'Tăng thụt lề', noteImgLayout:'Tùy chọn bố cục', noteImgInline:'Cùng dòng với văn bản', noteImgWrapping:'Văn bản bao quanh', noteImgSquare:'Hình vuông', noteImgTight:'Khít', noteImgTopBottom:'Trên và dưới', noteImgBehind:'Sau văn bản', noteImgFront:'Trước văn bản', noteImgSide:'Vị trí', noteImgLeft:'Trái', noteImgCenter:'Giữa', noteImgRight:'Phải', noteImgMoveHint:'Kéo hình để di chuyển.', noteImgMoveHintTouch:'Nhấn giữ hình rồi di chuyển.', noteImgDraw:'Vẽ lên hình',
     signIn:'Đăng nhập', authLastUsed:'Dùng gần đây', signUp:'Đăng ký', yourName:'Tên của bạn', email:'Email', password:'Mật khẩu', createAccount:'Tạo tài khoản',
     signOut:'Đăng xuất',
     tabStudy:'Tiếng Hàn', tabReading:'Đọc sách', tabJobs:'Xin việc', tabCalendar:'Lịch', tabHome:'Trang chủ', tabOverview:'Tổng quan', lblQuickNav:'Đi đến', homeMorning:'Chào buổi sáng', complimentAnother:'Xem lời khen khác', encourageAnother:'Thêm lời động viên', homeAfternoon:'Chào buổi chiều', homeEvening:'Chào buổi tối', homeToday:'Hôm nay', homeTodos:'Việc cần làm', homeTodosNone:'Hôm nay không có việc gì', homeAllDone:'Đã xong hết hôm nay', homeNextUp:'Sắp tới', homeTodayWord:'Hôm nay', homeStreak:'Chuỗi {n} ngày', homeReading:'Đang đọc', 
@@ -15472,6 +15532,17 @@ const ICON_PATHS = {
      top with the note below. Drawn as the page, so the two read as a pair. */
   layoutBeside: '<rect x="3" y="4" width="18" height="16" rx="2"></rect><polyline points="10 4 10 12 3 12"></polyline>',
   layoutUnder:  '<rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line>',
+  /* How a picture sits in a note's text (Layout options), drawn as Word draws
+     them: the picture and the lines of text round it. In line, a picture in
+     a line; Square, the lines beside its box; Tight, the lines along its
+     outline; Top and bottom, a line of its own; Behind, the lines across a
+     picture drawn as dashes; In front, a picture the lines stop at. */
+  wrapInline:    '<line x1="3" y1="5" x2="21" y2="5"></line><rect x="9" y="9" width="6" height="6" rx="1"></rect><line x1="3" y1="15" x2="6" y2="15"></line><line x1="18" y1="15" x2="21" y2="15"></line><line x1="3" y1="20" x2="21" y2="20"></line>',
+  wrapSquare:    '<rect x="3" y="3" width="8" height="9" rx="1"></rect><line x1="14" y1="4" x2="21" y2="4"></line><line x1="14" y1="8" x2="21" y2="8"></line><line x1="14" y1="12" x2="21" y2="12"></line><line x1="3" y1="16" x2="21" y2="16"></line><line x1="3" y1="20" x2="21" y2="20"></line>',
+  wrapTight:     '<circle cx="7" cy="8" r="4.5"></circle><line x1="12" y1="4" x2="21" y2="4"></line><line x1="15" y1="8" x2="21" y2="8"></line><line x1="12" y1="12" x2="21" y2="12"></line><line x1="3" y1="16" x2="21" y2="16"></line><line x1="3" y1="20" x2="21" y2="20"></line>',
+  wrapTopBottom: '<line x1="3" y1="4" x2="21" y2="4"></line><rect x="7" y="8" width="10" height="8" rx="1"></rect><line x1="3" y1="20" x2="21" y2="20"></line>',
+  wrapBehind:    '<rect x="8" y="4" width="8" height="16" rx="1" stroke-dasharray="2 3"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line>',
+  wrapFront:     '<rect x="8" y="4" width="8" height="16" rx="1"></rect><line x1="3" y1="9" x2="5" y2="9"></line><line x1="19" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="5" y2="15"></line><line x1="19" y1="15" x2="21" y2="15"></line>',
   /* Three joined dots: handing something on to other people. */
   share:   '<circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line>',
   /* A speech bubble: a comment on a note, beside the chat's own send. */
@@ -15547,6 +15618,12 @@ const ICON = {
   users:   function(sz){ return svgIcon(ICON_PATHS.users, sz); },
   layoutBeside: function(sz){ return svgIcon(ICON_PATHS.layoutBeside, sz); },
   layoutUnder:  function(sz){ return svgIcon(ICON_PATHS.layoutUnder, sz); },
+  wrapInline:    function(sz){ return svgIcon(ICON_PATHS.wrapInline, sz); },
+  wrapSquare:    function(sz){ return svgIcon(ICON_PATHS.wrapSquare, sz); },
+  wrapTight:     function(sz){ return svgIcon(ICON_PATHS.wrapTight, sz); },
+  wrapTopBottom: function(sz){ return svgIcon(ICON_PATHS.wrapTopBottom, sz); },
+  wrapBehind:    function(sz){ return svgIcon(ICON_PATHS.wrapBehind, sz); },
+  wrapFront:     function(sz){ return svgIcon(ICON_PATHS.wrapFront, sz); },
   share:   function(sz){ return svgIcon(ICON_PATHS.share, sz); },
   lock:    function(sz){ return svgIcon(ICON_PATHS.lock, sz); },
   comment: function(sz){ return svgIcon(ICON_PATHS.comment, sz); }
@@ -55631,6 +55708,8 @@ function enhanceNoteEditor(quill, key, opts){
   buildNoteStats(quill, key);
   enableNoteMath(quill, key, opts);
   enableNoteDrawings(quill, opts);
+  enableNoteImageLayout(quill);
+  enableNoteCopy(quill);
   buildNoteMenus(quill, key, opts);
 }
 
@@ -55790,6 +55869,457 @@ var NoteFormula = null;
   };
   Quill.register(NoteFormula, true);
 })();
+
+/* ---------- A PICTURE'S LAYOUT IN A NOTE ----------
+   Real-user request, 18 Nov: "add the thing that word has for pictures in
+   notes, where you can pick how you want the picture to be? in front of
+   text, behind, tight, etc.?". A picture pressed in a note shows Word's
+   Layout options at its top-right corner: In line with text (how every
+   picture sat before), and with text wrapping Square, Tight, Top and
+   bottom, Behind text and In front of text, with the side for the first
+   three. (Word's Through is Tight unless its wrap points are edited by
+   hand, which a note has no way to do.)
+   The choice is a format of the picture, 'wrap', kept as data-wrap, so Quill
+   carries it through undo, copy and paste; and it is written out as the
+   picture's own inline style as well, so the picture sits the same wherever
+   the note's HTML is shown: an earlier version, a print, an export.
+     square-left|right       floated, the text round its box
+     tight-left|right        floated, the text round what is drawn in it
+                             (shape-outside from the picture's see-through
+                             parts; a photo has none, so it is Square with a
+                             little less room)
+     topbottom-left|center|right   a line of its own
+     behind:x:y, front:x:y   out of the text's way, the text running under
+                             or over it as if it were not there; x and y are
+                             how far it was dragged from where it sits in the
+                             text, so it still moves with its line.
+   The old picture toolbar's left, centre and right (floats in the style
+   alone, never saved as anything else) are read as Square left, Square
+   right and Top and bottom. */
+var NOTE_WRAP_PROPS = ['float', 'display', 'margin', 'position', 'z-index', 'shape-outside', 'shape-margin', 'shape-image-threshold'];
+function noteWrapParse(v){
+  const m = /^(square|tight|topbottom|behind|front)(?:-(left|center|right))?(?::(-?\d{1,5}):(-?\d{1,5}))?$/.exec(String(v || '').trim());
+  if(!m) return null;
+  const mode = m[1];
+  if(mode === 'behind' || mode === 'front') return { mode, side: '', x: Number(m[3]) || 0, y: Number(m[4]) || 0 };
+  let side = m[2] || (mode === 'topbottom' ? 'center' : 'left');
+  if(side === 'center' && mode !== 'topbottom') side = 'left';
+  return { mode, side, x: 0, y: 0 };
+}
+function noteWrapString(w){
+  if(!w || !w.mode) return '';
+  if(w.mode === 'behind' || w.mode === 'front') return w.mode + ':' + Math.round(w.x || 0) + ':' + Math.round(w.y || 0);
+  return w.mode + '-' + w.side;
+}
+function noteWrapFree(w){ return !!w && (w.mode === 'behind' || w.mode === 'front'); }
+// The picture's own outline needs to be read by the browser, which it is
+// allowed to do only for a picture in the note's own storage (it says so to
+// any site) or one inside the note itself; anywhere else Tight is Square.
+function noteWrapShapeOk(src){
+  return /^data:image\//i.test(src) || src.indexOf(SUPABASE_URL + '/storage/') === 0;
+}
+function noteWrapCss(w, src){
+  const css = {};
+  if(!w) return css;
+  if(w.mode === 'square' || w.mode === 'tight'){
+    css.float = w.side;
+    css.margin = w.side === 'right' ? '2px 0 6px 14px' : '2px 14px 6px 0';
+    if(w.mode === 'tight' && noteWrapShapeOk(src)){
+      css['shape-outside'] = 'url("' + String(src).replace(/["\\\n\r]/g, encodeURIComponent) + '")';
+      css['shape-margin'] = '10px';
+      css['shape-image-threshold'] = '0.3';
+    }
+  } else if(w.mode === 'topbottom'){
+    css.display = 'block';
+    css.margin = w.side === 'right' ? '6px 0 6px auto' : w.side === 'left' ? '6px auto 6px 0' : '6px auto';
+  } else {
+    css.position = 'absolute';
+    css['z-index'] = w.mode === 'behind' ? '-1' : '2';
+    css.margin = Math.round(w.y) + 'px 0 0 ' + Math.round(w.x) + 'px';
+  }
+  return css;
+}
+function noteWrapStyleText(w, src){
+  const css = noteWrapCss(w, src);
+  return Object.keys(css).map(k=> k + ':' + css[k]).join(';');
+}
+// What a picture's layout is: its data-wrap, or what the old toolbar left.
+function noteWrapOf(node){
+  const w = noteWrapParse(node.getAttribute('data-wrap'));
+  if(w) return noteWrapString(w);
+  const st = node.style;
+  if(st.float === 'left' || st.float === 'right') return 'square-' + st.float;
+  if(st.display === 'block' && st.marginLeft === 'auto' && st.marginRight === 'auto') return 'topbottom-center';
+  return '';
+}
+// Writes a layout onto a picture, touching only what differs, so a picture
+// that is already right (every one in a note being opened) is not changed
+// and the note is not taken for edited.
+var noteWrapScratch = null;
+function noteWrapApply(node, value){
+  const w = noteWrapParse(value);
+  const str = noteWrapString(w);
+  if(str){ if(node.getAttribute('data-wrap') !== str) node.setAttribute('data-wrap', str); }
+  else if(node.hasAttribute('data-wrap')) node.removeAttribute('data-wrap');
+  const s = noteWrapScratch || (noteWrapScratch = document.createElement('img'));
+  s.removeAttribute('style');
+  const css = noteWrapCss(w, node.getAttribute('src') || '');
+  Object.keys(css).forEach(p=> s.style.setProperty(p, css[p]));
+  NOTE_WRAP_PROPS.forEach(p=>{
+    const want = s.style.getPropertyValue(p);
+    if(node.style.getPropertyValue(p) === want) return;
+    if(want) node.style.setProperty(p, want); else node.style.removeProperty(p);
+  });
+  if(node.hasAttribute('style') && !node.getAttribute('style').trim()) node.removeAttribute('style');
+}
+function noteWrapIcon(w, sz){
+  const mode = w ? w.mode : 'inline';
+  return ({ square: ICON.wrapSquare, tight: ICON.wrapTight, topbottom: ICON.wrapTopBottom, behind: ICON.wrapBehind, front: ICON.wrapFront }[mode] || ICON.wrapInline)(sz);
+}
+// Quill's picture with the layout as one of its formats (beside its width).
+// Registered before the drawing below, which is a picture of its own kind
+// and so takes the layout too.
+var NoteImage = null;
+(function(){
+  if(!window.Quill) return;
+  let Img;
+  try{ Img = Quill.import('formats/image'); }catch(e){ return; }
+  if(!Img) return;
+  NoteImage = class extends Img {
+    constructor(node, value){
+      super(node, value);
+      noteWrapApply(node, noteWrapOf(node));
+    }
+    static formats(node){
+      const f = super.formats(node) || {};
+      const w = noteWrapOf(node);
+      if(w) f.wrap = w;
+      return f;
+    }
+    format(name, value){
+      if(name === 'wrap'){ noteWrapApply(this.domNode, value); return; }
+      super.format(name, value);
+    }
+  };
+  Quill.register(NoteImage, true);
+})();
+// The picture handles (quill-image-resize) with their frame in the app's
+// colours, and Layout options in place of the module's own three alignment
+// buttons, which Square and Top and bottom now say better.
+function noteImageResizeOptions(){
+  return {
+    modules: ['DisplaySize', 'Resize', NoteImageLayout],
+    overlayStyles: { border: '1px dashed var(--ink-soft)', zIndex: '5' },
+    handleStyles: { backgroundColor: 'var(--paper)', border: '1px solid var(--ink-soft)', opacity: '1' },
+    displayStyles: { backgroundColor: 'var(--paper)', color: 'var(--ink)', border: '1px solid var(--line)', opacity: '1' }
+  };
+}
+// The picture frame's own part (a module of quill-image-resize): Layout
+// options and their panel, the pencil on a drawing, and moving a picture
+// that is out of the text's way -- a mouse drags it (or its grip), a finger
+// holds it first, so a finger that only meant to scroll the page does.
+// A function rather than a class, so it exists however early a note editor
+// is made.
+function NoteImageLayout(resizer){
+  const quill = resizer.quill, img = resizer.img, overlay = resizer.overlay;
+  const offs = [];
+  const on = (el, type, fn, opt)=>{ el.addEventListener(type, fn, opt); offs.push(()=> el.removeEventListener(type, fn, opt)); };
+  const editable = ()=> quill.root.getAttribute('contenteditable') === 'true';
+  const cur = ()=> noteWrapParse(img.getAttribute('data-wrap'));
+  let btn = null, panel = null, grip = null, drag = null;
+  const commit = (w)=>{
+    const blot = Quill.find(img);
+    if(!blot || blot === quill || !img.isConnected) return;
+    quill.formatText(quill.getIndex(blot), 1, 'wrap', noteWrapString(w) || false, 'user');
+    resizer.onUpdate();
+  };
+  const close = ()=>{
+    if(!panel || panel.hidden) return;
+    panel.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+  };
+  // Hung from the button, and slid back onto the screen if it runs off it.
+  const place = ()=>{
+    if(!panel || panel.hidden) return;
+    panel.style.right = '';
+    const r = panel.getBoundingClientRect();
+    const vw = document.documentElement.clientWidth;
+    const base = parseFloat(getComputedStyle(panel).right) || 0;
+    if(r.left < 8) panel.style.right = (base - (8 - r.left)) + 'px';
+    else if(r.right > vw - 8) panel.style.right = (base + (r.right - (vw - 8))) + 'px';
+  };
+  const SIDE_KEYS = { left: 'noteImgLeft', center: 'noteImgCenter', right: 'noteImgRight' };
+  const fill = ()=>{
+    const w = cur();
+    const mode = w ? w.mode : 'inline';
+    const opt = (m, key)=> `<button type="button" class="nimg-opt${m === mode ? ' on' : ''}" data-mode="${m}" aria-pressed="${m === mode}">${noteWrapIcon(m === 'inline' ? null : { mode: m }, 18)}<span>${escapeHtml(t(key))}</span></button>`;
+    let html = `<div class="nimg-sec">${opt('inline', 'noteImgInline')}</div>`
+      + `<div class="nimg-sec"><div class="nimg-head">${escapeHtml(t('noteImgWrapping'))}</div>`
+      + opt('square', 'noteImgSquare') + opt('tight', 'noteImgTight') + opt('topbottom', 'noteImgTopBottom')
+      + opt('behind', 'noteImgBehind') + opt('front', 'noteImgFront') + '</div>';
+    // The side, for the three that have one; dragging is the place of the
+    // other two, which say so.
+    if(w && !noteWrapFree(w)){
+      const sides = w.mode === 'topbottom' ? ['left', 'center', 'right'] : ['left', 'right'];
+      html += `<div class="nimg-sec"><div class="nimg-head">${escapeHtml(t('noteImgSide'))}</div><div class="nimg-seg">`
+        + sides.map(s=> `<button type="button" data-side="${s}" class="${s === w.side ? 'on' : ''}" aria-pressed="${s === w.side}">${escapeHtml(t(SIDE_KEYS[s]))}</button>`).join('')
+        + '</div></div>';
+    } else if(noteWrapFree(w)){
+      const touch = window.matchMedia && matchMedia('(hover: none)').matches;
+      html += `<div class="nimg-hint">${escapeHtml(t(touch ? 'noteImgMoveHintTouch' : 'noteImgMoveHint'))}</div>`;
+    }
+    panel.innerHTML = html;
+    panel.querySelectorAll('.nimg-opt').forEach(b=> b.addEventListener('click', e=>{
+      e.preventDefault();
+      pick(b.dataset.mode);
+    }));
+    panel.querySelectorAll('.nimg-seg button').forEach(b=> b.addEventListener('click', e=>{
+      e.preventDefault();
+      const c = cur();
+      if(c) commit(Object.assign({}, c, { side: b.dataset.side }));
+      fill();
+      place();
+    }));
+  };
+  // A new layout keeps what it can of the last one: the side between Square,
+  // Tight and Top and bottom, the place between Behind and In front. Word
+  // leaves the panel open to try the next, and so does this.
+  const pick = (mode)=>{
+    const was = cur();
+    if(mode === 'inline') commit(null);
+    else if(mode === 'behind' || mode === 'front') commit({ mode, x: noteWrapFree(was) ? was.x : 0, y: noteWrapFree(was) ? was.y : 0 });
+    else {
+      let side = was && !noteWrapFree(was) ? was.side : '';
+      if(!side || (side === 'center' && mode !== 'topbottom')) side = mode === 'topbottom' ? 'center' : 'left';
+      commit({ mode, side });
+    }
+    fill();
+    place();
+  };
+  // Moving: what is dragged is the picture's offset from its place in the
+  // text, kept inside the note's own box.
+  const startAt = (x, y)=>{
+    const w = cur();
+    if(!noteWrapFree(w)) return false;
+    drag = { x0: x, y0: y, w, nx: w.x, ny: w.y, moved: false, ed: quill.root.getBoundingClientRect(), r: img.getBoundingClientRect() };
+    return true;
+  };
+  const moveTo = (x, y)=>{
+    if(!drag) return;
+    let dx = x - drag.x0, dy = y - drag.y0;
+    if(!drag.moved && Math.hypot(dx, dy) < 3) return;
+    if(!drag.moved){ drag.moved = true; overlay.classList.add('nimg-moving'); close(); }
+    const ed = drag.ed, r = drag.r;
+    dx = Math.min(Math.max(dx, ed.left - r.left), Math.max(ed.left - r.left, ed.right - r.right));
+    dy = Math.min(Math.max(dy, ed.top - r.top), Math.max(ed.top - r.top, ed.bottom - r.bottom));
+    drag.nx = drag.w.x + Math.round(dx);
+    drag.ny = drag.w.y + Math.round(dy);
+    img.style.margin = drag.ny + 'px 0 0 ' + drag.nx + 'px';
+    resizer.onUpdate();
+  };
+  const endDrag = ()=>{
+    const d = drag;
+    drag = null;
+    overlay.classList.remove('nimg-moving');
+    if(d && d.moved) commit({ mode: d.w.mode, x: d.nx, y: d.ny });
+  };
+  const onPointerDown = (e)=>{
+    if(e.pointerType === 'touch' || e.button !== 0) return;
+    if(!(e.target === overlay || (grip && grip.contains(e.target)))) return;
+    if(!startAt(e.clientX, e.clientY)) return;
+    e.preventDefault();
+    const mv = ev=> moveTo(ev.clientX, ev.clientY);
+    const up = ()=>{
+      document.removeEventListener('pointermove', mv);
+      document.removeEventListener('pointerup', up);
+      document.removeEventListener('pointercancel', up);
+      endDrag();
+    };
+    document.addEventListener('pointermove', mv);
+    document.addEventListener('pointerup', up);
+    document.addEventListener('pointercancel', up);
+  };
+  const onTouchStart = (e)=>{
+    if(e.touches.length !== 1 || e.target !== overlay || !noteWrapFree(cur())) return;
+    const sx = e.touches[0].clientX, sy = e.touches[0].clientY;
+    let held = false;
+    const done = ()=>{
+      overlay.removeEventListener('touchmove', mv);
+      overlay.removeEventListener('touchend', end);
+      overlay.removeEventListener('touchcancel', end);
+    };
+    const timer = setTimeout(()=>{
+      held = startAt(sx, sy);
+      if(held){ drag.moved = true; overlay.classList.add('nimg-moving'); close(); appHaptic('light'); }
+    }, 380);
+    const mv = ev=>{
+      const tch = ev.touches[0];
+      if(!tch) return;
+      if(!held){
+        if(Math.hypot(tch.clientX - sx, tch.clientY - sy) > 8){ clearTimeout(timer); done(); }
+        return;
+      }
+      ev.preventDefault();
+      moveTo(tch.clientX, tch.clientY);
+    };
+    const end = ()=>{ clearTimeout(timer); done(); if(held) endDrag(); };
+    overlay.addEventListener('touchmove', mv, { passive: false });
+    overlay.addEventListener('touchend', end);
+    overlay.addEventListener('touchcancel', end);
+  };
+  this.onCreate = ()=>{
+    overlay.classList.add('nimg-frame');
+    if(!editable()) return;
+    grip = document.createElement('span');
+    grip.className = 'nimg-grip';
+    grip.innerHTML = ICON.grip(16);
+    grip.title = t('noteDragTip');
+    btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'nimg-lay';
+    btn.setAttribute('aria-haspopup', 'true');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.title = t('noteImgLayout');
+    btn.setAttribute('aria-label', t('noteImgLayout'));
+    panel = document.createElement('div');
+    panel.className = 'nimg-panel';
+    panel.hidden = true;
+    panel.setAttribute('role', 'group');
+    panel.setAttribute('aria-label', t('noteImgLayout'));
+    overlay.append(grip, btn, panel);
+    // A drawing is opened to draw on from its pencil (or a double press).
+    if(img.classList.contains('note-drawing') && typeof quill.__openDrawing === 'function'){
+      const pen = document.createElement('button');
+      pen.type = 'button';
+      pen.className = 'nimg-edit';
+      pen.innerHTML = ICON.pencil(16);
+      pen.title = t('noteImgDraw');
+      pen.setAttribute('aria-label', t('noteImgDraw'));
+      on(pen, 'click', e=>{ e.preventDefault(); quill.__openDrawing(img); });
+      overlay.appendChild(pen);
+    }
+    on(btn, 'click', e=>{
+      e.preventDefault();
+      if(panel.hidden){
+        fill();
+        panel.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+        place();
+      } else close();
+    });
+    on(document, 'click', e=>{
+      if(!panel.hidden && !e.composedPath().includes(panel) && !e.composedPath().includes(btn)) close();
+    }, true);
+    on(document, 'keydown', e=>{
+      if(e.key === 'Escape' && !panel.hidden){ e.preventDefault(); close(); }
+    }, true);
+    on(overlay, 'pointerdown', onPointerDown);
+    on(overlay, 'touchstart', onTouchStart, { passive: true });
+  };
+  this.onUpdate = ()=>{
+    if(!btn) return;
+    const w = cur();
+    btn.innerHTML = noteWrapIcon(w, 18);
+    overlay.classList.toggle('nimg-free', noteWrapFree(w));
+    grip.hidden = !noteWrapFree(w);
+    place();
+  };
+  this.onDestroy = ()=>{
+    offs.splice(0).forEach(f=> f());
+    if(drag){ drag.moved = false; endDrag(); }
+  };
+}
+// A picture behind the text is under the note's lines, so a press there
+// lands on the text. Where the press is not on a letter, it takes the
+// picture instead, as Word does.
+function noteTextAt(x, y){
+  let node = null, off = 0;
+  if(document.caretPositionFromPoint){
+    const p = document.caretPositionFromPoint(x, y);
+    if(p){ node = p.offsetNode; off = p.offset; }
+  } else if(document.caretRangeFromPoint){
+    const r = document.caretRangeFromPoint(x, y);
+    if(r){ node = r.startContainer; off = r.startOffset; }
+  }
+  if(!node || node.nodeType !== 3) return false;
+  const range = document.createRange();
+  for(const [a, b] of [[off - 1, off], [off, off + 1]]){
+    if(a < 0 || b > node.length) continue;
+    range.setStart(node, a);
+    range.setEnd(node, b);
+    for(const rc of range.getClientRects()){
+      if(x >= rc.left - 1 && x <= rc.right + 1 && y >= rc.top && y <= rc.bottom) return true;
+    }
+  }
+  return false;
+}
+function enableNoteImageLayout(quill){
+  if(!quill || quill.__noteImgLayout) return;
+  quill.__noteImgLayout = true;
+  quill.root.addEventListener('click', e=>{
+    // A note open to read only: the handles would resize a picture its
+    // reader cannot save, so a press on one frames nothing.
+    if(quill.root.getAttribute('contenteditable') !== 'true'){
+      if(e.target.tagName === 'IMG') e.stopPropagation();
+      return;
+    }
+    if(e.target.tagName === 'IMG') return;
+    const ns = document.getSelection();
+    if(ns && !ns.isCollapsed) return;
+    const pic = document.elementsFromPoint(e.clientX, e.clientY).find(el=>
+      el.tagName === 'IMG' && quill.root.contains(el) && /^behind/.test(el.getAttribute('data-wrap') || ''));
+    if(!pic || noteTextAt(e.clientX, e.clientY)) return;
+    const rz = quill.getModule('imageResize');
+    if(!rz) return;
+    // Before the handles' own listener, which would take a press on the
+    // text for a press away from every picture.
+    e.stopPropagation();
+    if(rz.img !== pic){ if(rz.img) rz.hide(); rz.show(pic); }
+  }, true);
+}
+/* COPYING OUT OF A NOTE (real-user report, 18 Nov, with two screenshots: "when
+   i copy paste this it adds major gaps, extra spaces"). Every line of a note
+   is a <p>, and what a copy puts on the clipboard is that HTML; an app that
+   reads it (a chat app did) takes each <p> for a paragraph with a blank line
+   after it, so the one empty line in the note came out as three. A copy now
+   writes the lines as <div>s, which are lines and nothing more, with the
+   alignment written out, and the plain text as the note's own text, one line
+   break per line (an equation as its TeX). Cut does the same and then
+   deletes, through Quill, so it can be undone. */
+function enableNoteCopy(quill){
+  if(!quill || quill.__noteCopy) return;
+  quill.__noteCopy = true;
+  const handle = (e, cut)=>{
+    const cd = e.clipboardData;
+    const r = quill.getSelection();
+    const ns = document.getSelection();
+    if(!cd || !r || !r.length || !ns || !ns.rangeCount || ns.isCollapsed) return;
+    const box = document.createElement('div');
+    box.appendChild(ns.getRangeAt(0).cloneContents());
+    box.querySelectorAll('span.ql-cursor').forEach(s=> s.remove());
+    box.querySelectorAll('p').forEach(p=>{
+      const div = document.createElement('div');
+      Array.from(p.attributes).forEach(a=> div.setAttribute(a.name, a.value));
+      while(p.firstChild) div.appendChild(p.firstChild);
+      p.replaceWith(div);
+    });
+    box.querySelectorAll('[class*="ql-align-"]').forEach(el=>{
+      const m = /ql-align-(center|right|justify)/.exec(el.className);
+      if(m) el.style.textAlign = m[1];
+    });
+    const text = quill.getContents(r.index, r.length).ops.map(op=>
+      typeof op.insert === 'string' ? op.insert : (op.insert && op.insert.formula != null ? String(op.insert.formula) : '')).join('');
+    e.preventDefault();
+    cd.setData('text/plain', text);
+    cd.setData('text/html', box.innerHTML);
+    if(cut && quill.root.getAttribute('contenteditable') === 'true'){
+      quill.deleteText(r.index, r.length, 'user');
+      quill.setSelection(r.index, 0, 'silent');
+    }
+  };
+  quill.root.addEventListener('copy', e=> handle(e, false));
+  quill.root.addEventListener('cut', e=> handle(e, true));
+}
 
 /* ---------- A DRAWING IN A NOTE ----------
    Real-user request, 4 Nov: "Add a drawing tool to the notes". Insert >
@@ -56372,10 +56902,10 @@ function buildNoteMenus(quill, key, opts){
   // TEXT: how the letters look, past the three on the bar.
   const text = noteMenu(quill, 'nf-menu-text', ICON.textMenu(16), 'noteMenuText');
   const looks = noteMenuSection(text);
-  noteMenuRow(looks, own('button.ql-strike'), 'noteStrike');
-  noteMenuRow(looks, noteQuillButton(quill, 'script', 'sub', icons.script.sub), 'noteSub');
-  noteMenuRow(looks, noteQuillButton(quill, 'script', 'super', icons.script.super), 'noteSup');
-  noteMenuRow(looks, own('button.ql-clean'), 'noteClean');
+  const strikeB = noteMenuRow(looks, own('button.ql-strike'), 'noteStrike');
+  const subB = noteMenuRow(looks, noteQuillButton(quill, 'script', 'sub', icons.script.sub), 'noteSub');
+  const supB = noteMenuRow(looks, noteQuillButton(quill, 'script', 'super', icons.script.super), 'noteSup');
+  const cleanB = noteMenuRow(looks, own('button.ql-clean'), 'noteClean');
   // The font (NOTE_FONTS), each name drawn in itself, the one at the caret
   // filled in; none when the selection runs over two. Default says which
   // font it is, and the last row changes it.
@@ -56583,13 +57113,15 @@ function buildNoteMenus(quill, key, opts){
       draw();
     });
   });
-  noteMenuRow(adds, noteMenuButton(NOTE_TOOL_SVG.eq), 'noteEqBtn').addEventListener('click', e=>{
+  const eqB = noteMenuRow(adds, noteMenuButton(NOTE_TOOL_SVG.eq), 'noteEqBtn');
+  eqB.addEventListener('click', e=>{
     e.preventDefault();
     const r = quill.getSelection(true);
     openNoteEquation(quill, r ? r.index : quill.getLength() - 1, r ? r.length : 0, '', null, markDirty);
   });
   // A DRAWING (real-user request, 4 Nov: "Add a drawing tool to the notes").
-  noteMenuRow(adds, noteMenuButton(ICON.drawMenu(16)), 'noteDrawBtn').addEventListener('click', e=>{
+  const drawB = noteMenuRow(adds, noteMenuButton(ICON.drawMenu(16)), 'noteDrawBtn');
+  drawB.addEventListener('click', e=>{
     e.preventDefault();
     const r = quill.getSelection(true);
     openNoteDrawing(quill, r ? r.index : quill.getLength() - 1, r ? r.length : 0, '', null, markDirty);
@@ -56630,7 +57162,7 @@ function buildNoteMenus(quill, key, opts){
       }));
     });
   });
-  noteMenuRow(adds, own('button.ql-video'), 'noteVideo');
+  const videoB = noteMenuRow(adds, own('button.ql-video'), 'noteVideo');
 
   // The bar itself, in the order it is read: the size, the letters, their
   // colours, the lists, a link and a picture, then the menus. Quill's own
@@ -56641,6 +57173,77 @@ function buildNoteMenus(quill, key, opts){
     .forEach(el=>{ if(el && el.parentNode === toolbar) toolbar.appendChild(el); });
   Array.from(toolbar.children).forEach(g=>{ if(g.classList.contains('ql-formats') && !g.children.length) g.remove(); });
 
+  // THE BAR SHOWS WHAT FITS (real-user request, 18 Nov, with a screenshot of
+  // a note across a wide window, the bar half empty: "when we have a long
+  // bar like this, we dont have to fold in as many things, hiding things in
+  // menus" ... "what we hide should be based on the length of the bar").
+  // Each menu has a run of its own controls beside its button, and they come
+  // out onto the bar in this order for as long as the bar keeps the rows it
+  // had with all of them folded: strikethrough and the scripts, alignment,
+  // an equation and a drawing, indent, clear formatting, a video. A control
+  // that is out is not in its menu too, and a heading left with nothing
+  // under it goes with it. The rest (the font, the text style, line
+  // spacing, symbols, the contents) are lists, and stay in their menus. A
+  // phone's toolbar is a grid of its own and keeps everything folded.
+  const runOf = new Map();
+  [text, para, ins].forEach(m=>{
+    const run = document.createElement('span');
+    run.className = 'nf-out';
+    m.group.before(run);
+    runOf.set(m, run);
+  });
+  const OUTS = [
+    [text, [strikeB, subB, supB]],
+    [para, Array.from(aligns.children)],
+    [ins, [eqB, drawB]],
+    [para, Array.from(indents.children)],
+    [text, [cleanB]],
+    [ins, [videoB]],
+  ].filter(([, items])=> items.length && items.every(Boolean));
+  const homes = [looks, aligns, indents, adds].map(parent=> ({ parent, kids: Array.from(parent.children) }));
+  const secs = [looks, aligns.parentNode, indents.parentNode, adds];
+  const foldAll = ()=>{ homes.forEach(h=> h.parent.append(...h.kids)); };
+  const labelOut = ()=>{
+    runOf.forEach(run=> run.querySelectorAll('button').forEach(b=>{
+      const lab = b.querySelector('.nf-menu-label');
+      const key = b.dataset.tipKey || (lab && lab.dataset.tkey);
+      if(!key) return;
+      b.title = t(key);
+      b.setAttribute('aria-label', t(key));
+    }));
+  };
+  let fitWidth = -1;
+  const fit = ()=>{
+    const w = toolbar.clientWidth;
+    if(!w || w === fitWidth) return;
+    fitWidth = w;
+    (quill._noteMenus || []).forEach(m=> m.close());
+    foldAll();
+    // The phone's grid (max-width 640px in the stylesheet), asked of the bar
+    // itself rather than of the window's width.
+    if(getComputedStyle(toolbar).display !== 'grid'){
+      const rows = toolbar.offsetHeight;
+      const out = [];
+      for(const [m, items] of OUTS){
+        runOf.get(m).append(...items);
+        if(toolbar.offsetHeight > rows + 4){
+          foldAll();
+          out.forEach(([mm, its])=> runOf.get(mm).append(...its));
+          break;
+        }
+        out.push([m, items]);
+      }
+    }
+    secs.forEach(sec=>{ sec.hidden = !sec.querySelector('button'); });
+    labelOut();
+  };
+  // Out of the observer's own call, so what moves does not size the bar
+  // again inside it.
+  if(window.ResizeObserver) new ResizeObserver(()=> setTimeout(fit, 0)).observe(toolbar);
+  else window.addEventListener('resize', fit);
+  setTimeout(fit, 0);
+  quill._fitNoteBar = fit;
+
   const relabel = ()=>{
     (quill._noteMenus || []).forEach(m=>{
       m.label();
@@ -56650,6 +57253,7 @@ function buildNoteMenus(quill, key, opts){
     spacing.querySelectorAll('button').forEach(b=>{ if(b.dataset.value) b.textContent = noteNum(Number(b.dataset.value)); });
     customRow.querySelector('.nf-ls-range').textContent = noteNum(NOTE_LINE_SPACING_MIN) + '\u2013' + noteNum(NOTE_LINE_SPACING_MAX);
     labelDefault();
+    labelOut();
   };
   relabel();
   quill._relabelNoteMenus = relabel;
@@ -58146,25 +58750,43 @@ function noteDrawBuild(){
 function openNoteDrawing(quill, index, length, src, editing, markDirty){
   noteDrawBuild().open({ quill, index, length, src: src || '', editing, markDirty });
 }
-// Pressing a drawing in a note opens it to draw on. Taken before the picture
-// handles (quill-image-resize) see the press: those are for photos.
+// A drawing in a note is a picture like the others: pressed, it takes the
+// picture handles and Layout options (18 Nov, so a drawing can have the text
+// beside it), and the pencil on its frame opens it to draw on, as does a
+// double press. (It used to open on the first press, which left it with no
+// handles and no layout.) In a note that is only read, a press does nothing.
 function enableNoteDrawings(quill, opts){
   if(!quill || quill.__noteDrawings) return;
   quill.__noteDrawings = true;
   const markDirty = ()=>{ if(opts && opts.markDirty) opts.markDirty(); };
   const host = quill.root.parentNode;
   if(!host) return;
+  const editable = ()=> quill.root.getAttribute('contenteditable') === 'true';
+  quill.__openDrawing = (img)=>{
+    if(!img || !quill.root.contains(img) || !editable()) return;
+    const blot = Quill.find(img);
+    if(!blot || blot === quill) return;
+    const rz = quill.getModule('imageResize');
+    if(rz && rz.img) rz.hide();
+    const idx = quill.getIndex(blot);
+    openNoteDrawing(quill, idx, 1, img.getAttribute('src') || '', idx, markDirty);
+  };
   host.addEventListener('click', e=>{
     const img = e.target.closest && e.target.closest('img.note-drawing');
     if(!img || !quill.root.contains(img)) return;
-    e.stopPropagation();
-    const ns = document.getSelection();
-    if(quill.root.getAttribute('contenteditable') !== 'true' || (ns && !ns.isCollapsed)) return;
-    const blot = Quill.find(img);
-    if(!blot || blot === quill) return;
-    const idx = quill.getIndex(blot);
-    openNoteDrawing(quill, idx, 1, img.getAttribute('src') || '', idx, markDirty);
+    if(!editable()) e.stopPropagation();
   }, true);
+  // The second press lands on the frame laid over the drawing by the first.
+  host.addEventListener('dblclick', e=>{
+    const ns = document.getSelection();
+    if(ns && !ns.isCollapsed && !(e.target.closest && e.target.closest('img.note-drawing'))) return;
+    let img = e.target.closest && e.target.closest('img.note-drawing');
+    const rz = quill.getModule('imageResize');
+    if(!img && rz && rz.img && rz.overlay && rz.overlay.contains(e.target) && rz.img.classList.contains('note-drawing')) img = rz.img;
+    if(!img || e.target.closest('.nimg-lay, .nimg-edit, .nimg-panel')) return;
+    e.preventDefault();
+    quill.__openDrawing(img);
+  });
 }
 /* ---------- LINKS IN A NOTE ----------
    A URL in a note was dead text: the toolbar had no link button and nothing
@@ -59831,7 +60453,7 @@ function ensureQuillInitialized(){
         handlers: { image: quillImageUploadHandler, link: noteLinkToolbarHandler, video: noteVideoToolbarHandler }
       },
       keyboard: { bindings: noteKeyboardBindings() },
-      imageResize: {}
+      imageResize: noteImageResizeOptions()
     }
   });
   keepPageStillOnPaste(quillEditor);
@@ -60191,7 +60813,7 @@ function ensureNotebookQuillInitialized(){
         handlers: { image: quillImageUploadHandler, link: noteLinkToolbarHandler, video: noteVideoToolbarHandler }
       },
       keyboard: { bindings: noteKeyboardBindings() },
-      imageResize: {}
+      imageResize: noteImageResizeOptions()
     }
   });
   keepPageStillOnPaste(notebookQuillEditor);
@@ -60620,7 +61242,7 @@ function noteExportRuns(el, base){
       if(n.classList.contains('ql-formula')){ out.push(Object.assign({ tex: n.getAttribute('data-value') || '' }, f)); return; }
       if(n.tagName === 'IMG'){
         const src = n.getAttribute('src');
-        if(src) out.push({ img: src, w: parseFloat(n.getAttribute('width')) || n.width || 0, alt: n.getAttribute('alt') || '' });
+        if(src) out.push({ img: src, w: parseFloat(n.getAttribute('width')) || n.width || 0, alt: n.getAttribute('alt') || '', wrap: noteWrapOf(n) });
         return;
       }
       if(n.tagName === 'BR' || n.classList.contains('ql-cursor')) return;
@@ -60798,10 +61420,16 @@ async function noteExportAssets(blocks, withFormulas){
   const map = new Map();
   const jobs = [];
   const texes = [];
+  // A picture with text tight round it takes its outline along (Word).
+  const tight = new Set();
+  blocks.forEach(b=> (b.runs || []).forEach(r=>{ if(r.img && /^tight/.test(r.wrap || '')) tight.add(r.img); }));
   blocks.forEach(b=> (b.runs || []).forEach(r=>{
     if(r.img && !map.has(r.img)){
       map.set(r.img, null);
-      jobs.push(noteExportFetchImage(r.img).then(v=> map.set(r.img, v), ()=>{}));
+      jobs.push(noteExportFetchImage(r.img).then(async v=>{
+        if(v && tight.has(r.img)) v.outline = await noteExportOutline(v.blob);
+        map.set(r.img, v);
+      }, ()=>{}));
     } else if(withFormulas && r.tex != null && !map.has('tex:' + r.tex)){
       map.set('tex:' + r.tex, null);
       texes.push(r.tex);
@@ -60811,6 +61439,45 @@ async function noteExportAssets(blocks, withFormulas){
   jobs.push(texes.reduce((p, tex)=> p.then(()=> noteExportFormulaImage(tex).then(v=> map.set('tex:' + tex, v), ()=>{})), Promise.resolve()));
   await Promise.all(jobs);
   return map;
+}
+// The outline Word wraps tight text round: down the picture's left edge and
+// back up its right, row by row, wherever it is not see-through (the note's
+// own threshold, 0.3), in Word's 0..21600 square. A picture with no clear
+// parts comes out as its rectangle.
+async function noteExportOutline(blob){
+  let bmp;
+  try{ bmp = await createImageBitmap(blob); }catch(e){ return null; }
+  const W = Math.max(1, Math.min(64, bmp.width)), H = Math.max(1, Math.min(32, bmp.height));
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  g.drawImage(bmp, 0, 0, W, H);
+  if(bmp.close) bmp.close();
+  let px;
+  try{ px = g.getImageData(0, 0, W, H).data; }catch(e){ return null; }
+  const rows = [];
+  for(let y = 0; y < H; y++){
+    let l = -1, r = -1;
+    for(let x = 0; x < W; x++) if(px[(y * W + x) * 4 + 3] > 76){ if(l < 0) l = x; r = x + 1; }
+    if(l >= 0) rows.push([y, l, r]);
+  }
+  if(!rows.length) return null;
+  const X = v=> Math.round(v / W * 21600), Y = v=> Math.round(v / H * 21600);
+  const pts = [];
+  rows.forEach(([y, l])=> pts.push([X(l), Y(y)], [X(l), Y(y + 1)]));
+  rows.slice().reverse().forEach(([y, , r])=> pts.push([X(r), Y(y + 1)], [X(r), Y(y)]));
+  // Points in the middle of a straight stretch say nothing.
+  const out = [];
+  pts.forEach(p=>{
+    out.push(p);
+    while(out.length >= 3){
+      const [a, b, q] = out.slice(-3);
+      if((a[0] === b[0] && b[0] === q[0]) || (a[1] === b[1] && b[1] === q[1])) out.splice(out.length - 2, 1);
+      else break;
+    }
+  });
+  out.push(out[0].slice());
+  return out;
 }
 function noteExportDataUrl(blob){
   return new Promise((ok, no)=>{ const fr = new FileReader(); fr.onload = ()=> ok(fr.result); fr.onerror = no; fr.readAsDataURL(blob); });
@@ -60923,7 +61590,12 @@ function noteExportHtmlRuns(runs, mode, assets){
         const a = assets && assets.get(r.img);
         const src = mode === 'notes' && a && a.dataUrl ? a.dataUrl : r.img;
         const w = r.w ? ` width="${Math.round(r.w)}"` : '';
-        return `<img src="${escapeHtml(src)}" alt="${escapeHtml(r.alt || '')}"${w}>`;
+        // The picture's layout as the note has it (float, wrap round its
+        // outline, behind or in front of the text).
+        const lay = noteWrapParse(r.wrap);
+        const st = lay ? noteWrapStyleText(lay, src) : '';
+        const wr = lay ? ` data-wrap="${escapeHtml(noteWrapString(lay))}" style="${escapeHtml(st)}"` : '';
+        return `<img src="${escapeHtml(src)}" alt="${escapeHtml(r.alt || '')}"${w}${wr}>`;
       }
       if(r.tex != null){
         if(mode === 'print' && window.katex){
@@ -60997,7 +61669,7 @@ function noteExportHtmlBody(title, blocks, mode, assets){
 }
 function noteExportHtmlDoc(title, body){
   return '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title>'
-    + '<style>body{font-family:-apple-system,"Helvetica Neue","Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.5;}'
+    + '<style>body{font-family:-apple-system,"Helvetica Neue","Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.5;isolation:isolate;}'
     + 'img{max-width:100%;height:auto;}blockquote{border-left:3px solid #bbb;margin-left:0;padding-left:12px;color:#555;}'
     + 'pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;}</style></head><body>\n' + body + '\n</body></html>\n';
 }
@@ -61029,24 +61701,59 @@ function docxRpr(r, linked){
   else if(r.sup) x += '<w:vertAlign w:val="superscript"/>';
   return x ? '<w:rPr>' + x + '</w:rPr>' : '';
 }
-function docxDrawing(ctx, a, wPx, descr){
+// A picture laid out in the note (data-wrap) goes in as Word's own floating
+// picture: Square, Tight round its outline, Top and bottom, Behind or In
+// front of text, on the same side and at the same gaps, and a picture moved
+// by hand as far from its place in the line as in the note. One left in
+// line with the text stays an inline picture.
+function docxDrawing(ctx, a, wPx, descr, wrap){
   const id = ++ctx.drawId;
   let cx = Math.round((wPx || a.w) * 9525);
   let cy = Math.round(cx * a.h / a.w);
   if(cx > DOCX_PAGE_W_EMU){ cy = Math.round(cy * DOCX_PAGE_W_EMU / cx); cx = DOCX_PAGE_W_EMU; }
   const d = docxEsc(descr || '');
-  return `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="Picture ${id}" descr="${d}"/>`
+  const graphic = `<wp:docPr id="${id}" name="Picture ${id}" descr="${d}"/>`
     + '<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>'
     + '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic>'
     + `<pic:nvPicPr><pic:cNvPr id="${id}" name="${a.name}" descr="${d}"/><pic:cNvPicPr/></pic:nvPicPr>`
     + `<pic:blipFill><a:blip r:embed="${a.rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>`
     + `<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>`
-    + '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
+    + '</pic:pic></a:graphicData></a:graphic>';
+  const w = noteWrapParse(wrap);
+  if(!w) return `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/>${graphic}</wp:inline></w:drawing></w:r>`;
+  const E = px=> Math.round(px * 9525);
+  let dist = [0, 0, 0, 0], posH, posV, wrapXml;
+  if(noteWrapFree(w)){
+    posH = `<wp:positionH relativeFrom="character"><wp:posOffset>${E(w.x)}</wp:posOffset></wp:positionH>`;
+    posV = `<wp:positionV relativeFrom="line"><wp:posOffset>${E(w.y)}</wp:posOffset></wp:positionV>`;
+    wrapXml = '<wp:wrapNone/>';
+  } else {
+    posH = `<wp:positionH relativeFrom="column"><wp:align>${w.side}</wp:align></wp:positionH>`;
+    posV = '<wp:positionV relativeFrom="paragraph"><wp:posOffset>0</wp:posOffset></wp:positionV>';
+    if(w.mode === 'topbottom'){
+      dist = [E(6), E(6), 0, 0];
+      wrapXml = '<wp:wrapTopAndBottom/>';
+    } else {
+      // The note's gaps: 14px on the text's side, 10px round a tight outline.
+      const gap = E(w.mode === 'tight' ? 10 : 14);
+      dist = [E(2), E(6), w.side === 'right' ? gap : 0, w.side === 'right' ? 0 : gap];
+      if(w.mode === 'square') wrapXml = '<wp:wrapSquare wrapText="bothSides"/>';
+      else {
+        const pts = a.outline || [[0, 0], [0, 21600], [21600, 21600], [21600, 0], [0, 0]];
+        wrapXml = '<wp:wrapTight wrapText="bothSides"><wp:wrapPolygon edited="0">'
+          + pts.map((p, k)=> `<wp:${k ? 'lineTo' : 'start'} x="${p[0]}" y="${p[1]}"/>`).join('')
+          + '</wp:wrapPolygon></wp:wrapTight>';
+      }
+    }
+  }
+  return `<w:r><w:drawing><wp:anchor distT="${dist[0]}" distB="${dist[1]}" distL="${dist[2]}" distR="${dist[3]}" simplePos="0" relativeHeight="${251658240 + id}" behindDoc="${w.mode === 'behind' ? 1 : 0}" locked="0" layoutInCell="1" allowOverlap="1">`
+    + `<wp:simplePos x="0" y="0"/>${posH}${posV}<wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/>${wrapXml}${graphic}`
+    + '</wp:anchor></w:drawing></w:r>';
 }
 function docxRuns(runs, ctx){
   return noteExportByLink(noteExportMerge(runs)).map(g=>{
     const inner = g.runs.map(r=>{
-      if(r.img){ const a = ctx.assets.get(r.img); return a ? docxDrawing(ctx, a, r.w, r.alt) : ''; }
+      if(r.img){ const a = ctx.assets.get(r.img); return a ? docxDrawing(ctx, a, r.w, r.alt, r.wrap) : ''; }
       if(r.tex != null){
         const a = ctx.assets.get('tex:' + r.tex);
         if(a) return docxDrawing(ctx, a, a.w, r.tex);
