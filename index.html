@@ -47100,7 +47100,30 @@ function safeRichHtml(html){
   // Fails closed: with no sanitizer loaded the note is shown as its text
   // rather than as markup nobody has checked.
   if(!p) return escapeHtml(stripHtml(String(html)));
-  return p.sanitize(String(html), RICH_HTML_CONFIG);
+  return dropCaretMarks(p.sanitize(String(html), RICH_HTML_CONFIG));
+}
+// THE CARET'S WAITING STYLE IS NEVER PART OF WHAT IS KEPT (real-user report,
+// 18 Nov: bold turned on with Cmd+B, "money demand" typed, Cmd+B again, and
+// the words stuck: on screen, but Backspace went past them, and they were
+// still there after a reload). With nothing selected, bold (and the rest)
+// goes on a marker Quill puts at the caret, <span class="ql-cursor"> with one
+// invisible character, and what is typed into it is moved out into the note
+// a moment later. Typed text left inside one is outside the note Quill
+// keeps, and a note saved like that brought the marker back on every open,
+// where Quill reads it as its own caret marker again. So a marker is dropped
+// from what is saved and from what is opened, and what was typed into it
+// stays as plain text where it was (the invisible character goes).
+function dropCaretMarks(html){
+  if(!html || String(html).indexOf('ql-cursor') < 0) return html;
+  const tpl = document.createElement('template');
+  tpl.innerHTML = String(html);
+  const marks = tpl.content.querySelectorAll('span.ql-cursor');
+  if(!marks.length) return html;
+  marks.forEach(span=>{
+    const text = (span.textContent || '').replace(/﻿/g, '');
+    if(text) span.replaceWith(document.createTextNode(text)); else span.remove();
+  });
+  return tpl.innerHTML;
 }
 // Checks whether a practice sentence correctly uses the grammar pattern, and returns
 // HTML with the matched portion bolded. finalOnly patterns must appear at the very end
@@ -51318,7 +51341,7 @@ async function saveWritingMockPane(paneKey){
   const editor = paneKey === 'q53' ? writingMockQ53Quill : writingMockQ54Quill;
   const sample = paneKey === 'q53' ? writingMockQ53Sample : writingMockQ54Sample;
   if(!editor || !sample) return;
-  const content = editor.root.innerHTML;
+  const content = dropCaretMarks(editor.root.innerHTML);
   const patch = { content, word_count: countWords(content), updated_at: new Date().toISOString(), updated_by: currentUser.id };
   await supabaseClient.from('writing_samples').update(patch).eq('id', sample.id);
   Object.assign(sample, patch);
@@ -51514,7 +51537,7 @@ document.getElementById('writingFeedbackSendBtn').addEventListener('click', ()=>
 });
 document.getElementById('saveWritingBtn').addEventListener('click', async ()=>{
   if(!selectedWritingSampleId || !writingQuillEditor || selectedWritingSampleOwner !== currentUser.id) return;
-  const content = writingQuillEditor.root.innerHTML;
+  const content = dropCaretMarks(writingQuillEditor.root.innerHTML);
   const w = (allWritingSamples[currentUser.id]||[]).find(x=>x.id===selectedWritingSampleId);
   if(!w) return;
   const prevVersions = (w.previous_versions || []).slice();
@@ -54373,7 +54396,7 @@ function makeNoteAutosaver(cfg){
   function save(){
     const editor = cfg.editor(), note = cfg.note();
     if(!editor || !note || !cfg.isDirty()) return chain;
-    const content = editor.root.innerHTML;
+    const content = dropCaretMarks(editor.root.innerHTML);
     const now = Date.now();
     // Taken by this save whether or not it changes anything: "Use this
     // version" asks for the save straight after it, and a restore that put
@@ -54839,6 +54862,48 @@ function enableTouchUndo(quill){
   });
 }
 if(window.Quill && window.ImageResize) Quill.register('modules/imageResize', ImageResize.default);
+// WHAT IS TYPED AFTER BOLD GOES ON OR OFF REACHES THE NOTE, IN SAFARI TOO
+// (the report under dropCaretMarks). Quill moves the letters out of its
+// caret marker when the marker's own text node changes, or later, when it
+// sees the selection move. Safari's typing help (a capital at the start of
+// what it takes for a sentence, a correction) can put a NEW text node in the
+// marker instead -- the caret in an empty marker looks like a sentence's
+// start, which is how "money" came out "Money" -- and if the selection check
+// does not come before the next Cmd+B, that press finds no place it knows
+// and does nothing, and from then on everything typed stays in the marker,
+// outside the note. Reproduced in this browser by swapping the node the same
+// way, with the page in the background (no selection checks there). Now a
+// marker holding anything but its own text node takes the text that is in
+// it and moves it out at once, the way Quill does for its own node. Not
+// while a word is being composed (Korean): Quill moves that text out itself
+// when the composition ends, and moving nodes under it would break it.
+(function(){
+  if(!window.Quill) return;
+  let Cursor;
+  try{ Cursor = Quill.import('blots/cursor'); }catch(e){ return; }
+  if(!Cursor || !Cursor.prototype || Cursor.prototype.__adoptText) return;
+  Cursor.prototype.__adoptText = true;
+  const update = Cursor.prototype.update;
+  Cursor.prototype.update = function(mutations, context){
+    const node = this.domNode;
+    const composing = this.selection && this.selection.composing;
+    if(node && !composing && !(node.childNodes.length === 1 && node.firstChild === this.textNode)){
+      node.normalize();
+      const texts = Array.from(node.childNodes).filter(n=> n.nodeType === 3);
+      const tn = texts[texts.length - 1];
+      if(tn && node.parentNode && (tn !== this.textNode || tn.data !== Cursor.CONTENTS)){
+        // What sits before it goes out ahead of the marker, as Quill's own
+        // restore() does with what sits after it.
+        while(node.firstChild && node.firstChild !== tn) node.parentNode.insertBefore(node.firstChild, node);
+        this.textNode = tn;
+        const range = this.restore();
+        if(range && context) context.range = range;
+        return;
+      }
+    }
+    return update.call(this, mutations, context);
+  };
+})();
 /* ---------- THE SIZE OF WHAT YOU ARE TYPING ---------- */
 // NOTE_SIZE_BASE is the editor's own type size, set once in CSS
 // (.ql-container.ql-snow{font-size:14px}) -- the two have to agree, because
